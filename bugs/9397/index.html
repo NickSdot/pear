@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9397</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_Template_IT/index.html">HTML_Template_IT</a> &#187; Bug #9397</h1>
+<p>getFile() using fread() does not read whole file</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-20 19:16 UTC</td></tr>
+<tr><th>From</th><td>blair dot chesnut at duke dot edu</td></tr>
+<tr><th>Assigned</th><td>dsp</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_Template_IT/index.html">HTML_Template_IT</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-20 19:16 UTC] blair dot chesnut at duke dot edu</h3>
+<p>Description:<br>
+------------<br>
+getFile() using fread() does not always get entire file, but sometimes only returns 8192 characters. Perhaps using fread() in a loop or get_file_contents() would resolve.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+ <br>
+require_once &quot;HTML/Template/IT.php&quot;;<br>
+require_once &quot;MDB2.php&quot;;<br>
+ <br>
+$template = new HTML_Template_IT(&#039;./test&#039;); <br>
+ <br>
+$dsn = &quot;mssql://user:passwd@host/db&quot;; <br>
+$dbh = MDB2::factory($dsn); <br>
+ <br>
+$query = &lt;&lt;&lt;EOQUERY <br>
+select *<br>
+  from person<br>
+ where lastname like ?<br>
+ order by lastname, firstname<br>
+EOQUERY;<br>
+ <br>
+$sth = $dbh-&gt;prepare($query); <br>
+$res = $sth-&gt;execute(&#039;A%&#039;); <br>
+$results = $res-&gt;fetchRow(); <br>
+ <br>
+$content = $template-&gt;getFile(&#039;templatefile.tpl&#039;); <br>
+print &quot;Contents = &quot; . strlen($content);<br>
+ <br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Contents = 8207</p>
+<p>Actual result:<br>
+--------------<br>
+Contents = 8192</p>
+</section>
+<section>
+<h3>[2006-11-20 19:38 UTC] dsp at php dot net</h3>
+<p>Can you give me additional information. Are you sure that the  file is in your template root directory ? <br>
+I cannot reproduce the bug.</p>
+</section>
+<section>
+<h3>[2006-11-20 19:54 UTC] blair dot chesnut at duke dot edu</h3>
+<p>The problem apparently has to do with MDB2 and $sth-&gt;execute() using a placeholder. Works fine if the query parameter is hard-coded in the query. I read about similar problems using fread() after opening a &quot;userspace stream&quot;.</p>
+</section>
+<section>
+<h3>[2006-11-20 21:26 UTC] blair dot chesnut at duke dot edu</h3>
+<p>You can chop out all the HTML_Template_IT code and add at the bottom:</p>
+<p>$fp = fopen(&#039;./test/templatefile.tpl&#039;);<br>
+$content = fread($fp, filesize(&#039;./test/templatefile.tpl&#039;);<br>
+print &quot;Contents = &quot; . strlen($content);</p>
+<p>Something in MDB2&#039;s execute() is causing fread()&#039;s output to be limited to 8192 chars.</p>
+</section>
+<section>
+<h3>[2006-11-21 17:55 UTC] dsp at php dot net</h3>
+<p>Works perfectly for me, I created a template file with 9022 bytes and tried you script, but with mysql as I don&#039;t have access to a mssql server. But furthermore, if it&#039;s really a bug, it&#039;s not a HTML_Template_IT bug (Bogus for me).</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

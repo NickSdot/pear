@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #817</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_NNTP/index.html">Net_NNTP</a> &#187; Bug #817</h1>
+<p>post() doesnt work (v0.2.3)</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-02-21 01:20 UTC</td></tr>
+<tr><th>From</th><td>jake at braingle dot com</td></tr>
+<tr><th>Assigned</th><td>heino</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_NNTP/index.html">Net_NNTP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-02-21 01:20 UTC] jake at braingle dot com</h3>
+<p>Description:<br>
+------------<br>
+The post method does not work in the stable version (0.2.3).  To fix it, you need to make the make the lines terminate with \r and \n like so:</p>
+<p>fputs($this-&gt;fp, &quot;Newsgroups: $newsgroup\r\n&quot;);<br>
+fputs($this-&gt;fp, &quot;Subject: $subject\r\n&quot;);<br>
+...</p>
+<p>Also, this function will not work with news servers that require authentication.  To fix that, I added this line to the top of the post function:</p>
+<p>$error = $this-&gt;authenticate($this-&gt;user, $this-&gt;pass, $this-&gt;authmode);</p>
+<p>now it works. :)</p>
+<p>Reproduce code:<br>
+---------------<br>
+$response = $nntp-&gt;post($subject, $group, $from, $body);</p>
+<p>Expected result:<br>
+----------------<br>
+the message would be posted</p>
+<p>Actual result:<br>
+--------------<br>
+the message is not posted</p>
+</section>
+<section>
+<h3>[2004-02-21 23:08 UTC] heino at php dot net</h3>
+<p>How about replacing line 261-276 with something like (not tested, since I&#039;m rather busy):</p>
+<p>---------------------------------------------------------<br>
+$r = $this-&gt;command(&#039;POST&#039;);<br>
+if (PEAR::isError($r) || $this-&gt;responseCode($r) != 340) {<br>
+    return $this-&gt;raiseError($r);<br>
+}</p>
+<p>$data = &#039;&#039;;<br>
+$data .= &quot;From: $from\r\n&quot;;<br>
+$data .= &quot;Newsgroups: $newsgroup\r\n&quot;;<br>
+$data .= &quot;Subject: $subject\r\n&quot;;<br>
+$data .= &quot;X-poster: PEAR::Net_NNTP (0.2) by Martin Kaltoft\r\n&quot;;<br>
+if (!empty($aditional)) {<br>
+    $data .= rtrim($aditional, &quot;\r\n&quot;).&quot;\r\n&quot;;<br>
+}<br>
+$data .= &quot;\r\n&quot;;<br>
+$data .= &quot;$body\r\n&quot;;<br>
+$data .= &quot;.&quot;;</p>
+<p>return $this-&gt;command($data, false);<br>
+---------------------------------------------------------</p>
+</section>
+<section>
+<h3>[2004-02-22 00:09 UTC] jake at braingle dot com</h3>
+<p>Yes, I believe that would fix it.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

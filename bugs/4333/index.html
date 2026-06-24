@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4333</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_Graph/index.html">Image_Graph</a> &#187; Bug #4333</h1>
+<p>Legend division by zero error on PieChart</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-12 08:24 UTC</td></tr>
+<tr><th>From</th><td>attb2 at fw dot hu</td></tr>
+<tr><th>Assigned</th><td>nosey</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Image_Graph/index.html">Image_Graph</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Debian Sarge</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-12 08:24 UTC] attb2 at fw dot hu</h3>
+<p>Description:<br>
+------------<br>
+If I want to display a Legend from a PieChart Image_Graph throws a <br>
+&quot;division by zero&quot; error.</p>
+<p>I traced down this error:<br>
+/Graph/Plot.php <br>
+function _legendSample($x, $y, &amp;$font) { Line: 719<br>
+[...]<br>
+$point = $this-&gt;_getMarkerData($point, $nextPoint, $prevPoint, $i);<br>
+[...]<br>
+}</p>
+<p>In this method calling &#039;$i&#039; variable has no value! (Not initialized.)</p>
+<p>Example is below. (Example is assembled from tutorial and <br>
+GraphPite site informations.)</p>
+<p>Thanks</p>
+<p>Attila Szuts</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php</p>
+<p>require_once(&quot;Image/Graph.php&quot;);</p>
+<p>// -----------------------------------------------------------------------------</p>
+<p>$startdate = date(&#039;Y-m-01&#039;);<br>
+  $enddate   = date(&#039;Y-m-d&#039;);<br>
+  $month     = date(&#039;Y-m&#039;);</p>
+<p>$total_income   = 541;   // Income<br>
+  $total_outcome  = 19;   // Outcome</p>
+<p>// -----------------------------------------------------------------------------<br>
+// Graph.</p>
+<p>$Graph =&amp; new Image_Graph(400, 300);</p>
+<p>// Font.<br>
+  $Arial =&amp; $Graph-&gt;addFont(new Image_Graph_Font_TTF(&quot;arial.ttf&quot;));<br>
+  $Arial-&gt;setSize(11);</p>
+<p>// Cimke font<br>
+  $ArialSolid =&amp; $Graph-&gt;addFont(new Image_Graph_Font_TTF(&quot;arial.ttf&quot;));<br>
+  $ArialSolid-&gt;setSize(10);</p>
+<p>$Graph-&gt;add(<br>
+    new Image_Graph_Layout_Vertical(<br>
+      new Image_Graph_Layout_Vertical(<br>
+        new Image_Graph_Title(sprintf(&quot;Income / Outcome %s (Ft)&quot;, $month), $Arial),<br>
+        $PlotArea = new Image_Graph_Plotarea(),<br>
+        5<br>
+      ),<br>
+      $Legend = new Image_Graph_Legend(),    // Legend<br>
+      70<br>
+    )<br>
+  );<br>
+  $Graph-&gt;hideLogo();<br>
+  $PlotArea-&gt;hideAxis();</p>
+<p>// Legend<br>
+  $Legend-&gt;setPlotArea($PlotArea);<br>
+  //$Legend-&gt;setFillColor(IMAGE_GRAPH_WHITE);<br>
+  //$Legend-&gt;setFont($ArialSolid);</p>
+<p>// Adatok.<br>
+  //$DataSet =&amp; new Image_Graph_Dataset_Random(10, 2, 15, true);<br>
+  $DataSet =&amp; new Image_Graph_Dataset_Trivial();<br>
+  $DataSet-&gt;addPoint(&#039;Income&#039;, $total_income);<br>
+  $DataSet-&gt;addPoint(&#039;Outcome&#039;, $total_outcome);<br>
+  $Plot =&amp; $PlotArea-&gt;addPlot(new Image_Graph_Plot_Pie($DataSet));</p>
+<p>// create a X data value marker<br>
+  $Marker =&amp; $Plot-&gt;add(new Image_Graph_Marker_Value(IMAGE_GRAPH_VALUE_X));<br>
+  $Marker-&gt;setFont($ArialSolid);</p>
+<p>// fill it with white<br>
+  $Marker-&gt;setFillColor(IMAGE_GRAPH_WHITE);<br>
+  // and use black border<br>
+  $Marker-&gt;setBorderColor(IMAGE_GRAPH_BLACK);<br>
+  // create a pin-point marker type<br>
+  $PointingMarker =&amp; $Plot-&gt;add(new Image_Graph_Marker_Pointing_Angular(30, $Marker));<br>
+  // and use the marker on the plot<br>
+  $Plot-&gt;setMarker($PointingMarker);</p>
+<p>$Plot-&gt;Radius = 2;<br>
+  $Plot-&gt;setLineColor(IMAGE_GRAPH_GRAY);</p>
+<p>$GREEN =&amp; $Graph-&gt;newColor(IMAGE_GRAPH_GREEN, 100);<br>
+  $RED =&amp; $Graph-&gt;newColor(IMAGE_GRAPH_RED, 100);</p>
+<p>$FillArray =&amp; new Image_Graph_Fill_Array();<br>
+  $Plot-&gt;setFillStyle($FillArray);<br>
+  $FillArray-&gt;add($GREEN);<br>
+  $FillArray-&gt;add($RED);</p>
+<p>$Graph-&gt;done();</p>
+<p>// -----------------------------------------------------------------------------</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+A nice Piechart with Legends.<br>
+If you comment out the <br>
+$Legend-&gt;setPlotArea($PlotArea);<br>
+line a piechart will be displayed. (without Legend)</p>
+<p>Actual result:<br>
+--------------<br>
+Warning: Division by zero in /mnt/work/lotimex/web/Graphs/Image/Graph/Plot/Pie.php on line 63</p>
+</section>
+<section>
+<h3>[2005-05-17 21:15 UTC] pear dot nosey at veggerby dot dk</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9106</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #9106</h1>
+<p>More accurate sequence name</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #9106</th><td>More accurate sequence name</td></tr>
+<tr><th>Submitted</th><td>2006-10-20 13:13 UTC</td></tr>
+<tr><th>From</th><td>mcraig at leadehealth dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.3</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-10-20 13:13 UTC] mcraig at leadehealth dot com</h3>
+<p>Description:<br>
+------------<br>
+This request is for the driver to do a little more introspection in getSequenceName in order to return a more accurate sequence name.  For instance, right now it does not check the tableInfo for SERIAL sequences created by PostgreSQL.  It just returns something like &quot;&lt;table&gt;_seq&quot;, whereas it should have the ability to look for a column definition containing &quot;nextval(.*)&quot;.  Through something:</p>
+<p>// pgsql.php / override getSequenceName<br>
+function getSequenceName($sqn)<br>
+{<br>
+    $ti = $this-&gt;reverse-&gt;tableInfo($sqn);<br>
+    ... grab the col &amp; parse the nextval();<br>
+    if($found) return $seqnname;</p>
+<p>return parent::getSequenceName($sqn);<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+For example, I use DB_DataObject to access a table called &quot;enrollment&quot; with a sequence called &quot;enrollment_id_seq&quot; that was created by Postgres.</p>
+<p>My current version of DB_DataObject (via DB, actually) creates and returns a seqeuence named &quot;enrollment_seq&quot; so that when non-PHP programs access the table and use the real sequence there are id collisions.</p>
+<p>It would be great if MDB could return the real sequence to avoid these collisions.</p>
+</section>
+<section>
+<h3>[2006-11-02 13:55 UTC] mcraig at leadehealth dot com</h3>
+<p>pg_get_serial_sequence does not seem to be included by default on the latest gentoo postgres 7.4.13, though it is in version 8.</p>
+<p>Also it still requires introspection to know exactly which column is expected to be the serial column.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XML_RPC Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/XML_RPC/index.html">XML_RPC</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/XML_RPC/docs/index.html#package-webservices-xml-rpc-intro">Introduction</a>
+</li>
+<li><a href="package/XML_RPC/docs/index.html#package-webservices-xml-rpc-support">Support</a>
+</li>
+<li><a href="package/XML_RPC/docs/index.html#package-webservices-xml-rpc-examples">Examples</a>
+</li>
+<li><a href="package/XML_RPC/docs/index.html#package-webservices-xml-rpc-api">API</a>
+</li></ul>
+</nav>
+<p>PHP implementation of the XML-RPC protocol. This is a PEAR-ified version of Useful inc&#039;s XML-RPC for PHP. It has support for HTTP transport, proxies and authentication.</p>
+<section id="package-webservices-xml-rpc-intro">
+<h2>Introduction</h2>
+
+</section>
+<section id="package-webservices-xml-rpc-support">
+<h2>Support</h2>
+<h3>Online Support</h3>
+
+  
+
+  <p>The package is offered &quot;as-is&quot; without any warranty or
+   commitment to support. However, informal advice and help is available
+   via the PEAR user mailing list and XML-RPC.com.</p>
+
+  <ul>
+   <li>
+    
+     The PEAR user mailing
+     list can be contacted for questions concerning the usage of
+     the package. More details can be
+     found here.
+    
+   </li>
+   <li>
+    
+     For more general XML-RPC questions, there is a Yahoo! Groups <a href="http://tech.groups.yahoo.com/group/xml-rpc/">XML-RPC mailing
+     list</a>.
+    
+   </li>
+   <li>
+    The <a href="http://www.xmlrpc.com/discuss/">XML-RPC.com</a>
+     discussion group is a useful place to get help with using
+     XML-RPC. This group is also gatewayed into the Yahoo! Groups
+     mailing list.
+   </li>
+  </ul>
+ 
+
+ <h3>The Jellyfish Book</h3>
+
+  
+
+  <p>Together with Simon St.Laurent and Joe Johnston, Edd Dumbill wrote a
+   book on XML-RPC for O&#039;Reilly and Associates on XML-RPC. It features a
+    rather fetching jellyfish on the cover.</p>
+  <p>Complete details of the book are <a href="http://oreilly.com/catalog/progxmlrpc/">available from
+   O&#039;Reilly&#039;s web site.</a></p>
+  <p>If you&#039;ve benefitted from the effort he has put into writing this
+   software, then please consider buying the book!</p>
+</section>
+<section id="package-webservices-xml-rpc-examples">
+<h2>Examples</h2>
+<h3>
+   Using a Client to Get Info About the Latest PEAR Release
+  </h3>
+
+  
+
+  
+   
+   <pre><code>&lt;?php
+require_once &#039;XML/RPC.php&#039;;
+
+/*
+ * Get info about the most recently released PEAR package
+ */
+$params = array(new XML_RPC_Value(1, &#039;int&#039;));
+$msg = new XML_RPC_Message(&#039;release.getRecent&#039;, $params);
+
+$cli = new XML_RPC_Client(&#039;/xmlrpc.php&#039;, &#039;pear.php.net&#039;);
+
+// If you want to turn debugging on...
+// $cli-&gt;setDebug(1);
+
+// If your payload requires extra lines to stay in tact...
+// NOTE: The $remove_extra_lines property was added in Version 1.4.6.
+// $cli-&gt;remove_extra_lines = false;
+
+// If inspect the XML request sent to the server...
+// $msg-&gt;createPayload();
+// logit($msg-&gt;payload);  // Hypothetical function.
+
+$resp = $cli-&gt;send($msg);
+
+if (!$resp) {
+    echo &#039;Communication error: &#039; . $cli-&gt;errstr;
+    exit;
+}
+
+if (!$resp-&gt;faultCode()) {
+    $val = $resp-&gt;value();
+    $data = XML_RPC_decode($val);
+    echo $data[0][&#039;name&#039;] . &#039; is at version &#039; . $data[0][&#039;version&#039;];
+} else {
+    /*
+     * Display problems that have been gracefully cought and
+     * reported by the xmlrpc.php script
+     */
+    echo &#039;Fault Code: &#039; . $resp-&gt;faultCode() . &quot;\n&quot;;
+    echo &#039;Fault Reason: &#039; . $resp-&gt;faultString() . &quot;\n&quot;;
+}
+
+// To inspect the XML response from the server...
+// NOTE: The $response_payload property was added in Version 1.4.6.
+// logit($msg-&gt;response_payload);  // Hypothetical function.
+?&gt;</code></pre>
+  
+ 
+
+ <h3>A Complete Client and Server Combination</h3>
+
+   
+  
+   
+
+   <p>Here is the server script.  It&#039;s named xmlrpc.php and located
+    in the document root of the web server at localhost:</p>
+   <pre><code>&lt;?php
+require_once &#039;XML/RPC/Server.php&#039;;
+
+/*
+ * Declare the functions, etc.
+ */
+function returnTimes2($params) {
+    $obj = new some_class_name;
+    return $obj-&gt;returnTimes2($params);
+}
+
+class some_class_name {
+    function returnTimes2($params) {
+        $param = $params-&gt;getParam(0);
+
+        // This error checking syntax was added in Release 1.3.0
+        if (!XML_RPC_Value::isValue($param)) {
+            return $param;
+        }
+
+        $val = new XML_RPC_Value($param-&gt;scalarval() * 2, &#039;int&#039;); 
+        return new XML_RPC_Response($val);
+    }
+}
+
+$some_object = new some_class_name;
+
+
+/*
+ * Establish the dispatch map and XML_RPC server instance.
+ */
+$server = new XML_RPC_Server(
+    array(
+        &#039;function_times2&#039; =&gt; array(
+            &#039;function&#039; =&gt; &#039;returnTimes2&#039;
+        ),
+        &#039;class_paamayim_nekudotayim_times2&#039; =&gt; array(
+            &#039;function&#039; =&gt; &#039;some_class_name::returnTimes2&#039;
+        ),
+        &#039;class_times2&#039; =&gt; array(
+            &#039;function&#039; =&gt; array(&#039;some_class_name&#039;, &#039;returnTimes2&#039;)
+        ),
+        &#039;object_times2&#039; =&gt; array(
+            &#039;function&#039; =&gt; array($some_object, &#039;returnTimes2&#039;)
+        ),
+    ),
+    1  // serviceNow
+);
+?&gt;</code></pre>
+
+   <p>And here is the client script:</p>
+   <pre><code>&lt;?php
+require_once &#039;XML/RPC.php&#039;;
+
+$input = 8;
+$params = array(new XML_RPC_Value($input, &#039;int&#039;));
+$msg = new XML_RPC_Message(&#039;function_times2&#039;, $params);
+
+$cli = new XML_RPC_Client(&#039;/xmlrpc.php&#039;, &#039;localhost&#039;);
+// $cli-&gt;setDebug(1);
+$resp = $cli-&gt;send($msg);
+
+if (!$resp) {
+    echo &#039;Communication error: &#039; . $cli-&gt;errstr;
+    exit;
+}
+
+if (!$resp-&gt;faultCode()) {
+    $val = $resp-&gt;value();
+    echo $input . &#039; times 2 is &#039; . $val-&gt;scalarval();
+} else {
+    /*
+     * Display problems that have been gracefully cought and
+     * reported by the xmlrpc.php script.
+     */
+    echo &#039;Fault Code: &#039; . $resp-&gt;faultCode() . &quot;\n&quot;;
+    echo &#039;Fault Reason: &#039; . $resp-&gt;faultString() . &quot;\n&quot;;
+}
+?&gt;</code></pre>
+
+  
+ 
+
+ <h3>Automatically encoding data</h3>
+
+  
+
+  <p>The <strong>XML_RPC_encode()</strong> function automatically converts
+   PHP data into the format needed by the XML_RPC library.</p>
+
+  
+   
+   <pre><code>&lt;?php
+require_once &#039;XML/RPC.php&#039;;
+
+$data = fetch_row_from_db();  //  Hypothetical example.
+
+$params = array(XML_RPC_encode($data));
+$msg = new XML_RPC_Message(&#039;some_function_name&#039;, $params);
+
+$cli = new XML_RPC_Client(&#039;/xmlrpc.php&#039;, &#039;pear.php.net&#039;);
+$resp = $cli-&gt;send($msg);
+
+// Process the same way as the other examples...
+?&gt;</code></pre>
+</section>
+<section id="package-webservices-xml-rpc-api">
+<h2>API</h2>
+<h3>XML_RPC_Client</h3>
+
+  
+  <p>This is the basic class used to represent a client of an XML-RPC
+   server.</p>
+
+  <h3>Creation</h3>
+
+   
+   <p>The constructor has the following syntax:</p>
+
+   
+    <p><code>
+     $client = new XML_RPC_Client ( 
+     
+      string $path
+     
+      , 
+      string $server
+     
+      , 
+      integer $port
+     
+      , 
+      string $proxy
+     
+      , 
+      integer $proxy_port
+     
+      , 
+      string $proxy_user
+     
+      , 
+      string $proxy_pass
+     
+    )</code></p>
+   
+
+   
+
+     <dl>
+      <dt>
+       string
+       <code>$path</code>
+      </dt>
+      <dd>
+       <p>the path and name of the RPC server script
+        you want the request to go to</p>
+      </dd>
+     </dl>
+
+     <dl>
+      <dt>
+       string
+       <code>$server</code>
+      </dt>
+      <dd>
+       <p>the URL of the remote server to connect to.
+        If this parameter doesn&#039;t specify a
+        protocol and $port is 443, ssl:// is assumed.</p>
+      </dd>
+     </dl>
+
+     <dl>
+      <dt>
+       integer
+       <code>$port</code>
+      </dt>
+      <dd>
+       <p>a port for connecting to the remote server.
+        Defaults to 80 for http:// connections and
+        443 for https:// and ssl:// connections.</p>
+      </dd>
+     </dl>
+
+     <dl>
+      <dt>
+       string
+       <code>$proxy</code>
+      </dt>
+      <dd>
+       <p>the URL of the proxy server to use, if any.
+        If this parameter doesn&#039;t specify a
+        protocol and $port is 443, ssl:// is assumed.</p>
+      </dd>
+     </dl>
+
+     <dl>
+      <dt>
+       integer
+       <code>$proxy_port</code>
+      </dt>
+      <dd>
+       <p>a port for connecting to the remote server.
+        Defaults to 8080 for http:// connections and
+        443 for https:// and ssl:// connections.</p>
+      </dd>
+     </dl>
+
+     <dl>
+      <dt>
+       string
+       <code>$proxy_user</code>
+      </dt>
+      <dd>
+       <p>a user name for accessing the proxy server</p>
+      </dd>
+     </dl>
+
+     <dl>
+      <dt>
+       string
+       <code>$proxy_pass</code>
+      </dt>
+      <dd>
+       <p>a password for accessing the proxy server</p>
+      </dd>
+     </dl>
+
+    
+   
+
+   <blockquote>
+    <p>In order to use SSL connections, your PHP installation must
+     have the <a href="http://php.net/openssl">
+      <code>openssl</code></a> extension enabled.</p>
+   </blockquote>
+
+   
+
+   <p>Here&#039;s an example client set up to query Userland&#039;s XML-RPC server
+    at <em>betty.userland.com</em>:</p>
+
+   <pre><code>&lt;?php
+$client = new XML_RPC_Client(&#039;/RPC2&#039;, &#039;betty.userland.com&#039;);
+?&gt;</code></pre>
+  
+
+  <h3>Methods</h3>
+
+   
+
+   <p>This class supports the following methods.</p>
+
+   <h3><strong>send()</strong></h3>
+
+    
+    <p>This method takes the form:</p>
+
+    
+     <p><code>
+      $response = $client-&gt;send ( 
+      $xmlrpc_message
+       , $timeout
+     )</code></p>
+    
+
+    <p>Where <code>$xmlrpc_message</code> is an instance of
+     <strong>XML_RPC_Message</strong> and
+     <code>$response</code> is an instance of
+     <strong>XML_RPC_Response</strong> (see <a href="package/XML_RPC/docs/index.html#package-webservices-xml-rpc-api">API</a>).</p>
+
+    <p>The <code>$timeout</code> is optional, and will be set to
+     <code>0</code> (wait forever) if omitted. This timeout value
+     is passed to <strong>fsockopen()</strong>.</p>
+
+    <p>If the value of <code>$response</code> is
+     <code>0</code> rather than an
+     <strong>XML_RPC_Response</strong> object, then this signifies
+     an I/O error has occured. You can find out what the I/O error was
+     from the values <code>$client-&gt;errno</code> and
+     <code>$client-&gt;errstring</code>.</p>
+
+    <p>In addition to low-level errors, the XML-RPC server you were
+     querying may return an error in the
+     <strong>XML_RPC_Response</strong> object. See <a href="package/XML_RPC/docs/index.html#package-webservices-xml-rpc-api">API</a> for details
+     of how to handle these errors.</p>
+
+   
+
+   <h3><strong>setCredentials()</strong></h3>
+
+    
+    
+     <p><code>
+      $client-&gt;setCredentials ( 
+      $username
+       , $password
+     )</code></p>
+    
+
+    <p>This method sets the username and password for authorizing the
+     client to a server. With the default (HTTP) transport, this
+     information is used for HTTP Basic authorization.</p>
+
+   
+
+
+
+   <h3><strong>setDebug()</strong></h3>
+
+    
+    
+     <p><code>
+      $client-&gt;setDebug ( 
+      $debugOn
+     )</code></p>
+    
+
+    <p><code>$debugOn</code> is either <code>0</code> or
+     <code>1</code> depending on whether you require the client to
+     print debugging information to the browser.  The default is not to
+     output this information.</p>
+
+    <p>The debugging information includes the raw data returned from the
+     XML-RPC server it was querying, and the PHP value the client
+     attempts to create to represent the value returned by the server.
+     This option can be very useful when debugging servers as it allows
+     you to see exactly what the server returns.</p>
+
+   
+
+  
+ 
+
+ <h3>XML_RPC_Message</h3>
+
+  
+
+  <p>This class provides a representation for a request to an XML-RPC
+   server. A client sends an <strong>XML_RPC_Message</strong> to a
+   server, and receives back an <strong>XML_RPC_Response</strong>.</p>
+
+  <h3>Creation</h3>
+
+   
+   <p>The constructor takes the following form:</p>
+
+   
+    <p><code>
+     $msg = new XML_RPC_Message ( 
+     $methodName
+      , $parameterArray
+    )</code></p>
+   
+
+   <p>Where <code>$methodName</code> is a string indicating the
+    name of the method you wish to invoke, and
+    <code>$parameterArray</code> is a simple
+    <strong>Array</strong> of <strong>XML_RPC_Value</strong>
+    objects.  Here&#039;s an example message to the <em>US state
+    name</em> server:</p>
+   <pre><code>&lt;?php
+require_once &quot;XML/RPC.php&quot;;
+$msg = new XML_RPC_Message(&quot;examples.getStateName&quot;, array(new XML_RPC_Value(23, &quot;int&quot;)));
+?&gt;</code></pre>
+
+   <p>This example requests the name of state number 23. For more
+    information on <strong>XML_RPC_Value</strong> objects, see
+    <a href="package/XML_RPC/docs/index.html#package-webservices-xml-rpc-api">API</a>.</p>
+  
+
+  <h3>Methods</h3>
+
+   
+   <h3><strong>serialize()</strong></h3>
+
+    
+    
+     <p><code>
+      $outString = $msg-&gt;serialize ( 
+      
+     )</code></p>
+    
+    <p>Returns the an XML string representing the XML-RPC message.</p>
+
+   
+
+   <h3><strong>addParam()</strong></h3>
+
+    
+    
+     <p><code>
+      $msg-&gt;addParam ( 
+      $xmlrpcVal
+     )</code></p>
+    
+
+    <p>Adds the <strong>XML_RPC_Value</strong>
+     <code>$xmlrpcVal</code> to the parameter list for this
+     method call.</p>
+    <p>Returns an <strong>XML_RPC_Value</strong> object.
+     If the parameter doesn&#039;t exist, an <strong>XML_RPC_Response</strong>
+     object is returned.</p>
+
+   
+
+   <h3><strong>getParam()</strong></h3>
+
+    
+    
+     <p><code>
+      $xmlrpcVal = $msg-&gt;getParam ( 
+      $n
+     )</code></p>
+    
+
+    <p>Gets the <code>$n</code>th parameter in the message. Use
+     this method in server implementations. Returns the
+     <code>undef</code> value if no such parameter exists.</p>
+   
+
+   <h3><strong>getNumParams()</strong></h3>
+
+    
+    
+     <p><code>
+      $n = $msg-&gt;getNumParams ( 
+      
+     )</code></p>
+    
+    <p>Returns the number of parameters attached to this message.</p>
+   
+
+   <h3><strong>method()</strong></h3>
+
+    
+    
+     <p><code>
+      $methName=$msg-&gt;method ( 
+      
+     )</code></p>
+     <p><code>
+      $msg-&gt;method ( 
+      $methName
+     )</code></p>
+    
+    <p>Gets or sets the method contained in the XML-RPC message.</p>
+   
+
+   <h3><strong>parseResponse()</strong></h3>
+
+    
+    
+     <p><code>
+      $response = $msg-&gt;parseResponse ( 
+      $xmlString
+     )</code></p>
+    
+
+    <p>Given an incoming XML-RPC server response contained in the string
+     <code>$xmlString</code>, this method constructs an
+     <strong>XML_RPC_Response</strong> response object and returns
+     it, setting error codes as appropriate.</p>
+    <p>This method processes any HTTP/MIME headers it finds.</p>
+   
+
+   <h3><strong>parseResponseFile()</strong></h3>
+
+    
+    
+     <p><code>
+      $response = $msg-&gt;parseResponseFile ( 
+      $fileHandle
+     )</code></p>
+    
+
+    <p>Given an incoming XML-RPC server response on the file handle
+     <code>$fileHandle</code>, this method reads the data and
+     passes it to <strong>parseResponse()</strong>.</p>
+    <p>This method is useful to construct responses from pre-prepared
+     files. It processes any HTTP headers it finds.</p>
+   
+  
+ 
+
+ <h3>XML_RPC_Response</h3>
+
+  
+  <p>This class is used to contain responses to XML-RPC requests. A server
+   method handler will construct an
+   <strong>XML_RPC_Response</strong> and pass it as a return
+   value. This same value will be returned by the result of an
+   invocation of the <strong>send()</strong> method of the
+   <strong>XML_RPC_Client</strong> class.</p>
+
+  <h3>Creation</h3>
+
+   
+   
+    <p><code>
+     $resp = new XML_RPC_Response ( 
+     $xmlrpcval
+    )</code></p>
+    <p><code>
+     $resp = new XML_RPC_Response ( 
+     0
+      , $errcode
+      , $errstring
+    )</code></p>
+   
+
+   <p>The first instance is used when execution has happened without
+    difficulty: <code>$xmlrpcval</code> is an
+    <strong>XML_RPC_Value</strong> value with the result of the
+    method execution contained in it.</p>
+   <p>The second type of constructor is used in case of
+    failure. <code>$errcode</code> and
+    <code>$errstring</code> are used to provide indication of
+    what has gone wrong.  See <a href="package/XML_RPC/docs/index.html#package-webservices-xml-rpc-api">API</a> for more
+    information on passing error codes.</p>
+  
+
+  <h3>Methods</h3>
+
+   
+
+   <h3><strong>faultCode()</strong></h3>
+
+    
+    
+     <p><code>
+      $fn = $resp-&gt;faultCode ( 
+      
+     )</code></p>
+    
+    <p>Returns the integer fault code return from the XML-RPC response
+     <code>$resp</code>. A zero value indicates success, any
+     other value indicates a failure response.</p>
+   
+
+   <h3><strong>faultString()</strong></h3>
+
+    
+    
+     <p><code>
+      $fs = $resp-&gt;faultString ( 
+      
+     )</code></p>
+    
+    <p>Returns the human readable explanation of the fault indicated by
+     <code>$resp-&gt;faultCode</code>.</p>
+   
+
+   <h3><strong>value()</strong></h3>
+
+    
+    
+     <p><code>
+      $xmlrpcVal = $resp-&gt;value ( 
+      
+     )</code></p>
+    
+    <p>Returns an <strong>XML_RPC_Value</strong> object  containing
+     the return value sent by the server. If the response&#039;s
+     <code>faultCode</code> is non-zero then the value returned
+     by this method should not be used (it may  not even be an object).</p>
+   
+
+   <h3><strong>serialize()</strong></h3>
+
+    
+    
+     <p><code>
+      $outString = $resp-&gt;serialize ( 
+      
+     )</code></p>
+    
+
+    <p>Returns an XML string representation of the response.</p>
+   
+  
+ 
+
+ <h3>XML_RPC_Value</h3>
+
+  
+
+  <p>This is where a lot of the hard work gets done.  This class enables
+   the creation and encapsulation of values for XML-RPC.</p>
+  <p>Ensure you&#039;ve read the XML-RPC spec at <a href="http://www.xmlrpc.com/stories/storyReader$7">http://www.xmlrpc.com/stories/storyReader$7</a> before reading on
+   as it will make things clearer.</p>
+  <p>The <strong>XML_RPC_Value</strong> class can store arbitrarily
+   complicated values using the following types:
+   <code>i4</code>,
+   <code>int</code>,
+   <code>boolean</code>,
+   <code>string</code>,
+   <code>double</code>,
+   <code>dateTime.iso8601</code>,
+   <code>base64</code>,
+   <code>array</code> or
+   <code>struct</code>.
+   You
+   should refer to the <a href="http://www.xmlrpc.com/stories/storyReader$7">spec</a> for
+   more information on what each of these types mean.</p>
+
+  <h3>Notes on types</h3>
+
+   
+   <h3>int</h3>
+
+    
+    <p>The type <strong>i4</strong> is accepted as a synonym for
+     <strong>int</strong>. The value parsing code will always
+     convert <strong>i4</strong> to <strong>int</strong>:
+     <strong>int</strong> is regarded by this implementation as
+     the canonical name for this type.</p>
+   
+
+   <h3>base64</h3>
+
+    
+    <p>Base 64 encoding is performed transparently to the caller when
+     using this type.  Therefore you ought to consider it as a binary
+     data type, for use when you want to pass none 7-bit clean data.
+     Decoding is also transparent.</p>
+   
+
+   <h3>boolean</h3>
+
+    
+    <p>The values <code>true</code> and <code>1</code> map to
+     <code>true</code>. All other values (including the empty
+     string) are converted to <code>false</code>.</p>
+   
+
+   <h3>string</h3>
+
+    
+    <p>The characters
+     <code>&lt;</code>,
+     <code>&gt;</code>,
+     <code>&quot;</code> and
+     <code>&amp;</code>
+     are converted to their entity equivalents
+     <code>&amp;lt;</code>,
+     <code>&amp;gt;</code>,
+     <code>&amp;quot;</code> and
+     <code>&amp;amp;</code>
+     for transport through XML-RPC.  The
+     current XML-RPC spec recommends only encoding
+     <code>&lt;</code> and <code>&amp;</code>
+     but this implementation goes further, for reasons
+     explained by <a href="http://www.w3.org/TR/REC-xml/#syntax">the XML 1.0
+     recommendation</a>.</p>
+
+    <blockquote>
+     <p>Currently, passing a string &quot;-1&quot; to <strong>XML_RPC_Value</strong>&#039;s
+      constructor creates an empty result since it serves as a special/magic
+      value.</p>
+    </blockquote>
+
+
+    <p>TODO: <code>&amp;apos;</code> entity is not yet supported</p>
+   
+
+  
+
+  <h3>Creation</h3>
+
+   
+   <p>The constructor is the normal way to create an
+    <strong>XML_RPC_Value</strong>. The constructor can take these
+    forms:</p>
+
+   
+    <p><code>
+     $myVal = new XML_RPC_Value ( 
+     
+    )</code></p>
+    <p><code>
+     $myVal = new XML_RPC_Value ( 
+     $stringVal
+    )</code></p>
+    <p><code>
+     $myVal = new XML_RPC_Value ( 
+     $scalarVal
+      , &#039;int&#039; | &#039;boolean&#039; | &#039;string&#039; | &#039;double&#039; | &#039;dateTime.iso8601&#039; | &#039;base64&#039;
+    )</code></p>
+    <p><code>
+     $myVal = new XML_RPC_Value ( 
+     $arrayVal
+      , &#039;array&#039; | &#039;struct&#039;
+    )</code></p>
+   
+   <p>The first constructor creates an empty value, which must be altered
+    using the methods <strong>addScalar()</strong>,
+    <strong>addArray()</strong> or <strong>addStruct()</strong>
+    before it can be used.</p>
+   <p>The second constructor creates a simple string value.</p>
+   <p>The third constructor is used to create a scalar value. The second
+    parameter must be a name of an XML-RPC type. Examples:</p>
+
+   <pre><code>&lt;?php
+$myInt = new XML_RPC_Value(1267, &quot;int&quot;);
+$myString= new XML_RPC_Value(&quot;Hello, World!&quot;, &quot;string&quot;);
+$myBool = new XML_RPC_Value(1, &quot;boolean&quot;);
+?&gt;</code></pre>
+
+   <p>The fourth constructor form can be used to compose complex XML-RPC
+    values. The first argument is either a simple array in the case of
+    an XML-RPC <strong>array</strong> or an associative array in
+    the case of a <strong>struct</strong>. The elements of the
+    array <em>must be <strong>XML_RPC_Value</strong> objects
+     themselves</em>. Examples:</p>
+
+   
+<br>$myArray = new XML_RPC_Value(array(<br>    new XML_RPC_Value(&quot;Tom&quot;), new XML_RPC_Value(&quot;Dick&quot;),<br>    new XML_RPC_Value(&quot;Harry&quot;)), &quot;array&quot;);<br><br>$myStruct = new XML_RPC_Value(array(<br>    &quot;name&quot; =&gt; new XML_RPC_Value(&quot;Tom&quot;),<br>    &quot;age&quot; =&gt; new XML_RPC_Value(34, &quot;int&quot;),<br>    &quot;geek&quot; =&gt; new XML_RPC_Value(1, &quot;boolean&quot;)), &quot;struct&quot;);
+   
+
+  
+
+  <h3>Methods</h3>
+
+   
+   <h3><strong>addScalar()</strong></h3>
+
+    
+    
+     <p><code>
+      $ok = $val-&gt;addScalar ( 
+      $stringVal
+     )</code></p>
+     <p><code>
+      $ok = $val-&gt;addScalar ( 
+      $scalarVal
+       , &#039;int&#039; | &#039;boolean&#039; | &#039;string&#039; | &#039;double&#039; | &#039;dateTime.iso8601&#039; | &#039;base64&#039;
+     )</code></p>
+    
+
+    <p>If <code>$val</code> is an empty
+     <strong>XML_RPC_Value</strong> this method makes it a scalar
+     value, and sets that value.  If <code>$val</code> is
+     already a scalar value, then no more scalars can be added and
+     <code>0</code> is returned. If all went OK,
+     <code>1</code> is returned.</p>
+
+    <p>There is a special case if <code>$val</code> is an
+     <strong>array</strong>: the scalar value passedis appended to
+     the array.</p>
+   
+
+   <h3><strong>addArray()</strong></h3>
+
+    
+    
+     <p><code>
+      $ok = $val-&gt;addArray ( 
+      $arrayVal
+     )</code></p>
+    
+
+    <p>Turns an empty <strong>XML_RPC_Value</strong> into an
+     <strong>array</strong> with contents as specified by
+     <code>$arrayVal</code>.  See the fourth constructor form
+     for more information.</p>
+   
+
+   <h3><strong>addStruct()</strong></h3>
+
+    
+    
+     <p><code>
+      $ok = $val-&gt;addStruct ( 
+      $assocArrayVal
+     )</code></p>
+    
+    <p>Turns an empty <strong>XML_RPC_Value</strong> into a
+     <strong>struct</strong> with contents as specified by
+     <code>$assocArrayVal</code>.  See the fourth constructor
+     form for more information.</p>
+   
+
+   <h3><strong>kindOf()</strong></h3>
+
+    
+    
+     <p><code>
+      $kind = $val-&gt;kindOf ( 
+      
+     )</code></p>
+    
+    <p>Returns a string containing <code>struct</code>, <code>array</code> or <code>scalar</code>
+     describing the base type of the value.  If it returns <code>undef</code> it
+     means that the value hasn&#039;t been initialised.</p>
+   
+
+   <h3><strong>serialize()</strong></h3>
+
+    
+    
+     <p><code>
+      $outString = $val-&gt;serialize ( 
+      
+     )</code></p>
+    
+    <p>Returns a string containing the XML-RPC representation of this
+     value.</p>
+   
+
+   <h3><strong>scalarval()</strong></h3>
+
+    
+    
+     <p><code>
+      $scalarVal = $val-&gt;scalarval ( 
+      
+     )</code></p>
+    
+    <p>If <strong>$val-&gt;kindOf()</strong> == &#039;scalar&#039;, this method
+     returns the actual PHP-language value of the scalar (base 64
+     decoding is automatically handled here).</p>
+   
+
+   <h3><strong>scalartyp()</strong></h3>
+
+    
+    
+     <p><code>
+      $typeName = $val-&gt;scalartyp ( 
+      
+     )</code></p>
+    
+    <p>If <strong>$val-&gt;kindOf()</strong> == &#039;scalar&#039;, this method
+     returns a string denoting the type of the scalar. As mentioned
+     before, <code>i4</code> is always coerced to
+     <code>int</code>.</p>
+   
+
+   <h3><strong>arraymem()</strong></h3>
+
+    
+    
+     <p><code>
+      $xmlrpcVal = $val-&gt;arraymem ( 
+      $n
+     )</code></p>
+    
+    <p>Returns the <code>$n</code>th element in the array
+     represented by the value <code>$val</code>. The value
+     returned is an <strong>XML_RPC_Value</strong> object.</p>
+   
+
+   <h3><strong>arraysize()</strong></h3>
+
+    
+    
+     <p><code>
+      $len = $val-&gt;arraysize ( 
+      
+     )</code></p>
+    
+    <p>If <code>$val</code> is an <strong>array</strong>,
+     returns the number of elements in that array.</p>
+   
+
+   <h3><strong>structmem()</strong></h3>
+
+    
+    
+     <p><code>
+      $xmlrpcVal = $val-&gt;structmem ( 
+      $memberName
+     )</code></p>
+    
+    <p>Returns the element called <code>$memberName</code> from
+     the struct represented by the value
+     <code>$val</code>. The value returned is an
+     <strong>XML_RPC_Value</strong> object.</p>
+   
+
+   <h3><strong>structeach()</strong></h3>
+
+    
+    
+     <p><code>
+      list($key,$value) = $val-&gt;structeach ( 
+      
+     )</code></p>
+    
+    <p>Returns the next (key,value) pair from the struct, when
+     <code>$val</code> is a struct. See also <a href="package/XML_RPC/docs/index.html#package-webservices-xml-rpc-api">API</a>.</p>
+   
+
+   <h3><strong>structreset()</strong></h3>
+
+    
+    
+     <p><code>
+      $val-&gt;structreset ( 
+      
+     )</code></p>
+    
+    <p>Resets the internal pointer for <strong>structeach()</strong>
+     to the beginning of the struct, where <code>$val</code>
+     is a struct.</p>
+   
+
+  
+ 
+
+ <h3>XML_RPC_Server</h3>
+
+  
+  <p>The current implementation of this class has been kept as simple as
+   possible. The constructor for the server basically does all the
+   work. Here&#039;s a minimal example:</p>
+
+  <pre><code>&lt;?php
+function foo ($params) {
+   ...
+}
+
+$s = new XML_RPC_Server(array(&quot;examples.myFunc&quot; =&gt; array(&quot;function&quot; =&gt; &quot;foo&quot;)));
+?&gt;</code></pre>
+
+  <p>This performs everything you need to do with a server.  The single
+   argument is an associative array from method names to function
+   names. The request is parsed and despatched to the relevant function,
+   which is reponsible for returning a
+   <strong>XML_RPC_Response</strong> object, which gets serialized
+   back to the caller.</p>
+  <p>Here is a more detailed look at what the handler function
+   <strong>foo()</strong> may do:</p>
+
+  <pre><code>&lt;?php
+function foo ($params) {
+    global $XML_RPC_erruser; // import user errcode value
+
+    // $params is the received XML_RPC_Message object.
+    if ($err) {
+        // this is an error condition
+        return new XML_RPC_Response(0, $XML_RPC_erruser+1, // user error 1
+           &quot;There&#039;s a problem, Captain&quot;);
+    } else {
+        // this is a successful value being returned
+        return new XML_RPC_Response(new XML_RPC_Value(&quot;All&#039;s fine!&quot;, &quot;string&quot;));
+    }
+}
+?&gt;</code></pre>
+
+  <h3>The dispatch map</h3>
+
+   
+   <p>The first argument to the <strong>XML_RPC_Server()</strong>
+    constructor is an array, called the <em>dispatch
+    map</em>.  In this array is the information the server needs
+    to service the XML-RPC methods you define.</p>
+   <p>The dispatch map takes the form of an associative array of
+    associative arrays: the outer array has one entry for each method,
+    the key being the method name. The corresponding value is another
+    associative array, which can have the following members:</p>
+
+   <ul>
+    <li>
+     
+      <code>function</code> - this entry is mandatory. It must
+      be a name of a function in the global scope which services the
+      XML-RPC method.
+     
+     
+      It is possible to use regular functions, class names with method
+      names and objects with method names. The Examples page of this
+      manual demonstrates the appropriate syntax for all of these approaches.
+     
+    </li>
+    <li>
+     
+      <code>signature</code> - this entry is an array containg
+      the possible signatures (see <a href="package/XML_RPC/docs/index.html#package-webservices-xml-rpc-api">API</a>)
+      for the method. If this entry is present then the server will
+      check that the correct number and type of parameters have been
+      sent for this method before dispatching it.
+     
+    </li>
+    <li>
+     
+      <code>docstring</code> - this entry is a string containing
+      documentation for the method. The documentation may contain HTML
+      markup.
+     
+    </li>
+   </ul>
+
+  
+
+  <h3>Method signatures</h3>
+
+   
+   <p>A signature is a description of a method&#039;s return type and its
+    parameter types.  A method may have more than one signature.</p>
+
+   <p>Within a server&#039;s dispatch map, each method has an array of possible
+    signatures. Each signature is an array of types. The first entry is
+    the return type.</p>
+
+   <p>Let&#039;s run through an example.  Imagine you wanted to write a
+    regular PHP function like this:</p><pre><code>&lt;?php
+function is_8($input, $strict = false) {
+    if ($strict) {
+       return ($input === 8);
+    } else {
+       return ($input == 8);
+    }
+}
+?&gt;</code></pre>
+   
+
+   <p>To get it to work in an XML_RPC server, you would have to
+    write it like this:</p><pre><code>&lt;?php
+function is_8($params) {
+    // This parameter is required.
+    $param = $params-&gt;getParam(0);
+    if (!XML_RPC_Value::isValue($param)) {
+        return $param;
+    }
+    $input = $param-&gt;scalarval();
+
+    // This parameter is optional.
+    $param = $params-&gt;getParam(1);
+    if (!XML_RPC_Value::isValue($param)) {
+        $strict = false;
+    } else {
+        $strict = $param-&gt;scalarval();
+    }
+
+    if ($strict) {
+       $answer = ($input === 8);
+    } else {
+       $answer = ($input == 8);
+    }
+
+    $val = new XML_RPC_Value($answer, &#039;boolean&#039;);
+    return new XML_RPC_Response($val);
+}
+?&gt;</code></pre>
+   
+
+   <p>Here is a signature covering all of the
+    possible permutations:</p><pre><code>&lt;?php
+array(
+    array(&#039;boolean&#039;, &#039;int&#039;),
+    array(&#039;boolean&#039;, &#039;int&#039;, &#039;boolean&#039;),
+    array(&#039;boolean&#039;, &#039;string&#039;),
+    array(&#039;boolean&#039;, &#039;string&#039;, &#039;boolean&#039;),
+)
+?&gt;</code></pre>
+   
+
+   <p>The server could be instatiated like this:</p><pre><code>&lt;?php
+$server = new XML_RPC_Server(
+    array(
+        &#039;isan8&#039; =&gt;
+            array(
+                &#039;function&#039; =&gt; &#039;is_8&#039;,
+                &#039;signature&#039; =&gt;
+                     array(
+                         array(&#039;boolean&#039;, &#039;int&#039;),
+                         array(&#039;boolean&#039;, &#039;int&#039;, &#039;boolean&#039;),
+                         array(&#039;boolean&#039;, &#039;string&#039;),
+                         array(&#039;boolean&#039;, &#039;string&#039;, &#039;boolean&#039;),
+                     ),
+                &#039;docstring&#039; =&gt; &#039;Is the value an 8?&#039;
+            ),
+    ),
+    1,
+    0
+);
+?&gt;</code></pre>
+   
+
+   <p>The strings representing the XML-RPC types have been
+    encoded as global variables for your convenience:</p>
+   <pre><code>&lt;?php
+$GLOBALS[&#039;XML_RPC_I4&#039;]       = &#039;i4&#039;;
+$GLOBALS[&#039;XML_RPC_Int&#039;]      = &#039;int&#039;;
+$GLOBALS[&#039;XML_RPC_Boolean&#039;]  = &#039;boolean&#039;;
+$GLOBALS[&#039;XML_RPC_Double&#039;]   = &#039;double&#039;;
+$GLOBALS[&#039;XML_RPC_String&#039;]   = &#039;string&#039;;
+$GLOBALS[&#039;XML_RPC_DateTime&#039;] = &#039;dateTime.iso8601&#039;;
+$GLOBALS[&#039;XML_RPC_Base64&#039;]   = &#039;base64&#039;;
+$GLOBALS[&#039;XML_RPC_Array&#039;]    = &#039;array&#039;;
+$GLOBALS[&#039;XML_RPC_Struct&#039;]   = &#039;struct&#039;;
+?&gt;</code></pre>
+  
+
+  <h3>Delaying the server response</h3>
+
+   
+
+   <p>You may want to construct the server, but for some reason not
+    fulfill the request immediately (security verification, for
+    instance). If you pass the constructor a second argument of
+    <code>0</code> this will have the desired effect. You can then
+    use the <strong>service()</strong> method of the server class to
+    service the request. For example:</p>
+
+   <pre><code>&lt;?php
+$s = new XML_RPC_Server($myDispMap, 0);
+
+// ... some code that does other stuff here
+
+$s-&gt;service();
+?&gt;</code></pre>
+  
+
+  <h3>Fault reporting</h3>
+
+   
+
+   <p>Fault codes for your servers should start at the value indicated by
+    the global <code>$xmlrpcerruser</code> + 1.</p>
+   <p>Standard errors returned by the server include:</p>
+   
+    <dl>
+     <dt>
+      <code>1</code> Unknown method
+     </dt>
+     <dd>
+      <p>Returned if the server was asked to dispatch a method it didn&#039;t
+       know about</p>
+     </dd>
+    </dl>
+    <dl>
+     <dt>
+      <code>2</code> Invalid return payload
+     </dt>
+     <dd>
+      <p>This error is actually generated by the client, not server, code,
+       but signifies that a server returned something it couldn&#039;t
+       understand.</p>
+     </dd>
+    </dl>
+    <dl>
+     <dt>
+      <code>3</code> Incorrect parameters
+     </dt>
+     <dd>
+      <p>This error is generated when the server has signature(s) defined
+       for a method, and the parameters passed by the client do not
+       match any of signatures.</p>
+     </dd>
+    </dl>
+    <dl>
+     <dt>
+      <code>4</code> Can&#039;t introspect: method
+      unknown
+     </dt>
+     <dd>
+      <p>This error is generated by the builtin
+       <strong>system.*()</strong> methods when any kind of
+       introspection is attempted on a method undefined by the server.</p>
+     </dd>
+    </dl>
+    <dl>
+     <dt>
+      <code>5</code> Didn&#039;t receive 200 OK from remote
+      server
+     </dt>
+
+     <dd>
+      <p>This error is generated by the client when a remote server
+       doesn&#039;t return HTTP/1.1 200 OK in response to a request. A more
+       detailed error report is added onto the end of the phrase above.</p>
+     </dd>
+    </dl>
+    <dl>
+     <dt>
+      <code>100-</code> XML parse errors
+     </dt>
+     <dd>
+      <p>Returns 100 plus the XML parser error code for the fault that
+       occurred.  The <code>faultString</code> returned explains
+       where the parse error was in the incoming XML stream.</p>
+     </dd>
+    </dl>
+   
+  
+ 
+
+ <h3>XML_RPC_Dump</h3>
+
+  
+  <p>This class generates string representations of
+   the data in XML_RPC_Value objects.</p>
+ 
+
+ <h3>Other Functions</h3>
+
+  
+  <p>Below are functions that lay outside the various XML_RPC objects.</p>
+
+  <h3><strong>XML_RPC_encode()</strong></h3>
+
+   
+
+   
+    <p><code>
+     $rpc = XML_RPC_encode ( 
+     $php_val
+    )</code></p>
+   
+
+   <p>Takes native php types and encodes them into XML_RPC
+    PHP object format.</p>
+  
+
+  <h3><strong>XML_RPC_decode()</strong></h3>
+
+   
+
+   
+    <p><code>
+     $values = XML_RPC_decode ( 
+     $XML_RPC_val
+    )</code></p>
+   
+
+   <p>Takes a message in PHP XML_RPC object format and
+    translates it into native PHP types.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

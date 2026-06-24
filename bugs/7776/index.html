@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7776</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PHP &#187; <a href="package/PHP_Beautifier/index.html">PHP_Beautifier</a> &#187; Bug #7776</h1>
+<p>Problem with recursivity scanning and outputing</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-06-01 07:45 UTC</td></tr>
+<tr><th>From</th><td>nicolasembleton at yahoo dot fr</td></tr>
+<tr><th>Status</th><td>Open</td></tr>
+<tr><th>Package</th><td><a href="package/PHP_Beautifier/index.html">PHP_Beautifier</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>n/a</td></tr>
+<tr><th>Roadmaps</th><td>1.0.0RC2</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-01 07:45 UTC] nicolasembleton at yahoo dot fr</h3>
+<p>Description:<br>
+------------<br>
+While trying to beautify a complete recursive file structure with pattern *.php5, outputing give completly messy files, with truncated names, without putting files correctly in the output structure, etc...</p>
+<p>Filename are often truncated, like &quot;ss.xml.php5&quot; instead of &quot;/class/class.xml.php5&quot; ( with path truncated too, i guess, so that&#039;s why file structure is not respected.</p>
+<p>When trying to parse myself directory, it gives something clean, but i have to let to false &quot;setRecursive()&quot; because problems come from here. Sometimes, it stops alone from scanning directories with a big .php5 file, so work is partially done.</p>
+<p>What else can i say to help you... I think a part of the problem come from glob() function using. Don&#039;t really now why, but...</p>
+<p>Test script:<br>
+---------------<br>
+Tried:<br>
+------<br>
+$oBeaut	= new PHP_Beautifier( );<br>
+$oBatch	= new PHP_Beautifier_Batch( $oBeaut );<br>
+$oBatch-&gt;addFilter( &#039;Dirox&#039; );</p>
+<p>$oBatch-&gt;setRecursive( true );</p>
+<p>// Contains my sources<br>
+$in_path = &quot;d:/Projects/regie_pub/_/_/*.php5&quot;;</p>
+<p>// Will contain output<br>
+$out_path = &quot;c:/tests/test-&quot; .date( &quot;ymdHi&quot; ) .&quot;/&quot;;</p>
+<p>$oBatch-&gt;setInputFile( $in_path );<br>
+$oBatch-&gt;setOutputFile( $out_path );<br>
+$oBatch-&gt;process();<br>
+$oBatch-&gt;save();</p>
+<p>And also:<br>
+---------</p>
+<p>$oBeaut	= new PHP_Beautifier( );<br>
+$oBatch	= new PHP_Beautifier_Batch(	$oBeaut	);</p>
+<p>$oBatch-&gt;addFilter(	&#039;Dirox&#039; );<br>
+$oBatch-&gt;setRecursive( true );</p>
+<p>$in_path = &quot;d:/Projects/regie_pub/_/_/*.php5&quot;;<br>
+$out_path = &quot;c:/tests/test-&quot; .date( &quot;ymdHi&quot; ) .&quot;/&quot;;</p>
+<p>$oBatch-&gt;setInputFile( $in_path );<br>
+$oBatch-&gt;setOutputFile( $out_path );<br>
+$oBatch-&gt;process();</p>
+<p>$oBatchDir = new PHP_Beautifier_Batch_Output_Directory( $oBatch );<br>
+$oBatchDir-&gt;save();</p>
+<p>Expected result:<br>
+----------------<br>
+Same file structure as original one with file beautified</p>
+<p>Actual result:<br>
+--------------<br>
+It only can be viewed as a screenshot. Result is written and beautifying is done, but files are messy.</p>
+<p>Looks like:</p>
+<p>Outputdir/ail.php5 instead of <br>
+Outputdir/acces/detail.php5</p>
+<p>... Everything like this with some dir created, but named with truncated strings.</p>
+<p>One thing strange is that the output is ALWAYS the same. Tried lots of workaround, but everytime, same output.</p>
+<p>( Under linux, the command line works nice, but it stops at a certain file ( very big ) and so the whole work is not done )</p>
+</section>
+<section>
+<h3>[2006-06-06 04:37 UTC] clbustos at php dot net</h3>
+<p>Ufff... Please, use xargs and find with individual files. Probably, in &gt;v2.0 I will try to fix it.</p>
+</section>
+<section>
+<h3>[2007-01-19 08:00 UTC] hkroger at gmail dot com</h3>
+<p>I can confirm this bug and it sucks big time.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

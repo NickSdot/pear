@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5076</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #5076</h1>
+<p>Add PDO Driver for DataGrid</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5076</th><td>Add PDO Driver for DataGrid</td></tr>
+<tr><th>Submitted</th><td>2005-08-12 10:00 UTC</td></tr>
+<tr><th>From</th><td>ferrante dot enriques at pleiade dot it</td></tr>
+<tr><th>Assigned</th><td>wiesemann</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.0</td></tr>
+<tr><th>OS</th><td>All</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-12 10:00 UTC] ferrante dot enriques at pleiade dot it</h3>
+<p>Description:<br>
+------------<br>
+Description, source code and example here:<br>
+http://www.pleiade.it/datagrid/</p>
+</section>
+<section>
+<h3>[2005-10-06 19:24 UTC] olivierg at php dot net</h3>
+<p>Hi Ferrante,</p>
+<p>Thank you for this contribution to Structures_DataGrid. I will try and integrate your new PDO driver in the next days.</p>
+<p>However, I see that you made two versions of DataSource.php. Could you try and make a single version that work in both php4 and php5 ?</p>
+</section>
+<section>
+<h3>[2005-10-07 09:23 UTC] ferrante dot enriques at pleiade dot it</h3>
+<p>php4 version of datasource.php works well with both php4 and php5. In the php5 version, it only checks if the class exists before instantiating it, see lines 180-187, using Reflection API that are new to php. That checking is indipendent of the specific datasource and could be used in a brand new version of Structures_datagrid that is designed specifically for php5. So don&#039;t mind and use php4 version safely for both php4 and php5 (but remember that PDO is extension of php5 only...)<br>
+Real issues are in the PDO driver itself: I found no way to have a better numrows than counting all the rows of the recordset (in PDO afaik there is no included numrows function...)</p>
+</section>
+<section>
+<h3>[2005-10-07 10:38 UTC] olivierg at php dot net</h3>
+<p>Okay for DataSource.php</p>
+<p>I saw your PDOStatement::fetchAll() call within the DataSource_PDO::count() method. That is a problem... Structures_DataGrid should not perform such heavy queries. Just imagine a little 10k rows table...</p>
+<p>Additionnaly I see that it&#039;s not possible to use PDO::query() to issue a count() like sql query. This would count all of the table rows, where the user may only have selected a subset of them, using a where clause.</p>
+<p>I believe that this is a serious PDO limitation where DB_DataObject has a smart count() method.</p>
+<p>As a workaround I propose to add an option to the DataSource_PDO driver.</p>
+<p>One would for example do :<br>
+$result= $pdo-&gt;query( <br>
+    &quot;SELECT name, age, sex <br>
+     FROM users<br>
+     WHERE sex = &#039;male&#039;&quot; <br>
+);<br>
+$countResult = $pdo-&gt;query(<br>
+    &quot;SELECT count(*) FROM users<br>
+     WHERE sex=&#039;male&#039;&quot;<br>
+);<br>
+$numRows = $countResult-&gt;fetchColumn();</p>
+<p>$options = array (&#039;numRows&#039; =&gt; $numRows);</p>
+<p>$dg-&gt;bind($result, $options);<br>
+$dg-&gt;render();</p>
+<p>This &#039;numRows&#039; option would be optionnal. If not provided, the PDO driver would call PDO::fetchAll(). _But_ the _documentation_ should clearly state that this &#039;numRows&#039; option is necessary for optimization.</p>
+<p>What do you think about this idea ? If it&#039;s ok with you, is it possible for you to send me an updated version ?</p>
+<p>As a general guideline, please send patches (cvs diff -u) instead of .phps files.</p>
+<p>Thanks</p>
+</section>
+<section>
+<h3>[2005-10-07 12:01 UTC] ferrante dot enriques at pleiade dot it</h3>
+<p>I believe that lack of numrow for PDO is a big limitation too. I stopped using PDO on my projects because of that.</p>
+<p>FetchAll is not called. Or better *should not* be called (both using what i&#039;ve done or your proposal)<br>
+The code in PDO.php (line 104+) is:</p>
+<p>while ($record = $this-&gt;_result-&gt;fetch(PDO_FETCH_ASSOC)) {<br>
+  $recordSet[] = $record;<br>
+}<br>
+$this-&gt;_rowNum = count($recordSet);<br>
+if($this-&gt;_rowNum&gt; 0 ){<br>
+ ...render fields...<br>
+}</p>
+<p>This mean I count records matched by the exact query. And no need to perform additional queries, just added a private var _rowNum.</p>
+<p>I don&#039;t remember why I put a call to fetchAll (line 132):</p>
+<p>if ($this-&gt;_rowNum == null) {<br>
+  $this-&gt;_rowNum = count($this-&gt;_result-&gt;fetchAll());<br>
+}</p>
+<p>Should be tested. I apoligise for that but I discontinued the usage of PDO and related classes.</p>
+</section>
+<section>
+<h3>[2006-02-12 13:37 UTC] ferrante dot enriques at pleiade dot dotit</h3>
+<p>PDO is meant for data access and not for database abstraction. Not having a good row count function is just consequence of this difference in scope.</p>
+<p>IMO PDO should be used in Datagrid (or any other package that deal with data abstraction) not directly. i.e.  DataGrid should use MDB2, or other, for abstraction and MDB2 could use PDO for data access.</p>
+<p>For this reason I suggest not to include PDO driver for DataGrid anymore. <br>
+Ok I started this topic...but my understanding of PDO was, and actually is, at an early stage.<br>
+Any thoughts?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

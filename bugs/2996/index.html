@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2996</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #2996</h1>
+<p>XML Parsing fails to retrieve attributes</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #2996</th><td>XML Parsing fails to retrieve attributes</td></tr>
+<tr><th>Submitted</th><td>2004-12-20 19:23 UTC</td></tr>
+<tr><th>From</th><td>whelan at nexserver dot com</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.7</td></tr>
+<tr><th>OS</th><td>Windows 2000/XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-20 19:23 UTC] whelan at nexserver dot com</h3>
+<p>Description:<br>
+------------<br>
+When making a call to a SOAP server, rather than resulting in an XML doc SOAP automatically parses this doc into a serialized object. This would be great if it would return everything from the original doc, but unfortunately it misses any xml attributes produced in the document. And there is also no way to get the original XML to retrieve these attributes, they are simply lost along the way.</p>
+<p>Reproduce code:<br>
+---------------<br>
+If for instance the following xml is returned:</p>
+<p>&lt;Skills&gt;<br>
+ &lt;Skill category=&quot;MED-CERT&quot;&gt;<br>
+  &lt;SkillName&gt;ada&lt;/SkillName&gt;<br>
+ &lt;/Skill&gt;<br>
+ &lt;Skill category=&quot;IT-LANG&quot;&gt;<br>
+  &lt;SkillName&gt;java&lt;/SkillName&gt;<br>
+ &lt;/Skill&gt;<br>
+ &lt;Skill category=&quot;IT-LANG&quot;&gt;<br>
+  &lt;SkillName&gt;php&lt;/SkillName&gt;<br>
+ &lt;/Skill&gt;<br>
+&lt;/Skills&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+We should expect the following:</p>
+<p>[Skills] =&gt; Array<br>
+(<br>
+ [0][&#039;category&#039;] =&gt; MED-CERT<br>
+ [0][&#039;skill&#039;] =&gt; stdClass Object<br>
+ (<br>
+   [SkillName] =&gt; ada<br>
+  )<br>
+ [0][&#039;category&#039;] =&gt; IT-LANG<br>
+ [0][&#039;skill&#039;] =&gt; stdClass Object<br>
+ (<br>
+   [SkillName] =&gt; java<br>
+  )<br>
+ [0][&#039;category&#039;] =&gt; IT-LANG<br>
+ [0][&#039;skill&#039;] =&gt; stdClass Object<br>
+ (<br>
+   [SkillName] =&gt; php<br>
+  )<br>
+)</p>
+<p>-OR-</p>
+<p>[Skills] =&gt; Array<br>
+(<br>
+ [0] =&gt; stdClass Object<br>
+ (<br>
+   [category] =&gt; MED-CERT<br>
+   [SkillName] =&gt; ada<br>
+  )<br>
+ [1] =&gt; stdClass Object<br>
+ (<br>
+   [category] =&gt; IT-LANG<br>
+   [SkillName] =&gt; java<br>
+  )<br>
+ [2] =&gt; stdClass Object<br>
+ (<br>
+   [category] =&gt; IT-LANG<br>
+   [SkillName] =&gt; php<br>
+  )<br>
+)</p>
+<p>Actual result:<br>
+--------------<br>
+But what we get is:</p>
+<p>[Skills] =&gt; Array<br>
+(<br>
+ [0] =&gt; stdClass Object<br>
+ (<br>
+   [SkillName] =&gt; ada<br>
+  )<br>
+ [1] =&gt; stdClass Object<br>
+ (<br>
+   [SkillName] =&gt; java<br>
+  )<br>
+ [2] =&gt; stdClass Object<br>
+ (<br>
+   [SkillName] =&gt; php<br>
+  )<br>
+)</p>
+<p>Yes, we lose the category attribute and have no way of retrieving it.</p>
+</section>
+<section>
+<h3>[2004-12-21 22:01 UTC] whelan at nexserver dot com</h3>
+<p>It appears the attributes are being lost in the _decodeResponse method in Client.php. Still working on a solution.</p>
+</section>
+<section>
+<h3>[2005-11-01 15:55 UTC] martin at malditainternet dot com</h3>
+<p>usage:<br>
+$client-&gt;decode_object=true;<br>
+$client-&gt;call(blah)</p>
+<p>--- SOAP_orig/Base.php	2005-11-01 11:43:06.000000000 -0300<br>
++++ SOAP_miop/Base.php	2005-11-01 11:44:12.000000000 -0300<br>
+@@ -369,6 +369,9 @@<br>
+     var $_auto_translation = false;<br>
+     var $_type_translation = array();<br>
+ <br>
++	// Should _decode() (and call()) return full soap objects instead just the value? (Fixes bug 2996) <br>
++	var $decode_object=false;<br>
++<br>
+     /**<br>
+      * Constructor.<br>
+      *<br>
+@@ -969,9 +972,21 @@<br>
+         }<br>
+ <br>
+         if ($this-&gt;_isBase64Type($soapval-&gt;type)) {<br>
+-            return base64_decode($soapval-&gt;value);<br>
++            if (!empty($this-&gt;decode_object)){<br>
++                $ret=array(base64_decode($soapval-&gt;value),$soapval);<br>
++                return $ret;<br>
++            }else{<br>
++                $ret=base64_decode($soapval-&gt;value);<br>
++                return $ret;<br>
++            }<br>
++<br>
+         } else {<br>
+-            return $soapval-&gt;value;<br>
++            if (!empty($this-&gt;decode_object)){<br>
++                $ret=array($soapval-&gt;value,$soapval);<br>
++                return $ret;<br>
++            }else{<br>
++                return $soapval-&gt;value;<br>
++            }<br>
+         }<br>
+     }</p>
+</section>
+<section>
+<h3>[2006-08-01 07:35 UTC] jbradler at eformation dot de</h3>
+<p>Following bugfix will work with arrays of soap values also. Additionally it will save attributes like a value by using the name of this attribute. This bugfix will also increase the nesting of your resulting array/objects. So use it permanently or leave it. An enable/disable feature of this bugfix is not a good idea.</p>
+<p>--- Base.php	2006-08-01 09:21:56.000000000 +0200<br>
++++ Base_.php	2006-08-01 09:23:58.000000000 +0200<br>
+@@ -912,6 +912,12 @@<br>
+                                                        &#039;__set_attribute&#039;),<br>
+                                                  array($key, $value));<br>
+                         }<br>
++                    } else {<br>
++						foreach ($soapval-&gt;attributes as $key =&gt; $value) {<br>
++							if ($soapval-&gt;name == $key)<br>
++								$key .= &#039;_&#039;;<br>
++							$return-&gt;$key = $value;<br>
++						}<br>
+                     }<br>
+                 } else {<br>
+                     if ($soapval-&gt;arrayType &amp;&amp; $this-&gt;_isSoapValue($item)) {<br>
+@@ -952,11 +958,32 @@<br>
+                     $this-&gt;_typemap[SOAP_XML_SCHEMA_VERSION][$soapval-&gt;type]);<br>
+         }<br>
+ <br>
+-        if ($this-&gt;_isBase64Type($soapval-&gt;type)) {<br>
+-            return base64_decode($soapval-&gt;value);<br>
+-        } else {<br>
+-            return $soapval-&gt;value;<br>
+-        }<br>
++<br>
++		// Fixes bug 2996<br>
++		$valueName = $soapval-&gt;name;<br>
++		$return = &amp; new $this-&gt;_defaultObjectClassname;<br>
++		// set value<br>
++		if ($this-&gt;_isBase64Type($soapval-&gt;type)) {<br>
++			$return-&gt;$valueName = base64_decode($soapval-&gt;value);<br>
++         } else {<br>
++			$return-&gt;$valueName = $soapval-&gt;value;<br>
++		}<br>
++        // Set the attributes as members in the class.<br>
++        if (method_exists($return, &#039;__set_attribute&#039;)) {<br>
++			foreach ($soapval-&gt;attributes as $key =&gt; $value) {<br>
++				call_user_func_array(array(&amp;$return,<br>
++											&#039;__set_attribute&#039;),<br>
++											array($key, $value));<br>
++			}<br>
++		} else {<br>
++			foreach ($soapval-&gt;attributes as $key =&gt; $value) {<br>
++				if ($soapval-&gt;name == $key)<br>
++					$key .= &#039;_&#039;;<br>
++				$return-&gt;$key = $value;<br>
++			}<br>
++		}<br>
++		<br>
++		return $return;<br>
+     }<br>
+ <br>
+     /**</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

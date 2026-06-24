@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #10181</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #10181</h1>
+<p>Invalid type passed to prepare() results in crypt error</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-02-25 16:36 UTC</td></tr>
+<tr><th>From</th><td>mercurious at dnr dot servegame dot org</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>5.2.1</td></tr>
+<tr><th>OS</th><td>FreeBSD</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-02-25 16:36 UTC] mercurious at dnr dot servegame dot org</h3>
+<p>Description:<br>
+------------<br>
+When a non-supported conversion type is passed to prepare, execute will fail with a cryptic error.<br>
+Applies to mysqli.php driver, but might apply to more drivers.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+$sql  = &#039;SELECT COUNT(1) AS matches FROM items&#039;;<br>
+$sql .= &#039; WHERE item_name = ?&#039;;<br>
+$sth = $dbh-&gt;prepare(<br>
+	$sql,<br>
+        // yes this should be text<br>
+	array(&#039;string&#039;),<br>
+	MDB2_PREPARE_RESULT<br>
+);<br>
+if(PEAR::isError($sth))<br>
+{<br>
+    die(&quot;Statement couldn&#039;t be prepared&quot;);<br>
+}<br>
+$sth-&gt;execute(&#039;foo&#039;);<br>
+?&gt;</p>
+<p>Patch:<br>
+--- mysqli.php.orig     Thu Feb 22 01:41:37 2007<br>
++++ mysqli.php  Sun Feb 25 17:22:10 2007<br>
+@@ -1433,7 +1433,23 @@<br>
+                             $value = $data;<br>
+                         }<br>
+                     }<br>
+-                    $param_query = &#039;SET @&#039;.$parameter.&#039; = &#039;.$this-&gt;db-&gt;quote($value, $type);<br>
++                    // This can return an error if the given type is invalid.<br>
++                    // Like, programmer made a typo in the type he passed, or the<br>
++                    // type is not supported by this backend.<br>
++                    // More elegantly, this should check $type against supported types<br>
++                    // before trying anything with it, but this works.<br>
++                    // &lt;rant&gt;<br>
++                    // We do wanna give the programmer some clue what&#039;s going on, rather<br>
++                    // then the cryptic:<br>
++                    // PHP Catchable fatal error:  Object of class MDB2_Error could<br>
++                    // not be converted to string in<br>
++                    // /wherever/pear/MDB2/Driver/mysqli.php on line 1436<br>
++                    // &lt;/rant&gt;<br>
++                    $quoted = $this-&gt;db-&gt;quote($value, $type);<br>
++                    if( PEAR::isError($quoted) ) {<br>
++                        return $quoted;<br>
++                    }<br>
++                    $param_query = &#039;SET @&#039;.$parameter.&#039; = &#039;.$quoted;<br>
+                     $result = $this-&gt;db-&gt;_doQuery($param_query, true, $connection);<br>
+                     if (PEAR::isError($result)) {<br>
+                         return $result;</p>
+<p>Expected result:<br>
+----------------<br>
+Some clue to what is wrong. Ideally it should already fail when the statement is prepared, rather then when it&#039;s executed, cause in essence this statement handler isn&#039;t valid.</p>
+<p>Actual result:<br>
+--------------<br>
+PHP Catchable fatal error:  Object of class MDB2_Error could not be converted to string in /usr/local/share/pear/MDB2/Driver/mysqli.php on line 1436</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

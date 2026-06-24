@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1949</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_WebDAV_Server/index.html">HTTP_WebDAV_Server</a> &#187; Bug #1949</h1>
+<p>$_prop_encoding not used for $file[&#039;path&#039;]</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-07-22 12:37 UTC</td></tr>
+<tr><th>From</th><td>pear dot php dot net at chsc dot dk</td></tr>
+<tr><th>Assigned</th><td>hholzgra</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_WebDAV_Server/index.html">HTTP_WebDAV_Server</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>1.0</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-22 12:37 UTC] pear dot php dot net at chsc dot dk</h3>
+<p>Description:<br>
+------------<br>
+Using Microsoft-WebDAV-MiniRedir/5.1.2600 on Windows XP I cannot get a directory listing of a directory that contains files or directories with non-us-ascii characters in their name, when $server-&gt;_prop_encoding is different from &quot;utf-8&quot;. Instead I get a generic error dialog saying something like &quot;Invalid parameter&quot;.</p>
+<p>If I make the following change to Server.php around line 606, it works for me:</p>
+<p>-            $href = $_SERVER[&#039;SCRIPT_NAME&#039;] . $path;<br>
++            $href = $_SERVER[&#039;SCRIPT_NAME&#039;] . $this-&gt;_prop_encode($path);</p>
+<p>Without the change, $path is encoded according to the encoding specified by the user in $server-&gt;_prop_encoding. With the change, the non-us-ascii characters are UTF-8-encoded.</p>
+<p>I don&#039;t know whether this is the right way to fix the problem - my understanding of the code is not that big.</p>
+</section>
+<section>
+<h3>[2004-10-05 16:20 UTC] pear dot php dot net at chsc dot dk</h3>
+<p>I looks as if $href should also be encoded using $this-&gt;_urlencode(). Otherwise there are problems when a filename contains an ampersand.</p>
+</section>
+<section>
+<h3>[2005-09-07 08:58 UTC] pear dot php dot net at chsc dot dk</h3>
+<p>This problem still exists in the latest CVS version.</p>
+<p>Changing line 635 from</p>
+<p>$href = $this-&gt;_slashify($_SERVER[&#039;SCRIPT_NAME&#039;]) . $path;</p>
+<p>to</p>
+<p>$href = $this-&gt;_prop_encode($this-&gt;_slashify($_SERVER[&#039;SCRIPT_NAME&#039;]) . $path);</p>
+<p>appearently fixes the problem.</p>
+</section>
+<section>
+<h3>[2005-09-07 09:18 UTC] pear dot php dot net at chsc dot dk</h3>
+<p>Sorry, that should be</p>
+<p>$href = $this-&gt;_urlencode($this-&gt;_prop_encode($this-&gt;_slashify($_SERVER[&#039;SCRIPT_NAME&#039;]) . $path));</p>
+<p>in order to also work with e.g. ampersands in filenames.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

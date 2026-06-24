@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2969</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_NestedSet/index.html">DB_NestedSet</a> &#187; Bug #2969</h1>
+<p>Undefined variables</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-12-15 09:51 UTC</td></tr>
+<tr><th>From</th><td>oancea at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>datenpunk</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_NestedSet/index.html">DB_NestedSet</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>WIN/LINUX</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-15 09:51 UTC] oancea at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+When trying to use CoolMenu driver, some Undefined variable errors pop`s up.<br>
+It`s about:<br>
+Undefined variable:  menu_properties in PEAR/DB/NestedSet/CoolMenu.php on line 291<br>
+(it appears on javascript, so probably you need to view source of the page)<br>
+and<br>
+Notice: Undefined variable: coolMenu in PEAR/DB/NestedSet/CoolMenu.php on line 157<br>
+Notice: Undefined variable: coolMenu in PEAR/DB/NestedSet/CoolMenu.php on line 160</p>
+<p>But, more to come (without affecting the result):<br>
+Notice: Undefined offset: 0 in PEAR/DB/NestedSet/CoolMenu.php on line 148</p>
+<p>Reproduce code:<br>
+---------------<br>
+The code is provided in docs/CoolMenu_exemple.php<br>
+To solve the problems, in method _createFromStructure from DB/NestedSet/CoolMenu.php I put:<br>
+$coolMenu = &#039;&#039;;<br>
+and in method: _buildMenuProperties from DB/NestedSet/CoolMenu.php I put:<br>
+$menu_properties = &#039;&#039;;<br>
+With this 2 changes, I was able to run the exemple code.</p>
+<p>For the problem with Undefined offset, I just comment the if condition starting with this line:<br>
+// figure out max length for textfields, increase if necessary--NEEDED?</p>
+<p>Expected result:<br>
+----------------<br>
+I exepect the demo from docs to work</p>
+</section>
+<section>
+<h3>[2005-07-14 09:51 UTC] mk at kaiser-software dot de</h3>
+<p>This diff should fix this bug.</p>
+<p>--- CoolMenu.php.org    2005-07-14 11:30:41.000000000 +0200<br>
++++ CoolMenu.php        2005-07-14 11:46:41.000000000 +0200<br>
+@@ -110,6 +110,9 @@<br>
+ <br>
+         static $rootlevel;<br>
+ <br>
++        // variable init<br>
++        $coolMenu = &#039;&#039;;<br>
++<br>
+         // always start at level 1<br>
+         if (!isset($params[&#039;currentLevel&#039;])) {<br>
+             $params[&#039;currentLevel&#039;] = 1;<br>
+@@ -145,7 +148,7 @@<br>
+             $params[&#039;structure&#039;][$key][&#039;hit&#039;] = $node[&#039;hit&#039;] = true;<br>
+ <br>
+             // figure out max length for textfields, increase if necessary--NEEDED?<br>
+-            if (!$this-&gt;_strlenByLevel[$params[&#039;currentLevel&#039;] - $this-&gt;_levelOffset] ||<br>
++            if (empty($this-&gt;_strlenByLevel[$params[&#039;currentLevel&#039;] - $this-&gt;_levelOffset]) ||<br>
+             strlen($node[$params[&#039;textField&#039;]]) &gt; $this-&gt;_strlenByLevel[$params[&#039;currentLevel&#039;] - $this-&gt;_levelOffset]) {<br>
+                 $this-&gt;_strlenByLevel[$params[&#039;currentLevel&#039;] - $this-&gt;_levelOffset] = strlen($node[$params[&#039;textField&#039;]]);<br>
+             };<br>
+@@ -286,6 +289,9 @@<br>
+     */<br>
+     function _buildMenuProperties($properties)<br>
+     {<br>
++       // variable init<br>
++       $menu_properties = &#039;&#039;;<br>
++<br>
+         foreach($properties as $prop_key =&gt; $prop_val){<br>
+             $menu_properties .= $this-&gt;_menuName . &quot;.$prop_key=$prop_val\n&quot;;<br>
+         }</p>
+</section>
+<section>
+<h3>[2005-10-25 21:49 UTC] datenpunk at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>Sorry for the delay - please verify that it works for you now.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

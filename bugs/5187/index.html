@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5187</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_Serializer/index.html">XML_Serializer</a> &#187; Bug #5187</h1>
+<p>Unserialize decodeFunction</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-23 17:14 UTC</td></tr>
+<tr><th>From</th><td>zik at zik dot hu</td></tr>
+<tr><th>Assigned</th><td>schst</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_Serializer/index.html">XML_Serializer</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Debian Sarge</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-23 17:14 UTC] zik at zik dot hu</h3>
+<p>Description:<br>
+------------<br>
+I think the decodeFunction option is not handled properly.<br>
+At least I could not use it to work around missing target encodings of xml parser. (By having a small function that calls iconv() on input set as decodeFunction.)</p>
+<p>http://www.php.net/manual/en/function.xml-parser-set-option.php</p>
+<p>&quot;Supported target encodings are ISO-8859-1, US-ASCII and UTF-8.&quot;</p>
+<p>Applying the attached patch solves this problem.</p>
+<p>NOTES: I don&#039;t know if this decodeFunction was intended for this or not, but this is how I need it. :)<br>
+I also don&#039;t understand why the tag name is decoded and the value of attributes, but not the name of attributes.<br>
+I don&#039;t believe attribute or tag names should be decoded. At least not for encoding conversion purposes. (It&#039;s not advisable to have xml tag and attr names in any other encoding than us-ascii, imho.)<br>
+But if tag names are decoded then attribute names should be decoded as well.</p>
+<p>Test script:<br>
+---------------<br>
+Unserializer-0.16.0_decode.patch:</p>
+<p>--- Unserializer.php.orig       2005-08-23 12:30:35.000000000 +0200<br>
++++ Unserializer.php    2005-08-23 18:22:51.000000000 +0200<br>
+@@ -366,11 +366,12 @@<br>
+         } else {<br>
+             $type = &#039;string&#039;;<br>
+         }</p>
+<p>if ($this-&gt;options[&#039;decodeFunction&#039;] !== null) {<br>
+-            $element = call_user_func($this-&gt;options[&#039;decodeFunction&#039;], $element);<br>
++            /* Do not decode element name */<br>
++            /* $element = call_user_func($this-&gt;options[&#039;decodeFunction&#039;], $element); */<br>
+             $attribs = array_map($this-&gt;options[&#039;decodeFunction&#039;], $attribs);<br>
+         }</p>
+<p>$this-&gt;_depth++;<br>
+         $this-&gt;_dataStack[$this-&gt;_depth] = null;<br>
+@@ -552,10 +553,15 @@<br>
+     * @param  string CDATA<br>
+     * @return void<br>
+     */<br>
+     function cdataHandler($parser, $cdata)<br>
+     {<br>
++        if ($this-&gt;options[&#039;decodeFunction&#039;] !== null) {<br>
++            /* Decode character data */<br>
++            $cdata = call_user_func( $this-&gt;options[&#039;decodeFunction&#039;], $cdata );<br>
++        }<br>
++<br>
+         $this-&gt;_dataStack[$this-&gt;_depth] .= $cdata;<br>
+     }</p>
+<p>/**<br>
+     * create the XML_Parser instance</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

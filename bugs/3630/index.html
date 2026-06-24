@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3630</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth_HTTP/index.html">Auth_HTTP</a> &#187; Bug #3630</h1>
+<p>getAuthData fails due to session var rename</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-28 02:34 UTC</td></tr>
+<tr><th>From</th><td>daniel at chaosengine dot net</td></tr>
+<tr><th>Assigned</th><td>hirokawa</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Auth_HTTP/index.html">Auth_HTTP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-28 02:34 UTC] daniel at chaosengine dot net</h3>
+<p>Description:<br>
+------------<br>
+Auth 1.2.3<br>
+Auth_HTTP 2.1.4</p>
+<p>on line 325 of Auth/HTTP.php in function assignData the session name is changed.</p>
+<p>however it&#039;s done after the Auth constructor is called</p>
+<p>this causes getAuthData to fail.</p>
+<p>commenting out line 325 fixes the problem (though it probably breaks something else =)</p>
+<p>Reproduce code:<br>
+---------------<br>
+$config[&#039;authEngine&#039;] = &quot;DB&quot;;<br>
+$config[&#039;authDBOptions&#039;] = array(<br>
+   &#039;table&#039;=&gt;&quot;users&quot;, <br>
+   &#039;usernamecol&#039;=&gt;&quot;username&quot;, <br>
+   &#039;passwordcol&#039;=&gt;&quot;password&quot;, <br>
+   &#039;cryptType&#039;=&gt; &quot;none&quot;,      <br>
+   &#039;db_fields&#039;=&gt; &quot;*&quot;, <br>
+);</p>
+<p>$this-&gt;auth = new Auth_HTTP($config[&#039;authEngine&#039;], $authOptions);</p>
+<p>$this-&gt;auth-&gt;start();</p>
+<p>if($this-&gt;auth-&gt;getAuth()) {<br>
+   $this-&gt;username=$this-&gt;auth-&gt;getUsername();<br>
+   $this-&gt;securityLevel=$this-&gt;auth-&gt;getAuthData(&#039;securityLevel&#039;);<br>
+} else {<br>
+   die(&quot;Authentication failed&quot;);<br>
+}</p>
+<p>var_dump($_SESSION);</p>
+<p>Expected result:<br>
+----------------<br>
+array(2) {<br>
+  [&quot;_authsession&quot;]=&gt;<br>
+  array(5) {<br>
+    [&quot;data&quot;]=&gt;<br>
+    array(3) {<br>
+      [&quot;id&quot;]=&gt;<br>
+      string(1) &quot;8&quot;<br>
+      [&quot;fullName&quot;]=&gt;<br>
+      string(10) &quot;John Doe&quot;<br>
+      [&quot;securityLevel&quot;]=&gt;<br>
+      string(3) &quot;100&quot;<br>
+    }<br>
+    [&quot;registered&quot;]=&gt;<br>
+    bool(true)<br>
+    [&quot;username&quot;]=&gt;<br>
+    string(6) &quot;johnd&quot;<br>
+    [&quot;timestamp&quot;]=&gt;<br>
+    int(1109557589)<br>
+    [&quot;idle&quot;]=&gt;<br>
+    int(1109557589)<br>
+  }<br>
+}</p>
+<p>Actual result:<br>
+--------------<br>
+getAuthData now fails as the are two arrays with the auth data split between them.</p>
+<p>array(2) {<br>
+  [&quot;_authsession&quot;]=&gt;<br>
+  array(1) {<br>
+    [&quot;data&quot;]=&gt;<br>
+    array(3) {<br>
+      [&quot;id&quot;]=&gt;<br>
+      string(1) &quot;1&quot;<br>
+      [&quot;fullName&quot;]=&gt;<br>
+      string(14) &quot;John Doe&quot;<br>
+      [&quot;securityLevel&quot;]=&gt;<br>
+      string(5) &quot;100&quot;<br>
+    }<br>
+  }<br>
+  [&quot;_authhttpb703e95377d3ff29f094d1c9ef888eeb&quot;]=&gt;<br>
+  array(5) {<br>
+    [&quot;data&quot;]=&gt;<br>
+    array(0) {<br>
+    }<br>
+    [&quot;registered&quot;]=&gt;<br>
+    bool(true)<br>
+    [&quot;username&quot;]=&gt;<br>
+    string(7) &quot;johnd&quot;<br>
+    [&quot;timestamp&quot;]=&gt;<br>
+    int(1109555234)<br>
+    [&quot;idle&quot;]=&gt;<br>
+    int(1109555524)<br>
+  }<br>
+}</p>
+</section>
+<section>
+<h3>[2005-03-02 04:50 UTC] pear at sapphire dot no</h3>
+<p>I&#039;m experiencing the same problem after upgrading to Auth_HTTP 2.1.4 from 2.0.<br>
+This error is the same as bug #1497 and as I commented on that bug: The error appeard first in CVS version 1.14. This patch fixes this problem.</p>
+<p>--- HTTP.php.orig       2005-02-26 21:19:29.000000000 +0100<br>
++++ HTTP.php    2005-02-26 22:27:34.000000000 +0100<br>
+@@ -323,6 +323,7 @@<br>
+          * for distinct realms <br>
+          */<br>
+          $this-&gt;_sessionName = &quot;_authhttp&quot;.md5($this-&gt;realm);<br>
++        $this-&gt;storage-&gt;_auth_obj-&gt;_sessionName =&amp; $this-&gt;_sessionName;<br>
+     }<br>
+ <br>
+     // }}}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

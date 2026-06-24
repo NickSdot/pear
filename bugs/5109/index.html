@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5109</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Caching &#187; <a href="package/Cache_Lite/index.html">Cache_Lite</a> &#187; Bug #5109</h1>
+<p>nested calls crash file key</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5109</th><td>nested calls crash file key</td></tr>
+<tr><th>Submitted</th><td>2005-08-16 16:42 UTC</td></tr>
+<tr><th>From</th><td>rumata at gmx dot co dot uk</td></tr>
+<tr><th>Assigned</th><td>fab</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/Cache_Lite/index.html">Cache_Lite</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-16 16:42 UTC] rumata at gmx dot co dot uk</h3>
+<p>Description:<br>
+------------<br>
+Nested calls to get &amp; save spoil caching because code in save is dependent on call of $this-&gt;_setFileName($id, $group); in get.</p>
+<p>As far as I understand it&#039;s kind of optimization to avoid calling rather &quot;expensive&quot; method _setFileName twice. But this optimization got me to 2 hour debug =)</p>
+<p>Maybe I&#039;m using cache in a wrong way?</p>
+<p>Test script:<br>
+---------------<br>
+In my case, I was using cache in this way:<br>
+function &amp;GetCacheInstance() {<br>
+	static $cache = null;<br>
+	if ($cache == null) {<br>
+		require_once(&#039;extlib/pear/Cache/Lite.php&#039;);<br>
+		$cache = new Cache_Lite(array(<br>
+...<br>
+		));<br>
+	}<br>
+	return $cache;<br>
+}</p>
+<p>function func1($id1) {<br>
+  $cache =&amp; GetCacheInstance();<br>
+  $res = $cache-&gt;get($id1, &#039;id1&#039;);<br>
+  if ($res === false) {<br>
+    $res = GetId1FromDB($id1);    <br>
+    $cache-&gt;save($res, $id1, &#039;id1&#039;);<br>
+  }  <br>
+  return $res;		<br>
+}</p>
+<p>function func2($id2, $id1) {<br>
+  $cache =&amp; GetCacheInstance();<br>
+  $res = $cache-&gt;get($id2, &#039;id2&#039;);<br>
+  if ($res === false) {<br>
+    $res = <br>
+      GetId2FromDBUsingId1Object($id2, func1($id1));    <br>
+    $cache-&gt;save($res, $id2, &#039;id2&#039;);<br>
+  }  <br>
+  return $res;		<br>
+}</p>
+<p>Now I wish to call func2(1,2);</p>
+<p>Expected result:<br>
+----------------<br>
+Normal work</p>
+<p>Actual result:<br>
+--------------<br>
+1. $res = $cache-&gt;get($id2, &#039;id2&#039;);<br>
+is called and<br>
+$cache-&gt;_setFileName() is called for &#039;id2&#039; and $id2<br>
+2. $res = $cache-&gt;get($id1, &#039;id1&#039;);<br>
+is called and<br>
+$cache-&gt;_setFileName() is called for &#039;id1&#039; and $id1<br>
+3. $cache-&gt;save($res, $id1, &#039;id1&#039;);<br>
+saves to id1 group<br>
+4.  $cache-&gt;save($res, $id2, &#039;id2&#039;);<br>
+also saves data to id1.</p>
+</section>
+<section>
+<h3>[2005-09-19 21:39 UTC] fab at php dot net</h3>
+<p>Thanks for the patch. I review it for the next version</p>
+</section>
+<section>
+<h3>[2005-11-17 09:27 UTC] fab at php dot net</h3>
+<p>It&#039;s really interresting but your hack change the API of Cache_Lite ($id and $group are not optionnal anymore in the save() method).</p>
+<p>So I will consider it only for an API break (Cache_Lite2 ?)</p>
+<p>Thanks anyways</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

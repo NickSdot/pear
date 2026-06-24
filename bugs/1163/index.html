@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1163</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #1163</h1>
+<p>pear makerpm fails with packages that provide role=&quot;doc&quot;</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-08 13:15 UTC</td></tr>
+<tr><th>From</th><td>dseg at shield dot jp</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-08 13:15 UTC] dseg at shield dot jp</h3>
+<p>Description:<br>
+------------<br>
+http://news.php.net/article.php?group=php.pear.dev&amp;article=27134<br>
+** Patches for template.spec, PEAR/Command/Package.phpincluded **</p>
+<p>o When trying to build rpms from pear packages(.tgz) by issuing command<br>
+&#039;/usr/bin/pear makerpm &lt;package.tgz&gt;&#039;,<br>
+document files listed in packages.xml was not added to rpm<br>
+as expected in some packages.</p>
+<p>o Due to other reason, documentations of DB-1.6.1.tgz also not added<br>
+to rpm. <br>
+From packages.xml of DB-1.6.1:<br>
+(...)<br>
+      &lt;file role=&quot;doc&quot; name=&quot;doc\IDEAS&quot;/&gt;<br>
+      &lt;file role=&quot;doc&quot; name=&quot;doc\MAINTAINERS&quot;/&gt;<br>
+      &lt;file role=&quot;doc&quot; name=&quot;doc\STATUS&quot;/&gt;<br>
+      &lt;file role=&quot;doc&quot; name=&quot;doc\TESTERS&quot;/&gt;<br>
+(...)<br>
+&#039;\&#039; used for directory separator, but no translation was done when<br>
+generating the spec file so resulting spec file contains &#039;\&#039; as<br>
+directory separator. This is not good on unix platform.<br>
+I think &#039;\&#039; should be replaced to php constant DIRECTORY_SEPARATOR<br>
+in PEAR/Command/Package.php.</p>
+<p>o When trying to uninstall rpms, error occurred.</p>
+<p>Reproduce code:<br>
+---------------<br>
+http://news.php.net/article.php?group=php.pear.dev&amp;article=27134</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;package_root&gt;/docs/* should be added to rpm.<br>
+&lt;package_root&gt;/examples/* should be added to rpm.</p>
+<p>Documentations listed in package.xml as &#039;doc\foo&#039;<br>
+should be treated as &#039;doc/foo&#039; on *nix platform.<br>
+(rpm run on *nix)</p>
+<p>rpm -e &lt;package-name&gt; should be exit without errors.</p>
+<p>Actual result:<br>
+--------------<br>
+http://news.php.net/article.php?group=php.pear.dev&amp;article=27134</p>
+</section>
+<section>
+<h3>[2004-04-08 13:17 UTC] dseg at shield dot jp</h3>
+<p>Description:<br>
+------------<br>
+http://news.php.net/article.php?group=php.pear.dev&amp;article=27134<br>
+** Patches for template.spec, PEAR/Command/Package.php are included **</p>
+<p>o When trying to build rpms from pear packages(.tgz) by issuing command<br>
+&#039;/usr/bin/pear makerpm &lt;package.tgz&gt;&#039;,<br>
+document files listed in packages.xml was not added to rpm<br>
+as expected in some packages.</p>
+<p>o Due to other reason, documentations of DB-1.6.1.tgz also not added<br>
+to rpm. <br>
+From packages.xml of DB-1.6.1:<br>
+(...)<br>
+      &lt;file role=&quot;doc&quot; name=&quot;doc\IDEAS&quot;/&gt;<br>
+      &lt;file role=&quot;doc&quot; name=&quot;doc\MAINTAINERS&quot;/&gt;<br>
+      &lt;file role=&quot;doc&quot; name=&quot;doc\STATUS&quot;/&gt;<br>
+      &lt;file role=&quot;doc&quot; name=&quot;doc\TESTERS&quot;/&gt;<br>
+(...)<br>
+&#039;\&#039; used for directory separator, but no translation was done when<br>
+generating the spec file so resulting spec file contains &#039;\&#039; as<br>
+directory separator. This is not good on unix platform.<br>
+I think &#039;\&#039; should be replaced to php constant DIRECTORY_SEPARATOR<br>
+in PEAR/Command/Package.php.</p>
+<p>o When trying to uninstall rpms, error occurred.</p>
+<p>Reproduce code:<br>
+---------------<br>
+http://news.php.net/article.php?group=php.pear.dev&amp;article=27134</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;package_root&gt;/docs/* should be added to rpm.<br>
+&lt;package_root&gt;/examples/* should be added to rpm.</p>
+<p>Documentations listed in package.xml as &#039;doc\foo&#039;<br>
+should be treated as &#039;doc/foo&#039; on *nix platform.<br>
+(rpm run on *nix)</p>
+<p>rpm -e &lt;package-name&gt; should be exit without errors.</p>
+<p>Actual result:<br>
+--------------<br>
+http://news.php.net/article.php?group=php.pear.dev&amp;article=27134</p>
+</section>
+<section>
+<h3>[2004-04-08 13:24 UTC] dseg at shield dot jp</h3>
+<p>Description:<br>
+------------<br>
+http://news.php.net/article.php?group=php.pear.dev&amp;article=27134<br>
+** Patches for template.spec, PEAR/Command/Package.php are included **</p>
+<p>o When trying to build rpms from pear packages(.tgz) by issuing command<br>
+&#039;/usr/bin/pear makerpm &lt;package.tgz&gt;&#039;,<br>
+document files listed in packages.xml was not added to rpm<br>
+as expected in some packages.</p>
+<p>o Due to other reason, documentations of DB-1.6.1.tgz also not added<br>
+to rpm. <br>
+From packages.xml of DB-1.6.1:<br>
+(...)<br>
+      &lt;file role=&quot;doc&quot; name=&quot;doc\IDEAS&quot;/&gt;<br>
+      &lt;file role=&quot;doc&quot; name=&quot;doc\MAINTAINERS&quot;/&gt;<br>
+      &lt;file role=&quot;doc&quot; name=&quot;doc\STATUS&quot;/&gt;<br>
+      &lt;file role=&quot;doc&quot; name=&quot;doc\TESTERS&quot;/&gt;<br>
+(...)<br>
+&#039;\&#039; used for directory separator, but no translation was done when<br>
+generating the spec file so resulting spec file contains &#039;\&#039; as<br>
+directory separator. This is not good on unix platform.<br>
+I think &#039;\&#039; should be replaced to php constant DIRECTORY_SEPARATOR<br>
+in PEAR/Command/Package.php.</p>
+<p>o When trying to uninstall rpms, error occurred.</p>
+<p>Reproduce code:<br>
+---------------<br>
+http://news.php.net/article.php?group=php.pear.dev&amp;article=27134</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;package_root&gt;/docs/* should be added to rpm.<br>
+&lt;package_root&gt;/examples/* should be added to rpm.</p>
+<p>Documentations listed in package.xml as &#039;doc\foo&#039;<br>
+should be treated as &#039;doc/foo&#039; on *nix platform.<br>
+(rpm run on *nix)</p>
+<p>rpm -e &lt;package-name&gt; should be exit without errors.</p>
+<p>Actual result:<br>
+--------------<br>
+http://news.php.net/article.php?group=php.pear.dev&amp;article=27134</p>
+<p>--<br>
+Sorry about duplicate posts.</p>
+</section>
+<section>
+<h3>[2004-07-12 11:06 UTC] wtatam at premierit dot com</h3>
+<p>What is happening about this bug ? We are now on 4.3.7 and it still has not been fixed.</p>
+<p>What is causing the delay ?</p>
+</section>
+<section>
+<h3>[2004-08-04 15:03 UTC] jellybob at gmail dot com</h3>
+<p>Attempting to run pear makerpm on a package now results in the following output.</p>
+<p>jon@georgie:~/pear/Auth_PrefManager2$ pear makerpm package.xml<br>
+Invalid checksum for file &quot;&lt;?xml version=&quot;1.0&quot; encoding=&quot;ISO-8859-1&quot; ?&gt;<br>
+&lt;!DOCTYPE package SYSTEM &quot;http://pear.php.net/dtd/packa&quot; : 44623 calculated, 0 expected</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

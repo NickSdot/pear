@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7197</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Sieve/index.html">Net_Sieve</a> &#187; Bug #7197</h1>
+<p>getScript() truncates long scripts</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-03-24 14:56 UTC</td></tr>
+<tr><th>From</th><td>bluecamel at imap dot cc</td></tr>
+<tr><th>Assigned</th><td>amistry</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Sieve/index.html">Net_Sieve</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-03-24 14:56 UTC] bluecamel at imap dot cc</h3>
+<p>Description:<br>
+------------<br>
+The default max sieve script size in Cyrus 2.3.1 is 32k. Net::Socket::read() called by Net::Sieve::_doCmd() uses php fread() to read a specific string length from the timsieved socket.</p>
+<p>If the first packet returned by timsieved is smaller than the string size requested by fread() then the remainder of the string was being truncated. The result is large scripts (27k+ in my case) are truncated at about 11k.</p>
+<p>This is correct behavior according to the php fread() manual:</p>
+<p>fread() reads up to length bytes from the file pointer referenced by handle. Reading stops when up to length bytes have been read, EOF (end of file) is reached, (for network streams) when a packet becomes available, or (after opening userspace stream) when 8192 bytes have been read whichever comes first.</p>
+<p>Test script:<br>
+---------------<br>
+// connect to sieve<br>
+if ( PEAR::isError( $sieve = my_sieve_connect($euser) ) ) {<br>
+    return $sieve;<br>
+}<br>
+$sieve-&gt;setDebug(TRUE);<br>
+$result = $sieve-&gt;getScript($large_script);<br>
+$sieve-&gt;disconnect();<br>
+var_dump($result);</p>
+</section>
+<section>
+<h3>[2006-03-24 15:00 UTC] bluecamel at imap dot cc</h3>
+<p>Possible patch. Note the line wraps! Also available at http://files.bluecamel.imap.cc/</p>
+<p>--- Sieve.php.orig      2006-03-23 19:29:39.000000000 -0500<br>
++++ Sieve.php   2006-03-24 09:15:47.000000000 -0500<br>
+@@ -993,7 +993,11 @@<br>
+                     } elseif (preg_match(&#039;/^{([0-9]+)\+?}/i&#039;, $line, $matches)) {<br>
+                         // Matches String Responses.<br>
+                         //$line = str_replace(&quot;\r\n&quot;, &#039; &#039;, $this-&gt;_sock-&gt;read($matches[1] + 2 ));<br>
+-                        $line = $this-&gt;_sock-&gt;read($matches[1] + 2 );<br>
++                        $str_size = $matches[1] + 2;<br>
++                        $line = &#039;&#039;;<br>
++                        while (strlen($line) != $str_size) {<br>
++                            $line .= $this-&gt;_sock-&gt;read($str_size - strlen($line));<br>
++                        }<br>
+                         if($this-&gt;_debug){<br>
+                             echo &quot;S:$line\n&quot;;<br>
+                         }</p>
+</section>
+<section>
+<h3>[2006-03-24 15:45 UTC] amistry at php dot net</h3>
+<p>I&#039;ll take a look at it this weekend.  Thanks for the report.</p>
+</section>
+<section>
+<h3>[2006-03-26 19:22 UTC] amistry at php dot net</h3>
+<p>I&#039;ve fixed this in the CVS with a slightly modified version of your patch.  Please test it and let me know.  Thanks.</p>
+</section>
+<section>
+<h3>[2006-04-01 19:27 UTC] amistry at php dot net</h3>
+<p>Any news?  I&#039;d like to cut a release this weekend and want to make sure this works for you.  Thanks.</p>
+</section>
+<section>
+<h3>[2006-04-20 01:23 UTC] bluecamel at imap dot cc</h3>
+<p>Sorry about that. I&#039;m a bit clueless on pear setup so am <br>
+unsure _where_ the CVS repo might be. I assume it&#039;s anonymous <br>
+pserver. What is CVSROOT for it?</p>
+</section>
+<section>
+<h3>[2006-04-20 03:26 UTC] amistry at php dot net</h3>
+<p>http://www.php.net/anoncvs.php</p>
+<p>You want to checkout pear/Net_Sieve</p>
+</section>
+<section>
+<h3>[2006-05-21 06:37 UTC] amistry at php dot net</h3>
+<p>Thank you for your bug report. This issue has been fixed<br>
+in the latest released version of the package, which you can download at<br>
+http://pear.php.net/get/Net_Sieve</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

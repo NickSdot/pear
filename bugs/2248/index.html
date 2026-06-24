@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2248</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/Translation2/index.html">Translation2</a> &#187; Bug #2248</h1>
+<p>Translation2 Missing Language Index</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-08-30 01:05 UTC</td></tr>
+<tr><th>From</th><td>matthewh at meta-bit dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Translation2/index.html">Translation2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-30 01:05 UTC] matthewh at meta-bit dot com</h3>
+<p>Description:<br>
+------------<br>
+If you have additional languages registered in the available languages database table, and the corresponding language doesn&#039;t appear within the &#039;strings_tables&#039; attribute of Translation2 the configuration array, then calls to Admin::remove will generate an index not found error.</p>
+<p>Reproduce code:<br>
+---------------<br>
+-----This erroneously contains only 3 language codes ------<br>
+$I18NPARAMS = array(<br>
+    &#039;langs_avail_table&#039; =&gt; TABLE_PREFIX.&#039;languages&#039;,<br>
+    &#039;lang_id_col&#039;     =&gt; &#039;locale&#039;,<br>
+    &#039;lang_name_col&#039;   =&gt; &#039;name&#039;,<br>
+    &#039;lang_meta_col&#039;   =&gt; &#039;meta&#039;,<br>
+    &#039;lang_errmsg_col&#039; =&gt; &#039;error_text&#039;,<br>
+    &#039;strings_tables&#039;  =&gt; array(<br>
+                            &#039;en&#039; =&gt; TABLE_PREFIX.&#039;translations&#039;,<br>
+                            &#039;ja&#039; =&gt; TABLE_PREFIX.&#039;translations&#039;,<br>
+                            &#039;zh&#039; =&gt; TABLE_PREFIX.&#039;translations&#039;<br>
+                         ),<br>
+    &#039;string_id_col&#039;        =&gt; &#039;token&#039;,<br>
+    &#039;string_page_id_col&#039;   =&gt; &#039;pageID&#039;,<br>
+    &#039;string_text_col&#039;      =&gt; &#039;%s&#039;,<br>
+    //&#039;prefetch&#039; =&gt; false  //more queries, smaller result sets<br>
+                           //(use when db load is cheaper than network load)<br>
+);</p>
+<p>BUT the database contains columns for additional languages:<br>
+mysql&gt; select * from xw_dlmgr_i18n_languages;<br>
++----+--------+------------+------------------+---------------+<br>
+| id | locale | name       | meta             | error_text    |<br>
++----+--------+------------+------------------+---------------+<br>
+|  1 | en     | english    | default language | not available |<br>
+|  2 | ja     | japanese   | charset=utf-8    | nai           |<br>
+|  3 | zh     | chinese    | charset=utf-8    | nai           |<br>
+|  4 | ko     | Korean     | charset=utf-8    | n/a           |<br>
+|  5 | ms     | Malay      | charset=utf-8    | n/a           |<br>
+|  6 | id     | Indonesian | charset=utf-8    | n/a           |<br>
+|  7 | th     | Thai       | charset=utf-8    | n/a           |<br>
++----+--------+------------+------------------+---------------+<br>
+7 rows in set (0.00 sec)</p>
+<p>Changes are required within PEAR::Translation2/Admin/Container/db.php<br>
+-------------------------------------------------------<br>
+class Translation2_Admin_Container_db.....<br>
+Line 329:<br>
+    function remove($stringID, $pageID)<br>
+    {<br>
+        $langs = $this-&gt;getLangs(&#039;ids&#039;);<br>
+        $tables = array();<br>
+        foreach ($langs as $langID) {<br>
+             // MiH - Suggested change...<br>
+             // Check to see if table name is defined in<br>
+             // configuration...  <br>
+            if (isset(<br>
+             $this-&gt;options[&#039;strings_tables&#039;][$langID] ))<br>
+         $tables[ $langID ] =<br>
+            $this-&gt;options[&#039;strings_tables&#039;][$langID];<br>
+            else<br>
+                $this-&gt;_logger-&gt;warning(&#039;remove(): Misconfigured language:&#039;.$langID );<br>
+        }<br>
+        $tables = array_unique($tables);</p>
+<p>Expected result:<br>
+----------------<br>
+If the Translation2 runtime configuration differs from the Available Languages database table, then index errors shouldnt be sent to stderr.</p>
+<p>Possibly use PEAR::Logging [or PHP error logging] to report a misconfigured/missing language from the runtime Translation2 config&#039;s.</p>
+<p>Alternatively, provide a facility within the config&#039;s to nominate a default table for **all languages** for the scenario where strings for multiple languages are stored within different columns in a single table [as is the case here].   Hence, lack of nomination of a specific dbase table could be compensated by, with a fallback to a default_strings_table parameter (or alike).</p>
+<p>Actual result:<br>
+--------------<br>
+PHP Notice:  Undefined index:  ko in c:\products\php\PEAR\Translation2\Admin\Con<br>
+tainer\db.php on line 334<br>
+PHP Notice:  Undefined index:  ms in c:\products\php\PEAR\Translation2\Admin\Con<br>
+tainer\db.php on line 334<br>
+PHP Notice:  Undefined index:  id in c:\products\php\PEAR\Translation2\Admin\Con<br>
+tainer\db.php on line 334<br>
+PHP Notice:  Undefined index:  th in c:\products\php\PEAR\Translation2\Admin\Con<br>
+tainer\db.php on line 334</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

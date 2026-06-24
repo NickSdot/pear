@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5112</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_IPv4/index.html">Net_IPv4</a> &#187; Bug #5112</h1>
+<p>ipInNetwork() returns not only boolean</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-16 20:18 UTC</td></tr>
+<tr><th>From</th><td>pear_dot_php_dot_net at edelhost dot de</td></tr>
+<tr><th>Assigned</th><td>bate</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_IPv4/index.html">Net_IPv4</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>GNU/Linux 2.6.12</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-16 20:18 UTC] pear_dot_php_dot_net at edelhost dot de</h3>
+<p>Description:<br>
+------------<br>
+The Method ipInNetwork() returns to mutch:<br>
+    * return($network); // Line 376<br>
+    * return(TRUE);     // Line 383<br>
+    * return(FALSE);    // Line 385<br>
+    * return((double)(sprintf(&quot;%u&quot;, ip2long($ip))));//Line 386<br>
+In Net_IPv4-1.2 it will never return true, because the if construct on line returns allways $network.</p>
+<p>Test script:<br>
+---------------<br>
+Test scripts see: http://kopfkrebs.de/node/496</p>
+<p>The following patch will fix this problem:</p>
+<p>--- Net/IPv4.php    2005-08-16 21:43:56.000000000 +0200<br>
++++ Net/IPv4.php.new    2005-08-16 21:41:02.000000000 +0200<br>
+@@ -372,18 +372,14 @@<br>
+         if (! is_object($network) || get_class($network) != &#039;net_ipv4&#039;) {<br>
+             $network = Net_IPv4::parseAddress($network);<br>
+         }<br>
+-        if (! is_object($network) || get_class($network) != &#039;net_ipv4&#039;) {<br>
+-            return($network);<br>
+-        }<br>
+-        $net = Net_IPv4::ip2double($network-&gt;network);<br>
++        $net   = Net_IPv4::ip2double($network-&gt;network);<br>
+         $bcast = Net_IPv4::ip2double($network-&gt;broadcast);<br>
+-        $ip = Net_IPv4::ip2double($ip);<br>
++        $ip    = Net_IPv4::ip2double($ip);<br>
+         unset($network);<br>
+         if ($ip &gt;= $net &amp;&amp; $ip &lt;= $bcast) {<br>
+-            return(TRUE);<br>
++            return true;<br>
+         }<br>
+-        return(FALSE);<br>
+-        return((double)(sprintf(&quot;%u&quot;, ip2long($ip))));<br>
++        return false;<br>
+     }<br>
+ }</p>
+<p>Expected result:<br>
+----------------<br>
+For example:<br>
+IPv4-Address 10.11.12.13 is:<br>
+	NOT in network: 127.0.0.1/8<br>
+	in network: 10.0.0.1/8<br>
+	NOT in network: 172.16.0.1/12<br>
+	NOT in network: 192.168.0.1/16</p>
+<p>Actual result:<br>
+--------------<br>
+IPv4-Address 10.11.12.13 is:<br>
+	in network: 127.0.0.1/8<br>
+	in network: 10.0.0.1/8<br>
+	in network: 172.16.0.1/12<br>
+	in network: 192.168.0.1/16</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

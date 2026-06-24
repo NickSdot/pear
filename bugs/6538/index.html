@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6538</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Queue/index.html">Mail_Queue</a> &#187; Bug #6538</h1>
+<p>Error on mail send causes infinite send loop</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-20 12:50 UTC</td></tr>
+<tr><th>From</th><td>nyeholt at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Queue/index.html">Mail_Queue</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>RHEL 4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-20 12:50 UTC] nyeholt at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+The method sendMailsInQueue can get into an infinite loop if there&#039;s a send error (and the application doesn&#039;t break out on a NOTICE error for some reason, like an overloaded error_handler) as the errornous mail isn&#039;t removed from the queue, and is the next one returned from $this-&gt;get(). This loops until you start receiving errors from Net::Socket when it gets its connects dropped by the mail server.</p>
+<p>Test script:<br>
+---------------<br>
+Possible fix</p>
+<p>if (!PEAR::isError($result)) {<br>
+    $this-&gt;container-&gt;setAsSent($mail);<br>
+    if($mail-&gt;isDeleteAfterSend()) {<br>
+        $this-&gt;deleteMail($mail-&gt;getId());<br>
+    }<br>
+} else {<br>
+    PEAR::raiseError(<br>
+        &#039;Error in sending mail: &#039;.$result-&gt;getMessage(),<br>
+        MAILQUEUE_ERROR_CANNOT_SEND_MAIL, PEAR_ERROR_TRIGGER,<br>
+        E_USER_NOTICE);<br>
+    if($mail-&gt;isDeleteAfterSend()) {<br>
+        $this-&gt;deleteMail($mail-&gt;getId());<br>
+    }<br>
+}</p>
+<p>Or just $this-&gt;deleteMail($mail-&gt;getId());</p>
+<p>Expected result:<br>
+----------------<br>
+Mail is removed from the queue, subsequent emails processed.</p>
+<p>Actual result:<br>
+--------------<br>
+2006-01-20 07:21:39][12:Root User][1024:mysource notice][R] (/usr/share/pear/PEAR.php:763) - Error in sending mail: Failed to send data [SMTP: Invalid response code received from server (code: 554, response: Error: no valid recipients)]<br>
+[2006-01-20 07:21:39][12:Root User][8:php notice][R] (/usr/share/pear/Net/Socket.php:295) - fwrite(): send of 37 bytes failed with errno=32 Broken pipe<br>
+[2006-01-20 07:21:39][12:Root User][8:php notice][R] (/usr/share/pear/Net/Socket.php:295) - fwrite(): send of 6 bytes failed with errno=32 Broken pipe</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5037</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_QueryTool/index.html">DB_QueryTool</a> &#187; Bug #5037</h1>
+<p>&quot;setLimit&quot; is not working properly</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-09 10:26 UTC</td></tr>
+<tr><th>From</th><td>pavol at otcenas dot org</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB_QueryTool/index.html">DB_QueryTool</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-09 10:26 UTC] pavol at otcenas dot org</h3>
+<p>Description:<br>
+------------<br>
+1) PEAR list: Installed packages:<br>
+Auth           1.2.3    stable<br>
+Auth_SASL      1.0.1    stable<br>
+Console_Getopt 1.2      stable<br>
+Crypt_CHAP     1.0.0    stable<br>
+DB             1.6.8    stable<br>
+DB_QueryTool   1.0.0    stable<br>
+File           1.0.3    stable<br>
+HTML_Common    1.2.1    stable<br>
+HTML_Form      1.2.0    stable<br>
+HTML_QuickForm 3.2.5    stable<br>
+HTML_Table     1.5      stable<br>
+Log            1.8.7    stable<br>
+Mail           1.1.4    stable<br>
+PEAR           1.3.4    stable<br>
+PHP_Compat     1.3.1    stable<br>
+XML_RPC        1.1.0    stable</p>
+<p>Test script:<br>
+---------------<br>
+// SQL Query<br>
+$query = new DB_QueryTool_Query();<br>
+$query-&gt;reset();<br>
+$query-&gt;setSelect(&quot;PC.ident pcid, ...&quot;);<br>
+$query-&gt;setTable(&#039;logz L&#039;);<br>
+$query-&gt;addLeftJoin(&#039;comps PC&#039;, &#039;(L.ID_Comp=PC.ID)&#039;);<br>
+$query-&gt;addWhere(&#039;L.ident=&quot;&#039;.$_REQUEST[&#039;ident&#039;].&#039;&quot;&#039;);<br>
+$query-&gt;addOrder($_REQUEST[&#039;sort&#039;]);</p>
+<p>//void setLimit( [integer $from = 0], [integer $count = 0])<br>
+$query-&gt;setLimit(0, 20);</p>
+<p>echo $query-&gt;getQueryString();</p>
+<p>Expected result:<br>
+----------------<br>
+Query result limited to 20 rows...</p>
+<p>Actual result:<br>
+--------------<br>
+Fatal error: Call to a member function on a non-object in /usr/share/php/DB/QueryTool/Query.php on line 1987</p>
+</section>
+<section>
+<h3>[2005-08-15 17:30 UTC] pavol at otcenas dot org</h3>
+<p>It is not a space, it&#039;s just an alias...<br>
+table <br>
+logz as L  == logz L<br>
+comps as PC == comps PC</p>
+</section>
+<section>
+<h3>[2005-08-15 20:17 UTC] pavol at otcenas dot org</h3>
+<p>Ok.<br>
+So now it is working great...<br>
+I have added   $query-&gt;setDbInstance($db);<br>
+where $db is initialized PEAR::DB<br>
+Thank you wery much.<br>
+This problem is SOLVED.</p>
+<p>!!!BUT: <br>
+There is still direct connection between &quot;Limit&quot; and the database. Without setting DbInstance I am not able to call $query-&gt;getQueryString(); It won&#039;t work. But it should!</p>
+<p>Perhaps, I don&#039;t understand the class very well. So try to explain it, please. <br>
+Simply, if I want use this class just to get my query string, it is not possible, you have to have DB instance. (Well, you don&#039;t have to, unless you are not going to use Limit.) And this should be resolved somehow...<br>
+Thanx for answer.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

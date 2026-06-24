@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1958</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #1958</h1>
+<p>variable &quot;typo&quot; in Admin/Auth/Container/DB.php</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-07-22 20:39 UTC</td></tr>
+<tr><th>From</th><td>tschlottke at virtualminds dot de</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0</td></tr>
+<tr><th>OS</th><td>debian</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-22 20:39 UTC] tschlottke at virtualminds dot de</h3>
+<p>Description:<br>
+------------<br>
+there is an error in the getUsers method, line 405:</p>
+<p>if (isset($this-&gt;authTableCols[&#039;is_active&#039;])) {</p>
+<p>it should be:</p>
+<p>if (isset($this-&gt;authTableCols[&#039;optional&#039;][&#039;is_active&#039;])) {</p>
+</section>
+<section>
+<h3>[2004-07-22 20:53 UTC] tschlottke at virtualminds dot de</h3>
+<p>Correction: it isn&#039;t only this typo, the whole thing is broken, here&#039;s the correct method:<br>
+   function getUsers($filters = array(), $order = null, $rekey = false)<br>
+    {<br>
+        if (!$this-&gt;init_ok) {<br>
+            return false;<br>
+        }</p>
+<p>$fields = $where = &#039;&#039;;</p>
+<p>if (isset($this-&gt;authTableCols[&#039;optional&#039;][&#039;lastlogin&#039;])) {<br>
+            $cFields[] = $this-&gt;authTableCols[&#039;optional&#039;][&#039;lastlogin&#039;][&#039;name&#039;] . &#039; AS lastlogin&#039;;<br>
+        }</p>
+<p>if (isset($this-&gt;authTableCols[&#039;optional&#039;][&#039;is_active&#039;])) {<br>
+             $cFields[] = &quot;CASE {$this-&gt;authTableCols[&#039;optional&#039;][&#039;is_active&#039;][&#039;name&#039;]}<br>
+                                WHEN &#039;Y&#039; THEN 1<br>
+                                WHEN &#039;N&#039; THEN 0 END<br>
+                                    AS is_active&quot;;<br>
+        }</p>
+<p>if (isset($this-&gt;authTableCols[&#039;owner_user_id&#039;])) {<br>
+            $cFields[] = $this-&gt;authTableCols[&#039;optional&#039;][&#039;owner_user_id&#039;][&#039;name&#039;] . &#039; AS owner_user_id&#039;;<br>
+        }</p>
+<p>if (isset($this-&gt;authTableCols[&#039;owner_group_id&#039;])) {<br>
+            $cFields[] = $this-&gt;authTableCols[&#039;optional&#039;][&#039;owner_group_id&#039;][&#039;name&#039;] . &#039; AS owner_group_id&#039;;<br>
+        }</p>
+<p>if (sizeof($this-&gt;authTableCols[&#039;custom&#039;]) &gt; 0) {<br>
+            foreach ($this-&gt;authTableCols[&#039;custom&#039;] as $alias =&gt; $field_data) {<br>
+                $cFields[] = $field_data[&#039;name&#039;] . &#039; AS &#039; . $alias;<br>
+            }<br>
+        }<br>
+        if(is_array($cFields)) {<br>
+            $fields  = &#039;,&#039;;<br>
+            $fields .= implode(&#039;,&#039;, $cFields);</p>
+<p>}</p>
+<p>if (sizeof($filters) &gt; 0) {<br>
+            $where = &#039; WHERE&#039;;<br>
+            foreach ($filters as $f =&gt; $v) {<br>
+                if (is_array($v)) {<br>
+                    $cond = &#039; &#039; . $v[&#039;cond&#039;];<br>
+                    $where .= &#039; &#039; . $f . $v[&#039;op&#039;] . $this-&gt;dbc-&gt;quoteSmart($v[&#039;value&#039;]) . $cond;<br>
+                } else {<br>
+                    $cond = &#039; AND&#039;;<br>
+                    $where .= &quot; $f=$v&quot; . $cond;<br>
+                }<br>
+            }<br>
+            $where = substr($where, 0, -(strlen($cond)));<br>
+        }</p>
+<p>if (!is_null($order)) {<br>
+            $order = &#039; ORDER BY &#039; . $order;<br>
+        }</p>
+<p>// First: Get all data from auth table.<br>
+        $query = &#039;<br>
+            SELECT<br>
+                &#039; . $this-&gt;authTableCols[&#039;required&#039;][&#039;auth_user_id&#039;][&#039;name&#039;] . &#039; AS auth_user_id,<br>
+                &#039; . $this-&gt;authTableCols[&#039;required&#039;][&#039;handle&#039;][&#039;name&#039;]  . &#039; AS handle,<br>
+                &#039; . $this-&gt;authTableCols[&#039;required&#039;][&#039;passwd&#039;][&#039;name&#039;]  . &#039; AS passwd<br>
+                &#039; . $fields . &#039;<br>
+            FROM<br>
+                &#039; . $this-&gt;authTable<br>
+            . $where<br>
+            . $order;</p>
+<p>if ($rekey) {<br>
+            $res = $this-&gt;dbc-&gt;getAssoc($query, false, array(), DB_FETCHMODE_ASSOC);<br>
+        } else {<br>
+            $res = $this-&gt;dbc-&gt;getAll($query, array(), DB_FETCHMODE_ASSOC);<br>
+        }</p>
+<p>return $res;<br>
+    }<br>
+}</p>
+</section>
+<section>
+<h3>[2004-07-23 08:59 UTC] smith at backendmedia dot com</h3>
+<p>I forgot to note that I gfixed this issue in the MDB2 container already with my last commit. So in theory someone just needs to port over those fixes.</p>
+</section>
+<section>
+<h3>[2004-07-31 10:12 UTC] smith at backendmedia dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

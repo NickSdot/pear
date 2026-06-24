@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDB_QueryTool Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB_QueryTool/index.html">MDB_QueryTool</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/MDB_QueryTool/docs/index.html#package-database-mdb-querytool-intro">Introduction</a>
+</li>
+<li><a href="package/MDB_QueryTool/docs/index.html#package-database-mdb-querytool-object">Object</a>
+</li>
+<li><a href="package/MDB_QueryTool/docs/index.html#package-database-mdb-querytool-api">Quick API reference</a>
+</li></ul>
+</nav>
+<p>This package is an OO-abstraction to the SQL-Query language, it provides methods such as setWhere, setOrder, setGroup, setJoin, etc. to easily build queries.</p>
+<section id="package-database-mdb-querytool-intro">
+<h2>Introduction</h2>
+<h3>MDB_QueryTool Description</h3>
+
+      
+      <p>This package is an OO-abstraction to the SQL-Query language, it provides 
+        methods such as <strong>setWhere()</strong>, <strong>setOrder()</strong>,
+        <strong>setGroup()</strong>, <strong>setJoin()</strong>, etc. to easily
+        build queries.
+        It also provides an easy to learn interface that interacts nicely with 
+        HTML-forms using arrays that contain the column data, that shall be 
+        updated/added in a database.
+        This package bases on an SQL-Builder which lets you easily build
+        SQL-Statements and execute them.
+        It supports all the db engines supported by <strong>MDB</strong>
+        and <strong>MDB2</strong>.</p>
+
+      <p>Since it&#039;s a 1:1 port of <strong>DB_QueryTool</strong>,
+        it has the same API, the only difference being the class name
+        (and the constructor name, of course).
+        Unfortunately, complete documentation is not available at the moment.</p>
+    
+
+  <h3>Example 1 - Arrays</h3>
+
+   
+    <p>The best way to use <strong>MDB_QueryTool</strong> is creating
+     a class that extends it. Here&#039;s a sample usage:</p><pre><code>&lt;?php
+require_once &#039;MDB/QueryTool.php&#039;;
+define(&#039;TABLE_CARS&#039;, &#039;cars&#039;);
+$dsn = &#039;mysql://user:pass@host/dbname&#039;;
+
+/**
+ * Let&#039;s suppose the &quot;car&quot; table has the following fields:
+ * (id, model, hp, color, clima, price)
+ */
+class Car extends MDB_QueryTool
+{
+    var $table        = TABLE_CARS;
+    var $sequenceName = TABLE_CARS;
+
+    // this is default, but to demonstrate it here ...
+    var $primaryCol =   &#039;id&#039;;
+
+    /**
+     * This table spec assigns a short name to a table name
+     * this short name is needed in case the table name changes
+     * i.e. when u put the application on a provider&#039;s db, where you have to
+     * prefix each table, and you dont need to change the entire application to
+     * where you refer to joined table columns, for that joined results the
+     * short name is used instead of the table name
+     */
+    var $tableSpec = array(
+        array(&#039;name&#039;  =&gt; TABLE_CARS, &#039;shortName&#039; =&gt;  &#039;cars&#039;),
+        //array(&#039;name&#039;  =&gt; TABLE_TIME, &#039;shortName&#039; =&gt;  &#039;time&#039;),
+    );
+}
+
+
+//instanciate an object of the Car class
+$car = new Car($dsn);
+
+//get the car #3
+$car-&gt;reset();     // reset the query-builder, so no where, order, etc. are set
+$res = $car-&gt;get(3);
+var_dump($res);
+
+//get all the cars
+$car-&gt;reset();     // reset the query-builder, so no where, order, etc. are set
+$res = $car-&gt;getAll();
+var_dump($res);
+
+// get the first 10 cars
+$car-&gt;reset();     // reset the query-builder, so no where, order, etc. are set
+$res = $car-&gt;getAll(0, 10);
+var_dump($res);
+
+//get all the red cars with clima, sorted by price
+$car-&gt;reset();
+$car-&gt;setWhere(&#039;color=&quot;red&quot;&#039;);
+$car-&gt;addWhere(&#039;clima=1&#039;);
+$car-&gt;setOrder(&#039;price&#039;);
+$res = $car-&gt;getAll();
+var_dump($res);
+
+//add a new car to the database
+$data = array(
+    &#039;model&#039; =&gt; &#039;Super Trooper&#039;,
+    &#039;hp&#039;    =&gt; 140,
+    &#039;color&#039; =&gt; &#039;black&#039;,
+    &#039;clima&#039; =&gt; 0,
+    &#039;price&#039; =&gt; 19000
+);
+$newCarId = $car-&gt;save($data);
+var_dump($newCarId);
+
+//update an existing car
+$data = array(
+    &#039;id&#039;    =&gt; $newCarId,
+    &#039;clima&#039; =&gt; 1,
+    &#039;price&#039; =&gt; 20000,
+);
+$res = $car-&gt;save($data);   //equivalent to $car-&gt;update($data);
+var_dump($res);
+
+
+//remove the car from the database
+$res = $car-&gt;remove($newCarId);
+var_dump($res);
+?&gt;</code></pre>
+    
+   
+   <h3>Example 2 - Classes</h3>
+
+   
+    <p><strong>MDB_QueryTool</strong> also offers working with
+     classes. Here&#039;s a sample usage:</p><pre><code>&lt;?php
+require_once &#039;MDB/QueryTool.php&#039;;
+define(&#039;TABLE_CARS&#039;, &#039;cars&#039;);
+$dsn = &#039;mysql://user:pass@host/dbname&#039;;
+
+/**
+ * Let&#039;s suppose the &quot;car&quot; table has the following fields:
+ * (id, model, hp, color, clima, price)
+ */
+class Car extends MDB_QueryTool
+{
+    var $table        = TABLE_CARS;
+    var $sequenceName = TABLE_CARS;
+
+    // this is default, but to demonstrate it here ...
+    var $primaryCol =   &#039;id&#039;;
+
+    /**
+     * This table spec assigns a short name to a table name
+     * this short name is needed in case the table name changes
+     * i.e. when u put the application on a provider&#039;s db, where you have to
+     * prefix each table, and you dont need to change the entire application to
+     * where you refer to joined table columns, for that joined results the
+     * short name is used instead of the table name
+     */
+    var $tableSpec = array(
+        array(&#039;name&#039;  =&gt; TABLE_CARS, &#039;shortName&#039; =&gt;  &#039;cars&#039;),
+        //array(&#039;name&#039;  =&gt; TABLE_TIME, &#039;shortName&#039; =&gt;  &#039;time&#039;),
+    );
+}
+
+
+//instanciate an object of the Car class
+$car = new Car($dsn);
+$car-&gt;useResult(&#039;object&#039;);
+
+//get the car #3
+$car-&gt;reset();     // reset the query-builder, so no where, order, etc. are set
+$res = $car-&gt;get(3)-&gt;fetchRow();
+var_dump($res);
+
+//get all the cars
+$car-&gt;reset();     // reset the query-builder, so no where, order, etc. are set
+$cars = $car-&gt;getAll();
+while ($res = $cars-&gt;getNext()) {
+    var_dump($res);
+}
+
+// get the first 10 cars
+$car-&gt;reset();     // reset the query-builder, so no where, order, etc. are set
+$cars = $car-&gt;getAll(0, 10);
+while ($res = $cars-&gt;getNext()) {
+    var_dump($res);
+}
+
+//get all the red cars with clima, sorted by price
+$car-&gt;reset();
+$car-&gt;setWhere(&#039;color=&quot;red&quot;&#039;);
+$car-&gt;addWhere(&#039;clima=1&#039;);
+$car-&gt;setOrder(&#039;price&#039;);
+$cars = $car-&gt;getAll();
+while ($res = $cars-&gt;getNext()) {
+    var_dump($res);
+}
+
+//add a new car to the database
+$newCar = $car-&gt;newEntity();
+$newCar-&gt;model = &#039;Super Trooper&#039;;
+$newCar-&gt;hp    = 140;
+$newCar-&gt;color = &#039;black&#039;;
+$newCar-&gt;clima = 0;
+$newCar-&gt;price = 19000;
+
+$newCarId = $newCar-&gt;save();
+var_dump($newCarId);
+
+//update an existing car
+$car-&gt;reset();
+$res        = $car-&gt;get($newCarId)-&gt;fetchRow();
+$res-&gt;clima = 1;
+$res-&gt;price = 20000;
+$res-&gt;save();
+var_dump($res);
+
+//remove the car from the database
+$car-&gt;reset();
+$res = $car-&gt;get($newCarId)-&gt;fetchRow();
+var_dump($res-&gt;remove());
+unset($res);
+?&gt;</code></pre>
+</section>
+<section id="package-database-mdb-querytool-object">
+<h2>Object</h2>
+<h3>MDB_QueryTool Object Description</h3>
+
+      
+      <p>It is possible to use objects as result. A comprehensive example may
+        be seen in the <a href="package/MDB_QueryTool/docs/index.html#package-database-mdb-querytool-intro">
+        intro</a>.</p>
+      <p>But using objects is not a simple alternative to using arrays as result.
+        It is also possible to register a custom Class to be returned instead of
+        the default <strong>MDB_QueryTool_Result_Row</strong>.
+        The new resulting class has to be child of the
+        <strong>MDB_QueryTool_Result_Row</strong> class.</p>
+    
+    <h3>Example 1 - Change the default result class</h3>
+
+      
+      <p>To change the resulting class the method <code>setReturnClass</code>
+        is used.</p><pre><code>&lt;?php
+require_once &#039;MDB/QueryTool.php&#039;;
+require_once &#039;MDB/QueryTool/Result/Object.php&#039;;
+define(&#039;TABLE_CARS&#039;, &#039;cars&#039;);
+$dsn = &#039;mysql://user:pass@host/dbname&#039;;
+
+/**
+ * Let&#039;s suppose the &quot;cars&quot; table has the following fields:
+ * (id, model, hp, color, clima, price)
+ */
+class Car extends MDB_QueryTool
+{
+    public $table = TABLE_CARS;
+}
+
+class CarEntity extends MDB_QueryTool_Result_Row
+{
+}
+
+//instanciate an object of the Car class
+$car = new Car($dsn);
+$car-&gt;useResult(&#039;object&#039;);
+$car-&gt;setReturnClass(&#039;CarEntity&#039;);
+?&gt;</code></pre>
+      
+    
+    <h3>Controlling class variable access</h3>
+
+      
+      <p>This can now be used to implement getter and setter and thus regulate
+        the accessability to the values. In order to block the access to the
+        class variables from outside they have to be declared as protected.
+        Declaring them as private would result in also blocking the parent class,
+        which gets the data, of accessing them. Of course when doing so corresponding
+        methods have to be implemented to access the variables again.</p>
+    
+    <h3>Example 2 - Restricting class variable access</h3>
+
+      
+      <p>To keep the example short only methods for dealing with model,
+        hp and clima have been implemented.</p><pre><code>&lt;?php
+require_once &#039;MDB/QueryTool.php&#039;;
+require_once &#039;MDB/QueryTool/Result/Object.php&#039;;
+define(&#039;TABLE_CARS&#039;, &#039;cars&#039;);
+$dsn = &#039;mysql://user:pass@host/dbname&#039;;
+
+/**
+ * Let&#039;s suppose the &quot;cars&quot; table has the following fields:
+ * (id, model, hp, color, clima, price)
+ */
+class Car extends MDB_QueryTool
+{
+    public $table = TABLE_CARS;
+}
+
+class CarEntity extends MDB_QueryTool_Result_Row
+{
+    protected $id;
+    protected $model;
+    protected $hp;
+    protected $color;
+    protected $clima;
+    protected $price;
+    public function getModel() {
+        return $this-&gt;model;
+    }
+    public function setModel($model) {
+        $this-&gt;model = $model;
+    }
+    public function getHp() {
+        return $this-&gt;hp;
+    }
+    public function setHp($hp) {
+        $this-&gt;hp = $hp;
+    }
+        public function getClima() {
+        if ($this-&gt;clima) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    public function setClima($clima) {
+        if ($clima) {
+            $this-&gt;clima = 1;
+        } else {
+            $this-&gt;clima = 0;
+        }
+    }
+}
+
+//instantiate an object of the Car class
+$car = new Car($dsn);
+$car-&gt;useResult(&#039;object&#039;);
+$car-&gt;setReturnClass(&#039;CarEntity&#039;);
+?&gt;</code></pre>
+      
+    
+    <h3>Outlook</h3>
+
+      
+      <p>This example only demonstrates a very basic feature. But it enables for
+        example the implementation of Decorators. Every feature of modern OOP is
+        now possible to implement.</p>
+</section>
+<section id="package-database-mdb-querytool-api">
+<h2>Quick API reference</h2>
+<h3><strong>MDB_QueryTool</strong> available methods</h3>
+
+   
+    <p><strong>MDB_QueryTool</strong> provides the following methods:</p><ul>
+     <li>
+      <strong>autoJoin()</strong>
+      
+       Join the given tables, using the column names, to find out how to join
+       the tables; i.e., if table1 has a column named &quot;table2_id&quot;,
+       this method will join &quot;WHERE table1.table2_id=table2.id&quot;.
+       All joins made here are only concatenated via AND.
+      
+     </li>
+     <li>
+      <strong>getDbInstance()</strong>
+      Return a PEAR::DB object
+     </li>
+     <li>
+      <strong>setDbInstance()</strong>
+      Pass an existing PEAR::DB object to <strong>MDB_QueryTool</strong>
+     </li>
+     <li>
+      get($id, $column)
+      
+        Get the data of a single entry. If the second parameter is only one column,
+        the result will be returned directly, not as an array!
+      
+     </li>
+     <li>
+      getMultiple($ids, $column)
+      
+        Same as <strong>get()</strong>, but for all the elements in the $ids array.
+      
+     </li>
+     <li>
+      <strong>getAll()</strong>
+      Get all the entries from the db.
+     </li>
+     <li>
+      getCol($column)
+      
+        This method only returns one column, so the result will be a one dimensional array.
+        This does also mean that using <strong>setSelect()</strong> should be set
+        to *one* column, the one you want to have returned.
+        A common use case for this could be:
+        <pre><code>&lt;?php
+$table-&gt;setSelect(&#039;id&#039;);
+$ids = $table-&gt;getCol();
+//OR
+$ids = $table-&gt;getCol(&#039;id&#039;);
+?&gt;</code></pre>
+        so ids will be an array with all the id&#039;s.
+      
+     </li>
+     <li>
+      <strong>getCount()</strong>
+      Get the number of entries.
+     </li>
+     <li>
+      <strong>getDefaultValues()</strong>
+      
+        return an empty element where all the array elements do already exist
+        corresponding to the columns in the DB
+      
+     </li>
+     <li>
+      <strong>getQueryString()</strong>
+      Render the current query and return it as a string.
+     </li>
+     <li>
+      save($data)
+      
+        Save data, calls either <strong>update()</strong> or <strong>add()</strong>.
+        If the primaryCol is given in the data this method knows that the
+        data passed to it are meant to be updated (call <strong>update()</strong>),
+        otherwise it will call the method <strong>add()</strong>.
+        If you don&#039;t like this behaviour simply stick with the methods
+        <strong>add()</strong> and <strong>update()</strong> and ignore this one here.
+        This method is very useful when you have validation checks that have to
+        be done for both adding and updating, then you can simply overwrite this
+        method and do the checks in here, and both cases will be validated first.
+      
+     </li>
+     <li>
+      update($data)
+      Update the member data of a data set.
+     </li>
+     <li>
+      add($data)
+      Add a new member in the db.
+     </li>
+     <li>
+      addMultiple($data)
+      Adds multiple new members in the db.
+     </li>
+     <li>
+      remove($data, $whereCol)
+      
+        Removes a member from the db.
+        <code>data</code> is the value of the column that shall be removed
+        (integer/string); if an array is used, it must contain multiple columns
+        that shall be matched (in this case, the second parameter will be ignored);
+        <code>$whereCol</code>: the column to match the data against,
+        only if <code>data</code> is not an array
+      
+     </li>
+     <li>
+      <strong>removeAll()</strong>
+      Empty a table.
+     </li>
+     <li>
+      removeMultiple($ids, $colName)
+      
+        Remove the datasets with the given ids. If <code>colName</code>
+        is set, it is used as the primary key column name.
+      
+     </li>
+     <li>
+      removePrimary($ids, $colName, $atLeastOneObject)
+      
+        Removes a member from the db and calls the <strong>remove()</strong>
+        methods of the given objects so all rows in another table that refer
+        to this table are erased too.
+      
+     </li>
+     <li>
+      setLimit($from=0, $count=0)
+      Set the limits for the following query.
+     </li>
+     <li>
+      <strong>getLimit()</strong>
+      Get the limits for the following query.
+     </li>
+     <li>
+      setWhere($whereCondition)
+      Sets the where condition which is used for the current instance.
+     </li>
+     <li>
+      <strong>getWhere()</strong>
+      Gets the where condition which is used for the current instance.
+     </li>
+     <li>
+      addWhere($whereCondition, $condition)
+      Adds a string to the where clause. The default <code>condition</code> is AND.
+     </li>
+     <li>
+      addWhereSearch($column, $stringToSearch, $condition)
+      
+        Add a where-like clause which works like a search for the given string;
+        i.e. calling it like this:
+        <pre><code>&lt;?php
+$this-&gt;addWhereSearch(&#039;name&#039;, &#039;otto hans&#039;)
+?&gt;</code></pre>
+        produces a where clause like this one
+        <pre>UPPER(name) LIKE &quot;%OTTO%HANS%&quot;</pre>
+
+        so the search finds the given string.
+      
+     </li>
+     <li>
+      setOrder($orderCondition, $desc=<strong>FALSE</strong>)
+      Sets the order condition which is used for the current instance.
+     </li>
+     <li>
+      <strong>getOrder()</strong>
+      Gets the order condition which is used for the current instance.
+     </li>
+     <li>
+      addOrder($orderCondition, $desc=<strong>FALSE</strong>)
+      Adds an order parameter to the query.
+     </li>
+     <li>
+      setHaving($havingCondition)
+      Sets the having condition which is used for the current instance.
+     </li>
+     <li>
+      <strong>getHaving()</strong>
+      Gets the having condition which is used for the current instance.
+     </li>
+     <li>
+      addHaving($what, $connectString)
+      Adds an having parameter to the query.
+     </li>
+     <li>
+      setJoin($table, $where, $joinType)
+      Sets the join condition which is used for the current instance.
+     </li>
+     <li>
+      setLeftJoin($table, $where)
+      Sets a left join on $this-&gt;table.
+     </li>
+     <li>
+      addLeftJoin($table, $where, $type)
+      Adds a left join to the query.
+     </li>
+     <li>
+      setRightJoin($table, $where)
+      Sets a right join on $this-&gt;table.
+     </li>
+     <li>
+      getJoin($what)
+      Gets the join-condition.
+     </li>
+     <li>
+      addJoin($table, $where, $type)
+      
+        adds a table and a where clause that shall be used for the join
+        instead of calling
+        <pre><code>&lt;?php
+setJoin(array(table1, table2), &#039;&lt;where clause1&gt; AND &lt;where clause2&gt;&#039;);
+?&gt;</code></pre>
+        you can also call
+        <pre><code>&lt;?php
+setJoin(table1,&#039;&lt;where clause1&gt;&#039;);
+addJoin(table2,&#039;&lt;where clause2&gt;&#039;);
+?&gt;</code></pre>
+      
+     </li>
+     <li>
+      setTable($table)
+      Sets the table this class is currently working on.
+     </li>
+     <li>
+      <strong>getTable()</strong>
+      Gets the table this class is currently working on.
+     </li>
+     <li>
+      setGroup($group)
+      Sets the group-by condition.
+     </li>
+     <li>
+      <strong>getGroup()</strong>
+      Gets the group-by condition.
+     </li>
+     <li>
+      setSelect($what)
+      Limit the result to return only the columns given in <code>what</code>.
+     </li>
+     <li>
+      addSelect($what, $connectString)
+      
+        Add a string to the select-part of the query and connects it to an existing
+        string using the <code>connectString</code>, which by default is a comma.
+       (&quot;SELECT xxx FROM...&quot;    xxx is the select-part of a query)
+      
+     </li>
+     <li>
+      <strong>getSelect()</strong>
+      Gets the select-part of the query.
+     </li>
+     <li>
+      setDontSelect($what)
+      Exclude some columns from the resultset.
+     </li>
+     <li>
+      <strong>getDontSelect()</strong>
+      Gets the columns excluded from the resultset.
+     </li>
+     <li>
+      reset($what)
+      Reset all the set* settings, with no parameter given it resets them all.
+     </li>
+     <li>
+      setOption($option, $value)
+      
+        Set mode the class shall work in. The &#039;raw&#039; mode does not quote the data
+        before building the query
+      
+     </li>
+     <li>
+      getOption($option)
+      Get the given option.
+     </li>
+     <li>
+      debug($string)
+      override this method and i.e. print the queryString to see the final query.
+     </li>
+     <li>
+      getTableShortName($table)
+      Gets the short name for a table.
+     </li>
+     <li>
+      execute($query, $method)
+      
+        Execute a query (the current query is executed when <code>query</code>
+        is null.
+      
+     </li>
+     <li>
+      writeLog($text)
+      
+        Write events to the logfile. It does some additional work,
+        like time measuring etc. to see some additional info.
+      
+     </li>
+     <li>
+      returnResult($result)
+      
+        Return the chosen result type
+      
+     </li>
+     <li>
+      setIndex($key)
+      
+        Format the result to be indexed by <code>key</code>.
+        NOTE: be careful, when using this you should be aware, that if you
+        use an index which&#039;s value appears multiple times you may loose data
+        since a key can&#039;t exist multiple times!
+        The result for a result to be indexed by a key(=columnName)
+        (i.e. &#039;relationtoMe&#039;) which&#039;s values are &#039;brother&#039;
+        and &#039;sister&#039; or alike normally returns this:
+        <pre><code>&lt;?php
+$res[&#039;brother&#039;] = array(&#039;name&#039; =&gt; &#039;xxx&#039;);
+$res[&#039;sister&#039;]  = array(&#039;name&#039; =&gt; &#039;xxx&#039;);
+?&gt;</code></pre>
+        but if the column &#039;relationtoMe&#039; contains multiple entries for
+        &#039;brother&#039; then the returned dataset will only contain one brother,
+        since the value from the column &#039;relationtoMe&#039; is used
+        and which &#039;brother&#039; you get depends on a lot of things,
+        like the sort order, how the db saves the data, and whatever else.
+        You can also set indexes which depend on 2 columns, simply pass the parameters
+        like &#039;table1.id,table2.id&#039; it will be used as a string for indexing
+        the result and the index will be built using the 2 values given, so a possible
+        index might be &#039;1,2&#039; or &#039;2108,29389&#039; this way you can access
+        data which have 2 primary keys. Be sure to remember that the index is a string!
+      
+     </li>
+     <li>
+      <strong>getIndex()</strong>
+      Gets the index.
+     </li>
+     <li>
+      useResult($type)
+      
+        Choose the type of the returned result
+        (&#039;array&#039;, &#039;object&#039;, &#039;none&#039;)
+      
+     </li>
+     <li>
+      setErrorCallback($param)
+      Set both callbacks.
+     </li>
+     <li>
+      setErrorLogCallback($param)
+      Set the error log callback.
+     </li>
+     <li>
+      setErrorSetCallback($param)
+      Set the error set callback.
+     </li>
+    </ul>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

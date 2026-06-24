@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7406</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_Bittorrent/index.html">File_Bittorrent</a> &#187; Bug #7406</h1>
+<p>MakeTorrent wont add files in directories</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-04-15 23:41 UTC</td></tr>
+<tr><th>From</th><td>knightar at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>tacker</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/File_Bittorrent/index.html">File_Bittorrent</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-15 23:41 UTC] knightar at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+MakeTorrent wont make a torrent of all the files in a dir like the docs said it would. It comes up with no result when using a directory.</p>
+<p>I currently have the following files in &quot;D:/files_to_torrent/&quot;:</p>
+<p>atvp4.exe<br>
+readme.txt<br>
+website.lnk</p>
+<p>The same method works when adding &quot;D:/files_to_torrent/atvp4.exe&quot; insted.</p>
+<p>Also, I used the php.ini-dist origional file and added include_path=&quot;.;C:\PHP\pear&quot; to it.</p>
+<p>Test script:<br>
+---------------<br>
+error_reporting(E_ALL);</p>
+<p>require_once &#039;File/Bittorrent/MakeTorrent.php&#039;;<br>
+// Set error handling<br>
+PEAR::setErrorHandling(PEAR_ERROR_PRINT);</p>
+<p>$MakeTorrent = new File_Bittorrent_MakeTorrent(&#039;D:/files_to_torrent/&#039;);</p>
+<p>// Set the announce URL<br>
+$MakeTorrent-&gt;setAnnounce(&#039;http://www.example.org&#039;);<br>
+// Set the comment<br>
+$MakeTorrent-&gt;setComment(&#039;Hello World!&#039;);<br>
+// Set the piece length (in KB)<br>
+$MakeTorrent-&gt;setPieceLength(256);<br>
+// Build the torrent<br>
+$metainfo = $MakeTorrent-&gt;buildTorrent();</p>
+<p>echo $metainfo;</p>
+</section>
+<section>
+<h3>[2006-04-16 03:06 UTC] knightar at gmail dot com</h3>
+<p>I&#039;ve got a quick patch after alot of debugging and ripping apart the coding. Bascily, the _addDir function was not returning anything after it was completed. I&#039;m guessing that the function wasnt returning $this-&gt;files after the function was finished.</p>
+<p>diff -u MakeTorrent_bk.php MakeTorrent.php<br>
+--- MakeTorrent_bk.php  2006-04-15 16:04:03.546875000 -0700<br>
++++ MakeTorrent.php     2006-04-15 19:50:26.578125000 -0700<br>
+@@ -398,6 +398,7 @@<br>
+                 $this-&gt;_files[] = $filedata;<br>
+             }<br>
+         }<br>
++               return true;<br>
+     }</p>
+<p>/**</p>
+</section>
+<section>
+<h3>[2006-04-16 03:12 UTC] knightar at gmail dot com</h3>
+<p>- OS version<br>
+- PHP Version<br>
++ PHP Version: Irrelevant</p>
+</section>
+<section>
+<h3>[2006-04-16 09:52 UTC] tacker at php dot net</h3>
+<p>Hm, _addDir [1] is not expected to return something but a return value is checked in [2].</p>
+<p>[1] http://m.tacker.org/trac/File_Bittorrent/browser/trunk/File/Bittorrent/MakeTorrent.php#L373<br>
+[2] http://m.tacker.org/trac/File_Bittorrent/browser/trunk/File/Bittorrent/MakeTorrent.php#L254</p>
+</section>
+<section>
+<h3>[2006-04-16 17:12 UTC] knightar at gmail dot com</h3>
+<p>Like I said, My patch was a quick fix. =] I suspected http://m.tacker.org/trac/File_Bittorrent/browser/trunk/File/Bittorrent/MakeTorrent.php#L254 had something to do with checking it, but since there wasnt anything being returned it would always false. So I took the example of http://m.tacker.org/trac/File_Bittorrent/browser/trunk/File/Bittorrent/MakeTorrent.php#L247 and put a &#039;return true&#039;. Wasnt sure what it was supposed to do and all, but it works perfectly with the &#039;return true&#039; on directories.</p>
+</section>
+<section>
+<h3>[2006-07-02 17:15 UTC] tacker at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>ChangeSet: http://versions.tacker.org/trac/File_Bittorrent/changeset/56</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

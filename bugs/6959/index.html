@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6959</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth/index.html">Auth</a> &#187; Bug #6959</h1>
+<p>Auth::LDAP Small Refactoring</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #6959</th><td>Auth::LDAP Small Refactoring</td></tr>
+<tr><th>Submitted</th><td>2006-02-28 11:15 UTC</td></tr>
+<tr><th>From</th><td>hugues dot peeters at claroline dot net</td></tr>
+<tr><th>Assigned</th><td>aashley</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Auth/index.html">Auth</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-28 11:15 UTC] hugues dot peeters at claroline dot net</h3>
+<p>Description:<br>
+------------<br>
+Dear Pear contributors,</p>
+<p>Christophe Gesché (aka Moosh) has already forwarded one of my message concerning Auth::LDAP (see http://news.php.net/php.pear.qa/3510).</p>
+<p>Last week, I worked on the Auth LDAP container to make it work again in our own Application. I forward in attachment the adapted container code for 1.3 Auth branches.</p>
+<p>Here are the main changes : <br>
+- Fix a detected bug in _quoteFilterString() (Note : I just noted that it has been fixed by someone else since then ...)</p>
+<p>- Rename checkGroup() method in _checkGroup() to follow the convention of other private class methods.</p>
+<p>- Set a default value for $this-&gt;options[&#039;url&#039;] rather than test later in the code if it is set.</p>
+<p>- Limit the _deconnect() method calls by refactoring a bit the code.</p>
+<p>- Refactor fetchData() method extracting the code for the additional attributes retrieval and put it in a new method called &#039;_fetchAdditionalAttributes()&#039;.</p>
+<p>- Add a new method called _setV12OptionsToV13() who manage the compatibility problems that could arise when user will pass from Auth LDAP 1.2 to 1.3.</p>
+<p>Sources are availbale at this url : http://www.claroline.net/dlarea/misc/Pear.Auth.LDAP.phps</p>
+<p>I&#039;ve read that Adam Ashley aim to release Auth 1.3 stable bery soon. I hope that the following remarks concerning the Auth LDAP container don&#039;t come too late, but I think it is certainly preferable to communicate them to you rather than keep them to me, isn&#039;t it ?</p>
+<p>1. The main remark concerns the &#039;attrformat&#039; option recently added by Moosh. This option was added because when Jan Wagner implement the possibility to fetch additional user attributes in the 1.3 branch, he choose to store them in pure LDAP format. This format is NOT compatible with data format used by other Auth containers (actually the &#039;DB&#039; one ...) and it will probably pose problems when user will try to retrieve these data from the Auth getAuthData() interface. Later, after discussions with Arnaud Limbourg, Moosh has added the &#039;attrformat&#039; option allowing user to set these data format to &#039;AUTH&#039; or &#039;LDAP&#039;. At that time it was decided to set the default value to &#039;LDAP&#039; to not break the compatibility. But Moosh didn&#039;t really figure out that the &#039;additional attributes&#039; feature was only implemented in Auth 1.3, not flagged as stable yet. Thus, couldn&#039;t we reconsider the default value of &#039;attrformat&#039; option and set it to &#039;AUTH&#039; before releasing the stable version ? It would probably be far easier for Auth library user, wouldn&#039;t it ?</p>
+<p>2. The &#039;attributes&#039; option of the LDAP container expects an array. On the other side, the equivalent option for the DB container (&#039;db_fields&#039;) expects a comma separated list in string format. Wouldn&#039;t it be better if both options, in LDAP and DB share, a similar format ? That just mean a simple explode() statement to add in the current code.</p>
+<p>3. This remark is really minor. I wonder if &#039;attributes&#039; is really the most appropriate name for this option as we know that there is also an other option called &#039;userattr&#039; in this container . Considering the existence of this other &#039;attr&#039; option, maybe another name for &#039;attributes&#039;, like &#039;otherattr&#039;, would clarify the option purpose in a greater degree, wouldn&#039;t it ? For your information, that&#039;s what has already been done for the &#039;scope&#039;, option which as been converted in &#039;userscope&#039; and &#039;groupscope&#039; in the Auth LDAP 1.3 version.</p>
+<p>I hope that this message doesn&#039;t upset too much the release planning.</p>
+<p>Best regards,</p>
+<p>Hugues Peeters</p>
+<p>PS. I would like to test the attached code again juste before sending it to you. Sadly the computer hosting our LDAP server has just crashed. As time is running, I indulge myself to send it nevertheless (it worked yesterday, it should today ... ). But, please, could you test it again before commit it into Pear CVS.</p>
+<p>Test script:<br>
+---------------<br>
+http://www.claroline.net/dlarea/misc/Pear.Auth.LDAP.phps</p>
+</section>
+<section>
+<h3>[2006-03-01 05:51 UTC] aashley at php dot net</h3>
+<p>- Rename checkGroup() method in _checkGroup() to follow the convention of other private class methods.</p>
+<p>Not doing as function may be useful to others.</p>
+<p>- Set a default value for $this-&gt;options[&#039;url&#039;] rather than test later in the code if it is set.<br>
+  <br>
+  Not doing as this is specifically done to handle the case where PHP is not compiled against openldap (which is the only one to support the url style connect options). URL takes precedence over host:port so if URL has a default host:port will never be used and in some cases it should be.</p>
+<p>I&#039;m not going to do the code refactoring at this late stage in the release. perhaps later.</p>
+<p>I&#039;ve merged the 1.2 compatibility options.</p>
+<p>attrformat default has been changed to AUTH to make it more consistent with the rest of auth.</p>
+<p>attributes options now accepts a comma limited string as well as an array the same as db_fields on the database backends.</p>
+</section>
+<section>
+<h3>[2006-03-01 13:48 UTC] jw at php dot net</h3>
+<p>- Rename checkGroup() method in _checkGroup() to follow the convention of other private class methods.</p>
+<p>This would be consistent as none has access to the Container anyway, except the Auth class itself which doesn&#039;t need the function. Must have been a typo back then ;-)</p>
+<p>- Set a default value for $this-&gt;options[&#039;url&#039;] rather than test later in the code if it is set.</p>
+<p>Nicely explained aashley. It is even documented in the code.</p>
+<p>- Limit the _deconnect() method calls by refactoring a bit the code.</p>
+<p>What&#039;s the problem with it? It gets called only once in any case I can see.</p>
+<p>1. The main remark concerns the &#039;attrformat&#039; option recently added by Moosh. This option was added because when Jan Wagner implement the ...</p>
+<p>Hehe, if I remember right, this was just a quick hack and none ever got back with me that LDAP format is a problem.</p>
+<p>2. The &#039;attributes&#039; option of the LDAP container expects an array. On the other side, the equivalent option for the DB container (&#039;db_fields&#039;) expects a comma separated list in string format. Wouldn&#039;t it be better if both options, in LDAP and DB share, a similar format? That just mean a simple explode() statement to add in the current code.</p>
+<p>Hmmh, LDAP is certainly not SQL in any case, and there IS a difference between attributes and columns I guess, but as it doesn&#039;t hurt ...</p>
+<p>3. This remark is really minor. I wonder if &#039;attributes&#039; is really the most appropriate name for this option as we know that there is also an ...</p>
+<p>As you have to read the docs anyway to use the Container and its name is neither way intuitive it should not matter. I see a problem with documentation though. I started documenting the class in source back in 2003. Now that more and more features get added it would be time to move it into a separate README file.</p>
+</section>
+<section>
+<h3>[2006-03-02 11:17 UTC] hugues dot peeters at claroline dot net</h3>
+<p>&gt;&gt; Set a default value for $this-&gt;options[&#039;url&#039;] rather than test later in the code if it is set.</p>
+<p>&gt; Not doing as this is specifically done to handle the case where PHP is not compiled against openldap (which is the only one to support the url style connect options). URL takes precedence over host:port so if URL has a default host:port will never be used and in some cases it should be.</p>
+<p>It depends how the _connect() function is written.</p>
+<p>function _connect()<br>
+{<br>
+  if (isset($this-&gt;options[&#039;url&#039;]) &amp;&amp; <br>
+      $this-&gt;options[&#039;url&#039;] != &#039;&#039;) {<br>
+  ...</p>
+<p>In the Auth::LDAP version I&#039;ve provided, the line below was changed to:</p>
+<p>if ( $this-&gt;options[&#039;url&#039;] != &#039;&#039;) {</p>
+<p>In that case, precedence problem shouldn&#039;t occur, shouldn&#039;t it?</p>
+<p>From my point of view, it is mostly a matter of consistency. &#039;url&#039; is the only option not set to a default value in the LDAP container. For example, &#039;group&#039; and &#039;groupdn&#039; options are set to a default empty string, even if they are not needed.</p>
+<p>function fetchData($username, $password)<br>
+{<br>
+  ...<br>
+  if( $this-&gt;options[&#039;group&#039;] != &#039;&#039; ) {</p>
+<p>&gt;&gt; Limit the _deconnect() method calls by refactoring a bit the code.</p>
+<p>&gt; What&#039;s the problem with it? It gets called only once in any case I can see.</p>
+<p>Is it really the job of the checkGroup() method to close the LDAP connection ? From my point of view, the LDAP connection closing should ideally be managed in the same location where it has been open.</p>
+<p>function fetchData($username, $password)<br>
+{<br>
+  $this-&gt;_connect();<br>
+  ...<br>
+  $this-&gt;_disconnect();<br>
+}</p>
+<p>I&#039;m not familiar with Pear community habits yet. I don&#039;t know if these topics are usually discussed in the bug tracker, and I hope that this few remarks won&#039;t be take as an offence. This is only a 0.2 cent contribution of a grateful PEAR user who has to dig in the code for the first time to fix a problem and has take the occasion to refactor it a bit. But if the Auth::LDAP works, it&#039;s ok for me. Thanks for all of your work.</p>
+<p>Regards</p>
+<p>Hugues<br>
+hugues.peeters@claroline.net</p>
+</section>
+<section>
+<h3>[2006-03-02 23:21 UTC] aashley at php dot net</h3>
+<p>oh you mean setting url to a default value of &#039;&#039;. Sorry I misunderstood your comment. That is already done and yes as such probably could simplify the check in _connect().</p>
+<p>to the disconnect() yes I agree with you, but I didnt want to merge your refactoring of the LDAP process this late in the release procedure. It&#039;s next on the list for after the stable version is out there.</p>
+</section>
+<section>
+<h3>[2006-08-10 03:45 UTC] aashley at php dot net</h3>
+<p>I think all the bits of this have made it into CVS. if there is stuff you think isnt please open new bugs for it.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6648</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail/index.html">Mail</a> &#187; Bug #6648</h1>
+<p>rfc822 problem during smtp conversation phase.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-31 23:35 UTC</td></tr>
+<tr><th>From</th><td>ruslan2004 at zr dot ru</td></tr>
+<tr><th>Assigned</th><td>jon</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Mail/index.html">Mail</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>win2003</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-31 23:35 UTC] ruslan2004 at zr dot ru</h3>
+<p>Description:<br>
+------------<br>
+Unable to use email adress like:<br>
+&quot;Ruslan Sulakov&quot; &lt;i@zr.ru&gt;</p>
+<p>There is a bug during smtp protocol conversations phase... Look:<br>
+	during talking with smtp server... php script tells such:<br>
+	MAIL FROM:&lt; &quot;Ruslan Sulakov&quot; &lt;i@zr.ru&gt;&gt;<br>
+	<br>
+	it&#039;s a bug! here must be:<br>
+	MAIL FROM:&quot;Ruslan Sulakov&quot; &lt;i@zr.ru&gt;<br>
+---<br>
+bug has appeared after upgrading xammp to latest version some days ago. (I think , php was 5.04 before upgrading)</p>
+<p>Win2003<br>
+Apache/2.2.0 (Win32) DAV/2 mod_ssl/2.2.0 OpenSSL/0.9.8a mod_autoindex_color PHP/5.1.1</p>
+<p>Test script:<br>
+---------------<br>
+	$text = $arr[&#039;body&#039;];<br>
+	$html = &#039;&#039;;<br>
+	$crlf = &quot;\n&quot;;<br>
+	$hdrs = array(<br>
+								&#039;From&#039;    =&gt; &#039;&quot;Ruslan Sulakov&quot; &lt;i@zr.ru&gt;&#039;,<br>
+								&#039;Subject&#039; =&gt; $arr[&#039;subject&#039;]<br>
+								);</p>
+<p>$mime = new Mail_mime($crlf);</p>
+<p>$mime-&gt;setTXTBody($text);</p>
+<p>$mimebody = $mime-&gt;get( array (&#039;text_encoding&#039; =&gt; &#039;quoted-printable&#039;,<br>
+                                &#039;head_charset&#039;  =&gt; &#039;windows-1251&#039;, <br>
+                                &#039;text_charset&#039;  =&gt; &#039;windows-1251&#039;,<br>
+                                &#039;html_charset&#039; =&gt; &#039;windows-1251&#039;<br>
+                            )<br>
+                     );<br>
+	$hdrs = $mime-&gt;headers($hdrs);</p>
+<p>$mail =&amp; Mail::factory(&#039;mail&#039;);<br>
+	$accepted = $mail-&gt;send($arr[&#039;to&#039;], $hdrs, $mimebody);<br>
+-------------------------------	<br>
+	this does not send mail because of smtp protocol conversations failure.. look:<br>
+	during talking with smtp server... php script tells such:<br>
+	MAIL FROM:&lt; &quot;Ruslan Sulakov&quot; &lt;i@zr.ru&gt;&gt;<br>
+	<br>
+	it&#039;s a bug! here must be:<br>
+	MAIL FROM:&quot;Ruslan Sulakov&quot; &lt;i@zr.ru&gt;</p>
+<p>!!</p>
+<p>Expected result:<br>
+----------------<br>
+MAIL FROM:&quot;Ruslan Sulakov&quot; &lt;i@zr.ru&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+MAIL FROM:&lt; &quot;Ruslan Sulakov&quot; &lt;i@zr.ru&gt;&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

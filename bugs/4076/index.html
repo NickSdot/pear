@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4076</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #4076</h1>
+<p>SOAP_WSDL generateProxyCode needs additional constructor</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4076</th><td>SOAP_WSDL generateProxyCode needs additional constructor</td></tr>
+<tr><th>Submitted</th><td>2005-04-06 11:24 UTC</td></tr>
+<tr><th>From</th><td>lafriks at hello dot lv</td></tr>
+<tr><th>Assigned</th><td>chagenbu</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-06 11:24 UTC] lafriks at hello dot lv</h3>
+<p>Description:<br>
+------------<br>
+It would be great that when generating proxy code using SOAP_WSDL generateProxyCode function it would generate additional constructor for generated file. So it would be posible to when programming such way to define path to web service in configuration file and it wouldn&#039;t be necesery regenerate proxy code for development and production server if thay are using same web services just on diffrent servers.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Example for generated file:</p>
+<p>class WebService_Test_TestSoap extends SOAP_Client<br>
+{<br>
+    function WebService_Test_TestSoap()<br>
+    {<br>
+        $this-&gt;SOAP_Client(&quot;http://localhost/test.asmx&quot;, 0);<br>
+    }<br>
+    function WebService_Test_TestSoap($path)<br>
+    {<br>
+        $this-&gt;SOAP_Client($path, 0);<br>
+    }</p>
+<p>...</p>
+<p>}</p>
+</section>
+<section>
+<h3>[2005-04-06 14:12 UTC] lafriks at hello dot lv</h3>
+<p>Diff for WSDL.php file:<br>
+460,461c460,461<br>
+&lt;             &quot;    function $classname()\n{\n&quot;.<br>
+&lt;             &quot;        \$this-&gt;SOAP_Client(\&quot;$clienturl\&quot;, 0, 0,<br>
+---<br>
+&gt;             &quot;    function _soap_client(\$path) {\n&quot;.<br>
+&gt;             &quot;        \$this-&gt;SOAP_Client(\$path, 0, 0,<br>
+479,480c479,480<br>
+&lt;             &quot;    function $classname()\n{\n&quot;.<br>
+&lt;             &quot;        \$this-&gt;SOAP_Client(\&quot;$clienturl\&quot;, 0);\n&quot;.<br>
+---<br>
+&gt;             &quot;    function _soap_client(\$path) {\n&quot;.<br>
+&gt;             &quot;        \$this-&gt;SOAP_Client(\$path, 0);\n&quot;.<br>
+482a483,488<br>
+&gt;         $class .= &quot;    function $classname() {\n&quot;.<br>
+&gt;             &quot;        \$this-&gt;_soap_client(\&quot;$clienturl\&quot;);\n&quot;.<br>
+&gt;             &quot;    }\n&quot;.<br>
+&gt;             &quot;    function $classname(\$path) {\n&quot;.<br>
+&gt;             &quot;        \$this-&gt;_soap_client(\$path);\n&quot;.<br>
+&gt;             &quot;    }\n&quot;;</p>
+</section>
+<section>
+<h3>[2005-04-07 08:23 UTC] lafriks at hello dot lv</h3>
+<p>First patch was not working :)<br>
+This one should be working just fine ;)</p>
+<p>--- E:\Macibas\pear_soap\SOAP-0.8.1\WSDL.php	Sun Aug 22 23:39:32 2004<br>
++++ E:\Macibas\pear_soap\WSDL.php	Thu Apr 07 11:20:31 2005<br>
+@@ -457,8 +457,8 @@<br>
+ <br>
+         if (is_array($this-&gt;proxy) &amp;&amp; count($this-&gt;proxy) &gt; 0) {<br>
+             $class = &quot;class $classname extends SOAP_Client\n{\n&quot;.<br>
+-            &quot;    function $classname()\n{\n&quot;.<br>
+-            &quot;        \$this-&gt;SOAP_Client(\&quot;$clienturl\&quot;, 0, 0,<br>
++            &quot;    function $classname(\$path=\&quot;$clienturl\&quot;) {\n&quot;.<br>
++            &quot;        \$this-&gt;SOAP_Client(\$path, 0, 0,<br>
+                     array(&quot;;<br>
+ <br>
+             foreach($this-&gt;proxy as $key =&gt; $val) {<br>
+@@ -476,8 +476,8 @@<br>
+             $class = str_replace(&#039;,))&#039;, &#039;))&#039;, $class);<br>
+         } else {<br>
+             $class = &quot;class $classname extends SOAP_Client\n{\n&quot;.<br>
+-            &quot;    function $classname()\n{\n&quot;.<br>
+-            &quot;        \$this-&gt;SOAP_Client(\&quot;$clienturl\&quot;, 0);\n&quot;.<br>
++            &quot;    function $classname(\$path=\&quot;$clienturl\&quot;) {\n&quot;.<br>
++            &quot;        \$this-&gt;SOAP_Client(\$path, 0);\n&quot;.<br>
+             &quot;    }\n&quot;;<br>
+         }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8747</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #8747</h1>
+<p>column name mangling in MDB2_FETCHMODE_ASSOC</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-09-20 20:01 UTC</td></tr>
+<tr><th>From</th><td>budgenator at user dot sourceforge dot net</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-09-20 20:01 UTC] budgenator at user dot sourceforge dot net</h3>
+<p>Description:<br>
+------------<br>
+in a database table jobs that contains fields Jobs, Case, DueDate, arrivialDate, RxDate, WOnumber, ShipDate the method fetchRow(MDB2_FETCHMODE_ASSOC) mangles the associative indices to lower case  and field names become case insensitive without warning or documentation in MySQL version 5.0.24</p>
+<p>Test script:<br>
+---------------<br>
+#!/usr/bin/php<br>
+&lt;?php<br>
+require_once &#039;MDB2.php&#039;;	// BSD License<br>
+$dsn = array(<br>
+	&#039;phptype&#039;  =&gt; &#039;mysqli&#039;,<br>
+	&#039;hostspec&#039; =&gt; &#039;localhost&#039;,<br>
+	&#039;database&#039; =&gt; &#039;test&#039;<br>
+	);<br>
+	<br>
+$mdb2 =&amp; MDB2::factory($dsn); // create MDB2 instance<br>
+$mdb2-&gt;setFetchMode(MDB2_FETCHMODE_ASSOC); // set the default fetchmode<br>
+$query = &quot;SELECT  Jobs, jobs.Case, DueDate, arrivialDate, RxDate, WOnumber, ShipDate FROM jobs WHERE Jobs &gt; 270&quot;;<br>
+$jobs_result =&amp; $mdb2-&gt;query($query);</p>
+<p>if (PEAR::isError($jobs_result)) die($jobs_result-&gt;getMessage());<br>
+echo &quot;$query\n&quot;;<br>
+$numberOfJobs = $jobs_result-&gt;numRows();<br>
+echo &quot;returned $numberOfJobs rows\n&quot;;<br>
+$loop = 1;<br>
+while ($job = $jobs_result-&gt;fetchRow()) {<br>
+echo &quot;while loop interation is $loop, &quot;;<br>
+print_r($job);<br>
+echo &quot; \n&quot;;</p>
+<p>$loop++;<br>
+}<br>
+exit();<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
++------+------+------------+--------------+--------+----------+----------+<br>
+| Jobs | Case | DueDate    | arrivialDate | RxDate | WOnumber | ShipDate |<br>
++------+------+------------+--------------+--------+----------+----------+<br>
+|  271 |  270 | 2006-05-02 | 2006-05-02   | NULL   |    19730 | NULL     |<br>
+|  272 |  275 | 2006-08-24 | 2006-08-21   | NULL   |    15589 | NULL     |<br>
++------+------+------------+--------------+--------+----------+----------+<br>
+while loop interation is 1, Array<br>
+(<br>
+    [Jobs] =&gt; 271<br>
+    [Case] =&gt; 270<br>
+    [DueDate] =&gt; 2006-05-02<br>
+    [arrivialdate] =&gt; 2006-05-02<br>
+    [rxdate] =&gt;<br>
+    [wonumber] =&gt; 19730<br>
+    [shipdate] =&gt;<br>
+)</p>
+<p>while loop interation is 2, Array<br>
+(<br>
+    [Jobs] =&gt; 272<br>
+    [Case] =&gt; 275<br>
+    [DueDate] =&gt; 2006-08-24<br>
+    [arrivialDate] =&gt; 2006-08-21<br>
+    [RxDate] =&gt;<br>
+    [WOnumber] =&gt; 15589<br>
+    [ShipDate] =&gt;<br>
+)</p>
+<p>Actual result:<br>
+--------------<br>
+while loop interation is 1, Array<br>
+(<br>
+    [jobs] =&gt; 271<br>
+    [case] =&gt; 270<br>
+    [duedate] =&gt; 2006-05-02<br>
+    [arrivialdate] =&gt; 2006-05-02<br>
+    [rxdate] =&gt;<br>
+    [wonumber] =&gt; 19730<br>
+    [shipdate] =&gt;<br>
+)</p>
+<p>while loop interation is 2, Array<br>
+(<br>
+    [jobs] =&gt; 272<br>
+    [case] =&gt; 275<br>
+    [duedate] =&gt; 2006-08-24<br>
+    [arrivialdate] =&gt; 2006-08-21<br>
+    [rxdate] =&gt;<br>
+    [wonumber] =&gt; 15589<br>
+    [shipdate] =&gt;<br>
+)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

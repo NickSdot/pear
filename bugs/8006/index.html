@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8006</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Server/index.html">Net_Server</a> &#187; Bug #8006</h1>
+<p>readLeftOver causing problems with HTTP_Server</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-06-26 16:28 UTC</td></tr>
+<tr><th>From</th><td>erudd at netfor dot com</td></tr>
+<tr><th>Assigned</th><td>cweiske</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Server/index.html">Net_Server</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-26 16:28 UTC] erudd at netfor dot com</h3>
+<p>Description:<br>
+------------<br>
+the new readLeftOver feature in Net_Server 1.0.0 is causing problems with HTTP_Server when using (at least) the sequential driver.  The problem that is occuring is the &quot;end&quot; of a previous request is appearing in the beginning of the next request and causing HTTP_Server to fail to find the initial GET line of the HTTP request as any trailing \r\ns from the previous request appear in the beginning of the new un-related request.</p>
+<p>What is the intended reasoning for the readLeftOver feature??<br>
+And shouldn&#039;t it be cleared upon client disconnect?</p>
+</section>
+<section>
+<h3>[2006-06-26 17:02 UTC] erudd at netfor dot com</h3>
+<p>Patch to fix of of the underlying issues. The length of readEndCharacter (which with HTTP_Server is 4 characters not 1). was not taken into account when appending the endCharacter to $data.  also when checking for leftover parts, readEndCharacter was not taken into account at all.</p>
+<p>--- Net_Server-1.0.0/Server/Driver.php.orig     2006-06-26 12:57:38.000000000 -0400<br>
++++ Net_Server-1.0.0/Server/Driver.php  2006-06-26 12:57:49.000000000 -0400<br>
+@@ -232,8 +233,8 @@<br>
+                 if ($posEndChar === false) {<br>
+                     $data .= $buf;<br>
+                 } else {<br>
+-                    $data .= substr($buf, 0, $posEndChar + 1);<br>
+-                    if ($posEndChar &lt; strlen($buf)) {<br>
++                    $data .= substr($buf, 0, $posEndChar + strlen($this-&gt;readEndCharacter));<br>
++                    if (($posEndChar + strlen($this-&gt;readEndCharacter)) &lt; strlen($buf)) {<br>
+                         $this-&gt;_readLeftOver = substr($buf, $posEndChar + 1);<br>
+                     }<br>
+                     break;</p>
+</section>
+<section>
+<h3>[2006-06-27 14:51 UTC] erudd at netfor dot com</h3>
+<p>Thanks.  CVS HEAD works.</p>
+<p>When the 1.0.1 release gets out I can finally drop all my &quot;kludges, patches and workarounds&quot; in my code.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2618</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #2618</h1>
+<p>PEAR_ErrorStack::staticPopCallback does not return a value</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-10-26 07:42 UTC</td></tr>
+<tr><th>From</th><td>mlmlml at lily dot freemail dot ne dot jp</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>redhat linux 7.3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-26 07:42 UTC] mlmlml at lily dot freemail dot ne dot jp</h3>
+<p>Description:<br>
+------------<br>
+Using &quot;PEAR_ErrorStack::staticPushCallback&quot; will not work while using &quot;pushCallback&quot; of a PEAR_ErrorStack instance works fine.</p>
+<p>I am guessing &quot;PEAR_ErrorStack::staticPopCallback&quot; is not returning anything although the document says that the function returns &quot;array|string|false&quot;</p>
+<p>I found a simillar bug &quot;Bug #1395 PEAR_ErrorStack::staticCallback needs to instantiate the stack,&quot; and I updated PEAR/ErrorStack.php (ErrorStack.php,v 1.13 2004/10/23 19:54:35).  But it still seems to be not fixed.  It reproduces the same result, explained on its bug page.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?PHP</p>
+<p>require_once(&#039;PEAR/ErrorStack.php&#039;);<br>
+	<br>
+	<br>
+	function myCallback($err){<br>
+		echo &#039;myCallback($err) was called&#039;;<br>
+	}</p>
+<p>//this callback doesn&#039;t work<br>
+	PEAR_ErrorStack::staticPushCallback(&#039;myCallback&#039;);<br>
+	PEAR_ErrorStack::staticPush(&#039;default&#039;, 1, &#039;error&#039;, null, &#039;testing PEAR_ErrorStack::staticPushCallback()&#039;);<br>
+	<br>
+	//but this does<br>
+	$defaultErrorStack =&amp; PEAR_ErrorStack::singleton(&#039;default&#039;);<br>
+	$defaultErrorStack-&gt;pushCallback(&#039;myCallback&#039;);<br>
+	PEAR_ErrorStack::staticPush(&#039;default&#039;, 1, &#039;error&#039;, null, &#039;testing PEAR_ErrorStack::staticPushCallback()&#039;);<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Even for the PEAR_ErrorStack::staticPush, after it&#039;s been called the function &quot;myCallback&quot; should be called back.</p>
+<p>Actual result:<br>
+--------------<br>
+nothing happens for the PEAR_ErrorStack::staticPush in the example.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

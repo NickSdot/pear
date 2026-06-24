@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7945</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Encryption &#187; <a href="package/Crypt_Blowfish/index.html">Crypt_Blowfish</a> &#187; Bug #7945</h1>
+<p>nul-padding needs doc / option</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-06-20 15:58 UTC</td></tr>
+<tr><th>From</th><td>pear dot 20 dot korkman at spamgourmet dot org</td></tr>
+<tr><th>Assigned</th><td>jausions</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Crypt_Blowfish/index.html">Crypt_Blowfish</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>SuSE 9.0 in VMWare</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-20 15:58 UTC] pear dot 20 dot korkman at spamgourmet dot org</h3>
+<p>Description:<br>
+------------<br>
+The returned String from decrypt() is nul-padded to be a multiple of 8 bytes minus one. That is chr(0), EOF! Dangerous to work with as non-binary-safe functions cut off the string on that. Please at least mention it in the description of -&gt;decrypt().</p>
+<p>Further this makes crypt/decrypt non-binary-safe as I understand that there is no way to tell how many nul-bytes where at the end of the crypt input. A solution would be to encode the length of the encrypted string into the output, then use that information upon decrypt to substr() the string to the correct length. This should probably be the default behaviour of the PEAR-Class, as the other Crypt_* Classes are binary-safe, and except of this one can be exchanged pretty easily.</p>
+<p>On the other hand, this would break backwards compatibility and may cause problems when exchanging encrypted data with other applications.</p>
+<p>Test script:<br>
+---------------<br>
+$test_string = &#039;what the!&#039;.chr(0);</p>
+<p>$fish = new Crypt_Blowfish(&#039;testkey&#039;);<br>
+$new_test_string = $fish-&gt;encrypt($test_string);<br>
+$new_test_string = $fish-&gt;decrypt($new_test_string);</p>
+<p>for ($i = 0; $i &lt; strlen($new_test_string); $i++)<br>
+{<br>
+  echo &quot;-&quot; . ord(substr($new_test_string, $i, 1));<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+-119-104-97-116-32-116-104-101-33-0</p>
+<p>// One nul-byte at the end</p>
+<p>Actual result:<br>
+--------------<br>
+-119-104-97-116-32-116-104-101-33-0-0-0-0-0-0-0</p>
+<p>// Many nul-bytes at the end</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

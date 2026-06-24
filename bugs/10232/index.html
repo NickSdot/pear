@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #10232</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #10232</h1>
+<p>Gmail creates double line break when \r\n is used</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-03-01 15:51 UTC</td></tr>
+<tr><th>From</th><td>stephen dot bigelis at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>cipri</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.1</td></tr>
+<tr><th>OS</th><td>4.11-STABLE FreeBSD</td></tr>
+<tr><th>Roadmaps</th><td>1.4.0, 1.4.0RC1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-03-01 15:51 UTC] stephen dot bigelis at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Emails come in as attachments.  Because the added line break prevents gmail from parsing the boundary description. I don&#039;t believe it is necessary for any email clients to put a line break in before the boundary definition, so I just removed it.  (I checked a ton of mime newsletters in my own mail box and the majority just used a tab.)  Then gmail would recognize the email, but the html-code was being displayed because of added line breaks in the section headers. So I manually changed them to &quot;\n&quot;, then any lines of html longer then 76 char were displaying wrong because of the added line break in the html, so I changed the end of line marker in _quotedPrintableEncode();</p>
+<p>Please note that you can&#039;t just define MAIL_MIMEPART_CRLF as &quot;\n&quot; that will cause a ton of other problems.</p>
+<p>The temporary fix I am currently using takes place entirely in mimePart.php.</p>
+<p>First in the encode function:</p>
+<p>function encode()<br>
+    {<br>
+        $encoded =&amp; $this-&gt;_encoded;</p>
+<p>if (!empty($this-&gt;_subparts)) {<br>
+            srand((double)microtime()*1000000);<br>
+            $boundary = &#039;=_&#039; . md5(rand() . microtime());<br>
+            $this-&gt;_headers[&#039;Content-Type&#039;] .= &#039;;&#039; . &quot;\t&quot; . &#039;boundary=&quot;&#039; . $boundary . &#039;&quot;&#039;;</p>
+<p>// Add body parts to $subparts<br>
+            for ($i = 0; $i _subparts); $i++) {<br>
+                $headers = array();<br>
+                $tmp = $this-&gt;_subparts[$i]-&gt;encode();<br>
+                foreach ($tmp[&#039;headers&#039;] as $key =&gt; $value) {<br>
+                    $headers[] = $key . &#039;: &#039; . $value;<br>
+                }<br>
+                $subparts[] = implode(&quot;\n&quot;, $headers) . MAIL_MIMEPART_CRLF . MAIL_MIMEPART_CRLF . $tmp[&#039;body&#039;];<br>
+            }</p>
+<p>$encoded[&#039;body&#039;] = &#039;--&#039; . $boundary . &quot;\n&quot; .<br>
+                               implode(&#039;--&#039; . $boundary . &quot;\n&quot;, $subparts) .<br>
+                               &#039;--&#039; . $boundary.&#039;--&#039; . &quot;\n&quot;;</p>
+<p>} else {<br>
+            $encoded[&#039;body&#039;] = $this-&gt;_getEncodedData($this-&gt;_body, $this-&gt;_encoding) . MAIL_MIMEPART_CRLF;<br>
+        }</p>
+<p>// Add headers to $encoded<br>
+        $encoded[&#039;headers&#039;] =&amp; $this-&gt;_headers;</p>
+<p>return $encoded;<br>
+    }</p>
+<p>and then to make your html properly display you must change:<br>
+$eol    = &quot;\n&quot;; in _quotedPrintableEncode();</p>
+<p>So far I have tested this in gmail, hotmail, yahoo, aol, lotus notes, &amp; thunderbird.  I haven&#039;t had a problem yet, but I suspect there has got to be client out there that won&#039;t like it.</p>
+<p>Test script:<br>
+---------------<br>
+&#039;; // Add a valid email here<br>
+$headers= array(&#039;From&#039;    =&gt; $from,<br>
+				 &#039;Subject&#039; =&gt; $subject);<br>
+$textMessage=&#039;This is a text message<br>
+thank you&#039;;<br>
+$htmlMessage=&#039;Invite</p>
+<p>This is an HTML message <br>
+thank you<br>
+&#039;;<br>
+$mime = new Mail_Mime(); <br>
+$mime-&gt;setTxtBody($textMessage);<br>
+$mime-&gt;setHtmlBody($htmlMessage); <br>
+$body = $mime-&gt;get();<br>
+$hdrs = $mime-&gt;headers($headers);<br>
+$mail = &amp;Mail::factory(&#039;mail&#039;);<br>
+$mail-&gt;send($to, $hdrs, $body);<br>
+if($mail){<br>
+		echo &quot;Note: Your Message has been sent&quot;;<br>
+	} else {<br>
+		die(&#039;FATAL ERROR: &#039;);<br>
+	} //else<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Gmail header should look like this:</p>
+<p>Message-ID: <br>
+To: myemail@gmail.com<br>
+Subject: test<br>
+Mime-Version: 1.0<br>
+From: Stephen Bigelis <br>
+Content-Type: multipart/alternative;<br>
+	boundary=&quot;=_ce8703e586c1d5b49955824c21e1da92&quot;</p>
+<p>--=_ce8703e586c1d5b49955824c21e1da92<br>
+Content-Type: text/plain; charset=&quot;ISO-8859-1&quot;<br>
+Content-Transfer-Encoding: 7bit</p>
+<p>This is a text message<br>
+thank you</p>
+<p>--=_ce8703e586c1d5b49955824c21e1da92<br>
+Content-Type: text/html; charset=&quot;ISO-8859-1&quot;<br>
+Content-Transfer-Encoding: quoted-printable</p>
+<p>Invite</p>
+<p>This is an HTML message <br>
+thank you</p>
+<p>--=_ce8703e586c1d5b49955824c21e1da92--</p>
+<p>Actual result:<br>
+--------------<br>
+Gamil header comes in looking like this:</p>
+<p>Message-ID: <br>
+To: myemail@gmail.com<br>
+Subject: test2<br>
+Mime-Version: 1.0<br>
+From: Stephen Bigelis <br>
+Content-Type: multipart/alternative;</p>
+<p>boundary=&quot;=_76d9d1e8ab8f2f3a4a8cd53c1616536b&quot;</p>
+<p>--=_76d9d1e8ab8f2f3a4a8cd53c1616536b</p>
+<p>Content-Type: text/plain; charset=&quot;ISO-8859-1&quot;</p>
+<p>Content-Transfer-Encoding: 7bit</p>
+<p>This is a text message<br>
+thank you</p>
+<p>--=_76d9d1e8ab8f2f3a4a8cd53c1616536b</p>
+<p>Content-Type: text/html; charset=&quot;ISO-8859-1&quot;</p>
+<p>Content-Transfer-Encoding: quoted-printable</p>
+<p>Invite</p>
+<p>This is an HTML message</p>
+<p>thank you</p>
+<p>&lt;/body&gt;&lt;html&gt;</p>
+<p>--=_76d9d1e8ab8f2f3a4a8cd53c1616536b--</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

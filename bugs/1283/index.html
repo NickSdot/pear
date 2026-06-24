@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1283</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm2/index.html">HTML_QuickForm2</a> &#187; Bug #1283</h1>
+<p>Feature request: Optgroup support</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #1283</th><td>Feature request: Optgroup support</td></tr>
+<tr><th>Submitted</th><td>2004-04-26 09:35 UTC</td></tr>
+<tr><th>From</th><td>boci at dravanet dot hu</td></tr>
+<tr><th>Assigned</th><td>avb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm2/index.html">HTML_QuickForm2</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>0.1.0</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-26 09:35 UTC] boci at dravanet dot hu</h3>
+<p>Description:<br>
+------------<br>
+Hi!</p>
+<p>I needed optgtoup support for the Select element. It&#039;s possible?</p>
+</section>
+<section>
+<h3>[2005-01-13 13:00 UTC] joao at cbpf dot br</h3>
+<p>I´m looking for this too.</p>
+</section>
+<section>
+<h3>[2005-03-31 13:26 UTC] no at mail dot com</h3>
+<p>Optgroup support with recursion would be great. (Like smarty&#039;s html_options).</p>
+</section>
+<section>
+<h3>[2005-09-28 13:52 UTC] chris dot yates1 at btconnect dot com</h3>
+<p>Here&#039;s how I did it, using an array for the options; recursive optgroups is supported.</p>
+<p>There are changes to the addOption and toHtml functions, and the addition of the _optionToHtml function.</p>
+<p>The code below shows the changes with the original code commented out.</p>
+<p>Hope this helps</p>
+<p>// CLY - modification to allow optgroups<br>
+//    function addOption($text, $value, $attributes=null)<br>
+    function addOption($text, $value, $attributes=null, &amp;$optGroup=null)<br>
+    {<br>
+        // if text is an array, start an optgroup<br>
+        if (is_array($text)) {<br>
+          <br>
+          if (is_array($optGroup)) {<br>
+            $optGroup[$value][&#039;options&#039;] = array();<br>
+            $optGroup =&amp; $optGroup[$value][&#039;options&#039;];<br>
+          }<br>
+          else {<br>
+            $this-&gt;_options[$value][&#039;options&#039;] = array();<br>
+            $optGroup =&amp; $this-&gt;_options[$value][&#039;options&#039;];<br>
+          };</p>
+<p>foreach($text as $key=&gt;$val) {<br>
+            $this-&gt;addOption($val, $key, null, $optGroup);<br>
+          } // foreach<br>
+          <br>
+          // done all the options in the optgroup<br>
+          return;<br>
+        }<br>
+// end mod</p>
+<p>if (null === $attributes) {<br>
+            $attributes = array(&#039;value&#039; =&gt; $value);<br>
+        } else {<br>
+            $attributes = $this-&gt;_parseAttributes($attributes);<br>
+            if (isset($attributes[&#039;selected&#039;])) {<br>
+                // the &#039;selected&#039; attribute will be set in toHtml()<br>
+                $this-&gt;_removeAttr(&#039;selected&#039;, $attributes);<br>
+                if (is_null($this-&gt;_values)) {<br>
+                    $this-&gt;_values = array($value);<br>
+                } elseif (!in_array($value, $this-&gt;_values)) {<br>
+                    $this-&gt;_values[] = $value;<br>
+                }<br>
+            }<br>
+            $this-&gt;_updateAttrArray($attributes, array(&#039;value&#039; =&gt; $value));<br>
+        }</p>
+<p>// CLY - modification to allow optgroups<br>
+        // if $optGroup is an array, add the option to it<br>
+        if (is_array($optGroup)) {<br>
+          $optGroup[$text][&#039;attr&#039;] = $attributes;<br>
+        }<br>
+        // if $optGroup is a string, add the option to the option group<br>
+        // used if directly adding an option to an optgroup<br>
+        elseif (is_string($optGroup)) {<br>
+          $optGroups = explode($optGroup, &#039;,&#039;);<br>
+          <br>
+          $target =&amp; $this-&gt;_options;<br>
+          <br>
+          foreach($optGroups as $group) {<br>
+            // create the option group if it does not exist<br>
+            if (empty($target[$group][&#039;options&#039;])) {<br>
+              $target[$group][&#039;options&#039;] = array();<br>
+            }<br>
+            <br>
+            $target =&amp; $target[$group][&#039;options&#039;];<br>
+          } // foreach</p>
+<p>// add the option<br>
+          $target[$text][&#039;attr&#039;] = $attributes;<br>
+          <br>
+        }<br>
+        // else if there are attributes, add them to the option<br>
+        elseif (is_array($attributes)) {<br>
+          $this-&gt;_options[$text][&#039;attr&#039;] = $attributes;<br>
+        }<br>
+//        $this-&gt;_options[] = array(&#039;text&#039; =&gt; $text, &#039;attr&#039; =&gt; $attributes);<br>
+// end mod<br>
+    } // end func addOption</p>
+<p>function toHtml()<br>
+    {<br>
+        if ($this-&gt;_flagFrozen) {<br>
+            return $this-&gt;getFrozenHtml();<br>
+        } else {<br>
+            $tabs    = $this-&gt;_getTabs();<br>
+            $strHtml = &#039;&#039;;</p>
+<p>if ($this-&gt;getComment() != &#039;&#039;) {<br>
+                $strHtml .= $tabs . &#039;&lt;!-- &#039; . $this-&gt;getComment() . &quot; //--&gt;\n&quot;;<br>
+            }</p>
+<p>if (!$this-&gt;getMultiple()) {<br>
+                $attrString = $this-&gt;_getAttrString($this-&gt;_attributes);<br>
+            } else {<br>
+                $myName = $this-&gt;getName();<br>
+                $this-&gt;setName($myName . &#039;[]&#039;);<br>
+                $attrString = $this-&gt;_getAttrString($this-&gt;_attributes);<br>
+                $this-&gt;setName($myName);<br>
+            }<br>
+            $strHtml .= $tabs . &#039;&lt;select&#039; . $attrString . &quot;&gt;\n&quot;;</p>
+<p>// CLY - modified to allow optgroups<br>
+            foreach ($this-&gt;_options as $text=&gt;$option) {<br>
+                $strHtml .= $tabs . $this-&gt;_optionToHtml($text, $option);<br>
+            }</p>
+<p>/*            foreach ($this-&gt;_options as $option) {<br>
+                if (is_array($this-&gt;_values) &amp;&amp; in_array((string)$option[&#039;attr&#039;][&#039;value&#039;], $this-&gt;_values)) {<br>
+                    $this-&gt;_updateAttrArray($option[&#039;attr&#039;], array(&#039;selected&#039; =&gt; &#039;selected&#039;));<br>
+                }<br>
+                $strHtml .= $tabs . &quot;\t&lt;option&quot; . $this-&gt;_getAttrString($option[&#039;attr&#039;]) . &#039;&gt;&#039; .<br>
+                            $option[&#039;text&#039;] . &quot;&lt;/option&gt;\n&quot;;<br>
+            }<br>
+*/<br>
+// end mod</p>
+<p>return $strHtml . $tabs . &#039;&lt;/select&gt;&#039;;<br>
+        }<br>
+    } //end func toHtml</p>
+<p>// CLY - new function to allow optgroups<br>
+    /**<br>
+     * Returns an OPTION in HTML<br>
+     * <br>
+     * This function is called recursively to support optgroups<br>
+     *<br>
+     * @param     string    $text       Display text for the option<br>
+     * @param     array     $option     The option<br>
+     * @since     ??<br>
+     * @access    private<br>
+     * @return    string<br>
+     */<br>
+    // Creates the HTML for an option<br>
+    function _optionToHtml($text, $option)<br>
+    {<br>
+        $tabs = $this-&gt;_getTabs();<br>
+      <br>
+        // if an option has options it&#039;s an optgroup<br>
+        if (isset($option[&#039;options&#039;])) {<br>
+            $strHtml = $tabs . &quot;&lt;optgroup label=\&quot;$text\&quot;&gt;\n&quot;;<br>
+        <br>
+            foreach($option[&#039;options&#039;] as $txt=&gt;$opt) {<br>
+                $strHtml .= $tabs . $this-&gt;_optionToHtml($txt, $opt);<br>
+            } // foreach<br>
+        <br>
+            $strHtml .= $tabs . &quot;&lt;/optgroup&gt;\n&quot;;<br>
+        <br>
+            return($strHtml);<br>
+        }<br>
+      <br>
+        // else it&#039;s an option<br>
+        else {<br>
+            if (is_array($this-&gt;_values) &amp;&amp; in_array((string)$option[&#039;attr&#039;][&#039;value&#039;], $this-&gt;_values)) {<br>
+                $this-&gt;_updateAttrArray($option[&#039;attr&#039;], array(&#039;selected&#039; =&gt; &#039;selected&#039;));<br>
+            }<br>
+            return(&quot;\t&lt;option&quot; . $this-&gt;_getAttrString($option[&#039;attr&#039;]) . &quot;&gt;$text&lt;/option&gt;\n&quot;);       <br>
+        }<br>
+    }</p>
+<p>And here&#039;s an array of UK county names that shows two levels of optgroups. Just pass $ukCounties as the options to a select as modified above.</p>
+<p>$ukCounties = array(<br>
+    &#039;0&#039; =&gt; &#039;-Select-&#039;,<br>
+    &#039;England&#039; =&gt; array(<br>
+      &#039;B&#039; =&gt; array(<br>
+        &#039;Bedfordshire&#039; =&gt; &#039;Bedfordshire&#039;,<br>
+        &#039;Berkshire&#039; =&gt; &#039;Berkshire&#039;,<br>
+        &#039;Buckinghamshire&#039; =&gt; &#039;Buckinghamshire&#039;,<br>
+      ),<br>
+      &#039;C&#039; =&gt; array(<br>
+        &#039;Cambridgeshire&#039; =&gt; &#039;Cambridgeshire&#039;,<br>
+        &#039;Cheshire&#039; =&gt; &#039;Cheshire&#039;,<br>
+        &#039;Cornwall&#039; =&gt; &#039;Cornwall&#039;,<br>
+        &#039;Cumberland&#039; =&gt; &#039;Cumberland&#039;,<br>
+      ),<br>
+      &#039;D&#039; =&gt; array(<br>
+        &#039;Derbyshire&#039; =&gt; &#039;Derbyshire&#039;,<br>
+        &#039;Devon&#039; =&gt; &#039;Devon&#039;,<br>
+        &#039;Dorset&#039; =&gt; &#039;Dorset&#039;,<br>
+        &#039;Durham&#039; =&gt; &#039;Durham&#039;,<br>
+      ),<br>
+      &#039;E&#039; =&gt; array(<br>
+        &#039;Essex&#039; =&gt; &#039;Essex&#039;,<br>
+      ),<br>
+      &#039;G&#039; =&gt; array(<br>
+        &#039;Gloucestershire&#039; =&gt; &#039;Gloucestershire&#039;,<br>
+      ),<br>
+      &#039;H&#039; =&gt; array(<br>
+        &#039;Hampshire&#039; =&gt; &#039;Hampshire&#039;,<br>
+        &#039;Herefordshire&#039; =&gt; &#039;Herefordshire&#039;,<br>
+        &#039;Hertfordshire&#039; =&gt; &#039;Hertfordshire&#039;,<br>
+        &#039;Huntingdonshire&#039; =&gt; &#039;Huntingdonshire&#039;,<br>
+      ),<br>
+      &#039;K&#039; =&gt; array(<br>
+        &#039;Kent&#039; =&gt; &#039;Kent&#039;,<br>
+      ),<br>
+      &#039;L&#039; =&gt; array(<br>
+        &#039;Lancashire&#039; =&gt; &#039;Lancashire&#039;,<br>
+        &#039;Leicestershire&#039; =&gt; &#039;Leicestershire&#039;,<br>
+        &#039;Lincolnshire&#039; =&gt; &#039;Lincolnshire&#039;,<br>
+      ),<br>
+      &#039;M&#039; =&gt; array(<br>
+        &#039;Middlesex&#039; =&gt; &#039;Middlesex&#039;,<br>
+      ),<br>
+      &#039;N&#039; =&gt; array(<br>
+        &#039;Norfolk&#039; =&gt; &#039;Norfolk&#039;,<br>
+        &#039;Northamptonshire&#039; =&gt; &#039;Northamptonshire&#039;,<br>
+        &#039;Northumberland&#039; =&gt; &#039;Northumberland&#039;,<br>
+        &#039;Nottinghamshire&#039; =&gt; &#039;Nottinghamshire&#039;,<br>
+      ),<br>
+      &#039;O&#039; =&gt; array(<br>
+        &#039;Oxfordshire&#039; =&gt; &#039;Oxfordshire&#039;,<br>
+      ),<br>
+      &#039;R&#039; =&gt; array(<br>
+        &#039;Rutland&#039; =&gt; &#039;Rutland&#039;,<br>
+      ),<br>
+      &#039;S&#039; =&gt; array(<br>
+        &#039;Shropshire&#039; =&gt; &#039;Shropshire&#039;,<br>
+        &#039;Somerset&#039; =&gt; &#039;Somerset&#039;,<br>
+        &#039;Staffordshire&#039; =&gt; &#039;Staffordshire&#039;,<br>
+        &#039;Suffolk&#039; =&gt; &#039;Suffolk&#039;,<br>
+        &#039;Surrey&#039; =&gt; &#039;Surrey&#039;,<br>
+        &#039;Sussex&#039; =&gt; &#039;Sussex&#039;,<br>
+      ),<br>
+      &#039;W&#039; =&gt; array(<br>
+        &#039;Warwickshire&#039; =&gt; &#039;Warwickshire&#039;,<br>
+        &#039;Westmorland&#039; =&gt; &#039;Westmorland&#039;,<br>
+        &#039;Wiltshire&#039; =&gt; &#039;Wiltshire&#039;,<br>
+        &#039;Worcestershire&#039; =&gt; &#039;Worcestershire&#039;,<br>
+      ),<br>
+      &#039;Y&#039; =&gt; array(<br>
+        &#039;Yorkshire&#039; =&gt; &#039;Yorkshire&#039;,<br>
+      ),<br>
+    ),<br>
+    &#039;Scotland&#039; =&gt; array(<br>
+      &#039;A&#039; =&gt; array(<br>
+        &#039;Aberdeenshire&#039; =&gt; &#039;Aberdeenshire&#039;,<br>
+        &#039;Angus&#039; =&gt; &#039;Angus&#039;,<br>
+        &#039;Argyllshire&#039; =&gt; &#039;Argyllshire&#039;,<br>
+        &#039;Ayrshire&#039; =&gt; &#039;Ayrshire&#039;,<br>
+      ),<br>
+      &#039;B&#039; =&gt; array(<br>
+        &#039;Banffshire&#039; =&gt; &#039;Banffshire&#039;,<br>
+        &#039;Berwickshire&#039; =&gt; &#039;Berwickshire&#039;,<br>
+        &#039;Buteshire&#039; =&gt; &#039;Buteshire&#039;,<br>
+      ),<br>
+      &#039;C&#039; =&gt; array(<br>
+        &#039;Cromartyshire&#039; =&gt; &#039;Cromartyshire&#039;,<br>
+        &#039;Caithness&#039; =&gt; &#039;Caithness&#039;,<br>
+        &#039;Clackmannanshire&#039; =&gt; &#039;Clackmannanshire&#039;,<br>
+       ),<br>
+      &#039;D&#039; =&gt; array(<br>
+        &#039;Dumfriesshire&#039; =&gt; &#039;Dumfriesshire&#039;,<br>
+        &#039;Dunbartonshire&#039; =&gt; &#039;Dunbartonshire&#039;,<br>
+      ),<br>
+      &#039;E&#039; =&gt; array(<br>
+        &#039;East Lothian&#039; =&gt; &#039;East Lothian&#039;,<br>
+      ),<br>
+      &#039;F&#039; =&gt; array(<br>
+        &#039;Fife&#039; =&gt; &#039;Fife&#039;,<br>
+      ),<br>
+      &#039;I&#039; =&gt; array(<br>
+        &#039;Inverness-shire&#039; =&gt; &#039;Inverness-shire&#039;,<br>
+      ),<br>
+      &#039;K&#039; =&gt; array(<br>
+        &#039;Kincardineshire&#039; =&gt; &#039;Kincardineshire&#039;,<br>
+        &#039;Kinross-shire&#039; =&gt; &#039;Kinross-shire&#039;,<br>
+        &#039;Kirkcudbrightshire&#039; =&gt; &#039;Kirkcudbrightshire&#039;,<br>
+      ),<br>
+      &#039;L&#039; =&gt; array(<br>
+        &#039;Lanarkshire&#039; =&gt; &#039;Lanarkshire&#039;,<br>
+      ),<br>
+      &#039;M&#039; =&gt; array(<br>
+        &#039;Midlothian&#039; =&gt; &#039;Midlothian&#039;,<br>
+        &#039;Morayshire&#039; =&gt; &#039;Morayshire&#039;,<br>
+      ),<br>
+      &#039;N&#039; =&gt; array(<br>
+        &#039;Nairnshire&#039; =&gt; &#039;Nairnshire&#039;,<br>
+      ),<br>
+      &#039;O&#039; =&gt; array(<br>
+        &#039;Orkney&#039; =&gt; &#039;Orkney&#039;,<br>
+      ),<br>
+      &#039;P&#039; =&gt; array(<br>
+        &#039;Peeblesshire&#039; =&gt; &#039;Peeblesshire&#039;,<br>
+        &#039;Perthshire&#039; =&gt; &#039;Perthshire&#039;,<br>
+      ),<br>
+      &#039;R&#039; =&gt; array(<br>
+        &#039;Renfrewshire&#039; =&gt; &#039;Renfrewshire&#039;,<br>
+        &#039;Ross-shire&#039; =&gt; &#039;Ross-shire&#039;,<br>
+        &#039;Roxburghshire&#039; =&gt; &#039;Roxburghshire&#039;,<br>
+      ),<br>
+      &#039;S&#039; =&gt; array(<br>
+        &#039;Selkirkshire&#039; =&gt; &#039;Selkirkshire&#039;,<br>
+        &#039;Shetland&#039; =&gt; &#039;Shetland&#039;,<br>
+        &#039;Stirlingshire&#039; =&gt; &#039;Stirlingshire&#039;,<br>
+        &#039;Sutherland&#039; =&gt; &#039;Sutherland&#039;,<br>
+      ),<br>
+      &#039;W&#039; =&gt; array(<br>
+        &#039;West Lothian&#039; =&gt; &#039;West Lothian&#039;,<br>
+        &#039;Wigtownshire&#039; =&gt; &#039;Wigtownshire&#039;,<br>
+      ),<br>
+    ),<br>
+    &#039;Ulster&#039; =&gt; array(<br>
+      &#039;County Antrim&#039; =&gt; &#039;County Antrim&#039;,<br>
+      &#039;County Armagh&#039; =&gt; &#039;County Armagh&#039;,<br>
+      &#039;County Down&#039; =&gt; &#039;County Down&#039;,<br>
+      &#039;County Fermanagh&#039; =&gt; &#039;County Fermanagh&#039;,<br>
+      &#039;County Tyrone&#039; =&gt; &#039;County Tyrone&#039;,<br>
+      &#039;County Londonderry&#039; =&gt; &#039;County Londonderry&#039;,<br>
+    ),<br>
+    &#039;Wales&#039; =&gt; array(<br>
+      &#039;A&#039; =&gt; array(<br>
+        &#039;Anglesey&#039; =&gt; &#039;Anglesey&#039;,<br>
+      ),<br>
+      &#039;B&#039; =&gt; array(<br>
+        &#039;Brecknockshire&#039; =&gt; &#039;Brecknockshire&#039;,<br>
+      ),<br>
+      &#039;C&#039; =&gt; array(<br>
+        &#039;Caernarfonshire&#039; =&gt; &#039;Caernarfonshire&#039;,<br>
+        &#039;Carmarthenshire&#039; =&gt; &#039;Carmarthenshire&#039;,<br>
+        &#039;Cardiganshire&#039; =&gt; &#039;Cardiganshire&#039;,<br>
+      ),<br>
+      &#039;D&#039; =&gt; array(<br>
+        &#039;Denbighshire&#039; =&gt; &#039;Denbighshire&#039;,<br>
+      ),<br>
+      &#039;F&#039; =&gt; array(<br>
+        &#039;Flintshire&#039; =&gt; &#039;Flintshire&#039;,<br>
+      ),<br>
+      &#039;G&#039; =&gt; array(<br>
+        &#039;Glamorgan&#039; =&gt; &#039;Glamorgan&#039;,<br>
+      ),<br>
+      &#039;M&#039; =&gt; array(<br>
+        &#039;Merioneth&#039; =&gt; &#039;Merioneth&#039;,<br>
+        &#039;Monmouthshire&#039; =&gt; &#039;Monmouthshire&#039;,<br>
+        &#039;Montgomeryshire&#039; =&gt; &#039;Montgomeryshire&#039;,<br>
+      ),<br>
+      &#039;P&#039; =&gt; array(<br>
+        &#039;Pembrokeshire&#039; =&gt; &#039;Pembrokeshire&#039;,<br>
+      ),<br>
+      &#039;R&#039; =&gt; array(<br>
+        &#039;Radnorshire&#039; =&gt; &#039;Radnorshire&#039;,<br>
+      ),<br>
+    ),<br>
+  );</p>
+</section>
+<section>
+<h3>[2006-05-25 04:32 UTC] walter_tom at hotmail dot com</h3>
+<p>Hi</p>
+<p>I came across a bug when using Chris Yates&#039; modification to allow optgroups.</p>
+<p>The exportValues function errors when it tries to check the submitted values against the _options array to see if it is clean.</p>
+<p>I came up with this workaround. Warning, this has not been thoroughly tested at all!</p>
+<p>Modify the exportValues function, from line 651, replacing the stuff which is commented out here:</p>
+<p>// CLY - modified to allow optgroups<br>
+            	if ($this-&gt;_isInOptGroup($v, $this-&gt;_options)) {<br>
+            		$cleanValue[] = $v;<br>
+            	}<br>
+//                for ($i = 0, $optCount = count($this-&gt;_options); $i &lt; $optCount; $i++) {<br>
+//                    if ($v == $this-&gt;_options[$i][&#039;attr&#039;][&#039;value&#039;]) {<br>
+//                        $cleanValue[] = $v;<br>
+//                        break;<br>
+//                    }<br>
+//                }<br>
+// end mod</p>
+<p>Also, add this function:</p>
+<p>// CLY - new function to allow optgroups<br>
+    function _isInOptGroup($v, $opts) {<br>
+    	$isInOptGroup = false;<br>
+    	foreach ($opts as $opt) {<br>
+    		if (isset($opt[&#039;options&#039;])) {<br>
+    			$isInOptGroup = $this-&gt;_isInOptGroup($v, $opt[&#039;options&#039;]);<br>
+    		} else {<br>
+	            if ($v == $opt[&#039;attr&#039;][&#039;value&#039;]) {<br>
+	                $isInOptGroup = true;<br>
+	            }<br>
+    		}<br>
+        }<br>
+        return $isInOptGroup;<br>
+    }</p>
+</section>
+<section>
+<h3>[2006-05-25 05:38 UTC] walter_tom at hotmail dot com</h3>
+<p>OOPS!</p>
+<p>Yes, as I said, the aforementioned code is not really tested at all, and I discovered soon after posting there was an error. The _isInOptGroup function from the above code should be replaced with this:</p>
+<p>function _isInOptGroup($v, $opts) {<br>
+    	$isInOptGroup = false;<br>
+    	foreach ($opts as $opt) {<br>
+    		if (isset($opt[&#039;options&#039;])) {<br>
+    			$isInOptGroup = $this-&gt;_isInOptGroup($v, $opt[&#039;options&#039;]);<br>
+    		} else {<br>
+	            if ($v == $opt[&#039;attr&#039;][&#039;value&#039;]) {<br>
+	                $isInOptGroup = true;<br>
+	            }<br>
+    		}<br>
+    		if ($isInOptGroup) break;<br>
+        }<br>
+        return $isInOptGroup;<br>
+    }</p>
+<p>The break; clause is the bit that changed.</p>
+<p>Sorry. Use at your own risk.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7241</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser_Admin/index.html">LiveUser_Admin</a> &#187; Bug #7241</h1>
+<p>Error on fetching rights for a specific user that only has inherited rights</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-03-29 09:49 UTC</td></tr>
+<tr><th>From</th><td>michiel at dinnersite dot nl</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser_Admin/index.html">LiveUser_Admin</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.0</td></tr>
+<tr><th>OS</th><td>Mandrake</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-03-29 09:49 UTC] michiel at dinnersite dot nl</h3>
+<p>Description:<br>
+------------<br>
+A call to the getRights function with the initial params:</p>
+<p>Array<br>
+(<br>
+    [filters] =&gt; Array<br>
+        (<br>
+            [perm_user_id] =&gt; 8<br>
+        )</p>
+<p>[inherited] =&gt; 1<br>
+    [implied] =&gt; 1<br>
+    [rekey] =&gt; 1<br>
+    [fields] =&gt; Array<br>
+        (<br>
+            [0] =&gt; right_id<br>
+            [1] =&gt; area_id<br>
+            [2] =&gt; right_define_name<br>
+            [3] =&gt; has_implied<br>
+        )</p>
+<p>[select] =&gt; all<br>
+)</p>
+<p>And the params created by _getInheritedRights()</p>
+<p>Array<br>
+(<br>
+    [filters] =&gt; Array<br>
+        (<br>
+            [perm_user_id] =&gt; 8<br>
+            [group_id] =&gt; Array<br>
+                (<br>
+                    [0] =&gt; 1<br>
+                    [1] =&gt; 4<br>
+                )</p>
+<p>)</p>
+<p>[rekey] =&gt; 1<br>
+    [fields] =&gt; Array<br>
+        (<br>
+            [0] =&gt; right_id<br>
+            [1] =&gt; area_id<br>
+            [2] =&gt; right_define_name<br>
+            [3] =&gt; has_implied<br>
+        )</p>
+<p>[select] =&gt; all<br>
+    [by_group] =&gt; 1<br>
+    [inherited] =&gt; <br>
+    [implied] =&gt; <br>
+)</p>
+<p>Results in the following errorstack (just a small part, mail me for the full errorstack):</p>
+<p>Array<br>
+(<br>
+    [0] =&gt; Array<br>
+        (<br>
+            [code] =&gt; -4<br>
+            [params] =&gt; Array<br>
+                (<br>
+                    [reason] =&gt; DB Error: unknown error-SELECT liveuser_rights.right_id AS right_id, liveuser_rights.area_id AS area_id, liveuser_rights.right_define_name AS right_define_name, liveuser_rights.has_implied AS has_implied  FROM liveuser_rights, liveuser_groupusers  WHERE liveuser_groupusers.group_id IN (&#039;1&#039;, &#039;3&#039;, &#039;4&#039;)<br>
+     AND liveuser_rights.area_id = liveuser_areas.area_id<br>
+     AND liveuser_areas.application_id = liveuser_applications.application_id<br>
+     AND liveuser_applications.application_id = liveuser_areas.application_id<br>
+     AND liveuser_translations.section_type = 1<br>
+     AND liveuser_areas.area_id = liveuser_translations.section_id<br>
+     AND liveuser_translations.section_id = liveuser_applications.application_id<br>
+     AND liveuser_rights.right_id = liveuser_translations.section_id [nativecode=1109 ** Unknown table &#039;liveuser_areas&#039; in where clause]<br>
+                )</p>
+<p>[package] =&gt; LiveUser_Admin<br>
+            [level] =&gt; exception<br>
+            [time] =&gt; 1143622685.44<br>
+            [context] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /home/netural/ds6/sdk/PEAR/LiveUser/Admin/Storage/DB.php<br>
+                    [line] =&gt; 321<br>
+                    [function] =&gt; queryall<br>
+                    [class] =&gt; liveuser_admin_perm_storage_db<br>
+                )</p>
+<p>[message] =&gt; Couldn&#039;t create the query, reason: DB Error: unknown error-SELECT liveuser_rights.right_id AS right_id, liveuser_rights.area_id AS area_id, liveuser_rights.right_define_name AS right_define_name, liveuser_rights.has_implied AS has_implied  FROM liveuser_rights, liveuser_groupusers  WHERE liveuser_groupusers.group_id IN (&#039;1&#039;, &#039;3&#039;, &#039;4&#039;)<br>
+     AND liveuser_rights.area_id = liveuser_areas.area_id<br>
+     AND liveuser_areas.application_id = liveuser_applications.application_id<br>
+     AND liveuser_applications.application_id = liveuser_areas.application_id<br>
+     AND liveuser_translations.section_type = 1<br>
+     AND liveuser_areas.area_id = liveuser_translations.section_id<br>
+     AND liveuser_translations.section_id = liveuser_applications.application_id<br>
+     AND liveuser_rights.right_id = liveuser_translations.section_id [nativecode=1109 ** Unknown table &#039;liveuser_areas&#039; in where clause]<br>
+        )</p>
+<p>[1] =&gt; Array<br>
+        (<br>
+            [code] =&gt; -4<br>
+            [params] =&gt; Array<br>
+                (<br>
+                    [reason] =&gt; infinite recursion detected: translations<br>
+                )</p>
+<p>[package] =&gt; LiveUser_Admin<br>
+            [level] =&gt; exception<br>
+            [time] =&gt; 1143622685.44<br>
+            [context] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /home/netural/ds6/sdk/PEAR/LiveUser/Admin/Storage/SQL.php<br>
+                    [line] =&gt; 717<br>
+                    [function] =&gt; createjoinfilter<br>
+                    [class] =&gt; liveuser_admin_perm_storage_db<br>
+                )</p>
+<p>[message] =&gt; Couldn&#039;t create the query, reason: infinite recursion detected: translations<br>
+        )</p>
+</section>
+<section>
+<h3>[2006-03-30 07:49 UTC] michiel at dinnersite dot nl</h3>
+<p>A tricky one indeed.. Btw. I did try to remove the perm_user_id from the getInheritedRights params but nothing changed.</p>
+<p>I could help out on some points to add some comment to the Admin side of LiveUser... (Been working with it a lot so I think understanding the code quite well). Mail me if you need any help with this..</p>
+</section>
+<section>
+<h3>[2006-03-30 08:11 UTC] michiel at dinnersite dot nl</h3>
+<p>Sounds</p>
+</section>
+<section>
+<h3>[2006-03-30 08:11 UTC] michiel at dinnersite dot nl</h3>
+<p>Sounds like a BC break, don&#039;t know if my code would break because of it (don&#039;t think so) but I can image it will with some others..</p>
+</section>
+<section>
+<h3>[2006-04-10 09:07 UTC] michiel at dinnersite dot nl</h3>
+<p>It still generates errors unfortunately.</p>
+<p>Using the following params:</p>
+<p>Array<br>
+(<br>
+    [filters] =&gt; Array<br>
+        (<br>
+            [perm_user_id] =&gt; 9<br>
+        )</p>
+<p>[inherited] =&gt; Array<br>
+        (<br>
+            [perm_user_id] =&gt; 9<br>
+        )</p>
+<p>[implied] =&gt; Array<br>
+        (<br>
+            [perm_user_id] =&gt; 9<br>
+        )</p>
+<p>[rekey] =&gt; 1<br>
+    [fields] =&gt; Array<br>
+        (<br>
+            [0] =&gt; right_id<br>
+            [1] =&gt; area_id<br>
+            [2] =&gt; right_define_name<br>
+            [3] =&gt; has_implied<br>
+        )</p>
+<p>[select] =&gt; all<br>
+)</p>
+<p>The errorstack:</p>
+<p>[0] =&gt; Array<br>
+        (<br>
+            [code] =&gt; -4<br>
+            [params] =&gt; Array<br>
+                (<br>
+                    [reason] =&gt; DB Error: no such field-SELECT liveuser_rights.right_id AS right_id, liveuser_rights.area_id AS area_id, liveuser_rights.right_define_name AS right_define_name, liveuser_rights.has_implied AS has_implied  FROM liveuser_rights, liveuser_groupusers  WHERE liveuser_groupusers.perm_user_id = &#039;9&#039;<br>
+     AND liveuser_groupusers.group_id IN (&#039;1&#039;)<br>
+     AND liveuser_rights.area_id = liveuser_areas.area_id<br>
+     AND liveuser_areas.application_id = liveuser_applications.application_id<br>
+     AND liveuser_applications.application_id = liveuser_areas.application_id<br>
+     AND liveuser_translations.section_type = 1<br>
+     AND liveuser_areas.area_id = liveuser_translations.section_id<br>
+     AND liveuser_translations.section_id = liveuser_applications.application_id<br>
+     AND liveuser_rights.right_id = liveuser_translations.section_id [nativecode=1054 ** Unknown column &#039;liveuser_areas.area_id&#039; in &#039;where clause&#039;]<br>
+                )</p>
+<p>[package] =&gt; LiveUser_Admin<br>
+            [level] =&gt; exception<br>
+            [time] =&gt; 1144659042.51<br>
+            [context] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /home/netural/ds6/sdk/PEAR/LiveUser/Admin/Storage/DB.php<br>
+                    [line] =&gt; 321<br>
+                    [function] =&gt; queryall<br>
+                    [class] =&gt; liveuser_admin_perm_storage_db<br>
+                )</p>
+<p>[message] =&gt; Couldn&#039;t create the query, reason: DB Error: no such field-SELECT liveuser_rights.right_id AS right_id, liveuser_rights.area_id AS area_id, liveuser_rights.right_define_name AS right_define_name, liveuser_rights.has_implied AS has_implied  FROM liveuser_rights, liveuser_groupusers  WHERE liveuser_groupusers.perm_user_id = &#039;9&#039;<br>
+     AND liveuser_groupusers.group_id IN (&#039;1&#039;)<br>
+     AND liveuser_rights.area_id = liveuser_areas.area_id<br>
+     AND liveuser_areas.application_id = liveuser_applications.application_id<br>
+     AND liveuser_applications.application_id = liveuser_areas.application_id<br>
+     AND liveuser_translations.section_type = 1<br>
+     AND liveuser_areas.area_id = liveuser_translations.section_id<br>
+     AND liveuser_translations.section_id = liveuser_applications.application_id<br>
+     AND liveuser_rights.right_id = liveuser_translations.section_id [nativecode=1054 ** Unknown column &#039;liveuser_areas.area_id&#039; in &#039;where clause&#039;]<br>
+        )</p>
+<p>[1] =&gt; Array<br>
+        (<br>
+            [code] =&gt; -4<br>
+            [params] =&gt; Array<br>
+                (<br>
+                    [reason] =&gt; infinite recursion detected: translations<br>
+                )</p>
+<p>[package] =&gt; LiveUser_Admin<br>
+            [level] =&gt; exception<br>
+            [time] =&gt; 1144659042.51<br>
+            [context] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /home/netural/ds6/sdk/PEAR/LiveUser/Admin/Storage/SQL.php<br>
+                    [line] =&gt; 717<br>
+                    [function] =&gt; createjoinfilter<br>
+                    [class] =&gt; liveuser_admin_perm_storage_db<br>
+                )</p>
+<p>[message] =&gt; Couldn&#039;t create the query, reason: infinite recursion detected: translations<br>
+        )</p>
+<p>Other changes with this version:</p>
+<p>* Break in my getGroups function, had to change my call to getRights().</p>
+<p>* Rights still fetch ok for the current logged in user (inherited and granted) with current code (no changes).</p>
+</section>
+<section>
+<h3>[2006-04-12 11:37 UTC] michiel at dinnersite dot nl</h3>
+<p>An update on the situation. I got everything working again, but with some interesting notes. In some cases adding right_level is required and some times adding right_level causes problems. right_level is required when you add perm_user_id or group_id to the filters. right_level gives problems when filtering on area_id. I included my parameters below, maby they can help some.</p>
+<p>With these parameters the right_level is required:</p>
+<p>Array<br>
+(<br>
+    [filters] =&gt; Array<br>
+        (<br>
+            [perm_user_id] =&gt; 8<br>
+        )</p>
+<p>[inherited] =&gt; Array<br>
+        (<br>
+            [perm_user_id] =&gt; 8<br>
+        )</p>
+<p>[implied] =&gt; Array<br>
+        (<br>
+            [perm_user_id] =&gt; 8<br>
+        )</p>
+<p>[rekey] =&gt; 1<br>
+    [fields] =&gt; Array<br>
+        (<br>
+            [0] =&gt; right_id<br>
+            [1] =&gt; area_id<br>
+            [2] =&gt; right_define_name<br>
+            [3] =&gt; has_implied<br>
+            [4] =&gt; right_level<br>
+        )</p>
+<p>[select] =&gt; all<br>
+)</p>
+<p>The same goes for filtering by group_id.</p>
+<p>However if you add right_level when filtering on area_id results in an empty array. Removing the right_level does provide (the correct) results.</p>
+</section>
+<section>
+<h3>[2006-04-13 10:59 UTC] michiel at dinnersite dot nl</h3>
+<p>I mailed you my database dump.</p>
+</section>
+<section>
+<h3>[2006-04-13 11:01 UTC] michiel at dinnersite dot nl</h3>
+<p>I maile</p>
+</section>
+<section>
+<h3>[2006-04-14 14:42 UTC] michiel at dinnersite dot nl</h3>
+<p>Hmm, that is a bit weird. I&#039;ll just try to renew my whole LiveUser package with the CVS version again (did the admin part once already). I&#039;ll update you as soon as I know more.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

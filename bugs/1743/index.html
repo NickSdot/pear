@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1743</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_SmartIRC/index.html">Net_SmartIRC</a> &#187; Bug #1743</h1>
+<p>declare+pcntl_signal semantics cause fatal error in Net_SmartIRC</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-06-30 01:37 UTC</td></tr>
+<tr><th>From</th><td>zancarius at zancarius dot com</td></tr>
+<tr><th>Assigned</th><td>garrettw</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_SmartIRC/index.html">Net_SmartIRC</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.7</td></tr>
+<tr><th>OS</th><td>FreeBSD 5.1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-06-30 01:37 UTC] zancarius at zancarius dot com</h3>
+<p>Description:<br>
+------------<br>
+When using declare(ticks=1); to use functions such as pcntl&#039;s pcntl_signal(), Net_SmartIRC dies with a fatal error on include. This appears to be due to the include/class declaration order which PHP is not normally particularly anal about without declare().</p>
+<p>Version affected: Net_SmartIRC 0.5.5p1<br>
+PHP Version: 4.3.7</p>
+<p>Configure Command =&gt;  &#039;./configure&#039; &#039;--with-pgsql&#039; &#039;--with-mysql=/db/mysql&#039; &#039;--with-gd&#039; &#039;--enable-exif&#039; &#039;--with-freetype-dir=/usr&#039; &#039;--enable-gd-native-ttf&#039; &#039;--enable-gd-imgstrttf&#039; &#039;--with-jpeg-dir=/usr&#039; &#039;--with-png-dir=/usr&#039; &#039;--with-zlib&#039; &#039;--with-gmp&#039; &#039;--enable-bcmath&#039; &#039;--enable-calendar&#039; &#039;--with-bz2&#039; &#039;--with-xml&#039; &#039;--with-dom=/usr&#039; &#039;--with-gettext&#039; &#039;--with-mcrypt&#039; &#039;--with-mhash&#039; &#039;--with-pspell&#039; &#039;--with-readline&#039; &#039;--enable-sockets&#039; &#039;--enable-pcntl&#039; &#039;--with-ncurses&#039;</p>
+<p>Reproduce code:<br>
+---------------<br>
+#!/usr/local/bin/php -q<br>
+&lt;?php<br>
+declare(ticks=1);<br>
+include &#039;Net/SmartIRC.php&#039;;<br>
+function testhandler()<br>
+{<br>
+        print &quot;Exiting...\n&quot;;<br>
+        exit (0);<br>
+}<br>
+pcntl_signal(SIGINT, &#039;testhandler&#039;);<br>
+while (true) { }<br>
+?&gt;</p>
+<p>--</p>
+<p>A unified diff of changes made to the class declaration and include order may be found here:</p>
+<p>http://sagittarius.destrealm.org/bshelton/SmartIRC.pcntl.patch</p>
+<p>WARNING! The patch has NOT been tested exhaustively; however, it only changes the order in which classes are declared and included.</p>
+<p>Expected result:<br>
+----------------<br>
+[sagittarius:test]$ ./test.php<br>
+^CExiting...</p>
+<p>Actual result:<br>
+--------------<br>
+[sagittarius:test]$ ./test.php</p>
+<p>Fatal error: Class net_smartirc_irccommands:  Cannot inherit from undefined class net_smartirc_base in /usr/local/lib/php/Net.orig/SmartIRC/irccommands.php on line 28</p>
+</section>
+<section>
+<h3>[2005-07-08 23:20 UTC] a_stevenson2000 at hotmail dot com</h3>
+<p>I also am having a simliar problem.  If I put declare(ticks=1) in my code, then there is a function in an include file that is no longer found, and php quits with a fatal error.<br>
+  It doesn&#039;t matter where I put declare(ticks=1) it always fails, and runs just perfectly without that statement.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

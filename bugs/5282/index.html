@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5282</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Testing &#187; <a href="package/PHPUnit2/index.html">PHPUnit2</a> &#187; Bug #5282</h1>
+<p>Tests get run 3 times</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-09-02 17:06 UTC</td></tr>
+<tr><th>From</th><td>jeff dot sawatzky at niltzdesigns dot com</td></tr>
+<tr><th>Assigned</th><td>sebastian</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/PHPUnit2/index.html">PHPUnit2</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-09-02 17:06 UTC] jeff dot sawatzky at niltzdesigns dot com</h3>
+<p>Description:<br>
+------------<br>
+using PHPUnit2 version 2.2.1</p>
+<p>I have 4 classes (Date, Time, DateTime and TimeSpan)</p>
+<p>I have 4 test classes (DateTest, TimeTest, DateTimeTest, TimeSpanTest) that have tests that test the methods on the respective classes.  DateTest has 5 tests, TimeTest has 5 tests, DateTimeTest has 8 tests, and TimeSpanTest has 6 tests totalling 24 tests all together.</p>
+<p>I then have a TestSuite class defined (shown in the test script section below).  When I run</p>
+<p>When I run $phpunit TestSuite everything runs fine, except the fact that it runs all the tests 3 times resulting in 72 tests being run total.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+require_once &quot;PHPUnit2/Framework/TestSuite.php&quot;;</p>
+<p>/**<br>
+ * Test suite class.<br>
+ */<br>
+class TestSuite extends PHPUnit2_Framework_TestSuite {<br>
+	<br>
+	public function __construct()<br>
+	{<br>
+		parent::__construct();<br>
+		<br>
+		//add the time class tests to the suite<br>
+		require_once &quot;time_test.php&quot;;<br>
+		$this-&gt;addTestSuite(&quot;TimeTest&quot;);<br>
+		<br>
+		//add the date class tests to the suite<br>
+		require_once &quot;date_test.php&quot;;<br>
+		$this-&gt;addTestSuite(&quot;DateTest&quot;);<br>
+		<br>
+		//add the datetime class tests to the suite<br>
+		require_once &quot;datetime_test.php&quot;;<br>
+		$this-&gt;addTestSuite(&quot;DateTimeTest&quot;);<br>
+		<br>
+		//add the timespan class tests to the suite<br>
+		require_once &quot;timespan_test.php&quot;;<br>
+		$this-&gt;addTestSuite(&quot;TimeSpanTest&quot;);<br>
+	}<br>
+}<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+PHPUnit 2.2.1 by Sebastian Bergmann.</p>
+<p>.........................................<br>
+...............................</p>
+<p>Time: 0.10421204566956</p>
+<p>OK (24 tests)</p>
+<p>Actual result:<br>
+--------------<br>
+PHPUnit 2.2.1 by Sebastian Bergmann.</p>
+<p>.........................................<br>
+...............................</p>
+<p>Time: 0.10421204566956</p>
+<p>OK (72 tests)</p>
+</section>
+<section>
+<h3>[2005-10-15 07:53 UTC] sebastian at php dot net</h3>
+<p>I was able to reproduce this issue but have not found a fix yet.</p>
+<p>You should circumvent this issue by setting up your TestSuite object in a more standard way (look at http://cvs.php.net/pear/PHPUnit2/Tests/ for an example of how to organize a test suite with PHPUnit2). The way you&#039;re doing it is not encouraged (nor supported at this time).</p>
+</section>
+<section>
+<h3>[2005-12-31 07:28 UTC] sebastian at php dot net</h3>
+<p>Assume we have the following two sourcefiles:</p>
+<p>FooSuite.php<br>
+  &lt;?php<br>
+  require_once &#039;FooTest.php&#039;;<br>
+  <br>
+  class FooSuite extends PHPUnit2_Framework_TestSuite {<br>
+      public function __construct() {<br>
+          parent::__construct();<br>
+        <br>
+          $this-&gt;addTestSuite(&#039;TimeTest&#039;);<br>
+      }<br>
+  }<br>
+  ?&gt;</p>
+<p>FooTest.php<br>
+  &lt;?php<br>
+  class FooTest extends PHPUnit2_Framework_TestCase {<br>
+      public function testSomething() {<br>
+          $this-&gt;assertEquals(TRUE, FALSE);<br>
+      }<br>
+  }<br>
+  ?&gt;</p>
+<p>Running PHPUnit results in</p>
+<p>$ phpunit FooSuite<br>
+  PHPUnit 3.0.0-dev by Sebastian Bergmann.<br>
+  <br>
+  <br>
+  <br>
+  Time: 00:00<br>
+  <br>
+  OK (0 tests)</p>
+<p>and</p>
+<p>PHPUnit 3.0.0-dev by Sebastian Bergmann.<br>
+  <br>
+  F<br>
+  <br>
+  Time: 00:00<br>
+  There was 1 failure:<br>
+  1) testSomething(FooTest)<br>
+  failed asserting that &lt;false&gt; is equal to &lt;boolean:true&gt;<br>
+  expected bool &lt;true&gt;<br>
+  got bool      &lt;false&gt;<br>
+  /home/sb/FooTest.php:4<br>
+  <br>
+  FAILURES!<br>
+  Tests: 1, Failures: 1.</p>
+<p>You need to change the FooSuite class as follows</p>
+<p>FooSuite.php<br>
+  &lt;?php<br>
+  require_once &#039;FooTest.php&#039;;<br>
+  <br>
+  class FooSuite {<br>
+      public static function suite() {<br>
+          $suite = new PHPUnit2_Framework_TestSuite;<br>
+          $suite-&gt;addTestSuite(&#039;FooTest&#039;);<br>
+  <br>
+          return $suite;<br>
+      }<br>
+  }<br>
+  ?&gt;</p>
+<p>to achieve what you want</p>
+<p>$ phpunit FooSuite<br>
+  PHPUnit 3.0.0-dev by Sebastian Bergmann.<br>
+  <br>
+  F<br>
+  <br>
+  Time: 00:00<br>
+  There was 1 failure:<br>
+  1) testSomething(FooTest)<br>
+  failed asserting that &lt;false&gt; is equal to &lt;boolean:true&gt;<br>
+  expected bool &lt;true&gt;<br>
+  got bool      &lt;false&gt;<br>
+  /home/sb/FooTest.php:4<br>
+  <br>
+  FAILURES!<br>
+  Tests: 1, Failures: 1.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

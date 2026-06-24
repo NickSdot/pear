@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #715</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #715</h1>
+<p>SOAP-0.8RC3 broken</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-02-09 15:24 UTC</td></tr>
+<tr><th>From</th><td>stanislav dot voroniy at portavita dot nl</td></tr>
+<tr><th>Assigned</th><td>arnaud</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Linux RH 9</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-02-09 15:24 UTC] stanislav dot voroniy at portavita dot nl</h3>
+<p>Description:<br>
+------------<br>
+I dont have to much time for debbuging - I have a work to do, but SOAP-0.8RC3 definetly broken - a code that works file with 0.8RC2 after upgrade to RC3 returns soap_fault. With var_dump-inf fault object I see no reasons for fault - HTTP code is 200 and as message complete SOAP responce included.</p>
+</section>
+<section>
+<h3>[2004-02-10 08:46 UTC] stanislav dot voroniy at portavita dot nl</h3>
+<p>Some debug info: In RC3 curl now returns full header, which was stripped in RC2. This is the cause of error I get, because your regular expression does not work correctly with the following header:</p>
+<p>HTTP/1.1 100 Continue<br>
+Server: Microsoft-IIS/4.0<br>
+Date: Tue, 10 Feb 2004 08:42:46 GMT<br>
+Content-Type: text/html<br>
+Pragma: no-cache<br>
+Expires: Tue, 30 Mar 1999 11:54:01 GMT<br>
+Content-Length: 25106</p>
+<p>HTTP/1.1 200 .........</p>
+<p>i.e. I have two &quot;headers instead of one. Previously it was skipped by curl, now you should care about it yourself.</p>
+</section>
+<section>
+<h3>[2004-02-10 09:14 UTC] stanislav dot voroniy at portavita dot nl</h3>
+<p>I&#039;ve made some changes to HTTP.php to fix the issue. Sorry, I&#039;m sysadmin and system programmer, so my solution that uses recursion you can consider not nice, but at least it is working :-) Here is the patch:<br>
+--- SOAP-0.8RC3/Transport/HTTP.php  2004-01-17 15:00:51.000000000 +0100<br>
++++ SOAP/Transport/HTTP.php 2004-02-10 10:14:51.000000000 +0100<br>
+@@ -338,10 +338,13 @@<br>
+             // find the response error, some servers response with 500 for soap faults<br>
+             $this-&gt;_parseHeaders($match[1]);<br>
+                                                                                                                             <br>
+-            list($protocol, $code) = sscanf($this-&gt;result_headers[0], &#039;%s %s&#039;);<br>
++            list($protocol, $code, $msg) = sscanf($this-&gt;result_headers[0], &#039;%s %s %s&#039;);<br>
+             unset($this-&gt;result_headers[0]);<br>
+                                                                                                                             <br>
+             switch($code) {<br>
++                case 100: // Continue<br>
++                   $this-&gt;incoming_payload = $match[2];<br>
++                   return $this-&gt;_parseResponse();<br>
+                 case 400:<br>
+                     $this-&gt;_raiseSoapFault(&quot;HTTP Response $code Bad Request&quot;);<br>
+                     return false;<br>
+@@ -372,7 +375,7 @@<br>
+                     break;<br>
+                 default:<br>
+                     if ($code &gt;= 400 &amp;&amp; $code &lt; 500) {<br>
+-                        $this-&gt;_raiseSoapFault(&quot;HTTP Response $code Not Found&quot;);<br>
++                        $this-&gt;_raiseSoapFault(&quot;HTTP Response $code Not Found, Server message: $msg&quot;);<br>
+                         return false;<br>
+                     }<br>
+             }</p>
+</section>
+<section>
+<h3>[2004-02-13 08:46 UTC] stanislav dot voroniy at portavita dot nl</h3>
+<p>That is me again. I still having strange troubles with accessing BEA Weblogic webservices. Now I&#039;ve got 2 Content-Type: headers line, only last should be taken into account. Here is the patch:<br>
+--- SOAP-0.8RC3/Transport/HTTP.php  2004-01-17 15:00:51.000000000 +0100<br>
++++ SOAP/Transport/HTTP.php 2004-02-13 09:46:47.000000000 +0100<br>
+@@ -246,8 +246,10 @@<br>
+      */<br>
+     function _parseEncoding($headers)<br>
+     {<br>
+-        $h = stristr($headers,&#039;Content-Type&#039;);<br>
+-        preg_match(&#039;/^Content-Type:\s*(.*)$/im&#039;,$h,$ct);<br>
++            $h = stristr($headers,&#039;Content-Type&#039;);<br>
++        preg_match_all(&#039;/^Content-Type:\s*(.*)$/im&#039;,$h,$ct,PREG_SET_ORDER);<br>
++   $n = count($ct);<br>
++   $ct = $ct[$n-1];<br>
+         $this-&gt;result_content_type = str_replace(&quot;\r&quot;,&quot;&quot;,$ct[1]);<br>
+         if (preg_match(&#039;/(.*?)(?:;\s?charset=)(.*)/i&#039;,$this-&gt;result_content_type,$m)) {<br>
+             // strip the string of \r</p>
+</section>
+<section>
+<h3>[2004-03-04 12:21 UTC] stanislav dot voroniy at portavita dot nl</h3>
+<p>That is me again. Despite that nobody pays attention to my posts I continue posting bugs:<br>
+in files WSDL.php after line 453<br>
+  $classname = str_replace(&#039;.&#039;,&#039;_&#039;,$classname);<br>
++ $classname = str_replace(&#039;-&#039;,&#039;_&#039;,$classname);</p>
+<p>and line 610 to be modified as follows:</p>
+<p>$classname = preg_replace(&#039;/[ .\-\(\)]+/&#039;, &#039;_&#039;, $classname);</p>
+<p>Both changes fix the same bug - Class name can not contain &quot;-&quot; (minus) sign.</p>
+</section>
+<section>
+<h3>[2004-04-09 18:51 UTC] jdriddle_producer at yahoo dot com</h3>
+<p>I had the same issue with the parser choking on HTTP headers. Your patch did the trick.</p>
+<p>I&#039;m not sure why the bug got marked closed, as I can&#039;t even find a cvs version to check if its been patched. Development on this package seems to have stopped.</p>
+<p>Got any ideas on how to make this library ouput the SOAP response as a nested array? ;)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

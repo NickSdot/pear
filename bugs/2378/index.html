@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2378</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #2378</h1>
+<p>getDate(DATE_FORMAT_UNIXTIME) doesn&#039;t convert to GMT</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-09-23 10:32 UTC</td></tr>
+<tr><th>From</th><td>scragz at hotmail dot com</td></tr>
+<tr><th>Status</th><td>Open</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>Debian Sarge</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-09-23 10:32 UTC] scragz at hotmail dot com</h3>
+<p>Description:<br>
+------------<br>
+If you have a Date in another TZ and ask use getDate(DATE_FORMAT_UNIXTIME) or getTime() the timestamp returned will be wrong since it is only using mktime.</p>
+<p>Trying to fix this caused me some problems, but I have a patch (below) that seems to work.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+$date =&amp; new Date();<br>
+echo $date-&gt;getTime().&quot;\n&quot;;<br>
+$date-&gt;convertTZbyID(&#039;America/Los_Angeles&#039;);<br>
+echo $date-&gt;getTime().&quot;\n&quot;;<br>
+?&gt;</p>
+<p>This patch corrects the faulty behavior. I&#039;m not sure if DATE_FORMAT_TIMESTAMP is expected to be GMT, but this could be adapted to that as well.</p>
+<p>Index: Date.php<br>
+===================================================================<br>
+--- Date.php    (revision 111)<br>
++++ Date.php    (working copy)<br>
+@@ -231,7 +231,16 @@<br>
+             return $this-&gt;format(&quot;%Y%m%d%H%M%S&quot;);<br>
+             break;<br>
+         case DATE_FORMAT_UNIXTIME:<br>
+-            return mktime($this-&gt;hour, $this-&gt;minute, $this-&gt;second, $this-&gt;month, $this-&gt;day, $this-&gt;year);<br>
++            $date =&amp; new Date($this);<br>
++            if ($date-&gt;tz-&gt;offset) {<br>
++                $offset = ($date-&gt;tz-&gt;offset + $date-&gt;tz-&gt;getDSTSavings()) / 1000;<br>
++                if ($offset &gt; 0) {<br>
++                    $date-&gt;subtractSeconds(intval($offset));<br>
++                } else {<br>
++                    $date-&gt;addSeconds(intval(abs($offset)));<br>
++                }<br>
++            }<br>
++            return mktime($date-&gt;hour, $date-&gt;minute, $date-&gt;second, $date-&gt;month, $date-&gt;day, $date-&gt;year);<br>
+             break;<br>
+         }<br>
+     }</p>
+<p>Expected result:<br>
+----------------<br>
+1095935549<br>
+1095935549</p>
+<p>Actual result:<br>
+--------------<br>
+1095935549<br>
+1095910349</p>
+</section>
+<section>
+<h3>[2004-09-24 09:54 UTC] scragz at hotmail dot com</h3>
+<p>Forgot DST.</p>
+<p>--- Date.php    (revision 100)<br>
++++ Date.php    (working copy)<br>
+@@ -231,7 +231,17 @@<br>
+             return $this-&gt;format(&quot;%Y%m%d%H%M%S&quot;);<br>
+             break;<br>
+         case DATE_FORMAT_UNIXTIME:<br>
+-            return mktime($this-&gt;hour, $this-&gt;minute, $this-&gt;second, $this-&gt;month, $this-&gt;day, $this-&gt;year);<br>
++            $date =&amp; new Date($this);<br>
++            if ($date-&gt;tz-&gt;offset) {<br>
++                $dst = ($date-&gt;inDaylightTime()) ? $date-&gt;tz-&gt;getDSTSavings() : 0;<br>
++                $offset = ($date-&gt;tz-&gt;offset + $dst) / 1000;<br>
++                if ($offset &gt; 0) {<br>
++                    $date-&gt;subtractSeconds(intval($offset));<br>
++                } else {<br>
++                    $date-&gt;addSeconds(intval(abs($offset)));<br>
++                }<br>
++            }<br>
++            return mktime($date-&gt;hour, $date-&gt;minute, $date-&gt;second, $date-&gt;month, $date-&gt;day, $date-&gt;year);<br>
+             break;<br>
+         }<br>
+     }</p>
+</section>
+<section>
+<h3>[2004-09-25 07:11 UTC] scragz at hotmail dot com</h3>
+<p>That whole patch could be consolidated to a single call to $date-&gt;toUTC(). Also, I just realized that Date_TimeZone::inDaylightTime() uses Date::getTime(), which causes recursion that segfaults PHP. I kluged through this by using strtotime(), which seems to be working since the TZ env variable is set right before there.</p>
+</section>
+<section>
+<h3>[2005-03-14 19:27 UTC] mjs15451 at hotmail dot com</h3>
+<p>So what is the final patch for this since no one seems to be maintaining this?</p>
+</section>
+<section>
+<h3>[2005-03-14 20:20 UTC] scragz at hotmail dot com</h3>
+<p>Below are all of my changes to Date. They involve this bug, bug 2217 (compare), 2401 (more lenient regexp), and maybe something else I&#039;m missing.</p>
+<p>--- Date.dist.php       2005-03-14 12:07:42.172448280 -0800<br>
++++ Date.php    2005-02-13 14:08:33.000000000 -0800<br>
+@@ -153,7 +153,7 @@<br>
+     {</p>
+<p>if (<br>
+-            preg_match(&#039;/^(\d{4})-?(\d{2})-?(\d{2})([T\s]?(\d{2}):?(\d{2}):?(\d{2})(\.\d+)?(Z|[\+\-]\d{2}:?\d{2})?)?$/i&#039;, $date, $regs)<br>
++            preg_match(&#039;/^(\d{4})-?(\d{2})-?(\d{2})([T\s]?(\d{2}):?(\d{2}):?(\d{2})?(\.\d+)?(Z|[\+\-]\d{2}:?\d{2})?)?$/i&#039;, $date, $regs)<br>
+             &amp;&amp; $format != DATE_FORMAT_UNIXTIME) {<br>
+             // DATE_FORMAT_ISO, ISO_BASIC, ISO_EXTENDED, and TIMESTAMP<br>
+             // These formats are extremely close to each other.  This regex<br>
+@@ -231,7 +231,9 @@<br>
+             return $this-&gt;format(&quot;%Y%m%d%H%M%S&quot;);<br>
+             break;<br>
+         case DATE_FORMAT_UNIXTIME:<br>
+-            return mktime($this-&gt;hour, $this-&gt;minute, $this-&gt;second, $this-&gt;month, $this-&gt;day, $this-&gt;year);<br>
++            $date =&amp; new Date($this);<br>
++            $date-&gt;toUTC();<br>
++            return mktime($date-&gt;hour, $date-&gt;minute, $date-&gt;second, $date-&gt;month, $date-&gt;day, $date-&gt;year);<br>
+             break;<br>
+         }<br>
+     }<br>
+@@ -731,6 +733,8 @@<br>
+      */<br>
+     function compare($d1, $d2)<br>
+     {<br>
++        $d1 =&amp; new Date($d1);<br>
++        $d2 =&amp; new Date($d2);<br>
+         $d1-&gt;convertTZ(new Date_TimeZone(&#039;UTC&#039;));<br>
+         $d2-&gt;convertTZ(new Date_TimeZone(&#039;UTC&#039;));<br>
+         $days1 = Date_Calc::dateToDays($d1-&gt;day, $d1-&gt;month, $d1-&gt;year);<br>
+@@ -1222,4 +1226,3 @@<br>
+ //<br>
+ // END<br>
+ ?&gt;<br>
+-</p>
+<p>--- Date/TimeZone.dist.php      2005-03-14 12:11:59.604192760 -0800<br>
++++ Date/TimeZone.php   2005-02-13 14:08:33.000000000 -0800<br>
+@@ -255,7 +255,9 @@<br>
+             $env_tz = getenv(&quot;TZ&quot;);<br>
+         }<br>
+         putenv(&quot;TZ=&quot;.$this-&gt;id);<br>
+-        $ltime = localtime($date-&gt;getTime(), true);<br>
++        //$ltime = localtime($date-&gt;getTime(), true);<br>
++        $time = strtotime($date-&gt;getYear().&#039;-&#039;.$date-&gt;getMonth().&#039;-&#039;.$date-&gt;getDay().&#039; &#039;.$date-&gt;getHour().&#039;:&#039;.$date-&gt;getMinute().&#039;:&#039;.$date-&gt;getSecond());<br>
++        $ltime = localtime($time, true);<br>
+         putenv(&quot;TZ=&quot;.$env_tz);<br>
+         return $ltime[&#039;tm_isdst&#039;];<br>
+     }<br>
+@@ -3643,4 +3645,3 @@<br>
+ //<br>
+ // END<br>
+ ?&gt;<br>
+-</p>
+</section>
+<section>
+<h3>[2005-03-14 21:37 UTC] mjs15451 at hotmail dot com</h3>
+<p>I found that the best thing to do is to remove these two lines in timezone.php as they make absolutely no sense to use since all they do is screw up the conversion and it seems to perform just fine without it:</p>
+<p>putenv(&quot;TZ=&quot;.$this-&gt;id);<br>
+putenv(&quot;TZ=&quot;.$env_tz);</p>
+</section>
+<section>
+<h3>[2005-03-15 19:48 UTC] mjs15451 at hotmail dot com</h3>
+<p>Better yet, I did more testing and I found it&#039;s better to leave the putenv functions in.  Just make sure you set putenv(TZ=YourTimeZone) before calling any Pear Date functions because PHP doesn&#039;t seem to set the server default Timezone in this variable.  A null TZ variable is what is the most problematic.  Obviously this variable setting needs to be allowed in safe mode for any date calculation to actually work correctly.</p>
+</section>
+<section>
+<h3>[2005-03-15 22:04 UTC] scragz at hotmail dot com</h3>
+<p>That&#039;s the thing, in my app the TZ gets set so I haven&#039;t noticed any problems the way I have it.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7467</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #7467</h1>
+<p>Emulated limit support</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-04-24 04:48 UTC</td></tr>
+<tr><th>From</th><td>ahayes at wcg dot net dot au</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Fedora Core 5</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-24 04:48 UTC] ahayes at wcg dot net dot au</h3>
+<p>Description:<br>
+------------<br>
+I have been trying to get (emulated) limiting to work for mssql driver with DB DataObjects, and I (believe I) have worked out where the problem lies (if indeed there is one, which there appeared to be).</p>
+<p>As you are probably aware DB_common contains the method limitQuery which allows for emulated limiting for databases that support it, as it sets the properties limit_from and limit_count with $result-&gt;setOption (line 1199 DB/common.php).</p>
+<p>So, for databases that use emulated limiting we should call this instead of just calling $DB-&gt;query.</p>
+<p>There are two parts in the DB_DataObjects class that must be modified.</p>
+<p>DB_DataObject::_query - Line 2323</p>
+<p>=======8&lt;========<br>
+if ($_DB_driver == &#039;DB&#039;) {<br>
+    $result = $DB-&gt;query($string);<br>
+}<br>
+=======&gt;8========</p>
+<p>to be changed to:</p>
+<p>=======8&lt;========<br>
+if ($_DB_driver == &#039;DB&#039;) {<br>
+	if($DB-&gt;features[&#039;limit&#039;] === &#039;emulate&#039; &amp;&amp; !empty($this-&gt;_query[&#039;limit_count&#039;])) {<br>
+		$result = $DB-&gt;limitQuery($string, $this-&gt;_query[&#039;limit_start&#039;], $this-&gt;_query[&#039;limit_count&#039;]);<br>
+	} else {<br>
+		$result = $DB-&gt;query($string);<br>
+	}<br>
+=======&gt;8========</p>
+<p>And, another part that must be changed so that the number of rows returned is correct is as follows:</p>
+<p>DB_DataObject::count - Line 1490</p>
+<p>=======8&lt;========<br>
+$t = clone($this);<br>
+=======&gt;8========</p>
+<p>to be changed to:</p>
+<p>=======8&lt;========<br>
+$t = clone($this);<br>
+unset($t-&gt;_query[&#039;limit_start&#039;]);<br>
+unset($t-&gt;_query[&#039;limit_count&#039;]);<br>
+=======&gt;8========</p>
+<p>I believe this is necessary because otherwise the limiting is applied because of the test that occurs to check for emulated limiting (in the first fix). So, there may be a better way to do this.</p>
+<p>Note, I have only tested this using mssql and mysql.</p>
+<p>Test script:<br>
+---------------<br>
+N/A</p>
+<p>Expected result:<br>
+----------------<br>
+N/A</p>
+<p>Actual result:<br>
+--------------<br>
+N/A</p>
+</section>
+<section>
+<h3>[2006-06-02 03:22 UTC] ahayes at wcg dot net dot au</h3>
+<p>So, does that mean the problem is fixed?</p>
+<p>Because it did not used to work, and if you are stating that it did (which is what think you are saying) then I think you are incorrect.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #677</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #677</h1>
+<p>so new methods</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-02-03 21:52 UTC</td></tr>
+<tr><th>From</th><td>smailling at free dot fr</td></tr>
+<tr><th>Assigned</th><td>pajoye</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>windows 2000</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-02-03 21:52 UTC] smailling at free dot fr</h3>
+<p>Description:<br>
+------------<br>
+I propose to chage the before and after method, to add the ability to work with &#039;&gt;=&#039; and &#039;&lt;=&#039; operator.<br>
+Here it is:</p>
+<p>Reproduce code:<br>
+---------------<br>
+728c782<br>
+&lt;     function before($when)<br>
+---<br>
+&gt;     function before($when, $equal = false)<br>
+730c784,786<br>
+&lt;         if (Date::compare($this,$when) == -1) {<br>
+---<br>
+&gt;         $_compare = Date::compare($this,$when);<br>
+&gt; <br>
+&gt;         if ($_compare == -1)<br>
+732c788,791<br>
+&lt;         } else {<br>
+---<br>
+&gt; <br>
+&gt;         if ($equal &amp;&amp; $_compare == 0)<br>
+&gt;             return true;<br>
+&gt; <br>
+735d793<br>
+&lt;     }<br>
+746c804<br>
+&lt;     function after($when)<br>
+---<br>
+&gt;     function after($when, $equal = false)<br>
+748c806,808<br>
+&lt;         if (Date::compare($this,$when) == 1) {<br>
+---<br>
+&gt;         $_compare = Date::compare($this,$when);<br>
+&gt; <br>
+&gt;         if ($_compare == 1)<br>
+750c810,813<br>
+&lt;         } else {<br>
+---<br>
+&gt; <br>
+&gt;         if ($equal &amp;&amp; $_compare == 0)<br>
+&gt;             return true;<br>
+&gt; <br>
+752c815<br>
+&lt;         }<br>
+---<br>
+&gt;</p>
+</section>
+<section>
+<h3>[2004-02-04 09:38 UTC] smailling at free dot fr</h3>
+<p>So, what is the deal?<br>
+Do we have to add 2 new methods (beforeOrEqual, ...) and remove the other ones (before, ...)?<br>
+I am fine with this.</p>
+</section>
+<section>
+<h3>[2004-02-04 16:13 UTC] baba at php dot net</h3>
+<p>we should not remove old methods, as this would break code that is using them.</p>
+<p>if we want to implement the new methods and then have the old signatures just call the new code, that would be fine.</p>
+</section>
+<section>
+<h3>[2004-02-05 08:15 UTC] smailling at free dot fr</h3>
+<p>Here is the diff<br>
+728c782,797<br>
+&lt;     function before($when)<br>
+---<br>
+&gt;     function before($when, $equal = false)<br>
+&gt;     {<br>
+&gt;         return $this-&gt;beforeOrEqual($when, false);<br>
+&gt;     }<br>
+&gt; <br>
+&gt;     /**<br>
+&gt;      * Test if this date/time is before a certain date/time<br>
+&gt;      *<br>
+&gt;      * Test if this date/time is before a certain date/time<br>
+&gt;      *<br>
+&gt;      * @access public<br>
+&gt;      * @param object Date $when the date to test against<br>
+&gt;      * @param boolean $equal Specify if the operator is &lt; or &lt;=<br>
+&gt;      * @return boolean true if this date is before $when<br>
+&gt;      */<br>
+&gt;     function beforeOrEqual($when, $equal = true)<br>
+730c799,801<br>
+&lt;         if (Date::compare($this,$when) == -1) {<br>
+---<br>
+&gt;         $_compare = Date::compare($this,$when);<br>
+&gt; <br>
+&gt;         if ($_compare == -1)<br>
+732c803,806<br>
+&lt;         } else {<br>
+---<br>
+&gt; <br>
+&gt;         if ($equal &amp;&amp; $_compare == 0)<br>
+&gt;             return true;<br>
+&gt; <br>
+735d808<br>
+&lt;     }<br>
+748c821,839<br>
+&lt;         if (Date::compare($this,$when) == 1) {<br>
+---<br>
+&gt;         return $this-&gt;afterOrEqual($when, false);<br>
+&gt; <br>
+&gt;     }<br>
+&gt; <br>
+&gt;     /**<br>
+&gt;      * Test if this date/time is after a certian date/time<br>
+&gt;      *<br>
+&gt;      * Test if this date/time is after a certian date/time<br>
+&gt;      *<br>
+&gt;      * @access public<br>
+&gt;      * @param object Date $when the date to test against<br>
+&gt;      * @param boolean $equal Specify if the operator is &lt; or &lt;=<br>
+&gt;      * @return boolean true if this date is after $when<br>
+&gt;      */<br>
+&gt;     function afterOrEqual($when, $equal = true)<br>
+&gt;     {<br>
+&gt;         $_compare = Date::compare($this,$when);<br>
+&gt; <br>
+&gt;         if ($_compare == 1)<br>
+750c841,844<br>
+&lt;         } else {<br>
+---<br>
+&gt; <br>
+&gt;         if ($equal &amp;&amp; $_compare == 0)<br>
+&gt;             return true;<br>
+&gt; <br>
+752c846<br>
+&lt;         }<br>
+---<br>
+&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

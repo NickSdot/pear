@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #942</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #942</h1>
+<p>Bug in isInactive()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-04 06:09 UTC</td></tr>
+<tr><th>From</th><td>alain_d99 at freesurf dot ch</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>4.2.1</td></tr>
+<tr><th>OS</th><td>Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-04 06:09 UTC] alain_d99 at freesurf dot ch</h3>
+<p>Description:<br>
+------------<br>
+Hello,</p>
+<p>LiveUser.php: v1.79</p>
+<p>The LiveUser::isInactive() function doesn&#039;t work as expected.</p>
+<p>Example:<br>
+$nLiveUser =&amp; LiveUser::factory($nConfig);<br>
+$nLiveUser-&gt;init();</p>
+<p>if(!$nLiveUser-&gt;isLoggedIn()) {<br>
+  if($nLiveUser-&gt;isInactive())<br>
+    echo &quot;Inactive&quot;;<br>
+  else<br>
+    echo &quot;Active&quot;;<br>
+}</p>
+<p>In the example above, the &quot;Active&quot; term is always printed, even if user has its &quot;is_active&quot; bit on &#039;N&#039;.</p>
+<p>The problem comes from the tryLogin() function at the end:<br>
+if (!$auth-&gt;isActive) {<br>
+   $this-&gt;status = LIVEUSER_STATUS_ISINACTIVE;<br>
+   $userFound = true;<br>
+}</p>
+<p>it would be:<br>
+if (!$auth-&gt;isActive) {<br>
+   $this-&gt;_auth  = $auth; //ADDED<br>
+   $this-&gt;status = LIVEUSER_STATUS_ISINACTIVE;<br>
+   $userFound = true;<br>
+}</p>
+<p>Now, LiveUser::isInactive() works perfectly well.</p>
+<p>Thanks for your work,<br>
+Alain</p>
+<p>Expected result:<br>
+----------------<br>
+LiveUser::isInactive() must return true if login is right and user has its &quot;is_active&quot; bit on &#039;N&#039;.</p>
+<p>Actual result:<br>
+--------------<br>
+LiveUser::isInactive() returns always false</p>
+</section>
+<section>
+<h3>[2004-03-06 08:58 UTC] alain_d99 at freesurf dot ch</h3>
+<p>Hello Smith,</p>
+<p>the status variable is only intended to give a &quot;status report&quot; of a LiveUser function member, right?</p>
+<p>If we write the following instructions, a problem arrives:<br>
+$nResult = $nLiveUser-&gt;init();<br>
+//Here status = LIVEUSER_STATUS_ISINACTIVE, Ok</p>
+<p>$nLiveUser-&gt;totoFunction();<br>
+//Here status = LIVEUSER_STATUS_TOTO</p>
+<p>if($nLiveUser-&gt;isInactive())<br>
+//Here, the inInactive function don&#039;t give the correct result even if the user has its &quot;is_active&quot; bit on &#039;N&#039;.</p>
+<p>the isInactive() function must give always the right result, even if some calls are made to another LiveUser function members.</p>
+<p>Thank for your work, greetings,<br>
+Alain</p>
+</section>
+<section>
+<h3>[2004-03-08 12:31 UTC] alain_d99 at freesurf dot ch</h3>
+<p>Hello Smith,</p>
+<p>you are right, your new isInactive() will be effectively sufficient if you don&#039;t introduce a new function that change the status variable (doesn&#039;t exist until now).</p>
+<p>I understand that only init() and its subfunctions will change this variable, and status variable gives the right &quot;status&quot; of LiveUser instance. Then you can see the status everywhere until the next call of init() function.</p>
+<p>But if you want to use your LIVEUSER_STATUS_ constants for another functions, then your will break the validity of your isInactive() function.</p>
+<p>Then, I find your solution is good.</p>
+<p>Thank for your work, and greetings,<br>
+Alain</p>
+<p>PS: if status variable is sufficient, no need for expired and idled variables anymore, because of use of LIVEUSER_STATUS_IDLED/EXPIRED?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

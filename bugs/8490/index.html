@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8490</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #8490</h1>
+<p>DataSource to produce a summary of the content of a DataObject</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8490</th><td>DataSource to produce a summary of the content of a DataObject</td></tr>
+<tr><th>Submitted</th><td>2006-08-17 14:53 UTC</td></tr>
+<tr><th>From</th><td>michel dot dhooge at gmail dot com</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-17 14:53 UTC] michel dot dhooge at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I extended SDG_DataSource_Array to take a DB_DO instance <br>
+and extract data using groupBy and Where. I&#039;d happily <br>
+share my code if you find it globally useful. Below are 2 <br>
+examples:</p>
+<p>Using a simple DB_DO, the generated SQL request is:<br>
+SELECT CONCAT(version, &quot; &quot;, config) AS Version , date , <br>
+count(*)AS __summary FROM myTable WHERE ( date IN <br>
+(&#039;2006-04-21&#039;,&#039;2006-04-22&#039;,&#039;2006-04-23&#039;) ) GROUP BY <br>
+Version , date WITH ROLLUP</p>
+<p>And the generated table is:<br>
++-------------+------------+------------+------------+<br>
+| Version     | ven 21 avr | sam 22 avr | dim 23 avr |<br>
++-------------+------------+------------+------------+<br>
+| 05.00 ?     | 5          |            |            |<br>
+| 05.46 ?     | 1          |            |            |<br>
+| 05.50 EPX06 | 370        |            |            |<br>
+| 05.51 ?     | 1          |            |            |<br>
+| ? ?         | 2          |            |            |<br>
+| Total       | 379        | 0          | 0          |<br>
++-------------+------------+------------+------------+</p>
+<p>Second example:<br>
+SELECT foo AS Field, bar AS F2, date, <br>
+GROUP_CONCAT(distinct time order by 1 SEPARATOR &quot;, &quot;)AS <br>
+__summary  FROM table WHERE ( date IN <br>
+(&#039;2006-04-21&#039;,&#039;2006-04-22&#039;) ) GROUP BY Field, F2, date <br>
+WITH ROLLUP</p>
+<p>+-------+-----+--------------------+------------+<br>
+| Field | F2  | ven 21 avr         | sam 22 avr |<br>
++-------+-----+--------------------+------------+<br>
+| 125   | 63  | 05:37:35           |            |<br>
+| 166   | 56  | 12:02:07           |            |<br>
+| 182   | 61  | 06:38:20, 15:17:27 |            |<br>
+| 186   | 59  | 06:29:28           |            |<br>
+| 196   | 62  | 06:38:42, 15:56:09 |            |<br>
+| 352   | 44  | 05:28:02           |            |<br>
+| 87    | 58  | 09:18:47, 09:41:36 |            |<br>
+| ?     | 0   | 00:33:44           |            |<br>
++-------+-----+--------------------+------------+</p>
+</section>
+<section>
+<h3>[2006-08-17 18:08 UTC] michel dot dhooge at gmail dot com</h3>
+<p>Even though it extends SDG_DS_Array, this class is in fact <br>
+an extension of SDG_DS_DataObject. In short, SDG_DS_DO <br>
+creates an array with one row for each record of the <br>
+provided DO. I&#039;d say the result is 1 dimension.</p>
+<p>My class on the contrary creates a 2D result. It <br>
+summarizes the content of the database table according to <br>
+2 axes. The first one (vertical) displays all available <br>
+values of some DB fields. The 2nd one (horizontal) is used <br>
+to filter on some other fields; in the previous examples, <br>
+these fields are dates.</p>
+<p>Let&#039;s say I have a table with login time of users. It <br>
+looks like:<br>
+SELECT Date, Time, Name FROM login;<br>
+2006-04-21, 05:37, foo<br>
+2006-04-21, 08:27, foo<br>
+2006-04-21, 15:37, bar<br>
+2006-04-22, 05:27, bar<br>
+2006-04-22, 12:51, bar<br>
+2006-04-22, 18:39, foo<br>
+...<br>
+Now, I only want to know which users logged-in, and how <br>
+many times. The configuration is simply Vertical: name, <br>
+horizontal: date = {2006-04-21, 2006-04-22} and the result <br>
+is<br>
+Name   2006-04-21   2006-04-22<br>
+bar        1             2<br>
+foo        2             1<br>
+Total      3             3</p>
+<p>In addition to vertical and horizontal cfg, I can also <br>
+define the content of the cells. For instance cells: time <br>
+and the result is<br>
+Name   2006-04-21     2006-04-22<br>
+bar     15:37          05:27, 12:51<br>
+foo   05:37, 08:27     18:39</p>
+</section>
+<section>
+<h3>[2006-08-17 20:11 UTC] michel dot dhooge at gmail dot com</h3>
+<p>Yes, I already found #8353 but in my case the result is a real table with rows &amp; columns.</p>
+<p>Nevertheless it&#039;s true that the code I wrote simply creates an array that is handled to SDG_DS_Array. So the only relation with DS is the format of the array. However I need this kind of &quot;summariser&quot; in my project and maybe others also would. It is up to you to decide...</p>
+<p>Thinking of it, a maybe faster implementation of SDG_DS_Array would be to use a table-array with row-arrays indexed by integer instead of strings (and with first row describing the columns&#039; titles).</p>
+</section>
+<section>
+<h3>[2006-10-18 14:54 UTC] olivierg at php dot net</h3>
+<p>I agree with Mark, this is similar to request #8353. However, I think your request is more relevant, since you <br>
+don&#039;t produce a data tree, but a sort of tabular representation of a data tree.</p>
+<p>But I really don&#039;t want to overload the DBDO driver with <br>
+these features. That would get heavy.</p>
+<p>So I suggest that you submit your new driver on PEPr at:<br>
+http://pear.php.net/pepr/pepr-proposal-edit.php</p>
+<p>Dan Rossi has recently done this for his Flexy renderer, and <br>
+it actually worked, his package was accepted:<br>
+http://pear.php.net/pepr/pepr-proposal-show.php?id=418</p>
+<p>Mark: if it&#039;s okay with you, I propose that we now mark this bug as a Wont fix.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6007</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/XML_RPC/index.html">XML_RPC</a> &#187; Bug #6007</h1>
+<p>Server fails to set Content-Type</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-18 00:53 UTC</td></tr>
+<tr><th>From</th><td>asppsa at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_RPC/index.html">XML_RPC</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>NetBSD</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-18 00:53 UTC] asppsa at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+When the XML-RPC server returns a result the Content-Type header is set to the default &#039;text/html&#039;.</p>
+<p>It appears that the XML_RPC_Server code uses one string to set all the headers at once.  This doesn&#039;t appear to work.  If one manually sets it (see below), however, then it does.</p>
+<p>The Content Length is set properly, so it looks like only the first line of the header string gets accepted by header().</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+  $server = new XML_RPC_Server (array (<br>
+    &#039;somefunc&#039; =&gt; array (&#039;function&#039; =&gt; &#039;funcname&#039;)<br>
+  ));<br>
+?&gt;</p>
+<p>--- If I change it like so, it works (produces the &#039;expected result&#039; below): ---</p>
+<p>&lt;?php<br>
+  header (&#039;Content-Type: text/xml&#039;);<br>
+  $server = new XML_RPC_Server (array (<br>
+    &#039;somefunc&#039; =&gt; array (&#039;function&#039; =&gt; &#039;funcname&#039;)<br>
+  ));<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+(When accessed via the XML_RPC_Client with setDebug (1))</p>
+<p>---GOT---<br>
+HTTP/1.1 200 OK<br>
+Date: Fri, 18 Nov 2005 00:33:09 GMT<br>
+Server: Apache/2.0.54 (Unix) mod_ssl/2.0.54 OpenSSL/0.9.7g-fips DAV/2 PHP/5.0.4<br>
+X-Powered-By: PHP/5.0.4<br>
+Content-Length: 4951<br>
+Connection: close<br>
+Content-Type: text/xml</p>
+<p>...</p>
+<p>(maybe it should include the charset too?)</p>
+<p>Actual result:<br>
+--------------<br>
+---GOT---<br>
+HTTP/1.1 200 OK<br>
+Date: Fri, 18 Nov 2005 00:47:56 GMT<br>
+Server: Apache/2.0.54 (Unix) mod_ssl/2.0.54 OpenSSL/0.9.7g-fips DAV/2 PHP/5.0.4<br>
+X-Powered-By: PHP/5.0.4<br>
+Content-Length: 4951<br>
+Connection: close<br>
+Content-Type: text/html</p>
+<p>...</p>
+</section>
+<section>
+<h3>[2005-11-18 03:33 UTC] asppsa at gmail dot com</h3>
+<p>I have (hopefully) fixed this</p>
+<p>Here is a diff ...</p>
+<p>394c394,397<br>
+&lt;         header($this-&gt;server_headers);<br>
+---<br>
+&gt;         foreach ($this-&gt;server_headers as $h)<br>
+&gt;         {<br>
+&gt;           header($h);<br>
+&gt;         }<br>
+429,432c432,436<br>
+&lt;         $this-&gt;server_headers = &#039;Content-Length: &#039;<br>
+&lt;                               . strlen($this-&gt;server_payload) . &quot;\r\n&quot;<br>
+&lt;                               . &#039;Content-Type: text/xml;&#039;<br>
+&lt;                               . &#039; charset=&#039; . $this-&gt;encoding;<br>
+---<br>
+&gt;         $this-&gt;server_headers = array (<br>
+&gt;           &#039;Content-Length: &#039; . strlen($this-&gt;server_payload),<br>
+&gt;           &#039;Content-Type: text/xml; charset=&#039; . $this-&gt;encoding<br>
+&gt;         );<br>
+&gt; <br>
+--- END ---</p>
+<p>cheers,</p>
+<p>Alastair</p>
+</section>
+<section>
+<h3>[2005-11-20 20:31 UTC] asppsa at gmail dot com</h3>
+<p>Do you think it would be better for backward compatibility if we were to keep the $server_headers variable as a string, and just split it on &quot;/\r\n|\n\r/&quot; or something similar?  That way it won&#039;t break for people who have added to or altered the string themselves ...</p>
+<p>Sorry about the non-standard/incomplete patch. I&#039;ve had a look around for information on how one is supposed to use the header() function, and haven&#039;t seen any examples where multiple headers are set with a single call, so I&#039;m definitely quite happy to spend the time to make the server package more compliant, hopefully without breaking any backward compatibility!</p>
+<p>Let me know what you think,</p>
+<p>-Alastair</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

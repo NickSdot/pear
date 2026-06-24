@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1166</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a> &#187; Bug #1166</h1>
+<p>Segmentation fault</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-09 00:25 UTC</td></tr>
+<tr><th>From</th><td>ulyanov at comcast dot net</td></tr>
+<tr><th>Assigned</th><td>xnoguer</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Gentoo Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-09 00:25 UTC] ulyanov at comcast dot net</h3>
+<p>Description:<br>
+------------<br>
+This is very similar to bug #1149 (http://pear.php.net/bugs/bug.php?id=1149), I also get segmentation afult, except that I get it under different circumstances. It is hard to get it to always reproduce, since I&#039;ve encountered it randomly depending on data I try to export to excel file.<br>
+Basically my script receives an array via POST and tries to write an excel row for each array entry. Depending on data in the array, sometimes it gives segemntation fault when I try to write a certain number into a cell It seems to always be close to last columns and close to last rows... but it&#039;s somewhat random... e.g. ignoring all values for certain rows works, ignoring all values for last column works... but ignoring only cells in last column on those same rows doesn&#039;t work.</p>
+<p>The line inside the loop to store the number looks like this:</p>
+<p>$worksheet-&gt;write($line_num, $col++, $value[&quot;p$i&quot;], $format);</p>
+<p>Reproduce code:<br>
+---------------<br>
+Ignoring all values for 2 rows works:<br>
+http://niesen.umassmed.edu/bug_test_yes.php<br>
+code:<br>
+http://niesen.umassmed.edu/bug_test_yes.phps</p>
+<p>Ignoring values for all last column works: http://niesen.umassmed.edu/bug_test_yes_2.php<br>
+code:<br>
+http://niesen.umassmed.edu/bug_test_yes_2.phps</p>
+<p>Ignoring only those 2 rows for only the last column gives segmentation fault:<br>
+http://niesen.umassmed.edu/bug_test_no_2.php<br>
+code:<br>
+http://niesen.umassmed.edu/bug_test_no_2.phps</p>
+<p>Not ignoring anything gives segmentation fault in apache error_log:<br>
+http://niesen.umassmed.edu/bug_test_no.php<br>
+code:<br>
+http://niesen.umassmed.edu/bug_test_no.phps</p>
+<p>data:<br>
+http://niesen.umassmed.edu/data.txt<br>
+view data array:<br>
+http://niesen.umassmed.edu/print_data.php<br>
+code:<br>
+http://niesen.umassmed.edu/print_data.phps</p>
+<p>Expected result:<br>
+----------------<br>
+Works for all data</p>
+<p>Actual result:<br>
+--------------<br>
+Works for only certain data, gives segmentation fault other times:</p>
+<p>[Thu Apr 08 20:00:00 2004] [notice] child pid 539 exit signal Segmentation fault (11)<br>
+[Thu Apr 08 20:00:00 2004] [notice] child pid 538 exit signal Segmentation fault (11)</p>
+</section>
+<section>
+<h3>[2004-04-09 22:42 UTC] xnoguer at php dot net</h3>
+<p>Can you get a gdb trace for this segfault?</p>
+</section>
+<section>
+<h3>[2004-04-12 20:46 UTC] ulyanov at comcast dot net</h3>
+<p>Could you help me out a little, please?</p>
+<p>I&#039;ve tried running gdb, but wasn&#039;t successful. I have gentoo linux distribution which handles apache slightly different, than when installing from source code. I do not have httpd or core binaries. I do have apache2, apache2ctl, apache2logserverstatus and apache2splitlogfile.</p>
+<p>apache2 -X or apache2ctrl -X don&#039;t seem to work the way I think httpd -X is supposed to. I could run gdb first, pointing it to /usr/sbin/apache2 and then did run -X, but then apache ran w/o the mod_php, so my php script displayed as text instead of being processed.</p>
+<p>Do you by chance know what exactly the equivalent of httpd is and where it may be located?</p>
+<p>Thanks!</p>
+</section>
+<section>
+<h3>[2004-04-14 23:25 UTC] xnoguer at php dot net</h3>
+<p>If I understand correctly you can&#039;t find the httpd executable? If that is the case, you can always check what running processes &quot;ps -ef&quot; shows. The apache deamon should be there somewhere.</p>
+<p>An alternative would be to just execute your sample script from the command line (using php -f sample_script.php) so it writes the Excel file directly to the server. In that case you can run gdb with the php CLI executable.</p>
+<p>If you need any more help, don&#039;t hesitate to ask.</p>
+</section>
+<section>
+<h3>[2004-04-23 16:36 UTC] ulyanov at comcast dot net</h3>
+<p>Actually, I do not have httpd executable, it&#039;s not that I can&#039;t find it. I have apache2 executable in its place. However, when I run it from gdb it fails to load mod_php so that the php script displays as text instead of being executed. I wondered if there was a way to load it into gdb with mod_php?</p>
+<p>I was not able to reproduce this bug with php local client, it only seems to be buggy with apache and mod_php. Regular php prints out the file ok.</p>
+<p>Another weird thing I noticed is that sometimes changing browser helps. For example a mac user was not able to save excel spreadsheet under IE for mac, but was able to under safari browser.</p>
+<p>Could this be an apache bug somehow? I haven&#039;t really noticed this segmentation fault happening with anything but this package though.</p>
+<p>Thanks!</p>
+</section>
+<section>
+<h3>[2004-05-24 21:02 UTC] ulyanov at comcast dot net</h3>
+<p>I just went to see if there was any progress on this bug, but when I clicked on buggy links, everything seemed to work just fine! I have done a few automatic updates to mod_php and apache since submitting the bug but I never upgraded the Spreadsheet package. So this was probably either apache or php bug. Unfortunately I haven&#039;t tested the bug after each upgrade, so I don&#039;t know which of the updates could&#039;ve fixed it exactly. So this bug should probably be closed?</p>
+<p>Thanks!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

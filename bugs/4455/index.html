@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4455</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #4455</h1>
+<p>addHTMLImage requires attribute SRC of tag IMG in lowercase</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-27 16:53 UTC</td></tr>
+<tr><th>From</th><td>vtamara at pasosdejesus dot org</td></tr>
+<tr><th>Assigned</th><td>cipri</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>OpenBSD/any</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-27 16:53 UTC] vtamara at pasosdejesus dot org</h3>
+<p>Description:<br>
+------------<br>
+In the BODY if I use &lt;IMG SRC=&quot;..&quot;&gt;, the Image is not<br>
+included, however if use &lt;img src=&quot;..&quot;&gt; it is included.</p>
+<p>This happens after version 1.32 in CVS of Mail_mime/mime.php</p>
+<p>http://cvs.php.net/diff.php/pear/Mail_Mime/mime.php?r1=1.31&amp;r2=1.32&amp;ty=h</p>
+<p>Note that you use:</p>
+<p>$regex = &#039;#src\s*=\s*([&quot;\&#039;]?)&#039; . preg_quote($value[&#039;name&#039;]) .<br>
+                                    &#039;cid:&#039; . $value[&#039;cid&#039;], 	                         &#039;([&quot;\&#039;])?#&#039;</p>
+<p>i.e src only in lowercase.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php</p>
+<p># Based on help available at:<br>
+        # http://www.weberforums.com/sutra14467.htm</p>
+<p>include(&#039;Mail.php&#039;);<br>
+        include(&#039;Mail/mime.php&#039;);</p>
+<p>$mail = new Mail_mime(&quot;\n&quot;);<br>
+        $mail-&gt;setHTMLBody(&#039;&lt;html&gt;&lt;body&gt;&lt;IMG SRC=&quot;graph.jpg&quot;/&gt;&lt;/body&gt;&lt;/html&gt;&#039;);<br>
+        $mail-&gt;addHTMLImage(&#039;graph.jpg&#039;, &#039;image/jpeg&#039;);<br>
+        $send = Mail::factory(&#039;mail&#039;);<br>
+        $body = $mail-&gt;get();<br>
+        $hdrs = $mail-&gt;headers(array(&#039;From&#039; =&gt; &#039;from@example.com&#039;,<br>
+        &#039;Subject&#039; =&gt; &#039;Buggy&#039;));<br>
+        $send-&gt;send(&#039;vtamara@pasosdejesus.org&#039;, $hdrs, $body);</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+I should receive an email with graph.jpg included.</p>
+<p>Actual result:<br>
+--------------<br>
+The image is an attachment, but it is not displayed in a mail client (e.g mozilla).</p>
+</section>
+<section>
+<h3>[2005-05-27 17:04 UTC] vtamara at informatik dot uni-kl dot de</h3>
+<p>A solution: In mime.php, replace</p>
+<p>regex = &#039;#src\s*=\s*([&quot;\&#039;]?)&#039; . preg_quote($value[&#039;name&#039;]) .<br>
+                                    &#039;cid:&#039; . $value[&#039;cid&#039;], 	                         &#039;([&quot;\&#039;])?#&#039;;</p>
+<p>with</p>
+<p>$regex = &#039;#[Ss][Rr][Cc]\s*=\s*([&quot;\&#039;]?)&#039; .<br>
+                    preg_quote($value[&#039;name&#039;]) .  &#039;([&quot;\&#039;])?#&#039;;</p>
+<p>Best regards.  God illuminate us.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

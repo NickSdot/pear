@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1355</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #1355</h1>
+<p>DB/odbc::quote fails with numeric data stored as strings</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-06 20:38 UTC</td></tr>
+<tr><th>From</th><td>aaron-public at 100-acre dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-06 20:38 UTC] aaron-public at 100-acre dot com</h3>
+<p>Description:<br>
+------------<br>
+See also Bug #234...</p>
+<p>odbc quote starts by checking if the value is_numeric. If so it returns it as is and doesnt quote it.</p>
+<p>&lt;code&gt;<br>
+    function quote($str = null)<br>
+    {<br>
+        if (is_numeric($str)) {<br>
+            return $str;<br>
+        }<br>
+.....<br>
+    }<br>
+&lt;/code&gt;</p>
+<p>This is an produces a SQL error</p>
+<p>&lt;code&gt;<br>
+Unexpected Database Error:delete from Questions where questionName=1 [nativecode=22005 [Microsoft][ODBC SQL Server Driver][SQL Server]Syntax error converting the varchar value &#039;3.1&#039; to a column of data type int.]<br>
+&lt;/code&gt;</p>
+<p>with the following included code.</p>
+<p>Reproduce code:<br>
+---------------<br>
+/* Database looks like this<br>
+CRREATE TABLE Questions (<br>
+     questionName varchar(50),<br>
+     someOtherFiled int<br>
+)</p>
+<p>INSERT INTO Questions (questionName, 1) VALUES (&#039;1&#039;, 1);<br>
+INSERT INTO Questions (questionName, 1) VALUES (&#039;1.1&#039;, 1);<br>
+INSERT INTO Questions (questionName, 1) VALUES (&#039;2.1&#039;, 1);<br>
+INSERT INTO Questions (questionName, 1) VALUES (&#039;3.1&#039;, 2);<br>
+*/</p>
+<p>$db-&gt;query(&#039;delete from Questions where questionName=?&#039;, array(&#039;3.1&#039;));</p>
+<p>Expected result:<br>
+----------------<br>
+odbc::quote should trust the actual datatype of the variable. This may result in numbers being quoted more often then necesary but MSSQL and other have no problem converting things fron char data to numeric type but something like questionName=3.1 is ambigious at best.</p>
+<p>The solution used in Bug #234 for DB_mssql seems like a good one here.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

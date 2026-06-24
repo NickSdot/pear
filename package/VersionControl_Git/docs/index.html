@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VersionControl_Git Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Version Control &#187; <a href="package/VersionControl_Git/index.html">VersionControl_Git</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/VersionControl_Git/docs/index.html#package-tools-versioncontrol-git-tutorial">Tutorial</a>
+<ul>
+<li><a href="package/VersionControl_Git/docs/index.html#package-tools-versioncontrol-git-tutorial-initialize">Initialize a new repository</a>
+</li>
+<li><a href="package/VersionControl_Git/docs/index.html#package-tools-versioncontrol-git-tutorial-getting-commits">Getting commits</a>
+</li>
+<li><a href="package/VersionControl_Git/docs/index.html#package-tools-versioncontrol-git-tutorial-commit-object">The commit object (VersionControl_Git_Object_Commit)</a>
+</li>
+<li><a href="package/VersionControl_Git/docs/index.html#package-tools-versioncontrol-git-tutorial-tree-object">The tree object (VersionControl_Git_Object_Tree)</a>
+</li>
+<li><a href="package/VersionControl_Git/docs/index.html#package-tools-versioncontrol-git-tutorial-blob-object">The blob object (VersionControl_Git_Object_Blob)</a>
+</li>
+<li><a href="package/VersionControl_Git/docs/index.html#package-tools-versioncontrol-git-tutorial-handle-command">Handle command</a>
+</li></ul>
+</li></ul>
+</nav>
+<p>VersionControl_Git is a library that provides OO interface to handle Git repository. You can use Git command via the wrapper class. Some features are provided by high-featured interface.</p>
+<section id="package-tools-versioncontrol-git-tutorial">
+<h2>Tutorial</h2>
+
+</section>
+<section id="package-tools-versioncontrol-git-tutorial-initialize">
+<h3>Initialize a new repository</h3>
+<p>The VersionControl_Git class represents your Git repository.</p>
+      <p>You should specified a path to repository to VersionControl_Git.</p>
+
+      <pre><code>&lt;?php
+require_once &#039;VersionControl/Git.php&#039;;
+
+// Specify a directory
+$git = new VersionControl_Git(&#039;/path/to/repository&#039;);</code></pre>
+
+      <p>Do you want to create new repository? It is easy.</p>
+      <p>First, create an instance of VersionControl_Git and pass a directory what you want to create new Git repository.</p>
+      <p>Next, call the VersionControl_Git::initRepository() method.</p>
+
+      <pre><code>&lt;?php
+require_once &#039;VersionControl/Git.php&#039;;
+
+// Specify a directory
+$git = new VersionControl_Git(&#039;/path/to/repository&#039;);
+
+// create new repository
+$git-&gt;initRepository();
+
+// If you want to create bare repository, pass true as the first argument
+$git-&gt;initRepository(true);</code></pre>
+
+      <p>Do you want to create clone repository? In this case, you can use the VersionControl_Git::createClone()</p>
+
+      <pre><code>&lt;?php
+require_once &#039;VersionControl/Git.php&#039;;
+
+// Specify a directory
+$git = new VersionControl_Git(&#039;/path/to/repository&#039;);
+
+// create new repository
+$git-&gt;createClone(&#039;http://example.com/repository.git&#039;);
+
+// If you want to create bare repository, pass true as the second argument
+$git-&gt;createClone(&#039;http://example.com/repository.git&#039;, true);</code></pre>
+
+      <p>Now, you&#039;ve readied to use full futures of VersionControl_Git.</p>
+</section>
+<section id="package-tools-versioncontrol-git-tutorial-getting-commits">
+<h3>Getting commits</h3>
+<p>The commit object in Git is provided as VersionControl_Git_Object_Commit.</p>
+      <p>There are some ways to get a list of VersionControl_Git_Object_Commit objects.</p>
+
+      
+        <h4>Use VersionControl_Git::getCommits()</h4>
+
+        <p>You can get commits by calling VersionControl_Git::getCommits().</p>
+        <pre><code>&lt;?php
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/path/to/repository&#039;);
+var_dump($git-&gt;getCommits());
+/*
+results:
+
+array(100) {
+  [0]=&gt;
+  object(VersionControl_Git_Object_Commit)#3 (9) {
+    :
+  }
+  [1]=&gt;
+  object(VersionControl_Git_Object_Commit)#6 (9) {
+    :
+  }
+
+  :
+*/</code></pre>
+
+        <p>Calling without arguments, VersionControl_Git::getCommits() returns a list of a hundred VersionControl_Git_Object_Commit instances from master branch. You can specify branch name, commit object name, tag name, tree object name and an instance of VersionControl_Git_Object.</p>
+
+        <pre><code>&lt;?php
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/path/to/repository&#039;);
+
+// from master branch
+$git-&gt;getCommits();
+
+// specify stable branch
+$git-&gt;getCommits(&#039;stable&#039;);
+
+// specify object name
+$git-&gt;getCommits(&#039;6c8284e4902c3adaf356adeed40d8bda715b73a0&#039;);
+
+// specify tag name
+$git-&gt;getCommits(&#039;v1.0&#039;);
+
+// specify an instance of VersionControl_Git_Object
+$commits = $git-&gt;getCommits();
+$git-&gt;getCommits($commits[0]);</code></pre>
+
+        <p>You can specify the maximum number of commits by the second argument.</p>
+        <pre><code>&lt;?php
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/path/to/repository&#039;);
+
+// get 1000 commits from master branch
+$git-&gt;getCommits(&#039;master&#039;, 1000);</code></pre>
+
+        <p>You can specify the starting point of fetching by the third argument.</p>
+        <pre><code>&lt;?php
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/path/to/repository&#039;);
+
+// get 100 commits from master branch (starting at 100 th commit)
+$git-&gt;getCommits(&#039;master&#039;, 100, 100);</code></pre>
+        
+
+        
+           <h4>Use VersionControl_Git_Util_RevListFetcher</h4> 
+
+          <p>The VersionControl_Git_Util_RevListFetcher is utility class for wrapping &quot;git-rev-list&quot; command. So you can use any feature of &quot;git-rev-list&quot; by this. VersionControl_Git::getCommits() provides by using VersionControl_Git_Util_RevListFetcher.</p>
+          <p>You can use VersionControl_Git_Util_RevListFetcher to specify your VersionControl_Git instance to the constructor</p>
+          <pre><code>&lt;?php
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/path/to/repository&#039;);
+$fetcher = new VersionControl_Git_Util_RevListFetcher($git);</code></pre>
+          <p>The VersionControl_Git provides the getRevListFetcher() convenience method. Use this normally.</p>
+          <pre><code>&lt;?php
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/path/to/repository&#039;);
+$fetcher = $git-&gt;getRevListFetcher();</code></pre>
+          <p>After specifying target (branch name, commit name, tree name, etc) and options, you can get an array of VersionControl_Git_Object_Commit by calling the fetch() method.</p>
+          <pre><code>&lt;?php
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/path/to/repository&#039;);
+$result = $git-&gt;getRevListFetcher()
+    -&gt;target(&#039;master&#039;)
+    -&gt;setOption(&#039;max-count&#039;, 10)
+    -&gt;setOption(&#039;grep&#039;, &#039;initial&#039;)
+    -&gt;setOption(&#039;date&#039;, &#039;3 hours ago&#039;)
+    -&gt;fetch();</code></pre>
+</section>
+<section id="package-tools-versioncontrol-git-tutorial-commit-object">
+<h3>The commit object (VersionControl_Git_Object_Commit)</h3>
+<p>An instance of the VersionControl_Git_Object_Commit provides information about a commit.</p>
+          <pre><code>&lt;?php
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/path/to/repository&#039;);
+$commits = $git-&gt;getCommits();
+
+var_dump($commits[0]-&gt;getAuthor());
+/*
+string(35) &quot;Kousuke Ebihara &lt;kousuke@co3k.org&gt;&quot;
+*/
+
+var_dump($commits[0]-&gt;getCreatedAt());
+/*
+int(1503517047)
+*/
+
+var_dump($commits[0]-&gt;getCommitter());
+/*
+string(35) &quot;Kousuke Ebihara &lt;kousuke@co3k.org&gt;&quot;
+*/
+
+var_dump($commits[0]-&gt;getCommittedAt());
+/*
+int(1503517047)
+*/
+
+var_dump($commits[0]-&gt;getMessage());
+/*
+string(62) &quot;changed url to JSON version of dashboard contents (fixes #509)&quot;
+*/
+
+var_dump($commits[0]-&gt;getParents());
+/*
+array(1) {
+  [0]=&gt;
+    object(VersionControl_Git_Object_Commit)#303 (9) {
+    }
+}
+*/
+
+var_dump($commits[0]-&gt;getTree());
+/*
+string(40) &quot;ba2dd3d861f68c6ea31c4cd4444a5d86869a3401&quot;
+*/</code></pre>
+</section>
+<section id="package-tools-versioncontrol-git-tutorial-tree-object">
+<h3>The tree object (VersionControl_Git_Object_Tree)</h3>
+<p>An instance of the VersionControl_Git_Object_Tree represents tree object in Git. It has pointers to contents of the direcotry.</p>
+          <p>An instance of VersionControl_Git_Object_Tree can get via VersionControl_Git::getTree().</p>
+          <pre><code>&lt;?php
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/path/to/repository&#039;);
+$commits = $git-&gt;getCommits();
+
+$tree = $git-&gt;getTree($commits[0]-&gt;getTree());</code></pre>
+
+          <p>The instance doesn&#039;t have any contents at the first. If you want to get contents, you must call &quot;fetch()&quot; method.</p>
+          <pre><code>&lt;?php
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/path/to/repository&#039;);
+$commits = $git-&gt;getCommits();
+
+$tree = $git-&gt;getTree($commits[0]-&gt;getTree());
+$tree-&gt;fetch();</code></pre>
+
+          <p>The VersionControl_Git_Object_Commit implements the SeekableIterator interface. You can iterate and seek contents of tree.</p>
+
+          <pre><code>&lt;?php
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/path/to/repository&#039;);
+$commits = $git-&gt;getCommits();
+
+$tree = $git-&gt;getTree($commits[0]-&gt;getTree());
+$tree-&gt;fetch();
+
+foreach ($tree as $content) {
+   var_dump($content);
+}
+
+/*
+results:
+
+object(VersionControl_Git_Object_Blob)#304 (3) {
+}
+object(VersionControl_Git_Object_Blob)#305 (3) {
+}
+object(VersionControl_Git_Object_Blob)#306 (3) {
+}
+object(VersionControl_Git_Object_Blob)#307 (3) {
+}
+object(VersionControl_Git_Object_Tree)#308 (4) {
+}
+object(VersionControl_Git_Object_Tree)#309 (4) {
+}
+object(VersionControl_Git_Object_Tree)#311 (4) {
+}
+object(VersionControl_Git_Object_Tree)#312 (4) {
+}
+object(VersionControl_Git_Object_Tree)#313 (4) {
+}
+object(VersionControl_Git_Object_Tree)#314 (4) {
+}
+object(VersionControl_Git_Object_Tree)#315 (4) {
+}
+object(VersionControl_Git_Object_Tree)#316 (4) {
+}
+object(VersionControl_Git_Object_Blob)#317 (3) {
+}
+object(VersionControl_Git_Object_Tree)#318 (4) {
+}
+*/</code></pre>
+</section>
+<section id="package-tools-versioncontrol-git-tutorial-blob-object">
+<h3>The blob object (VersionControl_Git_Object_Blob)</h3>
+<p>An instance of the VersionControl_Git_Object_Blob represents tree object in Git. It has contents of the file.</p>
+          <p>It can get via VersionControl_Git_Object_Tree</p>
+
+          <pre><code>&lt;?php
+
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/home/co3k/sf/op3-ebihara&#039;);
+$commits = $git-&gt;getCommits();
+
+$tree = $git-&gt;getTree($commits[0]-&gt;getTree());
+$tree-&gt;fetch();
+
+$blob = $tree-&gt;current();
+var_dump($blob);
+/*
+results:
+
+object(VersionControl_Git_Object_Blob)#304 (3) {
+}
+*/</code></pre>
+
+          <p>The instance doesn&#039;t have any contents at the first. If you want to get contents, call the getContents() after calling the fetch() method.</p>
+
+          <pre><code>&lt;?php
+
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/home/co3k/sf/op3-ebihara&#039;);
+$commits = $git-&gt;getCommits();
+
+$tree = $git-&gt;getTree($commits[0]-&gt;getTree());
+$tree-&gt;fetch();
+
+$blob = $tree-&gt;current()-&gt;fetch();
+var_dump($blob-&gt;getContent());</code></pre>
+</section>
+<section id="package-tools-versioncontrol-git-tutorial-handle-command">
+<h3>Handle command</h3>
+<p>The VersionControl_Git prepares OO interface of some Git feature, but it is not completely.</p>
+          <p>If you want to use full feature of Git by using VersionControl_Git, you should run Git command via VersionControl_Git_Util_Command.</p>
+          <p>To tell the truth, most of the feature of VersionControl_Git uses VersionControl_Git_Util_Command.</p>
+          <p>Now, I explain you how to use VersionControl_Git_Util_Command.</p>
+
+          <pre><code>&lt;?php
+
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/home/co3k/sf/op3-ebihara&#039;);
+$command = $git-&gt;getCommand(&#039;show&#039;);</code></pre>
+
+          <p>You can get an instance of VersionControl_Git_Util_Command by calling VersionControl_Git::getCommand() with sub-command name.</p>
+          <p>If you want to use options, add calling the setOption() method or the setOptions() method.</p>
+
+          <pre><code>&lt;?php
+
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/home/co3k/sf/op3-ebihara&#039;);
+$command = $git-&gt;getCommand(&#039;show&#039;)
+    -&gt;setOptions(array(
+        &#039;pretty&#039; =&gt; &#039;raw&#039;,
+    ))
+    -&gt;setOptions(&#039;pretty&#039;, &#039;raw&#039;);</code></pre>
+
+          <p>The boolean option value is special. &quot;true&quot; is specified as option value, it doesn&#039;t have value. &quot;false&quot; is specified as option value, the option will not be used.</p>
+
+          <pre><code>&lt;?php
+
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/home/co3k/sf/op3-ebihara&#039;);
+$command = $git-&gt;getCommand(&#039;show&#039;)
+    -&gt;setOptions(&#039;oneline&#039;, true);</code></pre>
+
+          <p>If you want to use arguments, add calling the addArgument() method or the setArguemnts() method.</p>
+
+          <pre><code>&lt;?php
+
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/home/co3k/sf/op3-ebihara&#039;);
+$command = $git-&gt;getCommand(&#039;show&#039;)
+    -&gt;setArguments(array(&#039;master&#039;, &#039;branch1&#039;))
+    -&gt;addArgument(&#039;branch2&#039;);</code></pre>
+
+          <p>Ready to execute the command? Now you can call &quot;execute()&quot; method and get result.</p>
+          <pre><code>&lt;?php
+
+require_once &#039;VersionControl/Git.php&#039;;
+
+$git = new VersionControl_Git(&#039;/home/co3k/sf/op3-ebihara&#039;);
+$result = $git-&gt;getCommand(&#039;show&#039;)
+    -&gt;setOption(&#039;oneline&#039;, true)
+    -&gt;addArgument(&#039;master&#039;)
+    -&gt;execute();
+var_dump($result);
+
+/*
+result:
+
+string(829) &quot;9a259a5 changed url to JSON version of dashboard contents (fixes #509)
+diff --git a/apps/pc_backend/modules/default/templates/topSuccess.php b/apps/pc_backend/modules/default/templates/topSuccess.php
+index 3c7764e..cbfcf26 100644
+  :
+*/</code></pre>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

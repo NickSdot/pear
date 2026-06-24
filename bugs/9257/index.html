@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9257</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_mysql/index.html">MDB2_Driver_mysql</a> &#187; Bug #9257</h1>
+<p>Charset not changed properly in MDB2_Driver_mysql::setCharset()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #9257</th><td>Charset not changed properly in MDB2_Driver_mysql::setCharset()</td></tr>
+<tr><th>Submitted</th><td>2006-11-07 15:51 UTC</td></tr>
+<tr><th>From</th><td>florian dot sonnenburg at pepperzak dot de</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_mysql/index.html">MDB2_Driver_mysql</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-07 15:51 UTC] florian dot sonnenburg at pepperzak dot de</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m using MDB2 on a MySQL 4.1 database with UTF8 as character set for the server, client and collation. The used driver is mysql.</p>
+<p>After creating the MDB2 object I call &quot;setCharset(&#039;utf8&#039;)&quot; to set all necessary parameters to UTF8. With this configuration, all SELECTs return values with the wrong charset (&#039;latin1&#039;).</p>
+<p>I checked &quot;setCharset()&quot; in the package MDB2_Driver_mysql, and the only parameter that is changed there is &quot;character_set_client&quot; (SET character_set_client = ...). The two remaining MySQL parameters that cover the complete client-server-communication (&#039;character_set_results&#039; and &#039;character_set_connection&#039;) are still set to the default settings of the PHP MySQL client (&#039;latin1&#039;) after setCharset() is executed.</p>
+<p>Test script:<br>
+---------------<br>
+$dsn = array(<br>
+    &#039;phptype&#039;  =&gt; &#039;mysql&#039;,<br>
+    &#039;username&#039; =&gt; &#039;...&#039;,<br>
+    &#039;password&#039; =&gt; &#039;...&#039;,<br>
+    &#039;hostspec&#039; =&gt; &#039;...&#039;,<br>
+    &#039;database&#039; =&gt; &#039;hpro3&#039;,<br>
+    &#039;new_link&#039;  =&gt; true,<br>
+);<br>
+$db = MDB2::connect($dsn);<br>
+$db-&gt;setCharset(&#039;utf8&#039;);</p>
+<p>$sql = &quot;SHOW VARIABLES LIKE &#039;character_set%&#039;&quot;;<br>
+print_r($db-&gt;queryAll($sql));<br>
+$sql = &quot;SHOW VARIABLES LIKE &#039;collation%&#039;;&quot;;<br>
+print_r($db-&gt;queryAll($sql));</p>
+<p>Expected result:<br>
+----------------<br>
+character_set%:<br>
+Array<br>
+    [0] =&gt; Array<br>
+            [0] =&gt; character_set_client<br>
+            [1] =&gt; utf8<br>
+    [1] =&gt; Array<br>
+            [0] =&gt; character_set_connection<br>
+            [1] =&gt; utf8<br>
+    [2] =&gt; Array<br>
+            [0] =&gt; character_set_database<br>
+            [1] =&gt; utf8<br>
+    [3] =&gt; Array<br>
+            [0] =&gt; character_set_results<br>
+            [1] =&gt; utf8<br>
+    [4] =&gt; Array<br>
+            [0] =&gt; character_set_server<br>
+            [1] =&gt; utf8<br>
+    [5] =&gt; Array<br>
+            [0] =&gt; character_set_system<br>
+            [1] =&gt; utf8<br>
+    [6] =&gt; Array<br>
+            [0] =&gt; character_sets_dir<br>
+            [1] =&gt; [charsetDirectory]</p>
+<p>collation%:<br>
+Array<br>
+    [0] =&gt; Array<br>
+            [0] =&gt; collation_connection<br>
+            [1] =&gt; utf8_general_ci<br>
+    [1] =&gt; Array<br>
+            [0] =&gt; collation_database<br>
+            [1] =&gt; utf8_general_ci<br>
+    [2] =&gt; Array<br>
+            [0] =&gt; collation_server<br>
+            [1] =&gt; utf8_general_ci</p>
+<p>Actual result:<br>
+--------------<br>
+character_set%:<br>
+Array<br>
+    [0] =&gt; Array<br>
+            [0] =&gt; character_set_client<br>
+            [1] =&gt; utf8<br>
+    [1] =&gt; Array<br>
+            [0] =&gt; character_set_connection<br>
+            [1] =&gt; latin1<br>
+    [2] =&gt; Array<br>
+            [0] =&gt; character_set_database<br>
+            [1] =&gt; utf8<br>
+    [3] =&gt; Array<br>
+            [0] =&gt; character_set_results<br>
+            [1] =&gt; latin1<br>
+    [4] =&gt; Array<br>
+            [0] =&gt; character_set_server<br>
+            [1] =&gt; utf8<br>
+    [5] =&gt; Array<br>
+            [0] =&gt; character_set_system<br>
+            [1] =&gt; utf8<br>
+    [6] =&gt; Array<br>
+            [0] =&gt; character_sets_dir<br>
+            [1] =&gt; [charsetDirectory]</p>
+<p>collation%:<br>
+Array<br>
+    [0] =&gt; Array<br>
+            [0] =&gt; collation_connection<br>
+            [1] =&gt; latin1_swedish_ci<br>
+    [1] =&gt; Array<br>
+            [0] =&gt; collation_database<br>
+            [1] =&gt; utf8_general_ci<br>
+    [2] =&gt; Array<br>
+            [0] =&gt; collation_server<br>
+            [1] =&gt; utf8_general_ci</p>
+</section>
+<section>
+<h3>[2006-11-07 16:03 UTC] florian dot sonnenburg at pepperzak dot de</h3>
+<p>I use a simple solution to this problem: I change line 535 of MDB2/Driver/mysql.php from</p>
+<p>$query =<br>
+&quot;SET character_set_client = &#039;&quot;.mysql_real_escape_string($charset, $connection).&quot;&#039;&quot;;</p>
+<p>to</p>
+<p>$query =<br>
+&quot;SET NAMES &#039;&quot;.mysql_real_escape_string($charset, $connection).&quot;&#039;&quot;;</p>
+<p>so that all three parameters are changed. Works perfectly well, but since I&#039;m patching the PEAR package, every update of the package &#039;MDB2_Driver_mysql&#039; removes the patch. Could this patch be included into the package or if there is a problem with that fix that I don&#039;t see at the moment?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

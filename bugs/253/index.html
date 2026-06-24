@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #253</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #253</h1>
+<p>Add a group of Radio-Buttons to a Static Smarty template on different locations</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-11-14 18:20 UTC</td></tr>
+<tr><th>From</th><td>wentz at gmx dot de</td></tr>
+<tr><th>Assigned</th><td>ths</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Gentoo Linux w/ Kernel 2.4.20</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-11-14 18:20 UTC] wentz at gmx dot de</h3>
+<p>Description:<br>
+------------<br>
+The goal is to have 3 Radio Buttons, not in a row but placed each on a different location.</p>
+<p>php-example:<br>
+&lt;php&gt;<br>
+$pic1[] = &amp;HTML_QuickForm::createElement(&#039;radio&#039;, null, null, &#039;No Pic&#039;, &#039;no&#039;);<br>
+$pic1[] = &amp;HTML_QuickForm::createElement(&#039;radio&#039;, null, null, &#039;Upload Pic&#039;, &#039;upload&#039;);<br>
+$pic1[] = &amp;HTML_QuickForm::createElement(&#039;radio&#039;, null, null, &#039;Use existing&#039;, &#039;use&#039;);<br>
+$form-&gt;addGroup($pic1, &#039;pic1&#039;, &#039;Picture 1:&#039;);<br>
+$form-&gt;addElement(&#039;file&#039;, &#039;pic1upload&#039;, &#039;Upload:&#039;);<br>
+&lt;/php&gt;</p>
+<p>template-example:<br>
+{form.pic1.no.html}&lt;br&gt;<br>
+{form.pic1.upload.html}&lt;br&gt;<br>
+{form.pic1upload.html}<br>
+{form.pic1.use.html}</p>
+<p>It seems like this is not possible in with the SmartyStatic-Renderer, {form.pic1.html} works, but i need the radio-buttons seperated.</p>
+<p>Stephan</p>
+<p>Reproduce code:<br>
+---------------<br>
+php-example:<br>
+&lt;php&gt;<br>
+$pic1[] = &amp;HTML_QuickForm::createElement(&#039;radio&#039;, null, null, &#039;No Pic&#039;, &#039;no&#039;);<br>
+$pic1[] = &amp;HTML_QuickForm::createElement(&#039;radio&#039;, null, null, &#039;Upload Pic&#039;, &#039;upload&#039;);<br>
+$pic1[] = &amp;HTML_QuickForm::createElement(&#039;radio&#039;, null, null, &#039;Use existing&#039;, &#039;use&#039;);<br>
+$form-&gt;addGroup($pic1, &#039;pic1&#039;, &#039;Picture 1:&#039;);<br>
+$form-&gt;addElement(&#039;file&#039;, &#039;pic1upload&#039;, &#039;Upload:&#039;);<br>
+&lt;/php&gt;</p>
+<p>template-example (method 1):<br>
+{form.pic1.no.html}&lt;br&gt;<br>
+{form.pic1.upload.html}&lt;br&gt;<br>
+{form.pic1upload.html}<br>
+{form.pic1.use.html}</p>
+<p>template-example (method 2):<br>
+{form.pic1.0.html}&lt;br&gt;<br>
+{form.pic1.1.html}&lt;br&gt;<br>
+{form.pic1upload.html}<br>
+{form.pic1.2.html}</p>
+<p>Expected result:<br>
+----------------<br>
+The Radio-Button-Elements should show up like other Elements.</p>
+<p>Actual result:<br>
+--------------<br>
+The Elements aren&#039;t shown.</p>
+</section>
+<section>
+<h3>[2003-11-14 19:57 UTC] ths at php dot net</h3>
+<p>Alexey, to provide an easy way to change from an dynamic to an static way of template rendering and just because radios are groups logical and in layout, the &quot;better&quot; way should be use groups for radios.</p>
+<p>This Bug is the same in ITStatic. So we should decide how to handle grouped radios in static renderers.</p>
+<p>I like the idea to use the value as key here. This is more intuitive then an numric key.</p>
+<p>{$form.pic1.no.html} / {form_pic1_no_html}</p>
+</section>
+<section>
+<h3>[2003-11-14 23:25 UTC] ths at php dot net</h3>
+<p>This should fix the problems adressed in these bug.</p>
+<p>cvs -q diff -uw <br>
+Index: ArraySmarty.php<br>
+===================================================================<br>
+RCS file: /repository/pear/HTML_QuickForm/QuickForm/Renderer/ArraySmarty.php,v<br>
+retrieving revision 1.3<br>
+diff -u -w -r1.3 ArraySmarty.php<br>
+--- ArraySmarty.php	4 Nov 2003 10:53:03 -0000	1.3<br>
++++ ArraySmarty.php	14 Nov 2003 23:22:00 -0000<br>
+@@ -85,7 +85,13 @@<br>
+     * Current element index<br>
+     * @var integer<br>
+     */<br>
+-    var $_elementIdx;<br>
++    var $_elementIdx = 0;<br>
++<br>
++   /**<br>
++    * If elements have been added with the same name<br>
++    * @var array<br>
++    */<br>
++    var $_duplicateElements = array();<br>
+ <br>
+    /**<br>
+     * The current element index inside a group<br>
+@@ -119,6 +125,20 @@<br>
+     } // end constructor<br>
+ <br>
+ <br>
++    function startForm(&amp;$form)<br>
++    {<br>
++        parent::startForm($form);<br>
++<br>
++        $this-&gt;_formName = $form-&gt;getAttribute(&#039;name&#039;);<br>
++<br>
++        if (count($form-&gt;_duplicateIndex) &gt; 0) {<br>
++            // Take care of duplicate elements<br>
++            foreach ($form-&gt;_duplicateIndex as $elementName =&gt; $indexes) {<br>
++                $this-&gt;_duplicateElements[$elementName] = 0;<br>
++            }<br>
++        }<br>
++    } // end func startForm<br>
++<br>
+     function renderHeader(&amp;$header)<br>
+     {<br>
+         if ($name = $header-&gt;getName()) {<br>
+@@ -165,13 +185,39 @@<br>
+         <br>
+         // create a simple element key<br>
+         $ret[&#039;key&#039;] = $ret[&#039;name&#039;];<br>
+-        if (strstr($ret[&#039;key&#039;], &#039;[&#039;)) {<br>
+-            preg_match(&#039;/\\[([^]]*)\\]/&#039;, $ret[&#039;key&#039;], $matches);<br>
++<br>
++        // grouped elements<br>
++        if (strstr($ret[&#039;key&#039;], &#039;[&#039;) or $this-&gt;_currentGroup) {<br>
++            // TODO: this should scale...<br>
++            preg_match(&#039;/([^]]*)\\[([^]]*)\\]/&#039;, $ret[&#039;key&#039;], $matches);<br>
++            // pseudo group element<br>
++            if (empty($this-&gt;_currentGroup)) {<br>
++                if ($matches[2] != &#039;&#039;) {<br>
++                    $newret[&#039;key&#039;] = $matches[1];<br>
++                    $newret[$matches[2]] = $ret;<br>
++                    $ret = $newret;<br>
++                } else {<br>
+             $ret[&#039;key&#039;] = $matches[1];<br>
+-            if (empty($ret[&#039;key&#039;])) {<br>
++                }<br>
++            // real group element<br>
++            } else {<br>
++                $ret[&#039;key&#039;] = $matches[2];<br>
++                if ($ret[&#039;key&#039;] == &#039;&#039;) {<br>
++                    if ($ret[&#039;type&#039;] == &#039;radio&#039;) {<br>
++                        $ret[&#039;key&#039;] = $ret[&#039;value&#039;];<br>
++                    } else {<br>
+                 $ret[&#039;key&#039;] = $this-&gt;_groupElementIdx++;<br>
+             }<br>
+-        } elseif (empty($ret[&#039;key&#039;])) {<br>
++                }<br>
++            }<br>
++        // element is a duplicate<br>
++        } elseif (isset($this-&gt;_duplicateElements[$ret[&#039;key&#039;]])) {<br>
++            $newret[&#039;key&#039;] = $ret[&#039;key&#039;];<br>
++            $newret[intval($this-&gt;_duplicateElements[$name])] = $ret;<br>
++            $ret = $newret;<br>
++            $this-&gt;_duplicateElements[$name]++;<br>
++        // element has no name<br>
++        } elseif ($ret[&#039;key&#039;] == &#039;&#039;) {<br>
+             $ret[&#039;key&#039;] = &#039;element_&#039; . $this-&gt;_elementIdx;<br>
+         }<br>
+         $this-&gt;_elementIdx++;<br>
+@@ -194,9 +240,13 @@<br>
+         if (is_array($this-&gt;_currentGroup) &amp;&amp; (&#039;group&#039; != $elAry[&#039;type&#039;])) {<br>
+             $this-&gt;_currentGroup[$key] = $elAry;<br>
+         } else {<br>
++            if (isset($this-&gt;_ary[$key])) {<br>
++                $this-&gt;_ary[$key] = $this-&gt;_ary[$key] + $elAry;<br>
++            } else {<br>
+             $this-&gt;_ary[$key] = $elAry;<br>
+         }<br>
+     }<br>
++    }<br>
+ <br>
+ <br>
+    /**</p>
+</section>
+<section>
+<h3>[2003-11-15 13:19 UTC] ths at php dot net</h3>
+<p>Uhps, sorry for that. Changed.</p>
+<p>Can we have a public property/method for _duplicateIndex? Get this from ITStatic renderer.</p>
+<p>I will not change my form definition, when I switch from dynamic to static with elements grouped to render them near each other. But I will have the option to arrange them flexible.</p>
+<p>I have no problem with radio-value as key also for non grouped radios. The question is: Should&#039;t we provide the same naming rules for similar renderes?</p>
+</section>
+<section>
+<h3>[2004-01-26 12:07 UTC] wentz at gmx dot de</h3>
+<p>hi, i&#039;m the original bug reporter and it seems like this one doesn&#039;t work as expected yet (just found out using it).</p>
+<p>at first i found out that (in this example) always &#039;use&#039; is selected as default, even when no default is set.</p>
+<p>when setting a default (for example $def[&#039;pic1&#039;] = &#039;no&#039;;) still &#039;use&#039; is selected.</p>
+<p>now for the strange part: when i add a {$form.pic1.html} to the template everything works fine, &#039;no&#039; is selected in both places (the group-output and the single-element-output). maybe there&#039;s some sort of calculation that&#039;s only going on when add the group-html?</p>
+</section>
+<section>
+<h3>[2005-06-05 13:33 UTC] sk at bouncemedia dot de</h3>
+<p>hi,</p>
+<p>i have thes same problem as the original reporter. i installed the bugfix, but the radio buttons wont show up. i am using itstatic with sigma templat.</p>
+</section>
+<section>
+<h3>[2005-08-19 15:04 UTC] mdjones0978-php at yahoo dot com</h3>
+<p>Well none of what I saw here helped me, but this is what I learned.  If you are going to use radio buttons with Smarty, you need to use a group.</p>
+<p>Here is the PHP code:</p>
+<p>$repeat = array();<br>
+$repeat[] = $form-&gt;addElement(&#039;radio&#039;, &#039;repeat&#039;, &#039;none&#039;, null, &#039;none&#039;);<br>
+$repeat[] = $form-&gt;addElement(&#039;radio&#039;, &#039;repeat&#039;, &#039;repeat&#039;, null, &#039;repeat&#039;);<br>
+$repeat[] = $form-&gt;addElement(&#039;radio&#039;, &#039;repeat&#039;, &#039;repeaton&#039;, null, &#039;reapeaton&#039;);</p>
+<p>$form-&gt;addGroup($repeat, &#039;repeat&#039;, &#039;&#039;, &#039;&lt;br /&gt;&#039;);<br>
+$form-&gt;addElement(&#039;select&#039;, &#039;repeatevery&#039;, &#039;&#039;, array(&#039;Every&#039; =&gt; &#039;Every&#039;, &#039;Every Other&#039; =&gt; &#039;Every Other&#039;));<br>
+$form-&gt;addElement(&#039;select&#039;, &#039;repeateverywhat&#039;, &#039;&#039;, array(&#039;Day&#039; =&gt; &#039;Day&#039;, &#039;Week&#039; =&gt; &#039;Week&#039;, &#039;Month&#039; =&gt; &#039;Month&#039;, &#039;Year&#039; =&gt; &#039;Year&#039;,<br>
+														 &#039;MWF&#039; =&gt; &#039;Mon, Wed, Fri&#039;, &#039;TuesThurs&#039; =&gt; &#039;Tue &amp; Thu&#039;, &#039;Weekdays&#039; =&gt; &#039;Mon Thru Fri&#039;,<br>
+														 &#039;Weekends&#039; =&gt; &#039;Sat &amp; Sun&#039;));</p>
+<p>$enddate = array();<br>
+$enddate[] = $form-&gt;addElement(&#039;radio&#039;, &#039;ends&#039;, &#039;none&#039;, null, &#039;none&#039;);<br>
+$enddate[] = $form-&gt;addElement(&#039;radio&#039;, &#039;ends&#039;, &#039;endon&#039;, null, &#039;endon&#039;);<br>
+$form-&gt;addGroup($enddate, &#039;ends&#039;, &#039;&#039;, &#039;&lt;br /&gt;&#039;);</p>
+<p>$form-&gt;addElement(&#039;date&#039;, &#039;enddate&#039;, &#039;Date:&#039;, array(&#039;format&#039; =&gt; &#039;F d, Y&#039;, &#039;minYear&#039; =&gt; date(&#039;Y&#039;), &#039;maxYear&#039; =&gt; date(&#039;Y&#039;)+10, &#039;addEmptyOption&#039; =&gt; true, &#039;emptyOptionText&#039; =&gt; &#039; &#039;));</p>
+<p>Here is the Template code:<br>
+                &lt;tr&gt;<br>
+                    &lt;td class=&quot;label&quot;&gt;{$form.newshowtime.label}&lt;/td&gt;<br>
+                    &lt;td class=&quot;element&quot;&gt;{$form.newshowtime.html}&lt;/td&gt;<br>
+                &lt;/tr&gt;<br>
+                &lt;tr&gt;<br>
+					&lt;TD CLASS=&#039;label&#039;&gt;Repeating:&lt;/TD&gt;<br>
+					&lt;TD CLASS=&#039;element&#039;&gt;<br>
+						{$form.repeat.none.html} This event does not repeat<br>
+                        &lt;BR&gt;{$form.repeat.repeat.html} Repeat {$form.repeatevery.html} {$form.repeateverywhat.html}&lt;/TD&gt;<br>
+                &lt;/tr&gt;<br>
+                &lt;tr&gt;<br>
+					&lt;TD CLASS=&#039;label&#039;&gt;End Date:&lt;/TD&gt;<br>
+					&lt;TD CLASS=&#039;element&#039;&gt;<br>
+						{$form.ends.none.html} No End Date<br>
+                        &lt;BR&gt;{$form.ends.endon.html} Repeat until {$form.enddate.html}&lt;/TD&gt;<br>
+                &lt;/tr&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

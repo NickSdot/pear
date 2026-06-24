@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8543</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail/index.html">Mail</a> &#187; Bug #8543</h1>
+<p>Missing newline after headers when using sendmail</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-08-23 17:07 UTC</td></tr>
+<tr><th>From</th><td>robin dot west at dal dot ca</td></tr>
+<tr><th>Assigned</th><td>jon</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail/index.html">Mail</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>RH Linux 2.4.21-40.EL.D01smp #1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-23 17:07 UTC] robin dot west at dal dot ca</h3>
+<p>Description:<br>
+------------<br>
+During a recent system update, our PEAR Mail package was updated to 1.1.10. After the update, we noticed an error message being displayed by our Webmail application (Horde/IMP v4.0.3). This was due to bug 7682 (Use of undefined constant PHP_EOL). We checked your CVS and noticed that this bug was fixed so we updated the Mail package to the CVS version.</p>
+<p>However, we now have a more serious bug: there is no newline inserted after the message headers when using the &quot;sendmail&quot; driver. Message lines that start with spaces, or with a single word followed by a colon (:), end up being interpreted as headers and disappear from the message body.</p>
+<p>After reviewing your CVS, we&#039;re pretty sure this is happening because of the &quot;fix&quot; put in for bug 7492, which removed the newline from the Mail.php file because there was already a newline being inserted in the &quot;mail&quot; driver. However, it appears there is no newline inserted by the &quot;sendmail&quot; driver, and so the message body gets mixed up with the text.</p>
+<p>You can see our phpinfo() here: <br>
+http://mytest.dal.ca/webmail/phpinfo.php</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php</p>
+<p>include(&#039;Mail.php&#039;);</p>
+<p>/* change addresses as needed for testing */<br>
+$recipients = &#039;rwest@dal.ca&#039;;</p>
+<p>$headers[&#039;From&#039;]    =  &#039;rwest@dal.ca&#039;;<br>
+$headers[&#039;Subject&#039;] = &#039;Test message&#039;;</p>
+<p>$body = &#039;Line1: 1<br>
+Line2: 2<br>
+Line3: 3</p>
+<p>LineX: X<br>
+LineY: Y<br>
+LineZ: Z<br>
+&#039;;</p>
+<p>$mail_object =&amp; Mail::factory(&#039;sendmail&#039;);</p>
+<p>var_dump($mail_object-&gt;send($recipients, $headers, $body));</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Date:  Wed, 23 Aug 2006 13:50:10 -0300 [01:50:10 PM ADT] <br>
+From:  rwest@dal.ca  <br>
+Subject:  Test message</p>
+<p>Line1: 1<br>
+Line2: 2<br>
+Line3: 3</p>
+<p>LineX: X<br>
+LineY: Y<br>
+LineZ: Z</p>
+<p>Actual result:<br>
+--------------<br>
+Date:  Wed, 23 Aug 2006 13:50:24 -0300 [01:50:24 PM ADT] <br>
+From:  rwest@dal.ca  <br>
+Subject:  Test message</p>
+<p>LineX: X<br>
+LineY: Y<br>
+LineZ: Z</p>
+</section>
+<section>
+<h3>[2006-09-13 13:54 UTC] robin dot west at dal dot ca</h3>
+<p>Hi - we are using sendmail v8.12.11.20060308 on RH Linux 2.4.21-40.EL.D01smp #1.</p>
+<p>-Robin</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9100</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_mimeDecode/index.html">Mail_mimeDecode</a> &#187; Bug #9100</h1>
+<p>Error with nested boundaries where inner boundary is a subset of the outer</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-10-20 04:31 UTC</td></tr>
+<tr><th>From</th><td>rocca at start dot ca</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_mimeDecode/index.html">Mail_mimeDecode</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>All</td></tr>
+<tr><th>Roadmaps</th><td>1.6.0</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-10-20 04:31 UTC] rocca at start dot ca</h3>
+<p>Description:<br>
+------------<br>
+If the input data has an inner boundary that contains a subset of the outer boundary the _boundarySplit function will incorrectly parse the data.</p>
+<p>For example:</p>
+<p>Content-Type: multipart/mixed; boundary=&quot;abc&quot;</p>
+<p>--abc<br>
+Content-Type: multipart/mixed; boundary=&quot;abc_a&quot;</p>
+<p>--abc_a<br>
+inner</p>
+<p>--abc_a--<br>
+outer</p>
+<p>--abc--</p>
+<p>...will return &#039;abc_a&#039; as being at the same level as &#039;abc&#039; and additionally create some garbage nodes.</p>
+<p>Test script:<br>
+---------------<br>
+function _boundarySplit($input, $boundary) {</p>
+<p>-  $tmp = explode(&#039;--&#039; . $boundary, $input);<br>
++  $tmp = preg_split(&quot;/--$boundary(\b|--)/&quot;, $input);</p>
+</section>
+<section>
+<h3>[2006-11-07 14:50 UTC] rocca at start dot ca</h3>
+<p>Changing PHP/OS version to Irrelevant. Also the &#039;test script&#039; is actually the diff required to fix the problem. Ie, using preg_split instead of explode.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

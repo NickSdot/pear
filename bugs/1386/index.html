@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1386</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Calendar/index.html">Calendar</a> &#187; Bug #1386</h1>
+<p>Multiple entries not possible</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-11 18:42 UTC</td></tr>
+<tr><th>From</th><td>max at tvattomaten dot se</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Calendar/index.html">Calendar</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-11 18:42 UTC] max at tvattomaten dot se</h3>
+<p>Description:<br>
+------------<br>
+I want to have several diary events for my calendar on the same day. I&#039;ve duplicated more or less your example code with the small change that I have month -&gt; days.</p>
+<p>The problem is that there is as I can see no way of having multiple events in one day when examining a month. There is also no support for having events that occur at the same time.</p>
+<p>Please consider adding the functionality, I believe that a diary without the possibility to have multiple entries on the same day/time is unrealistic and will because of that not be used.</p>
+<p>Reproduce code:<br>
+---------------<br>
+require_once &#039;Calendar/Month/Weekdays.php&#039;;<br>
+require_once &#039;Calendar/Day.php&#039;;<br>
+require_once &#039;Calendar/Hour.php&#039;;<br>
+require_once &#039;Calendar/Decorator.php&#039;;</p>
+<p>// Decorator to &quot;attach&quot; functionality to selected hours<br>
+class DiaryEvent extends Calendar_Decorator {<br>
+    var $entry;<br>
+    function DiaryEvent($calendar) {<br>
+        Calendar_Decorator::Calendar_Decorator($calendar);<br>
+    }<br>
+    function setEntry($entry) {<br>
+        $this-&gt;entry = $entry;<br>
+    }<br>
+    function getEntry() {<br>
+        return $this-&gt;entry;<br>
+    }<br>
+}</p>
+<p>if (!isset($_GET[&#039;Y&#039;])) $_GET[&#039;Y&#039;] = date(&#039;Y&#039;);<br>
+if (!isset($_GET[&#039;m&#039;])) $_GET[&#039;m&#039;] = date(&#039;m&#039;);</p>
+<p>$Month = new Calendar_Month_Weekdays($_GET[&#039;Y&#039;], $_GET[&#039;m&#039;]);</p>
+<p>$Times = array(<br>
+	array(&quot;Date&quot; =&gt; &quot;2004-05-20&quot;, <br>
+			&quot;StartTime&quot; =&gt; &quot;12:10:00&quot;, <br>
+			&quot;EndTime&quot; =&gt; &quot;14:00:00&quot;),<br>
+	array(&quot;Date&quot; =&gt; &quot;2004-05-20&quot;, <br>
+			&quot;StartTime&quot; =&gt; &quot;15:10:00&quot;, <br>
+			&quot;EndTime&quot; =&gt; &quot;18:00:00&quot;));</p>
+<p>// An array to place selected hours in<br>
+$selection = array();</p>
+<p>// Loop through the &quot;database result&quot;<br>
+foreach ( $Times as $Time ) {<br>
+    $d = explode(&quot;-&quot;, substr($Time[&quot;Date&quot;],0, strlen(&quot;2004-01-01&quot;)));<br>
+    $year = $d[0];<br>
+    $month = $d[1];<br>
+    $day = $d[2];<br>
+    unset($d);</p>
+<p>$d = explode(&quot;:&quot;, $Time[&quot;StartTime&quot;]);<br>
+    $h = $d[0];<br>
+    $min = $d[1];<br>
+    $sec = $d[2];<br>
+    unset($d);</p>
+<p>$MDay = new Calendar_Day(2000,1,1,1); // Create Hour with dummy values<br>
+	<br>
+	    $MDay-&gt;setTimeStamp(mktime($h, $min, $sec, $month, $day, $year));</p>
+<p>// Create the decorator, passing it the Hour<br>
+	    $DiaryEvent = new DiaryEvent($MDay);<br>
+	<br>
+		$msg = &#039;&lt;a style=&quot;font-size: 1em;&quot;&#039;<br>
+			.&#039; href=&quot;delivery_time.php?ID=&#039; . $Time[&quot;ID&quot;] . &#039;&quot;&gt;&#039;<br>
+			.  substr($Time[&quot;StartTime&quot;], 0, 2)  <br>
+			. &#039;&lt;span style=&quot;position: relative; top: -.5em; font-size: .6em;&quot;&gt;&#039;<br>
+			. substr($Time[&quot;StartTime&quot;], 3, 2) . &quot;&lt;/span&gt;&quot;<br>
+			.&quot;-&quot;<br>
+			. substr($Time[&quot;EndTime&quot;], 0, 2)  <br>
+			. &#039;&lt;span style=&quot;position: relative; top: -.5em; font-size: .6em;&quot;&gt;&#039;<br>
+			. substr($Time[&quot;EndTime&quot;], 3, 2) . &quot;&lt;/span&gt;&quot;<br>
+			.&quot;&lt;/a&gt;&quot;;<br>
+	<br>
+	    // Attach the payload<br>
+	    $DiaryEvent-&gt;setEntry($msg);<br>
+	<br>
+	    // Add the decorator to the selection<br>
+	    $selection[] = $DiaryEvent;<br>
+}</p>
+<p>$Month-&gt;build($selection);</p>
+<p>$OutputCalendar .= &quot;&lt;table class=\&quot;time\&quot;&gt;\n&quot;;<br>
+$today = date(&quot;Y-m-d&quot;, strtotime(&quot;now&quot;));<br>
+while ($Day = $Month-&gt;fetch()) {<br>
+    if ($Day-&gt;isFirst()) {<br>
+        $OutputCalendar .= &quot;&lt;tr&gt;\n&quot;;<br>
+    }</p>
+<p>if ($Day-&gt;isEmpty()) {<br>
+        $OutputCalendar .= &quot;&lt;td&gt; &lt;/td&gt;\n&quot;;<br>
+    } else {<br>
+       	if ( $Day-&gt;isSelected() ) {<br>
+			if ($today == date(&quot;Y-m-d&quot;, $Day-&gt;thisDay(TRUE))){<br>
+	    	    $OutputCalendar .= &#039;&lt;td id=&quot;selectedToday&quot;&gt;&lt;strong&gt;&#039;.$Day-&gt;thisDay().&quot;&lt;/strong&gt;\n&quot;;<br>
+			}else{<br>
+				$OutputCalendar .= &#039;&lt;td id=&quot;selectedTime&quot;&gt;&lt;strong&gt;&#039;.$Day-&gt;thisDay().&quot;&lt;/strong&gt;\n&quot;;<br>
+			}<br>
+    	    $OutputCalendar .= &quot;&lt;br /&gt;&quot; .$Day-&gt;getEntry().&quot;\n&quot;;<br>
+		}elseif ($today == date(&quot;Y-m-d&quot;, $Day-&gt;thisDay(TRUE))){<br>
+    	    $OutputCalendar .= &#039;&lt;td id=&quot;selectedToday&quot;&gt;&lt;strong&gt;&#039;.$Day-&gt;thisDay().&quot;&lt;/strong&gt;\n&quot;;<br>
+		}else{<br>
+    	    $OutputCalendar .= &#039;&lt;td&gt;&lt;strong&gt;&#039;.$Day-&gt;thisDay().&quot;&lt;/strong&gt;\n&quot;;<br>
+		}<br>
+				<br>
+		$OutputCalendar .= &#039;&lt;/td&gt;&#039;;<br>
+    }</p>
+<p>if ($Day-&gt;isLast()) {<br>
+        $OutputCalendar .= &quot;&lt;/tr&gt;\n&quot;;<br>
+    }<br>
+}</p>
+<p>$OutputCalendar .= &quot;&lt;/table&gt;&lt;/p&gt;\n&quot;;<br>
+echo $OutputCalendar;</p>
+<p>Expected result:<br>
+----------------<br>
+I would like there to be a function for iterating through the diary events so that they are all displayed.</p>
+<p>Actual result:<br>
+--------------<br>
+Only one of the two events that that are shown.</p>
+</section>
+<section>
+<h3>[2004-05-11 21:44 UTC] max at tvattomaten dot se</h3>
+<p>Thanks for your answer. Would be good to add that to your examples.</p>
+<p>As I understand a simple:<br>
+while($entry = $Day-&gt;getEntry()){<br>
+ ...<br>
+}</p>
+<p>should work. That would be neat and efficient.</p>
+<p>Is there a good way of adding an entry that spans several hours/days/months? That would also be interesting. I guess that can be done by adding multiple objects but that seems to me like an less desirable way to go...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

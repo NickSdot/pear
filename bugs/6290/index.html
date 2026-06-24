@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6290</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Caching &#187; <a href="package/Cache_Lite/index.html">Cache_Lite</a> &#187; Bug #6290</h1>
+<p>non-specific automaticCleaningFactor</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #6290</th><td>non-specific automaticCleaningFactor</td></tr>
+<tr><th>Submitted</th><td>2005-12-19 17:29 UTC</td></tr>
+<tr><th>From</th><td>kenrick at thebusypixel dot com</td></tr>
+<tr><th>Assigned</th><td>fab</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Cache_Lite/index.html">Cache_Lite</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-12-19 17:29 UTC] kenrick at thebusypixel dot com</h3>
+<p>Description:<br>
+------------<br>
+ver 1.62 of Cache_Lite, but this is present I think in most versions.</p>
+<p>automaticCleaningFactor - this is not immediatley apparent that it pertains to ALL created cache files. If this is specified in multiple instances of Cache_Lite, you will find your caches randomly cleaned, because it just wipes out all files, not just the file you are specifically caching. Im not sure if this is the desired behavoir, but I had to find out that this is what it does the hard way.</p>
+<p>Test script:<br>
+---------------<br>
+require_once(&#039;Cache/Lite.php&#039;);<br>
+$id      = &#039;articles/index&#039;;<br>
+$options = array( &#039;cacheDir&#039;=&gt;CACHE_PATH,<br>
+                         &#039;lifeTime&#039;=&gt;3600,<br>
+                         &#039;automaticCleaningFactor&#039;=&gt;20<br>
+                      );</p>
+<p>$Cache_Lite = new Cache_Lite($options);    <br>
+if ( $page = $Cache_Lite-&gt;get($id) )<br>
+{<br>
+    return $page;<br>
+} else {<br>
+    $page = &#039;some data&#039;;<br>
+    $Cache_Lite-&gt;save($page);<br>
+    return $page<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+I expect that Cache Lite would ONLY clean the requested cache, but instead it cleans all in the CACHE_PATH dir</p>
+<p>Actual result:<br>
+--------------<br>
+haha no files. ;)</p>
+</section>
+<section>
+<h3>[2006-02-02 23:02 UTC] pao at caramail dot com</h3>
+<p>Well that&#039;s the result I was expecting from reading the doc. It&#039;s some sort of a garbage collector.</p>
+</section>
+<section>
+<h3>[2006-02-04 13:02 UTC] fab at php dot net</h3>
+<p>Sure but I understand his point of view. I think it can be usefull to get a garbage collector ___only___ on a specifice cache id.</p>
+<p>But I don&#039;t accept this as a bug so we have to found a way to propose this feature without breaking the API.</p>
+</section>
+<section>
+<h3>[2006-02-04 20:07 UTC] fab at php dot net</h3>
+<p>After trying to code this, I have a problem :)</p>
+<p>IMHO, the automaticCleaning for a specific cache file has no interest at all !</p>
+<p>The cleaning is done when a cache is written on disk. As the cache filename doesn&#039;t change, the cache file will never be cleaned because the cache was just written !!!</p>
+<p>kenrick ?</p>
+</section>
+<section>
+<h3>[2006-02-05 19:54 UTC] kenrick at thebusypixel dot com</h3>
+<p>Well in light of all the comments, maybe its best to put in a  best practices sort of thing.</p>
+<p>This is how I ran into trouble:</p>
+<p>Create multiple instance of the Cache_Lite object. <br>
+Give them all the same lifetime except for one, give that a different lifetime. <br>
+Put all the caches in the same directory.</p>
+<p>If autoclean is specified on of the instance with the different lifetime, your other cache files may or may not be there, possibly creating too many cache writes and poor performance.</p>
+<p>Best practice then would appear to be that you create directories for each of your caches if you want to be using this autocleanfactor.</p>
+<p>True the filename never changes, and is overwritten on write. Where I first observed this problem is that I am caching some pages that are dynamically generated, that will rarely change after once being generated (an article lets say) kept in the same dir as some cached content that has a lifetime of 1 hour, and other caches that have a lifetime as small as 15 minutes. I had autoclean on a couple of instances and my cache performance was awful since it kept being wiped (using the random 1 times on x cache write).</p>
+<p>Ill close this and just hope for a best practice example for large sites.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

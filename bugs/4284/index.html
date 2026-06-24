@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4284</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #4284</h1>
+<p>Singleton reference within classes</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4284</th><td>Singleton reference within classes</td></tr>
+<tr><th>Submitted</th><td>2005-05-05 13:14 UTC</td></tr>
+<tr><th>From</th><td>tim dot daeleman at euronet dot nl</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>Linux (SuSE 9.1 + Xampp)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-05 13:14 UTC] tim dot daeleman at euronet dot nl</h3>
+<p>Description:<br>
+------------<br>
+As discussed in the maillist I file this bug to remind you of the following.</p>
+<p>I want to use the singleton functionality of LU in my web app. This means I want to instantiate a LiveUser object just once with a correct config array.<br>
+Inside classes I want to use this singleton LiveUser object as well, but I don&#039;t want to pass the conf array to the classes.</p>
+<p>I realise this by instatiating a LU singleton again in the class&#039; constructor which picks up the same instance again I instantiated at the beginning of the program flow with the right config array.<br>
+But the singleton method requires at least the config array<br>
+But I don&#039;t have access to the config array inside the class. Still the targetted functionality is possible by either supressing a warning when not submitting anything or submitting an empty array.</p>
+<p>Reproduce code:<br>
+---------------<br>
+//$conf = full config array</p>
+<p>$oLU = LiveUser::singleton($conf);<br>
+$oLU-&gt;init($username, $password, $logout, $remember);</p>
+<p>//check if logged in</p>
+<p>if ($oLU-&gt;isLoggedIn())<br>
+{<br>
+//bla bla<br>
+}</p>
+<p>$oMenu = new topMenu();<br>
+$oMenu-&gt;createMenu();<br>
+$sMenu = $oMenu-&gt;getMenu();</p>
+<p>//with topMenu class similar to:</p>
+<p>class topMenu<br>
+{<br>
+//(...)</p>
+<p>public function __construct()<br>
+{<br>
+        //workaround 1: use empty array<br>
+        $aEmpty = array();<br>
+        $this-&gt;oLiveUser = LiveUser::singleton($aEmpty);<br>
+        //workaround 2: suppres warning<br>
+        $this-&gt;oLiveUser = @LiveUser::singleton();<br>
+        //preferred way to use the method<br>
+        $this-&gt;oLiveUser = LiveUser::singleton();<br>
+}<br>
+//(...)<br>
+public function createMenu()<br>
+{<br>
+	if ($this-&gt;oLiveUser-&gt;checkRight(&quot;MANAGE_USERS&quot;))<br>
+	{<br>
+		//create menu item for user management<br>
+	}<br>
+	if ($this-&gt;LiveUser-&gt;checkRight(&quot;MANAGE_CONTENT&quot;))<br>
+	{<br>
+		//create menu item for content management<br>
+	}<br>
+	//etc.<br>
+}<br>
+//(...)<br>
+}</p>
+</section>
+<section>
+<h3>[2005-05-15 23:48 UTC] smith at backendmedia dot com</h3>
+<p>this might work:</p>
+<p>if (!empty($conf)) {<br>
+            if (empty($instances)) {<br>
+                return false;<br>
+            }<br>
+            $signature = key($instances);<br>
+        } else {<br>
+            $signature = serialize(array($handle, $passwd, $confName));<br>
+            if (!isset($instances[$signature])) {<br>
+                $obj = &amp;LiveUser::factory(<br>
+                    $conf, $handle, $passwd, $logout, $remember, $confName<br>
+                );<br>
+                $instances[$signature] =&amp; $obj;<br>
+            }<br>
+        }</p>
+</section>
+<section>
+<h3>[2005-05-16 13:07 UTC] tim dot daeleman at euronet dot nl</h3>
+<p>Thx for the reactions. I&#039;m happy enough with the workarounds I&#039;m already using. But Lukas asked me to report this bug just to remind him of the fact that this might have to be altered in the code. That&#039;s it. So it&#039;s up to you to do or not do something with this &quot;bug&quot;.</p>
+</section>
+<section>
+<h3>[2005-05-19 04:41 UTC] smith at backendmedia dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

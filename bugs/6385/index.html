@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6385</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Configuration &#187; <a href="package/Config/index.html">Config</a> &#187; Bug #6385</h1>
+<p>Allow colon in ini file key</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #6385</th><td>Allow colon in ini file key</td></tr>
+<tr><th>Submitted</th><td>2006-01-01 07:10 UTC</td></tr>
+<tr><th>From</th><td>shannah at sfu dot ca</td></tr>
+<tr><th>Assigned</th><td>aashley</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Config/index.html">Config</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>All</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-01 07:10 UTC] shannah at sfu dot ca</h3>
+<p>Description:<br>
+------------<br>
+Not sure if this is a bug or not, but it is handy to be able <br>
+to include colons in the keys of ini files</p>
+<p>eg:</p>
+<p>[section1]<br>
+widget:type = &quot;select&quot;<br>
+widget:label = &quot;My Section&quot;<br>
+widget:description = &quot;My Description&quot;</p>
+<p>Currently the iniCommented will not accept the colon <br>
+character.</p>
+<p>I have changed my local copy of Config/IniCommented.php to <br>
+allow this.  The diff file is as follows:</p>
+<p>72c72<br>
+&lt;                       } elseif (preg_match(&#039;/^\s*([a-zA-<br>
+Z0-9_\-\.\s:]*)\s*=\s*(.*)\s*$/&#039;, $line, $match)) {<br>
+---<br>
+&gt;                       } elseif (preg_match(&#039;/^\s*([a-zA-<br>
+Z0-9_\-\.\s]*)\s*=\s*(.*)\s*$/&#039;, $line, $match)) {</p>
+</section>
+<section>
+<h3>[2006-01-03 01:14 UTC] aashley at php dot net</h3>
+<p>How should these field names be handled when converting to other config file formats. For example in XML the : is used to seperate a namespace from the tag name, and unless the name space is specified in the header its not valid. I&#039;m not sure on its allowance in Apache style configs either (tho i suspect its allowed).</p>
+<p>Finally what is the php parse_ini_file() functions interpretation of this. It is used in IniFile.php and other than supporting comments I&#039;d like to keep the two ini file versions as similar as possible</p>
+</section>
+<section>
+<h3>[2006-01-03 01:25 UTC] shannah at sfu dot ca</h3>
+<p>I see your point about XML compatibility.  There doesn&#039;t <br>
+seem to be a perfect solution for the cross compatibility - <br>
+other than user responsibility to name things appropriately <br>
+if they will be using XML.</p>
+<p>parse_ini_file() allows colons in key names.  This is what I <br>
+was using prior to switching to PEAR Config.  Eg:</p>
+<p>inifile.ini<br>
+----<br>
+[section]<br>
+widget:label=&quot;Test Label&quot;<br>
+widget:description = &quot;Test Description&quot;</p>
+<p>test.php<br>
+----<br>
+&lt;?<br>
+$arr = parse_ini_file(&quot;inifile.ini&quot;, true);<br>
+print_r($arr);<br>
+?&gt;</p>
+<p>outputs:</p>
+<p>Array (<br>
+    [section] =&gt;<br>
+          Array (<br>
+             [widget:label] =&gt; &quot;Test Label&quot;,<br>
+             [widget:description] =&gt; &quot;Test Description&quot;<br>
+                )<br>
+      )</p>
+</section>
+<section>
+<h3>[2006-01-03 01:31 UTC] shannah at sfu dot ca</h3>
+<p>One possibility for the XML version would be to translate <br>
+colonized keys into nested XML tags:</p>
+<p>eg:<br>
+[section]<br>
+widget:label = &quot;Test Label&quot;</p>
+<p>translates to</p>
+<p>&lt;section&gt;<br>
+  &lt;widget&gt;<br>
+    &lt;label&gt;Test Label&lt;/label&gt;<br>
+  &lt;/widget&gt;<br>
+&lt;/section&gt;</p>
+</section>
+<section>
+<h3>[2006-01-03 03:00 UTC] aashley at php dot net</h3>
+<p>Seeing as php&#039;s parse_ini_file() supports : in the keys I&#039;ve added support for it to IniCommented.php. It is in CVS now and will be available in the next bug fix release.</p>
+<p>I&#039;m leaving this ticket open for now to deal with the translation to other Config formats.</p>
+</section>
+<section>
+<h3>[2006-02-14 00:04 UTC] aashley at php dot net</h3>
+<p>This is out there and fixed. If someone has problems with colons in other formats they can open a new bug.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

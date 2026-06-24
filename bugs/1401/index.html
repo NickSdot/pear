@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1401</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth/index.html">Auth</a> &#187; Bug #1401</h1>
+<p>IMAP authentication fails due to error in code</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-13 16:47 UTC</td></tr>
+<tr><th>From</th><td>mail at andreas dot id dot au</td></tr>
+<tr><th>Assigned</th><td>yavo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Auth/index.html">Auth</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0RC2 (Release Candidate 2)</td></tr>
+<tr><th>OS</th><td>FreeBSD</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-13 16:47 UTC] mail at andreas dot id dot au</h3>
+<p>Description:<br>
+------------<br>
+The IMAP authentication is always saying that it is unable to connect to server.</p>
+<p>There is a typing error in the code, $timeout should read $this-&gt;options[&#039;timeout&#039;]. Due to $timeout having a 0 value the fsockopen function gives up right away and returns false.</p>
+<p>Reproduce code:<br>
+---------------<br>
+function _checkServer() {<br>
+        $fp = @fsockopen ($this-&gt;options[&#039;host&#039;], $this-&gt;options[&#039;port&#039;],<br>
+                          $errno, $errstr, $timeout);<br>
+        if (is_resource($fp)) {<br>
+            @fclose($fp);<br>
+        } else {<br>
+            $message = &quot;Error connecting to IMAP server &quot;<br>
+                . $this-&gt;options[&#039;host&#039;]<br>
+                . &quot;:&quot; . $this-&gt;options[&#039;port&#039;];<br>
+            return PEAR::raiseError($message, 41, PEAR_ERROR_DIE);<br>
+        }<br>
+    }</p>
+</section>
+<section>
+<h3>[2004-05-16 01:17 UTC] mail at andreas dot id dot au</h3>
+<p>I have downloaded 1.2.3 from the PEAR website and have confirmed that the bug still exists in this version.</p>
+<p>$fp = @fsockopen ($this-&gt;options[&#039;host&#039;], $this-&gt;options[&#039;port&#039;],<br>
+                          $errno, $errstr, $timeout);</p>
+<p>That is the line of code copied out of IMAP.php, line 124 and 125. $timeout needs to be $this-&gt;options[&#039;timeout&#039;].</p>
+<p>Can you please check your CVS and verify that the latest version of that file has this fixed.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #214</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #214</h1>
+<p>Constructor returns error object on error. This isn&#039;t legal php code.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-11-07 16:30 UTC</td></tr>
+<tr><th>From</th><td>mfriedman at symcor dot com</td></tr>
+<tr><th>Assigned</th><td>mw21st</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-11-07 16:30 UTC] mfriedman at symcor dot com</h3>
+<p>Description:<br>
+------------<br>
+In some versions of php you may return an object from the constructor that is not the same type as the constructor would normally return. In the constructor: &quot;LiveUser_Admin_Auth_Container_DB&quot;, there is an error condition which results in a PEAR_Error object being return from the constructor. This is illegal php code and is not guaranteed to work in all versions of php. To address this, there should be a factory operation to instantiate this class (and any others that have this behavior) so that the factory operation can return the error if indeed there is one. This would &quot;keep failing code out of the constructor&quot;.</p>
+<p>See: http://bugs.php.net/bug.php?id=21380<br>
+This behavior will not be supported in ZE2.</p>
+<p>Reproduce code:<br>
+---------------<br>
+The offending code is:<br>
+if ($conf[&#039;type&#039;] != &#039;DB&#039;) {<br>
+            return PEAR::raiseError(&#039;the configuration array does not match<br>
+            this container type. Please use an array for a DB container.&#039;);</p>
+<p>Here is the constructor:</p>
+<p>function &amp;LiveUser_Admin_Auth_Container_DB(&amp;$connectOptions, $conf)<br>
+    {<br>
+        if (is_object($connectOptions)) {<br>
+            $this-&gt;dbc = &amp;$connectOptions;<br>
+            $this-&gt;init_ok = true;<br>
+        } elseif (is_array($connectOptions)) {<br>
+            foreach ($connectOptions as $key =&gt; $value) {<br>
+                if (isset($this-&gt;$key)) {<br>
+                    $this-&gt;$key = $value;<br>
+                }<br>
+            }</p>
+<p>$this-&gt;dbc = DB::connect($connectOptions[&#039;dsn&#039;]);</p>
+<p>if (!DB::isError($this-&gt;dbc)) {<br>
+                $this-&gt;init_ok = true;<br>
+            }<br>
+        }</p>
+<p>if ($conf[&#039;type&#039;] != &#039;DB&#039;) {<br>
+            return PEAR::raiseError(&#039;the configuration array does not match<br>
+            this container type. Please use an array for a DB container.&#039;);<br>
+        }</p>
+<p>$this-&gt;authTableCols = array_merge($conf[&#039;authTableCols&#039;], $this-&gt;authTableCols);<br>
+        $this-&gt;authTable     = $conf[&#039;authTable&#039;];<br>
+    } // end func LiveUser_Admin_Auth_DB</p>
+<p>Expected result:<br>
+----------------<br>
+The expected result should be to return a valid object of type:<br>
+LiveUser_Admin_Auth_Container_DB<br>
+ <br>
+The constructor may or may not return this result depending on the version of php.</p>
+</section>
+<section>
+<h3>[2003-11-10 19:13 UTC] mw21st at php dot net</h3>
+<p>Will fix this.</p>
+</section>
+<section>
+<h3>[2003-11-11 20:31 UTC] mw21st at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+<p>Actually, I made up my mind and won&#039;t fix it, as Lukas already did that in CVS, pick file version 1.21 or newer.</p>
+<p>Thanks for the bug report anyway :-)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

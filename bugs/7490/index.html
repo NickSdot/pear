@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7490</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Encryption &#187; <a href="package/Crypt_HMAC/index.html">Crypt_HMAC</a> &#187; Bug #7490</h1>
+<p>setFunction() after setKey() breaks for keys requiring hashing</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-04-25 22:31 UTC</td></tr>
+<tr><th>From</th><td>chad at herballure dot com</td></tr>
+<tr><th>Assigned</th><td>mfonda</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Crypt_HMAC/index.html">Crypt_HMAC</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-25 22:31 UTC] chad at herballure dot com</h3>
+<p>Description:<br>
+------------<br>
+I was unit-testing an internal port of Crypt_HMAC to PHP5, when I discovered that a key long enough to require hashing is hashed with whatever function was set when setKey was called. If the hash function is changed later with setFunction, then the _ipad and _opad variables are incorrect (having been produced with the wrong hash).</p>
+<p>Testing with data from RFC 2202; the data used below is SHA-1 case 6.</p>
+<p>Test script:<br>
+---------------<br>
+$long_key = pack(&#039;H80&#039;,<br>
+  &#039;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&#039; .<br>
+  &#039;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&#039; .<br>
+  &#039;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&#039; .<br>
+  &#039;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&#039;);<br>
+// long_key is 80 bytes of 0xaa</p>
+<p>$hmac = new Crypt_HMAC($long_key);<br>
+$hmac-&gt;setFunction(&#039;sha1&#039;);<br>
+echo($hmac-&gt;hash(&#039;Test Using Larger Than Block-Size Key - Hash Key First&#039;));</p>
+<p>Expected result:<br>
+----------------<br>
+aa4ae5e15272d00e95705637ce8a3b55ed402112</p>
+<p>Actual result:<br>
+--------------<br>
+78a32997ffa1e0719e61e533c2fb19fe7e85d44f</p>
+</section>
+<section>
+<h3>[2006-06-06 16:50 UTC] chad at herballure dot com</h3>
+<p>An edit of the documentation is really what I expect to happen. I only found this bug by pathological testing, not by stumbling over it in live code.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

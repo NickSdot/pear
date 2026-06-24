@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4475</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Console &#187; <a href="package/Console_Getopt/index.html">Console_Getopt</a> &#187; Bug #4475</h1>
+<p>An ambiguous error occurred when specifying similar longoption name.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-30 09:57 UTC</td></tr>
+<tr><th>From</th><td>ryo at fastriver dot net</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Console_Getopt/index.html">Console_Getopt</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Slackware Linux 9.0</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-30 09:57 UTC] ryo at fastriver dot net</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m a Japanese. I&#039;m sorry, my English is poor, <br>
+so it may be hard to read this.</p>
+<p>For example, I give the following similar longoptions parameter to getopt().</p>
+<p>$longoptions = array(&quot;last_name=&quot;, &quot;last_name_two=&quot;);</p>
+<p>And I execute my php script as follows.</p>
+<p>php myscript.php --last_name=&quot;abc&quot;</p>
+<p>Then, getopt() return a PEAR error object. The error <br>
+message of the error object is as follows.</p>
+<p>Console_Getopt: option --last_name is ambiguous</p>
+<p>Reproduce code:<br>
+---------------<br>
+--- Getopt.php.orig     2003-12-12 04:21:14.000000000 +0900<br>
++++ Getopt.php  2005-05-30 18:43:51.000000000 +0900<br>
+@@ -201,7 +201,7 @@<br>
+                options. */<br>
+             if ($opt_rest != &#039;&#039; &amp;&amp; $opt{0} != &#039;=&#039; &amp;&amp;<br>
+                 $i + 1 &lt; count($long_options) &amp;&amp;<br>
+-                $opt == substr($long_options[$i+1], 0, $opt_len)) {<br>
++                $opt == substr($long_options[$i+1], 0, strlen($long_options[$i+1]))) {<br>
+                 return PEAR::raiseError(&quot;Console_Getopt: option --$opt is ambiguous&quot;);<br>
+             }</p>
+<p>Expected result:<br>
+----------------<br>
+getopt() should not return the error object.</p>
+<p>Actual result:<br>
+--------------<br>
+getopt() returns the error object.</p>
+</section>
+<section>
+<h3>[2006-07-26 07:07 UTC] mleegwater at gmail dot com</h3>
+<p>Hi there!</p>
+<p>A patch that could solve this problem:</p>
+<p>--- /usr/share/php/Console/Getopt.php   2006-04-16 13:19:46.000000000 +0200<br>
++++ Getopt.php  2006-07-26 08:50:57.000000000 +0200<br>
+@@ -189,19 +189,21 @@</p>
+<p>for ($i = 0; $i &lt; count($long_options); $i++) {<br>
+             $long_opt  = $long_options[$i];<br>
+-            $opt_start = substr($long_opt, 0, $opt_len);<br>
++           $long_opt_name = preg_replace(&quot;/=/&quot;, &quot;&quot;, $long_opt);</p>
+<p>-            /* Option doesn&#039;t match. Go on to the next one. */<br>
+-            if ($opt_start != $opt)<br>
+-                continue;<br>
++           if ($long_opt_name != $opt)<br>
++               continue;</p>
+<p>$opt_rest  = substr($long_opt, $opt_len);</p>
+<p>/* Check that the options uniquely matches one of the allowed<br>
+                options. */<br>
++           $next_option_rest = substr($long_options[$i+1],$opt_len);<br>
+             if ($opt_rest != &#039;&#039; &amp;&amp; $opt{0} != &#039;=&#039; &amp;&amp;<br>
+                 $i + 1 &lt; count($long_options) &amp;&amp;<br>
+-                $opt == substr($long_options[$i+1], 0, $opt_len)) {<br>
++                $opt == substr($long_options[$i+1], 0, $opt_len) &amp;&amp;<br>
++               $next_option_rest != &#039;&#039; &amp;&amp;<br>
++               $next_option_rest{0} != &#039;=&#039;) {<br>
+                 return PEAR::raiseError(&quot;Console_Getopt: option --$opt is ambiguous&quot;);<br>
+             }</p>
+<p>Regards,</p>
+<p>Michiel</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

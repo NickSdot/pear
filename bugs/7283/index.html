@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7283</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/Pager/index.html">Pager</a> &#187; Bug #7283</h1>
+<p>proposals to getPerPageSelectBox</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #7283</th><td>proposals to getPerPageSelectBox</td></tr>
+<tr><th>Submitted</th><td>2006-04-03 14:11 UTC</td></tr>
+<tr><th>From</th><td>kmh496 at kornet dot net</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Pager/index.html">Pager</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.5</td></tr>
+<tr><th>OS</th><td>RH fedora 4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-03 14:11 UTC] kmh496 at kornet dot net</h3>
+<p>Description:<br>
+------------<br>
+I am using the Pager class to page through results of a data set as you <br>
+can see by looking at<br>
+http://www.myowndictionary.com/index.php?cfile=dict_pager&amp;old_cfile=skip&amp;browse_todo=1&amp;from_lang=english&amp;to_lang=english</p>
+<p>so I have used it frequently.</p>
+<p>the pager class has a function called getPagePerSelectBox which allows<br>
+you to change the size of the window of the results from the DB query<br>
+which are visible.</p>
+<p>I have some improvements made externally to the Pager module which the<br>
+maintainer may decide to incorporate into this already tight little<br>
+package....</p>
+<p>1.  add a onChange to the select box form element<br>
+2.    change max value in the select box to not exceed the max number of<br>
+elements in the form.</p>
+<p>note: i make my own form just for the select box</p>
+<p>-----------------1-------------------------<br>
+it is helpful to include the following javascript code to send the<br>
+select box form automatically when it is changed.</p>
+<p>&lt;script type=&quot;text/javascript&quot; language=JavaScript&gt;</p>
+<p>function submit_setPerPage(f)<br>
+{<br>
+    // another javascript function dead in the water, except for firefox<br>
+   var check = false;<br>
+    var new_entrant = 0;<br>
+    var display_size = 0;<br>
+    var offset = &lt;?=$offset?&gt;;<br>
+    display_size = f.setPerPage.selected;<br>
+    f.setPerPage = f.setPerPage.selected;<br>
+    if (offset &lt; display_size ) {<br>
+        new_entrant=1;<br>
+    } else {<br>
+        new_entrant = Math.floor(display_size / offset);<br>
+    }<br>
+    f.entrant= new_entrant;<br>
+    // alert(&#039;entrant=&#039;+new_entrant+&#039; and display_size=&#039;+display_size);<br>
+    f.action = &quot;index.php&quot;;<br>
+    f.submit();<br>
+}</p>
+<p>however, that doesn&#039;t work in windows.</p>
+<p>i found in windows machine.</p>
+<p>// javascript broken on MSIE     <br>
+    require_once(&#039;lib/browser.php&#039;);^M<br>
+// File name: browser.php<br>
+// Author: Gary White<br>
+// Last modified: November 10, 2003<br>
+   $br = new Browser;^M<br>
+    if ((strpos($br-&gt;Platform, &quot;indow&quot;)&gt;-1) ||<br>
+strpos($br-&gt;Name,&quot;MSIE&quot;)&gt;-1) {<br>
+        $selectBox .= &quot;&lt;input type=submit value=&#039;change&#039;&gt;  &quot;;<br>
+    }</p>
+<p>I then wrap the select in form tags.<br>
+startForm(&#039;setPerPage&#039;,$bo_table,$wr_id,<br>
+$entrant,0,&#039;dict_pager&#039;,&#039;index.php&#039;) ; <br>
+// startForm includes common variables in all my forms for me :)<br>
+echo $selectBox;<br>
+?&gt;  <br>
+&lt;/form&gt;</p>
+<p>------------- 2-----------------------</p>
+<p>get $max_from_db_table by issuing a count(*) query externally to the<br>
+pager class, but there is a pager method numItems method for the Pager<br>
+class which may do the same thing.</p>
+<p>$optionArr = array(5,10,15,20,25,30);<br>
+    foreach ($optionArr as $option) {<br>
+        if ($option == $items_per_page) {<br>
+            $max_option = $option;<br>
+            $selectBox .= &quot;&lt;option value=&#039;$option&#039;<br>
+selected=&#039;selected&#039;&gt;$option&lt;/option&gt;&quot;;<br>
+        } else  {<br>
+            $max_option = $option;<br>
+            $selectBox .= &quot;&lt;option value=&#039;$option&#039;&gt;$option&lt;/option&gt;&quot;;<br>
+        }<br>
+        if ( $option   &gt;= $max_from_db_table ) break;  /// it breaks<br>
+when you send more than will fit<br>
+            /// it would have to start at a non-existing number<br>
+    }<br>
+    $selectBox .= &quot;&lt;/select&gt;  &quot;;<br>
+    // javascript broken on my MSIE win2k comptuer<br>
+    require_once(&#039;lib/browser.php&#039;);^M<br>
+    $br = new Browser;^M<br>
+    if ((strpos($br-&gt;Platform, &quot;indow&quot;)&gt;-1) ||<br>
+strpos($br-&gt;Name,&quot;MSIE&quot;)&gt;-1) {<br>
+        $selectBox .= &quot;&lt;input type=submit value=&#039;change&#039;&gt;  &quot;;<br>
+    }<br>
+// function getPerPageSelectBox($start=5, $end=30, $step=5,<br>
+$showAllData=false, $extraParams=array())<br>
+$selectBox = $selectBox_opening . $pager-&gt;getPerPageSelectBox(5,<br>
+$max_option,5,true);<br>
+}</p>
+<p>-- <br>
+PEAR General Mailing List (http://pear.php.net/)<br>
+To unsubscribe, visit: http://www.php.net/unsub.php</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

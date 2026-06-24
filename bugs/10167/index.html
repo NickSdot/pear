@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #10167</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Validate &#187; <a href="package/Validate/index.html">Validate</a> &#187; Bug #10167</h1>
+<p>ISSN/ISBN validation is broken by _checkControlNumber</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-02-23 16:11 UTC</td></tr>
+<tr><th>From</th><td>ash at hexmen dot com</td></tr>
+<tr><th>Assigned</th><td>dufuz</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Validate/index.html">Validate</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>0.8.0</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-02-23 16:11 UTC] ash at hexmen dot com</h3>
+<p>Description:<br>
+------------<br>
+The Validate_ISPN package relies on _checkControlNumber from Validate - which contains a bug...</p>
+<p>The &#039;allow_high&#039; parameter passed from _checkControlNumber to _getControlNumber is &#039;true&#039; if the last character of the passed in $number is &#039;X&#039; and false otherwise - this is bad logic.</p>
+<p>Instead, the &#039;allow_high&#039; parameter should be &#039;true&#039; if the modulo is greater than 10 - regardless of what $number is passed in.</p>
+<p>Note: with correct logic, the &#039;allow_high&#039; parameter is redundant, as it can be determined within the function itself.</p>
+<p>A proper-patch with test-cases is available at:<br>
+http://hexmen.com/code/patches/pear-2879.diff<br>
+(this bug is probably related to bug 2879, hence the numbering)</p>
+<p>A one-line patch is below:<br>
+Index: ../Validate.php<br>
+===================================================================<br>
+RCS file: /repository/pear/Validate/Validate.php,v<br>
+retrieving revision 1.107<br>
+diff -u -r1.107 Validate.php<br>
+--- ../Validate.php	9 Jan 2007 20:26:00 -0000	1.107<br>
++++ ../Validate.php	23 Feb 2007 16:04:21 -0000<br>
+@@ -715,7 +715,7 @@<br>
+             return false;<br>
+         }<br>
+         $target_digit  = substr($number, count($weights), 1);<br>
+-        $control_digit = Validate::_getControlNumber($number, $weights, $modulo, $subtract, $target_digit === &#039;X&#039;);<br>
++        $control_digit = Validate::_getControlNumber($number, $weights, $modulo, $subtract, $modulo &gt; 10);<br>
+ <br>
+         if ($control_digit == -1) {<br>
+             return false;</p>
+<p>Test script:<br>
+---------------<br>
+echo Validate_ISPN::issn(&#039;1044-789X&#039;) ? &quot;YES\n&quot; : &quot;NO\n&quot;;<br>
+echo Validate_ISPN::issn(&#039;1044-7890&#039;) ? &quot;YES\n&quot; : &quot;NO\n&quot;;<br>
+echo Validate_ISPN::isbn(&#039;073571410X&#039;) ? &quot;YES\n&quot; : &quot;NO\n&quot;;<br>
+echo Validate_ISPN::isbn(&#039;0735714100&#039;) ? &quot;YES\n&quot; : &quot;NO\n&quot;;</p>
+<p>Expected result:<br>
+----------------<br>
+YES<br>
+NO<br>
+YES<br>
+NO</p>
+<p>Actual result:<br>
+--------------<br>
+YES<br>
+YES<br>
+YES<br>
+YES</p>
+</section>
+<section>
+<h3>[2007-03-30 06:54 UTC] ash at hexmen dot com</h3>
+<p>The valid ISSN number 1044-789X is for Dr Dobbs Journal.  As the last-digit is a check-digit, it&#039;s unique.  So, 1044-7890 is an invalid ISSN number.</p>
+<p>Similarly, the valid ISBN number is 073571410X, and the invalid one is 0735714100.  The book is &#039;Defensive Design for the Web...&#039;<br>
+http://www.amazon.com/o/ASIN/073571410X</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

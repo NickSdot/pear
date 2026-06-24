@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9081</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_pgsql/index.html">MDB2_Driver_pgsql</a> &#187; Bug #9081</h1>
+<p>MDB2 pgsql dropDatabase issue</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-10-18 15:01 UTC</td></tr>
+<tr><th>From</th><td>ale dot pas at tiscali dot it</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_pgsql/index.html">MDB2_Driver_pgsql</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-10-18 15:01 UTC] ale dot pas at tiscali dot it</h3>
+<p>Description:<br>
+------------<br>
+A call to dropDatabase() returns MDB2_Ok but the database is not dropped.</p>
+<p>Test script:<br>
+---------------<br>
+        $mdb2-&gt;loadModule(&#039;Manager&#039;);<br>
+        $this-&gt;assertFalse(PEAR::isError($mdb2));<br>
+        $this-&gt;assertTrue(in_array($new_db_name, $mdb2-&gt;listDatabases()));<br>
+        // Drop DB<br>
+        $this-&gt;assertTrue(MDB2_OK == $mdb2-&gt;dropDatabase($new_db_name));<br>
+        $this-&gt;assertFalse(in_array($new_db_name, $mdb2-&gt;listDatabases()));</p>
+<p>Expected result:<br>
+----------------<br>
+The last instruction should return false but returns true (the DB is still in the list reported by listDatabases().</p>
+<p>DB user permission are Ok and the DB is really still there.</p>
+</section>
+<section>
+<h3>[2006-10-19 09:00 UTC] ale dot pas at tiscali dot it</h3>
+<p>This code fails at random (once every 2-5 run)<br>
+---------------------------------<br>
+require_once &#039;MDB2.php&#039;;</p>
+<p>$mdb2 =&amp; <br>
+MDB2::connect(&#039;pgsql://***:***@localhost:5432/template1&#039;);<br>
+$mdb2-&gt;loadModule(&#039;Manager&#039;);<br>
+var_dump($mdb2-&gt;listDatabases());<br>
+$mdb2-&gt;dropDatabase(&#039;test_geodb&#039;);<br>
+var_dump($mdb2-&gt;listDatabases());<br>
+var_dump($mdb2-&gt;createDatabase(&#039;test_geodb&#039;));</p>
+<p>--------------------------------------</p>
+<p>This code always works:<br>
+--------------------------------------<br>
+$dbconn = pg_connect(&quot;host=localhost dbname=template1  <br>
+user=*** password=***&quot;)<br>
+   or die(&#039;Could not connect: &#039; . pg_last_error());</p>
+<p>$query = &#039;select datname from pg_database&#039;;<br>
+$result = pg_query($query) or die(&#039;Query failed: &#039; . <br>
+pg_last_error());<br>
+while($row = pg_fetch_row($result)){<br>
+    $dblist[] = $row[0];<br>
+}</p>
+<p>var_dump(db_list());</p>
+<p>if(in_array(&#039;test_geodb&#039;, db_list())){<br>
+    $query = &#039;DROP DATABASE test_geodb&#039;;<br>
+    $result = pg_query($query) or die(&#039;Query failed: &#039; . <br>
+pg_last_error());<br>
+}</p>
+<p>var_dump(db_list());</p>
+<p>$query = &#039;CREATE DATABASE test_geodb&#039;;<br>
+$result = pg_query($query) or die(&#039;Query failed: &#039; . <br>
+pg_last_error());</p>
+<p>pg_close($dbconn);</p>
+<p>function db_list(){<br>
+    $query = &#039;select datname from pg_database&#039;;<br>
+    $result = pg_query($query) or die(&#039;Query failed: &#039; . <br>
+pg_last_error());<br>
+    while($row = pg_fetch_row($result)){<br>
+        $dblist[] = $row[0];<br>
+    }<br>
+    return $dblist;<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

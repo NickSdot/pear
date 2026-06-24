@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7966</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File System &#187; <a href="package/File_Find/index.html">File_Find</a> &#187; Bug #7966</h1>
+<p>File_Find Stream Support</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #7966</th><td>File_Find Stream Support</td></tr>
+<tr><th>Submitted</th><td>2006-06-23 00:43 UTC</td></tr>
+<tr><th>From</th><td>ahayes at wcg dot net dot au</td></tr>
+<tr><th>Assigned</th><td>doconnor</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/File_Find/index.html">File_Find</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>FC5</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-23 00:43 UTC] ahayes at wcg dot net dot au</h3>
+<p>Description:<br>
+------------<br>
+It would be really nice if File_Find had support for streams.</p>
+<p>It almost has basic support for streams, if we do not bother about context&#039;s, however it would not be hard to integrate context support.</p>
+<p>There are a few places that cause stream support to fail, mainly because of searching and replacing of DIRECTORY_SEPARATOR, which while I&#039;m not exactly sure why it has been done I assume it is for security reasons.</p>
+<p>For example, lets assume we have a stream as follows:</p>
+<p>$files = File_Find::search(&quot;ftp://example.com/pub/*.txt&quot;);</p>
+<p>In its current form, File_Find replaces the directory to read as follows:</p>
+<p>ftp:/example.com/pub/*.txt</p>
+<p>Notice the missing / in the stream path, causing the stream path to be invalid.</p>
+<p>By removing or changing these replacements as listed below basic stream support is enabled. It would not be too hard to also include context support, either in the constructor or within the search and glob functions.</p>
+<p>- Line 138 ( $directory = preg_replace(&quot;![\\\\/]+!&quot;, DIRECTORY_SEPARATOR, $directory); )<br>
+ - Line 198/199 ( $path = str_replace(DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR, $path); )</p>
+<p>Can these lines be replaced by something that does not destroy the stream part?</p>
+<p>Test script:<br>
+---------------<br>
+$files = File_Find::search(&quot;file:///tmp&quot;);</p>
+<p>Expected result:<br>
+----------------<br>
+Should return some files in the /tmp directory</p>
+<p>Actual result:<br>
+--------------<br>
+PEAR Error is returned as follows:</p>
+<p>[pear_error: message=&quot;Cannot open directory&quot; code=0 mode=callback callback=Controller::PEAR_Error_Handler prefix=&quot;&quot; info=&quot;&quot;]</p>
+</section>
+<section>
+<h3>[2006-06-23 07:18 UTC] ahayes at wcg dot net dot au</h3>
+<p>As in Stream Contexts (http://au2.php.net/manual/en/ref.stream.php).</p>
+<p>Resource Contexts would be useful, say for instance as follows:</p>
+<p>=========8&lt;============<br>
+$opts = array(<br>
+  &#039;http&#039;=&gt;array(<br>
+   &#039;method&#039;=&gt;&quot;GET&quot;,<br>
+   &#039;header&#039;=&gt;&quot;Accept-language: en\r\n&quot; .<br>
+             &quot;Cookie: foo=bar\r\n&quot;<br>
+  )<br>
+);</p>
+<p>$context = stream_context_create($opts);</p>
+<p>/* Sends an http request to www.example.com<br>
+   with additional headers shown above */<br>
+$fp = fopen(&#039;http://www.example.com&#039;, &#039;r&#039;, false, $context);<br>
+fpassthru($fp);<br>
+fclose($fp);<br>
+=========&gt;8===========</p>
+<p>So I imagine that it would not be to hard to pass thru a context resource into File_Find either in the constructor or as an optional param at the end of either File_Find::search and File_Find::glob</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

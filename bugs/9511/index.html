@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9511</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a> &#187; Bug #9511</h1>
+<p>Shared /tmp dir assumed</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-30 15:51 UTC</td></tr>
+<tr><th>From</th><td>warrenklint at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>dufuz</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Ubuntu Dapper LTS</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-30 15:51 UTC] warrenklint at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+We use open_basedir to prevent users accidentally sharing cookies and temporary files between websites.<br>
+Each site has their own temporary dir nearer their docroot.</p>
+<p>This works really well, apart from with Spreadsheet_Excel_Writer.</p>
+<p>The problem is here:</p>
+<p>function _initialize()<br>
+    {<br>
+        // Open tmp file for storing Worksheet data<br>
+        $fh = tmpfile();<br>
+        if ($fh) {<br>
+            // Store filehandle<br>
+            $this-&gt;_filehandle = $fh;<br>
+        } else {<br>
+            // If tmpfile() fails store data in memory<br>
+            $this-&gt;_using_tmpfile = false;<br>
+        }<br>
+    }</p>
+<p>There are two problems.</p>
+<p>The default value for _using_tmpfile, at the beginning of the class, is ignored. The value will always be true.</p>
+<p>Allowing a check for the method _using_tmpfile first would solve this:</p>
+<p>function _initialize()<br>
+    {<br>
+	if ($this-&gt;_using_tmpfile == false) {<br>
+		return;<br>
+	}</p>
+<p>// Open tmp file for storing Worksheet data<br>
+        $fh = tmpfile();<br>
+        if ($fh) {<br>
+            // Store filehandle<br>
+            $this-&gt;_filehandle = $fh;<br>
+        } else {<br>
+            // If tmpfile() fails store data in memory<br>
+            $this-&gt;_using_tmpfile = false;<br>
+        }<br>
+    }</p>
+<p>The second problem is specific to sites which use a shared filesytem for thee data.</p>
+<p>Because tmpfile() will return something under &quot;/tmp/&quot;, and &quot;/tmp/&quot; is disallowed by open_basedir, php kills the script before it gets a chance to work.</p>
+<p>Switching from tmpfile() to tempnam() fixes this.<br>
+OLE/PPS/File.php also does this.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

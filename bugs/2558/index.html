@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2558</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Bug #2558</h1>
+<p>apc_fetch() memory leak</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>#2558</th><td>apc_fetch() memory leak</td></tr>
+<tr><th>Submitted</th><td>2004-10-18 14:18 UTC</td></tr>
+<tr><th>From</th><td>xuefer at 21cn dot com</td></tr>
+<tr><th>Assigned</th><td>rasmus</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-18 14:18 UTC] xuefer at 21cn dot com</h3>
+<p>Description:<br>
+------------<br>
+echo &quot;&lt;pre&gt;&quot;:<br>
+var_dump(apc_sma_info());<br>
+$k = &quot;a....................................................&quot;;<br>
+apc_store($k, 1);<br>
+for ($i = 0; $i &lt; 10000; $i ++) {<br>
+	apc_fetch($k);<br>
+}<br>
+var_dump(apc_sma_info());</p>
+<p>reload the page 2+ times to see the result</p>
+<p>i guess it&#039;s the key memory leak</p>
+</section>
+<section>
+<h3>[2004-10-19 02:29 UTC] xuefer at 21cn dot com</h3>
+<p>i&#039;ve move filename from entry to key.data, renamed as identifier<br>
+now both file/user have &quot;char *&quot; which have exactly same behavior and function(usage)<br>
+then, i merge union struct into key struct(just make it simple)</p>
+<p>copy pointer instead of apc_xstrdup in apc_make_*key identifier<br>
+but do apc_xstrdup in make_slot, free it in free_slot</p>
+<p>everything goes fine, including my APC_USE_INODE seems have no core dump again</p>
+<p>the merge of filename&amp;identifyer make it easy to inode free</p>
+</section>
+<section>
+<h3>[2004-10-26 20:49 UTC] gschlossnagle at php dot net</h3>
+<p>Can you post a patch,please?</p>
+</section>
+<section>
+<h3>[2004-10-27 01:22 UTC] xuefer at 21cn dot com</h3>
+<p>sure, i was hunting for space to upload</p>
+<p>ftp://211.92.88.40/pub/moo/apc_win32.patch (with other bug fixed)<br>
+apc_cache.c apc_cache.h:<br>
+fixed for APC_USE_INODE<br>
+the struct of key is changed, maybe u don&#039;t agree.<br>
+never do strdup for key before insert!(make_slot)<br>
+&quot;find&quot; on the cache is more frequent than insert</p>
+<p>apc_compile.c:<br>
+don&#039;t care about builtin_functions</p>
+<p>apc_fcntl.c:<br>
+we have 2 locks but why only 1 file used?</p>
+<p>apc_mmap.c:<br>
+mmap depends on shm?<br>
+&quot;#ifdef shm_open&quot; works? maybe u can make marco in config.m4</p>
+<p>apc_sem.c: remove redefine warnning, maybe wrong fix</p>
+<p>apc_shm.c: IPC_PRIVATE of TSRM seems buggy, the 2nd process will not able to create the shm</p>
+<p>other changes:<br>
+for apc_cache apc_user_cache, don&#039;t put it in GLOBALS<br>
+------------<br>
+ftp://211.92.88.40/pub/moo/apc_optimizer.c.patch<br>
+some of this patch is posted in another bug report<br>
+this time have a new fix:<br>
+function rewrite_const_cast<br>
+-    zval_dtor(&amp;cur-&gt;op1.u.constant);<br>
++    /*zval_dtor(&amp;cur-&gt;op1.u.constant);*/<br>
+i never used (string)&#039;1&#039; but phpmyadmin do, so i found this corrupt when i test with win32 (which i have installed phpmyadmin)</p>
+<p>although i modified constant_fold, it&#039;s still not fixed :(<br>
+optimizer is written by cute gschlossnagle right? i saw a stantalone-but-very-old version in cvs/pecl  :P<br>
+maybe u can have a review on it</p>
+<p>any question or complain about the patch is welcome</p>
+</section>
+<section>
+<h3>[2004-10-27 01:29 UTC] xuefer at 21cn dot com</h3>
+<p>&quot;fixed&quot; for APC_USE_INODE<br>
+should be:<br>
+&quot;improved&quot; for APC_USE_INODE</p>
+<p>btw:<br>
+this &quot;const_cast&quot; make phpmyadmin fine<br>
+but before &quot;const_cast&quot; fix(and after my other optimizer fix), it&#039;s still quite stable<br>
+it&#039;s used in production server(100MB traffic), only quite a few core dumps(for builtin_function in apc_compile) maybe 1 dump for 4months<br>
+i&#039;d suggest make apc.optimizer to NOT EXPERIMENTAL</p>
+</section>
+<section>
+<h3>[2004-10-28 01:48 UTC] xuefer at 21cn dot com</h3>
+<p>host was down and is up now.<br>
+i sent many emails to u but get no reply except the request for confirm. i confirmed it and no response from u(or server)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

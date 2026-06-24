@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6470</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_URL2/index.html">Net_URL2</a> &#187; Bug #6470</h1>
+<p>Path is not properly encoded</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-12 01:13 UTC</td></tr>
+<tr><th>From</th><td>arailean at squiz dot net</td></tr>
+<tr><th>Assigned</th><td>davidc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_URL2/index.html">Net_URL2</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.1</td></tr>
+<tr><th>OS</th><td>any</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-12 01:13 UTC] arailean at squiz dot net</h3>
+<p>Description:<br>
+------------<br>
+Url path is not properly encoded to comply with RFC 2396 - Uniform Resource Identifiers (URI): Generic Syntax</p>
+<p>This becomes evident when used by HTTP_Request and HTTP_Client while handling redirects. Both HTTP_Request and HTTP_Client access the PATH property of of Net_Url directly, so for proper compliance they should be modified as well. The problem is that there is no proper accessor for this property. Such accessor should handle all the re-formatting.</p>
+<p>Since this particular issue came up while using HTTP_Request,  that module should also be modified to use the new functionality. Particularly, line 758 of HTTP_Request should be changed to:<br>
+$path = $this-&gt;_url-&gt;getEncodedPath() . $querystring;</p>
+<p>given that the function getEncodedPath is implemented in Net_URL as provided below.</p>
+<p>Test script:<br>
+---------------<br>
+/**<br>
+* Returns encoded path<br>
+*<br>
+* Result is properly encoded and ready for use in the request.<br>
+* Complies with RFC 2396 - Uniform Resource Identifiers (URI): Generic Syntax<br>
+* Does not modify the internal state<br>
+*<br>
+* Code Based on work by: By Esben Maal?e esm-at-baseclass.modulweb.dk<br>
+* see: http://baseclass.modulweb.dk/urlvalidator<br>
+*<br>
+* @author Andrei Railean &lt;arailean@squiz.net&gt;<br>
+*<br>
+* @return string Path<br>
+* @access public<br>
+*/<br>
+function getEncodedPath()<br>
+{<br>
+	$is_dir = false;<br>
+	if (strlen($this-&gt;path) &gt; 1 &amp;&amp; substr($this-&gt;path, -1) == &#039;/&#039;) {<br>
+		$is_dir = true;<br>
+	}</p>
+<p>$path_parts = preg_split(&#039;|/|&#039;, $this-&gt;path, -1, PREG_SPLIT_NO_EMPTY);</p>
+<p>if (empty($path_parts)) {<br>
+		return &#039;/&#039;;<br>
+	}</p>
+<p>foreach ($path_parts as $key =&gt; $part) {<br>
+		// Check for % that is NOT an escape sequence || invalid chars<br>
+		if (preg_match(&#039;/%[^a-f0-9]{2}/i&#039;, $part) || preg_match(&#039;/[^@a-z0-9_.!~*\&#039;()$+&amp;,%:=;?-]/i&#039;, $part)) {<br>
+			$path_parts[$key] = urlencode(urldecode($part));<br>
+		}<br>
+	}</p>
+<p>$path = &#039;/&#039;.implode(&#039;/&#039;, $path_parts);</p>
+<p>if ($is_dir) {<br>
+		$path .= &#039;/&#039;;<br>
+	}</p>
+<p>return $path;<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+/this.%60hello%60/that.html</p>
+<p>Actual result:<br>
+--------------<br>
+/this.`hello`/that.html</p>
+</section>
+<section>
+<h3>[2006-01-12 23:33 UTC] arailean at squiz dot net</h3>
+<p>the IF statement should read:<br>
+if (preg_match(&#039;/%[^a-f0-9]/i&#039;, $part) || preg_match(&#039;/[^@a-z0-9_.!~*\&#039;()$+&amp;,%:=;?-]/i&#039;, $part)) {</p>
+<p>i.e. no {2}</p>
+</section>
+<section>
+<h3>[2006-02-06 23:44 UTC] arailean at squiz dot net</h3>
+<p>Index: URL.php<br>
+===================================================================<br>
+RCS file: /repository/pear/Net_URL/URL.php,v<br>
+retrieving revision 1.42<br>
+diff -w -u -r1.42 URL.php<br>
+--- URL.php	29 Oct 2005 11:17:56 -0000	1.42<br>
++++ URL.php	6 Feb 2006 23:28:43 -0000<br>
+@@ -418,5 +418,47 @@<br>
+         $this-&gt;port     = is_null($port) ? $this-&gt;getStandardPort($protocal) : $port;<br>
+     }<br>
+ <br>
++	/**<br>
++	* Returns encoded path                              <br>
++	*<br>
++	* Result is properly encoded and ready for use in the request.<br>
++	* Complies with RFC 2396 - Uniform Resource Identifiers (URI): Generic Syntax<br>
++	* Does not modify the internal state<br>
++	*<br>
++	* Code Based on work by: esm-at-baseclass.modulweb.dk<br>
++	* see: http://baseclass.modulweb.dk/urlvalidator<br>
++	*<br>
++	* @return string Path<br>
++	* @access public<br>
++	*/<br>
++	function getEncodedPath()<br>
++	{<br>
++		$is_dir = false;<br>
++		if (strlen($this-&gt;path) &gt; 1 &amp;&amp; substr($this-&gt;path, -1) == &#039;/&#039;) {<br>
++			$is_dir = true;<br>
++		}<br>
++<br>
++		$path_parts = preg_split(&#039;|/|&#039;, $this-&gt;path, -1, PREG_SPLIT_NO_EMPTY);<br>
++<br>
++		if (empty($path_parts)) {<br>
++			return &#039;/&#039;;<br>
++		}<br>
++<br>
++		foreach ($path_parts as $key =&gt; $part) {<br>
++			// Check for % that is NOT an escape sequence || invalid chars<br>
++			if (preg_match(&#039;/%[^a-f0-9]/i&#039;, $part) || preg_match(&#039;/[^@a-z0-9_.!~*\&#039;()$+&amp;,%:=;?-]/i&#039;, $part)) {<br>
++				$path_parts[$key] = urlencode(urldecode($part));<br>
++			}<br>
++		}<br>
++<br>
++		$path = &#039;/&#039;.implode(&#039;/&#039;, $path_parts);<br>
++<br>
++		if ($is_dir) {<br>
++			$path .= &#039;/&#039;;<br>
++		}<br>
++<br>
++		return $path;<br>
++	}<br>
++<br>
+ }<br>
+ ?&gt;</p>
+</section>
+<section>
+<h3>[2006-02-06 23:45 UTC] arailean at squiz dot net</h3>
+<p>The above patch was made from the CVS version of this package</p>
+</section>
+<section>
+<h3>[2006-02-22 03:19 UTC] arailean at squiz dot net</h3>
+<p>New patch:<br>
+http://delta.squiz.net/~arailean/pear6479.udiff.patch</p>
+<p>This introduces a new function &#039;encodePath&#039; that is similar to resolve path in that it can be called statically. Given a string, it will encode it according to rfc spec for the path component of the url.</p>
+<p>This is a replacement for the previous patch.</p>
+<p>Diff is made from CVS</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

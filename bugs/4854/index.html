@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4854</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #4854</h1>
+<p>Oracle Easy Connect syntax only works with array DSN</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-07-19 05:26 UTC</td></tr>
+<tr><th>From</th><td>cjbj at hotmail dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Linux x86</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-07-19 05:26 UTC] cjbj at hotmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Oracle&#039;s &quot;Easy Connect&quot; syntax works with MDB2&#039;s<br>
+array DSN, but not the string form.</p>
+<p>To use Easy Connect, Oracle 10g client libs are required.<br>
+The Easy Connect syntax is</p>
+<p>username/password@[//]host[:port][/service_name]</p>
+<p>e.g.</p>
+<p>sqlplus scott/tiger@//mymachine:1521/orcl</p>
+<p>Reproduce code:<br>
+---------------<br>
+require_once &#039;MDB2.php&#039;;</p>
+<p>// This works<br>
+$dsn = array(<br>
+    &#039;phptype&#039;   =&gt; &#039;oci8&#039;,<br>
+    &#039;hostspec&#039;  =&gt; &#039;//mymachine/orcl&#039;,<br>
+    &#039;username&#039;  =&gt; &#039;scott&#039;,<br>
+    &#039;password&#039;  =&gt; &#039;tiger&#039;,<br>
+);</p>
+<p>// This doesn&#039;t connect<br>
+$dsn = &#039;oci8://scott:tiger@//mymachine/oracle&#039;;</p>
+<p>$db = MDB2::connect($dsn);</p>
+<p>Expected result:<br>
+----------------<br>
+Successful connection</p>
+<p>Actual result:<br>
+--------------<br>
+The connection fails and $db-&gt;getDebugInfo() gives:</p>
+<p>[Error message: it was not specified a valid Oracle Service Identifier (SID)] ** oci8:///frodo/oracle:xxx@//frodo/oracle</p>
+</section>
+<section>
+<h3>[2005-07-19 05:32 UTC] cjbj at hotmail dot com</h3>
+<p>The service name typo in my example is not the cause of the<br>
+problem.  Even with &quot;orcl&quot; in the failure-case example, the<br>
+connection does not succeed.</p>
+</section>
+<section>
+<h3>[2005-08-09 14:33 UTC] david dot coallier at gmail dot com</h3>
+<p>What if you try this:</p>
+<p>$dsn = array(<br>
+    &#039;phptype&#039;   =&gt; &#039;oci8&#039;,<br>
+    &#039;hostspec&#039;  =&gt; &#039;hostname&#039;,<br>
+    &#039;username&#039;  =&gt; &#039;scott&#039;,<br>
+    &#039;password&#039;  =&gt; &#039;tiger&#039;,<br>
+    &#039;database&#039;  =&gt; &#039;orcacle&#039;,<br>
+);</p>
+</section>
+<section>
+<h3>[2005-08-13 16:00 UTC] davidc at phpsec dot org</h3>
+<p>Please reply, I will close this issue in 3 days.</p>
+<p>Thank you<br>
+David</p>
+</section>
+<section>
+<h3>[2006-12-18 23:37 UTC] cjbj at hotmail dot com</h3>
+<p>This bug still exists.  The DSN parsing overwrites the username.</p>
+<p>Looking in _doConnect() in Driver/oci8.php, the DSNs</p>
+<p>oci8://hr:hr@localhost/XE</p>
+<p>and</p>
+<p>$dsn = array(<br>
+	&#039;phptype&#039;   =&gt; &#039;oci8&#039;,<br>
+	&#039;hostspec&#039;  =&gt; &#039;hostname&#039;,<br>
+	&#039;username&#039;  =&gt; &#039;scott&#039;,<br>
+	&#039;password&#039;  =&gt; &#039;tiger&#039;,<br>
+	&#039;database&#039;  =&gt; &#039;XE&#039;,<br>
+    );</p>
+<p>were previously both parsed with username set to XE, hostspec set to<br>
+localhost and database set to false.</p>
+<p>(BTW, protocol is set to &quot;tcp&quot; with the former but not the latter<br>
+code)</p>
+<p>Workaround: This array DSN connects correctly:</p>
+<p>$dsn = array(<br>
+	&#039;phptype&#039; =&gt; &#039;oci8&#039;,<br>
+	&#039;username&#039; =&gt; &#039;hr&#039;,<br>
+	&#039;password&#039; =&gt; &#039;hr&#039;,<br>
+	&#039;hostspec&#039; =&gt; &#039;//localhost/XE&#039;<br>
+    );</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

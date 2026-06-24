@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7302</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP/index.html">HTTP</a> &#187; Bug #7302</h1>
+<p>Sending port number in request fails entire request on Apache</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-04-04 23:07 UTC</td></tr>
+<tr><th>From</th><td>markvds at elegia dot nl</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP/index.html">HTTP</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-04 23:07 UTC] markvds at elegia dot nl</h3>
+<p>Description:<br>
+------------<br>
+HTTP::head() sends the Host header in the form:<br>
+Host: www.example.com:80</p>
+<p>I noticed a strange bug when requesting a HEAD from an Apache 2.0.51 server. It makes it return a 404 if the port number gets sent along with the hostname.</p>
+<p>Actually, I don&#039;t know if it&#039;s an Apache bug, a bug in the HTTP package or a combination of these. It can be solved in the package, though. The most simple solution is to replace line #190 with:</p>
+<p>if ($port == 80) {<br>
+    $host = $p[&#039;host&#039;];<br>
+} else {<br>
+    $host = $p[&#039;host&#039;] . &#039;:&#039; . $port;<br>
+}<br>
+fputs($fp, &#039;Host: &#039; . $host . &quot;\r\n&quot;);</p>
+<p>I think more testing and knowledge is needed to fully understand what goes wrong.</p>
+<p>Test script:<br>
+---------------<br>
+/**<br>
+ * I don&#039;t have any connections with this website; it&#039;s just<br>
+ * the URL where I ran into problems. I don&#039;t know the server<br>
+ * configuration, and of course can&#039;t assure that Apache<br>
+ * 2.0.51 still runs on the server. The last time I checked<br>
+ * was on April 5, 2006<br>
+ */</p>
+<p>$result = HTTP::head(&#039;http://www.bodarandthebellboys.com/home.htm&#039;);<br>
+echo $result[&#039;response_code&#039;];</p>
+<p>Expected result:<br>
+----------------<br>
+200</p>
+<p>Actual result:<br>
+--------------<br>
+404</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

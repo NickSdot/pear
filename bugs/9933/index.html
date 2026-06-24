@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9933</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_oci8/index.html">MDB2_Driver_oci8</a> &#187; Bug #9933</h1>
+<p>Special characters are beeing stored in a wrong way</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-24 12:41 UTC</td></tr>
+<tr><th>From</th><td>brain dot workDELETEME at gmx dot net</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_oci8/index.html">MDB2_Driver_oci8</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.5</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-24 12:41 UTC] brain dot workDELETEME at gmx dot net</h3>
+<p>Description:<br>
+------------<br>
+Trying to store some text in the oracle database the special characters of this text are escaped with the command &quot;$quotedCharacters = $db-&gt;quote( $characters )&quot;.</p>
+<p>When $quotedCharacters is saved to the database the value in the database is also escaped.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+$sql = &quot;SELECT * FROM &quot;.$qTabellenname.&quot; WHERE &quot;.$qID_IDENT.&quot; = &quot; . $id;<br>
+$rs = $db-&gt;query( $sql );<br>
+if( PEAR::isError( $rs) ) {<br>
+  print( &#039;&lt;br&gt;&#039;.$rs-&gt;getUserInfo().&#039;&lt;br&gt;&#039; );<br>
+  die();<br>
+}<br>
+$row = $rs-&gt;fetchRow( MDB2_FETCHMODE_ASSOC );</p>
+<p>$form = new HTML_Quickform( &#039;editProfile&#039;,&#039;post&#039;,&#039;&#039;,&#039;&#039;,&#039;&#039;, true );<br>
+$form-&gt;setDefaults( array( &#039;kommentar&#039; =&gt; $row[&quot;Kommentar&quot;] ) );<br>
+$attrs = array ( &quot;Rows&quot;=&gt;&quot;4&quot;, &quot;Cols&quot;=&gt;&quot;70&quot; );<br>
+$form-&gt;addElement( &#039;textarea&#039;, &#039;kommentar&#039;, &#039;Kommentar:&#039;, $attrs );<br>
+$form-&gt;addElement( &#039;button&#039;, &#039;submit&#039;, &#039;Senden&#039; );<br>
+if( $form-&gt;validate() ) {<br>
+if( isset( $_POST[&quot;save&quot;] ) ) {<br>
+  update();<br>
+}<br>
+else {<br>
+  echo &#039;&lt;fieldset&gt;&lt;legend&gt;Profil bearbeiten&lt;/legend&gt;&#039;;<br>
+  $form-&gt;display();<br>
+  echo &#039;&lt;/fieldset&gt;&#039;;<br>
+}</p>
+<p>function update() {<br>
+  $_POST = disarmInputVars( $_POST );<br>
+  $qKommentar = $db-&gt;quote( $_POST[&quot;kommentar&quot;], &#039;text&#039; );<br>
+  $strSQL = &quot;UPDATE &quot;.$qTabellenname.&quot; SET &quot;.$qKommentar_IDENT. &quot;=&quot; . $qKommentar;<br>
+  $affected1 = $db-&gt;exec( $strSQL );<br>
+  if( PEAR::isError( $affected1 ) ) {<br>
+    print( &#039;&lt;br&gt;&#039;.$affected1-&gt;getUserInfo().&#039;&lt;br&gt;&#039; );<br>
+    die();<br>
+  }<br>
+  return affected1; <br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+1. set form input data &quot; &#039; &quot;<br>
+2. save form<br>
+3. reopen form with saved data: the result is &quot; \&#039;&quot;</p>
+</section>
+<section>
+<h3>[2007-01-24 14:49 UTC] brain dot workDELETEME at gmx dot net</h3>
+<p>I am sorry!<br>
+magic_quotes_gpc was enabled.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5807</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Socket/index.html">Net_Socket</a> &#187; Bug #5807</h1>
+<p>(patch) select is broken when out-of-band data present</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-10-28 10:17 UTC</td></tr>
+<tr><th>From</th><td>alasdair at emarketeers dot com</td></tr>
+<tr><th>Assigned</th><td>chagenbu</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Socket/index.html">Net_Socket</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-28 10:17 UTC] alasdair at emarketeers dot com</h3>
+<p>Description:<br>
+------------<br>
+Net_Socket/Socket.php has a bug in the select() method, due to the way the NET_SOCKET_* bitmasks have been defined, resulting in out-of-band data events being selected, even when not requested.</p>
+<p>At the head of the code, we have:</p>
+<p>define(&#039;NET_SOCKET_READ&#039;,  1);<br>
+define(&#039;NET_SOCKET_WRITE&#039;, 2);<br>
+define(&#039;NET_SOCKET_ERROR&#039;, 3);<br>
+  <br>
+Calling $socket-&gt;select(NET_SOCKET_READ, 0);</p>
+<p>Specifying NET_SOCKET_READ or NET_SOCKET_WRITE implicitly results in NET_SOCKET_ERROR as well.</p>
+<p>Test script:<br>
+---------------<br>
+Test script<br>
+-----------</p>
+<p>$socket =&amp; new Net_Socket();<br>
+$socket-&gt;connect(&#039;127.0.0.1&#039;, &#039;80&#039;);<br>
+$r = $socket-&gt;select(NET_SOCKET_READ, 0, 0);<br>
+if ($r &amp; NET_SOCKET_READ) {<br>
+    $b = $socket-&gt;readByte();<br>
+}</p>
+<p>Patch<br>
+-----<br>
+ define(&#039;NET_SOCKET_READ&#039;,  1);<br>
+ define(&#039;NET_SOCKET_WRITE&#039;, 2);<br>
+-define(&#039;NET_SOCKET_ERROR&#039;, 3);<br>
++define(&#039;NET_SOCKET_ERROR&#039;, 4);</p>
+<p>Arguably NET_SOCKET_ERROR should also be renamed NET_SOCKET_EXCEPT, since it does not represent any error condition on the socket. For backwards compatibility, the old NET_SOCKET_ERROR define could be retained.</p>
+<p>Expected result:<br>
+----------------<br>
+Internally, a call to:</p>
+<p>$r = $socket-&gt;select(NET_SOCKET_READ, 0, 0);</p>
+<p>should result in the implementation calling:</p>
+<p>stream_select(array($this-&gt;fp), null, null, 0, 0);</p>
+<p>Actual result:<br>
+--------------<br>
+It actually calls:</p>
+<p>stream_select(array($this-&gt;fp), null, array($this-&gt;fp), 0, 0);</p>
+<p>The problem being, if out-of-band data arrives on the socket, (but no data is available in the read buffer), the select() method call will return 3 (NET_SOCKET_ERROR), which is equivalent to NET_SOCKET_READ | NET_SOCKET_WRITE.</p>
+<p>The &#039;if&#039; in this code will then succeed, causing an attempt to read a byte from the socket, which is not in fact there:</p>
+<p>if ($r &amp; NET_SOCKET_READ) {<br>
+    $b = $socket-&gt;readByte();<br>
+}</p>
+</section>
+<section>
+<h3>[2005-11-15 03:48 UTC] chagenbu at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>We&#039;ll try to get a new package release out soon.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

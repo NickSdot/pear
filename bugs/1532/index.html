@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1532</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #1532</h1>
+<p>Database issues</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-31 07:40 UTC</td></tr>
+<tr><th>From</th><td>mpuglin at yahoo dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>Win XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-31 07:40 UTC] mpuglin at yahoo dot com</h3>
+<p>Description:<br>
+------------<br>
+Using version 0.11.1 of LiveUser.</p>
+<p>Various database inconsistencies seem to be apparent:</p>
+<p>1) LOTS of inconsistencies with the &quot;ID&quot; field used as primary key in many tables.  Please decide whether this field is int(10) or int(11) and be consistent within all tables.</p>
+<p>There are problems even in tables which refer to the same entities. For example:</p>
+<p>liveuser_areas defines ID as: area_id  int(11)  <br>
+yet,  liveuser_areas_seq  defines ID as:  id  int(10).</p>
+<p>liveuser_right_scopes: right_id  int(11)   <br>
+   liveuser_rights: right_id  int(10)</p>
+<p>May lead to truncation issues in some cases.</p>
+<p>liveuser_perm_users defines perm_user and auth_user differently. perm_user utilizes an int as the primary key. auth_user utilizes a varchar.</p>
+<p>The admin class method addUser supposedly will add a user to both tables with the same id.  How does this work or make sense considering the two different datatypes?</p>
+<p>2) The &quot;x_define_name&quot; column. Sometimes it is varchar(20), sometimes it is varchar(32).</p>
+<p>3) - Seems to be a problem with the SQL used to build the liveuser_translations table. We needed to modify two indexes to make them non-unique.<br>
+Modify the following two indexes on the translations table to be non-unique:<br>
+ - uc_ltranslations_section_id<br>
+ -  uc_translations_section_type</p>
+</section>
+<section>
+<h3>[2004-05-31 09:20 UTC] smith at backendmedia dot com</h3>
+<p>1) Arnaud already addressed the issues. Generally there seems to be a misunderstanding in how the auth_user_id and perm_user_id work. The perm_user_id is the unique identifier for a user, just as the auth_user_id along with an auth_container_name is a unique identifier for a user. These two identifier are mapped to eachother in the liveuser_perm_users table. Remember that LiveUser also supports LDAP etc. That is why the liveuser_perm_users table needs to define auth_user_id as a varchar. The auth container also defines auth_user_id in the liveuser_users table as a varchar just to make life easier for people migrating over. However since the admin classes uses a sequence to generate auth_user_id&#039;s you can safely modify this to int(11) in liveuser_users. However if you would change this in liveuser_perm_users you will run into trouble if you start using other auth containers (like LDAP etc).</p>
+<p>2) Arnaud seems to have fixed that one</p>
+<p>3) I also dont quite understand your concerns on the liveuser_translations table. There is currently only a single primary key index on that table which looks quite alright to me</p>
+</section>
+<section>
+<h3>[2004-06-01 16:46 UTC] mpuglin at yahoo dot com</h3>
+<p>RE: Translations table.</p>
+<p>The primary key is fine. However, it appears that individual indexes were also added on the same two columns used within the primary key.</p>
+<p>- uc_ltranslations_section_id<br>
+ -  uc_translations_section_type</p>
+<p>These indexes are defined as unique. This would appear to only allow one record with each section id and/or section type. This quickly broke when I added an application, area, and rights.</p>
+<p>Perhaps I misunderstand?</p>
+</section>
+<section>
+<h3>[2004-06-02 16:25 UTC] mpuglin at yahoo dot com</h3>
+<p>An addtional comment regarding database schema:</p>
+<p>The primary key for the liveuser_users table currently consists of auth_user_id  and handle. I suggest changing the primary key to only consist of the auth_user_id.</p>
+<p>Rationale:</p>
+<p>1) auth_user_id should always be unique, by itself. It is, by definition, a unique ID.</p>
+<p>2) Many websites allow the user to use their email address as their login ID. This has a couple benefits. One, it is easier for the user to remember. Two, it allows for greater number of easily remembered login ID. For example, there may be many John Smiths. But, using UserIds (not emails) only the first lucky contestant gets to use jsmith as a UserId. The subsequent tries must use somthing like &quot;jsmith02&quot; etc... &quot;Email as UserId&quot;  alleviates this.</p>
+<p>If you agree that using email as the LiveUser handle is a good idea, there is a problem. Currently, handle is part of the primary key. Many databases do not allow you to change a primary key value.</p>
+<p>Something to think about.</p>
+</section>
+<section>
+<h3>[2004-06-03 16:38 UTC] smith at backendmedia dot com</h3>
+<p>How about something like this?</p>
+<p>PRIMARY KEY auth_user_id (`auth_user_id`),<br>
+  UNIQUE KEY `handle` (`handle`)</p>
+</section>
+<section>
+<h3>[2004-06-03 20:44 UTC] mpuglin at yahoo dot com</h3>
+<p>Works for me.</p>
+</section>
+<section>
+<h3>[2004-06-03 20:52 UTC] smith at backendmedia dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5255</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #5255</h1>
+<p>Instantiating the class kills the page</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-31 12:54 UTC</td></tr>
+<tr><th>From</th><td>blcdhq at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>olivierg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Linux 2.2.24-7.0.3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-31 12:54 UTC] blcdhq at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I installed DataGrid 0.6.2 with alldeps with the pear installer. The quick example does not work with a valid Query. When I am instantiating the class, Php seems to crash and nothing, not even errors are put out. The test #2 is never echoed out, and execution is stopped on the instatiation line.</p>
+<p>&lt;?php<br>
+require(&#039;Structures/DataGrid.php&#039;);</p>
+<p>echo &quot;test #1&lt;br /&gt;&quot;;<br>
+$dg =&amp; new Structures_DataGrid();<br>
+echo &quot;test #2&lt;br /&gt;&quot;;</p>
+<p>// Get my data<br>
+$result = $db-&gt;query(&#039;SELECT * FROM members&#039;);</p>
+<p>// Bind to DataGrid<br>
+$data = Structures_DataGrid_DataSource::create($result);<br>
+$dg-&gt;bindDataSource($data);</p>
+<p>// Print the DataGrid<br>
+$dg-&gt;render();<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+seeing &quot;test #2&quot; printed to the browser</p>
+<p>Actual result:<br>
+--------------<br>
+the document is empty, as in &quot;0 Bytes&quot;</p>
+</section>
+<section>
+<h3>[2005-08-31 13:04 UTC] blcdhq at gmail dot com</h3>
+<p>sorry, the document is not empty, but contains test#1&lt;br /&gt;</p>
+<p>then, execution stops</p>
+</section>
+<section>
+<h3>[2005-09-04 20:28 UTC] post at mark-wiesemann dot de</h3>
+<p>Please check whether the packages OLE, HTML_Table and Pager are installed.</p>
+</section>
+<section>
+<h3>[2005-09-12 13:56 UTC] asnagy at php dot net</h3>
+<p>As Mark suggested, this happens when HTML_Table is not installed, please check this.</p>
+</section>
+<section>
+<h3>[2005-10-10 23:57 UTC] olivierg at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>It does not &quot;kill the page&quot;, it just fails silently. This was due to the @include_once() call, within Renderer::setRenderer().</p>
+<p>The problem happened when this call included some file which itself used the require construct.</p>
+<p>As in :<br>
+Renderer::setRenderer()<br>
+  --&gt; @include_once()<br>
+      --&gt; require()</p>
+<p>The require() cause a fatal error, but this error is not displayed due to the @ operator that&#039;s prepended to include_once() call. So, with missing dependencies, it just turned into a silent bug, which is not acceptable.</p>
+<p>I simply removed this useless @ operator. Missing dependencies will now cause useful messages to be displayed, helping developers to get the job done.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

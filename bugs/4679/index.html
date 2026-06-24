@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4679</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #4679</h1>
+<p>Cannot serialize wrapped DB-objects</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4679</th><td>Cannot serialize wrapped DB-objects</td></tr>
+<tr><th>Submitted</th><td>2005-06-25 10:59 UTC</td></tr>
+<tr><th>From</th><td>pear at fobie dot net</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>2.0.0beta5</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-25 10:59 UTC] pear at fobie dot net</h3>
+<p>Description:<br>
+------------<br>
+When trying to serialize a wrapped DB-object will give an error. Supplying the __sleep() and __wakeup()-functions will make this problem go away. Tho, I&#039;m not really sure how one can make this code honor the currently state (if in a transaction etc) -- so my code is no good.</p>
+<p>I tried to use the wrapped DB-class with PEAR::Log, this is why I found this error.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+require_once(&#039;MDB2/Wrapper/peardb.php&#039;);</p>
+<p>$db = &amp;DB::connect($dsn);<br>
+$serialize = serialize($db);<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+uniquely serialized object.</p>
+<p>Actual result:<br>
+--------------<br>
+Fatal error: Call to undefined function: MDB2_Driver_mysql::__sleep(). in /var/www/shared/PEAR/php/MDB2.php on line 1550</p>
+</section>
+<section>
+<h3>[2005-06-29 12:23 UTC] smith at backendmedia dot com</h3>
+<p>what version of PHP are you using?<br>
+what version of MDB2 are you using?</p>
+</section>
+<section>
+<h3>[2005-08-23 11:35 UTC] pear at fobie dot net</h3>
+<p>Sorry for the delay. Didn&#039;t recieve any notification and had a hard drive crash.</p>
+<p>I&#039;m using PHP 5.0.4 and MDB2 2.0.0beta5. For those of you who&#039;s having the same problem, add a __sleep()-function to MDB2/Driver/mysql.php (or which driver you&#039;re using).</p>
+</section>
+<section>
+<h3>[2005-08-23 22:31 UTC] pear at fobie dot net</h3>
+<p>That sounds strange. Have you made sure that $dsn is a correct DSN and that the object really is the correct object -- and that DB.php isn&#039;t loaded prior to this?</p>
+<p>The PHP manual states that &quot;serialize() handles all types, except the resource-type.&quot; -- which makes me believe that your $db object maybe didn&#039;t contain any resource-type (maybe the object variable $connection)?</p>
+<p>I have no problem to reproduce this bug under PHP 5.0.4 and beta5. Here&#039;s a lame patch. I realized that MDB2_Driver_Common would be a better place later when investigated how DB/common.php uses __sleep(). :)</p>
+<p>--- trunk/components/PEAR/MDB2.php	(revision 26)<br>
++++ trunk/components/PEAR/MDB2.php	(revision 27)<br>
+@@ -1114,6 +1114,20 @@<br>
+     }<br>
+ <br>
+     // }}}<br>
++    // {{{ __sleep()<br>
++<br>
++    /**<br>
++     * returns an array with names of the variables to serialize<br>
++     */<br>
++    function __sleep()<br>
++    {<br>
++        // XXX Should check if $in_transaction<br>
++        return array(&#039;dsn&#039;, &#039;db_index&#039;,  &#039;dbsyntax&#039;, &#039;database_name&#039;,<br>
++                     &#039;connected_database_name&#039;, &#039;fetchmode&#039;, &#039;options&#039;,<br>
++                     &#039;opened_persistent&#039;);<br>
++    }<br>
++<br>
++    // }}}<br>
+     // {{{ errorInfo()<br>
+ <br>
+     /**</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

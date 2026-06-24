@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2923</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a> &#187; Bug #2923</h1>
+<p>Problem inserting a newline into a cell</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-12-08 18:26 UTC</td></tr>
+<tr><th>From</th><td>kgrigsby at cs dot ndsu dot nodak dot edu</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>Windows/Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-08 18:26 UTC] kgrigsby at cs dot ndsu dot nodak dot edu</h3>
+<p>Description:<br>
+------------<br>
+I am trying to enter 2-3 lines of text into a cell as shown in the Cell example below. The lines need to be separated by new line characters. In excel this is achieved by inserting the formula “CHAR(10)”.</p>
+<p>The cell example below would have the cell formula <br>
+=&quot;line 1&quot;&amp;CHAR(10)&amp;&quot;line 2&quot;&amp;CHAR(10)&amp;&quot;much longer line 3&quot;</p>
+<p>It appears there is a problem with the handling of the &amp; in the writer file, because the only thing that gets to the excel file is the first part of the string before the &amp;.</p>
+<p>Cell example:<br>
+------------------------<br>
+| line1 <br>
+| line 2<br>
+| much longer line 3<br>
+------------------------</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+require_once( &#039;Spreadsheet/Excel/Writer.php&#039; );</p>
+<p>$workbook = new Spreadsheet_Excel_Writer();<br>
+$worksheet =&amp; $workbook-&gt;addWorksheet();<br>
+$worksheet-&gt;hideGridLines();<br>
+$multipleLineDataFormat = &amp;$workbook-&gt;addFormat( array( &#039;Border&#039; =&gt; 1, &#039;Align&#039; =&gt; &#039;left&#039; ) );<br>
+$multipleLineDataFormat-&gt;setTextWrap();</p>
+<p>$userString = &#039;=&#039;. &#039;&quot;line 1&quot;&#039; . &#039; &amp;char(10)&amp;&#039;;<br>
+$userString .= &#039;&quot;line 2&quot;&#039; . &#039;&amp;char(10)&amp;&#039;;<br>
+$userString .= &#039;&quot;Much longer line 3&quot;&#039;;</p>
+<p>$worksheet-&gt;write( 1, 1, $userString, $multipleLineDataFormat );<br>
+$workbook-&gt;send( &#039;test-excel.xls&#039; );<br>
+$workbook-&gt;close();<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+I expected to get this formula in cell (1,1)</p>
+<p>=&quot;line 1&quot; &amp;char(10)&amp;&quot;line 2&quot;&amp;char(10)&amp;&quot;Much longer line 3&quot;</p>
+<p>Actual result:<br>
+--------------<br>
+All that is in cell (1,1) is</p>
+<p>=&quot;line 1&quot;</p>
+<p>------------------------<br>
+Admittedly this may not be a bug. <br>
+But my search of the interweb was fruitless for a solution.</p>
+<p>Thank you for your help,<br>
+------------------------</p>
+</section>
+<section>
+<h3>[2005-02-22 09:57 UTC] smith at backendmedia dot com</h3>
+<p>Have you tried &quot;\n&quot; instead of &#039;&amp;char(10)&amp;&#039; ?</p>
+</section>
+<section>
+<h3>[2005-03-03 21:33 UTC] kgrigsby at cs dot ndsu dot nodak dot edu</h3>
+<p>That worked.<br>
+Maybe if I used K.I.S.S. that would have helped.</p>
+<p>Thank you,</p>
+</section>
+<section>
+<h3>[2005-06-08 21:09 UTC] bxny78 at yahoo dot com</h3>
+<p>Hi All, I&#039;m having the same problem, what was the solution?  the &#039;\n&#039; doesn&#039;t work, unless I&#039;m doing something wrong</p>
+</section>
+<section>
+<h3>[2005-06-08 22:17 UTC] kgrigsby at cs dot ndsu dot nodak dot edu</h3>
+<p>This code worked for me</p>
+<p>$multipleLineDataFormat = &amp;$workbook-&gt;addFormat( array( &#039;Border&#039;=&gt; 1, &#039;Align&#039; =&gt; &#039;left&#039; ) );<br>
+$multipleLineDataFormat-&gt;setTextWrap();</p>
+<p>$userString = &#039;line 1&#039; . &quot; \n &quot;;<br>
+$userString .= &#039;line 2&#039; . &quot; \n &quot;;<br>
+$userString .= &#039;Much longer line 3&#039;;</p>
+<p>$worksheet-&gt;write( 0, 2, $userString, $multipleLineDataFormat );</p>
+</section>
+<section>
+<h3>[2005-06-09 14:10 UTC] bxny78 at yahoo dot com</h3>
+<p>Thanks!</p>
+</section>
+<section>
+<h3>[2005-06-28 15:33 UTC] tmiller at tobymiller dot com</h3>
+<p>I am trying to run the example code that kgrigsby wrote and it does not work. At least not the way I expected it to. The newline is inserted into the cell, but the cell itself is not formatted to wrap text. Is this a bug? Is this example code still working for everyone else?</p>
+</section>
+<section>
+<h3>[2005-06-28 20:29 UTC] tmiller at tobymiller dot com</h3>
+<p>Sorry, false alarm. I was applying the cell format to the cell hash instead of the cell value.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

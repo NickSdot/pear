@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #10131</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #10131</h1>
+<p>incorrect return value in case of an empty array</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-02-20 00:39 UTC</td></tr>
+<tr><th>From</th><td>the-savior at freenet dot de</td></tr>
+<tr><th>Assigned</th><td>cweiske</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.1</td></tr>
+<tr><th>OS</th><td>debian linux etch</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-02-20 00:39 UTC] the-savior at freenet dot de</h3>
+<p>Description:<br>
+------------<br>
+if a soap server response an empty array (attribute xsi:nil=&quot;true&quot;), PEAR::SOAP on client side returns an empty string instead of an empty array. this can be really confusing  if you want to count the elements of the returned array for example.</p>
+<p>Sample:<br>
+&lt;?php<br>
+...<br>
+// get the wsdl-proxy<br>
+$oProxyRef = $oWSDLRef-&gt;getProxy();</p>
+<p>// call a function which should return an array<br>
+$mResult = $oProxyRef-&gt;returnArray();</p>
+<p>/* --- soap response ---<br>
+...<br>
+&lt;ns4:returnArrayResponse&gt;<br>
+  &lt;list xsi:type=&quot;SOAP-ENC:Array&quot; SOAP-ENC:arrayType=&quot;xsd:int[0]&quot; xsi:nil=&quot;true&quot;/&gt;<br>
+&lt;/ns4:returnArrayResponse&gt;<br>
+...<br>
+*/</p>
+<p>var_dump($mResult); // prints: string(0) &quot;&quot;<br>
+count($mResult); // 1<br>
+...<br>
+?&gt;</p>
+<p>after some debugging i found a solution to fix this problem:<br>
+i think the method &quot;buildResponse()&quot; in Parser.php refers a wrong value when creating a new Soap_Value on Line 221:</p>
+<p>current Parser.php<br>
+[Line 210] // Add current node&#039;s value.<br>
+[Line 211] if ($response) {<br>
+[Line 212]   $nqn =&amp; new Qname($this-&gt;message[$pos][&#039;name&#039;], $this-&gt;message[$pos][&#039;namespace&#039;]);<br>
+[Line 213]   $tqn =&amp; new Qname($this-&gt;message[$pos][&#039;type&#039;], $this-&gt;message[$pos][&#039;type_namespace&#039;]);<br>
+[Line 214]   $response =&amp; new SOAP_Value($nqn-&gt;fqn(), $tqn-&gt;fqn(), $response, $attrs);<br>
+[Line 215]   if (isset($this-&gt;message[$pos][&#039;arrayType&#039;])) {<br>
+[Line 216]     $response-&gt;arrayType = $this-&gt;message[$pos][&#039;arrayType&#039;];<br>
+[Line 217]   }<br>
+[Line 218] } else {<br>
+[Line 219]   $nqn =&amp; new Qname($this-&gt;message[$pos][&#039;name&#039;], $this-&gt;message[$pos][&#039;namespace&#039;]);<br>
+[Line 220]   $tqn =&amp; new Qname($this-&gt;message[$pos][&#039;type&#039;], $this-&gt;message[$pos][&#039;type_namespace&#039;]);<br>
+[Line 221]   $response =&amp; new SOAP_Value($nqn-&gt;fqn(), $tqn-&gt;fqn(), $this-&gt;message[$pos][&#039;cdata&#039;], $attrs);<br>
+[Line 222] }</p>
+<p>fixed Parser.php<br>
+[Line 210] // Add current node&#039;s value.<br>
+[Line 211] if ($response) {<br>
+[Line 212]   $nqn =&amp; new Qname($this-&gt;message[$pos][&#039;name&#039;], $this-&gt;message[$pos][&#039;namespace&#039;]);<br>
+[Line 213]   $tqn =&amp; new Qname($this-&gt;message[$pos][&#039;type&#039;], $this-&gt;message[$pos][&#039;type_namespace&#039;]);<br>
+[Line 214]   $response =&amp; new SOAP_Value($nqn-&gt;fqn(), $tqn-&gt;fqn(), $response, $attrs);<br>
+[Line 215]   if (isset($this-&gt;message[$pos][&#039;arrayType&#039;])) {<br>
+[Line 216]     $response-&gt;arrayType = $this-&gt;message[$pos][&#039;arrayType&#039;];<br>
+[Line 217]   }<br>
+[Line 218] } else {<br>
+[Line 219]   $nqn =&amp; new Qname($this-&gt;message[$pos][&#039;name&#039;], $this-&gt;message[$pos][&#039;namespace&#039;]);<br>
+[Line 220]   $tqn =&amp; new Qname($this-&gt;message[$pos][&#039;type&#039;], $this-&gt;message[$pos][&#039;type_namespace&#039;]);<br>
+[Line 221*]  // Check if value is an empty array<br>
+[Line 222*]  if ($tqn-&gt;name == &#039;Array&#039;) {<br>
+[Line 223*]    $response =&amp; new SOAP_Value($nqn-&gt;fqn(), $tqn-&gt;fqn(), array(), $attrs);<br>
+[Line 224*]  } else {<br>
+[Line 225*]    $response =&amp; new SOAP_Value($nqn-&gt;fqn(), $tqn-&gt;fqn(), $this-&gt;message[$pos][&#039;cdata&#039;], $attrs);<br>
+[Line 226*]  }<br>
+[Line 227] }</p>
+<p>maybe the wrong position to fix the problem - but for me it worked.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

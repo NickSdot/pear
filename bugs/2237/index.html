@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2237</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #2237</h1>
+<p>QuickForm crashes Apache</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-08-27 11:26 UTC</td></tr>
+<tr><th>From</th><td>eruff at web dot de</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>HP-UX 11.11</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-27 11:26 UTC] eruff at web dot de</h3>
+<p>Description:<br>
+------------<br>
+Installed are the following packages:</p>
+<p>HTML_Common               1.2.1   stable<br>
+HTML_QuickForm            3.2.3   stable<br>
+HTML_QuickForm_Controller 1.0.2   stable</p>
+<p>I tried to instantiate a QuickForm object (see code below).</p>
+<p>Apache 2.0.50 gives the following message:</p>
+<p># ./apachectl start<br>
+./apachectl[172]: 14032 Bus error</p>
+<p>tusc output shows that the error occurs in the class HTML_QuickForm_Renderer</p>
+<p>Configure options:<br>
+&#039;./configure&#039; &#039;--prefix=/opt/hpws/apache/php&#039; &#039;--enable-so&#039; &#039;--with-apxs2=/opt/hpws/apache/bin/apxs&#039; &#039;--with-apache2=/opt/hpws/apache&#039;</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+// Load the main class<br>
+require_once &#039;HTML/QuickForm.php&#039;;</p>
+<p>// Instantiate the HTML_QuickForm object<br>
+$form = new HTML_QuickForm(&#039;firstForm&#039;);</p>
+<p>// Set defaults for the form elements<br>
+$form-&gt;setDefaults(array(<br>
+    &#039;name&#039; =&gt; &#039;Joe User&#039;<br>
+));</p>
+<p>// Add some elements to the form<br>
+$form-&gt;addElement(&#039;header&#039;, null, &#039;QuickForm tutorial example&#039;);<br>
+$form-&gt;addElement(&#039;text&#039;, &#039;name&#039;, &#039;Enter your name:&#039;, array(&#039;size&#039; =&gt; 50, &#039;maxle<br>
+ngth&#039; =&gt; 255));<br>
+$form-&gt;addElement(&#039;submit&#039;, null, &#039;Send&#039;);</p>
+<p>// Output the form<br>
+$form-&gt;display();<br>
+?&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+output from tusc:</p>
+<p>p ,   $ r e q u i r e d ,   $ e r r o r ) \n        { \n<br>
+            r e t u r n ; \n        }   / /   e n d   f u n c   s t<br>
+    a r t G r o u p \n\n      / * * \n        *   C a l l e d   w h<br>
+    e n   v i s i t i n g   a   g r o u p ,   a f t e r   p r o c e<br>
+    s s i n g   a l l   g r o u p   e l e m e n t s \n        * \n<br>
+          *   @ p a r a m         o b j e c t           A n   H T M<br>
+    L _ Q u i c k F o r m _ g r o u p   o b j e c t   b e i n g   v<br>
+    i s i t e d \n        *   @ a c c e s s       p u b l i c \n<br>
+        *   @ r e t u r n       v o i d   \n        *   @ a b s t r<br>
+    a c t \n        * / \n        f u n c t i o n   f i n i s h G r<br>
+    o u p ( &amp; $ g r o u p ) \n        { \n                r e t u r<br>
+    n ; \n        }   / /   e n d   f u n c   f i n i s h G r o u p<br>
+    \n}   / /   e n d   c l a s s   H T M L _ Q u i c k F o r m _ R<br>
+    e n d e r e r \n? &gt; \n<br>
+[14072] read(9, 0x402acc40, 8192) ................................ = 0<br>
+[14072] close(9) ................................................. = 0<br>
+[14072]   Received signal 10, SIGBUS, in user mode, [SIG_DFL], partial siginfo<br>
+[14072]     Siginfo: si_code: I_NONEXIST, faulting address: 0x7aeee028, si_errno<br>
+: 0<br>
+[14072]     PC: 0xc095352b, instruction: 0x6bd33fc1<br>
+[14072] exit(10) [implicit] ...................................... WIFSIGNALED(S<br>
+IGBUS)</p>
+<p>backtrace from gdb:</p>
+<p>#143 0xc09540d8 in match () from /opt/hpws/apache/modules/libphp4.so<br>
+#144 0xc0955308 in match () from /opt/hpws/apache/modules/libphp4.so<br>
+#145 0xc0953628 in match () from /opt/hpws/apache/modules/libphp4.so<br>
+#146 0xc09540d8 in match () from /opt/hpws/apache/modules/libphp4.so<br>
+#147 0xc0953924 in match () from /opt/hpws/apache/modules/libphp4.so<br>
+#148 0xc0957d0c in php_pcre_exec () from /opt/hpws/apache/modules/libphp4.so<br>
+#149 0xc095a078 in php_pcre_replace () from /opt/hpws/apache/modules/libphp4.so<br>
+#150 0xc095a900 in php_replace_in_subject ()<br>
+   from /opt/hpws/apache/modules/libphp4.so<br>
+#151 0xc095afc0 in preg_replace_impl ()<br>
+   from /opt/hpws/apache/modules/libphp4.so<br>
+#152 0xc0a6ca74 in execute () from /opt/hpws/apache/modules/libphp4.so<br>
+#153 0xc0a6cd2c in execute () from /opt/hpws/apache/modules/libphp4.so<br>
+#154 0xc0a6cd2c in execute () from /opt/hpws/apache/modules/libphp4.so<br>
+#155 0xc0a6cd2c in execute () from /opt/hpws/apache/modules/libphp4.so<br>
+#156 0xc0a6cd2c in execute () from /opt/hpws/apache/modules/libphp4.so<br>
+# 57 0xc0a6cd2c in execute () from /opt/hpws/apache/modules/libphp4.so<br>
+# 58 0xc0a6cd2c in execute () from /opt/hpws/apache/modules/libphp4.so<br>
+# 59 0xc0a531c8 in zend_execute_scripts ()<br>
+#  from /opt/hpws/apache/modules/libphp4.so<br>
+# 60 0xc0a0ad88 in php_execute_script ()<br>
+#  from /opt/hpws/apache/modules/libphp4.so<br>
+# 61 0xc0a7615c in php_handler () from /opt/hpws/apache/modules/libphp4.so<br>
+# 62 0x000447ec in ap_run_handler ()<br>
+# 63 0x00045260 in ap_invoke_handler ()<br>
+# 64 0x0003d148 in ap_process_request ()<br>
+# 65 0x000368bc in ap_process_http_connection ()<br>
+# 66 0x00051ea4 in ap_run_process_connection ()<br>
+# 67 0x00052404 in ap_process_connection ()<br>
+# 68 0x0003eb84 in process_socket ()<br>
+# 69 0x0003f8b4 in worker_thread ()<br>
+# 70 0xc04a170c in dummy_worker () from /opt/hpws/apache/lib/libapr-0.sl.9</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

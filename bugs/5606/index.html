@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5606</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #5606</h1>
+<p>Structures_DataGrid fails sorting on joined tables</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-10-05 06:50 UTC</td></tr>
+<tr><th>From</th><td>ale dot pas at tiscali dot it</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-05 06:50 UTC] ale dot pas at tiscali dot it</h3>
+<p>Description:<br>
+------------<br>
+I have experienced some problems sorting on joined tables, where a conflict on <br>
+field names (same field name on more than one joined table) can provoke an <br>
+error in the resulting SQL query (the DB engine cannot determine on which <br>
+field to order).</p>
+<p>[message] =&gt; DB Error: unknown error<br>
+[userinfo] =&gt; SELECT FIRST 10 SKIP 0 * FROM UNITAFISICHE<br>
+INNER JOIN APPALTI_UF_OPER ON APPALTI_UF_OPER.IDUNITA=UNITAFISICHE.IDUNITA <br>
+WHERE ( IDAPPALTO IN (2)) ORDER BY IDUNITA ASC [nativecode=Dynamic SQL Error <br>
+SQL error code = -204 Ambiguous field name between table UNITAFISICHE and <br>
+table APPALTI_UF_OPER IDUNITA]</p>
+<p>Test script:<br>
+---------------<br>
+A solution is to add the table name before the sortBy field name:<br>
+... ORDER BY ZONE.IDUNITA</p>
+<p>After several trials in my subclasses, I ended up modifying the source in <br>
+Structures/DataGrid/DataSource/DataObject.php (line 281)</p>
+<p>/**<br>
+     * Sorts the dataobject.  This MUST be called before fetch.<br>
+     *<br>
+     * @access  public<br>
+     * @param   string  $sortField  Field to sort by<br>
+     * @param   string  $sortDir    Sort direction : &#039;ASC&#039; or &#039;DESC&#039;<br>
+     */<br>
+    function sort($sortField, $sortDir = null)<br>
+    {<br>
+        if ($sortDir === null) {<br>
+            $this-&gt;_dataobject-&gt;orderBy($this-&gt;_dataobject-&gt;__table . &#039;.&#039; . <br>
+$sortField);<br>
+        } else {<br>
+            $this-&gt;_dataobject-&gt;orderBy($this-&gt;_dataobject-&gt;__table . &#039;.&#039; . <br>
+$sortField . &#039; &#039; . $sortDir);<br>
+        }<br>
+    }</p>
+<p>This patch is probably harmless in other situations and could maybe integrated <br>
+in the class.</p>
+<p>I don&#039;t know if there was another solution, modifying the $_REQUEST suppresses <br>
+the error but the sorting arrows disappears too.</p>
+<p>Tested with Firebird (not my choice)</p>
+<p>Expected result:<br>
+----------------<br>
+Sorted column</p>
+<p>Actual result:<br>
+--------------<br>
+[nativecode=Dynamic SQL Error <br>
+SQL error code = -204 Ambiguous field name between table</p>
+</section>
+<section>
+<h3>[2005-10-31 18:36 UTC] olivierg at php dot net</h3>
+<p>I have reproduced this bug but it seems to be related to an underlying DB_DataObject bug or missing feature.</p>
+<p>Your workaround is not acceptable to me : you propose to prepend the table name when calling $dataobject-&gt;orderBy() from the DataSource_DataObject driver.</p>
+<p>But when you join two tables, you can either sort using the fields from the first table, or the second table, or even both. With your workaround, sort links would only work for columns that belong to the first table. It may have fixed your own problem, but it is not a general solution.</p>
+<p>I have been trying to solve this issue using DB_DataObject::selectAs() but it always ended up with the following mysql error &quot;Column &#039;foobar&#039; in order clause is ambiguous&quot;.</p>
+<p>I forward this issue to DB_DataObject maintainers.</p>
+</section>
+<section>
+<h3>[2005-11-01 22:07 UTC] olivierg at php dot net</h3>
+<p>Alright, it is possible to set up DB_DataObject so that column names are not considered ambiguous by MySQL. Thanks Alan Knowles for clarifying this.</p>
+<p>I think that your problem is no Structures_DataGrid bug but comes from a misconfigured dataobject.</p>
+<p>The following works fine here :<br>
+$products-&gt;selectAs();<br>
+$products-&gt;joinAdd($stores);<br>
+$products-&gt;selectAs($stores, &#039;store_%s&#039;);<br>
+$datagrid-&gt;bind($products);</p>
+<p>DB_DataObject will prepend &quot;store_&quot; to all of the column that come from the store table : no conflict anymore. Note that the first call to selectAs(), with no argument, is necessary.</p>
+<p>Does it work for you ?</p>
+</section>
+<section>
+<h3>[2005-11-07 13:49 UTC] ale dot pas at tiscali dot it</h3>
+<p>Sorry, don&#039;t works for me: all fields are now prepended  <br>
+with the table name, that is ok, but the sorting field is <br>
+still without the table name, so the conflict is still <br>
+here: <br>
+ <br>
+SELECT FIRST 10 SKIP 0  UNITAFISICHE.IDUNITA as IDUNITA ,  <br>
+UNITAFISICHE.IDZONA as IDZONA ,  UNITAFISICHE.IDSOTTOZONA <br>
+as IDSOTTOZONA ,  UNITAFISICHE.UNITA as UNITA ,  <br>
+UNITAFISICHE.MISURA as MISURA ,  UNITAFISICHE.UM as UM ,  <br>
+UNITAFISICHE.TIPO as TIPO ,  UNITAFISICHE.FN_O_PLANIMETRIA <br>
+as FN_O_PLANIMETRIA ,  UNITAFISICHE.FN_M_PLANIMETRIA as <br>
+FN_M_PLANIMETRIA ,  UNITAFISICHE.ALTEZZA as ALTEZZA ,  <br>
+UNITAFISICHE.LARGHEZZA as LARGHEZZA ,  <br>
+UNITAFISICHE.PROFONDITA as PROFONDITA ,  <br>
+UNITAFISICHE.DIAMETRO as DIAMETRO ,  UNITAFISICHE.SETTORE <br>
+as SETTORE ,  UNITAFISICHE.NOME_ZONA as NOME_ZONA ,  <br>
+UNITAFISICHE.ZONA as ZONA ,  UNITAFISICHE.TIPOLOGIA as <br>
+TIPOLOGIA ,  UNITAFISICHE.DESCRIZIONE as DESCRIZIONE ,  <br>
+UNITAFISICHE.NOTE1 as NOTE1 ,  UNITAFISICHE.NOTE2 as NOTE2  <br>
+ FROM UNITAFISICHE  <br>
+ INNER JOIN APPALTI_UF_OPER   ON <br>
+APPALTI_UF_OPER.IDUNITA=UNITAFISICHE.IDUNITA   WHERE <br>
+( APPALTI_UF_OPER.IDAPPALTO IN (1,2))    ORDER BY IDUNITA <br>
+ASC   <br>
+ <br>
+Engine Message : <br>
+Dynamic SQL Error <br>
+SQL error code = -204 <br>
+Ambiguous field name between table UNITAFISICHE and table <br>
+APPALTI_UF_OPER  <br>
+IDUNITA <br>
+ <br>
+--- code is now: <br>
+    $do-&gt;selectAs(); <br>
+    $dg =&amp; new Structures_DataGrid($numfields); <br>
+    $dg-&gt;setRequestPrefix($do-&gt;__table); <br>
+    $dg-&gt;bind($do, <br>
+array(&#039;formbuilder_integration&#039;=&gt;true)); <br>
+ <br>
+BTW the query is now longer :)</p>
+</section>
+<section>
+<h3>[2005-11-07 17:48 UTC] ale dot pas at tiscali dot it</h3>
+<p>After some other trials I&#039;ve finally found a solution: <br>
+ <br>
+$do-&gt;selectAs(); <br>
+// foreach fields <br>
+$dg-&gt;addColumn(new Structures_DataGrid_Column($label, <br>
+$fieldname, <br>
+$do-&gt;__table . &#039;.&#039; . $fieldname)); <br>
+ <br>
+This avoids any field name conflict while sorting.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

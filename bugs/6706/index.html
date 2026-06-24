@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6706</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_HTMLSax/index.html">XML_HTMLSax</a> &#187; Bug #6706</h1>
+<p>code fails on blockquote tag, thinks its bold tag</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-02-06 12:31 UTC</td></tr>
+<tr><th>From</th><td>joeofclew at yahoo dot com</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/XML_HTMLSax/index.html">XML_HTMLSax</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.2</td></tr>
+<tr><th>OS</th><td>fedora 4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-06 12:31 UTC] joeofclew at yahoo dot com</h3>
+<p>Description:<br>
+------------<br>
+stable release from 2004/ december</p>
+<p>I get this in the output from the parser when looking at the source<br>
+&lt;blockquote &gt;<br>
+some text</p>
+<p>&lt;/b &gt;<br>
+&lt;//b&gt;<br>
+ockquote&gt;<br>
+/p&gt;<br>
+p&gt;Yu ... more text<br>
+&lt;/p&gt;&lt;p&gt; &gt;<br>
+&lt;//p&gt;&lt;p&gt;&gt;</p>
+<p>myHandler class is simple.  Basically, i don&#039;t want to process anything between &lt;a ... /a&gt; tags, but the rest goes for special processing.</p>
+<p>function openHandler(&amp; $parser,$name,$attrs) { // copy html as is<br>
+       if ( (isset ( $attrs[&#039;id&#039;] ) &amp;&amp; $attrs[&#039;id&#039;] == &#039;title&#039;) || !strcasecmp($name,&#039;title&#039;) )  // example<br>
+            $this-&gt;inTitle=true;<br>
+       // if ( array_key_exists(&#039;href&#039;,$attrs) &amp;&amp; !strcasecmp($name,&#039;a&#039;) )  {<br>
+       if (  strcasecmp($name,&#039;a&#039;)==0 )  {<br>
+            // echo &quot;inA true***data***$data***&lt;br&gt;&quot;;<br>
+            $this-&gt;inA=true;<br>
+        }<br>
+        $this-&gt;current_tag = $name;</p>
+<p>$this-&gt;write_me .= &quot;&lt;&quot; . $name.&#039; &#039;;<br>
+        foreach ($attrs as $key=&gt;$value)  {<br>
+            // Watch for &#039;checked&#039; -- next 2 from the example<br>
+            if ( $key == &#039;checked&#039; ) {<br>
+                $this-&gt;write_me.=&#039; checked=&quot;checked&quot;&#039;;<br>
+            // Watch for &#039;selected&#039;<br>
+            } else if ( $key == &#039;selected&#039; ) {<br>
+                $this-&gt;write_me .=&#039; selected=&quot;selected&quot;&#039;;<br>
+            } else {<br>
+                $this-&gt;write_me .=&#039; &#039;.$key.&#039;=&quot;&#039;.$value.&#039;&quot;&#039;;<br>
+            }<br>
+        }<br>
+        if ($this-&gt;inA) $this-&gt;write_me .= &quot; class=&#039;realLink&#039; &quot;;  // to differentiate from sideviews and overlibs<br>
+        $this-&gt;write_me .= &quot;&gt;\n&quot;;<br>
+    }<br>
+    function closeHandler(&amp; $parser,$name) {<br>
+        $this-&gt;current_tag = &#039;&#039;;<br>
+        if ($this-&gt;inTitle) $this-&gt;inTitle=false;<br>
+        if ($this-&gt;inA) $this-&gt;inA=false;<br>
+        $this-&gt;write_me .= &quot;&lt;/&quot;.$name.&quot;&gt;\n&quot;;<br>
+    }<br>
+    function get_write_me() {<br>
+        $rv = $this-&gt;write_me;<br>
+        $this-&gt;write_me = &#039;&#039;;<br>
+        return $rv;<br>
+    }<br>
+    function dataHandler(&amp; $parser,$data) {<br>
+        if ($this-&gt;inTitle || $this-&gt;inA) {<br>
+            $this-&gt;write_me .=  $data;<br>
+        }<br>
+        else if (stripos($data,&quot;img &quot;) !== false)  { $this-&gt;write_me .=  $data; }  //  bug in parser?<br>
+        else $this-&gt;write_me .=  write_sideviewed($this-&gt;from_lang,$data,0);  // last arg says convert from &amp; -&gt; &amp;</p>
+<p>Test script:<br>
+---------------<br>
+an rss feed.  need change back to html chars first....<br>
+&lt;blockquote&gt;&quot;Creative Commons is one of the tools that local musicians can use to protect their works. But it?? just a form of licensing; how you create your music, how you market yourself, how you help create a better, more diverse scene, and how you help others will be the things that make a difference to the local music scene.&quot;&lt;/blockquote&gt;&lt;/p&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;/blockquote&gt;&lt;/p&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;/b &gt;<br>
+&lt;//b&gt;<br>
+ockquote&gt;<br>
+/p&gt;<br>
+p&gt;Yu ... more text<br>
+&lt;/p&gt;&lt;p&gt; &gt;<br>
+&lt;//p&gt;&lt;p&gt;&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

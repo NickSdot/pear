@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8124</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #8124</h1>
+<p>Datatype mapNativeDatatype reports TEXT as BLOB</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-07-06 06:15 UTC</td></tr>
+<tr><th>From</th><td>webmaster at kryptronic dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>Linux (Fedora)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-06 06:15 UTC] webmaster at kryptronic dot com</h3>
+<p>Description:<br>
+------------<br>
+It appears that the mapNativeDatatype method in the MDB2_Driver_Datatype_mysql class is inadvertently assinging an internal datatype of &#039;blob&#039; to MySQL &#039;TEXT&#039; columns.  This occurs on my setup (Linux, PHP 4.3.8, MySQL 3.23).</p>
+<p>I fixed this by editing line 344.  Replace:</p>
+<p>$type[] = &#039;blob&#039;;</p>
+<p>With:</p>
+<p>if (substr_count($field[&#039;flags&#039;],&#039;binary&#039;)) {<br>
+    $type[] = &#039;blob&#039;;<br>
+} else {<br>
+    $type[] = &#039;text&#039;;<br>
+}</p>
+<p>This solves the internal datatype issue, however tableInfo() still reports the actual &#039;type&#039; as a &#039;blob&#039;.</p>
+<p>It seems that the mysql_field_type() call in the tableInfo() method in the MDB2_Driver_Reverse_mysql class is inconsistent in how it reports various MySQL data types.    Read the PHP Manual entry for mysql_field_type() to see other&#039;s results.</p>
+<p>I modified the tableInfo() method as follows to get more consistent data back on the datatype from MySQL:</p>
+<p>Replaced:</p>
+<p>$db-&gt;loadModule(&#039;Datatype&#039;, null, true);<br>
+        for ($i = 0; $i &lt; $count; $i++) {</p>
+<p>$res[$i] = array(<br>
+                &#039;table&#039; =&gt; $case_func(@mysql_field_table($id, $i)),<br>
+                &#039;name&#039;  =&gt; $case_func(@mysql_field_name($id, $i)),<br>
+                &#039;type&#039;  =&gt; @mysql_field_type($id, $i),<br>
+                &#039;length&#039;   =&gt; @mysql_field_len($id, $i),<br>
+                &#039;flags&#039; =&gt; @mysql_field_flags($id, $i),<br>
+            );</p>
+<p>With:</p>
+<p>if ($got_string) {<br>
+    $x_query = &#039;SHOW COLUMNS FROM &#039; . $db-&gt;quoteIdentifier($result);<br>
+    $x_result =&amp; $db-&gt;queryAll($x_query, false);<br>
+    if (PEAR::isError($x_result)) {<br>
+        return $id;<br>
+    }<br>
+}</p>
+<p>$db-&gt;loadModule(&#039;Datatype&#039;, null, true);<br>
+        for ($i = 0; $i &lt; $count; $i++) {</p>
+<p>$res[$i] = array(<br>
+                &#039;table&#039; =&gt; $case_func(@mysql_field_table($id, $i)),<br>
+                &#039;name&#039;  =&gt; $case_func(@mysql_field_name($id, $i)),<br>
+                &#039;type&#039;  =&gt; @mysql_field_type($id, $i),<br>
+                &#039;length&#039;   =&gt; @mysql_field_len($id, $i),<br>
+                &#039;flags&#039; =&gt; @mysql_field_flags($id, $i),<br>
+            );</p>
+<p>if (($got_string) &amp;&amp; ($x_result)) {<br>
+    $x_result[$i][&#039;type&#039;] = preg_replace(&#039;/\(.*?\)$/&#039;,&#039;&#039;,$x_result[$i][&#039;type&#039;]);<br>
+    $res[$i][&#039;type&#039;]      = $case_func($x_result[$i][&#039;type&#039;]);<br>
+}</p>
+<p>This got the actual MySQL datatype into the array before it was passed off to the datatype module.  I didn&#039;t do anything with the &#039;flags&#039; array key.  It still read &#039;blob&#039; on my setup.</p>
+</section>
+<section>
+<h3>[2006-07-06 14:41 UTC] webmaster at kryptronic dot com</h3>
+<p>I tested with the CSV version and the issue remains.  I did some further hacking around and discovered that if I made the right mods in the tableInfo() method in the MDB2_Driver_Reverse_mysql class, no modifications were needed in the mapNativeDatatype() method in the MDB2_Driver_Datatype_mysql class.</p>
+<p>Below is a full copy of my patched tableInfo() method.  I modified the original code posted substantially:</p>
+<p>1. Now accounts for getting info on a result set instead of just a table ($got_string can == true or false).</p>
+<p>2. Optimized for single table ($got_string == true) however will work if using a result set and the table returned is different.  You may want to optimize further as right now this code is calling the &#039;SHOW COLUMNS FROM &#039;... SQL for each column if a result set is being worked on.  I only call tableInfo() on static tables so this doesn&#039;t matter much to me.</p>
+<p>3. Attempts to use the &#039;SHOW COLUMNS FROM &#039;... SQL but on failure reverts back to old behavior if that can&#039;t be done.</p>
+<p>4. Strips &#039;binary&#039; and &#039;blob&#039; flags if &#039;mdb2type&#039; is &#039;text&#039;.  (MySQL was returning a &#039;blob&#039; tag for &#039;text&#039; types for some reason.</p>
+<p>5. NOTE: Now I&#039;m looking at the mysqli driver which I imagine will need a similar fix.  I won&#039;t post a bug there as that driver seems to behave correctly even though better info could be returned with this new methodology.</p>
+<p>==============BEGIN_CUT</p>
+<p>function tableInfo($result, $mode = null)<br>
+    {<br>
+        $db =&amp; $this-&gt;getDBInstance();<br>
+        if (PEAR::isError($db)) {<br>
+            return $db;<br>
+        }</p>
+<p>if (is_string($result)) {<br>
+            /*<br>
+             * Probably received a table name.<br>
+             * Create a result resource identifier.<br>
+             */<br>
+            $query = &#039;SELECT * FROM &#039;.$db-&gt;quoteIdentifier($result).&#039; LIMIT 0&#039;;<br>
+            $id =&amp; $db-&gt;_doQuery($query, false);<br>
+            if (PEAR::isError($id)) {<br>
+                return $id;<br>
+            }<br>
+            $got_string = true;<br>
+        } elseif (MDB2::isResultCommon($result)) {<br>
+            /*<br>
+             * Probably received a result object.<br>
+             * Extract the result resource identifier.<br>
+             */<br>
+            $id = $result-&gt;getResource();<br>
+            $got_string = false;<br>
+        } else {<br>
+            /*<br>
+             * Probably received a result resource identifier.             * Copy it.<br>
+             * Deprecated.  Here for compatibility only.<br>
+             */<br>
+            $id = $result;<br>
+            $got_string = false;<br>
+        }</p>
+<p>if (!is_resource($id)) {<br>
+            return $db-&gt;raiseError(MDB2_ERROR_NEED_MORE_DATA);<br>
+        }</p>
+<p>if ($db-&gt;options[&#039;portability&#039;] &amp; MDB2_PORTABILITY_FIX_CASE) {<br>
+            if ($db-&gt;options[&#039;field_case&#039;] == CASE_LOWER) {<br>
+                $case_func = &#039;strtolower&#039;;<br>
+            } else {<br>
+                $case_func = &#039;strtoupper&#039;;<br>
+            }<br>
+        } else {<br>
+            $case_func = &#039;strval&#039;;<br>
+        }</p>
+<p>$count = @mysql_num_fields($id);<br>
+        $res   = array();</p>
+<p>if ($mode) {<br>
+            $res[&#039;num_fields&#039;] = $count;<br>
+        }</p>
+<p>///////// BEGIN PATCH - webmaster@kryptronic.com</p>
+<p>$x_result = null;</p>
+<p>if ($got_string) {<br>
+            $x_query = &#039;SHOW COLUMNS FROM &#039; . $db-&gt;quoteIdentifier($result);<br>
+            $x_result =&amp; $db-&gt;queryAll($x_query, false);<br>
+            if (PEAR::isError($x_result)) {$x_result = null;}<br>
+        }</p>
+<p>///////// END PATCH - webmaster@kryptronic.com</p>
+<p>$db-&gt;loadModule(&#039;Datatype&#039;, null, true);<br>
+        for ($i = 0; $i &lt; $count; $i++) {</p>
+<p>$res[$i] = array(<br>
+                &#039;table&#039; =&gt; $case_func(@mysql_field_table($id, $i)),<br>
+                &#039;name&#039;  =&gt; $case_func(@mysql_field_name($id, $i)),<br>
+                &#039;type&#039;  =&gt; @mysql_field_type($id, $i),<br>
+                &#039;length&#039;   =&gt; @mysql_field_len($id, $i),<br>
+                &#039;flags&#039; =&gt; @mysql_field_flags($id, $i),<br>
+            );</p>
+<p>///////// BEGIN PATCH - webmaster@kryptronic.com</p>
+<p>if (!($got_string)) {<br>
+                $x_query = &#039;SHOW COLUMNS FROM &#039; . $db-&gt;quoteIdentifier($res[$i][&#039;table&#039;]);<br>
+                $x_result =&amp; $db-&gt;queryAll($x_query, false);<br>
+                if (PEAR::isError($x_result)) {$x_result = null;}<br>
+            }</p>
+<p>if ($x_result) {<br>
+                foreach ($x_result as $x) {<br>
+                    if ($x[&#039;field&#039;] == $res[$i][&#039;name&#039;]) {<br>
+                        $x[&#039;type&#039;] = preg_replace(&#039;/\(.*?\)$/&#039;,&#039;&#039;,$x[&#039;type&#039;]);<br>
+                        $res[$i][&#039;type&#039;] = $x[&#039;type&#039;];<br>
+                    }<br>
+                }<br>
+            }</p>
+<p>///////// END PATCH - support@kryptronic.com</p>
+<p>if ($res[$i][&#039;type&#039;] == &#039;string&#039;) {<br>
+                $res[$i][&#039;type&#039;] = &#039;char&#039;;<br>
+            } elseif ($res[$i][&#039;type&#039;] == &#039;unknown&#039;) {<br>
+                $res[$i][&#039;type&#039;] = &#039;decimal&#039;;<br>
+            }<br>
+            $mdb2type_info = $db-&gt;datatype-&gt;mapNativeDatatype($res[$i]);<br>
+            if (PEAR::isError($mdb2type_info)) {<br>
+               return $mdb2type_info;<br>
+            }<br>
+            $res[$i][&#039;mdb2type&#039;] = $mdb2type_info[0][0];<br>
+            if ($mode &amp; MDB2_TABLEINFO_ORDER) {<br>
+                $res[&#039;order&#039;][$res[$i][&#039;name&#039;]] = $i;<br>
+            }<br>
+            if ($mode &amp; MDB2_TABLEINFO_ORDERTABLE) {<br>
+                $res[&#039;ordertable&#039;][$res[$i][&#039;table&#039;]][$res[$i][&#039;name&#039;]] = $i;<br>
+            }</p>
+<p>///////// BEGIN PATCH - support@kryptronic.com</p>
+<p>if ($x_result) {<br>
+                if ($res[$i][&#039;mdb2type&#039;] == &#039;text&#039;) {<br>
+                    $x_flags = explode(&#039; &#039;,$res[$i][&#039;flags&#039;]);<br>
+                    $z_flags = array();<br>
+                    foreach ($x_flags as $x) {<br>
+                        if (($x != &#039;binary&#039;) &amp;&amp; ($x != &#039;blob&#039;)) {$z_flags[] = $x;}<br>
+                    }<br>
+                    $res[$i][&#039;flags&#039;] = implode(&#039; &#039;,$z_flags);<br>
+                }<br>
+            }</p>
+<p>///////// END PATCH - support@kryptronic.com</p>
+<p>}<br>
+        // free the result only if we were called on a table<br>
+        if ($got_string) {<br>
+            @mysql_free_result($id);<br>
+        }<br>
+        return $res;<br>
+    }</p>
+<p>==============END_CUT</p>
+</section>
+<section>
+<h3>[2006-07-06 15:20 UTC] webmaster at kryptronic dot com</h3>
+<p>I think the issue here is that mysql_field_type() reports the field type inconsistently in different versions of PHP.  Read here for info:</p>
+<p>http://us2.php.net/manual/en/function.mysql-field-type.php</p>
+<p>In my case mysql_field_type() was reporting a type of BLOB for TEXT, MEDIUMTEXT and LONGTEXT.  Additionally, mysql_field_type() was reporting VARCHAR and CHAR types as CHARs.  This was causing problems when doing table introspection.</p>
+<p>For my purposes I need to be able to compare the actual table definition with the definition in my XML schema so as to prepare a changes array for MDB2.  The MDB2 native types did not have enough detail in them for me to be able to tell the difference between something like a CHAR or a VARCHAR or a TEXT field.  They are all &#039;text&#039;.  So when the time comes to compare the schema to the actual table definition I had no idea whether I need to make changes to the column datatypes or not.  I know dealing with the rdbms types in an application goes against what MDB2 stands for, however when you have users using utilities like PHPMyAdmin to change table structures in addition to an MDB2-based app problems can arise if a good level of detail for the column type is not available.</p>
+<p>Consider the following:</p>
+<p>(1) MDB2 already uses &#039;SHOW COLUMNS FROM &#039; ... SQL in getTableFieldDefinition() so using this SQL in tableInfo() is not out of the question.</p>
+<p>(2) Because tableInfo() relies on mysql_field_type() to get the rdbms datatype, result consistency in the &#039;type&#039; key between PHP and MySQL versions is non-existent.  Any programmer currently relying on the tableInfo &#039;type&#039; field instead of the &#039;mdb2type&#039; field for table field info is crazy if they care about application portability.</p>
+<p>(3) Because of (2) above, the &#039;type&#039; key returned by tableInfo() really should be used for informational purposes only.</p>
+<p>(4) Using the new SQL format in tableInfo() creates more consistency within the driver as getTableFieldDefinition() uses those results already to map back to MDB2 types.  Right now the two methods are inconsistent because they&#039;re mapping different data back to the same native types.</p>
+<p>I recommend the changes be made to tableInfo() to use the &#039;SHOW COLUMNS FROM &#039; ... SQL for these reasons.  Right now there is no way to get the actual column types for MySQL tables out of MDB2.</p>
+<p>These are just my thoughts.  I am going to use my patched mysql and mysql drivers in production as they do what I need them to do.  I really like MDB2 and only posted this as a bug as I thought the behavior was unreasonable and easilly fixed.</p>
+<p>BTW: I just tested this same patch against the mysqli tableInfo() method and it worked fine without any changes.</p>
+</section>
+<section>
+<h3>[2006-07-06 16:56 UTC] webmaster at kryptronic dot com</h3>
+<p>The issue with getTableFieldDefinition() is that it uses the Datatype method mapNativeDatatype() to return the &#039;type&#039; key.  In order for that to be usable it would have to return &#039;type&#039; as the actual type and &#039;mdb2type&#039; as the native type.  As it is now getTableFieldDefinition() and tableInfo() return different types for my setup:</p>
+<p>getTableFieldDefinition() returns &#039;clob&#039; as &#039;type&#039; for MySQL &#039;TEXT&#039; columns.</p>
+<p>tableInfo() returns &#039;blob&#039; as &#039;type&#039; and &#039;mdb2type&#039; for MySQL &#039;TEXT&#039; columns.</p>
+<p>While getTableFieldDefinition() is better, it still doesn&#039;t give me an accurate MySQL type.</p>
+</section>
+<section>
+<h3>[2006-07-06 17:24 UTC] webmaster at kryptronic dot com</h3>
+<p>That would totally work.  It&#039;s a bit confusing because of the use of the key &#039;type&#039; in both methods, however it would work.  To recap:</p>
+<p>(1) tableInfo() &#039;type&#039; key returns RDBMS native type</p>
+<p>(2) tableInfo() &#039;mdb2type&#039; key returns MDB2 type</p>
+<p>(3) getTableFieldDefinition() &#039;type&#039; key returns MDB2 type</p>
+<p>(4) getTableFieldDefinition() &#039;nativetype&#039; key returns RDBMS native type</p>
+<p>This would bypass (read: eliminate) the problems associated with mysql_field_type() altogether as MySQL would report the native column type itself.</p>
+<p>I assume this would be impelemented in the mysqli driver as well.  Correct?  What about the other drivers?  My research indicates:</p>
+<p>(1) MySQL - see above</p>
+<p>(2) MySQLi - see above</p>
+<p>(3) PostgreSQL - uses pg_field_type() which (according to the PHP Manual) returns accurate info.  It looks like getTableFieldDefinition() gets info right from PostgreSQL which would be much better.</p>
+<p>(4) MS SQL Server - uses mssql_field_type() which appears to have the same sort of issues.  There is a great post by huib at bestia dot com on 27-May-2005 03:18 here:<br>
+http://us2.php.net/manual/en/function.mssql-field-type.php<br>
+That gives good SQL to use.  It looks like getTableFieldDefinition() is extended from the Common driver in this module currently.</p>
+<p>(5) Oracle - Uses SQL in both methods to get column info but looks to hit different tables.  This may be OK.  Not sure.</p>
+<p>(6) SQLite - Uses SQL in both methods to get column info but looks to hit different tables.  This may be OK.  Not sure.  Maybe you can explain whether types matter at all in SQLite when creating tables or adding new columns (please?).</p>
+<p>Concerning SQLite (very off subject):</p>
+<p>You may be able to support a &#039;remove&#039; in the ALTER TABLE code with SQLite.  Read here for more info (FAQ: #13 How do I add or delete columns from an existing table in SQLite.):<br>
+http://www.sqlite.org/faq.html#q12</p>
+<p>Applying the SQLite example above further you may be able to support full ALTER TABLE functionality.</p>
+<p>-------<br>
+Sorry for all the extra non-MySQL driver details here.  I figured they may help if you&#039;re re-arranging how things work.</p>
+</section>
+<section>
+<h3>[2006-07-06 17:57 UTC] webmaster at kryptronic dot com</h3>
+<p>I just had an idea which would help the API make a little more sense.  Add a &#039;mdb2type&#039; key to getTableFieldDefinition() and set it equal to the &#039;type&#039; key.  Add a &#039;nativetype&#039; key to tableInfo() and set it equal to the &#039;type&#039; key.  In the end you would have:</p>
+<p>(1) tableInfo() &#039;type&#039; key returns RDBMS native type</p>
+<p>(2) tableInfo() &#039;mdb2type&#039; key returns MDB2 type</p>
+<p>(3) tableInfo() &#039;nativetype&#039; key returns RDBMS native type</p>
+<p>(4) getTableFieldDefinition() &#039;type&#039; key returns MDB2 type</p>
+<p>(5) getTableFieldDefinition() &#039;mdb2type&#039; key returns MDB2 type</p>
+<p>(6) getTableFieldDefinition() &#039;nativetype&#039; key returns RDBMS native type</p>
+<p>At some point you could deprecate the &#039;type&#039; key in the two methods.</p>
+</section>
+<section>
+<h3>[2006-07-16 18:35 UTC] webmaster at kryptronic dot com</h3>
+<p>I&#039;ve determined after testing the remaining drivers that in it&#039;s current state MDB2 is not going to fit well with my project.  Over the past couple of weeks I&#039;ve rolled my own DBI interface directly into my application based on how MDB2 works using all the same system calls.</p>
+<p>In my programming I determined that there is no good way to map an internal (MDB2) type back to a native type during a tableInfo() lookup because length parameters preclude getting matching anything exactly.  The best method I&#039;ve come up with is the following:</p>
+<p>(1) Use MDB2 internal types to create database columns by using them plus length, notnull and default parameters to create a solid declaration string.</p>
+<p>(2) Use a native type declaration (calculated as the same type declaration used to create a column) in tableInfo().</p>
+<p>(3) When doing comparissons of existing columns and XML db definitions, do the comparisson on what the application thinks the actual native declaration string should be versus what the database reports.</p>
+<p>If you&#039;d like any of the SQL statements needed to get proper tableInfo() for the RDBMSs, please let me know.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

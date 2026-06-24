@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2631</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/Translation2/index.html">Translation2</a> &#187; Bug #2631</h1>
+<p>Translation2_Admin::add() produces duplicates</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-10-27 14:11 UTC</td></tr>
+<tr><th>From</th><td>ylf at xung dot org</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Translation2/index.html">Translation2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Linux Debian (testing)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-27 14:11 UTC] ylf at xung dot org</h3>
+<p>Description:<br>
+------------<br>
+In bug #2570 I asked for an Admin:update() method, which you did include. Thanks for that.</p>
+<p>But, the add() method performs in a pretty inconsistent manner. It should sometimes perform an update.</p>
+<p>The point is that the string id and page id couple should form a unique key : there can&#039;t be two rows in the i18n table with both the same string id and page id, or the table is inconsistent. And this is not respected.</p>
+<p>Currently add() means &#039;add a new string id&#039;, but one may think add() also means : &#039;add a new translation for this string id&#039;. Of course, the documentation could state that for this later case, update() is the right way.</p>
+<p>But I believe you have to do some extra checking, otherwise the tables may get inconsistent when someone adds twice the same string id.</p>
+<p>After checking the reproduce code you may think that the closest solution to this issue would be to use the mysql REPLACE statement, but it won&#039;t work :</p>
+<p>&quot;Values for all columns are taken from the values specified in the REPLACE statement. Any missing columns are set to their default values, just as happens for INSERT.&quot;</p>
+<p>(see: http://dev.mysql.com/doc/mysql/en/REPLACE.html)</p>
+<p>So, to keep tables consistent, I guess you&#039;ll have to <br>
+- either issue more queries, <br>
+- or do some comparison between the cache and what&#039;s to be add()ed<br>
+- or use an sql constraint as &quot;INDEX full_id (page_id,id)&quot; which will result in a DB error if there&#039;s a duplicate row (the lightest and smartest to me, but is it portable ?)</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+   <br>
+error_reporting (E_ALL);</p>
+<p>require_once &#039;PEAR.php&#039;;<br>
+require_once &#039;DB.php&#039;;<br>
+require_once &#039;Translation2/Admin.php&#039;;</p>
+<p>$dsn = &#039;&#039;;<br>
+$db =&amp; DB::connect($dsn);</p>
+<p>// Starting with an empty db : tables langs and i18n do not exist</p>
+<p>$db-&gt;query(&#039;drop table if exists langs, i18n&#039;);</p>
+<p>$tr =&amp; Translation2_Admin::factory(&#039;DB&#039;, $db);</p>
+<p>if (PEAR::isError($tr)) exit($tr-&gt;getMessage());</p>
+<p>$newLang = array(<br>
+    &#039;lang_id&#039;    =&gt; &#039;en&#039;,<br>
+    &#039;table_name&#039; =&gt; &#039;i18n&#039;,<br>
+    &#039;name&#039;       =&gt; &#039;english&#039;,<br>
+    &#039;meta&#039;       =&gt; &#039;some meta info&#039;,<br>
+    &#039;error_text&#039; =&gt; &#039;not available&#039;);</p>
+<p>$tr-&gt;createNewLang($newLang);</p>
+<p>$newLang = array(<br>
+    &#039;lang_id&#039;    =&gt; &#039;fr&#039;,<br>
+    &#039;table_name&#039; =&gt; &#039;i18n&#039;,<br>
+    &#039;name&#039;       =&gt; &#039;french&#039;,<br>
+    &#039;meta&#039;       =&gt; &#039;some meta info&#039;,<br>
+    &#039;error_text&#039; =&gt; &#039;not available&#039;);</p>
+<p>$tr-&gt;createNewLang($newLang);</p>
+<p>// this works fine :<br>
+$tr-&gt;add(&#039;string1&#039;,&#039;page1&#039;,array(&#039;en&#039; =&gt; &#039;string 1&#039;, &#039;fr&#039; =&gt; &#039;texte 1&#039;));</p>
+<p>// now let&#039;s add an english only translation<br>
+$tr-&gt;add(&#039;string2&#039;,&#039;page1&#039;,array(&#039;en&#039; =&gt; &#039;string 2&#039;));</p>
+<p>// and, subsequently, the french translation for the same string id<br>
+$tr-&gt;add(&#039;string2&#039;,&#039;page1&#039;,array(&#039;fr&#039; =&gt; &#039;chaine 2&#039;));</p>
+<p>// and even, the english translation again for the same string id<br>
+$tr-&gt;add(&#039;string2&#039;,&#039;page1&#039;,array(&#039;en&#039; =&gt; &#039;string 2&#039;));</p>
+<p>echo &quot;&lt;html&gt;&lt;body&gt;&lt;pre&gt;&quot;;</p>
+<p>echo &quot;\n\n----------------------------------------\n&quot;;<br>
+echo &quot;table : i18n\n&quot;;<br>
+echo &quot;----------------------------------------\n&quot;;<br>
+$res =&amp; $db-&gt;getAll(&quot;select * from i18n&quot;,array(),DB_FETCHMODE_ASSOC);<br>
+print_r ($res);</p>
+<p>echo &quot;&lt;/pre&gt;&lt;/body&gt;&lt;/html&gt;&quot;;<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+----------------------------------------<br>
+table : i18n<br>
+----------------------------------------<br>
+Array<br>
+(<br>
+    [0] =&gt; Array<br>
+        (<br>
+            [page_id] =&gt; page1<br>
+            [id] =&gt; string1<br>
+            [en] =&gt; string 1<br>
+            [fr] =&gt; texte 1<br>
+        )</p>
+<p>[1] =&gt; Array<br>
+        (<br>
+            [page_id] =&gt; page1<br>
+            [id] =&gt; string2<br>
+            [en] =&gt; string 2<br>
+            [fr] =&gt; chaine 2<br>
+        )</p>
+<p>)</p>
+<p>Actual result:<br>
+--------------<br>
+----------------------------------------<br>
+table : i18n<br>
+----------------------------------------<br>
+Array<br>
+(<br>
+    [0] =&gt; Array<br>
+        (<br>
+            [page_id] =&gt; page1<br>
+            [id] =&gt; string1<br>
+            [en] =&gt; string 1<br>
+            [fr] =&gt; texte 1<br>
+        )</p>
+<p>[1] =&gt; Array<br>
+        (<br>
+            [page_id] =&gt; page1<br>
+            [id] =&gt; string2<br>
+            [en] =&gt; string 2<br>
+            [fr] =&gt; <br>
+        )</p>
+<p>[2] =&gt; Array<br>
+        (<br>
+            [page_id] =&gt; page1<br>
+            [id] =&gt; string2<br>
+            [en] =&gt; <br>
+            [fr] =&gt; chaine 2<br>
+        )</p>
+<p>[3] =&gt; Array<br>
+        (<br>
+            [page_id] =&gt; page1<br>
+            [id] =&gt; string2<br>
+            [en] =&gt; string 2<br>
+            [fr] =&gt; <br>
+        )</p>
+<p>)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

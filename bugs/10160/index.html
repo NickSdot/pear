@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #10160</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB_QueryTool/index.html">MDB_QueryTool</a> &#187; Bug #10160</h1>
+<p>raw mode still quotes with MDB2</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-02-22 21:44 UTC</td></tr>
+<tr><th>From</th><td>bbaumer at nymets dot com</td></tr>
+<tr><th>Assigned</th><td>hugoki</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB_QueryTool/index.html">MDB_QueryTool</a></td></tr>
+<tr><th>PHP Version</th><td>5.2.0</td></tr>
+<tr><th>OS</th><td>Win XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-02-22 21:44 UTC] bbaumer at nymets dot com</h3>
+<p>Description:<br>
+------------<br>
+Maybe I&#039;m an idiot, but the behavior of raw mode does not seem to work as expected with MDB2 (v. 2.3.0). I can&#039;t prevent it from quoting the SELECT field names. It looks to me like MDB2-&gt;quote() is the culprit, but why is it being called if &quot;raw&quot; is set to TRUE?</p>
+<p>Test script:<br>
+---------------<br>
+require_once &quot;MDB/QueryTool.php&quot;;<br>
+$dsn=&#039;mysqli://user:pass@localhost/bdb&#039;;<br>
+$query=new MDB_QueryTool($dsn,NULL,2);<br>
+$query-&gt;setOption(&#039;raw&#039;,true);<br>
+$query-&gt;setSelect(&quot;t.playerid, concat(namelast,&#039;, &#039;,namefirst) as Name, sum(h)/sum(ab) as AVG&quot;);<br>
+$query-&gt;setTable(&quot;batting t&quot;);<br>
+$query-&gt;setLeftJoin(&quot;master m&quot;,&quot;m.playerid=t.playerid&quot;);<br>
+$query-&gt;setWhere(&quot;yearid=2006 and teamid=&#039;NYN&#039;&quot;);<br>
+$query-&gt;setGroup(&quot;playerid&quot;);</p>
+<p>print_r($query-&gt;options);<br>
+echo $query-&gt;getQueryString();<br>
+echo &quot;&lt;br&gt;&quot;;<br>
+print_r($query-&gt;execute());</p>
+<p>Expected result:<br>
+----------------<br>
+Array<br>
+(<br>
+    [raw] =&gt; 1<br>
+    [verbose] =&gt; 1<br>
+    [useCache] =&gt; <br>
+    [logFile] =&gt; <br>
+)<br>
+SELECT t.playerid,concat(namelast,&#039;,&#039;,namefirst) AS Name,sum(h)/sum(ab) AS `AVG` FROM batting t LEFT JOIN master m ON m.playerid=t.playerid WHERE yearid=2006 and teamid=&#039;NYN&#039; GROUP BY batting t.playerid</p>
+<p>Actual result:<br>
+--------------<br>
+Array<br>
+(<br>
+    [raw] =&gt; 1<br>
+    [verbose] =&gt; 1<br>
+    [useCache] =&gt; <br>
+    [logFile] =&gt; <br>
+)<br>
+SELECT t.`playerid`,`concat(namelast`,`&#039;`,`&#039;`,`namefirst)` AS Name,sum(h)/sum(ab) AS `AVG` FROM batting t LEFT JOIN master m ON m.playerid=t.playerid WHERE yearid=2006 and teamid=&#039;NYN&#039; GROUP BY batting t.playerid</p>
+</section>
+<section>
+<h3>[2007-02-23 15:53 UTC] hugoki at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>Works only with MDB2!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

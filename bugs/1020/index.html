@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1020</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #1020</h1>
+<p>isInactive() problematic (DB container)</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-16 08:16 UTC</td></tr>
+<tr><th>From</th><td>alain_d99 at freesurf dot ch</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>4.2.0</td></tr>
+<tr><th>OS</th><td>Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-16 08:16 UTC] alain_d99 at freesurf dot ch</h3>
+<p>Description:<br>
+------------<br>
+Hello</p>
+<p>LiveUser.php: v1.82</p>
+<p>The LiveUser::isInactive() function doesn&#039;t work as expected.</p>
+<p>Example:<br>
+$nLiveUser =&amp; LiveUser::factory($nConfig);<br>
+$nLiveUser-&gt;init();</p>
+<p>if(!$nLiveUser-&gt;isLoggedIn()) {<br>
+  if($nLiveUser-&gt;isInactive())<br>
+    echo &quot;Inactive&quot;;<br>
+  else<br>
+    echo &quot;Active but wrong password&quot;;<br>
+}</p>
+<p>In the example above, the &quot;Inactive&quot; term is always printed if the user exists and the given password is wrong. Must be &quot;Active but wrong password&quot;.</p>
+<p>The problem comes from the following calls:<br>
+LiveUser::init() -&gt; LiveUser::tryLogin(...., ...., true) -&gt; Container_DB::readUserData(&#039;handle&#039;, &#039;password&#039;).</p>
+<p>The Container_DB::readUserData() gets a password, then in this function the user is searched with handle AND password. If the password is wrong, no user is found, and the following condition is never met :</p>
+<p>$result = $this-&gt;dbc-&gt;getRow($sql, null, DB_FETCHMODE_ASSOC);</p>
+<p>// If a user was found, read data into class variables and set<br>
+  // return value to true<br>
+  if (!DB::isError($result) &amp;&amp; is_array($result)) {<br>
+    $udata = $result; // NEVER GO INTO CONDITION</p>
+<p>$this-&gt;isActive     = ((!isset($udata[&#039;is_active&#039;]) || $udata[&#039;is_active&#039;] == &#039;Y&#039;) ? true : false); // NEVER SET THE ISACTIVE FIELD<br>
+    .....<br>
+  }</p>
+<p>In this case, $this-&gt;isActive is always false. Then LiveUser::isInactive() returns always true.</p>
+<p>Then, impossible in my example to differenciate between a wrong login (handle correct but password not) and an inactive state.</p>
+<p>Thank for your work,<br>
+Alain</p>
+<p>Expected result:<br>
+----------------<br>
+The LiveUser::isInactive() must return false (if the &#039;is_active&#039; bit is set to &#039;Y&#039;) when a correct handle is given, but its password is wrong.</p>
+<p>Actual result:<br>
+--------------<br>
+The LiveUser::isInactive() returns always true (the &#039;is_active&#039; bit is set to &#039;Y&#039;) when a correct handle is given, but its password is wrong.</p>
+</section>
+<section>
+<h3>[2004-04-04 08:21 UTC] alain_d99 at freesurf dot ch</h3>
+<p>Hello Dufuz,</p>
+<p>thank for your message. I have made a workaround for my problem (in Common.php: ~310):</p>
+<p>if ($this-&gt;allowDuplicateHandles == true || $checkpw == true) {<br>
+            // If duplicate handles are allowed or the password _has_<br>
+            // to be checked, only read in data if a matching user is found<br>
+            $success = $this-&gt;readUserData($handle, $passwd);<br>
+        } else {<br>
+            // If duplicate handles are not allowed or the password<br>
+            // doesn&#039;t need to be checked, just read in the data based<br>
+            // on the handle<br>
+            $success = $this-&gt;readUserData($handle);<br>
+        }</p>
+<p>Change to:</p>
+<p>if ($this-&gt;allowDuplicateHandles == true) { // REMOVED, PASSWORD IS CHECKED AFTER || $checkpw == true) {<br>
+            // If duplicate handles are allowed,<br>
+            // only read in data if a matching user is found<br>
+            $success = $this-&gt;readUserData($handle, $passwd);<br>
+        } else {<br>
+            // If duplicate handles are not allowed,<br>
+            // just read in the data based<br>
+            // on the handle<br>
+            $success = $this-&gt;readUserData($handle);<br>
+        }</p>
+<p>And now, works correctly. But I believe that the whole condition must be removed, and keep only:</p>
+<p>$success = $this-&gt;readUserData($handle);</p>
+<p>And test after the password if duplicate handler is allowed or password must be checked, ie :</p>
+<p>...<br>
+if($checkpw == true || $this-&gt;allowDuplicateHandles == true) {<br>
+  if($this-&gt;passwd == $this-&gt;encryptPW($passwd)) {<br>
+...</p>
+<p>I will discuss about this into devs mailing list.</p>
+<p>The status member must be only valid for init() function. It will be a status_init member. Actually it is.</p>
+<p>Greetings,<br>
+Alain</p>
+</section>
+<section>
+<h3>[2004-04-22 13:24 UTC] smith at backendmedia dot com</h3>
+<p>This is the intended behaviour.<br>
+A failed login attempt can be determined by the return value of the init() method.</p>
+<p>However since LiveUser tries to potentially authenticate against multiple auth containers it would be a bad idea if we would consider a matching handle a match if passwords are actually required. It is very likely that one person will use the same handle in those multiple containers. Therefore if you need this feature you will have to create a custom container.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

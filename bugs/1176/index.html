@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1176</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_FTP/index.html">Net_FTP</a> &#187; Bug #1176</h1>
+<p>Net_FTP::ls can return dates in the future</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-10 16:25 UTC</td></tr>
+<tr><th>From</th><td>philip at philipnet dot com</td></tr>
+<tr><th>Assigned</th><td>toby</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_FTP/index.html">Net_FTP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Linux 2.4.25</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-10 16:25 UTC] philip at philipnet dot com</h3>
+<p>Description:<br>
+------------<br>
+Net_FTP::ls can return a timestamp value for a file which <br>
+is in the future. This only occurs if the FTP site does <br>
+not <br>
+send Year information for its files and the files have a <br>
+later date (wtr. month, day etc.) than the current date <br>
+and <br>
+time.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Apologies for the length</p>
+<p>&lt;?php<br>
+require_once &#039;Net/FTP.php&#039;;<br>
+$ftp = new Net_FTP( );<br>
+$ftp -&gt; connect( &#039;www.xmlsoft.org&#039;);<br>
+$ftp -&gt; login ( &#039;anonymous&#039;);<br>
+$dir = $ftp-&gt;ls( &#039;/&#039;);<br>
+$theone = array( );<br>
+foreach ($dir as $entry) {<br>
+  echo $entry[&quot;name&quot;];<br>
+  if (ereg(&quot;libxml2-[0-9].[0-9].[0-9].tar.gz&quot;, $entry[&quot;name&quot;])) {<br>
+    echo &quot; &quot;.$theone[&quot;date&quot;] .&quot; &quot;.$entry[&quot;date&quot;];<br>
+    if ($theone[&quot;date&quot;] &lt; $entry[&quot;date&quot;]) {<br>
+      $theone = $entry;<br>
+      echo &quot; match&quot;;<br>
+    }<br>
+  }<br>
+  echo &quot;\n&quot;;<br>
+}<br>
+if ($theone[&quot;name&quot;]==&quot;&quot;) {<br>
+  echo &quot;Unable to find file which maches &quot;.$file.&quot;\n&quot;;<br>
+  exit (1);<br>
+}<br>
+echo &quot;The latest release is &quot;.$theone[&quot;name&quot;].&quot;\n&quot;;<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Doing a Net_FTP::ls to ftp://www.xmlsort.org/ should return <br>
+a timestamp indicating that libxml2-2.68.tar.gz is later <br>
+than libxml2-2.6.4.tar.gz, but it doesn&#039;t.</p>
+<p>Below is my proposed solution.</p>
+<p>It checks for timestamps from the future and recalculates <br>
+the value if so.<br>
+There might be a quicker way to do it - by subtracting the <br>
+equivalent of a year from $out, but you would have to take <br>
+leap years into account.</p>
+<p>Actual result:<br>
+--------------<br>
+Proposed solution:</p>
+<p>function _parse_Date ( $date ) {<br>
+            // Sep 10 22:06 =&gt; Sep 10, &lt;year&gt; 22:06<br>
+            if (preg_match(&quot;/([A-Za-z]+)[ ]+([0-9]+)[ <br>
+]+([0-9]+):([0-9]+)/&quot;, $date, $res)) {<br>
+                $year = date(&quot;Y&quot;);<br>
+                $month = $res[1];<br>
+                $day = $res[2];<br>
+                $hour = $res[3];<br>
+                $minute = $res[4];<br>
+                $date = &quot;$month $day, $year $hour:$minute&quot;;<br>
+                $out = strtotime($date);<br>
+                if ($out &gt; time())<br>
+                  {<br>
+                    // We can&#039;t have a file with a <br>
+timestamp in the future<br>
+                    $year = date(&quot;Y&quot;)-;<br>
+                    $month = $res[1];<br>
+                    $day = $res[2];<br>
+                    $hour = $res[3];<br>
+                    $minute = $res[4];<br>
+                    $date = &quot;$month $day, $year <br>
+$hour:$minute&quot;;<br>
+                    $out = strtotime($date);<br>
+                  }<br>
+              }<br>
+            else<br>
+              {<br>
+                $out = strtotime($date);<br>
+              }<br>
+            if (!$out) {<br>
+                return $this-&gt;raiseError(&quot;Dateconversion <br>
+faild.&quot;, 0);<br>
+            }<br>
+            return $out;<br>
+        }</p>
+</section>
+<section>
+<h3>[2004-04-10 18:36 UTC] philip at philipnet dot com</h3>
+<p>Opps!</p>
+<p>$year = date(&quot;Y&quot;)-;</p>
+<p>should be:<br>
+  $year = date(&quot;Y&quot;)-1;</p>
+</section>
+<section>
+<h3>[2004-04-12 09:50 UTC] philip at philipnet dot com</h3>
+<p>And the duplicate assignments don&#039;t need to be there as <br>
+well!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

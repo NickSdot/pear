@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #949</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #949</h1>
+<p>Impossible to raiseError(DB_Error)</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-05 16:09 UTC</td></tr>
+<tr><th>From</th><td>markus dot kalkbrenner at arcor dot de</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-05 16:09 UTC] markus dot kalkbrenner at arcor dot de</h3>
+<p>Description:<br>
+------------<br>
+There&#039;s another bug in PEAR&#039;s error handling:</p>
+<p>If you have an existing object that inherits PEAR_Error (like an instance of DB_Error) it&#039;s impossible to raise it again using PEAR::raiseError(), if the constructor of the object doesn&#039;t support messages.</p>
+<p>The problem is that $skipmsg is always false if the only parameter passed to raiseError is an object.</p>
+<p>Here&#039;s a patch for PEAR.php and DB.php that solves the problem for DB_Error.</p>
+<p>--- PEAR_original.php   2004-02-09 10:03:10.000000000 +0100<br>
++++ PEAR.php    2004-03-05 16:40:57.000000000 +0100<br>
+@@ -490,7 +490,7 @@<br>
+                          $options = null,<br>
+                          $userinfo = null,<br>
+                          $error_class = null,<br>
+-                         $skipmsg = false)<br>
++                         /* deprecated */ $skipmsg = false)<br>
+     {<br>
+         // The error is yet a PEAR error object<br>
+         if (is_object($message)) {<br>
+@@ -528,6 +528,7 @@<br>
+         } else {<br>
+             $ec = &#039;PEAR_Error&#039;;<br>
+         }<br>
++        eval(&quot;\$skipmsg = ! $ec::isConstructorSupportingMessage();&quot;);<br>
+         if ($skipmsg) {<br>
+             return new $ec($code, $mode, $options, $userinfo);<br>
+         } else {<br>
+@@ -780,6 +781,12 @@<br>
+     }</p>
+<p>// }}}<br>
++<br>
++    function isConstructorSupportingMessage()<br>
++    {<br>
++       return false;<br>
++    }<br>
++<br>
+     // {{{ getMode()</p>
+<p>/**</p>
+<p>--- DB_original.php     2004-03-05 16:44:32.000000000 +0100<br>
++++ DB.php      2004-03-05 16:45:47.000000000 +0100<br>
+@@ -751,6 +751,12 @@<br>
+         }<br>
+     }<br>
+     // }}}<br>
++<br>
++    function isConstructorSupportingMessage()<br>
++    {<br>
++       return false;<br>
++    }<br>
++<br>
+ }</p>
+<p>// }}}</p>
+<p>Other classes that extend PEAR_Error and offering a constructor that doesn&#039;t support messages will have to overwrite the static method PEAR::isConstructorSupportingMessage() according to the patch above.</p>
+<p>Another question:<br>
+Why has raiseError to create a new instance of an error object if a error object is passed to it? Isn&#039;t it easier to just return the passed object or a copy of it?</p>
+<p>Markus Kalkbrenner</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+require_once(&quot;DB.php&quot;);<br>
+PEAR::setErrorHandling(PEAR_ERROR_PRINT);<br>
+PEAR::raiseError(new DB_Error());<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+DB Error: unknown error</p>
+<p>Actual result:<br>
+--------------<br>
+DB Error: DB Error: unknown error<br>
+Notice: DB Error: DB Error: unknown error in /home/markus/pear/PEAR.php on line 758<br>
+DB Error: DB Error: unknown error</p>
+</section>
+<section>
+<h3>[2004-03-29 15:36 UTC] markus dot kalkbrenner at arcor dot de</h3>
+<p>I made a little mistake at the patch. The method isConstructorSupportingMessage() of PEAR_Error has to return true ;-)</p>
+<p>The patch has to be applied against PEAR 1.3 and DB 1.6.0</p>
+<p>Here&#039;s the corrected patch:</p>
+<p>--- PEAR_original.php   2004-02-09 10:03:10.000000000 +0100<br>
++++ PEAR.php    2004-03-05 16:40:57.000000000 +0100<br>
+@@ -490,7 +490,7 @@<br>
+                          $options = null,<br>
+                          $userinfo = null,<br>
+                          $error_class = null,<br>
+-                         $skipmsg = false)<br>
++                         /* deprecated */ $skipmsg = false)<br>
+     {<br>
+         // The error is yet a PEAR error object<br>
+         if (is_object($message)) {<br>
+@@ -528,6 +528,7 @@<br>
+         } else {<br>
+             $ec = &#039;PEAR_Error&#039;;<br>
+         }<br>
++        eval(&quot;\$skipmsg = ! $ec::isConstructorSupportingMessage();&quot;);<br>
+         if ($skipmsg) {<br>
+             return new $ec($code, $mode, $options, $userinfo);<br>
+         } else {<br>
+@@ -780,6 +781,12 @@<br>
+     }</p>
+<p>// }}}<br>
++<br>
++    function isConstructorSupportingMessage()<br>
++    {<br>
++       return true;<br>
++    }<br>
++<br>
+     // {{{ getMode()</p>
+<p>/**</p>
+<p>--- DB_original.php     2004-03-05 16:44:32.000000000 +0100<br>
++++ DB.php      2004-03-05 16:45:47.000000000 +0100<br>
+@@ -751,6 +751,12 @@<br>
+         }<br>
+     }<br>
+     // }}}<br>
++<br>
++    function isConstructorSupportingMessage()<br>
++    {<br>
++       return false;<br>
++    }<br>
++<br>
+ }</p>
+<p>// }}}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

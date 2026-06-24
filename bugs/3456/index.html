@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3456</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #3456</h1>
+<p>serialized array of soap_vals does not include namespace</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-14 02:48 UTC</td></tr>
+<tr><th>From</th><td>commanderjason at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>chagenbu</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>win2000</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-14 02:48 UTC] commanderjason at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I have a complex soap_val, one of the members of this soap_val is an array of other complex soap_val types. The XML describing the complex types within the array does not properly define the namespace for the nested complex type.</p>
+<p>Simple library change below fixes the problem</p>
+<p>Base.php line: near 475</p>
+<p>change: $xmlout_value .= $array_val-&gt;serialize($this);<br>
+to: $xmlout_value .= $this-&gt;_serializeValue($array_val, $array_val-&gt;name, $array_type, $array_type_ns);</p>
+<p>Reproduce code:<br>
+---------------<br>
+for($i=0; $i&lt;2; $i++) {<br>
+	$Option = array(&quot;OptionId&quot; =&gt; $i, &quot;Name&quot; =&gt; &quot;Option Nizzame&quot;);<br>
+	$NewOp = new SOAP_Value(&#039;ProductOption&#039;, &#039;{http://jlite.com/webservices/}ProductOption&#039;, $Option);<br>
+	$ProductOptions[] = $NewOp;<br>
+	<br>
+}</p>
+<p>$CartItem = array(&#039;ProductCode&#039; =&gt; $_REQUEST[&quot;ProductCode&quot;],<br>
+						&#039;Quantity&#039; =&gt; 1,<br>
+						&#039;SelectedProductOptions&#039; =&gt; $ProductOptions);</p>
+<p>$ProxyClass-&gt;MyFunction($CartItem);</p>
+<p>Expected result:<br>
+----------------<br>
+xml =</p>
+<p>&lt;SOAP-ENV:Body&gt;</p>
+<p>&lt;ns4:Order_CreateItem&gt;<br>
+&lt;ns4:OrderId&gt;qOxuq6fmoMhvjLhkDtBOKg==&lt;/ns4:OrderId&gt;<br>
+&lt;ns4:Item&gt;<br>
+&lt;ns4:ProductCode&gt;ts1&lt;/ns4:ProductCode&gt;<br>
+&lt;ns4:Quantity&gt;1&lt;/ns4:Quantity&gt;<br>
+&lt;ns4:SelectedProductOptions&gt;<br>
+&lt;ns4:ProductOption&gt;<br>
+&lt;OptionId&gt;0&lt;/OptionId&gt;<br>
+&lt;Name&gt;Option Nizzame&lt;/ns4:Name&gt;<br>
+&lt;/ns4:ProductOption&gt;<br>
+&lt;ns4:ProductOption&gt;<br>
+&lt;OptionId&gt;1&lt;/OptionId&gt;<br>
+&lt;Name&gt;Option Nizzame&lt;/ns4:Name&gt;<br>
+&lt;/ns4:ProductOption&gt;<br>
+&lt;/ns4:SelectedProductOptions&gt;&lt;/ns4:Item&gt;<br>
+&lt;ns4:AccessId&gt;1U98PggfAevXQUiqVY0kFA==&lt;/ns4:AccessId&gt;&lt;/ns4:Order_CreateItem&gt;<br>
+&lt;/SOAP-ENV:Body&gt;<br>
+&lt;/SOAP-ENV:Envelope&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+xml =</p>
+<p>&lt;SOAP-ENV:Body&gt;</p>
+<p>&lt;ns4:Order_CreateItem&gt;<br>
+&lt;ns4:OrderId&gt;qOxuq6fmoMhvjLhkDtBOKg==&lt;/ns4:OrderId&gt;<br>
+&lt;ns4:Item&gt;<br>
+&lt;ns4:ProductCode&gt;ts1&lt;/ns4:ProductCode&gt;<br>
+&lt;ns4:Quantity&gt;1&lt;/ns4:Quantity&gt;<br>
+&lt;ns4:SelectedProductOptions&gt;<br>
+&lt;ProductOption&gt;<br>
+&lt;OptionId&gt;0&lt;/OptionId&gt;<br>
+&lt;Name&gt;Option Nizzame&lt;/ns4:Name&gt;<br>
+&lt;/ProductOption&gt;<br>
+&lt;ProductOption&gt;<br>
+&lt;OptionId&gt;1&lt;/OptionId&gt;<br>
+&lt;Name&gt;Option Nizzame&lt;/ns4:Name&gt;<br>
+&lt;/ProductOption&gt;<br>
+&lt;/ns4:SelectedProductOptions&gt;&lt;/ns4:Item&gt;<br>
+&lt;ns4:AccessId&gt;1U98PggfAevXQUiqVY0kFA==&lt;/ns4:AccessId&gt;&lt;/ns4:Order_CreateItem&gt;<br>
+&lt;/SOAP-ENV:Body&gt;<br>
+&lt;/SOAP-ENV:Envelope&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

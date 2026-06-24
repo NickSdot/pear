@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #473</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #473</h1>
+<p>A DB_Error isn&#039;t a DB_Error in function _query()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-12-21 22:12 UTC</td></tr>
+<tr><th>From</th><td>rene dot oelke at zehn245 dot net</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>SuSE Linux 7.1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-12-21 22:12 UTC] rene dot oelke at zehn245 dot net</h3>
+<p>Description:<br>
+------------<br>
+A table with the following properties:</p>
+<p>CREATE TABLE users (<br>
+  id int(16) unsigned NOT NULL auto_increment,<br>
+  login varchar(255) default NULL,<br>
+  passwd varchar(255) default NULL,<br>
+  name varchar(255) default NULL,<br>
+  sname varchar(255) default NULL,<br>
+  regdate datetime default NULL,<br>
+  email varchar(255) default NULL,<br>
+  lang varchar(255) default NULL,<br>
+  apikey varchar(255) default NULL,<br>
+  PRIMARY KEY  (id),<br>
+  UNIQUE KEY login (login),<br>
+  KEY usr_id (id)<br>
+) TYPE=MyISAM;</p>
+<p>A class with the following properties:<br>
+class MyClass extends DB_DataObject {<br>
+  function DataObjects_Seos_users() {<br>
+    PEAR::setErrorHandling( PEAR_ERROR_CALLBACK, array( &amp;$this, &#039;handleError&#039; ) );<br>
+  }<br>
+...<br>
+  function handleError( $error ) {<br>
+    if( DB::isError($error) ) echo &quot;&lt;br&gt;Error is DB_Error&lt;br&gt;&quot;;</p>
+<p>echo &quot;class: &quot; . get_class( $error ) . &quot; type: &quot; . $error-&gt;getType() . &quot; code: &quot; . $error-&gt;getCode() . &quot; message: &quot; . $error-&gt;getMessage() . &quot;&lt;br&gt;&quot;;<br>
+  }<br>
+}</p>
+<p>If i update or insert a new row with an existing login-name, the system throws an error. This error is a DB_Error with the code -5. But in the handleError-function i can&#039;t check the error as an DB_Error. It is an PEAR_Error.</p>
+<p>The reason for this &quot;bug&quot; is to find in the DataObject-class in the function _query. Here at line 1627 the query result is checked as an DB_Error. If so the DB_DataObject raises an error (PEAR_Error):<br>
+...<br>
+  return DB_DataError::raiseError(...);<br>
+...</p>
+<p>I think this is wrong. An DB_Error should be an DB_Error. I can&#039;t exactly ckeck the error code because the DB_DataObject has also an error code -5. So i can&#039;t make a correct message for the user-interface.</p>
+<p>The following code should solve the problem.<br>
+  return DB_DataError::raiseError(..., &#039;DB_Error&#039;);<br>
+The type will be tested in raiseError() and here we should raise the PEAR_Error with the correct type (line 2655):<br>
+  $error = PEAR::raiseError($message, $type, $behaviour, null, null, $type, true );</p>
+<p>Reproduce code:<br>
+---------------<br>
+  function handleError( $error ) {<br>
+    if( DB::isError($error) ) echo &quot;&lt;br&gt;Error is DB_Error&lt;br&gt;&quot;;<br>
+    else echo &quot;&lt;br&gt;Error is no DB_Error&lt;br&gt;&quot;;</p>
+<p>echo &quot;class: &quot; . get_class( $error ) . &quot; type: &quot; . $error-&gt;getType() . &quot; code: &quot; . $error-&gt;getCode() . &quot; message: &quot; . $error-&gt;getMessage() . &quot;&lt;br&gt;&quot;;<br>
+  }</p>
+<p>...</p>
+<p>INSERT INTO users (login , passwd , name , sname , regdate , email , lang , apikey ) VALUES (&#039;test&#039; , &#039;password&#039; , &#039;name&#039; , &#039;sname&#039; , &#039;2003-12-21 18:57:25&#039; , &#039;name@email.de&#039; , &#039;&#039; , &#039;&#039; )</p>
+<p>INSERT INTO users (login , passwd , name , sname , regdate , email , lang , apikey ) VALUES (&#039;test&#039; , &#039;password2&#039; , &#039;name2&#039; , &#039;sname2&#039; , &#039;2003-12-21 18:59:45&#039; , &#039;name2@email.com&#039; , &#039;&#039; , &#039;&#039; )</p>
+<p>Expected result:<br>
+----------------<br>
+Error is DB_Error</p>
+<p>class: db_error type: db_error code: -5 <br>
+Message: DB Error: already exists<br>
+ERROR: DB Error: already exists<br>
+ERROR: Object</p>
+<p>Actual result:<br>
+--------------<br>
+Error is no DB_Error</p>
+<p>class: pear_error type: pear_error Code: -5<br>
+message: DB Error: already exists<br>
+ERROR: DB Error: already exists<br>
+ERROR: Object</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

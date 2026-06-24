@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1825</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/Translation2/index.html">Translation2</a> &#187; Bug #1825</h1>
+<p>no table prefix delivered to class?</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #1825</th><td>no table prefix delivered to class?</td></tr>
+<tr><th>Submitted</th><td>2004-07-08 16:51 UTC</td></tr>
+<tr><th>From</th><td>michael dot klink at no-limits dot net</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Translation2/index.html">Translation2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>Win XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-08 16:51 UTC] michael dot klink at no-limits dot net</h3>
+<p>Description:<br>
+------------<br>
+There where no table prefix in the query but in the options array, so I receive a DB error</p>
+<p>The table definitions are included in the options array but why there is no table prefix in the query.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Error object<br>
+db_error Object ( [error_message_prefix] =&gt; [mode] =&gt; 1 [level] =&gt; 256 [code] =&gt; -2 [message] =&gt; DB Error: syntax error [userinfo] =&gt; SELECT FROM WHERE .group=&#039;metadata&#039; AND .id=&#039;metadata_author&#039; [nativecode=1064 ** You have an error in your SQL syntax near &#039;FROM WHERE .group=&#039;metadata&#039; AND .id=&#039;metadata_author&#039;&#039; at line 1] [backtrace] =&gt; [callback] =&gt; )</p>
+<p>The options array is:<br>
+Array ( [langs_avail_table] =&gt; test_languages [lang_id_col] =&gt; id [lang_meta_col] =&gt; iso [lang_name_col] =&gt; language [lang_errmsg_col] =&gt; error [strings_tables] =&gt; Array ( [en] =&gt; test_i18n [de] =&gt; test_i18n [es] =&gt; test_i18n [fr] =&gt; test_i18n [it] =&gt; test_i18n ) [string_id_col] =&gt; id [string_page_id_col] =&gt; group [string_text_col] =&gt; %s )</p>
+<p>The log message is:<br>
+18:42:05 MODUL myCrossAssembler - myTranslation(): ERROR - SELECT  FROM  WHERE .group=&#039;metadata&#039; AND .id=&#039;metadata_author&#039; [nativecode=1064 ** You have an error in your SQL syntax near &#039;FROM  WHERE .group=&#039;metadata&#039; AND .id=&#039;metadata_author&#039;&#039; at line 1] [info]</p>
+<p>Expected result:<br>
+----------------<br>
+I see nothing, because the table definition was not delivered to language2</p>
+</section>
+<section>
+<h3>[2004-07-08 20:11 UTC] michael dot klink at no-limits dot net</h3>
+<p>Hi, the code is:<br>
+-------------------------------------------------------------<br>
+	function myTranslation($myData, $myGroup, $mySQLTable) {<br>
+		$myConfig = new myConfig;<br>
+		$mySQLType = $myConfig -&gt; mySQLType;<br>
+		$mySQLConfig = array(<br>
+			phptype  =&gt; $myConfig -&gt; mySQLType,<br>
+			username =&gt; $myConfig -&gt; mySQLUsername,<br>
+			password =&gt; $myConfig -&gt; mySQLPassword,<br>
+			hostspec =&gt; $myConfig -&gt; mySQLHost,<br>
+			database =&gt; $myConfig -&gt; mySQLDataBase,<br>
+			prefix =&gt; $myConfig -&gt; mySQLPrefix<br>
+		);<br>
+		$mySQLOptions = array(<br>
+			langs_avail_table =&gt; $mySQL[Prefix].&quot;_languages&quot;,<br>
+			lang_id_col =&gt; &quot;id&quot;,<br>
+			lang_meta_col =&gt; &quot;iso&quot;,<br>
+			lang_name_col =&gt; &quot;language&quot;,<br>
+			lang_errmsg_col =&gt; &quot;error&quot;,<br>
+			strings_tables=&gt; array(<br>
+				en =&gt; $mySQL[Prefix].&quot;_&quot;.$mySQLTable.&quot;&quot;,<br>
+				de =&gt; $mySQL[Prefix].&quot;_&quot;.$mySQLTable.&quot;&quot;,<br>
+				es =&gt; $mySQL[Prefix].&quot;_&quot;.$mySQLTable.&quot;&quot;,<br>
+				fr =&gt; $mySQL[Prefix].&quot;_&quot;.$mySQLTable.&quot;&quot;,<br>
+				it =&gt; $mySQL[Prefix].&quot;_&quot;.$mySQLTable.&quot;&quot; <br>
+			),<br>
+			string_id_col=&gt; &quot;id&quot;,<br>
+			string_page_id_col =&gt; &quot;group&quot;,<br>
+			string_text_col=&gt; &quot;%s&quot;<br>
+		);<br>
+		$myTranslation = new Translation2($mySQLDriver, $mySQLConfig, $mySQLOptions);<br>
+		if(PEAR::isError($myTranslation)) {<br>
+			$myLogFile = new myLogFile(&quot;MODUL myCrossAssembler - myTranslation(): CAN&#039;T CONNECT TO mySQL - &quot;.$myTranslation -&gt; getDebugInfo().&quot;&quot;);<br>
+		}<br>
+		else {<br>
+			$myLogFile = new myLogFile(&quot;MODUL myCrossAssembler - myTranslation(): CONNECTED TO mySQL&quot;);<br>
+		}<br>
+		$myTranslation -&gt; setLang($this -&gt; myLanguage());<br>
+		$myTranslation -&gt; setPageID($page);<br>
+		$myTranslation =&amp; $myTranslation -&gt; getDecorator(&quot;Lang&quot;);<br>
+		$myTranslation -&gt; setOption(&quot;fallbackLang&quot;, &quot;en&quot;);<br>
+		$myTranslation =&amp; $myTranslation -&gt; getDecorator(&quot;Lang&quot;);<br>
+		$myTranslation -&gt; setOption(&quot;fallbackLang&quot;, &quot;de&quot;);<br>
+		if(is_array($myData)) {<br>
+			$myTranslation -&gt; setParams($myData);<br>
+			$myTranslation = $myTranslation -&gt; get($myData[0]);<br>
+			if(PEAR::isError($myTranslation)) {<br>
+				$myLogFile = new myLogFile(&quot;MODUL myCrossAssembler - myTranslation(): ERROR - &quot;.$myTranslation -&gt; getDebugInfo().&quot;&quot;);<br>
+				print_r($myTranslation -&gt; getDebugInfo());<br>
+			}<br>
+			else {<br>
+				$myLogFile = new myLogFile(&quot;MODUL myCrossAssembler - myTranslation(): GET TRANSLATION FOR &quot;.$myData[0].&quot;&quot;);<br>
+			}<br>
+		}<br>
+		else {<br>
+			$myTranslation = $myTranslation -&gt; get($myData);<br>
+			if(PEAR::isError($myTranslation)) {<br>
+				$myLogFile = new myLogFile(&quot;MODUL myCrossAssembler - myTranslation(): ERROR - &quot;.$myTranslation -&gt; getDebugInfo().&quot;&quot;);<br>
+				print_r($myTranslation -&gt; getDebugInfo());<br>
+			}<br>
+			else {<br>
+				$myLogFile = new myLogFile(&quot;MODUL myCrossAssembler - myTranslation(): GET TRANSLATION &quot;.$myTranslation.&quot; FOR &quot;.$myData.&quot; IN GROUP &quot;.$myGroup.&quot;&quot;);<br>
+			}<br>
+		}<br>
+		return $myTranslation;<br>
+	}</p>
+</section>
+<section>
+<h3>[2004-07-09 09:43 UTC] michael dot klink at no-limits dot net</h3>
+<p>Sorry, the Problem is solved. There was an error in my script in</p>
+<p>en =&gt; $mySQL[Prefix].&quot;_&quot;.$mySQLTable.&quot;&quot;,</p>
+<p>it should be</p>
+<p>en =&gt; $myConfig -&gt; mySQLPrefix.&quot;_&quot;.$mySQLTable.&quot;&quot;,</p>
+<p>But another question is why I cannot use a existing connection from pear DB? For every Translation it creates a new connection with</p>
+<p>new Translation2($mySQLDriver, $mySQLConfig, $mySQLOptions);</p>
+<p>using a existing connaction, as example</p>
+<p>new Translation2($_SESSION[connection], $mySQLOptions);</p>
+<p>or something else should be possible.</p>
+</section>
+<section>
+<h3>[2004-07-09 11:31 UTC] michael dot klink at no-limits dot net</h3>
+<p>No, this solution is not possible.</p>
+<p>In bd_nestedset I con do this:</p>
+<p>$mySQLOptions = array(<br>
+				id =&gt; &quot;id&quot;,<br>
+				root =&gt; &quot;rootid&quot;,<br>
+				sequence =&gt; &quot;norder&quot;,<br>
+				level =&gt; &quot;level&quot;,<br>
+				lft =&gt; &quot;l&quot;,<br>
+				rgt =&gt; &quot;r&quot;,<br>
+				name =&gt; &quot;name&quot;,<br>
+				status =&gt; &quot;status&quot;<br>
+			);<br>
+			$myNestedSet = DB_NestedSet::factory($mySQLDriver = $myConfig -&gt; mySQLDriver, $_SESSION[mySQLConnection], $mySQLOptions);</p>
+<p>That use the connetion from the session object.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6095</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Tools and Utilities &#187; <a href="package/MIME_Type/index.html">MIME_Type</a> &#187; Bug #6095</h1>
+<p>Parameters and comments parsing buggy</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-28 12:50 UTC</td></tr>
+<tr><th>From</th><td>t dot broyer at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>cweiske</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MIME_Type/index.html">MIME_Type</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-28 12:50 UTC] t dot broyer at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+When parsing parameters, comments are only detected after the parameter value, whereas RFC2045, section 5.1 (calling rules of RFC822, section 3.1.4) explicitely allows them anywhere.</p>
+<p>These are all valid Content-Type field values:<br>
+(UTF-8 Plain Text) text / plain ; charset = utf-8<br>
+text (Text) / plain ; charset = utf-8<br>
+text / (Plain) plain ; charset = utf-8<br>
+text / plain (Plain Text) ; charset = utf-8<br>
+text / plain ; (Charset=utf-8) charset = utf-8<br>
+text / plain ; charset (Charset) = utf-8<br>
+text / plain ; charset = (UTF8) utf-8<br>
+text / plain ; charset = utf-8 (UTF-8 Plain Text)</p>
+<p>Moreover, stripping of comments will also corrupt parameter values containing an opening parenthesis, e.g.<br>
+    application/x-foobar;description=&quot;bbgh(kdur&quot;<br>
+will be parsed as:<br>
+ - media = application<br>
+ - subtype = x-foobar<br>
+ - parameters:<br>
+    - description = bbgh</p>
+<p>And, finally, parsing of quoted-string parameter values has another bug: when the value ends with a quoted &lt;&quot;&gt;, the &lt;&quot;&gt; will be stripped. E.g. the parameter value in:<br>
+    application/x-foobar;description=&quot;a \&quot;quoted string\&quot;&quot;<br>
+will be parsed as (enclosed in angle brackets) &lt;a \&quot;quoted string&gt; instead of &lt;a \&quot;quoted string\&quot;&gt; (or, better: &lt;a &quot;quoted string&quot;&gt;)</p>
+</section>
+<section>
+<h3>[2005-11-28 13:07 UTC] t dot broyer at gmail dot com</h3>
+<p>Test script:<br>
+------------</p>
+<p>$tests = array(<br>
+&#039;(UTF-8 Plain Text) text / plain ; charset = utf-8&#039;,<br>
+&#039;text (Text) / plain ; charset = utf-8&#039;,<br>
+&#039;text / (Plain) plain ; charset = utf-8&#039;,<br>
+&#039;text / plain (Plain Text) ; charset = utf-8&#039;,<br>
+&#039;text / plain ; (Charset=utf-8) charset = utf-8&#039;,<br>
+&#039;text / plain ; charset (Charset) = utf-8&#039;,<br>
+&#039;text / plain ; charset = (UTF8) utf-8&#039;,<br>
+&#039;text / plain ; charset = utf-8 (UTF-8 Plain Text)&#039;,<br>
+&#039;application/x-foobar;description=&quot;bbgh(kdur&quot;&#039;,<br>
+&#039;application/x-foobar;description=&quot;a \\&quot;quoted string\\&quot;&quot;&#039;<br>
+);</p>
+<p>foreach ($tests as $test) {<br>
+    print($test . &quot;\n =&gt; &quot;);<br>
+    $mediaType =&amp; new MIME_Type($test);<br>
+    print($mediaType-&gt;get() . &quot;\n\n&quot;);<br>
+}</p>
+<p>Expected result:<br>
+----------------</p>
+<p>(UTF-8 Plain Text) text / plain ; charset = utf-8<br>
+ =&gt; text/plain; charset=&quot;utf-8&quot;</p>
+<p>text (Text) / plain ; charset = utf-8<br>
+ =&gt; text/plain; charset=&quot;utf-8&quot;</p>
+<p>text / (Plain) plain ; charset = utf-8<br>
+ =&gt; text/plain; charset=&quot;utf-8&quot;</p>
+<p>text / plain (Plain Text) ; charset = utf-8<br>
+ =&gt; text/plain; charset=&quot;utf-8&quot;</p>
+<p>text / plain ; (Charset=utf-8) charset = utf-8<br>
+ =&gt; text/plain; charset=&quot;utf-8&quot; (Charset=utf-8)</p>
+<p>text / plain ; charset (Charset) = utf-8<br>
+ =&gt; text/plain; charset=&quot;utf-8&quot; (Charset)</p>
+<p>text / plain ; charset = (UTF8) utf-8<br>
+ =&gt; text/plain; charset=&quot;utf-8&quot; (UTF8)</p>
+<p>text / plain ; charset = utf-8 (UTF-8 Plain Text)<br>
+ =&gt; text /plain; charset=&quot;utf-8&quot; (UTF-8 Plain Text)</p>
+<p>application/x-foobar;description=&quot;bbgh(kdur&quot;<br>
+ =&gt; application/x-foobar; description=&quot;bbgh(kdur&quot;</p>
+<p>application/x-foobar;description=&quot;a \&quot;quoted string\&quot;&quot;<br>
+ =&gt; application/x-foobar; description=&quot;a \&quot;quoted string\&quot;&quot;</p>
+<p>Actual result:<br>
+--------------</p>
+<p>(UTF-8 Plain Text) text / plain ; charset = utf-8<br>
+ =&gt; (utf-8 plain text) text /plain; charset=&quot;utf-8&quot;</p>
+<p>text (Text) / plain ; charset = utf-8<br>
+ =&gt; text (text) /plain; charset=&quot;utf-8&quot;</p>
+<p>text / (Plain) plain ; charset = utf-8<br>
+ =&gt; text /(plain) plain; charset=&quot;utf-8&quot;</p>
+<p>text / plain (Plain Text) ; charset = utf-8<br>
+ =&gt; text /plain (plain text); charset=&quot;utf-8&quot;</p>
+<p>text / plain ; (Charset=utf-8) charset = utf-8<br>
+ =&gt; text /plain; (Charset=&quot;&quot; (Charset=utf-8) charset = utf-8)</p>
+<p>text / plain ; charset (Charset) = utf-8<br>
+ =&gt; text /plain; charset (Charset)=&quot;&quot; (Charset) = utf-8)</p>
+<p>text / plain ; charset = (UTF8) utf-8<br>
+ =&gt; text /plain; charset=&quot;&quot; (UTF8) utf-8)</p>
+<p>text / plain ; charset = utf-8 (UTF-8 Plain Text)<br>
+ =&gt; text /plain; charset=&quot;utf-8&quot; (UTF-8 Plain Text)</p>
+<p>application/x-foobar;description=&quot;bbgh(kdur&quot;<br>
+ =&gt; application/x-foobar; description=&quot;bbgh&quot; (kdur&quot;)</p>
+<p>application/x-foobar;description=&quot;a \&quot;quoted string\&quot;&quot;<br>
+ =&gt; application/x-foobar; description=&quot;a \&quot;quoted string\&quot;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

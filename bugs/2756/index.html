@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2756</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Payment &#187; <a href="package/Payment_Process/index.html">Payment_Process</a> &#187; Bug #2756</h1>
+<p>Field Encapsulation Character Support</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #2756</th><td>Field Encapsulation Character Support</td></tr>
+<tr><th>Submitted</th><td>2004-11-15 15:38 UTC</td></tr>
+<tr><th>From</th><td>josh at trutwins dot homeip dot net</td></tr>
+<tr><th>Assigned</th><td>jstump</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Payment_Process/index.html">Payment_Process</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>Linux Debian Stable</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-11-15 15:38 UTC] josh at trutwins dot homeip dot net</h3>
+<p>Description:<br>
+------------<br>
+Authorize.NET recommends that a user enable a Field Encapsulation Character so the response is not only delmitted by commas, but in the event of a comma being in one of the return fields it is encapsulted, for example:</p>
+<p>[_rawResponse] =&gt; |2|,|2|,|45|,|This transaction has been declined.|,|005191|,|A|,|710881561|,|1123451458|,||,|1.00|,|CC|,|auth_only|,|1461264151|,|Joshua|,|D Trutwin|,||,|4342 Fake St N|,|Metropolis|,|NY|,|10101|,|US|,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,|E508DF8E048CC23DD95AA1E629A21708|,|N|,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,||,|&quot;x_delim_data&quot;</p>
+<p>I was able to add support for this by modifying the Payment_Process_AuthorizeNet parse method:</p>
+<p>function parse()<br>
+    {<br>
+      $responseArray = explode(&#039;,&#039;,$this-&gt;_rawResponse);<br>
+      for($i = 0; $i &lt; count($responseArray); $i++) {<br>
+         $responseArray[$i] = preg_replace(&quot;/^\|(.*)\|$/&quot;,&quot;\\1&quot;,$responseArray[$i]);<br>
+      }<br>
+      $this-&gt;_mapFields($responseArray);<br>
+    }</p>
+</section>
+<section>
+<h3>[2004-11-15 15:45 UTC] josh at trutwins dot homeip dot net</h3>
+<p>Of course this would be configurable as there are more things you can use for a Field Encapsulation Character besides a pipe...</p>
+</section>
+<section>
+<h3>[2005-03-15 17:34 UTC] josh at trutwins dot homeip dot net</h3>
+<p>I&#039;m not sure why but for some reason explode(&quot;|,|&quot;, $this-&gt;_rawResponse) caused odd behavior.  I&#039;m leaving it alone for now, if you implement a patch I&#039;d be more than happy to test it out.</p>
+<p>Josh</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

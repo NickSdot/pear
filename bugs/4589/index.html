@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4589</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_LDAP/index.html">Net_LDAP</a> &#187; Bug #4589</h1>
+<p>Net_LDAP_Entry-&gt;delete() does not work with empty array type attributes</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-06-14 13:29 UTC</td></tr>
+<tr><th>From</th><td>pkremer at spurious dot biz</td></tr>
+<tr><th>Assigned</th><td>jw</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_LDAP/index.html">Net_LDAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux 2.4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-14 13:29 UTC] pkremer at spurious dot biz</h3>
+<p>Description:<br>
+------------<br>
+usually, when you want to delete all attributes without considering their value for an LDAP_Entry object, you will specify an empty array as attribute in native PHP ldap method ldap_mod_del().</p>
+<p>However, the Net_LDAP_Entry::delete() method does not recognize the empty array as a valid option for saying &quot;regardless of the value&quot; and does not pass it on to the native PHP ldap methods. Instead, it will revert to the meaning &quot;delete only specified values&quot; and thus not enable the deletion of some attributes on some server implementations.</p>
+<p>The patch is pretty straightforward an listed below.</p>
+<p>Reproduce code:<br>
+---------------<br>
+--- Net/LDAP/Entry.php.orig     2005-06-14 14:38:47.000000000 +0200<br>
++++ Net/LDAP/Entry.php  2005-06-14 15:19:45.000000000 +0200<br>
+@@ -416,9 +416,9 @@</p>
+<p>if ($this-&gt;exists ($k)) {<br>
+                 // if v is a null, then remove the whole attribute, else only the value.<br>
+-                if ($v == &#039;&#039;) {<br>
++                if ($v == &#039;&#039; || (is_array($v) &amp;&amp; count($v) == 0 )  ) {<br>
+                     unset($this-&gt;_attrs[$k]);<br>
+-                    $this-&gt;_delAttrs[$k] = &quot;&quot;;<br>
++                    $this-&gt;_delAttrs[$k] = $v;<br>
+                 // else we remove only the correct value.<br>
+                 } else {<br>
+                     for ($i = 0;$i&lt; $this-&gt;_attrs[$k][&#039;count&#039;];$i++) {</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

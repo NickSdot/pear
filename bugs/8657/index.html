@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8657</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_pgsql/index.html">MDB2_Driver_pgsql</a> &#187; Bug #8657</h1>
+<p>execute() returns 0 on successful manip query</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-09-07 17:55 UTC</td></tr>
+<tr><th>From</th><td>auldridgej at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_pgsql/index.html">MDB2_Driver_pgsql</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.3</td></tr>
+<tr><th>OS</th><td>FreeBSD 6.1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-09-07 17:55 UTC] auldridgej at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I am having a problem on a few machines where execute() returns 0 when successfully executing a prepared statement whose 3rd argument was passed as MDB2_PREPARE_MANIP.  I can see the data changing in the database, but always get 0 as number of rows returned.  However, when directly working with PostgreSQL via PHP, or using MDB2 exec(), I get the proper number of affected rows.</p>
+<p>This is true on the following machine configurations:</p>
+<p>|My local dev machine at work----------------------<br>
+|-FreeBSD 6.1-RELEASE-p3<br>
+|-Apache 2.0.59<br>
+|-PHP 4.4.3<br>
+|---PEAR 1.4.11<br>
+|-----MDB2 2.2.2<br>
+|-------MDB2-Driver-pgsql 1.2.2<br>
+|-PostgreSQL 7.4.13_1<br>
+|---------------------------------------------------</p>
+<p>|Same machine as above after upgrading PostgreSQL---<br>
+|-FreeBSD 6.1-RELEASE-p3<br>
+|-Apache 2.0.59<br>
+|-PHP 4.4.3<br>
+|---PEAR 1.4.11<br>
+|-----MDB2 2.2.2<br>
+|-------MDB2-Driver-pgsql 1.2.2<br>
+|-PostgreSQL 8.1.4_1<br>
+|---------------------------------------------------</p>
+<p>|Remote dev machine at work-------------------------<br>
+|-RedHat Linux Enterprise 4<br>
+|-Apache 2.0.52<br>
+|-PHP 4.3.9<br>
+|--Pear 1.4.11<br>
+|---MDB2 2.2.2<br>
+|----MDB2_Driver_pgsql 1.2.2<br>
+|-PostgreSQL 7.4.13<br>
+|---------------------------------------------------</p>
+<p>|Co-worker&#039;s dev machine at work--------------------<br>
+|-FreeBSD 6.1<br>
+|-Apache 1.3.37<br>
+|-PHP 4.4.3<br>
+|--Pear 1.4.6<br>
+|---MDB2 2.2.2<br>
+|----MDB2_Driver_pgsql 1.2.2<br>
+|-PostgreSQL 7.4.13<br>
+|---------------------------------------------------</p>
+<p>However, on some other machine configurations, I see it working just fine:<br>
+|Friend&#039;s home Windows server-----------------------<br>
+|-Windows XP Pro sp2<br>
+|-Apache 2.0.55<br>
+|-PHP 5.1.2<br>
+|---PEAR 1.4.11<br>
+|-----MDB2 2.2.2<br>
+|-------MDB2-Driver-pgsql 1.2.2<br>
+|-PostgreSQL 8.1.4_1<br>
+|---------------------------------------------------</p>
+<p>|Same friend&#039;s MAC at home--------------------------<br>
+|-Apple OS X 10.4.7 ~ FreeBSD 5<br>
+|-Apache 1.3.33<br>
+|-PHP 4.4.4<br>
+|---PEAR 1.4.11<br>
+|-----MDB2 2.2.2<br>
+|-------MDB2-Driver-pgsql 1.2.2<br>
+|-PostgreSQL Server on the above windows box<br>
+|---------------------------------------------------</p>
+<p>|My home dev server---------------------------------<br>
+|-FreeBSD 6.1-RELEASE-p1<br>
+|-Apache  1.3.37<br>
+|-PHP 5.1.4<br>
+|---PEAR 1.4.11<br>
+|-----MDB2 2.2.2<br>
+|-------MDB2-Driver-pgsql 1.2.2<br>
+|-PostgreSQL 8.1.4_1<br>
+|---------------------------------------------------</p>
+<p>I worked with IRC user lsmith on #pear who suggested I try to add this line:<br>
+$mdb2-&gt;setOption(&#039;emulate_prepared&#039;,true);<br>
+to my test code.  This corrected the affectd rows from being misreported, though obviously doesn&#039;t answer the question as to why this setting is required in some places but not in others.  lsmith asked me to open this bug report, so here it is. :)</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+//GET the PEAR file for MDB2<br>
+require &#039;MDB2.php&#039;;<br>
+//SET UP ERROR HANDLING<br>
+function handle_pear_error ($error_obj)<br>
+    {<br>
+        die(&#039;&lt;pre&gt;&lt;b&gt;PEAR-Error&lt;/b&gt;&lt;br /&gt;&#039;.<br>
+        	$error_obj-&gt;getMessage().&#039;: &#039;.$error_obj-&gt;getUserinfo().<br>
+        	&#039;&lt;/pre&gt;&#039;);<br>
+    }<br>
+PEAR::setErrorHandling(PEAR_ERROR_CALLBACK, &#039;handle_pear_error&#039;);<br>
+//CONNECTION INFO<br>
+$dsn = array(<br>
+    &#039;phptype&#039;  =&gt; &#039;pgsql&#039;,<br>
+    &#039;username&#039; =&gt; &#039;postgres&#039;,<br>
+    &#039;password&#039; =&gt; &#039;MyPassword&#039;,<br>
+    &#039;hostspec&#039; =&gt; &#039;localhost&#039;,<br>
+    &#039;database&#039; =&gt; &#039;testdb&#039;,<br>
+);<br>
+//MAKE THE CONNECTION, INSTANCIATE THE OBJECT<br>
+$mdb2 =&amp; MDB2::factory($dsn);</p>
+<p>/* ADDED BY SUGGESTION OF LSMITH, COMMENTING OUT HERE BECAUSE THIS HIDES THE ACTUAL REPORTED PROBLEM</p>
+<p>//SETTING OPTION TO FIX execute()<br>
+$mdb2-&gt;setOption(&#039;emulate_prepared&#039;,true);</p>
+<p>*/</p>
+<p>//QUERY PREPARE/EXECUTE STUFF<br>
+$query = &quot;INSERT INTO testtable (data1) VALUES(?)&quot;;<br>
+$stmt = $mdb2-&gt;prepare($query,array(&#039;text&#039;),MDB2_PREPARE_MANIP);<br>
+$data = array(&#039;hello world&#039;);<br>
+$aRows = $stmt-&gt;execute($data);<br>
+//WHAT DID WE COME UP WITH?<br>
+if(!PEAR::isError($aRows)){<br>
+  echo &quot;&lt;p&gt;&quot;.$aRows.&quot; rows affected&lt;/p&gt;\n&quot;;<br>
+}<br>
+//DID DB ROW COUNT INCREASE?<br>
+$result = $mdb2-&gt;query(&quot;SELECT * FROM testtable&quot;);<br>
+echo &quot;&lt;p&gt;&quot;.$result-&gt;numRows().&quot; rows now in DB&lt;/p&gt;\n&quot;;</p>
+<p>//Try exec()<br>
+$aRows = $mdb2-&gt;exec(&quot;INSERT INTO testtable (data1) VALUES(&#039;hello world&#039;)&quot;);<br>
+if(!PEAR::isError($aRows)){<br>
+  echo &quot;&lt;p&gt;&quot;.$aRows.&quot; rows affected&lt;/p&gt;\n&quot;;<br>
+}<br>
+//DID DB ROW COUNT INCREASE?<br>
+$result = $mdb2-&gt;query(&quot;SELECT * FROM testtable&quot;);<br>
+echo &quot;&lt;p&gt;&quot;.$result-&gt;numRows().&quot; rows now in DB&lt;/p&gt;\n&quot;;<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;p&gt;1 rows affected&lt;/p&gt;<br>
+&lt;p&gt;21 rows now in DB&lt;/p&gt;<br>
+&lt;p&gt;1 rows affected&lt;/p&gt;<br>
+&lt;p&gt;22 rows now in DB&lt;/p&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;p&gt;0 rows affected&lt;/p&gt;<br>
+&lt;p&gt;21 rows now in DB&lt;/p&gt;<br>
+&lt;p&gt;1 rows affected&lt;/p&gt;<br>
+&lt;p&gt;22 rows now in DB&lt;/p&gt;</p>
+</section>
+<section>
+<h3>[2006-09-11 13:36 UTC] auldridgej at gmail dot com</h3>
+<p>I completely rebuilt the first box listed in the list of boxes having the problem.  It is still having the problem.  Its new specs are as follows:</p>
+<p>|My local dev machine at work----------------------<br>
+|-CentOS 4.1<br>
+|-Apache 2.0.52 <br>
+|-PHP 4.3.9<br>
+|---PEAR 1.4.11<br>
+|-----MDB2 2.2.2<br>
+|-------MDB2-Driver-pgsql 1.2.2<br>
+|-PostgreSQL server 7.4.13-2.RHEL4.1<br>
+|-PostgreSQL libs 7.4.13-2.RHEL4.1<br>
+|---------------------------------------------------</p>
+</section>
+<section>
+<h3>[2006-11-22 19:27 UTC] auldridgej at gmail dot com</h3>
+<p>Hello Lorenzo,</p>
+<p>I have modified the test script to add your debug suggestions and smooth out the output.  It now looks like so:<br>
+-------------------------------------<br>
+&lt;html&gt;<br>
+&lt;head&gt;<br>
+&lt;title&gt;Testing PEAR MDB2 Bug #8657&lt;/title&gt;<br>
+&lt;style type=&quot;text/css&quot;&gt;<br>
+b{color: #f00;}<br>
+&lt;/style&gt;<br>
+&lt;/head&gt;<br>
+&lt;body&gt;<br>
+&lt;?php<br>
+/*<br>
+Uses following DB schema:</p>
+<p>CREATE DATABASE testdb;<br>
+CREATE TABLE testtable<br>
+(<br>
+  data1 text<br>
+) <br>
+WITH OIDS;</p>
+<p>*/<br>
+//CONNECTION INFO<br>
+$dsn = array(<br>
+    &#039;phptype&#039;  =&gt; &#039;pgsql&#039;,<br>
+    &#039;username&#039; =&gt; &#039;MyPostgresUser&#039;,<br>
+    &#039;password&#039; =&gt; &#039;MyPostgresPassword&#039;,<br>
+    &#039;hostspec&#039; =&gt; &#039;localhost&#039;,<br>
+    &#039;database&#039; =&gt; &#039;testdb&#039;,<br>
+);</p>
+<p>//GET the PEAR file for MDB2<br>
+require(&#039;MDB2.php&#039;);<br>
+//SET UP ERROR HANDLING<br>
+function handle_pear_error ($error_obj){<br>
+	die(&#039;&lt;h1&gt;PEAR-Error&lt;/h1&gt;&lt;pre&gt;&#039;.$error_obj-&gt;getMessage().&#039; : &#039;.$error_obj-&gt;getUserinfo().&quot;&lt;/pre&gt;\n&quot;);<br>
+}<br>
+PEAR::setErrorHandling(PEAR_ERROR_CALLBACK, &#039;handle_pear_error&#039;);</p>
+<p>//MAKE THE CONNECTION, INSTANCIATE THE OBJECT<br>
+$mdb2 =&amp; MDB2::factory($dsn);<br>
+//BEEF UP DEBUGGING<br>
+$mdb2-&gt;setOption(&#039;debug&#039;,2);</p>
+<p>//ADDED BY SUGGESTION OF LSMITH<br>
+//UNCOMMENT FOLLOWING LINE TO USE EMULATED PREPARES AND FIX THE RETURN ISSUE IN execute()--THIS ONLY FIXES A SYMPTOM, THOUGH, NOT THE PROBLEM<br>
+//$mdb2-&gt;setOption(&#039;emulate_prepared&#039;,true);</p>
+<p>//COUNT NUMBER OF ROWS BEFORE DOING INSERT<br>
+$result = $mdb2-&gt;query(&#039;SELECT * FROM testtable&#039;);<br>
+echo &#039;&lt;p&gt;&lt;b&gt;&#039;.$result-&gt;numRows().&quot;&lt;/b&gt; rows in DB before any MANIP queries&lt;/p&gt;\n&quot;;</p>
+<p>//QUERY PREPARE/EXECUTE STUFF<br>
+$query = &#039;INSERT INTO testtable (data1) VALUES(?)&#039;;<br>
+$stmt = $mdb2-&gt;prepare($query,array(&#039;text&#039;),MDB2_PREPARE_MANIP);<br>
+$data = array(&#039;hello world&#039;);<br>
+$aRows = $stmt-&gt;execute($data);<br>
+//WHAT DID WE COME UP WITH?<br>
+if(!PEAR::isError($aRows)){<br>
+	echo &#039;&lt;p&gt;Ran execute(), it returned &lt;b&gt;&#039;.$aRows.&quot;&lt;/b&gt; as number of rows affected&lt;/p&gt;\n&quot;;<br>
+}<br>
+//DID DB ROW COUNT INCREASE?<br>
+$result = $mdb2-&gt;query(&quot;SELECT * FROM testtable&quot;);<br>
+echo &#039;&lt;p&gt;&lt;b&gt;&#039;.$result-&gt;numRows().&quot;&lt;/b&gt; rows in DB after running execute()&lt;/p&gt;\n&quot;;</p>
+<p>//Try exec()<br>
+$aRows = $mdb2-&gt;exec(&quot;INSERT INTO testtable (data1) VALUES(&#039;hello world&#039;)&quot;);<br>
+if(!PEAR::isError($aRows)){<br>
+  echo &#039;&lt;p&gt;Ran exec(), it returned &lt;b&gt;&#039;.$aRows.&quot;&lt;/b&gt; as number of rows affected&lt;/p&gt;\n&quot;;<br>
+}<br>
+//DID DB ROW COUNT INCREASE?<br>
+$result = $mdb2-&gt;query(&quot;SELECT * FROM testtable&quot;);<br>
+echo &#039;&lt;p&gt;&lt;b&gt;&#039;.$result-&gt;numRows().&quot;&lt;/b&gt; rows in DB after running exec()&lt;/p&gt;\n&quot;;</p>
+<p>//DUMP DEBUG INFO<br>
+echo &#039;&lt;h1&gt;MDB2 Debug Output:&lt;/h1&gt;&lt;pre&gt;&#039;;var_dump($mdb2-&gt;getDebugOutput());echo&quot;&lt;/pre&gt;\n&quot;;<br>
+?&gt;<br>
+&lt;/body&gt;<br>
+&lt;/html&gt;<br>
+-------------------------------------</p>
+<p>I also ran this on three different machines.  Two of them continued failing, the other worked fine.  One of the two failed machines is the same as one that failed before, with some software updates.  The other that failed is totally new hardware built from the ground up.  The failed machines start working fine as soon as I turn on emulated prepares.  The one that passed without prepare emulation was on hardware that passed before but has been rebuilt from the ground up on a new OS and everything.  Before I list the machine specs, here is what the failed output looks like:<br>
+-------------------------------------<br>
+&lt;html&gt;<br>
+&lt;head&gt;<br>
+&lt;title&gt;Testing PEAR MDB2 Bug #8657&lt;/title&gt;<br>
+&lt;style type=&quot;text/css&quot;&gt;<br>
+b{color: #f00;}<br>
+&lt;/style&gt;<br>
+&lt;/head&gt;<br>
+&lt;body&gt;<br>
+&lt;p&gt;&lt;b&gt;12&lt;/b&gt; rows in DB before any MANIP queries&lt;/p&gt;<br>
+&lt;p&gt;Ran execute(), it returned &lt;b&gt;0&lt;/b&gt; as number of rows affected&lt;/p&gt;</p>
+<p>&lt;p&gt;&lt;b&gt;13&lt;/b&gt; rows in DB after running execute()&lt;/p&gt;<br>
+&lt;p&gt;Ran exec(), it returned &lt;b&gt;1&lt;/b&gt; as number of rows affected&lt;/p&gt;<br>
+&lt;p&gt;&lt;b&gt;14&lt;/b&gt; rows in DB after running exec()&lt;/p&gt;<br>
+&lt;h1&gt;MDB2 Debug Output:&lt;/h1&gt;&lt;pre&gt;string(554) &quot;query(1): SELECT * FROM testtable<br>
+prepare(1): INSERT INTO testtable (data1) VALUES(?)<br>
+query(1): PREPARE mdb2_statement_pgsql_b95679ce955266cd7767f664a05b0c20 (text)  AS INSERT INTO testtable (data1) VALUES($1)<br>
+execute(1): PREPARE mdb2_statement_pgsql_b95679ce955266cd7767f664a05b0c20 (text)  AS INSERT INTO testtable (data1) VALUES($1)<br>
+query(1): EXECUTE mdb2_statement_pgsql_b95679ce955266cd7767f664a05b0c20 (&#039;hello world&#039;)<br>
+query(1): SELECT * FROM testtable<br>
+query(1): INSERT INTO testtable (data1) VALUES(&#039;hello world&#039;)<br>
+query(1): SELECT * FROM testtable<br>
+&quot;<br>
+&lt;/pre&gt;</p>
+<p>&lt;/body&gt;<br>
+&lt;/html&gt;<br>
+-------------------------------------</p>
+<p>The machine specs are as follows:</p>
+<p>|FAILED: Remote dev machine at work-Same Hardware as prev tests, some software updates<br>
+|-RedHat Linux Enterprise 4<br>
+|-Apache 2.0.52<br>
+|-PHP 4.3.9<br>
+|--Pear 1.4.11<br>
+|---MDB2 2.3.0<br>
+|----MDB2_Driver_pgsql 1.3.0<br>
+|-PostgreSQL 7.4.13<br>
+|---------------------------------------------------</p>
+<p>|FAILED: Local dev machine at work-brand new hardware and software since last tests<br>
+|-CentOS 4.4<br>
+|-Apache 2.0.52<br>
+|-PHP 4.3.9<br>
+|--Pear 1.4.11<br>
+|---MDB2 2.3.0<br>
+|----MDB2_Driver_pgsql 1.3.0<br>
+|-PostgreSQL 7.4.13<br>
+|---------------------------------------------------</p>
+<p>|PASSED: machine at home-same hardware, all new software build<br>
+|-Fedora Core 6<br>
+|-Apache 2.2.3<br>
+|-PHP 5.1.6<br>
+|--Pear 1.4.11<br>
+|---MDB2 2.3.0<br>
+|----MDB2_Driver_pgsql 1.3.0<br>
+|-PostgreSQL 8.1.4<br>
+|---------------------------------------------------</p>
+<p>Note that while the two that failed are on PostgreSQL 7.4, it has passed on 7.4 before (see original bug report).</p>
+<p>Thanks,<br>
+Jim</p>
+</section>
+<section>
+<h3>[2007-02-27 14:38 UTC] andrew dot hill at openads dot org</h3>
+<p>I have been doing some testing on this &quot;bug&quot;, and can confirm that of the two versions of PostgreSQL I have installed (7.4 and 8.1), it only seems to be an issue with PostgreSQL 7.4.</p>
+<p>This appears to be entirely separate from the MDB2_Driver_pgsql class; the PHP pg_affected_rows built in function simply does not return the affected rows when using a prepared statement via the SQL &quot;PREPARE&quot; statement in PostgreSQL 7.4.</p>
+<p>HTH.</p>
+</section>
+<section>
+<h3>[2007-03-01 13:18 UTC] auldridgej at gmail dot com</h3>
+<p>Thanks all for the extra analysis and comments.  Looking into the possible PHP problem.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

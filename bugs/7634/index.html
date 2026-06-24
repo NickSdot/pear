@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7634</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #7634</h1>
+<p>E_ERROR and E_WARNING inside SoapObject::$methodname</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-05-16 00:31 UTC</td></tr>
+<tr><th>From</th><td>vitaly at yakovenko dot net</td></tr>
+<tr><th>Status</th><td>Open</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.2</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-05-16 00:31 UTC] vitaly at yakovenko dot net</h3>
+<p>Description:<br>
+------------<br>
+Hi everybody. <br>
+I have a problem with error reporting inside an object which generate response for SOAP request. I mean object::method() which called from SOAP_Server::callMethod().<br>
+In my current configuration I have log_errors enabled in php.ini. So, all errors is (should be) logged. But any error which appear inside SOAP Object isn&#039;t logged by default.<br>
+Well. If I have E_WARNING than I can see error in SOAP Response, but if there is an E_ERROR, which can&#039;t be handled by SOAP_Server::_errorHandler(), that&#039;s real problem because I don&#039;t see it either in SOAP Response or log file (probably because of error muting @, I&#039;m not sure). <br>
+So, to solve this problem I&#039;ve deleted @ before call to SOAP Object method, added ini_set(&#039;display_errors&#039;, false) to hide all errors and added writing to log file in SOAP_Server::_errorHandler() if option enabled in configuration.<br>
+Patch file solving this problem to expected result can be downloaded from http://vitaly.yakovenko.net/soap/SOAP_Server.patch . Put it in pear directory and `patch -p0 &lt; SOAP_Server.patch`. <br>
+Hope this will help. <br>
+Regards. Vitali.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php</p>
+<p>// Uncomment line by line to see result<br>
+function HandleRequest()<br>
+{<br>
+    //include &#039;asdf.php&#039;; // 1: should generate E_WARNING<br>
+    //require &#039;asdf.php&#039;; // 2: should generate E_ERROR<br>
+    //parse error here    // 3: should generate E_PARSE<br>
+}<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+1: E_WARNING wrapped in SOAP Response and record in log file.<br>
+2: at least something saying that error happened<br>
+3: at leat something saying that error happened.</p>
+<p>Actual result:<br>
+--------------<br>
+1: E_WARNING wrapped in SOAP Response without record in log file.<br>
+2: nothing at all!<br>
+3: record in log file</p>
+</section>
+<section>
+<h3>[2006-06-19 19:07 UTC] vitali at yakavenka dot net</h3>
+<p>Hi Jan, <br>
+I tried your solution. As I see from PEAR_Error and PEAR code, if  you set callback method for PEAR it can be called from method PEAR::raiseError(). If you want to call manual handler without using raiseError you have to pass callback method in PEAR_Error constructor. <br>
+So, for me this solution doesn&#039;t works.</p>
+<p>Thanks for answer anyway.</p>
+</section>
+<section>
+<h3>[2006-06-20 16:24 UTC] vitaly at yakovenko dot net</h3>
+<p>Well, <br>
+You understood my problem correctly, but...<br>
+First of all, as I see there is 2 ways to specify callback fucntion. First - parameter in PEAR_Error constructor, another is PEAR::setErrorHandling(). <br>
+If you open PEAR_Error constructor, you&#039;ll see that if you don&#039;t specify $mode parameter in constructor, it&#039;s PEAR_ERROR_RETURN by default, and no other callback function will be called. <br>
+From other side. To call callback function registered with PEAR::setErrorHandling() you have to call PEAR::throwError().<br>
+In current code I can&#039;t do any of these.<br>
+I hope this time it&#039;s clear what I&#039;m talking about.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

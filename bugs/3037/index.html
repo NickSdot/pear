@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3037</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_Request/index.html">HTTP_Request</a> &#187; Bug #3037</h1>
+<p>hang until socket close in an HTTP/1.1 request</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-12-27 15:52 UTC</td></tr>
+<tr><th>From</th><td>vdevaux at jetmultimedia dot fr</td></tr>
+<tr><th>Assigned</th><td>avb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_Request/index.html">HTTP_Request</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.7</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-27 15:52 UTC] vdevaux at jetmultimedia dot fr</h3>
+<p>Description:<br>
+------------<br>
+in HTTP_Request version 1.2.3, in the function _readChunked;<br>
+the readAll function does not return until the socket is closed: so will the _readChuncked function too, instead of returning when a 0 length chunk part is found.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Instead of <br>
+if (0 == $this-&gt;_chunkLength) {<br>
+    $this-&gt;_sock-&gt;readAll(); // make this an eof()<br>
+    return &#039;&#039;;<br>
+}</p>
+<p>I propose<br>
+if (0 == $this-&gt;_chunkLength) {<br>
+    $this-&gt;_sock-&gt;readLine();<br>
+    return &#039;&#039;;<br>
+}</p>
+<p>It then will return as soon as possible without leaving characters to be read on the socket but without waiting for it to be closed.</p>
+</section>
+<section>
+<h3>[2005-01-07 15:24 UTC] vdevaux at jetmultimedia dot fr</h3>
+<p>ok, sorry for the delay i was in kind of a hurry here at work.<br>
+i check the whole package and see that i make in fact more modifications than i first thought:<br>
+here is the readChuncked function in its whole:<br>
+function _readChunked() {<br>
+    if (0 == $this-&gt;_chunkLength) {<br>
+        $line = $this-&gt;_sock-&gt;readLine();<br>
+        if (preg_match(&#039;/^([0-9a-f]+)/i&#039;, $line, $matches)){<br>
+            $this-&gt;_chunkLength = hexdec($matches[1]);<br>
+            if (0 == $this-&gt;_chunkLength) {<br>
+                $this-&gt;_sock-&gt;readLine();// readline instead of readAll<br>
+                return &#039;&#039;;<br>
+            }<br>
+        } else {  // this else ...<br>
+            return &#039;&#039;; // ... clause is new<br>
+        }<br>
+    }<br>
+    $data = $this-&gt;_sock-&gt;read($this-&gt;_chunkLength);<br>
+    $this-&gt;_chunkLength -= strlen($data);<br>
+    if (0 == $this-&gt;_chunkLength) {<br>
+        $this-&gt;_sock-&gt;readLine(); // Trailing CRLF<br>
+    }<br>
+    return $data;<br>
+}</p>
+<p>And here is the HTTP_Response::process function with comments on the changed lines:<br>
+function process($saveBody = true) {<br>
+	do {<br>
+		$line = $this-&gt;_sock-&gt;readLine();<br>
+		if (sscanf($line, &#039;HTTP/%s %s&#039;, $http_version, $returncode) != 2) {<br>
+			return PEAR::raiseError(&#039;Malformed response.&#039;);<br>
+		} else {<br>
+			$this-&gt;_protocol = &#039;HTTP/&#039; . $http_version;<br>
+			$this-&gt;_code     = intval($returncode);<br>
+		}<br>
+		while (&#039;&#039; !== ($header = $this-&gt;_sock-&gt;readLine())) {<br>
+			$this-&gt;_processHeader($header);<br>
+		}<br>
+	} while (100 == $this-&gt;_code);</p>
+<p>$this-&gt;_notify(&#039;gotHeaders&#039;, $this-&gt;_headers);<br>
+	$chunked = isset($this-&gt;_headers[&#039;transfer-encoding&#039;]) &amp;&amp; (&#039;chunked&#039; == $this-&gt;_headers[&#039;transfer-encoding&#039;]);<br>
+	$gzipped = isset($this-&gt;_headers[&#039;content-encoding&#039;]) &amp;&amp; (&#039;gzip&#039; == $this-&gt;_headers[&#039;content-encoding&#039;]);<br>
+	$hasBody = false;<br>
+	if((!isset($this-&gt;_headers[&#039;content-length&#039;])) || ( 0 != $this-&gt;_headers[&#039;content-length&#039;])) { // this is new<br>
+		while (!$this-&gt;_sock-&gt;eof()) {<br>
+			if ($chunked) {<br>
+				$data = $this-&gt;_readChunked();<br>
+			} else {<br>
+				$data = $this-&gt;_sock-&gt;read(4096);<br>
+			}<br>
+			if (&#039;&#039; != $data) {<br>
+				$hasBody = true;<br>
+				if ($saveBody || $gzipped) {<br>
+					$this-&gt;_body .= $data;<br>
+				}<br>
+				$this-&gt;_notify($gzipped? &#039;gzTick&#039;: &#039;tick&#039;, $data);<br>
+			} else { // this break is new too<br>
+				break;<br>
+			}<br>
+		}<br>
+	}<br>
+	if ($hasBody) {<br>
+	// Uncompress the body if needed<br>
+		if ($gzipped) {<br>
+			$this-&gt;_body = gzinflate(substr($this-&gt;_body, 10));<br>
+			$this-&gt;_notify(&#039;gotBody&#039;, $this-&gt;_body);<br>
+		} else {<br>
+			$this-&gt;_notify(&#039;gotBody&#039;);<br>
+		}<br>
+	}<br>
+	return true;<br>
+}<br>
+I test it (i use it in production environment). It works well and correct a problem found on a server (this problem happens only on this server and is perhaps related to the presence of packet with obnly a 0 chunked length in it).</p>
+<p>Apart from that, i would like to submit you a new feature for this package: could you set a private variable that contains the request string and a function to get it? I did it already like that: in the file Request.php<br>
+line 200: var $_request =&#039;&#039;;<br>
+line 655: <br>
+function getRequest() {<br>
+  return $this-&gt;_request;<br>
+}<br>
+line 800: $this-&gt;_request=$request;</p>
+<p>Don&#039;t hesitate to contact me.</p>
+</section>
+<section>
+<h3>[2005-08-26 13:35 UTC] rouanelion at msn dot com</h3>
+<p>Hello,</p>
+<p>I thing i have found a little problem of path in the Request.php librairie because the Request.php need three librairies:<br>
+require_once &#039;PEAR.php&#039;;<br>
+require_once &#039;Net/Socket.php&#039;;<br>
+require_once &#039;Net/URL.php&#039;;<br>
+and the problem is that the Socket.php need that too:<br>
+require_once &#039;PEAR.php&#039;;<br>
+but if you put PEAR.php into Net directory with the Socket.php, i have this problem <br>
+Fatal error: Cannot redeclare class pear in /var/www/free.fr/4/6/rouanelion/KelkooRssReaderWebApp_1-0-1/lib/Net/PEAR.php on line 103.<br>
+So i think there is an error of PATH.(maybe i was wrong)<br>
+Best regards<br>
+rouanelion</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

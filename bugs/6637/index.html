@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6637</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_Barcode/index.html">Image_Barcode</a> &#187; Bug #6637</h1>
+<p>error don&#039;t declare</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-31 11:37 UTC</td></tr>
+<tr><th>From</th><td>d dot shalygin at servplus dot ru</td></tr>
+<tr><th>Assigned</th><td>cweiske</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Image_Barcode/index.html">Image_Barcode</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>WindowsXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-31 11:37 UTC] d dot shalygin at servplus dot ru</h3>
+<p>Description:<br>
+------------<br>
+variable error don&#039;t declare on some scenary</p>
+<p>Test script:<br>
+---------------<br>
+require_once(&quot;Image/Barcode/upca.php&quot;);<br>
+$str_to_print=&#039;029703006256&#039;; <br>
+$_barcode=new Image_Barcode_upca;		  $_barcode-&gt;_barcodeheight=50;<br>
+$_barcode-&gt;draw($str_to_print);<br>
+die;</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;br /&gt;<br>
+&lt;b&gt;Notice&lt;/b&gt;:  Undefined variable:  error in &lt;b&gt;c:\php\pear\Image\Barcode\upca.php&lt;/b&gt; on line &lt;b&gt;197&lt;/b&gt;&lt;br /&gt;<br>
+&lt;br /&gt;<br>
+&lt;b&gt;Notice&lt;/b&gt;:  Undefined variable:  error in &lt;b&gt;c:\php\pear\Image\Barcode\upca.php&lt;/b&gt; on line &lt;b&gt;342&lt;/b&gt;&lt;br /&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+before<br>
+if ( (is_numeric($text)==false) || (strlen($text)!=12) )  {<br>
+wright<br>
+$error=0;</p>
+</section>
+<section>
+<h3>[2006-10-12 14:41 UTC] chqs at sina dot com</h3>
+<p>function draw($text, $imgtype = &#039;png&#039;)  {</p>
+<p>if (!isset($error)) {<br>
+			$error = isset($GLOBALS[&#039;error&#039;]) ? $GLOBALS[&#039;error&#039;] : 0;<br>
+		}<br>
+		<br>
+		if ( (is_numeric($text)==false) || (strlen($text)!=12) )  {<br>
+			$barcodewidth= (12 * 7 * $this-&gt;_barwidth) + 3 + 5 + 3 + 2 * (imagefontwidth($this-&gt;_font)+1);<br>
+			$error = 1;<br>
+		}</p>
+<p>...</p>
+</section>
+<section>
+<h3>[2006-10-12 14:48 UTC] chqs at sina dot com</h3>
+<p>function draw($text, $imgtype = &#039;png&#039;)  {</p>
+<p>if ( (is_numeric($text)==false) || (strlen($text)!=12) )  {<br>
+		$barcodewidth= (12 * 7 * $this-&gt;_barwidth) + 3 + 5 + 3 + 2 * (imagefontwidth($this-&gt;_font)+1);<br>
+		$error = 1;<br>
+	}<br>
+	else {<br>
+		// Calculate the barcode width<br>
+		$barcodewidth = (strlen($text)) * (7 * $this-&gt;_barwidth)<br>
+		+ 3 // left<br>
+		+ 5 // center<br>
+		+ 3 // right<br>
+		+ imagefontwidth($this-&gt;_font)+1<br>
+		+ imagefontwidth($this-&gt;_font)+1   // check digit&#039;s padding<br>
+                ;<br>
+		$error = 0;  // &lt;-- Here, the bug is fixed<br>
+	}</p>
+<p>...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1503</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Configuration &#187; <a href="package/Config/index.html">Config</a> &#187; Bug #1503</h1>
+<p>XML parsing fail on complex element</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-26 07:30 UTC</td></tr>
+<tr><th>From</th><td>pnagy at allianz dot hu</td></tr>
+<tr><th>Assigned</th><td>mansion</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/Config/index.html">Config</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.5</td></tr>
+<tr><th>OS</th><td>WinXP Prof.</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-26 07:30 UTC] pnagy at allianz dot hu</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m using Config 1.10. In an XML-file containing complex-type elements the parser fail to create it right. The source xml looks like this:<br>
+-------------<br>
+      &lt;lit&gt;You can write some text here which will displayed in &lt;strong&gt;full width&lt;/strong&gt;on the form. Text could contain fields &lt;field name=&quot;bar&quot; src=&quot;post&quot; /&gt;, they will displayed as pure text.  <br>
+      &lt;/lit&gt;<br>
+-------------<br>
+The error shows in all output, so I think it is in the parser method.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php</p>
+<p>require_once(&#039;Config.php&#039;);<br>
+        // Config object<br>
+        $config = new Config();<br>
+        $root =&amp; $config-&gt;parseConfig(&#039;flowConfExample.xml&#039;, &#039;xml&#039;);<br>
+        echo $root-&gt;toString(&#039;phparray&#039;, array(&#039;name&#039; =&gt; &#039;conf&#039;));<br>
+require_once(&#039;Config/Container.php&#039;);<br>
+        $out = $config-&gt;writeConfig ( &#039;output.ini&#039;, &#039;inifile&#039;,  array(&#039;name&#039; =&gt; &#039;conf&#039;) );<br>
+        $out = $config-&gt;writeConfig ( &#039;output.apache.conf&#039;, &#039;apache&#039;,  array(&#039;name&#039; =&gt; &#039;conf&#039;) );<br>
+        $out = $config-&gt;writeConfig ( &#039;output.generic.conf&#039;, &#039;genericconf&#039;,  array(&#039;name&#039; =&gt; &#039;conf&#039;) );<br>
+        $out = $config-&gt;writeConfig ( &#039;output.xml.conf&#039;, &#039;xml&#039;,  array(&#039;name&#039; =&gt; &#039;conf&#039;) );<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+$conf[&#039;flow&#039;][&#039;page&#039;][0][&#039;section&#039;][&#039;lit&#039;][&#039;#&#039;] = &#039;You can write some text here which will displayed in &#039;;<br>
+$conf[&#039;flow&#039;][&#039;page&#039;][0][&#039;section&#039;][&#039;lit&#039;][&#039;#&#039;][&#039;strong&#039;] = &#039;full width&#039;;<br>
+$conf[&#039;flow&#039;][&#039;page&#039;][0][&#039;section&#039;][&#039;lit&#039;][&#039;#&#039;] = &#039;on the form. Text could contain fields&#039;;<br>
+$conf[&#039;flow&#039;][&#039;page&#039;][0][&#039;section&#039;][&#039;lit&#039;][&#039;field&#039;][&#039;@&#039;][&#039;name&#039;] = &#039;bar&#039;;<br>
+$conf[&#039;flow&#039;][&#039;page&#039;][0][&#039;section&#039;][&#039;lit&#039;][&#039;field&#039;][&#039;@&#039;][&#039;src&#039;] = &#039;post&#039;;<br>
+$conf[&#039;flow&#039;][&#039;page&#039;][0][&#039;section&#039;][&#039;lit&#039;][&#039;#&#039;] = &#039;, they will displayed as pure text.&#039;;</p>
+<p>Actual result:<br>
+--------------<br>
+$conf[&#039;flow&#039;][&#039;page&#039;][0][&#039;section&#039;][&#039;lit&#039;][&#039;strong&#039;] = &#039;You can write some text here which will displayed in full width&#039;;<br>
+$conf[&#039;flow&#039;][&#039;page&#039;][0][&#039;section&#039;][&#039;lit&#039;][&#039;field&#039;][&#039;#&#039;] = &#039;on the form. Text could contain fields&#039;;<br>
+$conf[&#039;flow&#039;][&#039;page&#039;][0][&#039;section&#039;][&#039;lit&#039;][&#039;field&#039;][&#039;@&#039;][&#039;name&#039;] = &#039;bar&#039;;<br>
+$conf[&#039;flow&#039;][&#039;page&#039;][0][&#039;section&#039;][&#039;lit&#039;][&#039;field&#039;][&#039;@&#039;][&#039;src&#039;] = &#039;post&#039;;</p>
+</section>
+<section>
+<h3>[2004-06-04 10:04 UTC] bmansion at mamasam dot com</h3>
+<p>This does not look like a configuration. Config&#039;s purpose is to parse/edit/write configuration files. Configuration files are usually more simple than what you propose here.</p>
+<p>I suggest you rewrite your configuration by using htmlentities  for &lt; (&lt;) and &gt; (&gt;) in your &lt;lit&gt; directive because it is what it is in the end.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

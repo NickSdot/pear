@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8114</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Archive_Tar/index.html">Archive_Tar</a> &#187; Bug #8114</h1>
+<p>Files added on-the-fly not storing date</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-07-04 14:20 UTC</td></tr>
+<tr><th>From</th><td>jfernandez at electronic-group dot com</td></tr>
+<tr><th>Assigned</th><td>vblavet</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Archive_Tar/index.html">Archive_Tar</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.1</td></tr>
+<tr><th>OS</th><td>RHEL</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-04 14:20 UTC] jfernandez at electronic-group dot com</h3>
+<p>Description:<br>
+------------<br>
+Whenever a tar file is created on-the-fly and some files are stored in by using the addString method, neither the date nor any permissions are stored for each inserted file.</p>
+<p>This is a patch that makes those files to be created with the system timestamp and with permissions of rw-r----</p>
+<p>Test script:<br>
+---------------<br>
+--- Tar.php     2005-03-17 22:02:31.000000000 +0100<br>
++++ TarModif.php        2006-07-04 16:15:20.000000000 +0200<br>
+@@ -973,7 +973,7 @@<br>
+       $p_filename = $this-&gt;_translateWinPath($p_filename, false);;<br>
+ <br>
+       if (!$this-&gt;_writeHeaderBlock($p_filename, strlen($p_string),<br>
+-                                       0, 0, &quot;&quot;, 0, 0))<br>
++                                       time (), 438 - umask (), &quot;&quot;, 0, 0))<br>
+           return false;<br>
+ <br>
+       $i=0;</p>
+<p>Expected result:<br>
+----------------<br>
+The files created from memory have timestamps and permissions set.</p>
+</section>
+<section>
+<h3>[2006-09-01 21:17 UTC] adam at pilorz dot net</h3>
+<p>Sometimes (I have such situation in my script) it is better, when you can specify the date yourself. I&#039;ve made a modification, which allows you do that. This patch allow you to specify the date in third parameter, and when the date is not specified, it uses the current timestamp. It is modified version of patched (with Juan Fernández-Rebollos&#039;s patch) Tar.php (the diff from original Tar.php)</p>
+<p>As the file is a bit bigger than original patch I have uploaded it on my server. It is available at http://adam.pilorz.net/files/tar.php.patch</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

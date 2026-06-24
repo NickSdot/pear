@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8915</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/Translation2/index.html">Translation2</a> &#187; Bug #8915</h1>
+<p>Fetching vom Database does not work with Oracle</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-10-09 09:09 UTC</td></tr>
+<tr><th>From</th><td>d dot schwarz at lise dot de</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Translation2/index.html">Translation2</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-10-09 09:09 UTC] d dot schwarz at lise dot de</h3>
+<p>Description:<br>
+------------<br>
+Since Oracle uses uppercase column-namens i had to change some Indeses from [&#039;id&#039;] to [&#039;ID&#039;] in the container classes to work.</p>
+<p>Strange, but this little change helped in my situation</p>
+<p>Test script:<br>
+---------------<br>
+// example for changed fetchLangs function in db.php-Container</p>
+<p>// }}}<br>
+    // {{{ fetchLangs()</p>
+<p>/**<br>
+     * Fetch the available langs if they&#039;re not cached yet.<br>
+     */<br>
+    function fetchLangs()<br>
+    {<br>
+        $query = sprintf(&#039;SELECT %s AS id, %s AS name, %s AS meta, %s AS error_text, %s AS encoding FROM %s&#039;,<br>
+            $this-&gt;db-&gt;quoteIdentifier($this-&gt;options[&#039;lang_id_col&#039;]),<br>
+            $this-&gt;db-&gt;quoteIdentifier($this-&gt;options[&#039;lang_name_col&#039;]),<br>
+            $this-&gt;db-&gt;quoteIdentifier($this-&gt;options[&#039;lang_meta_col&#039;]),<br>
+            $this-&gt;db-&gt;quoteIdentifier($this-&gt;options[&#039;lang_errmsg_col&#039;]),<br>
+            $this-&gt;db-&gt;quoteIdentifier($this-&gt;options[&#039;lang_encoding_col&#039;]),<br>
+            $this-&gt;db-&gt;quoteIdentifier($this-&gt;options[&#039;langs_avail_table&#039;])<br>
+        );</p>
+<p>++$this-&gt;_queries;<br>
+        $res = $this-&gt;db-&gt;getAll($query, DB_FETCHMODE_ASSOC);<br>
+        if (PEAR::isError($res)) {<br>
+            return $res;<br>
+        }<br>
+        foreach ($res as $row) {<br>
+            $this-&gt;langs[$row[&#039;ID&#039;]] = $row;<br>
+        }<br>
+    }</p>
+<p>Expected result:<br>
+----------------<br>
+it works :-)</p>
+<p>otherwise i allways get &quot;object #resourceId&quot;</p>
+</section>
+<section>
+<h3>[2006-10-09 10:58 UTC] d dot schwarz at lise dot de</h3>
+<p>...<br>
+$db = DB::connect(&quot;oci8://lise:PASSWORD@MYDB&quot;);<br>
+$query = &#039;SELECT id AS aliasname FROM langs_avail&#039;;</p>
+<p>$row = $db-&gt;getRow($query, DB_FETCHMODE_ASSOC);<br>
+print_r(array_keys($row));<br>
+?&gt;</p>
+<p>results in</p>
+<p>Array ( [0] =&gt; ALIASNAME )</p>
+<p>really! :-)</p>
+<p>if you use another application to confirm this (e. g. toad), you get the same result: uppercased aliasnames.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

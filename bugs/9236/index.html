@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9236</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Console &#187; <a href="package/Console_ProgressBar/index.html">Console_ProgressBar</a> &#187; Bug #9236</h1>
+<p>Patch to improve performance</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #9236</th><td>Patch to improve performance</td></tr>
+<tr><th>Submitted</th><td>2006-11-05 04:56 UTC</td></tr>
+<tr><th>From</th><td>apinstein at mac dot com</td></tr>
+<tr><th>Assigned</th><td>et</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Console_ProgressBar/index.html">Console_ProgressBar</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>n/a</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-05 04:56 UTC] apinstein at mac dot com</h3>
+<p>Description:<br>
+------------<br>
+Repeated calls to update() can affect performance, <br>
+particularly over a network, as ansi chars are transmitted <br>
+and rendered by the terminal.</p>
+<p>On my Mac OS X G5 1.6GHz, the follow test results <br>
+demonstrate the issue:</p>
+<p>Progressing... 10000/10000 <br>
+[===============================&gt;] 100.00% 00:30.06 <br>
+[Remaining: 00:00.00]Done!</p>
+<p>This is just a simple for loop going 10,000 times, and <br>
+updating the progress bar once each time through the loop.</p>
+<p>It takes 30s to run! That is a cost of 0.003s/call to <br>
+update.</p>
+<p>I have added a small bit of code that imposes a &quot;minimum <br>
+update delay&quot; so that the udpate function quietly exits if <br>
+the minimum delay hasn&#039;t been met.</p>
+<p>Changing to a 1-second delay speed up the test by 30x:</p>
+<p>Progressing...  9172/10000 <br>
+[============================&gt;---]  91.72% 00:01.01 <br>
+[Remaining: 00:00.09]Done!</p>
+<p>The main reason for implementing such a thing in progressbar <br>
+rather than having the client code call update() less often <br>
+is ease-of-use. Usually progressbar is used only for <br>
+interactive sessions, and thus most of the code related to <br>
+it is just for &quot;debug&quot; or interactive use. It is somewhat <br>
+annoying to have to write throttling code on the client for <br>
+this purpose. Client-side throttling is even further <br>
+complicated by the fact that the same script running on <br>
+different machines with different speeds should be throttled <br>
+differently. Moving the throttling to time-based within <br>
+progressbar reduces the need for the client to have to spend <br>
+any time coding around this small performance drain.</p>
+<p>Also, if you accept the patch, you could also change default <br>
+value for &quot;min_update_delay&quot; to 0 which would cause no <br>
+backwards-compatibility issues.</p>
+<p>Test script:<br>
+---------------<br>
+/* test script */<br>
+test(0);<br>
+test(1);</p>
+<p>function test($minUpdateDelay)<br>
+{<br>
+    $its = 10000;<br>
+    $progress = new Console_ProgressBar(&quot;Progressing... %fraction% [%bar%] %percent% %elapsed% [Remaining: %estimate%]&quot;, &quot;=&gt;&quot;, &quot;-&quot;, 100, $its, array(&#039;ansi_terminal&#039; =&gt; true, &#039;min_update_delay&#039; =&gt; $minUpdateDelay));<br>
+    for ($i = 0; $i &lt; $its; $i++) {<br>
+        $progress-&gt;update($i);<br>
+    }<br>
+    $progress-&gt;update($i);<br>
+    print &quot;Done!\n&quot;;<br>
+}</p>
+<p>/* patch to ProgressBar.php (0.40) */</p>
+<p>--- ProgressBar.php.orig	2006-11-04 23:43:52.000000000 -0500<br>
++++ ProgressBar.php	2006-11-04 23:43:57.000000000 -0500<br>
+@@ -73,6 +73,10 @@<br>
+       */<br>
+     var $_start_time = null;<br>
+     var $_rate_datapoints = array();<br>
++     /**<br>
++      * Update throttle<br>
++      */<br>
++    var $_lastUpdateTime = null;<br>
+     // }}}<br>
+     <br>
+     // constructor() {{{<br>
+@@ -187,6 +191,7 @@<br>
+             &#039;ansi_terminal&#039; =&gt; false,<br>
+             &#039;ansi_clear&#039; =&gt; false,<br>
+             &#039;num_datapoints&#039; =&gt; 5,<br>
++            &#039;min_update_delay&#039; =&gt; 1,<br>
+         );<br>
+         $intopts = array();<br>
+         foreach ($default_options as $key =&gt; $value) {<br>
+@@ -257,13 +262,17 @@<br>
+      */<br>
+     function update($current)<br>
+     {<br>
++        // throttle updates<br>
++        $tNow = $this-&gt;_fetchTime();<br>
++        if ( ($tNow - $this-&gt;_lastUpdateTime) &lt; $this-&gt;_options[&#039;min_update_delay&#039;]) return;<br>
++        $this-&gt;_lastUpdateTime = $tNow;<br>
+         $this-&gt;_addDatapoint($current);<br>
+         if ($this-&gt;_first) {<br>
+             if ($this-&gt;_options[&#039;ansi_terminal&#039;]) {<br>
+                 print &quot;\x1b[s&quot;; // save cursor position<br>
+             }<br>
+             $this-&gt;_first = false;<br>
+-            $this-&gt;_start_time = $this-&gt;_fetchTime();<br>
++            $this-&gt;_start_time = $tNow;<br>
+             $this-&gt;display($current);<br>
+             return;<br>
+         }</p>
+</section>
+<section>
+<h3>[2006-12-01 16:29 UTC] apinstein at mac dot com</h3>
+<p>I just re-built my pear and realized that my patch doesn&#039;t <br>
+work against 0.4.0. I am re-submitting a valid patch.</p>
+<p>--- ProgressBar.php.orig	2006-12-01 11:15:18.000000000 <br>
+-0500<br>
++++ ProgressBar.php	2006-12-01 11:27:08.000000000 -0500<br>
+@@ -52,6 +52,10 @@<br>
+      * Options, like the precision used to display the <br>
+numbers<br>
+      */<br>
+     var $_options = array();<br>
++    /**<br>
++     * Update throttle<br>
++     */<br>
++    var $_lastUpdateTime = null;<br>
+     // }}}<br>
+     <br>
+     // constructor() {{{<br>
+@@ -196,6 +200,10 @@<br>
+      *     ansi_terminal      | false |  If this option is <br>
+true, a better<br>
+      *                        |       |  (faster) method <br>
+for erasing the bar is<br>
+      *                        |       |  used.<br>
++     *     min_update_delay   | 0.25  |  Minimum time delay <br>
+in seconds (decimals ok)<br>
++     *                        |       |  required to pass <br>
+before an update will be drawn.<br>
++     *                        |       |  Improves <br>
+performance of things that progress <br>
++     *                        |       |  hundreds+ times <br>
+per second.<br>
+      * &lt;/pre&gt;<br>
+      *<br>
+      * @param string The format string<br>
+@@ -217,6 +225,7 @@<br>
+             &#039;fraction_pad&#039; =&gt; &#039; &#039;,<br>
+             &#039;width_absolute&#039; =&gt; true,<br>
+             &#039;ansi_terminal&#039; =&gt; false,<br>
++            &#039;min_update_delay&#039; =&gt; 0.25,<br>
+         );<br>
+         foreach ($default_options as $key =&gt; $value) {<br>
+             if (!isset($options[$key])) {<br>
+@@ -279,8 +288,13 @@<br>
+      */<br>
+     function update($current)<br>
+     {<br>
++        // throttle updates<br>
++        $tNow = microtime(true);<br>
++        if ( ($tNow - $this-&gt;_lastUpdateTime) &lt; $this-<br>
+&gt;_options[&#039;min_update_delay&#039;]) return;<br>
++        $this-&gt;_lastUpdateTime = $tNow;<br>
+         if ($this-&gt;_first) {<br>
+             $this-&gt;_first = false;<br>
++            $this-&gt;_start_time = $tNow;<br>
+             $this-&gt;display($current);<br>
+             return;<br>
+         }</p>
+</section>
+<section>
+<h3>[2007-01-23 03:49 UTC] apinstein at mac dot com</h3>
+<p>Hmm... I just tried using my own patch and it didn&#039;t work... <br>
+I re-did the patch and here&#039;s yet another patchfile...</p>
+<p>--- /opt/local/lib/php/Console/ProgressBar.php.orig     <br>
+2007-01-22 22:43:40.000000000 -0500<br>
++++ /opt/local/lib/php/Console/ProgressBar.php  2007-01-22 <br>
+22:47:50.000000000 -0500<br>
+@@ -64,6 +64,10 @@<br>
+      * Options, like the precision used to display the <br>
+numbers<br>
+      */<br>
+     var $_options = array();<br>
++    /**<br>
++     * Update throttle<br>
++     */<br>
++    var $_lastUpdateTime = null;<br>
+      /**<br>
+       * Length to erase<br>
+       */<br>
+@@ -164,6 +168,10 @@<br>
+      *     ansi_clear         | false |  If the bar should <br>
+be cleared everytime<br>
+      *     num_datapoints     | 5     |  How many <br>
+datapoints to use to create <br>
+      *                        |       |  the estimated <br>
+remaining time <br>
++     *     min_update_delay   | 0.25  |  Minimum time delay <br>
+in seconds (decimals ok)<br>
++     *                        |       |  required to pass <br>
+before an update will be drawn.<br>
++     *                        |       |  Improves <br>
+performance of things that progress <br>
++     *                        |       |  hundreds+ times <br>
+per second.<br>
+      * &lt;/pre&gt;<br>
+      *<br>
+      * @param string The format string<br>
+@@ -187,6 +195,7 @@<br>
+             &#039;ansi_terminal&#039; =&gt; false,<br>
+             &#039;ansi_clear&#039; =&gt; false,<br>
+             &#039;num_datapoints&#039; =&gt; 5,<br>
++            &#039;min_update_delay&#039; =&gt; 0.25,<br>
+         );<br>
+         $intopts = array();<br>
+         foreach ($default_options as $key =&gt; $value) {<br>
+@@ -257,12 +266,17 @@<br>
+      */<br>
+     function update($current)<br>
+     {<br>
++        // throttle updates<br>
++        $tNow = microtime(true);<br>
++        if ( ($tNow - $this-&gt;_lastUpdateTime) &lt; $this-<br>
+&gt;_options[&#039;min_update_delay&#039;]) return;<br>
++        $this-&gt;_lastUpdateTime = $tNow;<br>
+         $this-&gt;_addDatapoint($current);<br>
+         if ($this-&gt;_first) {<br>
+             if ($this-&gt;_options[&#039;ansi_terminal&#039;]) {<br>
+                 print &quot;\x1b[s&quot;; // save cursor position<br>
+             }<br>
+             $this-&gt;_first = false;<br>
++            $this-&gt;_start_time = $tNow;<br>
+             $this-&gt;_start_time = $this-&gt;_fetchTime();<br>
+             $this-&gt;display($current);<br>
+             return;</p>
+</section>
+<section>
+<h3>[2007-01-30 23:16 UTC] apinstein at mac dot com</h3>
+<p>Just a quick update to my original patch...</p>
+<p>In the update() function, change:</p>
+<p>tNow = microtime(true);</p>
+<p>to:</p>
+<p>tNow = $this-&gt;_fetchTime();</p>
+<p>That&#039;s all! Now it works in PHP4 and PHP5.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

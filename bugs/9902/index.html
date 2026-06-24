@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9902</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #9902</h1>
+<p>Database connections are not stored by reference in global variable</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-21 19:35 UTC</td></tr>
+<tr><th>From</th><td>david dot ward at gatech dot edu</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.4</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-21 19:35 UTC] david dot ward at gatech dot edu</h3>
+<p>Description:<br>
+------------<br>
+In DataObject.php, the following lines (2221/2223/2231):</p>
+<p>$_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5] = DB::connect($dsn,$db_options);<br>
+$_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5] = DB::connect($dsn);<br>
+$_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5] = MDB2::connect($dsn,$db_options);</p>
+<p>all need to be modified to the following to store a reference to the DB/MDB2 connection, rather than a copy:</p>
+<p>$_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5] = &amp;DB::connect($dsn,$db_options);<br>
+$_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5] = &amp;DB::connect($dsn);<br>
+$_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5] = &amp;MDB2::connect($dsn,$db_options);</p>
+<p>Because of this bug, for MDB2 (at least), setting options on an object in $GLOBALS[&#039;_DB_DATAOBJECT&#039;][&#039;CONNECTIONS&#039;] does not change the option on the corresponding object in $GLOBALS[&#039;_MDB2_databases&#039;].  So the following line (DataObject/Generator.php, line 1066):</p>
+<p>$__DB-&gt;setOption(&#039;portability&#039;, MDB2_PORTABILITY_ALL ^ MDB2_PORTABILITY_FIX_CASE);</p>
+<p>has no effect when tableInfo() is subsequently called (line 1074):</p>
+<p>$defs =  $__DB-&gt;reverse-&gt;tableInfo($table);</p>
+</section>
+<section>
+<h3>[2007-01-22 01:14 UTC] david dot ward at gatech dot edu</h3>
+<p>After this change is made, I discovered that the MDB2 portability mode is not set consistently in different functions.</p>
+<p>DB_DataObject_Generator::_createTableList() and<br>
+DB_DataObject_Generator::fillTableSchema() both set the MDB2 portability mode to allow mixed case (line 192/line 1066 from DB/DataObject/Generator.php):</p>
+<p>$__DB-&gt;setOption(&#039;portability&#039;, MDB2_PORTABILITY_ALL ^ MDB2_PORTABILITY_FIX_CASE);</p>
+<p>However, the portability mode is not set like this if other functions are called, such as DB_DataObject::_query().  Therefore the behavior is not consistent, since a query will assume that the DataObject&#039;s member variables are lowercase.</p>
+<p>This can be fixed easily.  The proper place to set the portability mode appears to be in DB_DataObject::_connect(), rather than in functions like DB_DataObject_Generator::_createTableList() and DB_DataObject_Generator::fillTableSchema().</p>
+<p>So, lines 192 and 1066 of DB/DataObject/Generator.php (mentioned above) should be removed.</p>
+<p>Then, if desired, the portability mode should be set once in DB_DataObject::_connect() by inserting this at line 2231 in DB/DataObject.php:</p>
+<p>$db_options[&#039;portability&#039;] = MDB2_PORTABILITY_ALL ^ MDB2_PORTABILITY_FIX_CASE;</p>
+</section>
+<section>
+<h3>[2007-01-28 03:17 UTC] david dot ward at gatech dot edu</h3>
+<p>Sorry for the delay, here it is.</p>
+<p>--- DataObject.old.php	Sat Jan 27 22:08:28 2007<br>
++++ DataObject.php	Sat Jan 27 22:11:22 2007<br>
+@@ -2228,6 +2228,7 @@<br>
+             require_once &#039;MDB2.php&#039;;<br>
+             // this allows the setings of compatibility on MDB2 <br>
+             $db_options = PEAR::getStaticProperty(&#039;MDB2&#039;,&#039;options&#039;);<br>
++	    $db_options[&#039;portability&#039;] = MDB2_PORTABILITY_ALL ^ MDB2_PORTABILITY_FIX_CASE;<br>
+             $_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5] = MDB2::connect($dsn,$db_options);<br>
+             <br>
+         }<br>
+--- Generator.old.php	Sat Jan 27 22:08:28 2007<br>
++++ Generator.php	Sat Jan 27 22:11:52 2007<br>
+@@ -189,7 +189,6 @@<br>
+             /**<br>
+              * set portability and some modules to fetch the informations<br>
+              */<br>
+-            $__DB-&gt;setOption(&#039;portability&#039;, MDB2_PORTABILITY_ALL ^ MDB2_PORTABILITY_FIX_CASE);<br>
+             $__DB-&gt;loadModule(&#039;Manager&#039;);<br>
+             $__DB-&gt;loadModule(&#039;Reverse&#039;);<br>
+         }<br>
+@@ -1063,7 +1062,6 @@<br>
+             /**<br>
+              * set portability and some modules to fetch the informations<br>
+              */<br>
+-            $__DB-&gt;setOption(&#039;portability&#039;, MDB2_PORTABILITY_ALL ^ MDB2_PORTABILITY_FIX_CASE);<br>
+             $__DB-&gt;loadModule(&#039;Manager&#039;);<br>
+             $__DB-&gt;loadModule(&#039;Reverse&#039;);<br>
+         }</p>
+</section>
+<section>
+<h3>[2007-03-18 10:01 UTC] david dot ward at gatech dot edu</h3>
+<p>That is another way to change the portability option, yes, although MDB2 has the setOption function that I used in my diff.</p>
+<p>However this will have no effect if you don&#039;t fix the three lines that allow the database connection variable to be stored by reference.  You have to make that change for the second one to have any effect.</p>
+</section>
+<section>
+<h3>[2007-03-18 10:05 UTC] david dot ward at gatech dot edu</h3>
+<p>and now I realize that I didn&#039;t change those three lines to make the diff.  Go figure.  Do you want another diff or do you see what I&#039;m talking about from my original message?</p>
+</section>
+<section>
+<h3>[2007-05-08 20:19 UTC] david dot ward at gatech dot edu</h3>
+<p>Sorry for the confusion and for not including everything in the earlier diff.  Basically here is the diff of all the changes needed to fix this issue.</p>
+<p>I have removed two lines in Generator.php because they are redundant and unnecessary after the fixes are made to DataObject.php.</p>
+<p>If you have questions let me know.</p>
+<p>--- DataObject.old.php	Tue May  8 16:00:48 2007<br>
++++ DataObject.php	Tue May  8 16:04:18 2007<br>
+@@ -2218,9 +2218,9 @@<br>
+             $db_options = PEAR::getStaticProperty(&#039;DB&#039;,&#039;options&#039;);<br>
+             require_once &#039;DB.php&#039;;<br>
+             if ($db_options) {<br>
+-                $_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5] = DB::connect($dsn,$db_options);<br>
++                $_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5] = &amp;DB::connect($dsn,$db_options);<br>
+             } else {<br>
+-                $_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5] = DB::connect($dsn);<br>
++                $_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5] = &amp;DB::connect($dsn);<br>
+             }<br>
+             <br>
+         } else {<br>
+@@ -2228,7 +2228,8 @@<br>
+             require_once &#039;MDB2.php&#039;;<br>
+             // this allows the setings of compatibility on MDB2 <br>
+             $db_options = PEAR::getStaticProperty(&#039;MDB2&#039;,&#039;options&#039;);<br>
+-            $_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5] = MDB2::connect($dsn,$db_options);<br>
++            $db_options[&#039;portability&#039;] = MDB2_PORTABILITY_ALL ^ MDB2_PORTABILITY_FIX_CASE;<br>
++            $_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5] = &amp;MDB2::connect($dsn,$db_options);<br>
+             <br>
+         }<br>
+         <br>
+--- Generator.old.php	Tue May  8 15:56:44 2007<br>
++++ Generator.php	Tue May  8 16:06:56 2007<br>
+@@ -189,7 +189,6 @@<br>
+             /**<br>
+              * set portability and some modules to fetch the informations<br>
+              */<br>
+-            $__DB-&gt;setOption(&#039;portability&#039;, MDB2_PORTABILITY_ALL ^ MDB2_PORTABILITY_FIX_CASE);<br>
+             $__DB-&gt;loadModule(&#039;Manager&#039;);<br>
+             $__DB-&gt;loadModule(&#039;Reverse&#039;);<br>
+         }<br>
+@@ -1063,7 +1062,6 @@<br>
+             /**<br>
+              * set portability and some modules to fetch the informations<br>
+              */<br>
+-            $__DB-&gt;setOption(&#039;portability&#039;, MDB2_PORTABILITY_ALL ^ MDB2_PORTABILITY_FIX_CASE);<br>
+             $__DB-&gt;loadModule(&#039;Manager&#039;);<br>
+             $__DB-&gt;loadModule(&#039;Reverse&#039;);<br>
+         }</p>
+</section>
+<section>
+<h3>[2007-08-10 04:22 UTC] david dot ward at gatech dot edu</h3>
+<p>If you have any table/field names with spaces, DB_DataObject will throw several errors and not work, unless you include all of the options as I described.  Try it and see for yourself.  The changes I included are a bug fix, not just some personal configuration preferences I came up with.  Please apply the entire list of changes I submitted to you if you want MDB2 to work properly.  Thanks.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

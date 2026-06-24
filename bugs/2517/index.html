@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2517</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #2517</h1>
+<p>applyFilter activates the validation</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-10-13 08:23 UTC</td></tr>
+<tr><th>From</th><td>max at tvattomaten dot se</td></tr>
+<tr><th>Assigned</th><td>avb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>Win XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-13 08:23 UTC] max at tvattomaten dot se</h3>
+<p>Description:<br>
+------------<br>
+When adding a filter for my form I&#039;ve noticed that the applyFilter function filters automatically the values and puts them into the submitted values array:</p>
+<p>foreach ($element as $elName) {<br>
+  $value = $this-&gt;getSubmitValue($elName);<br>
+  if (null !== $value) {<br>
+    if (false === strpos($elName, &#039;[&#039;)) {<br>
+      $this-&gt;_submitValues[$elName] = $this-&gt;_recursiveFilter($filter, $value);<br>
+    } else {<br>
+      $idx  = &quot;[&#039;&quot; . str_replace(array(&#039;]&#039;, &#039;[&#039;), array(&#039;&#039;, &quot;&#039;][&#039;&quot;), $elName) . &quot;&#039;]&quot;;<br>
+      eval(&quot;\$this-&gt;_submitValues{$idx} = \$this-&gt;_recursiveFilter(\$filter, \$value);&quot;);<br>
+    }<br>
+  }<br>
+}</p>
+<p>I find this very annoying since if I use any default variables they seem to end up in the _submitValues array resulting in that when I do a validate() it won&#039;t detect properly that the form hasn&#039;t been submitted.</p>
+<p>My suggestion is that either submitValues is checked for bugs when using grouped elements, applyFilter is changed or an isFormSubmitted() action is added.</p>
+<p>Reproduce code:<br>
+---------------<br>
+My code goes as:<br>
+/**<br>
+ * Function for checkin a date that has been inputted <br>
+ * and changing it to a YYYY-MM-DD format. If an invalid<br>
+ * date was supplied then the function returns false.<br>
+ * <br>
+ * @access public<br>
+ * @return string If false it will return boolean FALSE <br>
+ **/<br>
+function CheckAndReformatDate($DateString){<br>
+	$DateString = trim(strval($DateString));<br>
+	<br>
+	// Correct date ex. 2004-01-15<br>
+	if (eregi(&quot;^20[0-9]{2}-[0-1]{1}[0-9]{1}-[0-3]{1}[0-9]{1}$&quot;, $DateString)){<br>
+		//Nothing to do</p>
+<p>// Date formatted as ex. 04-01-15<br>
+	}elseif (eregi(&quot;^[0-9]{2}-[0-1]{1}[0-9]{1}-[0-3]{1}[0-9]{1}$&quot;, $DateString)){<br>
+		$DateString = &quot;20&quot; . $DateString;</p>
+<p>// Date formatted as ex. 040115<br>
+	}elseif (eregi(&quot;^[0-9]{2}[0-1]{1}[0-9]{1}[0-3]{1}[0-9]{1}$&quot;, $DateString)){<br>
+		$DateString = &quot;20&quot; . substr($DateString, 0, 2) . &quot;-&quot; <br>
+			. substr($DateString, 2, 2) . &quot;-&quot;<br>
+			. substr($DateString, 4, 2);<br>
+	<br>
+	// Date formatted as ex. 20040115<br>
+	}elseif (eregi(&quot;^20[0-9]{2}[0-1]{1}[0-9]{1}[0-3]{1}[0-9]{1}$&quot;, $DateString)){<br>
+		$DateString = substr($DateString, 0, 4) . &quot;-&quot; <br>
+			. substr($DateString, 4, 2) . &quot;-&quot;<br>
+			. substr($DateString, 6, 2);<br>
+	<br>
+	// Date formatted as ex. 03/01 04<br>
+	}elseif (eregi(&quot;^[0-3]{1}[0-9]{1}\/[0-1]{1}[0-9]{1}[[:space:]][0-9]{2}$&quot;, $DateString)){<br>
+		$DateString = &quot;20&quot; . substr($DateString, 6, 2) . &quot;-&quot; <br>
+			. substr($DateString, 3, 2) . &quot;-&quot;<br>
+			. substr($DateString, 0, 2);<br>
+	<br>
+	// Date formatted as ex. 3/01 03<br>
+	}elseif (eregi(&quot;^[1-9]{1}\/[0-1]{1}[0-9]{1}[[:space:]][0-9]{2}$&quot;, $DateString)){<br>
+		$DateString = &quot;20&quot; . substr($DateString, 6, 2) . &quot;-&quot; <br>
+			. substr($DateString, 3, 2) . &quot;-0&quot;<br>
+			. substr($DateString, 0, 2);<br>
+	<br>
+	// Date formatted as ex. 03/11<br>
+	}elseif (eregi(&quot;^[0-3]{1}[0-9]{1}\/[0-1]{1}[0-9]{1}$&quot;, $DateString)){<br>
+		$TodayDate = getdate();<br>
+		$DateString = $TodayDate[&quot;year&quot;] . &quot;-&quot; <br>
+			. substr($DateString, 3, 2) . &quot;-&quot;<br>
+			. substr($DateString, 0, 2);</p>
+<p>// Date formatted as ex. 03/8<br>
+	}elseif (eregi(&quot;^[0-3]{1}[0-9]{1}\/[0-9]{1}$&quot;, $DateString)){<br>
+		$TodayDate = getdate();<br>
+		$DateString = $TodayDate[&quot;year&quot;] . &quot;-0&quot; <br>
+			. substr($DateString, 3, 1) . &quot;-&quot;<br>
+			. substr($DateString, 0, 2);</p>
+<p>// Date formatted as ex. 3/11<br>
+	}elseif (eregi(&quot;^[0-9]{1}\/[0-1]{1}[0-9]{1}$&quot;, $DateString)){<br>
+		$TodayDate = getdate();<br>
+		$DateString = $TodayDate[&quot;year&quot;] . &quot;-&quot; <br>
+			. substr($DateString, 2, 2) . &quot;-0&quot;<br>
+			. substr($DateString, 0, 1);</p>
+<p>// Date formatted as ex. 3/8<br>
+	}elseif (eregi(&quot;^[0-9]{1}\/[0-9]{1}$&quot;, $DateString)){<br>
+		$TodayDate = getdate();<br>
+		$DateString = $TodayDate[&quot;year&quot;] . &quot;-0&quot; <br>
+			. substr($DateString, 2, 1) . &quot;-0&quot;<br>
+			. substr($DateString, 0, 1);</p>
+<p>// Date formatted as ex. 03<br>
+	}elseif (eregi(&quot;^[0-3]{1}[0-9]{1}$&quot;, $DateString)){<br>
+		$TodayDate = getdate();<br>
+		if (intval($TodayDate[&quot;mon&quot;]) &lt; 10) {<br>
+			$DateString = $TodayDate[&quot;year&quot;] . &quot;-0&quot; <br>
+				. intval($TodayDate[&quot;mon&quot;]) . &quot;-&quot;<br>
+				. substr($DateString, 0, 2);<br>
+		}else{<br>
+			$DateString = $TodayDate[&quot;year&quot;] . &quot;-&quot; <br>
+				. intval($TodayDate[&quot;mon&quot;]) . &quot;-&quot;<br>
+				. substr($DateString, 0, 2);<br>
+		}</p>
+<p>// Date formatted as ex. 3<br>
+	}elseif (eregi(&quot;^[1-9]{1}$&quot;, $DateString)){<br>
+		$TodayDate = getdate();<br>
+		if (intval($TodayDate[&quot;mon&quot;]) &lt; 10) {<br>
+			$DateString = $TodayDate[&quot;year&quot;] . &quot;-0&quot; <br>
+				. intval($TodayDate[&quot;mon&quot;]) . &quot;-0&quot;<br>
+				. substr($DateString, 0, 2);<br>
+		}else{<br>
+			$DateString = $TodayDate[&quot;year&quot;] . &quot;-&quot; <br>
+				. intval($TodayDate[&quot;mon&quot;]) . &quot;-0&quot;<br>
+				. substr($DateString, 0, 2);<br>
+		}<br>
+		<br>
+	// If the user wants a date x days ahead<br>
+	}elseif (eregi(&quot;^\+\s*[1-9]{1}[0-9]*$&quot;, $DateString)){<br>
+		$DateString = date(&quot;Y-m-d&quot;,strtotime(trim(substr($DateString, 1, strlen($DateString) - 1)) . &quot; days&quot;));<br>
+	<br>
+	}elseif (eregi(&quot;^\-\s*[1-9]{1}[0-9]*$&quot;, $DateString)){<br>
+		$DateString = date(&quot;Y-m-d&quot;,strtotime(trim(substr($DateString, 1, strlen($DateString) - 1)) . &quot; days ago&quot;));<br>
+	<br>
+	}elseif (eregi(&quot;igår&quot;, $DateString)){<br>
+		$DateString = date(&quot;Y-m-d&quot;,strtotime(&quot;yesterday&quot;));<br>
+		<br>
+	}elseif (eregi(&quot;förrgår&quot;, $DateString)){<br>
+		$DateString = date(&quot;Y-m-d&quot;,strtotime(&quot;2 days ago&quot;));<br>
+	<br>
+	}else{<br>
+		// No valid date pattern was found<br>
+		return FALSE;<br>
+	}<br>
+	<br>
+	// Check if the date is a valid one. <br>
+	if (checkdate(substr($DateString, 5, 2), substr($DateString, 8, 2), substr($DateString, 0, 4)) == FALSE) {<br>
+		$DateString = FALSE;<br>
+	}<br>
+	<br>
+	return $DateString;<br>
+}</p>
+<p>function FilterDate($DateString){<br>
+	$Date = CheckAndReformatDate($DateString);<br>
+	if (MyCheckDate($Date)) {<br>
+	    return $Date;<br>
+	}else{<br>
+		return $DateString;<br>
+	}<br>
+}<br>
+$form =&amp; new HTML_QuickForm(&#039;OrderForm&#039;, &#039;POST&#039;, &#039;&#039;, &#039;_self&#039;, &#039;autocomplete =&quot;off&quot;&#039;, true);</p>
+<p>$form-&gt;setRequiredNote(&#039;&lt;font color=&quot;#FF0000&quot;&gt;*&lt;/font&gt; Obligatoriska fält.&#039;);<br>
+$form-&gt;setJsWarnings(&#039;Följande fält är felaktiga:&#039;, &#039;Tacksom om du kan rätta till misstagen.&#039;);</p>
+<p>$date[&#039;startDate&#039;] =&amp; HTML_QuickForm::createElement(&#039;text&#039;, &#039;startDate&#039;, &#039;Första datum för beställning&#039;, &#039;size=10 align=right&#039;);<br>
+$date[&#039;endDate&#039;] =&amp; HTML_QuickForm::createElement(&#039;text&#039;, &#039;endDate&#039;, &#039;Dista datum för beställning&#039;, &#039;size=10 align=right&#039;);</p>
+<p>$form-&gt;addGroup($date, &#039;date&#039;, &#039;&lt;a name=&quot;date&quot;&gt;Datum:&lt;/a&gt;&#039;);<br>
+$form-&gt;addGroupRule(&#039;date&#039;, array(<br>
+	&#039;startDate&#039; =&gt; array(array(&#039;Ogiltigt första datum angivet.&#039;,<br>
+						&#039;callback&#039;, &#039;ValidateDate&#039;),<br>
+						array(&#039;Du måste ange ett första datum.&#039;,<br>
+						&#039;required&#039;)),<br>
+	&#039;endDate&#039; =&gt; array(array(&#039;Ogiltigt andra datum angivet.&#039;,<br>
+						&#039;callback&#039;, &#039;ValidateDate&#039;))));</p>
+<p>$form-&gt;addElement(&#039;submit&#039;, &#039;&#039;, &#039;Spara beställning&#039;);</p>
+<p>$TodayDate = date(&quot;Y-m-d&quot;,strtotime(&quot;now&quot;));<br>
+$DefaultValues[&quot;date&quot;][&quot;startDate&quot;] = $TodayDate;<br>
+$DefaultValues[&quot;date&quot;][&quot;endDate&quot;] = $TodayDate;<br>
+$form-&gt;setDefaults($DefaultValues);</p>
+<p>$form-&gt;addFormRule(&#039;ValidateOrder&#039;);<br>
+$form-&gt;applyFilter(&quot;date&quot;, &#039;FilterDate&#039;);</p>
+<p>// Tries to validate the form<br>
+if ($form-&gt;validate()) {<br>
+  die(&quot;This is validated&quot;);<br>
+}</p>
+<p>print($form-&gt;toHTML());</p>
+<p>Expected result:<br>
+----------------<br>
+The form should be outputted without going through the validatoin process.</p>
+<p>Actual result:<br>
+--------------<br>
+I get that one of the dates are not properly validated. This is absurd since I haven&#039;t submitted the form! When removing the applyFilter this issue disappears.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

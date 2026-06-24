@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2643</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #2643</h1>
+<p>Wrong tableinfo</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-10-29 11:33 UTC</td></tr>
+<tr><th>From</th><td>bert at studioemma dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-29 11:33 UTC] bert at studioemma dot com</h3>
+<p>Description:<br>
+------------<br>
+Using the latest version of DB and connecting to MySQL (Client API version 	3.23.49)<br>
+When I ask for the info of a table, then the returned info is not correct with a timestamp. The field ts is a timestamp and is default null. The [flags] says that it is not_null.<br>
+print_r gives me <br>
+....<br>
+[5] =&gt; Array(<br>
+            [table] =&gt; testTable<br>
+            [name] =&gt; ts<br>
+            [type] =&gt; timestamp<br>
+            [len] =&gt; 14<br>
+            [flags] =&gt; not_null unsigned zerofill<br>
+        )<br>
+....</p>
+<p>Reproduce code:<br>
+---------------<br>
+$sql = &quot;SELECT * FROM &quot;.$this-&gt;table_name.&quot; LIMIT 0,1&quot;;<br>
+$result = $this-&gt;db-&gt;query($sql);<br>
+// Check that $result is not an error<br>
+if (DB::isError($result)) {<br>
+	$this-&gt;error[] = array(&quot;error&quot; =&gt; $result-&gt;getMessage());<br>
+}<br>
+else{<br>
+ $info = $this-&gt;db-&gt;tableInfo($result);<br>
+ print_r($info);<br>
+ $this-&gt;table_columnInfo = $info;<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+[5] =&gt; Array(<br>
+            [table] =&gt; testTable<br>
+            [name] =&gt; ts<br>
+            [type] =&gt; timestamp<br>
+            [len] =&gt; 14<br>
+            [flags] =&gt; unsigned zerofill<br>
+        )</p>
+</section>
+<section>
+<h3>[2005-02-03 07:18 UTC] bert at studioemma dot com</h3>
+<p>Sorry for the delay:</p>
+<p>&lt;?<br>
+if (!isset($_POST[&quot;username&quot;]) ||!isset($_POST[&quot;pass&quot;]) || !isset($_POST[&quot;host&quot;]) || !isset($_POST[&quot;db&quot;])){<br>
+	?&gt;<br>
+	&lt;form method=&quot;POST&quot;&gt;<br>
+	  Username: &lt;input type=&quot;text&quot; name=&quot;username&quot;&gt;&lt;br&gt;<br>
+	  Password: &lt;input type=&quot;text&quot; name=&quot;pass&quot;&gt;&lt;br&gt;<br>
+	  Server: &lt;input type=&quot;text&quot; name=&quot;host&quot; value=&quot;localhost&quot;&gt;&lt;br&gt;<br>
+	  Database: &lt;input type=&quot;text&quot; name=&quot;db&quot;&gt;&lt;br&gt;<br>
+	  &lt;input type=&quot;submit&quot; value=&quot;Test&quot;&gt;<br>
+	&lt;/form&gt;<br>
+	&lt;?<br>
+}<br>
+else {<br>
+	require_once(&quot;DB.php&quot;);<br>
+	<br>
+	$dsn = &quot;mysql://&quot;.$_POST[&quot;username&quot;].&quot;:&quot;.$_POST[&quot;pass&quot;].&quot;@&quot;.$_POST[&quot;host&quot;].&quot;/&quot;.$_POST[&quot;db&quot;];<br>
+	$db = DB::connect($dsn);<br>
+	if (DB::isError($db)) {<br>
+   		echo $db-&gt;getMessage();<br>
+	}<br>
+	$sql = &quot;CREATE TABLE `test` (<br>
+  `id` int(11) NOT NULL auto_increment,<br>
+  `modified_user_id` int(11) default NULL,<br>
+  `update_ts` timestamp(14) NOT NULL,<br>
+  `active` enum(&#039;0&#039;,&#039;1&#039;) default &#039;1&#039;,<br>
+  `itemName` varchar(255) default NULL,<br>
+  `add_ts` timestamp(14) default NULL,<br>
+  PRIMARY KEY  (`id`)<br>
+) TYPE=MyISAM&quot;;<br>
+	echo $sql.&quot;\n\n\n&lt;br&gt;&quot;;<br>
+	$result = $db-&gt;query($sql);<br>
+	if (DB::isError($result)) {<br>
+ 		echo $result-&gt;getMessage();<br>
+	}<br>
+	else{<br>
+		<br>
+		$result = $db-&gt;query(&quot;INSERT INTO test (active, itemName, add_ts) VALUES (&#039;0&#039;, &#039;Test&#039;, now())&quot;);<br>
+		if (DB::isError($result)) {<br>
+ 			echo $result-&gt;getMessage();<br>
+		}<br>
+		$result = $db-&gt;query(&quot;SELECT * FROM test LIMIT 0,1&quot;);<br>
+		if (DB::isError($result)) {<br>
+ 			echo $result-&gt;getMessage();<br>
+		}<br>
+		$info = $db-&gt;tableInfo($result);<br>
+		if (DB::isError($info)) {<br>
+			echo $info-&gt;getMessage();<br>
+		}<br>
+		else{<br>
+			print_r($info);<br>
+		}<br>
+		$result = $db-&gt;query(&quot;DROP TABLE test&quot;);<br>
+		if (DB::isError($result)) {<br>
+ 			echo $result-&gt;getMessage();<br>
+		}<br>
+	}<br>
+}<br>
+?&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

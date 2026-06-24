@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5333</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #5333</h1>
+<p>Only variables should be returned by reference; triggers notices since php 4.4.0</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-09-08 11:38 UTC</td></tr>
+<tr><th>From</th><td>matl-pear at jijenik dot com</td></tr>
+<tr><th>Assigned</th><td>cipri</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.0</td></tr>
+<tr><th>OS</th><td>XP</td></tr>
+<tr><th>Roadmaps</th><td>1.4.0, 1.4.0a1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-09-08 11:38 UTC] matl-pear at jijenik dot com</h3>
+<p>Description:<br>
+------------<br>
+Since upgrading to php 4.4.0, the mime.php script triggers some notices:</p>
+<p>Notice: Only variable references should be returned by reference in ...path...\mime.php on line 341</p>
+<p>Notice: Only variable references should be returned by reference in ...path...\mime.php on line 593</p>
+<p>I have display_errors = On set in php.ini</p>
+<p>This is the revision string of the mimi.php file</p>
+<p>// $Id: mime.php,v 1.39 2005/06/13 21:24:16 cipri Exp $</p>
+<p>Test script:<br>
+---------------<br>
+simply including the mail.php should trigger the notices being displayed.</p>
+</section>
+<section>
+<h3>[2005-09-08 17:40 UTC] florent at creative-area dot net</h3>
+<p>same problem with php 4.4.0 on Linux :</p>
+<p>Notice: Only variable references should be returned by reference in /wwwroot/php/lib/php/Mail/mime.php on line 375</p>
+<p>Notice: Only variable references should be returned by reference in /wwwroot/php/lib/php/Mail/mime.php on line 416</p>
+<p>Notice: Only variable references should be returned by reference in /wwwroot/php/lib/php/Mail/mime.php on line 416</p>
+<p>Notice: Only variable references should be returned by reference in /wwwroot/php/lib/php/Mail/mime.php on line 593</p>
+</section>
+<section>
+<h3>[2005-09-09 06:54 UTC] matl-pear at jijenik dot com</h3>
+<p>I found some more info and a (kludgy) workaround for this issue.</p>
+<p>Each of the four problematic lines contains a statement in the form &quot;return new SomeClass()&quot;. For some reason you cannot return a pointer to a newly created instance since PHP 4.4.0 (there is some documentation on that in the PHP release notes).</p>
+<p>the kludy workaround: replace the &quot;return new SomeClass()&quot; statement by these two lines:</p>
+<p>$newObj =&amp; new SomeClass();<br>
+return $newObj;</p>
+<p>Wel, what can I say? PHP is a messy language :)</p>
+</section>
+<section>
+<h3>[2005-12-07 19:17 UTC] phyre at rogers dot com</h3>
+<p>Still remains unfixed for three months?  We&#039;re into PHP5.1 these days, so these warnings really shouldn&#039;t be occuring as the error reporting and strict standards continues to increase.  This and other errors in particular with E_STRICT on.</p>
+</section>
+<section>
+<h3>[2006-02-20 11:36 UTC] winkler at multimedia dot cz</h3>
+<p>&#039;the fix&#039; still does not eliminate all the notices, the return statement in Mail_mime::headers() on line 598 of mime.php for instance.</p>
+</section>
+<section>
+<h3>[2006-02-22 13:04 UTC] j dot svoboda at phoenix dot cz</h3>
+<p>Version 1.41 still gives errors on line 444.<br>
+PHP Notice:  Only variable references should be returned by reference in /usr/local/lib/php/Mail/mime.php on line 444</p>
+</section>
+<section>
+<h3>[2006-02-28 18:21 UTC] vasilyev at cliffgear dot com</h3>
+<p>Current (v 1.41 2006/02/20) version of mime.php still has some problems with returning by reference:</p>
+<p>*function &amp;_addHtmlImagePart(&amp;$obj, $value) and function &amp;_addAttachmentPart(&amp;$obj, $value):<br>
+these function do not return a value, which is a problem since you can&#039;t return NULL by reference.</p>
+<p>*function &amp;get($build_params = null) can return false constant value, which is also a problem</p>
+</section>
+<section>
+<h3>[2006-03-20 13:24 UTC] j dot svoboda at phoenix dot cz</h3>
+<p>Function &amp;_addAttachmentPart(&amp;$obj, $value) still does not return value. (v 1.42 2006/03/14)</p>
+</section>
+<section>
+<h3>[2006-04-01 22:18 UTC] busby at edoceo dot com</h3>
+<p>I&#039;m using PHP 5 and tried the latest CVS versions of Mail_Mime and Mail packages, there were notices/warnings about using public/private and still some &#039;return by reference&#039; issues.  I hacked up a few of the files to get it to work for me, not a highly professional fix, just quick and dirty.  Patches here:</p>
+<p>http://www.edoceo.com/busby/patches/pearmail.php</p>
+<p>(I didn&#039;t know if it&#039;s cool to push in big diffs so I just linked it)</p>
+</section>
+<section>
+<h3>[2006-06-08 15:55 UTC] alan dot harder at sun dot com</h3>
+<p>When will a stable release include the return by reference fixes?</p>
+</section>
+<section>
+<h3>[2006-07-17 12:04 UTC] koto at webworkers dot pl</h3>
+<p>Is there any progress in releasing the next version of the package with CVS patches?</p>
+</section>
+<section>
+<h3>[2006-12-20 17:22 UTC] davhana at hotmail dot com</h3>
+<p>Its neary 2007 and the problem still exists..... Is this problem going to be fixed or is this package dead? Will someone please update the status of this package.</p>
+</section>
+<section>
+<h3>[2007-01-13 14:23 UTC] rob at someplace dot com</h3>
+<p>This problem isn&#039;t solved yet:<br>
+If I try to use the mail_queue package (on PHP 5.2) the following two notices still appear:</p>
+<p>Notice: Only variable references should be returned by reference in C:\Program Files\PHP\PEAR\Mail\mime.php on line 320</p>
+<p>Notice: Only variable references should be returned by reference in C:\Program Files\PHP\PEAR\Mail\mime.php on line 593</p>
+</section>
+<section>
+<h3>[2007-02-13 21:17 UTC] adul at shadow-lands dot net</h3>
+<p>I used the below work around to get it working for me. I am going to move away from mail mime as I have found a better package to use.</p>
+<p>For those of you still having issues try out swiftmailer.</p>
+<p>http://www.swiftmailer.org</p>
+<p>&quot;I found some more info and a (kludgy) workaround for this issue.</p>
+<p>Each of the four problematic lines contains a statement in the form<br>
+&quot;return new SomeClass()&quot;. For some reason you cannot return a<br>
+pointer to a newly created instance since PHP 4.4.0 (there is some<br>
+documentation on that in the PHP release notes).</p>
+<p>the kludy workaround: replace the &quot;return new SomeClass()&quot;<br>
+statement by these two lines:</p>
+<p>$newObj =&amp; new SomeClass();<br>
+return $newObj;</p>
+<p>Wel, what can I say? PHP is a messy language :)&quot;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

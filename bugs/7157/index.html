@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7157</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #7157</h1>
+<p>__autoload not called for getLink()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-03-19 00:38 UTC</td></tr>
+<tr><th>From</th><td>cuppett at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-03-19 00:38 UTC] cuppett at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+If a custom __autoload function is provided in PHP 5.1.2 it appears to get called just fine by DB_DataObjects as long as the first reference to a particular class isn&#039;t happening inside of the -&gt;getLink member function.</p>
+<p>__autoload is correctly utilized when instantiating a new object; however, when instantiation is implicit (getLink) it is not called correctly.</p>
+<p>Test script:<br>
+---------------<br>
+In the following code:</p>
+<p>$session = $request-&gt;getSession();<br>
+          <br>
+if ($ticket = $user-&gt;getLink(&#039;id&#039;, &#039;Ticket&#039;, &#039;submitter&#039;))<br>
+{...}</p>
+<p>if $user is another DB_DataObject that has already been retrieved (via find) he will properly autoload.  However, Ticket will fail to autoload.</p>
+<p>In order to make this work, prior to the conditional it is necessary to add something arbitrary such as:</p>
+<p>$ticket = new DataObjects_Ticket;</p>
+<p>And then just override it in the conditional with $user-&gt;getLink(...).</p>
+<p>Expected result:<br>
+----------------<br>
+You would expect no problems from using the API in this way.  If factory fails, custom __autoload should be last resort and be called per language spec.</p>
+<p>Actual result:<br>
+--------------<br>
+The following is what is observed:</p>
+<p>DataObjects_User: fetchrow: users DONE<br>
+DataObjects_User: find: DONE<br>
+DataObjects_User: ERROR: factory could not find class from Ticket<br>
+DataObjects_User: ERROR: getLink:Could not find class for row id, table Ticket</p>
+<p>with some simple echo commands in the custom __autoload function it is easy to observe that the fetch or new() calls trigger __autoload but that getLink() does not.</p>
+</section>
+<section>
+<h3>[2006-03-20 19:31 UTC] cuppett at gmail dot com</h3>
+<p>Should I use 5.1.x snapshot or 6.0-dev?</p>
+</section>
+<section>
+<h3>[2006-03-20 23:34 UTC] cuppett at gmail dot com</h3>
+<p>Have tried this with latest 5.1.x snapshot:</p>
+<p>php5.1-200603202130</p>
+<p>with same results.</p>
+</section>
+<section>
+<h3>[2006-03-21 17:57 UTC] cuppett at gmail dot com</h3>
+<p>Have created reproducible example.  Documenting it here and then will attempt to find where to open a PHP bug.</p>
+<p>Recreated under:</p>
+<p>PHP 5.1.3RC2-dev (cli) (built: Mar 21 2006 10:50:11)<br>
+5.1-200603211530</p>
+<p>________START DATABASE________</p>
+<p>DROP TABLE IF EXISTS `users`;<br>
+CREATE TABLE `users` (<br>
+  `id` bigint(20) NOT NULL auto_increment,<br>
+  `username` varchar(15) NOT NULL default &#039;&#039;,<br>
+  `password` varchar(15) NOT NULL default &#039;&#039;,<br>
+  PRIMARY KEY  (`id`)<br>
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;</p>
+<p>--<br>
+-- Table structure for table `tickets`<br>
+--</p>
+<p>DROP TABLE IF EXISTS `tickets`;<br>
+CREATE TABLE `tickets` (<br>
+  `id` bigint(20) NOT NULL auto_increment,<br>
+  `subject` varchar(25) NOT NULL default &#039;&#039;,<br>
+  `submitter` bigint(20) default NULL,<br>
+  PRIMARY KEY  (`id`),<br>
+  KEY `submitter` (`submitter`),<br>
+  CONSTRAINT `tickets_ibfk_1` FOREIGN KEY (`submitter`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE<br>
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;</p>
+<p>INSERT INTO `users` VALUES (1,&#039;cuppett&#039;,&#039;t3st&#039;);<br>
+INSERT INTO `tickets` VALUES (1,&#039;Test tick 1&#039;,1),(2,&#039;Test tick 2&#039;,1),(3,&#039;Test tick 3&#039;,1);</p>
+<p>________END DATABASE________</p>
+<p>____________START OF INDEX.PHP______________<br>
+&lt;?php</p>
+<p>require(&quot;DB.php&quot;);</p>
+<p>define(&#039;DB_DATAOBJECT_NO_OVERLOAD&#039;,0);<br>
+	<br>
+	$options = &amp;PEAR::getStaticProperty(&#039;DB_DataObject&#039;,&#039;options&#039;);<br>
+	$options = array(<br>
+	    &#039;database&#039;           =&gt; &#039;mysql://testuser:t3st@localhost/test&#039;,<br>
+	    &#039;require_prefix&#039;     =&gt; &#039;includes/&#039;,<br>
+	    &#039;class_prefix&#039;       =&gt; &#039;DataObjects_&#039;,<br>
+		&#039;quote_identifiers&#039;  =&gt; &#039;1&#039;<br>
+	);<br>
+	<br>
+	require(&quot;DB/DataObject.php&quot;);<br>
+	<br>
+	DB_DataObject::debugLevel(5);	  // Turns on full debugging of SQL generated and results.</p>
+<p>?&gt;<br>
+&lt;HTML&gt;<br>
+&lt;HEAD&gt;<br>
+   &lt;TITLE&gt;__autoload Bug&lt;/TITLE&gt;<br>
+&lt;/HEAD&gt;<br>
+&lt;BODY&gt;<br>
+&lt;?php<br>
+     $user = new DataObjects_User;<br>
+     $user-&gt;username = cuppett;<br>
+     if ($user-&gt;find(true)) {<br>
+         if ($ticket = $user-&gt;getLink(&quot;id&quot;, &quot;Ticket&quot;, &quot;submitter&quot;))<br>
+         {<br>
+             echo &quot;Found everything just fine.&quot;;<br>
+         }<br>
+     }<br>
+?&gt;</p>
+<p>&lt;/BODY&gt;<br>
+&lt;?php<br>
+	function __autoload($className)<br>
+	{<br>
+		echo &quot;Trying to find class: &quot; . $className . &quot;\n&lt;br&gt;&quot;;<br>
+		$className = strtolower($className);<br>
+		if (file_exists(&quot;includes/&quot; . $className . &quot;.php&quot;))<br>
+		{<br>
+			echo &quot;Found in includes.\n&lt;br&gt;&quot;;<br>
+			include(&quot;includes/&quot; . $className . &quot;.php&quot;);<br>
+		}<br>
+	}	<br>
+?&gt;<br>
+____________END OF INDEX.PHP______________<br>
+____________START OF DATAOBJECTS_USER.PHP______________<br>
+&lt;?php<br>
+class DataObjects_User extends  DB_DataObject {<br>
+      <br>
+    var $__table=&#039;users&#039;;        <br>
+    var $id; 		<br>
+    var $username;<br>
+    var $password;<br>
+		    <br>
+    // Schema definition for the object<br>
+    <br>
+    /* Static get */<br>
+    function staticGet($k,$v=NULL) { return DB_DataObject::staticGet(&#039;DataObjects_User&#039;,$k,$v); }<br>
+  <br>
+    // now define your table structure.<br>
+    // key is column name, value is type<br>
+    function table() {<br>
+        return array(<br>
+            &#039;id&#039;         =&gt; DB_DATAOBJECT_INT,<br>
+            &#039;username&#039;   =&gt; DB_DATAOBJECT_STR,<br>
+            &#039;password&#039;   =&gt; DB_DATAOBJECT_STR<br>
+        );<br>
+    }<br>
+    <br>
+    // now define the keys.<br>
+    function keys() {<br>
+        return array(&#039;id&#039;);<br>
+    }<br>
+}<br>
+?&gt;<br>
+____________END OF DATAOBJECTS_USER.PHP______________<br>
+____________START OF DATAOBJECTS_TICKET.PHP______________<br>
+&lt;?php<br>
+class DataObjects_Ticket extends  DB_DataObject {<br>
+        <br>
+    var $__table=&#039;tickets&#039;;        <br>
+    var $id; 		<br>
+    var $submitter;<br>
+    var $subject;<br>
+		    <br>
+    // Schema definition for the object<br>
+    <br>
+    /* Static get */<br>
+    function staticGet($k,$v=NULL) { return DB_DataObject::staticGet(&#039;DataObjects_Ticket&#039;,$k,$v); }<br>
+  <br>
+    // now define your table structure.<br>
+    // key is column name, value is type<br>
+    function table() {<br>
+        return array(<br>
+            &#039;id&#039;          =&gt; DB_DATAOBJECT_INT,<br>
+            &#039;submitter&#039;   =&gt; DB_DATAOBJECT_INT,<br>
+			&#039;subject&#039;     =&gt; DB_DATAOBJECT_STR<br>
+        );<br>
+    }<br>
+    <br>
+    // now define the keys.<br>
+    function keys() {<br>
+        return array(&#039;id&#039;);<br>
+    }<br>
+}<br>
+?&gt;<br>
+____________END OF DATAOBJECTS_TICKET.PHP______________</p>
+</section>
+<section>
+<h3>[2006-03-21 18:00 UTC] cuppett at gmail dot com</h3>
+<p>Output from the sample code:</p>
+<p>Trying to find class: DataObjects_User<br>
+Found in includes.<br>
+DataObjects_User: find: 1<br>
+DataObjects_User: CONNECT: Checking for database database_ in options<br>
+DataObjects_User: CONNECT: NEW CONNECTION<br>
+DataObjects_User: CONNECT: mysql://testuser:t3st@localhost/test e99174a55dfff52a26d46fb4e606d082<br>
+DataObjects_User: CONNECT: a:1:{s:32:&quot;e99174a55dfff52a26d46fb4e606d082&quot;;O:8:&quot;DB_mysql&quot;:8:{s:10:&quot;autocommit&quot;;b:1;s:8:&quot;dbsyntax&quot;;s:5:&quot;mysql&quot;;s:3:&quot;dsn&quot;;a:9:{s:7:&quot;phptype&quot;;s:5:&quot;mysql&quot;;s:8:&quot;dbsyntax&quot;;s:5:&quot;mysql&quot;;s:8:&quot;username&quot;;s:8:&quot;testuser&quot;;s:8:&quot;password&quot;;s:4:&quot;t3st&quot;;s:8:&quot;protocol&quot;;s:3:&quot;tcp&quot;;s:8:&quot;hostspec&quot;;s:9:&quot;localhost&quot;;s:4:&quot;port&quot;;b:0;s:6:&quot;socket&quot;;b:0;s:8:&quot;database&quot;;s:4:&quot;test&quot;;}s:8:&quot;features&quot;;a:7:{s:5:&quot;limit&quot;;s:5:&quot;alter&quot;;s:8:&quot;new_link&quot;;s:5:&quot;4.2.0&quot;;s:7:&quot;numrows&quot;;b:1;s:8:&quot;pconnect&quot;;b:1;s:7:&quot;prepare&quot;;b:0;s:3:&quot;ssl&quot;;b:0;s:12:&quot;transactions&quot;;b:1;}s:9:&quot;fetchmode&quot;;i:1;s:22:&quot;fetchmode_object_class&quot;;s:8:&quot;stdClass&quot;;s:7:&quot;options&quot;;a:8:{s:16:&quot;result_buffering&quot;;i:500;s:10:&quot;persistent&quot;;b:0;s:3:&quot;ssl&quot;;b:0;s:5:&quot;debug&quot;;i:0;s:14:&quot;seqname_format&quot;;s:6:&quot;%s_seq&quot;;s:8:&quot;autofree&quot;;b:0;s:11:&quot;portability&quot;;i:0;s:8:&quot;optimize&quot;;s:11:&quot;performance&quot;;}s:13:&quot;was_connected&quot;;b:1;}}<br>
+DataObjects_User: QUERY: SELECT *<br>
+FROM `users`</p>
+<p>WHERE ( `users`.`username` = &#039;cuppett&#039; )</p>
+<p>DataObjects_User: query: QUERY DONE IN 0.00091886520385742 seconds<br>
+DataObjects_User: RESULT: O:9:&quot;DB_result&quot;:11:{s:8:&quot;autofree&quot;;b:0;s:3:&quot;dbh&quot;;O:8:&quot;DB_mysql&quot;:8:{s:10:&quot;autocommit&quot;;b:1;s:8:&quot;dbsyntax&quot;;s:5:&quot;mysql&quot;;s:3:&quot;dsn&quot;;a:9:{s:7:&quot;phptype&quot;;s:5:&quot;mysql&quot;;s:8:&quot;dbsyntax&quot;;s:5:&quot;mysql&quot;;s:8:&quot;username&quot;;s:8:&quot;testuser&quot;;s:8:&quot;password&quot;;s:4:&quot;t3st&quot;;s:8:&quot;protocol&quot;;s:3:&quot;tcp&quot;;s:8:&quot;hostspec&quot;;s:9:&quot;localhost&quot;;s:4:&quot;port&quot;;b:0;s:6:&quot;socket&quot;;b:0;s:8:&quot;database&quot;;s:4:&quot;test&quot;;}s:8:&quot;features&quot;;a:7:{s:5:&quot;limit&quot;;s:5:&quot;alter&quot;;s:8:&quot;new_link&quot;;s:5:&quot;4.2.0&quot;;s:7:&quot;numrows&quot;;b:1;s:8:&quot;pconnect&quot;;b:1;s:7:&quot;prepare&quot;;b:0;s:3:&quot;ssl&quot;;b:0;s:12:&quot;transactions&quot;;b:1;}s:9:&quot;fetchmode&quot;;i:1;s:22:&quot;fetchmode_object_class&quot;;s:8:&quot;stdClass&quot;;s:7:&quot;options&quot;;a:8:{s:16:&quot;result_buffering&quot;;i:500;s:10:&quot;persistent&quot;;b:0;s:3:&quot;ssl&quot;;b:0;s:5:&quot;debug&quot;;i:0;s:14:&quot;seqname_format&quot;;s:6:&quot;%s_seq&quot;;s:8:&quot;autofree&quot;;b:0;s:11:&quot;portability&quot;;i:0;s:8:&quot;optimize&quot;;s:11:&quot;performance&quot;;}s:13:&quot;was_connected&quot;;b:1;}s:9:&quot;fetchmode&quot;;i:1;s:22:&quot;fetchmode_object_class&quot;;s:8:&quot;stdClass&quot;;s:11:&quot;limit_count&quot;;N;s:10:&quot;limit_from&quot;;N;s:10:&quot;parameters&quot;;a:0:{}s:5:&quot;query&quot;;s:79:&quot;SELECT *<br>
+FROM `users`</p>
+<p>WHERE ( `users`.`username` = &#039;cuppett&#039; )</p>
+<p>&quot;;s:6:&quot;result&quot;;i:0;s:11:&quot;row_counter&quot;;N;s:9:&quot;statement&quot;;N;}<br>
+DataObjects_User: find: CHECK autofetchd 1<br>
+DataObjects_User: find: ABOUT TO AUTOFETCH<br>
+DataObjects_User: FETCH: a:3:{s:2:&quot;id&quot;;s:1:&quot;1&quot;;s:8:&quot;username&quot;;s:7:&quot;cuppett&quot;;s:8:&quot;password&quot;;s:4:&quot;t3st&quot;;}<br>
+DataObjects_User: fetchrow LINE: id = 1<br>
+DataObjects_User: fetchrow LINE: username = cuppett<br>
+DataObjects_User: fetchrow LINE: password = t3st<br>
+DataObjects_User: fetchrow: users DONE<br>
+DataObjects_User: find: DONE<br>
+DataObjects_User: ERROR: factory could not find class from Ticket<br>
+DataObjects_User: ERROR: getLink:Could not find class for row id, table Ticket</p>
+</section>
+<section>
+<h3>[2006-03-23 13:38 UTC] cuppett at gmail dot com</h3>
+<p>I would recommend a change that factory fall back on attempting to utilize the &quot;new&quot; call as a last resort such that __autoload behavior can take place; however, the changes recommended worked out for me.  I really appreciate all the help and I hope that this bug proves to be a good use case user error example.  Am closing this bug.</p>
+<p>Here was the updated index.php:<br>
+&lt;?php</p>
+<p>require(&quot;DB.php&quot;);</p>
+<p>define(&#039;DB_DATAOBJECT_NO_OVERLOAD&#039;,0);<br>
+	<br>
+	$options = &amp;PEAR::getStaticProperty(&#039;DB_DataObject&#039;,&#039;options&#039;);<br>
+	$options = array(<br>
+	    &#039;database&#039;           =&gt; &#039;mysql://testuser:t3st@localhost/test&#039;,<br>
+	    &#039;require_prefix&#039;     =&gt; &#039;includes/&#039;,<br>
+	    &#039;class_prefix&#039;       =&gt; &#039;DataObjects_&#039;,<br>
+        &#039;class_location&#039;    =&gt;  dirname(__FILE__).&#039;/includes/DataObjects_%s.php&#039;,<br>
+		&#039;quote_identifiers&#039;  =&gt; &#039;1&#039;<br>
+	);<br>
+	<br>
+	require(&quot;DB/DataObject.php&quot;);<br>
+	<br>
+	DB_DataObject::debugLevel(5);	  // Turns on full debugging of SQL generated and results.</p>
+<p>?&gt;<br>
+&lt;HTML&gt;<br>
+&lt;HEAD&gt;<br>
+   &lt;TITLE&gt;__autoload Bug&lt;/TITLE&gt;<br>
+&lt;/HEAD&gt;<br>
+&lt;BODY&gt;<br>
+&lt;?php<br>
+     $user = DB_DataObject::factory(&quot;User&quot;);<br>
+     $user-&gt;username = cuppett;<br>
+     if ($user-&gt;find(true)) {<br>
+         if ($ticket = $user-&gt;getLink(&quot;id&quot;, &quot;Ticket&quot;, &quot;submitter&quot;))<br>
+         {<br>
+             echo &quot;Found everything just fine.&quot;;<br>
+         }<br>
+     }<br>
+?&gt;</p>
+<p>&lt;/BODY&gt;<br>
+&lt;?php<br>
+	function __autoload($className)<br>
+	{<br>
+		echo &quot;Trying to find class: &quot; . $className . &quot;\n&lt;br&gt;&quot;;<br>
+		$className = strtolower($className);<br>
+		if (file_exists(&quot;includes/&quot; . $className . &quot;.php&quot;))<br>
+		{<br>
+			echo &quot;Found in includes.\n&lt;br&gt;&quot;;<br>
+			include(&quot;includes/&quot; . $className . &quot;.php&quot;);<br>
+		}<br>
+	}	<br>
+?&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

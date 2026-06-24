@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6618</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_NNTP/index.html">Net_NNTP</a> &#187; Bug #6618</h1>
+<p>Undefined variable or offset</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-29 15:09 UTC</td></tr>
+<tr><th>From</th><td>struchkov at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>heino</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_NNTP/index.html">Net_NNTP</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-29 15:09 UTC] struchkov at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+In my test there are many php-messages like this:<br>
+1)<br>
+PHP Notice:  Undefined variable: groups in /usr/share/pear/Net/NNTP/Protocol/Client.php on line 652</p>
+<p>and</p>
+<p>2)<br>
+PHP Notice:  Undefined offset:  1 in /usr/share/pear/Net/NNTP/Protocol/Client.php on line 649<br>
+PHP Notice:  Undefined offset:  2 in /usr/share/pear/Net/NNTP/Protocol/Client.php on line 649</p>
+<p>I think that this code decide situation above.<br>
+1)<br>
+            case 215: // RFC2980: &#039;information follows&#039;<br>
+                $data = $this-&gt;_getTextResponse();<br>
+                if (PEAR::isError($data)) {<br>
+                    return $data;<br>
+                }<br>
+                $groups=array();<br>
+                foreach($data as $line) {<br>
+                    preg_match(&quot;/^(.*?)\s(.*?$)/&quot;, trim($line), $matches);<br>
+                    $groups[$matches[1]] = (string) $matches[2];<br>
+                }</p>
+<p>return $groups;<br>
+2)</p>
+<p>foreach($data as $line) <br>
+                {<br>
+                    if (preg_match(&quot;/^(.*?)\s(.*?$)/&quot;, trim($line), $matches))<br>
+                          $groups[$matches[1]] = (string) $matches[2];<br>
+                }</p>
+</section>
+<section>
+<h3>[2006-02-01 12:30 UTC] heino at php dot net</h3>
+<p>Which version of Net_NNTP are you using? My guess would be v1.0.1.</p>
+<p>1)<br>
+The first notice should already be fixed - at least in the current beta release (v1.3.2).</p>
+<p>2)<br>
+As for the second notice it&#039;s rather hard to find a possible bug without some debugging data. A quallified guess would be that your server has problems with the wildcard parameter, or the server simply doesnøt handle the &#039;LIST NEWSGROUPS&#039; command correctly...</p>
+</section>
+<section>
+<h3>[2006-02-01 15:06 UTC] struchkov at gmail dot com</h3>
+<p>Hi Heino!</p>
+<p>I will try to upgrade packege manual, because command &#039;pear updgrade-all&#039; do nothing.<br>
+After weekend I email you list of strange servers.<br>
+There are a lot of servers in my program make this notices.</p>
+</section>
+<section>
+<h3>[2006-02-01 15:30 UTC] heino at php dot net</h3>
+<p>I believe &#039;pear upgrade Net_NNTP-beta&#039; should do the trick ;-)</p>
+</section>
+<section>
+<h3>[2006-02-01 15:40 UTC] heino at php dot net</h3>
+<p>Looking more closely I saw what looks like a minor typo.</p>
+<p>Try to replace the line</p>
+<p>&quot;if (preg_match(&quot;/^(.*?)\s(.*?$)/&quot;, trim($line), $matches))&quot;</p>
+<p>with</p>
+<p>&quot;if (preg_match(&quot;/^(.*?)\s(.*?)$/&quot;, trim($line), $matches))&quot;</p>
+<p>The $ character should of cause be located at the end of the regexp...</p>
+</section>
+<section>
+<h3>[2006-02-05 19:10 UTC] struchkov at gmail dot com</h3>
+<p>I do that you advise me and upgrade to beta.<br>
+But now I have error<br>
+Undefined variable: debug in /usr/share/pear/Net/NNTP/Protocol/Client.php on line 343</p>
+<p>You must use if (isset($debug) &amp;&amp; $debug)</p>
+</section>
+<section>
+<h3>[2006-02-05 19:22 UTC] struchkov at gmail dot com</h3>
+<p>I found test-case for next notice:</p>
+<p>PHP Notice:  Undefined offset:  1 in /usr/share/pear/Net/NNTP/Protocol/Client.php on line 1504<br>
+PHP Notice:  Undefined offset:  2 in /usr/share/pear/Net/NNTP/Protocol/Client.php on line 1504</p>
+<p>Try to use &#039;infa.abo.fi&#039; as nntp-server and do &#039;getDescriptions&#039; command.</p>
+<p>My fix using &#039; if (preg_match(....&#039; in this case is helped.</p>
+</section>
+<section>
+<h3>[2006-02-05 21:51 UTC] heino at php dot net</h3>
+<p>The NNTP daemon at &#039;infa.abo.fi&#039; sends empty fields for groups without descriptions. This is semi-non-standard, and broke the the regexp, since the trim() also removing the whitespace between the fields, because of the missing description...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

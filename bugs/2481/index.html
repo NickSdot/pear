@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2481</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #2481</h1>
+<p>multipart not detected if enclosed in double quotes</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-10-08 05:41 UTC</td></tr>
+<tr><th>From</th><td>vik_agrawal at hotmail dot com</td></tr>
+<tr><th>Assigned</th><td>sean</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-08 05:41 UTC] vik_agrawal at hotmail dot com</h3>
+<p>Description:<br>
+------------<br>
+The function in mimeDecode.php of Mail_Mime-1.2.1 pear classes</p>
+<p>function _parseHeaderValue($input)<br>
+    {</p>
+<p>if (($pos = strpos($input, &#039;;&#039;)) !== false) {</p>
+<p>$return[&#039;value&#039;] = trim(substr($input, 0, $pos));<br>
+			$input = trim(substr($input, $pos+1));</p>
+<p>if (strlen($input) &gt; 0) {</p>
+<p>// This splits on a semi-colon, if there&#039;s no preceeding backslash<br>
+                // Can&#039;t handle if it&#039;s in double quotes however. (Of course anyone<br>
+                // sending that needs a good slap).<br>
+                $parameters = preg_split(&#039;/\s*(?&lt;!\\\\);\s*/i&#039;, $input);</p>
+<p>for ($i = 0; $i &lt; count($parameters); $i++) {<br>
+                    $param_name  = substr($parameters[$i], 0, $pos = strpos($parameters[$i], &#039;=&#039;));<br>
+                    $param_value = substr($parameters[$i], $pos + 1);<br>
+                    if ($param_value[0] == &#039;&quot;&#039;) {<br>
+                        $param_value = substr($param_value, 1, -1);<br>
+                    }<br>
+                    $return[&#039;other&#039;][$param_name] = $param_value;<br>
+                    $return[&#039;other&#039;][strtolower($param_name)] = $param_value;<br>
+                }<br>
+            }<br>
+        } else {<br>
+            $return[&#039;value&#039;] = trim($input);<br>
+        }</p>
+<p>return $return;<br>
+    }</p>
+<p>do not resolve multipart in the content-type header of email body if the multipart is enclosed in double quotes for example:</p>
+<p>Content-Type: multipart/related;<br>
+	type=&quot;multipart/alternative&quot;;<br>
+	boundary=&quot;----=_NextPart_000_002F_01C4AB07.C075C180&quot;</p>
+<p>for solution</p>
+<p>change the function to</p>
+<p>function _parseHeaderValue($input)<br>
+    {</p>
+<p>if (($pos = strpos($input, &#039;;&#039;)) !== false) {</p>
+<p>$return[&#039;value&#039;] = trim(substr($input, 0, $pos));<br>
+			$input = trim(substr($input, $pos+1));</p>
+<p>if(eregi(&quot;content-type&quot;, $input))<br>
+			{<br>
+				$input = str_replace(&quot;\&quot;&quot;, &quot;&quot;, $input);<br>
+			}<br>
+            if (strlen($input) &gt; 0) {</p>
+<p>// This splits on a semi-colon, if there&#039;s no preceeding backslash<br>
+                // Can&#039;t handle if it&#039;s in double quotes however. (Of course anyone<br>
+                // sending that needs a good slap).<br>
+                $parameters = preg_split(&#039;/\s*(?&lt;!\\\\);\s*/i&#039;, $input);</p>
+<p>for ($i = 0; $i &lt; count($parameters); $i++) {<br>
+                    $param_name  = substr($parameters[$i], 0, $pos = strpos($parameters[$i], &#039;=&#039;));<br>
+                    $param_value = substr($parameters[$i], $pos + 1);<br>
+                    if ($param_value[0] == &#039;&quot;&#039;) {<br>
+                        $param_value = substr($param_value, 1, -1);<br>
+                    }<br>
+                    $return[&#039;other&#039;][$param_name] = $param_value;<br>
+                    $return[&#039;other&#039;][strtolower($param_name)] = $param_value;<br>
+                }<br>
+            }<br>
+        } else {<br>
+            $return[&#039;value&#039;] = trim($input);<br>
+        }</p>
+<p>return $return;<br>
+    }</p>
+<p>or do some changes in</p>
+<p>if ($param_value[0] == &#039;&quot;&#039;) {<br>
+                        $param_value = substr($param_value, 1, -1);<br>
+                    }</p>
+</section>
+<section>
+<h3>[2004-10-08 05:45 UTC] vik_agrawal at hotmail dot com</h3>
+<p>no comment. just changed the title.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

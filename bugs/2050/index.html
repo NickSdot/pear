@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2050</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Queue/index.html">Mail_Queue</a> &#187; Bug #2050</h1>
+<p>Messages get sent multiple times</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-08-04 09:35 UTC</td></tr>
+<tr><th>From</th><td>arthur at movenext dot nl</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Queue/index.html">Mail_Queue</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-04 09:35 UTC] arthur at movenext dot nl</h3>
+<p>Description:<br>
+------------<br>
+When two scripts use the mail queue to send messages at the same time, some emails are sent twice. This happens when for example two scripts initiated by a crontab on different servers try to send messages from the same mail queue.</p>
+<p>I am using a Postgres database as container and &#039;mail&#039; as mail driver.</p>
+<p>Reproduce code:<br>
+---------------<br>
+require_once &quot;Mail/Queue.php&quot;;<br>
+$mail_queue =&amp; new Mail_Queue($db_options, $mail_options);<br>
+/* really sending the messages */<br>
+$return = $mail_queue-&gt;sendMailsInQueue($this-&gt;_SETTING[&#039;queue&#039;][&#039;max_mails&#039;]);<br>
+print_r(&quot;Status: $return&quot;);</p>
+</section>
+<section>
+<h3>[2005-05-18 20:20 UTC] realmlord at hotmail dot com</h3>
+<p>I reproduce using FreeBSD and MySQL db</p>
+</section>
+<section>
+<h3>[2005-08-19 01:19 UTC] ronin_san at rednoize dot com</h3>
+<p>I have figured out something simmilar when using the smtp driver. I get up to 4 mails per recipient. This happens when I use a crontab to send the mails. The enqueueing takes some time, when there are hundrets or more of mails to send. Now, that is might the problem: When the &quot;sending&quot; script is called, while the enqueing script is still running, emails are sent as often, as the enqeuing takes its time. No matter if the deleteAfterSend set to true in the put method.</p>
+<p>A solution is to run the crontabs not at the same time. ie run the enqueue script just 4 times a day and the sending script just a few minutes befor that. If the enqueueing takes no longer than 6 hours, it will work fine.</p>
+<p>maybe I have missed something,... but I wasn&#039;t able to fiugure it out.</p>
+</section>
+<section>
+<h3>[2006-03-03 15:04 UTC] ben at nlcweb dot com</h3>
+<p>I am having the same trouble.  I too think it is related to my crontab.  I have ~2000 emails to send, done in 200 email batches which are sent every 5 minutes.  Apparently, if there is an SMTP problem and the script hangs, the crontab runs the script again (after 5 minutes) and it queues up another copy of the email, so some of my recipients are receiving up to 8 copies.</p>
+</section>
+<section>
+<h3>[2006-03-03 15:20 UTC] pedro dot vera at gmail dot com</h3>
+<p>We just got burned by this bug. Ours was set to send 2500 messages every 5 minutes. We sent 500 on the first batch, then about 1200 in the second. A bunch of people got three messages instead of one. Argh.</p>
+</section>
+<section>
+<h3>[2006-03-08 14:14 UTC] benny dot butler at americanfamilyfunds dot com</h3>
+<p>Don&#039;t blame pear for this one.  I have a a mailing script that sends out 14k emails in the morning.  It just uses mail() to do it, and it has sent up to 30 to the same person (always if the server load gets to high.)</p>
+<p>I originally had it going as fast as it could, but that created a lot of dupes, then I had it throttled back to do batches, but some people would still get 2-3.  Since then I have created another table in mysql to keep up with that day&#039;s log.  I select my email out of one table, then delete it out of that table, then check my log table to see if it&#039;s already been sent, and if it hasn&#039;t send it.  If it has, move on. The the loop is while(1){mailscript;wait(1)}</p>
+<p>This REALLY slows down how I can process, especially since I have over a million rows in the log, but no dupes since I did this.  Well, there was one other step.  I also told it, each time it loops, to check the 5min server load.  If it&#039;s over 4, I set the wait to be 20... that keeps the server load down.</p>
+<p>THe biggest cause that I&#039;ve found for the whole thing is DNS queries taking to long.</p>
+</section>
+<section>
+<h3>[2006-03-09 21:53 UTC] ben dot litton at gmail dot com</h3>
+<p>I may have a solution. I opted for a redundant solution. First, in your cron script, try this...</p>
+<p>#!/usr/bin/php<br>
+&lt;?php<br>
+$filename = &#039;/whatever/path/you/want/mail.lock&#039;;<br>
+$fp = @fopen($filename, &#039;x&#039;);<br>
+if (!$fp)<br>
+     exit;<br>
+//run mail daemon here.<br>
+     fclose($fp);<br>
+unlink($filename);<br>
+?&gt;</p>
+<p>If the lockfile is absent, it runs, if it&#039;s there, it&#039;s already running, and it aborts. This begs the question, what if the cron script dies during the run and the lockfile remains?</p>
+<p>I modified the PEAR code.</p>
+<p>1. add a column called ptime to your table, default to null, it&#039;s a datetime.</p>
+<p>2. We use db as our container, so I added these to the container db.php file.</p>
+<p>In the constructor, ~line 65</p>
+<p>/**<br>
+     * @var string one day ago, this is compared to current processing time to prevent duplicate e-mails<br>
+     */<br>
+    var $olddate;</p>
+<p>/**<br>
+     * @var string this is the timestamp of when this class was initialized. It is inserted into the database under ptime as the process time<br>
+     */<br>
+    var $ptime;</p>
+<p>The _preload function ~line 125:</p>
+<p>function _preload()<br>
+    {<br>
+        $query = sprintf(&quot;SELECT * FROM %s WHERE sent_time IS NULL<br>
+                            AND (ptime IS NULL or ptime &lt; %s) <br>
+                            AND try_sent &lt; %d<br>
+                            AND %s &gt; time_to_send<br>
+                            ORDER BY time_to_send&quot;,<br>
+                         $this-&gt;mail_table,<br>
+                         $this-&gt;db-&gt;quote($this-&gt;olddate),<br>
+                         $this-&gt;try,<br>
+                         $this-&gt;db-&gt;quote(date(&quot;Y-m-d H:i:s&quot;))<br>
+                         );<br>
+        $query = $this-&gt;db-&gt;modifyLimitQuery($query, $this-&gt;offset, $this-&gt;limit);<br>
+        if (DB::isError($query)) {<br>
+            return new Mail_Queue_Error(MAILQUEUE_ERROR_QUERY_FAILED,<br>
+                $this-&gt;pearErrorMode, E_USER_ERROR, __FILE__, __LINE__,<br>
+                &#039;DB::modifyLimitQuery failed - &#039;.$query-&gt;toString());<br>
+        }<br>
+        $res = $this-&gt;db-&gt;query($query);<br>
+        if (DB::isError($res)) {<br>
+            return new Mail_Queue_Error(MAILQUEUE_ERROR_QUERY_FAILED,<br>
+                $this-&gt;pearErrorMode, E_USER_ERROR, __FILE__, __LINE__,<br>
+                &#039;DB::query failed - &quot;&#039;.$query.&#039;&quot; - &#039;.$res-&gt;toString());<br>
+        }</p>
+<p>$this-&gt;_last_item = 0;<br>
+        $this-&gt;queue_data = array(); //reset buffer<br>
+        $id_increment = 0;<br>
+        $id_list = array();</p>
+<p>while ($row = $res-&gt;fetchRow(DB_FETCHMODE_ASSOC)) {<br>
+            if (!is_array($row)) {<br>
+                return new Mail_Queue_Error(MAILQUEUE_ERROR_QUERY_FAILED,<br>
+                    $this-&gt;pearErrorMode, E_USER_ERROR, __FILE__, __LINE__,<br>
+                    &#039;DB::query failed - &quot;&#039;.$query.&#039;&quot; - &#039;.$res-&gt;toString());<br>
+            }<br>
+            $this-&gt;queue_data[$this-&gt;_last_item] = new Mail_Queue_Body(<br>
+                $row[&#039;id&#039;],<br>
+                $row[&#039;create_time&#039;],<br>
+                $row[&#039;time_to_send&#039;],<br>
+                $row[&#039;sent_time&#039;],<br>
+                $row[&#039;id_user&#039;],<br>
+                $row[&#039;ip&#039;],<br>
+                $row[&#039;sender&#039;],<br>
+                $row[&#039;recipient&#039;],<br>
+                unserialize($row[&#039;headers&#039;]),<br>
+                unserialize($row[&#039;body&#039;]),<br>
+                $row[&#039;delete_after_send&#039;],<br>
+                $row[&#039;try_sent&#039;]<br>
+            );<br>
+            $id_list[$id_increment++] = $row[&#039;id&#039;];<br>
+            $this-&gt;_last_item++;<br>
+        }</p>
+<p>if (count($id_list) &gt; 0)<br>
+          {<br>
+            $query = sprintf(&quot;update %s  set ptime = %s where id in (%s)&quot;, $this-&gt;mail_table,  $this-&gt;db-&gt;quote($this-&gt;ptime), implode(&#039;,&#039;,$id_list));<br>
+            $res = $this-&gt;db-&gt;query($query);<br>
+            if (DB::isError($res)) {<br>
+              return new Mail_Queue_Error(MAILQUEUE_ERROR_QUERY_FAILED,<br>
+                                          $this-&gt;pearErrorMode, E_USER_ERROR, __FILE__, __LINE__,<br>
+                                          &#039;DB::query failed - &quot;&#039;.$query.&#039;&quot; - &#039;.$res-&gt;toString());<br>
+            }<br>
+          }</p>
+<p>return true;<br>
+    }</p>
+</section>
+<section>
+<h3>[2006-09-08 23:21 UTC] ben at nlcweb dot com</h3>
+<p>Can an admin verify the above posted method?  I&#039;m having the same troubles with a client&#039;s customers receiving up to 10 duplicate copies of the same email due to this problem.  I would like to hear an update on people who have tried it or if something is in the works for the Mail Queue package...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

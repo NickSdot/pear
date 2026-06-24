@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3269</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #3269</h1>
+<p>session_regenerate_id() is run on every page request when regenid is true</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-22 13:33 UTC</td></tr>
+<tr><th>From</th><td>roehr at zilleon dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>irrelevent</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-22 13:33 UTC] roehr at zilleon dot com</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>while refacturing the init() method for the 0.14.0 release a severe bug has been introduced:</p>
+<p>When the option &quot;regenid&quot; is set to true LiveUser will call session_regenerate_id() on *each* page request thereby generating a new session id every time!</p>
+<p>This creates multiple entries in the session container and  only deletes the last one on logout. So multiple entries with valid session ids are still hanging around in the session container and the session is not destroyed correctly.</p>
+<p>Reproduce code:<br>
+---------------<br>
+LiveUser.php, lines 924-929:</p>
+<p>// Return boolean that indicates whether a auth object has been created<br>
+// or retrieved from session<br>
+if ($this-&gt;isLoggedIn()) {<br>
+    if ($this-&gt;_options[&#039;login&#039;][&#039;regenid&#039;]) {<br>
+        session_regenerate_id();<br>
+    }</p>
+<p>As the comment says this code is run whenever a user has been authenticated. But session_regenerate_id() should only be run after the FIRST login.</p>
+<p>Unfortunately, I haven&#039;t found an obvious way to determine when a login is being processed for the first time and therefore cannot supply a patch.</p>
+<p>Please fix this as soon as possible - otherwise the regenid option is causing severe problems.</p>
+<p>Thanks and best regards,<br>
+Torsten Roehr</p>
+</section>
+<section>
+<h3>[2005-01-23 20:30 UTC] smith at backendmedia dot com</h3>
+<p>Well I was under the impression that this was the actual intention? The session container should be able to handle that afaik. Obviously this is going to break things for people surfing on the site with multiple browser windows.</p>
+<p>Anyways the solution is to either leave this kind of stuff to the observers or have LiveUser default to the bahaviour requested by Tobias. Personally I have disabled the regen id for the same reasons was Tobias mentions in the bug report. So I am +1 on changing things to only regen the session id on login.</p>
+</section>
+<section>
+<h3>[2005-01-23 20:35 UTC] smith at backendmedia dot com</h3>
+<p>*blush*</p>
+<p>s/Tobias/Torsten</p>
+</section>
+<section>
+<h3>[2005-01-25 10:27 UTC] smith at backendmedia dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

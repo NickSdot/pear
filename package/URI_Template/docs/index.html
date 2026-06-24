@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URI_Template Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/URI_Template/index.html">URI_Template</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/URI_Template/docs/index.html#package-networking-uri-template-intro">Introduction</a>
+</li></ul>
+</nav>
+<p>This package contains a parser for URI Templates as defined in the URI Template draft that is currently being proposed to the IETF.</p>
+<section id="package-networking-uri-template-intro">
+<h2>Introduction</h2>
+<h3>Overview</h3>
+
+        
+
+        <p>URI Templates are strings that contain embedded variables that are
+            transformed into URIs after embedded variables are substituted.</p>
+        
+        <p>More information about URI Templates can be found at the following
+            locations:</p>
+
+        <ul>
+            <li>
+                
+                    <a href="http://bitworking.org/projects/URI-Templates/">
+                        URI Template project page
+                    </a>
+                
+            </li>
+            <li>
+                
+                    <a href="http://www.xml.com/pub/a/2005/04/06/restful.html">Constructing or Traversing URIs?</a> on XML.com
+                
+            </li>
+            <li>
+                
+                    <a href="http://blog.unto.net/work/uri-templates-draft/">DeWitt Clinton</a>
+                
+            </li>
+            <li>
+                
+                    <a href="http://www.mnot.net/blog/2006/10/04/uri_templating">Mark Nottingham</a>
+                
+            </li>
+            <li>
+                
+                    <a href="http://www.snellspace.com/wp/?p=467">James Snell</a>
+                
+            </li>
+        </ul>
+        
+        <p>In a nutshell, URI Templates allow actors to specify a certain
+            structure for URIs in order to make it possible for other actors
+            to fill the structure with concrete information later.  Joe
+            Gregorio has posted an <a href="http://bitworking.org/news/296/How-To-Do-RESTful-Partial-Updates">
+            example</a> of a possible use case.</p>
+    
+
+    <h3>Setup</h3>
+
+        
+
+        <h3>Requirements</h3>
+
+            
+
+            <p><strong>URI_Template</strong> requires <a href="http://www.php.net/">PHP 5</a>.</p>
+        
+
+        <h3>Installation</h3>
+
+            
+
+            <p>The <strong>URI_Template</strong> package can be installed
+                using the PEAR installer command <strong>pear install
+                URI_Template</strong>.</p>
+
+            <p>Alternative installation methods for situations where one has no
+                access to the <strong>pear</strong> installer command can be
+                found in the general installation
+                chapter.</p>
+        
+
+        <h3>Uninstallation</h3>
+
+            
+
+            <p>Uninstalling the package can be done with <strong>pear uninstall
+                URI_Template</strong>.</p>
+        
+    
+
+    <h3>Example</h3>
+
+        
+
+        
+            
+
+            <pre><code>&lt;?php
+require_once &quot;URI/Template.php&quot;;
+
+$values = array(&quot;a&quot; =&gt; &quot;foo&quot;, &quot;b&quot; =&gt; &quot;bar&quot;, &quot;data&quot; =&gt; &quot;10,20,30&quot;,
+                &quot;points&quot; =&gt; array(10, 20, 30), &quot;list0&quot; =&gt; array(),
+                &quot;str0&quot; =&gt; &quot;&quot;, &quot;reserved&quot; =&gt; &quot;:/?#[]@!$&amp;&#039;()*+,;=&quot;,
+                &quot;a_b&quot; =&gt; &quot;baz&quot;);
+
+$t = new URI_Template(&quot;/{-append|/|a}{-opt|data|points}{-neg|@|a}{-prefix|#|b}&quot;);
+echo $t-&gt;substitute($values); /* /foo/data#bar */
+
+$t = new URI_Template(&quot;relative/{reserved}/&quot;);
+echo $t-&gt;substitute($values); /* relative/%3A%2F%3F%23%5B%5D%40%21%24%26%27%28%29%2A%2B%2C%3B%3D/ */
+
+$t = new URI_Template(&quot;http://example.org/{foo=%25}/&quot;);
+echo $t-&gt;substitute($values); /* http://example.org/%25/ */
+
+$t = new URI_Template(&quot;http://example.org/?{-join|&amp;|a,data}&quot;);
+echo $t-&gt;substitute($values); /* http://example.org/?a=foo&amp;data=10%2C20%2C30 */
+
+$t = new URI_Template(&quot;http://example.org/?d={-listjoin|,|points}&amp;{-join|&amp;|a,b}&quot;);
+echo $t-&gt;substitute($values); /* http://example.org/?d=10,20,30&amp;a=foo&amp;b=bar */
+
+$t = new URI_Template(&quot;http://example.org/?d={-listjoin|,|list0}&amp;{-join|&amp;|foo}&quot;);
+echo $t-&gt;substitute(array()); /* http://example.org/?d=&amp; */
+
+$t = new URI_Template(&quot;http://example.org/?d={-listjoin|&amp;d=|points}&quot;);
+echo $t-&gt;substitute($values); /* http://example.org/?d=10&amp;d=20&amp;d=30 */
+
+$t = new URI_Template(&quot;http://example.org/{a}{b}/{a_b}&quot;);
+echo $t-&gt;substitute($values); /* http://example.org/foobar/baz */
+
+$t = new URI_Template(&quot;http://example.org/{a}{-prefix|/-/|a}/&quot;);
+echo $t-&gt;substitute($values); /* http://example.org/foo/-/foo/ */
+?&gt;</code></pre>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

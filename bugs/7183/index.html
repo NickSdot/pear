@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7183</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Bug #7183</h1>
+<p>&lt;a&gt; tag cannot be self-closing in text/html document</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-03-23 15:07 UTC</td></tr>
+<tr><th>From</th><td>pecl-bugs-2006 at ryandesign dot com</td></tr>
+<tr><th>Assigned</th><td>pajoye</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td>Web Site</td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Mac OS X 10.4.7 PPC</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-03-23 15:07 UTC] pecl-bugs-2006 at ryandesign dot com</h3>
+<p>Description:<br>
+------------<br>
+The source code of many (most? all?) pages on pecl.php.net <br>
+contains this near the top:</p>
+<p>That&#039;s not permissible. It must read:</p>
+<p>Doing it your way breaks Safari, which then considers the <br>
+&lt;a&gt; tag to never have been closed, and causes all normal <br>
+text throughout the rest of the page to be inside an &lt;a&gt; and <br>
+to participate in ridiculous onmouseover effects like <br>
+turning pink when you click anywhere on the page.</p>
+</section>
+<section>
+<h3>[2006-08-21 01:51 UTC] pecl-bugs-2006 at ryandesign dot com</h3>
+<p>The problem is still observed with the current version of Safari 2.0.4 (419.3) in Mac OS X 10.4.7 and also in OmniWeb 5.5b3 which also uses Apple&#039;s WebKit.</p>
+<p>I have researched the cause of the problem extensively today and can now say with certainty that it is the PECL web site which is in error, and the solution I provided in March should be applied, or you should serve your pages with the application/xml or application/xhtml+xml content type. Documents served as text/html (as the PECL web site is) may not self-close anchor tags, or any other tag whose content definition in the XHTML spec is not EMPTY. See this Firefox/Mozilla bug:</p>
+<p>https://bugzilla.mozilla.org/show_bug.cgi?id=203398</p>
+<p>See the XHTML spec, appendix C, section 3:</p>
+<p>http://www.w3.org/TR/xhtml1/#guidelines</p>
+<p>I&#039;d recommend changing the anchor tag to explicitly close, not self-close, since perhaps this is problematic for Internet Explorer on Windows, and since Mozilla does not particularly recommend using application/xhtml+xml anyway:</p>
+<p>http://www.mozilla.org/docs/web-developer/faq.html#accept</p>
+<p>Yes, there is a slight difference in behavior between Gecko and WebKit: when Gecko encounters the opening table tag, it decides to automatically close the anchor tag which had been left open, while WebKit does not do this, which is why the problem is evident in Safari and OmniWeb and not in Firefox. Whether this constitutes a WebKit bug is open to debate, since the document is not entirely valid based on its content type, so I don&#039;t know if one can expect the browser to exhibit any specific behavior. But when the OpenDarwin web server is responding again I will check if a WebKit bug has already been entered about this.</p>
+<p>As to the w3c validator validating the site, I will see about submitting this to the w3c validator mailing list so that they can display an error for this situation instead of giving it a pass.</p>
+</section>
+<section>
+<h3>[2006-08-21 11:39 UTC] pecl-bugs-2006 at ryandesign dot com</h3>
+<p>The w3c is already aware of this bug in their validator:</p>
+<p>http://www.w3.org/Bugs/Public/show_bug.cgi?id=1500</p>
+</section>
+<section>
+<h3>[2006-08-21 12:00 UTC] pecl-bugs-2006 at ryandesign dot com</h3>
+<p>The WebKit bug has also already been submitted:</p>
+<p>http://bugzilla.opendarwin.org/show_bug.cgi?id=5771</p>
+</section>
+<section>
+<h3>[2006-08-22 03:00 UTC] pecl-bugs-2006 at ryandesign dot com</h3>
+<p>So they are. Thanks for the pointer. Here are the patches:</p>
+<p>http://www.ryandesign.com/tmp/pear-7183-pearweb.patch<br>
+http://www.ryandesign.com/tmp/pear-7183-peclweb.patch</p>
+<p>I created these by searching all files for this regular expression:</p>
+<p>&lt;a\s+(id|name)[^&gt;]+/&gt;</p>
+<p>then correcting by hand. I have not tested the changes, because I don&#039;t know how to make these web sites function on my own server, but the changes are fairly straightforward.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

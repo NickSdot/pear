@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4575</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_Serializer/index.html">XML_Serializer</a> &#187; Bug #4575</h1>
+<p>_serializeObject and __sleep</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-06-11 23:58 UTC</td></tr>
+<tr><th>From</th><td>patxi at eslomas dot com</td></tr>
+<tr><th>Assigned</th><td>schst</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_Serializer/index.html">XML_Serializer</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-11 23:58 UTC] patxi at eslomas dot com</h3>
+<p>Description:<br>
+------------<br>
+I think there is an error in the _serializeObject method of XML_serializer. If the object to be serialized has a __sleep method, it is called, but its return value is not captured.</p>
+<p>In fact, you get the attributes to be serialized always with get_object_vars function, however, when __sleep method exists, it must returns an array with the name of every attribute of the object to be serialized, so you shouldn&#039;t call get_object_vars in these cases.</p>
+<p>Reproduce code:<br>
+---------------<br>
+The actual code is:<br>
+-------------------<br>
+//  check for magic function<br>
+if (method_exists($object, &#039;__sleep&#039;)) {<br>
+    $object-&gt;__sleep();<br>
+}</p>
+<p>$tmp = $this-&gt;options[XML_SERIALIZER_OPTION_LINEBREAKS];<br>
+$properties = get_object_vars($object);</p>
+<p>&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;</p>
+<p>i think it should be:<br>
+---------------------</p>
+<p>//  check for magic function<br>
+if (method_exists($object, &#039;__sleep&#039;)) {<br>
+    $properties = $object-&gt;__sleep();<br>
+}<br>
+else $properties = get_object_vars($object);</p>
+<p>$tmp = $this-&gt;options[XML_SERIALIZER_OPTION_LINEBREAKS];</p>
+</section>
+<section>
+<h3>[2005-09-29 18:25 UTC] chris at ilikeu2 dot nl</h3>
+<p>This bug is fixed incorrectly.<br>
+The __sleep() method returns an array of propertie _names_ and does not include the values.</p>
+<p>Also, I think it would be wise to call the __wakeup() afterwards.</p>
+<p>To come to the point, this is how I think the _serializeObject function should look:</p>
+<p>function _serializeObject(&amp;$object, $tagName = null, $attributes = array())<br>
+    {<br>
+        //  check for magic function<br>
+        if (method_exists($object, &#039;__sleep&#039;)) {<br>
+            $props = $object-&gt;__sleep();<br>
+            $properties = array();<br>
+            foreach($props as $prop) {<br>
+                $properties[$prop] = $object-&gt;$prop;<br>
+            }<br>
+        } else {<br>
+            $properties = get_object_vars($object);<br>
+        }<br>
+        <br>
+        if (method_exists($object, &#039;__wakeup&#039;)) {<br>
+            $object-&gt;__wakeup();<br>
+        }<br>
+        <br>
+        $tmp = $this-&gt;options[XML_SERIALIZER_OPTION_LINEBREAKS];<br>
+        if (empty($tagName)) {<br>
+            $tagName = get_class($object);<br>
+        }<br>
+        <br>
+        // typehints activated?<br>
+        if ($this-&gt;options[XML_SERIALIZER_OPTION_TYPEHINTS] === true) {<br>
+            $attributes[$this-&gt;options[XML_SERIALIZER_OPTION_ATTRIBUTE_TYPE]]  = &#039;object&#039;;<br>
+            $attributes[$this-&gt;options[XML_SERIALIZER_OPTION_ATTRIBUTE_CLASS]] =  get_class($object);<br>
+        }<br>
+        <br>
+        $string = $this-&gt;_serializeArray($properties, $tagName, $attributes);<br>
+        return $string;<br>
+    }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

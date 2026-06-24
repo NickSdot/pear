@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5811</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #5811</h1>
+<p>Referencing in addElement</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5811</th><td>Referencing in addElement</td></tr>
+<tr><th>Submitted</th><td>2005-10-28 14:26 UTC</td></tr>
+<tr><th>From</th><td>michiel at dinnersite dot nl</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.0</td></tr>
+<tr><th>OS</th><td>Linux mandrake 9.0</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-28 14:26 UTC] michiel at dinnersite dot nl</h3>
+<p>Description:<br>
+------------<br>
+Version: 3.2.5<br>
+Installation: Fairly standard (only zlib and xml support added, the rest is standard).</p>
+<p>When assinging an element that is created seperatly from QuickForm (::createElement) with addElement it creates a copy instead of a reference. This is due to the fact that the $element parameter in addElement is not passed by reference.</p>
+<p>Of course this can&#039;t be altered due to the nature of this function (also accepting string input for the addElement function). Adding a function that allows for adding by reference (addElementByReference) would be greatly appriciated.</p>
+<p>This was posted before as a bug under #80. Since the date on that post is more than two years ago I though I&#039;d post the issue up again. Note that I do not whish the addElement function to be altered but the addElementByReference function to be added.</p>
+<p>I made a custom function doing what I want to but it is a `workaround`. I&#039;d rather see a permanent solution though. The function is posted in the testscript section.</p>
+<p>Test script:<br>
+---------------<br>
+function addElementByReference(&amp;$qf, &amp;$element)<br>
+{<br>
+  $element-&gt;onQuickFormEvent(&#039;updateValue&#039;, null, $qf);<br>
+  $elementName = $element-&gt;getName();</p>
+<p>// Add the element if it is not an incompatible duplicate<br>
+  if (!empty($elementName) &amp;&amp; isset($qf-&gt;_elementIndex[$elementName]))<br>
+  {<br>
+    if ($qf-&gt;_elements[$qf-&gt;_elementIndex[$elementName]]-&gt;getType() == $elementObject-&gt;getType())<br>
+    {<br>
+      $qf-&gt;_elements[] =&amp; $element;<br>
+      $qf-&gt;_duplicateIndex[$elementName][] = end(array_keys($this-&gt;_elements));<br>
+    }<br>
+    else<br>
+    {<br>
+      return PEAR::raiseError(null, QUICKFORM_INVALID_ELEMENT_NAME, null, E_USER_WARNING, &quot;Element &#039;$elementName&#039; already exists in HTML_QuickForm::addElement()&quot;, &#039;HTML_QuickForm_Error&#039;, true);<br>
+    }<br>
+  }<br>
+  else<br>
+  {<br>
+    $qf-&gt;_elements[] =&amp; $element;<br>
+    $qf-&gt;_elementIndex[$elementName] = end(array_keys($qf-&gt;_elements));<br>
+  }<br>
+  if ($qf-&gt;_freezeAll)<br>
+  {<br>
+    $element-&gt;freeze();<br>
+  }<br>
+  return $element;<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

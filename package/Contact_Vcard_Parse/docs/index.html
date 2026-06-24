@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact_Vcard_Parse Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Contact_Vcard_Parse/index.html">Contact_Vcard_Parse</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Contact_Vcard_Parse/docs/index.html#package-fileformats-contact-vcard-parse-intro">Introduction</a>
+</li>
+<li><a href="package/Contact_Vcard_Parse/docs/index.html#package-fileformats-contact-vcard-parse-data">How Data Is Returned</a>
+</li>
+<li><a href="package/Contact_Vcard_Parse/docs/index.html#package-fileformats-contact-vcard-parse-knownissues">Known issues</a>
+</li></ul>
+</nav>
+<p>Parse vCard 2.1 and 3.0 files. Please read About Contact_Vcard first.</p>
+<section id="package-fileformats-contact-vcard-parse-intro">
+<h2>Introduction</h2>
+<h3>Description</h3>
+
+  
+  <p>Here are some quick instructions for the impatient. :-)</p>
+  <ul>
+   <li>
+    
+     Download and un-compress Contact_Vcard_Parse from the PEAR archive.
+    
+   </li>
+   <li>
+    
+     Include <code>Contact_Vcard_Parse.php</code> in your PHP script.
+    
+   </li>
+   <li>
+    
+     Instantiate a new <strong>Contact_Vcard_Parse</strong> object.
+    
+   </li>
+   <li>
+    
+     Use the <strong>fromFile()</strong> method to parse any file which may
+     have one or more vCards in it; try the <code>sample.vcf</code>
+     file for a start.
+     <strong>Contact_Vcard_Parse</strong> should work with both
+     2.1 and 3.0 vCard files.
+    
+   </li>
+   <li>
+    
+     Use <strong>print_r()</strong> to view the resulting array of data
+     from the parsed file.
+    
+   </li>
+   <li>
+    
+     Do what you want with the data, such as insert into a table.
+    
+   </li>
+  </ul>
+  <p><strong>Example code</strong></p>
+   
+   <pre><code>&lt;?php
+    // include the class file
+    require_once &#039;Contact_Vcard_Parse.php&#039;;
+
+    // instantiate a parser object
+    $parse = new Contact_Vcard_Parse();
+
+    // parse a vCard file and store the data
+    // in $cardinfo
+    $cardinfo = $parse-&gt;fromFile(&#039;sample.vcf&#039;);
+
+    // view the card info array
+    echo &#039;&lt;pre&gt;&#039;;
+    print_r($cardinfo);
+    echo &#039;&lt;/pre&gt;&#039;;
+
+?&gt;</code></pre>
+</section>
+<section id="package-fileformats-contact-vcard-parse-data">
+<h2>How Data Is Returned</h2>
+<h3>Description</h3>
+
+  
+
+  <p><strong>Contact_Vcard_Parse</strong> reads a file or block of text
+   for vCard data, then converts that data into a series of nested arrays.
+   I used to present a detailed prose explanation of the array, but
+   I think it&#039;s easier to just give a generic outline of the array:</p>
+  <pre><br>$parse_result = array (<br>    [int_cardnumber] =&gt; array (<br>        [string_datatype] =&gt; array (<br>            [&quot;param&quot;] =&gt; array (<br>                [string_paramname] =&gt; array (<br>                    [int_repetitionnumber] =&gt; string_paramtext<br>                )<br>            )<br>            [&quot;value&quot;] =&gt; array (<br>                [int_partnumber] =&gt; array (<br>                    [int_repetitionnumber] =&gt; string_valuetext<br>                )<br>            )<br>        )<br>    )<br>)<br></pre>
+
+
+  <p>By way of example, let&#039;s take a look at the vCard of my friend
+   Bolivar Shagnasty.</p>
+  <pre><br>BEGIN:VCARD<br>VERSION:3.0<br>N:Shagnasty;Bolivar;Odysseus;Mr.;III,B.S.<br>FN:Bolivar Shagnasty<br>ADR;TYPE=HOME,WORK:;;123 Main,Apartment 101;Beverly Hills;CA;90210<br>EMAIL;TYPE=HOME;TYPE=WORK:boshag@example.com<br>EMAIL;TYPE=PREF:boshag@ciaweb.net<br>END:VCARD<br></pre>
+
+
+  <p>This is a pretty simple vCard: my buddy Bolivar&#039;s name, one
+   address (looks like Bolivar works from home), two email addresses
+   (one for work and home, and one as his &quot;preferred&quot; address).
+   This simple vCard, when it gets parsed, looks like this:</p>
+  <pre><br>(<br>    [0] =&gt; Array<br>        (<br>            [VERSION] =&gt; Array<br>                (<br>                    [0] =&gt; Array<br>                        (<br>                            [param] =&gt; Array<br>                                (<br>                                )<br><br>                            [value] =&gt; Array<br>                                (<br>                                    [0] =&gt; Array<br>                                        (<br>                                            [0] =&gt; 3.0<br>                                        )<br><br>                                )<br><br>                        )<br><br>                )<br><br>            [N] =&gt; Array<br>                (<br>                    [0] =&gt; Array<br>                        (<br>                            [param] =&gt; Array<br>                                (<br>                                )<br><br>                            [value] =&gt; Array<br>                                (<br>                                    [0] =&gt; Array // family<br>                                        (<br>                                            [0] =&gt; Shagnasty<br>                                        )<br><br>                                    [1] =&gt; Array // first<br>                                        (<br>                                            [0] =&gt; Bolivar<br>                                        )<br><br>                                    [2] =&gt; Array // additional or middle<br>                                        (<br>                                            [0] =&gt; Odysseus<br>                                        )<br><br>                                    [3] =&gt; Array // honorifix prefix<br>                                        (<br>                                            [0] =&gt; Mr.<br>                                        )<br><br>                                    [4] =&gt; Array // honorifix suffix<br>                                        (<br>                                            [0] =&gt; III<br>                                            [1] =&gt; B.S.<br>                                        )<br><br>                                )<br><br>                        )<br><br>                )<br><br>            [FN] =&gt; Array<br>                (<br>                    [0] =&gt; Array<br>                        (<br>                            [param] =&gt; Array<br>                                (<br>                                )<br><br>                            [value] =&gt; Array<br>                                (<br>                                    [0] =&gt; Array<br>                                        (<br>                                            [0] =&gt; Bolivar Shagnasty<br>                                        )<br><br>                                )<br><br>                        )<br><br>                )<br><br>            [ADR] =&gt; Array<br>                (<br>                    [0] =&gt; Array<br>                        (<br>                            [param] =&gt; Array<br>                                (<br>                                    [TYPE] =&gt; Array<br>                                        (<br>                                            [0] =&gt; HOME<br>                                            [1] =&gt; WORK<br>                                        )<br><br>                                )<br><br>                            [value] =&gt; Array<br>                                (<br>                                    [0] =&gt; Array // p.o. box<br>                                        (<br>                                            [0] =&gt; <br>                                        )<br><br>                                    [1] =&gt; Array // extended<br>                                        (<br>                                            [0] =&gt; <br>                                        )<br><br>                                    [2] =&gt; Array // street<br>                                        (<br>                                            [0] =&gt; 123 Main<br>                                            [1] =&gt; Apartment 101<br>                                        )<br><br>                                    [3] =&gt; Array // locality or city<br>                                        (<br>                                            [0] =&gt; Beverly Hills<br>                                        )<br><br>                                    [4] =&gt; Array // region, state, or province<br>                                        (<br>                                            [0] =&gt; CA<br>                                        )<br><br>                                    [5] =&gt; Array // postal code<br>                                        (<br>                                            [0] =&gt; 90210<br>                                        )<br><br>                                    [6] =&gt; Array // country<br>                                        (<br>                                            [0] =&gt; <br>                                        )<br><br>                                )<br><br>                        )<br><br>                )<br><br>            [EMAIL] =&gt; Array<br>                (<br>                    [0] =&gt; Array<br>                        (<br>                            [param] =&gt; Array<br>                                (<br>                                    [TYPE] =&gt; Array<br>                                        (<br>                                            [0] =&gt; HOME<br>                                            [1] =&gt; WORK<br>                                        )<br><br>                                )<br><br>                            [value] =&gt; Array<br>                                (<br>                                    [0] =&gt; Array<br>                                        (<br>                                            [0] =&gt; boshag@example.com<br>                                        )<br><br>                                )<br><br>                        )<br><br>                    [1] =&gt; Array<br>                        (<br>                            [param] =&gt; Array<br>                                (<br>                                    [TYPE] =&gt; Array<br>                                        (<br>                                            [0] =&gt; PREF<br>                                        )<br><br>                                )<br><br>                            [value] =&gt; Array<br>                                (<br>                                    [0] =&gt; Array<br>                                        (<br>                                            [0] =&gt; boshag@ciaweb.net<br>                                        )<br><br>                                )<br><br>                        )<br><br>                )<br><br>        )<br><br>)<br></pre>
+
+
+  <p>Sweet Jebus! That&#039;s an ugly mess. But it retains every bit of info about
+   the vCard so you can do what you like with it.
+   It keeps (separately) every element and component so you can see
+   the underlying structure of the vCard.</p>
+  <p>Yes, I know it&#039;s a deeply-nested array set, and is ugly and
+   probably inefficient.
+   The problem (or genius?) of the vCard format is that just about every
+   part of a vCard element can have multiple values.
+   While this makes the vCard format very flexible, it makes it a little
+   difficult to parse and interpret in a simple fashion.
+   The easiest way I could think of was a series of nested arrays.
+   An object-oriented approach might be better, but even then you&#039;re going
+   to have nested objects or nested arrays within the vCard object to
+   represent multiple values of a vCard data element.</p>
+</section>
+<section id="package-fileformats-contact-vcard-parse-knownissues">
+<h2>Known issues</h2>
+<h3>Description</h3>
+
+  
+
+  <p>When I wrote this parser, my primary goal was to be able to read vCard
+   files produced by the Mac OS X Address Book application.
+   However, it looks like Address Book puts some weird character after every
+   single text character in the output, in addition to some weird line endings.
+   If you want to use <code>.vcf</code> files generated by the Mac OS X
+   Address Book, you might need to massage the file in BBEdit or TextWrangler
+   first; turn on &quot;show invisibles&quot; to see the offending characters, then do
+   a search-and-replace to delete them all at once (or perhaps &quot;Zap Gremlins&quot;).</p>
+  <p>UPDATE: David Weingart writes, &quot;That&#039;s probably Unicode. In my extremely
+   limited testing, it looks like in some cases you get plain vanilla
+   ISO Latin 1, but if there are any high ascii characters in the entry,
+   they export UTF 16 (double-byte) Unicode.&quot;
+   Thanks, David. (<strong>Contact_Vcard_Parse</strong> does
+   not do Unicode at this time.)</p>
+  <p><strong>Contact_Vcard_Parse</strong> does not validate the information
+   or formatting in the vCard (although it does decode quoted-printable text).
+   In the spirit of &quot;be lenient in what you accept and strict in what you
+   produce&quot;, <strong>Contact_Vcard_Parse</strong> should be able to read just
+   about anything from a vCard file, but it&#039;s up to you as the programmer
+   to make sense of the data.</p>
+  <p>Contact_Vcard_Parse should work on file with any kind of line endings
+   (Mac \r, Unix \n, and DOS \r\n) automatically.
+   It also unfolds lines automatically, so data elements spread across multiple
+   lines should come through OK.</p>
+  <p>If you discover a new bug or want to contribute code to
+   <strong>Contact_Vcard_Parse</strong>, contact Paul M. Jones at 
+   pjones at ciaweb dot net;
+   the subject line should start with <code>[VCARD]</code>.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

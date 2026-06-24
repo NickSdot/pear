@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #382</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/XML_RPC/index.html">XML_RPC</a> &#187; Bug #382</h1>
+<p>Undefined index: ac in XML/RPC.php at line 342</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-12-08 21:23 UTC</td></tr>
+<tr><th>From</th><td>raymond at dotsphinx dot com</td></tr>
+<tr><th>Assigned</th><td>pajoye</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_RPC/index.html">XML_RPC</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>GNU/Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-12-08 21:23 UTC] raymond at dotsphinx dot com</h3>
+<p>Description:<br>
+------------<br>
+I ran into a case where XML_RPC uses an uninitialised variable:</p>
+<p>Undefined index:  ac in /home/dotsphin/public_html/share/php/pear/XML/RPC.php at line 342</p>
+<p>A quick search on the net showed that the problem was already present in useful inc&#039;s code:</p>
+<p>http://article.gmane.org/gmane.comp.php.xml-rpc/51</p>
+<p>The following patch fixes the problem:</p>
+<p>--- RPC.php.orig	2003-12-08 19:36:54.000000000 +0100<br>
++++ RPC.php	2003-12-08 22:22:52.000000000 +0100<br>
+@@ -337,11 +337,14 @@<br>
+             $XML_RPC_xh[$parser][&#039;lv&#039;]=2;<br>
+         }<br>
+ <br>
+-        // replace characters that eval would<br>
+-        // do special things with<br>
+-        @$XML_RPC_xh[$parser][&#039;ac&#039;].=str_replace(&#039;$&#039;, &#039;\$&#039;,<br>
+-            str_replace(&#039;&quot;&#039;, &#039;\&quot;&#039;, str_replace(chr(92),<br>
+-                $XML_RPC_backslash, $data)));<br>
++        // EXPERIMENTAL FIX:<br>
++		if(array_key_exists(&#039;ac&#039;, $XML_RPC_xh[$parser])) {<br>
++			$XML_RPC_xh[$parser][&#039;ac&#039;].=str_replace(&#039;$&#039;, &#039;\$&#039;,<br>
++				str_replace(&#039;&quot;&#039;, &#039;\&quot;&#039;, str_replace(chr(92),<br>
++					$XML_RPC_backslash, $data)));<br>
++		} else {<br>
++			$XML_RPC_xh[$parser][&#039;ac&#039;] = &#039;&#039;;<br>
++		}<br>
+     }<br>
+ }</p>
+</section>
+<section>
+<h3>[2004-04-09 12:35 UTC] pash_ka at fonbet dot info</h3>
+<p>This fix introduced a new bug http://pear.php.net/bugs/bug.php?id=1170</p>
+<p>The correct fix shoud be</p>
+<p>// replace characters that eval would<br>
+        // do special things with<br>
+        if (!isset($XML_RPC_xh[$parser][&#039;ac&#039;])) {<br>
+            $XML_RPC_xh[$parser][&#039;ac&#039;] = &#039;&#039;;<br>
+        }<br>
+        $XML_RPC_xh[$parser][&#039;ac&#039;] .= str_replace(&#039;$&#039;, &#039;\$&#039;,<br>
+          str_replace(&#039;&quot;&#039;, &#039;\&quot;&#039;, str_replace(chr(92),<br>
+          $XML_RPC_backslash, $data)));</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

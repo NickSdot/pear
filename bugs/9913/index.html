@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9913</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid_DataSource_MDB2/index.html">Structures_DataGrid_DataSource_MDB2</a> &#187; Bug #9913</h1>
+<p>Incorrect count when using subqueries</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-22 13:34 UTC</td></tr>
+<tr><th>From</th><td>HarrySchool at netscape dot net</td></tr>
+<tr><th>Assigned</th><td>wiesemann</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid_DataSource_MDB2/index.html">Structures_DataGrid_DataSource_MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-22 13:34 UTC] HarrySchool at netscape dot net</h3>
+<p>Description:<br>
+------------<br>
+Counting the number of records for a query is done by replacing the columns by COUNT(*).<br>
+This is done incorrectly when using subqueries.</p>
+<p>In function count() line 285<br>
+The following codelines are concerned:<br>
+$query = preg_replace(&#039;#SELECT\s.*\sFROM#is&#039;,<br>
+                       &#039;SELECT COUNT(*) FROM&#039;,<br>
+                        $this-&gt;_query);</p>
+<p>Replacing this with<br>
+$query = preg_replace(&#039;#SELECT\s.*?\sFROM#is&#039;,<br>
+                       &#039;SELECT COUNT(*) FROM&#039;,<br>
+                        $this-&gt;_query, 1);</p>
+<p>should cure the problem.</p>
+<p>Test script:<br>
+---------------<br>
+$qry = &#039;select aa from bb where cc in select dd from ee;&#039;;<br>
+$pattern = &#039;#SELECT\s.*\sFROM#is&#039;;<br>
+$query = preg_replace($pattern,<br>
+                    &#039;SELECT COUNT(*) FROM&#039;,<br>
+                    $qry);                <br>
+echo &#039;result: &#039;.$query;</p>
+<p>Expected result:<br>
+----------------<br>
+The actual result is:<br>
+$query = &#039;SELECT COUNT(*) FROM ee;&#039;</p>
+<p>The correct result should be:<br>
+$query = <br>
+&#039;SELECT COUNT(*) FROM bb where cc in select dd from ee;&#039;</p>
+<p>Actual result:<br>
+--------------<br>
+The actual (wrong) result is:<br>
+$query = &#039;SELECT COUNT(*) FROM ee;&#039;</p>
+<p>In function count() line 285<br>
+The following codelines are concerned:<br>
+$query = preg_replace(&#039;#SELECT\s.*\sFROM#is&#039;,<br>
+                       &#039;SELECT COUNT(*) FROM&#039;,<br>
+                        $this-&gt;_query);</p>
+<p>Replacing this with<br>
+$query = preg_replace(&#039;#SELECT\s.*?\sFROM#is&#039;,<br>
+                       &#039;SELECT COUNT(*) FROM&#039;,<br>
+                        $this-&gt;_query, 1);</p>
+<p>should cure the problem.</p>
+</section>
+<section>
+<h3>[2007-01-25 16:46 UTC] HarrySchool at netscape dot net</h3>
+<p>Dear Mark,</p>
+<p>the fix in version 0.1.6 is partially correct. You forgot the question mark in the pattern: &#039;#SELECT\s.*?\sFROM#is&#039;</p>
+<p>Harry</p>
+</section>
+<section>
+<h3>[2007-01-30 20:37 UTC] HarrySchool at netscape dot net</h3>
+<p>The question mark makes the * less greedy.<br>
+Without the question mark everthing till the last FROM is replaced, whereas with questionmark only till the first FROM is replaced. The one (1) couses only one replacement. In the following example there could be two replacements because the select has two SELECt ... FROM combinations.</p>
+<p>Example:<br>
+&#039;SELECT COUNT(*) FROM bb where cc in SELECT dd FROM ee;&#039; = <br>
+	preg_replace(&#039;#SELECT\s.*?\sFROM#is&#039;,<br>
+                       &#039;SELECT COUNT(*) FROM&#039;,<br>
+                        &#039;SELECT aa FROM bb where cc in select dd from ee;&#039;,<br>
+			 1);</p>
+<p>&#039;SELECT COUNT(*) FROM ee;&#039; = <br>
+	preg_replace(&#039;#SELECT\s.*\sFROM#is&#039;,<br>
+                       &#039;SELECT COUNT(*) FROM&#039;,<br>
+                        &#039;SELECT aa FROM bb where cc in select dd from ee;&#039;,<br>
+			 1);</p>
+</section>
+<section>
+<h3>[2007-02-01 12:22 UTC] HarrySchool at netscape dot net</h3>
+<p>Mark,</p>
+<p>I had to fill in a summary, otherwise I could nog post a new comment. I had no idea that this would change the original summary.</p>
+<p>Thanks for fixing.</p>
+<p>Harry</p>
+</section>
+<section>
+<h3>[2007-02-12 12:24 UTC] mail at coppermine-gallery dot net</h3>
+<p>This fix breaks previously working code.</p>
+<p>Example query:</p>
+<p>SELECT ticket_id, phone, ticket_time, ticket_status, amount, total_odds, ROUND(amount * total_odds, 2) AS poss_win,<br>
+	(SELECT COUNT(*) FROM bets WHERE ticketid = t.ticket_id) AS numbets<br>
+	FROM tickets AS t<br>
+	INNER JOIN subscribers AS s ON s.subscriber_id = t.owner<br>
+	WHERE approved = &#039;APPROVED&#039;</p>
+<p>Expected result:</p>
+<p>SELECT COUNT(*) FROM tickets AS t<br>
+        INNER JOIN subscribers AS s ON s.subscriber_id = t.owner<br>
+        WHERE approved = &#039;APPROVED&#039;</p>
+<p>Actual result:</p>
+<p>SELECT COUNT(*) FROM bets WHERE ticketid = t.ticket_id) AS numbets<br>
+        FROM tickets AS t<br>
+        INNER JOIN subscribers AS s ON s.subscriber_id = t.owner<br>
+        WHERE approved = &#039;APPROVED&#039;</p>
+<p>Which is not valid SQL. 0.1.5 and 0.1.6 both give the expected result.</p>
+</section>
+<section>
+<h3>[2007-02-12 19:18 UTC] HarrySchool at netscape dot net</h3>
+<p>Tom Atkinson is right. Both his case and mine are valid SQL. They can&#039;t be solved both the way it was and the way i proposed.</p>
+<p>Here is a new proposal to solve both: Every query which contains two times SELECT will be excecuted as is.</p>
+<p>current line 260:</p>
+<p>elseif (preg_match(&#039;#GROUP\s*BY#is&#039;, $this-&gt;_query) === 1 ||<br>
+                preg_match(&#039;#\sUNION\s#is&#039;, $this-&gt;_query) === 1 ||<br>
+                preg_match(&#039;#SELECT.*DISTINCT.*FROM#is&#039;, $this-&gt;_query) === 1</p>
+<p>replace them with the following lines:</p>
+<p>elseif (preg_match(&#039;#GROUP\s*BY#is&#039;, $this-&gt;_query) === 1 ||<br>
+                preg_match(&#039;#SELECT.*SELECT#is&#039;, $this-&gt;_query) === 1 ||<br>
+                preg_match(&#039;#\sUNION\s#is&#039;, $this-&gt;_query) === 1 ||<br>
+                preg_match(&#039;#SELECT.*DISTINCT.*FROM#is&#039;, $this-&gt;_query) === 1</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

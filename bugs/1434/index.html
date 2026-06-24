@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1434</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail/index.html">Mail</a> &#187; Bug #1434</h1>
+<p>parseAddressList won&#039;t parse unqualified addresses</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-18 21:19 UTC</td></tr>
+<tr><th>From</th><td>espen at hhkol dot dk</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Mail/index.html">Mail</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Debian Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-18 21:19 UTC] espen at hhkol dot dk</h3>
+<p>Description:<br>
+------------<br>
+The problem is that parseAddressList version 1.13 now returns PEAR error on input, which was previously accepted. Earlier versions (1.10) accepted addresses which were unqualified (no @xxx-part), but now it returns an error. This behaviour is also inconsistent with imap_rfc822_parse_adrlist.</p>
+<p>Chuck, this issue might also have been mentioned here:<br>
+http://lists.horde.org/archives/sork/Week-of-Mon-20040426/001565.html</p>
+<p>I would like to add that it would be nice, if this didn&#039;t produce errors as well:</p>
+<p>Mail_RFC822::parseAddressList(&#039; &quot;|/usr/bin/vacation -a me@test.com&quot; &#039;, &quot;&quot;)</p>
+<p>That is, stuff which is enclosed in quotes should just be returned without errors. Again, imap_rfc822_parse_adrlist does this. I need this so I can use Mail_RFC822 to parse .forward-files.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Mail_RFC822::parseAddressList(&quot;mymailbox&quot;, &quot;&quot;)<br>
+Mail_RFC822::parseAddressList(&quot;john, joe&quot;, &quot;&quot;)</p>
+<p>Expected result:<br>
+----------------<br>
+I expect an array with the mailboxes.</p>
+<p>Actual result:<br>
+--------------<br>
+I get a PEAR error:</p>
+<p>pear_error Object<br>
+(<br>
+    [error_message_prefix] =&gt;<br>
+    [mode] =&gt; 1<br>
+    [level] =&gt; 1024<br>
+    [code] =&gt;<br>
+    [message] =&gt; Validation failed for &quot;mymailbox&quot;<br>
+    [userinfo] =&gt;<br>
+    [backtrace] =&gt; Array<br>
+        (<br>
+            [0] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /usr/share/php/PEAR.php<br>
+                    [line] =&gt; 528<br>
+                    [function] =&gt; pear_error<br>
+                    [class] =&gt; pear_error<br>
+                    [type] =&gt; -&gt;<br>
+                    [args] =&gt; Array<br>
+                        (<br>
+                            [0] =&gt; Validation failed for &quot;mymailbox&quot;<br>
+                            [1] =&gt;<br>
+                            [2] =&gt; 1<br>
+                            [3] =&gt; 1024<br>
+                            [4] =&gt;<br>
+                        )</p>
+<p>)<br>
+            [1] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /usr/share/php/Mail/RFC822.php<br>
+                    [line] =&gt; 199<br>
+                    [function] =&gt; raiseerror<br>
+                    [class] =&gt; pear<br>
+                    [type] =&gt; ::<br>
+                    [args] =&gt; Array<br>
+                        (<br>
+                            [0] =&gt; Validation failed for &quot;mymailbox&quot;<br>
+                        )</p>
+<p>)</p>
+<p>[2] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /usr/share/php/Mail/RFC822.php<br>
+                    [line] =&gt; 171<br>
+                    [function] =&gt; parseaddresslist<br>
+                    [class] =&gt; mail_rfc822<br>
+                    [type] =&gt; -&gt;<br>
+                    [args] =&gt; Array<br>
+                        (<br>
+                        )</p>
+<p>)</p>
+<p>[3] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /home/espen/wm/espen-vacation-bak/test.php<br>
+                    [line] =&gt; 8<br>
+                    [function] =&gt; parseaddresslist<br>
+                    [class] =&gt; mail_rfc822<br>
+                    [type] =&gt; ::<br>
+                    [args] =&gt; Array<br>
+                        (<br>
+                            [0] =&gt; mymailbox<br>
+                            [1] =&gt;<br>
+                        )</p>
+<p>)</p>
+<p>)</p>
+<p>[callback] =&gt;<br>
+)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

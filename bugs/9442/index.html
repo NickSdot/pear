@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9442</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_mssql/index.html">MDB2_Driver_mssql</a> &#187; Bug #9442</h1>
+<p>Quotes aren&#039;t being escaped using autoExecute</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-24 14:13 UTC</td></tr>
+<tr><th>From</th><td>matthijs at 1key dot nl</td></tr>
+<tr><th>Assigned</th><td>davidc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_mssql/index.html">MDB2_Driver_mssql</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>Windows Server 2003</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-24 14:13 UTC] matthijs at 1key dot nl</h3>
+<p>Description:<br>
+------------<br>
+Software I&#039;m using:<br>
+-Windows Server 2003 R2 Enterprise<br>
+-Apache<br>
+-Microsoft SQL Server 2005<br>
+-PHP 5.16<br>
+-PEAR 1.4.11<br>
+-MDB2 2.3.0<br>
+-MDB2_Driver_mssql 1.1.0</p>
+<p>Installed pecl extensions:<br>
+-php_mssql.dll<br>
+-php_ldap.dll<br>
+-php_gd2.dll</p>
+<p>Changes made to PHP.INI:<br>
+-mssql.textlimit = 2147483647<br>
+-mssql.textsize = 2147483647</p>
+<p>----</p>
+<p>In the previous version of MDB2 (2.2.2) there was no problem inserting strings containing single quotes (&#039;). In the new version I get an error while inserting single quotes. I tried to use the escape and quote function but it had no use.</p>
+<p>In the previous version I didn&#039;t escape the string at all. I just used autoExecute without escaping my string and that worked fine.</p>
+<p>Test script:<br>
+---------------<br>
+$i_ResultId = 1;<br>
+$s_TextValue = &quot;This doesn&#039;t work&quot;;</p>
+<p>$s_TableName = &#039;CIS_TextResult&#039;;	<br>
+$a_FieldsValues = array(<br>
+&#039;resultId&#039; =&gt; $i_ResultId,<br>
+&#039;text&#039; =&gt; $s_TextValue);<br>
+  						      <br>
+$a_Types = array(&#039;integer&#039;, &#039;text&#039;);<br>
+$s_Where = &#039;resultId = &#039;.$i_ResultId;<br>
+  		<br>
+$this-&gt;o_DatabaseController-&gt;loadModule(&#039;Extended&#039;);<br>
+$r_Result = $this-&gt;o_DatabaseController-&gt;extended-&gt;autoExecute($s_TableName, $a_FieldsValues, MDB2_AUTOQUERY_UPDATE, $s_Where, $a_Types);</p>
+<p>if (PEAR::isError($r_Result))<br>
+  throw new Exception ($r_Result-&gt;userinfo);</p>
+<p>Expected result:<br>
+----------------<br>
+My row is succesfully updated...</p>
+<p>Actual result:<br>
+--------------<br>
+[24-nov-2006 14:31:33] PHP Fatal error:  Uncaught exception &#039;Exception&#039; with message &#039;[Error message: _doQuery: Could not execute statement]<br>
+[Last executed query: INSERT INTO CIS_TextResult (resultId, text) VALUES (13, &#039;This doesn&#039;t work&#039;)]<br>
+[Native code: 105]<br>
+[Native message: Unclosed quotation mark after the character string &#039;)&#039;.]<br>
+&#039; in D:\websites\jbc.nl\core\cis\CISController.php:577<br>
+Stack trace:<br>
+#0 D:\websites\jbc.nl\core\cis\CISController.php(393): CISController-&gt;setTextResult(13, &#039;This doesn&#039;t wo...&#039;)<br>
+#1 D:\websites\jbc.nl\core\MainController.php(73): CISController-&gt;saveCISItem()<br>
+#2 D:\websites\jbc.nl\core\MainController.php(22): MainController-&gt;run()<br>
+#3 D:\websites\jbc.nl\index.php(3): MainController-&gt;__construct()<br>
+#4 {main}<br>
+  thrown in D:\websites\jbc.nl\core\cis\CISController.php on line 577</p>
+</section>
+<section>
+<h3>[2006-11-27 11:19 UTC] matthijs at 1key dot nl</h3>
+<p>I don&#039;t think it&#039;s a bug in the driver since it worked fine in the previous MDB2 version and I didn&#039;t update the driver. I&#039;m using autoExecute on very much places in my code so would really like to keep using it.</p>
+<p>I tried to use the prepare() and execute() that also didn&#039;t work. It looks like the new MDB2 doesn&#039;t escape text at all.</p>
+</section>
+<section>
+<h3>[2007-01-10 13:44 UTC] matthijs at 1key dot nl</h3>
+<p>Hi David,</p>
+<p>Sorry for responding this late. I didn&#039;t notice your message it was being kept in my junk mailbox. I tried to update the mdb2 driver and msb2 itself but it doesn&#039;t work. After updating every page on my website is blank. The error log doesn&#039;t show any errors.</p>
+<p>What can I do to give you more information?</p>
+</section>
+<section>
+<h3>[2007-01-18 13:02 UTC] matthijs at 1key dot nl</h3>
+<p>It works! Thanks!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

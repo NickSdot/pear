@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1501</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #1501</h1>
+<p>Feature Requests and Code</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-26 06:44 UTC</td></tr>
+<tr><th>From</th><td>michael at mompopmedia dot com</td></tr>
+<tr><th>Assigned</th><td>asnagy</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0RC2 (Release Candidate 2)</td></tr>
+<tr><th>OS</th><td>RH9</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-26 06:44 UTC] michael at mompopmedia dot com</h3>
+<p>Description:<br>
+------------<br>
+I have implemented two small changes to the HTMLTable.php renderer that I think should be implemented across renderers (see below diff):</p>
+<p>1) getPaging now takes a 6th parameter that allows you to apply misc. other options to the Page class</p>
+<p>2) Applied to properties (path, and fieldName) a la pager class that allows you to override the path and filename that the renderer builds it&#039;s sort links on.</p>
+<p>I hope these changes (or a variation of), can make it into the  distribution.</p>
+<p>Thanks,</p>
+<p>Michael</p>
+<p>Reproduce code:<br>
+---------------<br>
+===================================================================<br>
+RCS file: /vhome/cvs/cvsroot/gateway/lib/Structures/DataGrid/Renderer/HTMLTable.php,v<br>
+retrieving revision 1.1<br>
+retrieving revision 1.2<br>
+diff -p --unified=3 -r1.1 -r1.2<br>
+--- HTMLTable.php	2004/05/26 05:31:32	1.1<br>
++++ HTMLTable.php	2004/05/26 06:43:37	1.2<br>
+@@ -16,7 +16,7 @@<br>
+ // | Author: Andrew Nagy &lt;asnagy@webitecture.org&gt;                         |<br>
+ // +----------------------------------------------------------------------+<br>
+ //<br>
+-// $Id: HTMLTable.php,v 1.1 2004/05/26 05:31:32 cvs Exp $<br>
++// $Id: HTMLTable.php,v 1.2 2004/05/26 06:43:37 cvs Exp $</p>
+<p>require_once &#039;HTML/Table.php&#039;;<br>
+ require_once &#039;Pager/Pager.php&#039;;<br>
+@@ -24,7 +24,7 @@ require_once &#039;Pager/Pager.php&#039;;<br>
+ /**<br>
+  * Structures_DataGrid_Renderer_HTMLTable Class<br>
+  *<br>
+- * @version  $Revision: 1.1 $<br>
++ * @version  $Revision: 1.2 $<br>
+  * @author   Andrew S. Nagy &lt;asnagy@webitecture.org&gt;<br>
+  * @access   public<br>
+  * @package  Structures_DataGrid<br>
+@@ -73,6 +73,18 @@ class Structures_DataGrid_Renderer_HTMLT<br>
+      * @var array<br>
+      */<br>
+     var $emptyRowAttributes = array();<br>
++<br>
++    /**<br>
++     * complete path to the page (without the page name)<br>
++     * @var string<br>
++     */<br>
++    var $path;<br>
++<br>
++    /**<br>
++     * name of the page<br>
++     * @var string<br>
++     */<br>
++    var $fileName;</p>
+<p>/**<br>
+      * The structures_datagrid object<br>
+@@ -149,7 +161,8 @@ class Structures_DataGrid_Renderer_HTMLT<br>
+     {<br>
+         $this-&gt;rowLightBgColor = $bgColor;<br>
+     }<br>
+-<br>
++<br>
++<br>
+     /**<br>
+      * Define the table&#039;s autofill value.  This value appears only in an empty<br>
+      * table cell.<br>
+@@ -210,7 +223,13 @@ class Structures_DataGrid_Renderer_HTMLT<br>
+                 }</p>
+<p>// Build URL -- This needs much refinement :)<br>
+-                $url = $_SERVER[&#039;PHP_SELF&#039;] . &#039;?&#039;;<br>
++                if (isset($this-&gt;path) &amp;&amp; isset($this-&gt;fileName)) {<br>
++                    $url = $this-&gt;path . $this-&gt;fileName . &#039;?&#039;;<br>
++                } elseif (isset($this-&gt;path)) {<br>
++                    $url = $this-&gt;path . &#039;?&#039;;<br>
++                } else {<br>
++                    $url = $_SERVER[&#039;PHP_SELF&#039;] . &#039;?&#039;;<br>
++                }<br>
+                 if (isset($_SERVER[&#039;QUERY_STRING&#039;])) {<br>
+                     $qString = explode(&#039;&amp;&#039;, $_SERVER[&#039;QUERY_STRING&#039;]);<br>
+                     $i = 0;<br>
+@@ -335,7 +354,7 @@ class Structures_DataGrid_Renderer_HTMLT<br>
+      * @see     HTML::Pager<br>
+      */<br>
+     function getPaging($mode = &#039;Sliding&#039;, $separator = &#039;|&#039;, $prev = &#039;&lt;&lt;&#039;,<br>
+-                       $next = &#039;&gt;&gt;&#039;, $delta = 5)<br>
++                       $next = &#039;&gt;&gt;&#039;, $delta = 5, $user_options = null)<br>
+     {<br>
+         // Generate Paging<br>
+         $options = array(&#039;mode&#039; =&gt; $mode,<br>
+@@ -343,6 +362,9 @@ class Structures_DataGrid_Renderer_HTMLT<br>
+                          &#039;separator&#039; =&gt; $separator,<br>
+                          &#039;prevImg&#039; =&gt; $prev,<br>
+                          &#039;nextImg&#039; =&gt; $next);<br>
++        if (is_array($user_options)) {<br>
++            $options = array_merge($options, $user_options);<br>
++        }<br>
+         $this-&gt;_dg-&gt;buildPaging($options);</p>
+<p>// Return paging html</p>
+</section>
+<section>
+<h3>[2004-05-27 16:15 UTC] asnagy at webitecture dot org</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

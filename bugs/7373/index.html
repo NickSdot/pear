@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7373</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Testing &#187; <a href="package/PHPUnit2/index.html">PHPUnit2</a> &#187; Bug #7373</h1>
+<p>Unexpected &quot;syntax error&quot; in safe mode</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-04-12 06:37 UTC</td></tr>
+<tr><th>From</th><td>doctor at wil dot linux dot krakow dot pl</td></tr>
+<tr><th>Assigned</th><td>sebastian</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PHPUnit2/index.html">PHPUnit2</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-12 06:37 UTC] doctor at wil dot linux dot krakow dot pl</h3>
+<p>Description:<br>
+------------<br>
+I used to develop my programs with all that safe mode restrictions turned on. It makes me sure that it&#039;ll work on every host, that software is little more secure and so on.</p>
+<p>While in safe mode I&#039;m getting following output:</p>
+<p>---console---<br>
+Warning: shell_exec(): Cannot execute using backquotes in Safe Mode in E:\PEAR\PHPUnit2\Util\Fileloader.php on line 86<br>
+PHPUnit 2.3.5 by Sebastian Bergmann.</p>
+<p>Syntax error in E:\PEAR\ArrayTest.php<br>
+-------------</p>
+<p>OK then. It&#039;s a bit frustrating message because there&#039;s no syntax error in ArrayTest.php. The error occurs because shell_exec won&#039;t execute &#039;php -l&#039; in safe mode. Thanks to this $output=&#039;&#039; and everything fails.</p>
+<p>Test script:<br>
+---------------<br>
+Fileloader.php, begining at line 86:<br>
+-----<br>
+        $output = shell_exec(&#039;php -l &#039; . escapeshellarg($filename));</p>
+<p>if (strpos($output, &#039;No syntax errors detected in&#039;) === FALSE) {<br>
+            throw new Exception(<br>
+              sprintf(<br>
+                &#039;Syntax error in %s.&#039;,</p>
+<p>str_replace(&#039;./&#039;, &#039;&#039;, $filename)<br>
+              )<br>
+            );<br>
+        }</p>
+<p>Expected result:<br>
+----------------<br>
+I whish the script let it go even if it couldn&#039;t check the syntax. Changing condition solves the problem:</p>
+<p>Fileloader.php, line 88:<br>
+-----<br>
+if (strpos($output, &#039;Errors parsing&#039;) === TRUE) {<br>
+-----</p>
+<p>However I don&#039;t know if is it necessary to check syntax at all, since the php parser will trigger such errors itself.</p>
+<p>Actual result:<br>
+--------------<br>
+In safe mode shell_exec won&#039;t execute so $output=&#039;&#039;. Then the condition passes and exception is thrown.</p>
+</section>
+<section>
+<h3>[2006-06-01 07:16 UTC] sebastian at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>Fixed for PHPUnit 3.0, sorry this took so long.</p>
+</section>
+<section>
+<h3>[2006-06-30 15:54 UTC] slsoek at yahoo dot com</h3>
+<p>shell_exec(): <br>
+Is there away to not using cmd.<br>
+Because windows is shutting down any calls from web to cmd.exe.<br>
+shell_exec() is one of the functions that is using cmd.exe.<br>
+PHP<br>
+IIS6<br>
+Windows 2003 and greater</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4034</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/SQL_Parser/index.html">SQL_Parser</a> &#187; Bug #4034</h1>
+<p>Assignment of field = field not recognized</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-04-03 04:29 UTC</td></tr>
+<tr><th>From</th><td>epte at ruffdogs dot com</td></tr>
+<tr><th>Assigned</th><td>busterb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SQL_Parser/index.html">SQL_Parser</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>Linux/Gentoo</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-03 04:29 UTC] epte at ruffdogs dot com</h3>
+<p>Description:<br>
+------------<br>
+The following code breaks.</p>
+<p>Apparently it&#039;s expecting a value, and not to be set to the value of some other database field.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$sql = &#039;<br>
+UPDATE tblTicklerPatientData<br>
+  SET tblTicklerPatientData.final_diagnosis = ptc.path_diagnosis_codes<br>
+FROM<br>
+  tblTicklerPatientData<br>
+    INNER JOIN `PatientTest(Case)` as ptc<br>
+      ON tblTicklerPatientData.PatientTest_key = ptc.PatientTest_key<br>
+WHERE<br>
+  ptc.path_diagnosis_codes Is Not Null<br>
+    and tblTicklerPatientData.final_diagnosis is null&#039;;<br>
+$_SQLParser = new SQL_Parser(NULL, &#039;MySQL&#039;);<br>
+$parseRes = $_SQLParser-&gt;parse($sql);</p>
+<p>Actual result:<br>
+--------------<br>
+The error:</p>
+<p>Expected a value on line 3<br>
+  SET tblTicklerPatientData.final_diagnosis = ptc.path_diagnosis_codes<br>
+^ found: &quot;ptc.path_diagnosis_codes&quot;</p>
+</section>
+<section>
+<h3>[2005-04-03 04:37 UTC] epte at ruffdogs dot com</h3>
+<p>Fixed it.  Patch follows (the second hunk is the fix).  Leaving open so the patch can be seen and submitted.</p>
+<p>--- Parser.php  3 Jul 2004 04:49:44 -0000       1.27<br>
++++ Parser.php  3 Apr 2005 04:34:07 -0000<br>
+@@ -143,6 +143,7 @@<br>
+     // {{{ isVal()<br>
+     function isVal() {<br>
+        return (($this-&gt;token == &#039;real_val&#039;) ||<br>
++               ($this-&gt;token == &#039;function&#039;) ||<br>
+                ($this-&gt;token == &#039;int_val&#039;) ||<br>
+                ($this-&gt;token == &#039;text_val&#039;) ||<br>
+                ($this-&gt;token == &#039;null&#039;));<br>
+@@ -766,8 +767,8 @@<br>
+                 return $this-&gt;raiseError(&#039;Expected =&#039;);<br>
+             }<br>
+             $this-&gt;getTok();<br>
+-            if (!$this-&gt;isVal($this-&gt;token)) {<br>
+-                return $this-&gt;raiseError(&#039;Expected a value&#039;);<br>
++            if (!$this-&gt;isVal($this-&gt;token) &amp;&amp; $this-&gt;token != &#039;ident&#039;) {<br>
++                return $this-&gt;raiseError(&#039;Expected a value or column name&#039;);<br>
+             }<br>
+             $tree[&#039;values&#039;][] = array(&#039;value&#039;=&gt;$this-&gt;lexer-&gt;tokText,<br>
+                                       &#039;type&#039;=&gt;$this-&gt;token);</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

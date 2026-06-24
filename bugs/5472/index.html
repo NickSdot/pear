@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5472</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_Diff/index.html">Text_Diff</a> &#187; Bug #5472</h1>
+<p>inline renderer always encodes html entities forcefully, should be controllable</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5472</th><td>inline renderer always encodes html entities forcefully, should be controllable</td></tr>
+<tr><th>Submitted</th><td>2005-09-21 12:29 UTC</td></tr>
+<tr><th>From</th><td>ciprian at zuavra dot net</td></tr>
+<tr><th>Assigned</th><td>yunosh</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Text_Diff/index.html">Text_Diff</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-09-21 12:29 UTC] ciprian at zuavra dot net</h3>
+<p>Description:<br>
+------------<br>
+Version 0.1.0 introduced the _encode() member function which is always used forcefully from _lines(), _added() and _deleted().</p>
+<p>Only _lines() accepts an extra parameter which can control whether the encoding is performed, but the user has no way of controlling the way it is called. _added() and _deleted(), on the other hand, don&#039;t even have such a parameter.</p>
+<p>Making a diff renderer mangle the output in such a subjective way is highly disturbing. The output should be in pristine condition when it returns to the user code. If the programmer decides that they want to do something else with it, it&#039;s their business. They should apply htmlspecialchars() themselves, before or after the text is fed to the renderer.</p>
+<p>My first proposal is to revert the forced encoding, as it has no business being there in the first place.</p>
+<p>The workaround would be to allow the programmer to control the use of _encode() through a class member or contructor parameter. However, I see no reason to complicate a problem which should not have appeared at all.</p>
+<p>Test script:<br>
+---------------<br>
+Any inline diff attempted on text that contains characters that are affected by htmlspecialchars().</p>
+<p>Expected result:<br>
+----------------<br>
+The text WITHOUT filtering applied.</p>
+<p>Actual result:<br>
+--------------<br>
+htmlspecialchars() is applied to the result.</p>
+</section>
+<section>
+<h3>[2005-09-21 14:52 UTC] ciprian at zuavra dot net</h3>
+<p>I can&#039;t see where the assumption that the inline renderer should produce HTML comes from. The package is called Text_Diff, right? Furthermore, _encode() assumes that the output would be displayed on Web pages. Why? I first used the inline renderer for wiki text, which is a simple, non-HTML, format, as a matter of fact.</p>
+<p>If you mean that not escaping HTML would mix with the &lt;del&gt; and &lt;ins&gt; markers, that&#039;s the programmer&#039;s problem. Let them use different markers or deal with it some other way.</p>
+<p>I also don&#039;t see how not escaping HTML would break the renderer. The escaping is done post-processing AFAICT. I commented it out and it still worked fine. Any examples for which it wouldn&#039;t?</p>
+<p>I still maintain that messing with the text fed to the renderer is a nasty thing to do. At the very least, consider making it an option. Consider also NOT applying it by default. Breaking users&#039; code for arbitrary assumptions is not nice.</p>
+</section>
+<section>
+<h3>[2005-09-21 16:49 UTC] chagenbu at php dot net</h3>
+<p>Would it hurt for you to take a _slightly_ less confrontational tack on this?</p>
+<p>With the default markers being HTML tags, the diff output _must_ be escaped internal to the renderer. I honestly don&#039;t remember why escaping beforehand didn&#039;t work, but I know I considered it. Escaping after means you escape the markers as well, and lose the ability to tell the markers apart from any &lt;ins&gt; or &lt;del&gt; tags that are part of the actual diff.</p>
+<p>I&#039;d be all for having a setting on the renderer for whether to output XHTML or plain text. You seem to be quite motivated to do this and to have spent a lot of time with the code, so if you were to submit a patch to add this option I&#039;m sure it would be committed quickly. Otherwise it&#039;ll stay on the todo list for the package until someone has time to do it.</p>
+</section>
+<section>
+<h3>[2005-09-22 07:26 UTC] ciprian at zuavra dot net</h3>
+<p>Fair enough, and sorry if I seemed too agressive.</p>
+<p>Allow me to explain my circumstances. Perhaps my latest case was a bit unusual. I was actually trying to obtain a diff which combined the markers and XHTML at the same time, unescaped. I know it&#039;s not valid XHTML, but that&#039;s what I needed: a kind of poor-man&#039;s htmldiff, if you want. You can see how _encode() would hurt in this particular case.</p>
+<p>Give me a few days, I&#039;ll be back with a patch.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

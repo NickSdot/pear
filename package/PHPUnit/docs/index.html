@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHPUnit Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Testing &#187; <a href="package/PHPUnit/index.html">PHPUnit</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/PHPUnit/docs/index.html#package-php-phpunit-intro">Tutorial</a>
+</li>
+<li><a href="package/PHPUnit/docs/index.html#package-php-phpunit-run">PHPUnit::run()</a>
+</li>
+<li><a href="package/PHPUnit/docs/index.html#packages-php-phpunit-testcase-intro">PHPUnit::TestCase</a>
+</li></ul>
+</nav>
+<p>Provides a simple framework for creating a test application to automate testing of functions and classes.</p>
+<section id="package-php-phpunit-intro">
+<h2>Tutorial</h2>
+<h3>A short introduction to the test framework</h3>
+
+    
+    <p><strong>PHPUnit</strong> provides a simple
+    framework for creating a test suite to
+    automate testing of functions and classes.
+    PHPUnit is inspired by
+    <a href="http://www.junit.org/">JUnit</a> which was created by
+    Kent Beck and Erich Gamma as a tool for <a href="http://xprogramming.com/">
+    eXtreme Programming</a>. One of the rules of XP
+    is to test small software components as often and early
+    as possible, this way you will not have to fix bugs and errors in the API
+    while setting up and testing larger applications which depend on the class.
+    While unit testing is one of the fundimental rules in XP, you don&#039;t have
+    to switch to XP to benefit from PHPUnit. PHPUnit stands alone as a good 
+    tool for testing classes or a set of functions and will ease your
+    development cycle and help you to avoid endless debug sessions.</p>
+   
+  <h3>Work routine</h3>
+
+   
+   <p>Normally, you would write a class, do some unsystematic tests
+    using <strong>echo()</strong> or <strong>var_dump()</strong>.
+    After this, you use the class in your application and hope everything
+    is ok.
+    To benefit from PHPUnit you should rethink the flow. The best way is
+    to do this:</p><ul>
+     <li>
+      1. design your class/API
+     </li>
+     <li>
+      2. create a test suite
+     </li>
+     <li>
+      3. implement the class/API
+     </li>
+     <li>
+      4. run the test suite
+     </li>
+     <li>
+      5. fix failures or errors and go to #4 again
+     </li>
+    </ul><p>It may seem that this will require a lot of time, but this impression is
+    wrong. Creating the test suite using PHPUnit needs only a few minutes
+    and running the test suite only seconds.</p>
+  
+  <h3>Design a class</h3>
+
+   
+   <p>Let&#039;s start with a small example: a string class. First we create
+    a bunch of functions declarations to work on a string:</p><pre><code>---- string.php ----
+
+&lt;?php
+class String
+{
+    //contains the internal data
+    var $data;
+
+    // constructor
+    function String($data) {
+        $this-&gt;data = $data;
+    }
+
+    // creates a deep copy of the string object
+    function copy() {
+    }
+
+    // adds another string object to this class
+    function add($string) {
+    }
+
+    // returns the formated string
+    function toString($format) {
+    }
+}
+?&gt;</code></pre>
+   
+  
+  <h3>Creating test suite</h3>
+
+   
+   <p>Now we can create a test suite, which checks every
+    function of your string class. A test suite is normal
+    PHP class inherited from <strong>PHPUnit_TestCase
+    </strong> containing test functions,
+    identified by a leading &#039;test&#039; in the function name.
+    In the test function an expected value has to be compared
+    with the result of the function to test.
+    The result of this compare must delegate to a function
+    of the <strong>assert*()</strong>-family, which decides
+    if a function passes or fails the test.</p><pre><code>---- testcase.php ----
+
+&lt;?php
+
+require_once &#039;string.php&#039;;
+require_once &#039;PHPUnit.php&#039;;
+
+class StringTest extends PHPUnit_TestCase
+{
+    // contains the object handle of the string class
+    var $abc;
+
+    // constructor of the test suite
+    function StringTest($name) {
+       $this-&gt;PHPUnit_TestCase($name);
+    }
+
+    // called before the test functions will be executed
+    // this function is defined in PHPUnit_TestCase and overwritten
+    // here
+    function setUp() {
+        // create a new instance of String with the
+        // string &#039;abc&#039;
+        $this-&gt;abc = new String(&quot;abc&quot;);
+    }
+
+    // called after the test functions are executed
+    // this function is defined in PHPUnit_TestCase and overwritten
+    // here
+    function tearDown() {
+        // delete your instance
+        unset($this-&gt;abc);
+    }
+
+    // test the toString function
+    function testToString() {
+        $result = $this-&gt;abc-&gt;toString(&#039;contains %s&#039;);
+        $expected = &#039;contains abc&#039;;
+        $this-&gt;assertTrue($result == $expected);
+    }
+
+    // test the copy function
+    function testCopy() {
+      $abc2 = $this-&gt;abc-&gt;copy();
+      $this-&gt;assertEquals($abc2, $this-&gt;abc);
+    }
+
+    // test the add function
+    function testAdd() {
+        $abc2 = new String(&#039;123&#039;);
+        $this-&gt;abc-&gt;add($abc2);
+        $result = $this-&gt;abc-&gt;toString(&quot;%s&quot;);
+        $expected = &quot;abc123&quot;;
+        $this-&gt;assertTrue($result == $expected);
+    }
+  }
+?&gt;</code></pre>
+   
+  
+  <h3>The first test run</h3>
+
+   
+   <p>Now, we can run a first test. Make sure that all the paths are correct and
+    then execute this PHP program.</p><pre><code>---- stringtest.php ----
+
+&lt;?php
+
+require_once &#039;testcase.php&#039;;
+require_once &#039;PHPUnit.php&#039;;
+
+$suite  = new PHPUnit_TestSuite(&quot;StringTest&quot;);
+$result = PHPUnit::run($suite);
+
+echo $result -&gt; toString();
+?&gt;</code></pre>
+   
+   <p>If you call this script from the commandline, you will get
+    the following output:</p>
+    <br>TestCase stringtest-&gt;testtostring() failed: expected true, actual false<br>TestCase stringtest-&gt;testcopy() failed: expected , actual Object<br>TestCase stringtest-&gt;testadd() failed: expected true, actual false
+    <p>Every function fails the test, because your string functions
+    didn&#039;t returned what we defined as the expected value.</p>
+   <p>If you want to call the script through your browser, you have to put
+    the script in a correct html page and call <strong>$result-&gt;toHTML
+    ()</strong> instead of <strong>$result-&gt;toString()</strong>.</p>
+  
+
+  <h3>Implementation</h3>
+
+   
+   <p>Ok, let&#039;s start with implementation of the our string class.</p><pre><code>---- string.php ----
+
+&lt;?php
+class String
+{
+    //contains the internal data
+    var $data;
+
+    // constructor
+    function String($data) {
+        $this-&gt;data = $data;
+    }
+
+    // creates a deep copy of the string object
+    function copy() {
+        $ret = new String($this-&gt;data);
+        return $ret;
+    }
+
+    // adds another string object to this class
+    function add($string) {
+        $this-&gt;data = $this-&gt;data.$string-&gt;toString(&quot;%ss&quot;);
+    }
+
+    // returns the formated string
+    function toString($format) {
+        $ret = sprintf($format, $this-&gt;data);
+        return $ret;
+    }
+}
+?&gt;</code></pre>
+   
+   <p>The implementation is complete and we can run the test again:</p><pre>~&gt;</pre>
+<strong>php -f stringtest.php</strong><pre>TestCase stringtest-&gt;testtostring() passed
+TestCase stringtest-&gt;testcopy() passed
+TestCase stringtest-&gt;testadd() failed: expected true, actual false</pre>
+<p>D&#039;oh! the last test failed! We made a typing mistake. Change
+    line 16 in <code>string.php</code> to</p><pre><code>&lt;?php
+$this-&gt;data = $this-&gt;data.$string-&gt;toString(&quot;%s&quot;);
+?&gt;</code></pre><p>and run the test again:</p><pre>~&gt;</pre>
+<strong>php -f stringtest.php</strong><pre>TestCase stringtest-&gt;testtostring() passed
+TestCase stringtest-&gt;testcopy() passed
+TestCase stringtest-&gt;testadd() passed</pre>
+<p>Everything is now OK!</p>
+  
+  <h3>Conclusion</h3>
+
+   
+   <p>Does it seem like a lot of work for testing three simple
+    functions? Don&#039;t forget, this is a small example.
+    Think about bigger, more complex API&#039;s like database
+    abstraction or basket classes in a shop application.
+    PHPUnit is an excellent tool to detect errors in the
+    implementation of your class.</p>
+   <p>Often you will want to reimplement or refactor a large class which is
+    used in several different applications. Without a test suite the
+    likeliness of you breaking something in one of the applications that
+    depends on your class is very high. Thanks to unit tests, you can create
+    a test suite for your class, and then reimplement your class with the 
+    security of knowing that as long as the new class passes the tests,
+    applications that depend on the class will work.</p>
+</section>
+<section id="package-php-phpunit-run">
+<h2>PHPUnit::run()</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;PHPUnit.php&#039;;
+     
+     <p><code>
+      object <strong>PHPUnit::run</strong> ( 
+      
+       object $suite
+      
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Executes the given test suite</p>
+   
+   
+    <h3>Parameter</h3>
+    <ul>
+      <li>
+       
+        <code>object $suite</code> - an object of PHPUnit_TestSuite
+        
+       
+      </li>
+     </ul>
+    
+   
+   
+    <h3>Return value</h3>
+    <p><code>&amp;PHPUnit_Result</code> - A reference to a
+      PHPUnit_Result.</p>
+   
+   
+    <h3>Example</h3>
+    <p><strong>Using <strong>PHPUnit::run()</strong></strong></p>
+     
+      <pre><code>&lt;?php
+require_once &quot;PHPUnit.php&quot;;
+$suite  = New PHPUnit_TestSuite(&#039;Mathtest&#039;);
+$result = PHPUnit::run($suite);
+echo $result-&gt;toHtml();
+?&gt;</code></pre>
+</section>
+<section id="packages-php-phpunit-testcase-intro">
+<h2>PHPUnit::TestCase</h2>
+<h3>To define a TestCase</h3>
+
+    
+    <ul>
+     <li>
+         1) Implement a subclass of PHPUnit_TestCase.
+     </li>
+     <li>
+         2) Define instance variables that store the state of the fixture.
+     </li>
+     <li>
+         3) Initialize the fixture state by overriding setUp().
+     </li>
+     <li>
+         4) Clean-up after a test by overriding tearDown().
+     </li>
+    </ul><p>Each test runs in its own fixture so there can be no side effects
+   among test runs.</p>
+   
+   <h3>PHPUnit::TestCase</h3>
+
+   
+   <pre><code>&lt;?php
+    class MathTest extends PHPUnit_TestCase {
+      var $fValue1;
+      var $fValue2;
+
+      function MathTest($name) {
+        $this-&gt;PHPUnit_TestCase($name);
+      }
+
+      function setUp() {
+        $this-&gt;fValue1 = 2;
+        $this-&gt;fValue2 = 3;
+      }
+    }
+    ?&gt;</code></pre>
+    
+    <p>For each test implement a method which interacts with the fixture.
+    Verify the expected results with assertions specified by calling
+   assert with a boolean.</p>
+    <pre><code>&lt;?php
+function testPass() {
+      $this-&gt;assertTrue($this-&gt;fValue1 + $this-&gt;fValue2 == 5);
+    }
+?&gt;</code></pre>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

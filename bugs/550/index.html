@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #550</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Encryption &#187; <a href="package/Crypt_HMAC/index.html">Crypt_HMAC</a> &#187; Bug #550</h1>
+<p>Invalid HMAC SHA1 Calculation</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-01-09 16:44 UTC</td></tr>
+<tr><th>From</th><td>jury at hightech dot lv</td></tr>
+<tr><th>Assigned</th><td>derick</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Crypt_HMAC/index.html">Crypt_HMAC</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Linux Slackware 2.4.20</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-01-09 16:44 UTC] jury at hightech dot lv</h3>
+<p>Description:<br>
+------------<br>
+SHA Calculation is depeding on length of generating Hash:</p>
+<p>Was:<br>
+$inner  = pack(&quot;H32&quot;, $func($this-&gt;_ipad . $data));</p>
+<p>Patch To:<br>
+$inner  = pack(&quot;H&quot; . (($func == &quot;sha1&quot;) ? &quot;40&quot; : &quot;32&quot;), $func($this-&gt;_ipad . $data));</p>
+<p>At least seems that in initialisation function there also is &quot;pack&quot; with &quot;H32&quot; to be patched.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$CryptObj = new Crypt_HMAC(&quot;1234&quot;, &quot;sha1&quot;);<br>
+echo strtoupper($CryptObj-&gt;Hash(&quot;test&quot;));</p>
+<p>Expected result:<br>
+----------------<br>
+6455FDB217CFE086953A844DABAC0491B05D91D2</p>
+<p>Actual result:<br>
+--------------<br>
+63066F77A255A47DCE2AA60ED421D50678F7F89B</p>
+</section>
+<section>
+<h3>[2004-02-11 10:31 UTC] jury at hightech dot lv</h3>
+<p>This Is Patched Version of HMAC:</p>
+<p>&lt;?php<br>
+/* vim: set expandtab tabstop=4 shiftwidth=4: */<br>
+// +----------------------------------------------------------------------+<br>
+// | PHP Version 4                                                        |<br>
+// +----------------------------------------------------------------------+<br>
+// | Copyright (c) 1997-2003 The PHP Group                                |<br>
+// +----------------------------------------------------------------------+<br>
+// | This source file is subject to version 2.0 of the PHP license,       |<br>
+// | that is bundled with this package in the file LICENSE, and is        |<br>
+// | available at through the world-wide-web at                           |<br>
+// | http://www.php.net/license/2_02.txt.                                 |<br>
+// | If you did not receive a copy of the PHP license and are unable to   |<br>
+// | obtain it through the world-wide-web, please send a note to          |<br>
+// | license@php.net so we can mail you a copy immediately.               |<br>
+// +----------------------------------------------------------------------+<br>
+// | Authors: Derick Rethans &lt;d.rethans@jdimedia.nl&gt;                      |<br>
+// +----------------------------------------------------------------------+<br>
+//<br>
+// $Id: HMAC.php,v 1.1 2003/02/16 20:34:16 derick Exp $</p>
+<p>/**<br>
+* Calculates RFC 2104 compliant HMACs<br>
+*<br>
+* @version $Revision: 1.1 $<br>
+* @access public<br>
+* @package Crypt<br>
+* @author Derick Rethans &lt;d.rethans@jdimedia.nl&gt;<br>
+ */   <br>
+class Crypt_HMAC {</p>
+<p>/**<br>
+    * Hash function to use<br>
+    * @var string<br>
+    */<br>
+    var $_func;</p>
+<p>/**<br>
+    * Inner padded key<br>
+    * @var string<br>
+    */<br>
+    var $_ipad;</p>
+<p>/**<br>
+    * Outer padded key<br>
+    * @var string<br>
+    */<br>
+    var $_opad;<br>
+    <br>
+    /**<br>
+    * Constructor<br>
+    * Pass method as first parameter<br>
+    *<br>
+    * @param  string method - Hash function used for the calculation<br>
+    * @return void<br>
+    * @access public<br>
+    */<br>
+    function Crypt_HMAC($key, $method = &#039;md5&#039;)<br>
+    {<br>
+        if (!in_array($method, array(&#039;sha1&#039;, &#039;md5&#039;))) {<br>
+            die(&quot;Unsupported hash function &#039;$method&#039;.&quot;);<br>
+        }<br>
+        $this-&gt;_func = $method;</p>
+<p>/* Pad the key as the RFC wishes */<br>
+        if (strlen($key) &gt; 64) {<br>
+            $key = pack(&quot;H&quot; . (($func == &quot;sha1&quot;) ? &quot;40&quot; : &quot;32&quot;), $method($key));<br>
+        }</p>
+<p>if (strlen($key) &lt; 64) {<br>
+            $key = str_pad($key, 64, chr(0));<br>
+        }</p>
+<p>/* Calculate the padded keys and save them */<br>
+        $this-&gt;_ipad = (substr($key, 0, 64) ^ str_repeat(chr(0x36), 64));<br>
+        $this-&gt;_opad = (substr($key, 0, 64) ^ str_repeat(chr(0x5C), 64));<br>
+	}<br>
+    <br>
+    /**<br>
+    * Hashing function<br>
+    *<br>
+    * @param  string data - string that will encrypted<br>
+    * @return string<br>
+    * @access public<br>
+    */<br>
+    function hash($data)<br>
+    {<br>
+        $func = $this-&gt;_func;<br>
+        $inner  = pack(&quot;H&quot; . (($func == &quot;sha1&quot;) ? &quot;40&quot; : &quot;32&quot;), $func($this-&gt;_ipad . $data));<br>
+        $digest = $func($this-&gt;_opad . $inner);<br>
+        return $digest;<br>
+    }<br>
+}<br>
+?&gt;</p>
+</section>
+<section>
+<h3>[2004-02-11 10:34 UTC] jury at hightech dot lv</h3>
+<p>With connectivity-wbxml when you make security verefication.<br>
+They use HMAC SHA1<br>
+Alsougth you can read RFC about HMAC&#039;it.</p>
+</section>
+<section>
+<h3>[2004-09-23 16:13 UTC] mcorne at yahoo dot com</h3>
+<p>The package does not work against the Test Cases for HMAC-MD5 and HMAC-SHA-1 published at the following address: http://xml.resource.org/public/rfc/html/rfc2202.html.<br>
+The correction proposed below is right.</p>
+<p>I enhanced the class so it could calculate the HMAC of other hash methods. I also create a test class to verify the code against the Test Cases mentioned above.</p>
+<p>I would be happy to contribute to the Pear community with this enhancement. Let me know what I should do.</p>
+</section>
+<section>
+<h3>[2004-09-23 17:01 UTC] php at derickrethans dot nl</h3>
+<p>E-mail me the patch and I&#039;ll have a look at it.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

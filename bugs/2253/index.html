@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2253</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_Upload/index.html">HTTP_Upload</a> &#187; Bug #2253</h1>
+<p>quotes</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-08-30 15:46 UTC</td></tr>
+<tr><th>From</th><td>znoob2 at yahoo dot com</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_Upload/index.html">HTTP_Upload</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-30 15:46 UTC] znoob2 at yahoo dot com</h3>
+<p>Description:<br>
+------------<br>
+HTTP_Upload version 0.9.1</p>
+<p>I got a form on a page with a file input field named &quot;f&quot;. I upload a file called (without the &lt; and &gt;):<br>
+  &lt;BI&#039; evil!!.torrent&gt;</p>
+<p>Then when I check the name, the first part until the single quote gets ripped off.</p>
+<p>Reproduce code:<br>
+---------------<br>
+// The script that shows things are nasty:</p>
+<p>$upload = new HTTP_Upload( &#039;en&#039; );<br>
+$torrent_file = $upload-&gt;getFiles( &#039;f&#039; );<br>
+print_r( $torrent_file );</p>
+<p>Expected result:<br>
+----------------<br>
+/* Expected (part of) output:<br>
+...<br>
+[upload] =&gt; Array<br>
+        (<br>
+            [real] =&gt; BI&#039; evil!!.torrent<br>
+            [name] =&gt; BI&#039; evil!!.torrent<br>
+...<br>
+*/</p>
+<p>Actual result:<br>
+--------------<br>
+/* Actual (part of) output:<br>
+...<br>
+[upload] =&gt; Array<br>
+        (<br>
+            [real] =&gt; &#039; evil!!.torrent<br>
+            [name] =&gt; &#039; evil!!.torrent<br>
+...<br>
+*/</p>
+</section>
+<section>
+<h3>[2004-08-31 15:36 UTC] znoob2 at yahoo dot com</h3>
+<p>To reply to wenz:<br>
+  no, $_FILES[&#039;f&#039;][&#039;name&#039;] returns the filename correctly apart from that it is addslashes-ed. But that is overcomeable.</p>
+<p>And for antonio:<br>
+  Sorry, but I don&#039;t understand a thing from that backtrace-making-tutorial. Especially because I am running WinXP and can&#039;t find those executables (unlimit, gdb). And how do I know if I compiled with --enable-debug? I downloaded the precompiled binaries.</p>
+<p>Thanks for the support so far.</p>
+</section>
+<section>
+<h3>[2004-08-31 15:58 UTC] znoob2 at yahoo dot com</h3>
+<p>$_FILES:</p>
+<p>Array<br>
+(<br>
+    [f] =&gt; Array<br>
+        (<br>
+            [name] =&gt; BI\&#039; evil!!.torrent<br>
+            [type] =&gt; application/octet-stream<br>
+            [tmp_name] =&gt; C:\WINDOWS\TEMP\php7.tmp<br>
+            [error] =&gt; 0<br>
+            [size] =&gt; 0<br>
+        )</p>
+<p>)</p>
+<p>and $HTTP_POST_FILES:</p>
+<p>Array<br>
+(<br>
+    [f] =&gt; Array<br>
+        (<br>
+            [name] =&gt; BI\&#039; evil!!.torrent<br>
+            [type] =&gt; application/octet-stream<br>
+            [tmp_name] =&gt; C:\WINDOWS\TEMP\php7.tmp<br>
+            [error] =&gt; 0<br>
+            [size] =&gt; 0<br>
+        )</p>
+<p>)</p>
+<p>seems to be the same (and correct) to me.. But the HTTP_Upload gives this:<br>
+(php code:<br>
+  require_once &#039;HTTP/Upload.php&#039;;<br>
+  $upload = new HTTP_Upload(&#039;en&#039;);<br>
+  $file = $upload-&gt;getFiles(&#039;f&#039;);<br>
+  if ( !$file-&gt;isError() )<br>
+    print_r( $file );<br>
+end code)</p>
+<p>http_upload_file Object<br>
+(<br>
+    [_seeded] =&gt; 0<br>
+    [upload] =&gt; Array<br>
+        (<br>
+            [real] =&gt; &#039; evil!!.torrent<br>
+            [name] =&gt; &#039; evil!!.torrent<br>
+            [form_name] =&gt; f<br>
+            [ext] =&gt; <br>
+            [tmp_name] =&gt; C:\WINDOWS\TEMP\php9.tmp<br>
+            [size] =&gt; 0<br>
+            [type] =&gt; application/octet-stream<br>
+            [error] =&gt; NO_USER_FILE<br>
+        )</p>
+<p>[mode_name_selected] =&gt; <br>
+    [_extensions_check] =&gt; Array<br>
+        (<br>
+            [0] =&gt; php<br>
+            [1] =&gt; phtm<br>
+            [2] =&gt; phtml<br>
+            [3] =&gt; php3<br>
+            [4] =&gt; inc<br>
+        )</p>
+<p>[_extensions_mode] =&gt; deny<br>
+    [_chmod] =&gt; 432<br>
+    [lang] =&gt; en<br>
+    [html] =&gt; <br>
+    [_debug] =&gt; <br>
+    [_default_error_mode] =&gt; <br>
+    [_default_error_options] =&gt; <br>
+    [_default_error_handler] =&gt; <br>
+    [_error_class] =&gt; PEAR_Error<br>
+    [_expected_errors] =&gt; Array<br>
+        (<br>
+        )</p>
+<p>[error_codes] =&gt; Array<br>
+............</p>
+</section>
+<section>
+<h3>[2004-09-17 20:38 UTC] znoob2 at yahoo dot com</h3>
+<p>Now got the Upload.php file from<br>
+http://www.inf.ufsc.br/~antonio/pear/Upload.php<br>
+(17th of September)<br>
+It is a little better (the backslash is now added), but still &quot;BI&quot; is missing.<br>
+Thanks for all the effort and I hope we can find out what&#039;s wrong. Does it maybe matter where php runs (C:\Program Files\php)? Or on which drive my php file is (D:)? Or where PEAR runs (C:\Program Files\php\PEAR)?</p>
+<p>[upload] =&gt; Array<br>
+        (<br>
+            [real] =&gt; \&#039; evil!!.torrent<br>
+            [name] =&gt; \&#039; evil!!.torrent<br>
+            [form_name] =&gt; f<br>
+            [ext] =&gt; <br>
+            [tmp_name] =&gt; C:\WINDOWS\TEMP\phpB1.tmp<br>
+            [size] =&gt; 0<br>
+            [type] =&gt; application/octet-stream<br>
+            [error] =&gt; NO_USER_FILE<br>
+        )</p>
+</section>
+<section>
+<h3>[2004-09-19 21:33 UTC] znoob2 at yahoo dot com</h3>
+<p>Yes! That zero should do the trick. You&#039;re good.</p>
+<p>0 -&gt; BI\&#039; evil!!.torrent<br>
+1 -&gt; &#039; evil!!.torrent<br>
+2 -&gt; &quot;&#039; evil!!.torrent&quot;<br>
+3 -&gt; &#039; evil!!.torrent<br>
+http_upload_file Object<br>
+(<br>
+    [_seeded] =&gt; 0<br>
+    [upload] =&gt; Array<br>
+        (<br>
+            [real] =&gt; \&#039; evil!!.torrent<br>
+            [name] =&gt; \&#039; evil!!.torrent<br>
+            [form_name] =&gt; f<br>
+            [ext] =&gt; <br>
+            [tmp_name] =&gt; C:\WINDOWS\TEMP\php10.tmp<br>
+            [size] =&gt; 0<br>
+            [type] =&gt; application/octet-stream<br>
+            [error] =&gt; NO_USER_FILE<br>
+        )</p>
+</section>
+<section>
+<h3>[2004-09-23 18:42 UTC] znoob2 at yahoo dot com</h3>
+<p>Things are getting worse again... What seems to be the problem?<br>
+Thx,<br>
+Paul</p>
+<p>0 -&gt; &#039; evil!!.torrent<br>
+1 -&gt; &#039; evil!!.torrenthttp_upload_file Object<br>
+(<br>
+    [_seeded] =&gt; 0<br>
+    [upload] =&gt; Array<br>
+        (<br>
+            [real] =&gt; \&#039; evil!!.torrent<br>
+            [name] =&gt; \&#039; evil!!.torrent<br>
+            [form_name] =&gt; f</p>
+</section>
+<section>
+<h3>[2004-10-07 14:30 UTC] znoob2 at yahoo dot com</h3>
+<p>Ah, I think I am starting to understand the problem. What happens is that somewhere the &#039; is escaped to \&#039;. However in windows basename() takes the last index of \ and returns what follows it.<br>
+Why is the &#039; escaped?<br>
+That&#039;s because of the nasty magic quotes. So actually it&#039;s a magic quotes problem. <br>
+Would this be a solution? -&gt; check magic quotes, then decide to stripslashes or not.<br>
+I haven&#039;t looked in your code, so could you - hopefully for the last time - update your code? then I download it to test again.</p>
+<p>Thx</p>
+</section>
+<section>
+<h3>[2004-10-07 14:46 UTC] znoob2 at yahoo dot com</h3>
+<p>OK, what I did:<br>
+I think you don&#039;t need that basename() because a file that is sent, is never sent with the full path. Only the filename. So I removed all basename() function calls. Then line 455 I changed to:<br>
+$name = get_magic_quotes_gpc() ? stripslashes( $value[&#039;name&#039;] ) : $value[&#039;name&#039;];<br>
+Now the output seems to be completely correct.</p>
+<p>One open question remains:<br>
+Is my claim true that it&#039;s safe to omit the basename call? If there&#039;s some sneeky hacker around modifying evil post data so that it DOES send a complete path, is it then possible for him / her to do malicious things?</p>
+</section>
+<section>
+<h3>[2004-10-07 14:54 UTC] znoob2 at yahoo dot com</h3>
+<p>Hm, still not everything compatible.</p>
+<p>Must<br>
+if (DIRECTORY_SEPARATOR == &#039;\\&#039;) {<br>
+  $name = addslashes($name);<br>
+}<br>
+( i got it on line 584 )<br>
+not be:<br>
+if (DIRECTORY_SEPARATOR == &#039;\\&#039;) {<br>
+  $name = str_replace( &#039;\&#039;, &#039;\\&#039;, $name );<br>
+}</p>
+<p>??? Actually, is it really needed?</p>
+</section>
+<section>
+<h3>[2004-10-07 15:08 UTC] znoob2 at yahoo dot com</h3>
+<p>Sorry, I was a little too enthousiastic so I posted a lot, but now my searching is complete. I tested it both with magic quotes on and off. And in all cases I got it returning the same value as $_FILES does.</p>
+<p>line 439: $name = $value[&#039;name&#039;][$key];<br>
+line 455: $name = $value[&#039;name&#039;];<br>
+line 584: completely removed this code:<br>
+          if (DIRECTORY_SEPARATOR == &#039;\\&#039; ) {<br>
+            $name = addslashes( $name );<br>
+          }</p>
+<p>and I believe there was some call to basename before line 439. I removed it. I removed all calls to basename. So that&#039;s about it. It works now and I hope I didn&#039;t remove some important security checking.</p>
+<p>Greetz</p>
+</section>
+<section>
+<h3>[2004-12-01 13:29 UTC] znoob2 at yahoo dot com</h3>
+<p>Sorry to tell you, but I recently bought a new computer and didn&#039;t backup the pear files. And besides that I wouldn&#039;t have a clue on how to make a diff.</p>
+<p>A final remark: I&#039;m not sure if the changes I make alter the security aspects of the class. Because I removed, as I remember, some checking and escaping or so. I believed those were redundant in my situation but I am not sure if they were redundant on every system and situation. For example, I am using windows and I don&#039;t know how I changed threads for Linux systems. So I think this change is not worth putting as an update in the public version as yet. Better other people that do know about Linux etc. take a look and a deep thought about it, then do the update.</p>
+<p>I am willing to test any changes though, so please let me know about any progress.</p>
+<p>Yours sincerely</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

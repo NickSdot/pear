@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7118</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR_Command_Packaging/index.html">PEAR_Command_Packaging</a> &#187; Bug #7118</h1>
+<p>Remove &quot;doc hack&quot; from template spec file</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-03-14 16:29 UTC</td></tr>
+<tr><th>From</th><td>timj at php dot net</td></tr>
+<tr><th>Assigned</th><td>timj</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR_Command_Packaging/index.html">PEAR_Command_Packaging</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-03-14 16:29 UTC] timj at php dot net</h3>
+<p>Description:<br>
+------------<br>
+The template spec file has a &quot;doc hack&quot; which compares the string containing the list of documents against an empty string, to decide if stuff needs to be done with them:</p>
+<p># Sort out documentation<br>
+if [ &quot;@doc_files@&quot; != &quot;&quot; ]; then<br>
+     mv %{buildroot}/docs/@package@/* .<br>
+     rm -rf %{buildroot}/docs<br>
+fi</p>
+<p>This is a messy hack and needs tidying.</p>
+<p>Test script:<br>
+---------------<br>
+# Test1: this is a package with docs<br>
+pear make-rpm-spec Net_SMTP-1.2.8.tgz <br>
+(grep out the paragraph following &quot;# Sort out documentation&quot;)</p>
+<p># Test2: this is a package without docs<br>
+pear make-rpm-spec PEAR_Command_Packaging-0.1.0.tgz<br>
+(grep out the paragraph following &quot;# Sort out documentation&quot;)</p>
+<p>Expected result:<br>
+----------------<br>
+Test1:<br>
+mv %{buildroot}/docs/Net_SMTP/* .<br>
+rm -rf %{buildroot}/docs</p>
+<p>Test2:<br>
+[nothing]</p>
+<p>Actual result:<br>
+--------------<br>
+Test1:<br>
+if [ &quot; docs/examples/basic.php docs/guide.txt&quot; != &quot;&quot; ]; then<br>
+     mv %{buildroot}/docs/Net_SMTP/* .<br>
+     rm -rf %{buildroot}/docs<br>
+fi</p>
+<p>Test2:<br>
+if [ &quot;&quot; != &quot;&quot; ]; then<br>
+     mv %{buildroot}/docs/PEAR_Command_Packaging/* .<br>
+     rm -rf %{buildroot}/docs<br>
+fi</p>
+</section>
+<section>
+<h3>[2006-04-14 22:40 UTC] timj at php dot net</h3>
+<p>Fixed in CVS using some changes based on:</p>
+<p>http://cvs.pld-linux.org/cgi-bin/cvsweb/SOURCES/php-pear-PEAR-rpmvars.patch?rev=1.25</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

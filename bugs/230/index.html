@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #230</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #230</h1>
+<p>Add tableinfo()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-11-12 19:19 UTC</td></tr>
+<tr><th>From</th><td>tpg at umich dot edu</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Solaris/Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-11-12 19:19 UTC] tpg at umich dot edu</h3>
+<p>Description:<br>
+------------<br>
+tableinfo() is missing for Sybase. The following code will return something very much like MySQL. I wrote this originally in DB 1.3 and have now integrated it into 1.4 and 1.5.  How about putting it in the next release?  Thanks</p>
+<p>/**<br>
+     * Get information describing the table<br>
+     */<br>
+    function tableInfo($result, $mode = null) {<br>
+        $count = 0;<br>
+        $id    = 0;<br>
+        $res   = array();</p>
+<p>/*<br>
+         * depending on $mode, metadata returns the following values:<br>
+         *<br>
+         * - mode is false (default):<br>
+         * $result[]:<br>
+         *   [0][&quot;table&quot;]  table name<br>
+         *   [0][&quot;name&quot;]   field name<br>
+         *   [0][&quot;type&quot;]   field type<br>
+         *   [0][&quot;len&quot;]    field length<br>
+         *   [0][&quot;flags&quot;]  field flags<br>
+         *<br>
+         * - mode is DB_TABLEINFO_ORDER<br>
+         * $result[]:<br>
+         *   [&quot;num_fields&quot;] number of metadata records<br>
+         *   [0][&quot;table&quot;]  table name<br>
+         *   [0][&quot;name&quot;]   field name<br>
+         *   [0][&quot;type&quot;]   field type<br>
+         *   [0][&quot;len&quot;]    field length<br>
+         *   [0][&quot;flags&quot;]  field flags<br>
+         *   [&quot;order&quot;][field name]  index of field named &quot;field name&quot;<br>
+         *   The last one is used, if you have a field name, but no index.<br>
+         *   Test:  if (isset($result[&#039;meta&#039;][&#039;myfield&#039;])) { ...<br>
+         *<br>
+         * - mode is DB_TABLEINFO_ORDERTABLE<br>
+         *    the same as above. but additionally<br>
+         *   [&quot;ordertable&quot;][table name][field name] index of field<br>
+         *      named &quot;field name&quot;<br>
+         *<br>
+         *      this is, because if you have fields from different<br>
+         *      tables with the same field name * they override each<br>
+         *      other with DB_TABLEINFO_ORDER<br>
+         *<br>
+         *      you can combine DB_TABLEINFO_ORDER and<br>
+         *      DB_TABLEINFO_ORDERTABLE with DB_TABLEINFO_ORDER |<br>
+         *      DB_TABLEINFO_ORDERTABLE * or with DB_TABLEINFO_FULL<br>
+         */</p>
+<p>// if $result is a string, then we want information about a<br>
+        // table without a resultset<br>
+        if (is_string($result)) {<br>
+            //id = @sybase_query(&quot;SELECT * FROM $result WHERE 0 = 1&quot;,<br>
+            $id = @sybase_query(&quot;SELECT * FROM $result&quot;,<br>
+                $this-&gt;connection);<br>
+            if (empty($id)) {<br>
+                return $this-&gt;raiseError();<br>
+            }<br>
+        }<br>
+        //  This part does not work in Mysql either.<br>
+        else {<br>
+            echo &quot;I do not know what to do with a result in Sybase::tableInfo&lt;BR&gt;\n&quot;;<br>
+            return $this-&gt;raiseError();<br>
+        }</p>
+<p>$count = @sybase_num_fields($id);<br>
+        for ($i=0; $i&lt;$count; $i++) {<br>
+            $f = @sybase_fetch_field($id, $i);<br>
+            $res[$i][&#039;table&#039;] = $result;<br>
+            $res[$i][&#039;name&#039;]  = $f-&gt;name;<br>
+            $res[$i][&#039;type&#039;]  = $f-&gt;type;<br>
+            $res[$i][&#039;len&#039;]   = $f-&gt;max_length;<br>
+            $res[$i][&#039;flags&#039;] = &#039;&#039;;<br>
+        }<br>
+        if (! empty($mode)) {<br>
+            $res[&#039;num_fields&#039;]= $count;<br>
+            for ($i=0; $i&lt;$count; $i++) {<br>
+                if ($mode &amp; DB_TABLEINFO_ORDER) {<br>
+                    $res[&#039;order&#039;][$res[$i][&#039;name&#039;]] = $i;<br>
+                }<br>
+                if ($mode &amp; DB_TABLEINFO_ORDERTABLE) {<br>
+                    $res[&#039;ordertable&#039;][$res[$i][&#039;table&#039;]][$res[$i][&#039;name&#039;]] = $i;<br>
+                }<br>
+            }<br>
+        }</p>
+<p>// free the result only if we were called on a table<br>
+        if (is_string($result)) {<br>
+            @sybase_free_result($id);<br>
+        }<br>
+        return $res;<br>
+    }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

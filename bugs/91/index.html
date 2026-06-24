@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #91</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #91</h1>
+<p>OCI8 Prepare() does not allow &#039;!&#039; as placeholder</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-10-13 05:30 UTC</td></tr>
+<tr><th>From</th><td>cjbj at hotmail dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Windows 2000</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-10-13 05:30 UTC] cjbj at hotmail dot com</h3>
+<p>Description:<br>
+------------<br>
+The PEAR DB documentation for Execute [see<br>
+http://pear.php.net/manual/en/package.database.db.intro-execute.php]<br>
+says three placeholders are allowed: question mark,<br>
+exclamation point and ampersand.  The common.php<br>
+implementation of Prepare() does support all three.  However<br>
+the oci8.php implementation only recognizes question marks<br>
+and ampersands.  This potentially impacts script migration<br>
+to the oci8 driver.</p>
+<p>If I read the code correctly, the fix is to make oci8.php&#039;s<br>
+Prepare() recognize exclamation points like common.php&#039;s.</p>
+<p>The affected file has timestamp:<br>
+        // $Id: oci8.php,v 1.10 2003/06/11 16:42:44 cox Exp$</p>
+<p>(which is pre-bug 53: http://pear.php.net/bugs/bug.php?id=53)</p>
+<p>Potential patch:</p>
+<p>*** oci8.php.orig       Tue Sep 02 15:21:20 2003<br>
+        --- oci8.php    Mon Oct 13 14:37:48 2003<br>
+        ***************<br>
+        *** 332,338 ****<br>
+               */<br>
+              function prepare($query)<br>
+              {<br>
+        !         $tokens = split(&#039;[\&amp;\?]&#039;, $query);<br>
+                  $token = 0;<br>
+                  $types = array();<br>
+                  $qlen = strlen($query);<br>
+        --- 332,338 ----<br>
+               */<br>
+              function prepare($query)<br>
+              {<br>
+        !         $tokens = split(&quot;[\&amp;\?\!]&quot;, $query);<br>
+                  $token = 0;<br>
+                  $types = array();<br>
+                  $qlen = strlen($query);<br>
+        ***************<br>
+        *** 343,348 ****<br>
+        --- 343,351 ----<br>
+                              break;<br>
+                          case &#039;&amp;&#039;:<br>
+                              $types[$token++] = DB_PARAM_OPAQUE;<br>
+        +                     break;<br>
+        +                 case &#039;!&#039;:<br>
+        +                     $types[$token++] = DB_PARAM_MISC;<br>
+                              break;<br>
+                      }<br>
+                  }</p>
+<p>This makes the exclamation and ampersands have the same<br>
+behavior.</p>
+<p>Reproduce code:<br>
+---------------<br>
+In SQL*Plus execute:</p>
+<p>connect scott/tiger@mydb<br>
+        CREATE TABLE MYTAB (C1 NUMBER)</p>
+<p>Then run this PHP script:</p>
+<p>&lt;?php</p>
+<p>require_once(&#039;DB.php&#039;);</p>
+<p>echo &quot;&lt;p&gt;Connecting . . . &lt;/p&gt;&quot;;<br>
+            $db = DB::connect(&quot;oci8://scott:tiger@MYDB&quot;);</p>
+<p>if (DB::iserror($db))<br>
+              die($db-&gt;getDebugInfo());</p>
+<p>// Note: an exclamation point is used as the place holder<br>
+            $stid = $db-&gt;prepare(&quot;INSERT INTO MYTAB (C1) VALUES (!)&quot;);<br>
+            if (DB::isError($stid)) {<br>
+              echo &quot;Prepare failed:\n&quot;;<br>
+              die($stid-&gt;getDebugInfo());<br>
+            }</p>
+<p>$bn = 8;</p>
+<p>$res = $db-&gt;execute($stid, array($bn));<br>
+            if (DB::isError($res)) {<br>
+              echo &quot;Execute failed:\n&quot;;<br>
+              die($res-&gt;getDebugInfo());<br>
+            }</p>
+<p>echo &quot;Insert complete.&quot;;<br>
+        ?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+After applying the patch the screen output is:</p>
+<p>Connecting . . .<br>
+        Insert complete.</p>
+<p>Querying the table &quot;MYTAB&quot; from SQL*Plus shows one row with<br>
+value &#039;8&#039;.</p>
+<p>Actual result:<br>
+--------------<br>
+Without the patch, no row is inserted.  The screen output<br>
+is:</p>
+<p>Connecting . . .<br>
+        Execute failed: INSERT INTO MYTAB (C1) VALUES (!)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2972</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/Translation2/index.html">Translation2</a> &#187; Bug #2972</h1>
+<p>cache_lite decorator not handling param sub as expected</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-12-15 18:21 UTC</td></tr>
+<tr><th>From</th><td>michael dot caplan at lechateau dot ca</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Translation2/index.html">Translation2</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.2</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-15 18:21 UTC] michael dot caplan at lechateau dot ca</h3>
+<p>Description:<br>
+------------<br>
+with the cache_light decorator, parameter substiution does not work as expected (at least what I expected). With caching on, I expect multiple calls to fetch a translation string to do parameter substitution each time.  Instead, the first cached string is alwasy returned, which defeats the purpose of parameter substitution.</p>
+</section>
+<section>
+<h3>[2004-12-15 19:19 UTC] michael dot caplan at lechateau dot ca</h3>
+<p>For what it is worth, here a patch (it&#039;s a really rough patch that doesn&#039;t fully take into consideration the different ways that the Cache_Lite_Function::call() method can be invoked. But, as a temporary messure it works):</p>
+<p>===================================================================<br>
+RCS file: /prod/cvs/intranet_3/lib/Translation2/Decorator/CacheLiteFunction.php,v<br>
+retrieving revision 1.5<br>
+retrieving revision 1.3<br>
+diff -p --unified=3 -r1.5 -r1.3<br>
+--- CacheLiteFunction.php	2004/12/15 19:16:44	1.5<br>
++++ CacheLiteFunction.php	2004/11/29 17:46:53	1.3<br>
+@@ -16,11 +16,11 @@<br>
+ // | Authors: Lorenzo Alberton &lt;l dot alberton at quipo dot it&gt;           |<br>
+ // +----------------------------------------------------------------------+<br>
+ //<br>
+-// $Id: CacheLiteFunction.php,v 1.5 2004/12/15 19:16:44 michael Exp $<br>
++// $Id: CacheLiteFunction.php,v 1.3 2004/11/29 17:46:53 michael Exp $<br>
+ //<br>
+ /**<br>
+  * @package Translation2<br>
+- * @version $Id: CacheLiteFunction.php,v 1.5 2004/12/15 19:16:44 michael Exp $<br>
++ * @version $Id: CacheLiteFunction.php,v 1.3 2004/11/29 17:46:53 michael Exp $<br>
+  */<br>
+ /**<br>
+  * Load Translation2 decorator base class<br>
+@@ -156,9 +156,8 @@ class Translation2_Decorator_CacheLiteFu<br>
+         global ${$this-&gt;tempVarName}; // WITHOUT THIS, IT DOESN&#039;T WORK<br>
+         ${$this-&gt;tempVarName} = $this-&gt;translation2;</p>
+<p>-        $return = $this-&gt;cacheLiteFunction-&gt;call($this-&gt;tempVarName.&#039;-&gt;get&#039;,<br>
+-            $stringID, $pageID, $langID, $defaultText, false);<br>
+-        return $this-&gt;translation2-&gt;_replaceParams($return);<br>
++        return $this-&gt;cacheLiteFunction-&gt;call($this-&gt;tempVarName.&#039;-&gt;get&#039;,<br>
++            $stringID, $pageID, $langID, $defaultText);<br>
+     }</p>
+<p>// }}}</p>
+<p>===================================================================<br>
+RCS file: /prod/cvs/intranet_3/lib/Translation2.php,v<br>
+retrieving revision 1.3<br>
+retrieving revision 1.4<br>
+diff -bB -p --unified=3 -r1.3 -r1.4<br>
+--- Translation2.php	2004/11/29 17:47:45	1.3<br>
++++ Translation2.php	2004/12/15 18:55:30	1.4<br>
+@@ -16,11 +16,11 @@<br>
+ // | Authors: Lorenzo Alberton &lt;l dot alberton at quipo dot it&gt;           |<br>
+ // +----------------------------------------------------------------------+<br>
+ //<br>
+-// $Id: Translation2.php,v 1.3 2004/11/29 17:47:45 michael Exp $<br>
++// $Id: Translation2.php,v 1.4 2004/12/15 18:55:30 michael Exp $<br>
+ //<br>
+ /**<br>
+  * @package Translation2<br>
+- * @version $Id: Translation2.php,v 1.3 2004/11/29 17:47:45 michael Exp $<br>
++ * @version $Id: Translation2.php,v 1.4 2004/12/15 18:55:30 michael Exp $<br>
+  */</p>
+<p>/**<br>
+@@ -396,16 +396,21 @@ class Translation2<br>
+      * @param string $langID<br>
+      * @param string $defaultText Text to display when the strings in both<br>
+      *                            the default and the fallback lang are empty<br>
++     * @param boolean $replace Should string parameter replacing take place (default true)<br>
+      * @return string<br>
+      */<br>
+-    function get($stringID, $pageID=TRANSLATION2_DEFAULT_PAGEID, $langID=null, $defaultText=&#039;&#039;)<br>
++    function get($stringID, $pageID=TRANSLATION2_DEFAULT_PAGEID, $langID=null, $defaultText=&#039;&#039;, $replace = true)<br>
+     {<br>
+         $pageID = ($pageID == TRANSLATION2_DEFAULT_PAGEID ? $this-&gt;currentPageID : $pageID);<br>
+         $str = $this-&gt;storage-&gt;getOne($stringID, $pageID, $langID);<br>
+         if (PEAR::isError($str)) {<br>
+             return $str;<br>
+         }<br>
++        if ($replace) {<br>
+         return $this-&gt;_replaceParams($str);<br>
++        } else {<br>
++            return $str;<br>
++        }<br>
+     }</p>
+<p>// }}}</p>
+</section>
+<section>
+<h3>[2004-12-15 19:20 UTC] michael dot caplan at lechateau dot ca</h3>
+<p>ignore comment about Cache_Lite_Function::call()  That would be part of the cache_light pacakge.</p>
+</section>
+<section>
+<h3>[2004-12-15 22:57 UTC] michael dot caplan at lechateau dot ca</h3>
+<p>sorry about the messed up summary.  IE auto-populated the summary using an old filed bug</p>
+</section>
+<section>
+<h3>[2004-12-16 00:50 UTC] michael dot caplan at lechateau dot ca</h3>
+<p>This is pretty much exactly what I am doing:</p>
+<p>$fw_tr =&amp; Translation2::factory(&#039;mdb2&#039;, &amp;$fw_db, $fw_tr_params);</p>
+<p>if (PEAR::isError($fw_tr)) {<br>
+	trigger_error($fw_tr-&gt;getMessage . $fw_tr-&gt;GetUserInfo(), E_USER_ERROR);<br>
+	die();<br>
+}</p>
+<p>// set default translation lang<br>
+$fw_lang = (is_null($fw_locale)) ? $fw_ini[&#039;locales.locale&#039;][&#039;default_locale&#039;] : $fw_locale;<br>
+$fw_lang = strtolower(substr($fw_lang, 0, 2));<br>
+$fw_tr-&gt;setLang($fw_lang);<br>
+$fw_tr-&gt;setPageID();</p>
+<p>// set translation caching<br>
+$fw_tr =&amp; $fw_tr-&gt;getDecorator(&#039;CacheLiteFunction&#039;);<br>
+define(&#039;TR_CACHE_DIR&#039;, ROOT . DIR_SEP . &#039;cache&#039; . DIR_SEP . &#039;translation&#039; . DIR_SEP);<br>
+$fw_tr-&gt;setOption(&#039;cacheDir&#039;, TR_CACHE_DIR);<br>
+$fw_tr-&gt;setOption(&#039;lifeTime&#039;, 3600*24); //one day<br>
+$fw_tr-&gt;setOption(&#039;autoCleanCache&#039;, true);</p>
+<p>// set fallback language<br>
+$fw_lang_fallback = ($fw_ini[&#039;locales.locale&#039;][&#039;default_locale&#039;] != $fw_locale) ? $fw_locale : &#039;en_CA&#039;;<br>
+$fw_lang_fallback = strtolower(substr($fw_lang_fallback, 0, 2));<br>
+$fw_tr =&amp; $fw_tr-&gt;getDecorator(&#039;Lang&#039;);<br>
+$fw_tr-&gt;setOption(&#039;fallbackLang&#039;, $fw_lang_fallback);</p>
+<p>// set default text<br>
+$fw_tr =&amp; $fw_tr-&gt;getDecorator(&#039;DefaultText&#039;);<br>
+$fw_tr-&gt;setOption(&#039;emptyPrefix&#039;, &#039;[&#039;);  //mark empty strings<br>
+$fw_tr-&gt;setOption(&#039;emptyPostfix&#039;, &#039;]&#039;); //enclose them within brackets</p>
+<p>$fw_tr-&gt;setParams(array(&#039;collection&#039; =&gt; $collection));<br>
+$results[] = $fw_tr-&gt;get(&#039;result_restored&#039;);</p>
+<p>$fw_tr-&gt;setParams(array(&#039;collection&#039; =&gt; $collection2));<br>
+$results[] = $fw_tr-&gt;get(&#039;result_restored&#039;);</p>
+<p>$fw_tr-&gt;setParams(array(&#039;collection&#039; =&gt; $collection3));<br>
+$results[] = $fw_tr-&gt;get(&#039;result_restored&#039;);</p>
+<p>Where results_restored is something like &#039;Collection &amp;&amp;collection&amp;&amp; has been restored.&#039;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

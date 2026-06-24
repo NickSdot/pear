@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #660</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Caching &#187; <a href="package/Cache_Lite/index.html">Cache_Lite</a> &#187; Bug #660</h1>
+<p>Problem using Cache_Lite_Function&#039;s &#039;call&#039; method and $this-&gt;method</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-02-01 11:45 UTC</td></tr>
+<tr><th>From</th><td>eikke at eikke dot com</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/Cache_Lite/index.html">Cache_Lite</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>GNU/Linux 2.4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-02-01 11:45 UTC] eikke at eikke dot com</h3>
+<p>Description:<br>
+------------<br>
+If I try to use PEAR::Cache_Lite&#039;s Cache_Lite_Function class in a class of mine, I cannot cache results of methode calls of that class itself (error on $this-&gt;_cache-&gt;call(&#039;this-&gt;_myFunction&#039;, &#039;arg1&#039;, &#039;arg2&#039;))</p>
+<p>These 2 possible solution do not work:<br>
+a) $tmp=$this;<br>
+    $this-&gt;_cache-&gt;call(&#039;tmp-&gt;_myFunction&#039;, &#039;arg1&#039;, &#039;arg2&#039;);</p>
+<p>b) $tmp=&amp; $this;<br>
+    $this-&gt;_cache-&gt;call(&#039;tmp-&gt;_myFunction&#039;, &#039;arg1&#039;, &#039;arg2&#039;);</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+require_once &#039;Cache/Lite/Function.php&#039;;<br>
+class myClass{<br>
+        var $_cache;<br>
+        function myClass(){<br>
+                $options = array(&#039;caching&#039; =&gt; true,<br>
+                    &#039;cacheDir&#039; =&gt; &#039;../cache&#039;,<br>
+                    &#039;lifeTime&#039; =&gt; 1800);<br>
+                $this-&gt;_cache = new Cache_Lite_Function($options);<br>
+        }<br>
+        function _myTest($a, $b){<br>
+                return $a.&quot;+&quot;.$b.&quot;=&quot;.($a+$b);<br>
+        }<br>
+        function getResult($c, $d){<br>
+                $ret=$this-&gt;_cache-&gt;call(&#039;this-&gt;_myTest&#039;, $c, $d);<br>
+                return $ret;<br>
+        }<br>
+}<br>
+$mc=new myClass();<br>
+echo $mc-&gt;getResult(1,2);<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+1+2=3</p>
+<p>Actual result:<br>
+--------------<br>
+Fatal error: Call to a member function on a non-object in /usr/local/lib/php/Cache/Lite/Function.php on line 103</p>
+</section>
+<section>
+<h3>[2004-02-07 13:34 UTC] fab at php dot net</h3>
+<p>I don&#039;t find any good solution.</p>
+<p>But, a good workaround is :<br>
+&lt;?php<br>
+(...)<br>
+    function getResult($c, $d){<br>
+        global $temp; // WITHOUT THIS, IT DOESN&#039;T WORK<br>
+        $temp = $this;<br>
+        $ret=$this-&gt;_cache-&gt;call(&#039;temp-&gt;_myTest&#039;, $c, $d);<br>
+        return $ret;<br>
+    }<br>
+(...)<br>
+?&gt;</p>
+</section>
+<section>
+<h3>[2004-10-12 20:04 UTC] dcech at phpwerx dot net</h3>
+<p>You can call it like:</p>
+<p>$this-&gt;_cache-&gt;call(array(&amp;$this,&#039;myFunction&#039;), &#039;arg1&#039;, &#039;arg2&#039;);</p>
+<p>It will generate 2 notices but will work just fine.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

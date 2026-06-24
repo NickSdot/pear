@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6189</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_WebDAV_Server/index.html">HTTP_WebDAV_Server</a> &#187; Bug #6189</h1>
+<p>Various international filename issues</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-12-08 08:42 UTC</td></tr>
+<tr><th>From</th><td>pprasse at actindo dot de</td></tr>
+<tr><th>Assigned</th><td>hholzgra</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_WebDAV_Server/index.html">HTTP_WebDAV_Server</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Linux / MacOS / Windows</td></tr>
+<tr><th>Roadmaps</th><td>1.0</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-12-08 08:42 UTC] pprasse at actindo dot de</h3>
+<p>Description:<br>
+------------<br>
+As said in bug #4971 _urlencode is not sufficient for international filenames.</p>
+<p>1. _urlencode has to add property encoding (and _urldecode has to decode properly) if _prop_encoding!=&#039;utf-8&#039; for clients to display international filenames correctly. (Fix attached)</p>
+<p>2. Windows submits question marks in filenames (which you can not create in Windows but can be created by other clients) as literal &#039;?&#039;, which means we get everything before the question mark in $_SERVER[&#039;PATH_INFO&#039;] and everything behind it in $_SERVER[&#039;QUERY_STRING&#039;]. (Fix attached)</p>
+<p>3. In _copymove we have to _urldecode $options[&#039;dest&#039;] before checking for locks. (Fix attached)</p>
+</section>
+<section>
+<h3>[2005-12-08 08:44 UTC] pprasse at actindo dot de</h3>
+<p>Here&#039;s a patch for Server.php:</p>
+<p>--- Server.php	2005-04-06 00:51:09.000000000 +0200<br>
++++ Server.php.new	2005-12-08 09:34:02.617707904 +0100<br>
+@@ -129,7 +129,7 @@<br>
+         $uri.= &quot;//$_SERVER[HTTP_HOST]$_SERVER[SCRIPT_NAME]&quot;;<br>
+         <br>
+         $this-&gt;base_uri = $uri;<br>
+-        $this-&gt;uri      = $uri . $_SERVER[PATH_INFO]&quot;;<br>
++        $this-&gt;uri      = $uri . $_SERVER[&#039;PATH_INFO&#039;];<br>
+ <br>
+         // identify ourselves<br>
+         if (empty($this-&gt;dav_powered_by)) {<br>
+@@ -158,9 +158,15 @@<br>
+             $this-&gt;http_status(&quot;412 Precondition failed&quot;);<br>
+             return;<br>
+         }<br>
+-        <br>
++<br>
+         // set path<br>
+-        $this-&gt;path = $this-&gt;_urldecode($_SERVER[&quot;PATH_INFO&quot;]);<br>
++        if( strpos(strtolower($_SERVER[&#039;HTTP_USER_AGENT&#039;]),&#039;microsoft&#039;) !== FALSE )<br>
++        {<br>
++          // Windows sends question marks in filenames as query string<br>
++          $this-&gt;path = $this-&gt;_urldecode($_SERVER[&quot;PATH_INFO&quot;].(!empty($_SERVER[&#039;QUERY_STRING&#039;]) ? &#039;%3F&#039;.$_SERVER[&#039;QUERY_STRING&#039;] : &#039;&#039;) );<br>
++        }<br>
++        else<br>
++          $this-&gt;path = $this-&gt;_urldecode($_SERVER[&quot;PATH_INFO&quot;]);<br>
+         if (!strlen($this-&gt;path)) {<br>
+             header(&quot;Location: &quot;.$this-&gt;base_uri.&quot;/&quot;);<br>
+             exit;<br>
+@@ -634,7 +640,7 @@<br>
+         <br>
+             $href = $this-&gt;_slashify($_SERVER[&#039;SCRIPT_NAME&#039;] . $path);<br>
+         <br>
+-            echo &quot;  &lt;D:href&gt;$href&lt;/D:href&gt;\n&quot;;<br>
++            echo &quot;  &lt;D:href&gt;&quot;.$this-&gt;_urlencode($href).&quot;&lt;/D:href&gt;\n&quot;;<br>
+         <br>
+             // report all found properties and their values (if any)<br>
+             if (isset($file[&quot;props&quot;]) &amp;&amp; is_array($file[&quot;props&quot;])) {<br>
+@@ -1294,7 +1300,7 @@<br>
+             <br>
+             $options[&quot;locktoken&quot;] = $this-&gt;_new_locktoken();<br>
+             <br>
+-            $stat = $this-&gt;lock($options);              <br>
++            $stat = $this-&gt;lock($options);<br>
+         }<br>
+         <br>
+         if(is_bool($stat)) {<br>
+@@ -1398,6 +1404,7 @@<br>
+             !strncmp($_SERVER[&quot;SCRIPT_NAME&quot;], $path,<br>
+                      strlen($_SERVER[&quot;SCRIPT_NAME&quot;]))) {<br>
+             $options[&quot;dest&quot;] = substr($path, strlen($_SERVER[&quot;SCRIPT_NAME&quot;]));<br>
++            $options[&#039;dest&#039;] = $this-&gt;_urldecode( $options[&#039;dest&#039;] );<br>
+             if (!$this-&gt;_check_lock_status($options[&quot;dest&quot;])) {<br>
+                 $this-&gt;http_status(&quot;423 Locked&quot;);<br>
+                 return;<br>
+@@ -1774,7 +1781,7 @@<br>
+             // ... and lock is not owned?<br>
+             if (is_array($lock) &amp;&amp; count($lock)) {<br>
+                 // FIXME doesn&#039;t check uri restrictions yet<br>
+-                if (!strstr($_SERVER[&quot;HTTP_IF&quot;], $lock[&quot;token&quot;])) {<br>
++                if( strpos($_SERVER[&quot;HTTP_IF&quot;], $lock[&quot;token&quot;]) === FALSE ) {<br>
+                     if (!$exclusive_only || ($lock[&quot;scope&quot;] !== &quot;shared&quot;))<br>
+                         return false;<br>
+                 }<br>
+@@ -1864,13 +1871,10 @@<br>
+      * @param  string  URL to encode<br>
+      * @return string  encoded URL<br>
+      */<br>
+-    function _urlencode($url) <br>
++    function _urlencode( $path )<br>
+     {<br>
+-        return strtr($url, array(&quot; &quot;=&gt;&quot;%20&quot;,<br>
+-                                 &quot;&amp;&quot;=&gt;&quot;%26&quot;,<br>
+-                                 &quot;&lt;&quot;=&gt;&quot;%3C&quot;,<br>
+-                                 &quot;&gt;&quot;=&gt;&quot;%3E&quot;,<br>
+-                                 ));<br>
++      $ret = rawurlencode( $this-&gt;_prop_encode($path) );<br>
++      return strtr( $ret, array( &#039;%2F&#039; =&gt; &#039;/&#039; ) );<br>
+     }<br>
+ <br>
+     /**<br>
+@@ -1881,9 +1885,9 @@<br>
+      * @param  string  URL to decode<br>
+      * @return string  decoded URL<br>
+      */<br>
+-    function _urldecode($path) <br>
++    function _urldecode( $path )<br>
+     {<br>
+-        return urldecode($path);<br>
++      return $this-&gt;_prop_decode( rawurldecode($path) );<br>
+     }<br>
+ <br>
+     /**<br>
+@@ -1906,6 +1910,25 @@<br>
+     }<br>
+ <br>
+     /**<br>
++     * UTF-8 decode property values if not already done so<br>
++     *<br>
++     * @param  string  text to decode<br>
++     * @return string  utf-8 decoded text<br>
++     */<br>
++    function _prop_decode($text) <br>
++    {<br>
++        switch (strtolower($this-&gt;_prop_encoding)) {<br>
++        case &quot;utf-8&quot;:<br>
++            return $text;<br>
++        case &quot;iso-8859-1&quot;:<br>
++        case &quot;iso-8859-15&quot;:<br>
++        case &quot;latin-1&quot;:<br>
++        default:<br>
++            return utf8_decode($text);<br>
++        }<br>
++    }<br>
++<br>
++    /**<br>
+      * Slashify - make sure path ends in a slash<br>
+      *<br>
+      * @param   string directory path</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

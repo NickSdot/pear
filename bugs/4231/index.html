@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4231</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/XML_RPC/index.html">XML_RPC</a> &#187; Bug #4231</h1>
+<p>RPC method calls with bad parameter counts can cause PHP notices.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-04-27 08:42 UTC</td></tr>
+<tr><th>From</th><td>mike at naberezny dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_RPC/index.html">XML_RPC</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-27 08:42 UTC] mike at naberezny dot com</h3>
+<p>Description:<br>
+------------<br>
+If a client calls an RPC method but supplies a parameter count that does not match any of the method&#039;s signatures as defined in the dispatch map, the function verifySignature() of XML_RPC_Server will cause PHP undefined variable notices if PHP notices have not been disabled.</p>
+<p>This is a security issue because it exposes the script path to the client.  Also, having the server&#039;s XML response prepended with PHP notices will cause many clients to reject the return payload as invalid during parsing.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Build the example server and client from the end-user documentation.  The built-in RPC method system.methodHelp() takes one parameter.  Use the client to call this method with no parameters, and again with two or more parameters.  Observe the response payload.</p>
+<p>Expected result:<br>
+----------------<br>
+A valid response from the server with a fault code of 3 and a fault string similar to &quot;Bad parameter count&quot;.</p>
+<p>Actual result:<br>
+--------------<br>
+Undefined variable notices occur for $wanted, $got, and $pno in the function verifySignature() of XML_RPC_Server.  These will be prepended to the XML returned from the server, resulting in XML_RPC_Client to report its own fault code 2 (invalud return payload).  Although the XML from the server does contain a faultCode and faultString, most other clients react similarly and reject the return payload during parsing.</p>
+<p>Fix<br>
+----<br>
+In the class XML_RPC_Server, replace the last line of the function verifySignature().</p>
+<p>Before:<br>
+        return array(0, &quot;Wanted ${wanted}, got ${got} at param ${pno})&quot;);</p>
+<p>Fixed:<br>
+        if (isset($pno)) {<br>
+            return array(0, &quot;Wanted ${wanted}, got ${got} at param ${pno})&quot;);<br>
+        } else {<br>
+            return array(0, &#039;Bad parameter count&#039;);<br>
+        }</p>
+</section>
+<section>
+<h3>[2005-05-05 05:09 UTC] mike at naberezny dot com</h3>
+<p>Please see the reproduce code here:</p>
+<p>http://www.mikenaberezny.com/pear/bugs/4231</p>
+</section>
+<section>
+<h3>[2005-05-07 00:57 UTC] mike at naberezny dot com</h3>
+<p>I have reopened this bug because the patch in 1.3.0RC2 has the side-effect of breaking support for optional method parameters.  Please see a description and reproduce code here:</p>
+<p>http://www.mikenaberezny.com/pear/bugs/4231-addendum</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

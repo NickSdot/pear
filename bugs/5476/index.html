@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5476</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #5476</h1>
+<p>proposal for &quot;texis&quot; driver</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5476</th><td>proposal for &quot;texis&quot; driver</td></tr>
+<tr><th>Submitted</th><td>2005-09-21 19:42 UTC</td></tr>
+<tr><th>From</th><td>myke at adicio dot com</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.5</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-09-21 19:42 UTC] myke at adicio dot com</h3>
+<p>Description:<br>
+------------<br>
+This is a DB module for connecting to a texis database.  Sorry <br>
+for apparently posting this to the wrong place (mailing list).</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php</p>
+<p>/* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */</p>
+<p>/**<br>
+ * The PEAR DB driver for a texis extension<br>
+ * for interacting with Texis databases<br>
+ *<br>
+ * PHP versions 4 and 5<br>
+ *<br>
+ * LICENSE: This source file is subject to version 3.0 of the PHP license<br>
+ * that is available through the world-wide-web at the following URI:<br>
+ * http://www.php.net/license/3_0.txt.  If you did not receive a copy of<br>
+ * the PHP License and are unable to obtain it through the web, please<br>
+ * send a note to license@php.net so we can mail you a copy immediately.<br>
+ *<br>
+ * Use:<br>
+ *  In order to use this script you need to first setup a vortex script<br>
+ *  that will return your XML to this module.  (name script xml)<br>
+ * &lt;code&gt;<br>
+ *   &lt;a name=xmloutput public&gt;<br>
+ *     &lt;sql output=xml db=$db $sqlstatement&gt;&lt;/sql&gt;<br>
+ *   &lt;/a&gt;<br>
+ * &lt;/code&gt;<br>
+ * <br>
+ *<br>
+ * @category   Database<br>
+ * @package    DB<br>
+ * @author     Myke Hines &lt;myke@adicio.com&gt;<br>
+ * @copyright  1997-2005 The PHP Group<br>
+ * @license    http://www.php.net/license/3_0.txt  PHP License 3.0<br>
+ * @version    CVS: $Id: texis.php,v 1.117 2005/03/29 15:03:26 myke Exp $<br>
+ * @link       http://pear.php.net/package/DB<br>
+ */</p>
+<p>/**<br>
+ * Obtain the DB_common class so it can be extended from<br>
+ */<br>
+require_once &#039;DB/common.php&#039;;</p>
+<p>/**<br>
+ * The methods PEAR DB uses to interact with PHP&#039;s texis extension<br>
+ * for interacting with Texis databases<br>
+ *<br>
+ * These methods overload the ones declared in DB_common.<br>
+ *<br>
+ * @category   Database<br>
+ * @package    DB<br>
+ * @author     Stig Bakken &lt;ssb@php.net&gt;<br>
+ * @author     Daniel Convissor &lt;danielc@php.net&gt;<br>
+ * @copyright  1997-2005 The PHP Group<br>
+ * @license    http://www.php.net/license/3_0.txt  PHP License 3.0<br>
+ * @version    Release: 1.7.6<br>
+ * @link       http://pear.php.net/package/DB<br>
+ */<br>
+class DB_texis extends DB_common<br>
+{<br>
+    // {{{ properties</p>
+<p>/**<br>
+     * The DB driver type (texis, oci8, odbc, etc.)<br>
+     * @var string<br>
+     */<br>
+    var $phptype = &#039;texis&#039;;</p>
+<p>/**<br>
+     * The database syntax variant to be used (db2, access, etc.), if any<br>
+     * @var string<br>
+     */<br>
+    var $dbsyntax = &#039;texis&#039;;</p>
+<p>/**<br>
+     * The capabilities of this DB implementation<br>
+     *<br>
+     * The &#039;new_link&#039; element contains the PHP version that first provided<br>
+     * new_link support for this DBMS.  Contains false if it&#039;s unsupported.<br>
+     *<br>
+     * Meaning of the &#039;limit&#039; element:<br>
+     *   + &#039;emulate&#039; = emulate with fetch row by number<br>
+     *   + &#039;alter&#039;   = alter the query<br>
+     *   + false     = skip rows<br>
+     *<br>
+     * @var array<br>
+     */<br>
+    var $features = array(<br>
+        &#039;limit&#039;         =&gt; &#039;alter&#039;,<br>
+        &#039;new_link&#039;      =&gt; &#039;4.2.0&#039;,<br>
+        &#039;numrows&#039;       =&gt; true,<br>
+        &#039;pconnect&#039;      =&gt; false,<br>
+        &#039;prepare&#039;       =&gt; false,<br>
+        &#039;ssl&#039;           =&gt; false,<br>
+        &#039;transactions&#039;  =&gt; true,<br>
+    );</p>
+<p>/**<br>
+     * A mapping of native error codes to DB error codes<br>
+     * @var array<br>
+     */<br>
+    var $errorcode_map = array(<br>
+        1004 =&gt; DB_ERROR_CANNOT_CREATE,<br>
+        1005 =&gt; DB_ERROR_CANNOT_CREATE,<br>
+        1006 =&gt; DB_ERROR_CANNOT_CREATE,<br>
+        1007 =&gt; DB_ERROR_ALREADY_EXISTS,<br>
+        1008 =&gt; DB_ERROR_CANNOT_DROP,<br>
+        1022 =&gt; DB_ERROR_ALREADY_EXISTS,<br>
+        1044 =&gt; DB_ERROR_ACCESS_VIOLATION,<br>
+        1046 =&gt; DB_ERROR_NODBSELECTED,<br>
+        1048 =&gt; DB_ERROR_CONSTRAINT,<br>
+        1049 =&gt; DB_ERROR_NOSUCHDB,<br>
+        1050 =&gt; DB_ERROR_ALREADY_EXISTS,<br>
+        1051 =&gt; DB_ERROR_NOSUCHTABLE,<br>
+        1054 =&gt; DB_ERROR_NOSUCHFIELD,<br>
+        1061 =&gt; DB_ERROR_ALREADY_EXISTS,<br>
+        1062 =&gt; DB_ERROR_ALREADY_EXISTS,<br>
+        1064 =&gt; DB_ERROR_SYNTAX,<br>
+        1091 =&gt; DB_ERROR_NOT_FOUND,<br>
+        1100 =&gt; DB_ERROR_NOT_LOCKED,<br>
+        1136 =&gt; DB_ERROR_VALUE_COUNT_ON_ROW,<br>
+        1142 =&gt; DB_ERROR_ACCESS_VIOLATION,<br>
+        1146 =&gt; DB_ERROR_NOSUCHTABLE,<br>
+        1216 =&gt; DB_ERROR_CONSTRAINT,<br>
+        1217 =&gt; DB_ERROR_CONSTRAINT,<br>
+    );</p>
+<p>/**<br>
+     * The raw database connection created by PHP<br>
+     * @var resource<br>
+     */<br>
+    var $connection;</p>
+<p>/**<br>
+     * The DSN information for connecting to a database<br>
+     * @var array<br>
+     */<br>
+    var $dsn = array();</p>
+<p>/**<br>
+     * Should data manipulation queries be committed automatically?<br>
+     * @var bool<br>
+     * @access private<br>
+     */<br>
+    var $autocommit = true;</p>
+<p>/**<br>
+     * The quantity of transactions begun<br>
+     *<br>
+     * {@internal  While this is private, it can&#039;t actually be designated<br>
+     * private in PHP 5 because it is directly accessed in the test suite.}}<br>
+     *<br>
+     * @var integer<br>
+     * @access private<br>
+     */<br>
+    var $transaction_opcount = 0;</p>
+<p>/**<br>
+     * The database specified in the DSN<br>
+     *<br>
+     * It&#039;s a fix to allow calls to different databases in the same script.<br>
+     *<br>
+     * @var string<br>
+     * @access private<br>
+     */<br>
+    var $_db = &#039;&#039;;</p>
+<p>// }}}<br>
+    // {{{ constructor</p>
+<p>/**<br>
+     * This constructor calls &lt;kbd&gt;$this-&gt;DB_common()&lt;/kbd&gt;<br>
+     *<br>
+     * @return void<br>
+     */<br>
+    function DB_texis()<br>
+    {<br>
+        $this-&gt;DB_common();<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ connect()</p>
+<p>/**<br>
+     * Connect to the database server, log in and open the database<br>
+     *<br>
+     * Don&#039;t call this method directly.  Use DB::connect() instead.<br>
+     *<br>
+     * PEAR DB&#039;s texis driver supports the following extra DSN options:<br>
+     *   + new_link      If set to true, causes subsequent calls to connect()<br>
+     *                    to return a new connection link instead of the<br>
+     *                    existing one.  WARNING: this is not portable to<br>
+     *                    other DBMS&#039;s. Available since PEAR DB 1.7.0.<br>
+     *   + client_flags  Any combination of MYSQL_CLIENT_* constants.<br>
+     *                    Only used if PHP is at version 4.3.0 or greater.<br>
+     *                    Available since PEAR DB 1.7.0.<br>
+     *<br>
+     * @param array $dsn         the data source name<br>
+     * @param bool  $persistent  should the connection be persistent?<br>
+     *<br>
+     * @return int  DB_OK on success. A DB_Error object on failure.<br>
+     */<br>
+    function connect($dsn, $persistent = false)<br>
+    {<br>
+        $this-&gt;dsn = $dsn;<br>
+        if ($dsn[&#039;dbsyntax&#039;]) {<br>
+            $this-&gt;dbsyntax = $dsn[&#039;dbsyntax&#039;];<br>
+        }</p>
+<p>$params = array();<br>
+        if ($dsn[&#039;protocol&#039;] &amp;&amp; $dsn[&#039;protocol&#039;] == &#039;unix&#039;) {<br>
+            $params[0] = &#039;:&#039; . $dsn[&#039;socket&#039;];<br>
+        } else {<br>
+            $params[0] = $dsn[&#039;hostspec&#039;] ? $dsn[&#039;hostspec&#039;]<br>
+                         : &#039;central&#039;;<br>
+            if ($dsn[&#039;port&#039;]) {<br>
+                $params[0] .= &#039;:&#039; . $dsn[&#039;port&#039;];<br>
+            }<br>
+        }</p>
+<p>$php_errormsg = &#039;&#039;;</p>
+<p>$this-&gt;host = $params[0];<br>
+        if ($dsn[&#039;database&#039;]) {<br>
+            $this-&gt;_db = &#039;/home/db/&#039; . $dsn[&#039;database&#039;];<br>
+        }<br>
+        $this-&gt;connection = TRUE;<br>
+        return DB_OK;<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ disconnect()</p>
+<p>/**<br>
+     * Disconnects from the database server<br>
+     *<br>
+     * @return bool  TRUE on success, FALSE on failure<br>
+     */<br>
+    function disconnect()<br>
+    {<br>
+        return TRUE;<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ simpleQuery()</p>
+<p>/**<br>
+     * Sends a query to the database server<br>
+     *<br>
+     * @param string  the SQL query string<br>
+     *<br>
+     * @return mixed  + a PHP result resrouce for successful SELECT queries<br>
+     *                + the DB_OK constant for other successful queries<br>
+     *                + a DB_Error object on failure<br>
+     */<br>
+    function simpleQuery($query)<br>
+    {<br>
+        $ismanip = DB::isManip($query);<br>
+        $this-&gt;last_query = $query;<br>
+        //$query = $this-&gt;modifyQuery($query);</p>
+<p>unset($this-&gt;resultCount);<br>
+        $queryUrl=&#039;http://&#039; . $this-&gt;host . &#039;/texis/xml/xmloutput?db=&#039; . <br>
+            urlencode($this-&gt;_db) . &#039;&amp;q=&#039; . urlencode($query) . &quot;&amp;skip=$skip&amp;max=$max&amp;getcount=$getResultCount&quot;;</p>
+<p>$rawTexisOutput=file_get_contents($queryUrl);<br>
+        if (isset($_REQUEST[&#039;debug&#039;])){<br>
+            echo &quot;&lt;xmp&gt; $rawTexisOutput &lt;/xmp&gt;&quot;;<br>
+        }   <br>
+          <br>
+        if (! strstr($rawTexisOutput, &#039;&lt;record&#039;)) {<br>
+            // No results, for one reason or another. Return empty array.<br>
+            // Error<br>
+        }<br>
+        $texisXml = xml_parser_create(&#039;UTF-8&#039;);<br>
+        xml_parser_set_option($texisXml,XML_OPTION_CASE_FOLDING,0);</p>
+<p>if (! xml_parse_into_struct($texisXml, $rawTexisOutput, $vals, $index)) {<br>
+            // xml parsing failed. That sucks. Return empty array.<br>
+            if (isset($_REQUEST[&#039;debug&#039;])){<br>
+                echo xml_error_string(xml_get_error_code($texisXml));<br>
+                echo &quot;Warning XML parsing failed!&quot;;<br>
+            }<br>
+            return array();<br>
+        }<br>
+        <br>
+        $out=array();</p>
+<p>// xml_parse_into_struct produces a format more suitable for complex xml, rebuild here into a<br>
+        // simple multi dimensional array similar to the format returned by mysql&#039;s fetch_assoc<br>
+        $row=0;<br>
+        for ($i=0; $i &lt; sizeof($vals); $i++) {<br>
+            $tag=$vals[$i][&#039;tag&#039;];<br>
+            if ($tag == &#039;resultSet&#039;) {<br>
+                if (isset($vals[$i][&#039;attributes&#039;][&#039;matches&#039;])){<br>
+                    $this-&gt;resultCount=$vals[$i][&#039;attributes&#039;][&#039;matches&#039;];<br>
+                }<br>
+                continue;        <br>
+            } elseif ($tag == &#039;record&#039;) {          <br>
+                if ($vals[$i][&#039;type&#039;] == &#039;close&#039;){            <br>
+                    $row++;          <br>
+                }          <br>
+                continue;        <br>
+            }        <br>
+            if ($returnEmptyVals){            <br>
+                $out[$row][$tag]=@$vals[$i][&#039;value&#039;];<br>
+            }else{<br>
+                if (isset($vals[$i][&#039;value&#039;])) {<br>
+                    $out[$row][$tag]=@$vals[$i][&#039;value&#039;];<br>
+                }<br>
+            }<br>
+        }<br>
+        $result_obj = new DB_result($this, $out);</p>
+<p>return $result_obj;<br>
+    <br>
+    }</p>
+<p>// }}}<br>
+    // {{{ nextResult()</p>
+<p>/**<br>
+     * Move the internal texis result pointer to the next available result<br>
+     *<br>
+     * This method has not been implemented yet.<br>
+     *<br>
+     * @param a valid sql result resource<br>
+     *<br>
+     * @return false<br>
+     */<br>
+    function nextResult($result)<br>
+    {<br>
+        return false;<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ fetchInto()</p>
+<p>/**<br>
+     * Places a row from the result set into the given array<br>
+     *<br>
+     * Formating of the array and the data therein are configurable.<br>
+     * See DB_result::fetchInto() for more information.<br>
+     *<br>
+     * This method is not meant to be called directly.  Use<br>
+     * DB_result::fetchInto() instead.  It can&#039;t be declared &quot;protected&quot;<br>
+     * because DB_result is a separate object.<br>
+     *<br>
+     * @param resource $result    the query result resource<br>
+     * @param array    $arr       the referenced array to put the data in<br>
+     * @param int      $fetchmode how the resulting array should be indexed<br>
+     * @param int      $rownum    the row number to fetch (0 = first row)<br>
+     *<br>
+     * @return mixed  DB_OK on success, NULL when the end of a result set is<br>
+     *                 reached or on failure<br>
+     *<br>
+     * @see DB_result::fetchInto()<br>
+     */<br>
+    function fetchInto($result, &amp;$arr, $fetchmode, $rownum = null)<br>
+    {<br>
+        if ($rownum !== null) {<br>
+            $result-&gt;rowPointer = $rownum;<br>
+        }<br>
+        if (! isset ($result-&gt;rowPointer)) {<br>
+            $result-&gt;rowPointer = 0;<br>
+        }</p>
+<p>if ($fetchmode &amp; DB_FETCHMODE_ASSOC) {<br>
+            if (!isset ($this-&gt;rowCounter)) {<br>
+                $this-&gt;rowCounter = 1; //Element 0 is the texis header<br>
+            }<br>
+            $arr = $result-&gt;result[$this-&gt;rowCounter];<br>
+            $this-&gt;rowCounter++;</p>
+<p>} else {<br>
+            $arr = $result-&gt;result[$result-&gt;rowPointer];<br>
+            $result-&gt;rowPointer++;<br>
+        }<br>
+        if (!$arr) {<br>
+            return null;<br>
+        }<br>
+        if ($this-&gt;options[&#039;portability&#039;] &amp; DB_PORTABILITY_RTRIM) {<br>
+            /*<br>
+             * Even though this DBMS already trims output, we do this because<br>
+             * a field might have intentional whitespace at the end that<br>
+             * gets removed by DB_PORTABILITY_RTRIM under another driver.<br>
+             */<br>
+            $this-&gt;_rtrimArrayValues($arr);<br>
+        }<br>
+        if ($this-&gt;options[&#039;portability&#039;] &amp; DB_PORTABILITY_NULL_TO_EMPTY) {<br>
+            $this-&gt;_convertNullArrayValuesToEmpty($arr);<br>
+        }<br>
+        return DB_OK;<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ freeResult()</p>
+<p>/**<br>
+     * Deletes the result set and frees the memory occupied by the result set<br>
+     *<br>
+     * This method is not meant to be called directly.  Use<br>
+     * DB_result::free() instead.  It can&#039;t be declared &quot;protected&quot;<br>
+     * because DB_result is a separate object.<br>
+     *<br>
+     * @param resource $result  PHP&#039;s query result resource<br>
+     *<br>
+     * @return bool  TRUE on success, FALSE if $result is invalid<br>
+     *<br>
+     * @see DB_result::free()<br>
+     */<br>
+    function freeResult($result)<br>
+    {<br>
+        return 1;<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ numCols()</p>
+<p>/**<br>
+     * Gets the number of columns in a result set<br>
+     *<br>
+     * This method is not meant to be called directly.  Use<br>
+     * DB_result::numCols() instead.  It can&#039;t be declared &quot;protected&quot;<br>
+     * because DB_result is a separate object.<br>
+     *<br>
+     * @param resource $result  PHP&#039;s query result resource<br>
+     *<br>
+     * @return int  the number of columns.  A DB_Error object on failure.<br>
+     *<br>
+     * @see DB_result::numCols()<br>
+     */<br>
+    function numCols($result)<br>
+    {<br>
+        $cols = count($result-&gt;result[0]);<br>
+        if (!$cols) {<br>
+            return $this-&gt;texisRaiseError();<br>
+        }<br>
+        return $cols;<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ numRows()</p>
+<p>/**<br>
+     * Gets the number of rows in a result set<br>
+     *<br>
+     * This method is not meant to be called directly.  Use<br>
+     * DB_result::numRows() instead.  It can&#039;t be declared &quot;protected&quot;<br>
+     * because DB_result is a separate object.<br>
+     *<br>
+     * @param resource $result  PHP&#039;s query result resource<br>
+     *<br>
+     * @return int  the number of rows.  A DB_Error object on failure.<br>
+     *<br>
+     * @see DB_result::numRows()<br>
+     */<br>
+    function numRows($result)<br>
+    {<br>
+        $rows = count($result-&gt;result);<br>
+        if ($rows === null) {<br>
+            return $this-&gt;texisRaiseError();<br>
+        }<br>
+        return $rows;<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ autoCommit()</p>
+<p>/**<br>
+     * Enables or disables automatic commits<br>
+     *<br>
+     * @param bool $onoff  true turns it on, false turns it off<br>
+     *<br>
+     * @return int  DB_OK on success.  A DB_Error object if the driver<br>
+     *               doesn&#039;t support auto-committing transactions.<br>
+     */<br>
+    function autoCommit($onoff = false)<br>
+    {<br>
+        // XXX if $this-&gt;transaction_opcount &gt; 0, we should probably<br>
+        // issue a warning here.<br>
+        $this-&gt;autocommit = $onoff ? true : false;<br>
+        return DB_OK;<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ affectedRows()</p>
+<p>/**<br>
+     * Determines the number of rows affected by a data maniuplation query<br>
+     *<br>
+     * 0 is returned for queries that don&#039;t manipulate data.<br>
+     *<br>
+     * @return int  the number of rows.  A DB_Error object on failure.<br>
+     */<br>
+    function affectedRows()<br>
+    {<br>
+        if (DB::isManip($this-&gt;last_query)) {<br>
+            return 0;<br>
+        } else {<br>
+            return 0;<br>
+        }<br>
+     }</p>
+<p>// }}}<br>
+    // {{{ nextId()</p>
+<p>/**<br>
+     * Returns the next free id in a sequence<br>
+     *<br>
+     * @param string  $seq_name  name of the sequence<br>
+     * @param boolean $ondemand  when true, the seqence is automatically<br>
+     *                            created if it does not exist<br>
+     *<br>
+     * @return int  the next id number in the sequence.<br>
+     *               A DB_Error object on failure.<br>
+     *<br>
+     * @see DB_common::nextID(), DB_common::getSequenceName(),<br>
+     *      DB_texis::createSequence(), DB_texis::dropSequence()<br>
+     */<br>
+    function nextId($seq_name, $ondemand = true)<br>
+    {<br>
+        return $this-&gt;raiseError($result);<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ createSequence()</p>
+<p>/**<br>
+     * Creates a new sequence<br>
+     *<br>
+     * @param string $seq_name  name of the new sequence<br>
+     *<br>
+     * @return int  DB_OK on success.  A DB_Error object on failure.<br>
+     *<br>
+     * @see DB_common::createSequence(), DB_common::getSequenceName(),<br>
+     *      DB_texis::nextID(), DB_texis::dropSequence()<br>
+     */<br>
+    function createSequence($seq_name)<br>
+    {<br>
+        return $this-&gt;raiseError($seq_name);<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ dropSequence()</p>
+<p>/**<br>
+     * Deletes a sequence<br>
+     *<br>
+     * @param string $seq_name  name of the sequence to be deleted<br>
+     *<br>
+     * @return int  DB_OK on success.  A DB_Error object on failure.<br>
+     *<br>
+     * @see DB_common::dropSequence(), DB_common::getSequenceName(),<br>
+     *      DB_texis::nextID(), DB_texis::createSequence()<br>
+     */<br>
+    function dropSequence($seq_name)<br>
+    {<br>
+        return $this-&gt;raiseError ($seq_name);<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ _BCsequence()</p>
+<p>/**<br>
+     * Backwards compatibility with old sequence emulation implementation<br>
+     * (clean up the dupes)<br>
+     *<br>
+     * @param string $seqname  the sequence name to clean up<br>
+     *<br>
+     * @return bool  true on success.  A DB_Error object on failure.<br>
+     *<br>
+     * @access private<br>
+     */<br>
+    function _BCsequence($seqname)<br>
+    {<br>
+        return $this-&gt;raiseError ($seq_name);<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ quoteIdentifier()</p>
+<p>/**<br>
+     * Quotes a string so it can be safely used as a table or column name<br>
+     *<br>
+     * Texis can&#039;t handle the backtick character (&lt;kbd&gt;`&lt;/kbd&gt;) in<br>
+     * table or column names.<br>
+     *<br>
+     * @param string $str  identifier name to be quoted<br>
+     *<br>
+     * @return string  quoted identifier string<br>
+     *<br>
+     * @see DB_common::quoteIdentifier()<br>
+     * @since Method available since Release 1.6.0<br>
+     */<br>
+    function quoteIdentifier($str)<br>
+    {<br>
+        return &#039;`&#039; . $str . &#039;`&#039;;<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ quote()</p>
+<p>/**<br>
+     * @deprecated  Deprecated in release 1.6.0<br>
+     */<br>
+    function quote($str)<br>
+    {<br>
+        return $this-&gt;quoteSmart($str);<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ escapeSimple()</p>
+<p>/**<br>
+     * mysql_escape_string replaces new lines with \n\r, etc.  This is<br>
+     * not the desired behavior for Texis, manually escape single<br>
+     * quotes, black slash, and null instead.<br>
+     *<br>
+     * @param string $str  the string to be escaped<br>
+     *<br>
+     * @return string  the escaped string<br>
+     *<br>
+     * @see DB_common::quoteSmart()<br>
+     * @since Method available since Release 1.6.0<br>
+     */<br>
+    function escapeSimple($str)<br>
+    {<br>
+        return preg_replace(&#039;/(\x00|\xC5|\x27)/&#039;, &#039;\\\$1&#039;, $in);<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ modifyQuery()</p>
+<p>/**<br>
+     * Changes a query string for various DBMS specific reasons<br>
+     *<br>
+     * This little hack lets you know how many rows were deleted<br>
+     * when running a &quot;DELETE FROM table&quot; query.  Only implemented<br>
+     * if the DB_PORTABILITY_DELETE_COUNT portability option is on.<br>
+     *<br>
+     * @param string $query  the query string to modify<br>
+     *<br>
+     * @return string  the modified query string<br>
+     *<br>
+     * @access protected<br>
+     * @see DB_common::setOption()<br>
+     */<br>
+    function modifyQuery($query)<br>
+    {<br>
+        if ($this-&gt;options[&#039;portability&#039;] &amp; DB_PORTABILITY_DELETE_COUNT) {<br>
+            // &quot;DELETE FROM table&quot; gives 0 affected rows in Texis.<br>
+            // This little hack lets you know how many rows were deleted.<br>
+            if (preg_match(&#039;/^\s*DELETE\s+FROM\s+(\S+)\s*$/i&#039;, $query)) {<br>
+                $query = preg_replace(&#039;/^\s*DELETE\s+FROM\s+(\S+)\s*$/&#039;,<br>
+                                      &#039;DELETE FROM \1 WHERE 1=1&#039;, $query);<br>
+            }<br>
+        }<br>
+        return $query;<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ modifyLimitQuery()</p>
+<p>/**<br>
+     * Adds LIMIT clauses to a query string according to current DBMS standards<br>
+     *<br>
+     * @param string $query   the query to modify<br>
+     * @param int    $from    the row to start to fetching (0 = the first row)<br>
+     * @param int    $count   the numbers of rows to fetch<br>
+     * @param mixed  $params  array, string or numeric data to be used in<br>
+     *                         execution of the statement.  Quantity of items<br>
+     *                         passed must match quantity of placeholders in<br>
+     *                         query:  meaning 1 placeholder for non-array<br>
+     *                         parameters or 1 placeholder per array element.<br>
+     *<br>
+     * @return string  the query string with LIMIT clauses added<br>
+     *<br>
+     * @access protected<br>
+     */<br>
+    function modifyLimitQuery($query, $from, $count, $params = array())<br>
+    {<br>
+        if (DB::isManip($query)) {<br>
+            return $query . &quot; LIMIT $count&quot;;<br>
+        } else {<br>
+            return $query . &quot; LIMIT $from, $count&quot;;<br>
+        }<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ texisRaiseError()</p>
+<p>/**<br>
+     * Produces a DB_Error object regarding the current problem<br>
+     *<br>
+     * @param int $errno  if the error is being manually raised pass a<br>
+     *                     DB_ERROR* constant here.  If this isn&#039;t passed<br>
+     *                     the error information gathered from the DBMS.<br>
+     *<br>
+     * @return object  the DB_Error object<br>
+     *<br>
+     * @see DB_common::raiseError(),<br>
+     *      DB_texis::errorNative(), DB_common::errorCode()<br>
+     */<br>
+    function texisRaiseError($errno = null)<br>
+    {<br>
+        return $this-&gt;raiseError($errno, null, null, null,<br>
+                                 &quot;Unknown&quot;  . &#039; ** &#039; .<br>
+                                 &quot;Error with your query&quot;);<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ errorNative()</p>
+<p>/**<br>
+     * Gets the DBMS&#039; native error code produced by the last query<br>
+     *<br>
+     * @return int  the DBMS&#039; error code<br>
+     */<br>
+    function errorNative()<br>
+    {<br>
+        return 0;<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ tableInfo()</p>
+<p>/**<br>
+     * Returns information about a table or a result set<br>
+     *<br>
+     * @param object|string  $result  DB_result object from a query or a<br>
+     *                                 string containing the name of a table.<br>
+     *                                 While this also accepts a query result<br>
+     *                                 resource identifier, this behavior is<br>
+     *                                 deprecated.<br>
+     * @param int            $mode    a valid tableInfo mode<br>
+     *<br>
+     * @return array  an associative array with the information requested.<br>
+     *                 A DB_Error object on failure.<br>
+     *<br>
+     * @see DB_common::tableInfo()<br>
+     */<br>
+    function tableInfo($result, $mode = null)<br>
+    {<br>
+        if (is_string($result)) {<br>
+            /*<br>
+             * Probably received a table name.<br>
+             * Create a result resource identifier.<br>
+             */<br>
+            $id = @texis_list_fields($this-&gt;dsn[&#039;database&#039;],<br>
+                                     $result, $this-&gt;connection);<br>
+            $got_string = true;<br>
+        } elseif (isset($result-&gt;result)) {<br>
+            /*<br>
+             * Probably received a result object.<br>
+             * Extract the result resource identifier.<br>
+             */<br>
+            $id = $result-&gt;result;<br>
+            $got_string = false;<br>
+        } else {<br>
+            /*<br>
+             * Probably received a result resource identifier.<br>
+             * Copy it.<br>
+             * Deprecated.  Here for compatibility only.<br>
+             */<br>
+            $id = $result;<br>
+            $got_string = false;<br>
+        }</p>
+<p>if (!is_resource($id)) {<br>
+            return $this-&gt;texisRaiseError(DB_ERROR_NEED_MORE_DATA);<br>
+        }</p>
+<p>if ($this-&gt;options[&#039;portability&#039;] &amp; DB_PORTABILITY_LOWERCASE) {<br>
+            $case_func = &#039;strtolower&#039;;<br>
+        } else {<br>
+            $case_func = &#039;strval&#039;;<br>
+        }</p>
+<p>$count = $result-&gt;numCols();<br>
+        $res   = array();</p>
+<p>if ($mode) {<br>
+            $res[&#039;num_fields&#039;] = $count;<br>
+        }</p>
+<p>for ($i = 0; $i &lt; $count; $i++) {<br>
+            $res[$i] = array(<br>
+                &#039;table&#039; =&gt; &#039;&#039;, //This needs to be fixed<br>
+                &#039;name&#039;  =&gt; $case_func($id[$i]),<br>
+                &#039;type&#039;  =&gt; &#039;&#039;, <br>
+                &#039;len&#039;   =&gt; count($id[$i]),<br>
+                &#039;flags&#039; =&gt; &#039;&#039;,<br>
+            );<br>
+            if ($mode &amp; DB_TABLEINFO_ORDER) {<br>
+                $res[&#039;order&#039;][$res[$i][&#039;name&#039;]] = $i;<br>
+            }<br>
+            if ($mode &amp; DB_TABLEINFO_ORDERTABLE) {<br>
+                $res[&#039;ordertable&#039;][$res[$i][&#039;table&#039;]][$res[$i][&#039;name&#039;]] = $i;<br>
+            }<br>
+        }</p>
+<p>return $res;<br>
+    }</p>
+<p>// }}}<br>
+    // {{{ getSpecialQuery()</p>
+<p>/**<br>
+     * Obtains the query string needed for listing a given type of objects<br>
+     *<br>
+     * @param string $type  the kind of objects you want to retrieve<br>
+     *<br>
+     * @return string  the SQL query string or null if the driver doesn&#039;t<br>
+     *                  support the object type requested<br>
+     *<br>
+     * @access protected<br>
+     * @see DB_common::getListOf()<br>
+     */<br>
+    function getSpecialQuery($type)<br>
+    {<br>
+        switch ($type) {<br>
+            case &#039;tables&#039;:<br>
+                return &#039;SHOW TABLES&#039;;<br>
+            case &#039;users&#039;:<br>
+                return &#039;SELECT DISTINCT User FROM texis.user&#039;;<br>
+            case &#039;databases&#039;:<br>
+                return &#039;SHOW DATABASES&#039;;<br>
+            default:<br>
+                return null;<br>
+        }<br>
+    }</p>
+<p>// }}}</p>
+<p>}</p>
+<p>/*<br>
+ * Local variables:<br>
+ * tab-width: 4<br>
+ * c-basic-offset: 4<br>
+ * End:<br>
+ */</p>
+<p>?&gt;</p>
+</section>
+<section>
+<h3>[2006-08-18 21:15 UTC] stubie at ucsd dot edu</h3>
+<p>- getSpecialQuery is returning commands specific to mysql <br>
+which won&#039;t work with Texis.</p>
+<p>- simpleQuery calls Texis database over http and is using some <br>
+unknown custom script? wtf?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

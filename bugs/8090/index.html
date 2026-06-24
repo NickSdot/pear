@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8090</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #8090</h1>
+<p>Questions after Code Review</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8090</th><td>Questions after Code Review</td></tr>
+<tr><th>Submitted</th><td>2006-06-30 13:52 UTC</td></tr>
+<tr><th>From</th><td>michel dot dhooge at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>wiesemann</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-30 13:52 UTC] michel dot dhooge at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Dear,</p>
+<p>After a code review of DataGrid, I have some questions on precise points. So I thought it would be simpler to put those questions in the source code. Please follow the link http://www.phpfi.com/126697 for a patch including the questions as PHP comments.</p>
+<p>HTH<br>
+Michel</p>
+</section>
+<section>
+<h3>[2006-07-03 08:23 UTC] michel dot dhooge at gmail dot com</h3>
+<p>- Column.php:<br>
+&gt; Constructors can&#039;t return anything. Would<br>
+&gt; $this = PEAR::raiseError(...) be possible?<br>
+&gt; Would this cause any problems somewhere else<br>
+&gt; in the (SDG / user) code?<br>
+Not that easy, indeed ! I didn&#039;t realise we were in the constructor... Maybe the simplest is to put a warning in the comment: &quot;If you aren&#039;t sure of the validity of the formatter callback, please call explicitely setFormatter()&quot;</p>
+<p>- Column.php, #2:<br>
+Well, _pCS() is really just a subpart of sF() but I agree smaller methods are easier to read.</p>
+</section>
+<section>
+<h3>[2006-07-03 10:47 UTC] olivierg at php dot net</h3>
+<p>Mark wrote :<br>
+&gt; - Column.php:<br>
+&gt; Constructors can&#039;t return anything. <br>
+&gt; Would $this = PEAR::raiseError(...) be possible?</p>
+<p>No..</p>
+<p>&gt; Would this cause any problems somewhere else in <br>
+&gt; the (SDG / user) code?</p>
+<p>Usually, in a constructor you just call PEAR::raiseError(), without returning anything. It works for debugging purpose, if PEAR error handling is set to PEAR_ERROR_PRINT, or the like.</p>
+<p>Michel wrote :<br>
+&gt; - Column.php, #2:<br>
+&gt; Well, _pCS() is really just a subpart of sF() but I agree<br>
+&gt; smallermethods are easier to read.</p>
+<p>No, it is no sub-part. _parseCallbackString() mainly exists because it is called twice from setFormatter(). How would you do ? Duplicate the code inside setFormatter()?</p>
+<p>Btw, let&#039;s please work on more serious things.</p>
+<p>Mark wrote :<br>
+&gt; - Renderer.php: Valid point, the formatters don&#039;t need <br>
+&gt; to be called for renderers like Pager or HTMLSortForm. <br>
+&gt; I&#039;ll add a new renderer property in the renderers and a<br>
+&gt; switch before the for loop in Renderer.php.</p>
+<p>Actually, it&#039;s a deeper problem. For example, with the Pager driver, the DataSource should only count the data, not fetch it. And for the HTMLSortForm driver, the data does not even need to be counted.</p>
+<p>So the DataGrid class must know what the Renderer needs so that it can properly query the DataSource. In this regard, I think that a mechanism similar to the DataSource &quot;features&quot; (hasFeature(), setFeatures(), etc...) could be needed.</p>
+<p>There could then be features like &quot;renderLimits&quot;, &quot;renderContent&quot; (both true by default) and the DataGrid would &quot;ask&quot; with : <br>
+if ($renderer-&gt;hasFeature(&#039;renderLimits&#039;)) {count the rows}<br>
+if ($renderer-&gt;hasFeature(&#039;renderContent&#039;)) {fetch the rows}</p>
+<p>The core renderer layer would of course also know about supported features and properly handle loops like the one you&#039;re talking about.</p>
+</section>
+<section>
+<h3>[2006-08-17 14:06 UTC] michel dot dhooge at gmail dot com</h3>
+<p>comment on SDG_DS_DBDO is in bug #8106</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

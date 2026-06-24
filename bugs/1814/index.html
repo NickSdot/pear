@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1814</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #1814</h1>
+<p>adduser does not work in Class: LiveUser_Admin_Perm_Container_DB_Simple</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-07-07 18:44 UTC</td></tr>
+<tr><th>From</th><td>jack at studiorvb dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.7</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-07 18:44 UTC] jack at studiorvb dot com</h3>
+<p>Description:<br>
+------------<br>
+(i&#039;m discovering liveuser, so now knowing that that was not the best way)</p>
+<p>Trying to add an user to my right application based on &#039;admin_example.php&#039; within the example 5, so :<br>
+- first adding an user to the &#039;LiveUser_Admin_Auth_Container_DB&#039;<br>
+- then adding to &#039;LiveUser_Admin_Perm_Container_DB_Medium&#039; (or complex)</p>
+<p>the first one succeed, but I never succeeded the second adduser function.</p>
+<p>I began with exactly the example code, and then adapted it to my needs and tried to modify some param to add it.</p>
+<p>Bug ? As I succeeded with the adduser function of the LiveUser_Admin, I did no code search, sorry ;-)</p>
+<p>Reproduce code:<br>
+---------------<br>
+$objRightsAdminAuth = new<br>
+    LiveUser_Admin_Auth_Container_DB(<br>
+        $lu_dsn, $conf[&#039;authContainers&#039;][0]<br>
+    );</p>
+<p>$objRightsAdminPerm = new<br>
+    LiveUser_Admin_Perm_Container_DB_Medium($lu_dsn, $conf);</p>
+<p>$objRightsAdminPerm-&gt;setCurrentLanguage(&#039;FR&#039;);</p>
+<p>$user_auth_id = $objRightsAdminAuth-&gt;addUser(&#039;johndoe&#039;, &#039;dummypass&#039;, true);</p>
+<p>if (DB::isError($user_auth_id)) {<br>
+    $user_auth_id-&gt;getMessage();<br>
+    //exit;<br>
+}</p>
+<p>$user_perm_id = $objRightsAdminPerm-&gt;addUser($user_auth_id);</p>
+<p>echo &#039;$user_id created &#039; . $user_auth_id . &quot;\n&quot;;</p>
+<p>Expected result:<br>
+----------------<br>
+the same user created in auth and perm.</p>
+<p>Actual result:<br>
+--------------<br>
+code above : success for Auth user, and error for perm user.</p>
+</section>
+<section>
+<h3>[2004-07-21 10:36 UTC] smith at backendmedia dot com</h3>
+<p>This is a bug in the example due to a recent API change. You are missing the second parameter from your addUser call. However the second parameter was defined as optional, but caused an error to be raised if it was not passed. I cleaned that up.</p>
+<p>In the future please include a print_r() of the error you got to make debugging easier for us. Thx.</p>
+<p>$user_perm_id = $objRightsAdminPerm-&gt;addUser($user_auth_id);<br>
+if (LiveUser::isError($user_perm_id)) {<br>
+  print_r($user_perm_id);<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

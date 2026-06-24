@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9800</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #9800</h1>
+<p>Blank Page when mysql fails to load.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-11 08:49 UTC</td></tr>
+<tr><th>From</th><td>pprocacci at bellsouth dot net</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>5.2.0</td></tr>
+<tr><th>OS</th><td>FreeBSD 6.1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-11 08:49 UTC] pprocacci at bellsouth dot net</h3>
+<p>Description:<br>
+------------<br>
+Tested Operating Systems:<br>
+FreeBSD 4.11<br>
+FreeBSD 6.1</p>
+<p>Tested Versions of PHP:<br>
+5.2.0.<br>
+4.3.10</p>
+<p>INSTALLED PACKAGES, CHANNEL PEAR.PHP.NET:<br>
+=========================================<br>
+PACKAGE            VERSION STATE<br>
+Archive_Tar        1.3.2   stable<br>
+Console_Getopt     1.2.1   stable<br>
+HTTP_Session       0.5.5   beta<br>
+MDB2               2.3.0   stable<br>
+MDB2_Driver_mysqli 1.3.0   stable<br>
+PEAR               1.4.11  stable<br>
+XML_Parser         1.2.8   stable<br>
+XML_RPC            1.5.1   stable</p>
+<p>This problem presents itself with either of the two drivers that I&#039;ve had the luxury to test, namely mysql or mysqli.  I haven&#039;t tested it with other drivers.</p>
+<p>I&#039;ve done a bit of debugging, and have discovered why the page is blank, but unfortunately my OOP skills are like.....well, lets just say I&#039;m a procedural type of guy.</p>
+<p>When making the initial connection to the database via the drivers  method &quot;connect&quot;, if the extension that is necessary to make that connection doesn&#039;t exist, then pear handles the dynamic loading of the shared module provided it&#039;s present via PEAR::loadExtension().</p>
+<p>While debugging, I lost track of exactly what happens next, but I ended up in the class method &quot;errorInfo&quot; in either the  mysql or mysqli drivers, which then in turn halts execution of the script with no output at the following line:</p>
+<p>$native_code = @mysqli_errno();</p>
+<p>My guess is that MDB2 isn&#039;t handling the &#039;false&#039; value properly that being returned by PEAR::loadExtension(), but I&#039;m no expert and don&#039;t want to mislead anyone.</p>
+<p>Thanks for taking a peek.</p>
+<p>Test script:<br>
+---------------<br>
+A test script is impossible due to the nature of revealing usernames and passwords, however sudo code will work.</p>
+<p>&lt;?php</p>
+<p>ini_set(&#039;error_reporting&#039;, E_ALL);<br>
+ini_set(&#039;display_errors&#039;, 1);<br>
+ini_set(&#039;display_startup_errors&quot;, 1);</p>
+<p>$db =&amp; MDB2::factory(&quot;mysqli://user:pass@unix(/tmp/mysql.sock)/db&quot;);</p>
+<p>//Insert Error checking....doesn&#039;t bomb here.</p>
+<p>$row =&amp; $db-&gt;queryRow($query);  // Never returns</p>
+<p>print &quot;Never gets run&quot;;</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Using the sudo-code....</p>
+<p>If the driver for the database isn&#039;t present either statically and/or if PEAR can&#039;t load that module, then I would expect the application to give a bit of information as to why rather than given no output at all.</p>
+<p>Actual result:<br>
+--------------<br>
+Well, this is the only way to demonstrate it and it&#039;s not going to tell you much.  Note: myhost.net doesn&#039;t actually exist.</p>
+<p>fileserv# telnet dev.myhost.net 80<br>
+Trying 65.17.210.244...<br>
+Connected to dev.myhost.net.<br>
+Escape character is &#039;^]&#039;.<br>
+GET / HTTP/1.1<br>
+connection: close<br>
+host: dev.myhost.net</p>
+<p>HTTP/1.1 200 OK<br>
+Date: Thu, 11 Jan 2007 08:56:12 GMT<br>
+Server: Apache/1.3.33 (Unix) mod_throttle/3.1.2 PHP/4.3.10 FrontPage/5.0.2.2623 mod_ssl/2.8.22 OpenSSL/0.9.7d<br>
+X-Powered-By: PHP/4.3.10<br>
+Connection: close<br>
+Transfer-Encoding: chunked<br>
+Content-Type: text/html</p>
+<p>0</p>
+<p>Connection closed by foreign host.</p>
+</section>
+<section>
+<h3>[2007-01-11 09:10 UTC] pprocacci at bellsouth dot net</h3>
+<p>Doing more debugging here:</p>
+<p>After the failure of loading the extension, an error gets raised:</p>
+<p>mysqli.php:394<br>
+$this-&gt;raiseError(MDB2_ERROR_NOT_FOUND, ...)</p>
+<p>The following elseif statements gets executed within that method:</p>
+<p>MDB2.php:1409<br>
+} elseif (isset($this-&gt;connection)) {</p>
+<p>and then.....</p>
+<p>MDB2.php:1414<br>
+list($code, $native_errno, $native_msg) = $this-&gt;errorInfo($code);</p>
+<p>where $this is the driver being used (i.e. MDB2_Driver_mysqli).</p>
+<p>and then it bombs on the line given:</p>
+<p>mysqli.php:125<br>
+$native_code = @mysqli_errno();</p>
+<p>I hope that helps.</p>
+</section>
+<section>
+<h3>[2007-01-11 09:22 UTC] pprocacci at bellsouth dot net</h3>
+<p>Yeah, I know another comment:</p>
+<p>define(&#039;MDB2_ERROR_NOT_FOUND&#039;,           -4);</p>
+<p>You are raising MDB2_ERROR_NOT_FOUND which has a value of -4, but the following will always return false in this case:</p>
+<p>MDB2.php:1398<br>
+if (PEAR::isError($code)) {</p>
+<p>because PEAR::isError returns:</p>
+<p>return $data-&gt;getCode() == $code;</p>
+<p>define(&#039;PEAR_ERROR_TRIGGER&#039;,    4);</p>
+<p>-4 != 4</p>
+<p>Gong to bed....hopefully I get some constructive feekback without having to modify the source files!</p>
+<p>Thanks</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File_Find Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File System &#187; <a href="package/File_Find/index.html">File_Find</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/File_Find/docs/index.html#package-filesystem-file-find-searchmethods">Search methods</a>
+</li>
+<li><a href="package/File_Find/docs/index.html#package-filesystem-file-find-glob">File_Find::glob()</a>
+</li>
+<li><a href="package/File_Find/docs/index.html#package-filesystem-file-find-maptree">File_Find::maptree()</a>
+</li>
+<li><a href="package/File_Find/docs/index.html#package-filesystem-file-find-maptreemultiple">File_Find::mapTreeMultiple()</a>
+</li>
+<li><a href="package/File_Find/docs/index.html#package-filesystem-file-find-search">File_Find::search()</a>
+</li></ul>
+</nav>
+<p>Commonly needed functions to search for files and directories</p>
+<section id="package-filesystem-file-find-searchmethods">
+<h2>Search methods</h2>
+<h3>Search methods and their patterns</h3>
+
+    
+      <p>All search functions use <code>$pattern</code> parameter to
+       specify match for filenames. Format of the <code>$pattern</code>
+       depends on value of another parameter - <code>$pattern_type</code>.</p><ul>
+          <li>
+            
+       If value of <code>$pattern_type</code> is 
+       <code>&#039;php&#039;</code>, then the pattern is
+       case-sensitive string which follows the conventions of the
+       ereg_*-functions.
+            
+          </li>
+          <li>
+            
+       In case of <code>&#039;perl&#039;</code> pattern type it must follow the 
+       preg_*-functions pattern format. It is recommended to use 
+       <code>&#039;perl&#039;</code>, because it is faster. 
+            
+          </li>
+          <li>
+            
+       The last <code>&#039;shell&#039;</code> mode is most simple and should
+       be familiar to everybody with basic computer skills. It is as easy as
+       windows approach, but has some additional concepts borrowed from the FAR
+       Manager software. The text of the following section was borrowed from 
+       the FAR Manager documentation.
+            
+          </li>
+         </ul>
+      
+    
+    <h3>&#039;shell&#039; search mode file masks</h3>
+
+      
+      <p>File masks are used to select single files and folders or groups
+of them. Masks may contain common valid file name symbols, wildcards
+(&#039;*&#039; and &#039;?&#039;) and special expressions:</p><ul>
+          <li><em>*</em></li>
+          <li>any number of characters;</li>
+
+          <li><em>?</em></li>
+          <li>any single character;</li>
+
+          <li><em>[c,x-z]</em></li> 
+          <li>any character enclosed by the brackets. Both separate
+                  characters and character intervals are allowed.
+          </li>
+         </ul><p>For example, files ftp.exe, fc.exe and f.ext may be selected
+using mask f*.ex?, mask *co* will select both color.ini and edit.com,
+mask [c-f,t]*.txt can select config.txt, demo.txt, faq.txt and tips.txt.</p>
+
+      <p>You may enter several file masks separated with commas or semicolons.
+For example, to select all the documents, you can specify *.doc,*.txt,*.wri
+in search pattern.</p>
+
+
+
+      <p>You may use <em>exclude masks</em>. An exclude mask is one
+or multiple file masks that must not be matched by the files matching the
+mask. The exclude mask is delimited from the main mask by the character
+&#039;<em>|</em>&#039;.</p>
+
+      <p>Usage examples of exclude masks:</p><ol>
+           <li>*.cpp
+           
+    All files with the extension <em>cpp</em>.
+           
+           </li>
+           <li>*.*|*.bak,*.tmp
+           
+    All files except for the files with extensions 
+    <em>bak</em> and <em>tmp</em>.
+           
+           </li>
+           <li>*.*|
+           
+    This mask has an error - the character | is entered, but the
+    mask itself is not specified.
+           
+           </li>
+           <li>*.*|*.bak|*.tmp
+           
+    Also an error - the character | may not be contained in the mask
+    more than once.
+           
+           </li>
+           <li>|*.bak
+           
+    The same as *|*.bak
+           
+           </li>
+        </ol><p>The comma (or semicolon) is used for separating file masks from each
+other, and the &#039;|&#039; character separates include masks from exclude masks.</p>
+
+      <p>&#039;shell&#039; match mode is available from version 1.2.0 of File_Find</p>
+</section>
+<section id="package-filesystem-file-find-glob">
+<h2>File_Find::glob()</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/Find.php&#039;;
+          
+    <p><code>
+     array
+     <strong>&amp;File_Find::glob</strong> ( 
+     
+        string $pattern
+      , 
+        string $dirpath
+      , 
+        string $pattern_type = &#039;php&#039;
+     
+    )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Search the directory to find matches for the specified pattern.</p>
+      
+   
+    <h3>Parameter</h3>
+    <ul>
+     <li>
+      
+       <code>$pattern</code> - a string containing the pattern
+       to search the directory for.
+      
+     </li>
+     <li>
+      
+       <code>$dirpath</code> - a string containing the
+       directory path to search.
+      
+     </li>
+     <li>
+      
+       <code>$pattern_type</code> - a string containing the type
+       of pattern matching functions to use (can either be &#039;php&#039;, &#039;perl&#039; or &#039;shell&#039;).
+      
+      
+       The format of the <code>$pattern</code> depends on the
+       <code>$pattern_type</code>-value. For more information see
+       <a href="package/File_Find/docs/index.html#package-filesystem-file-find-searchmethods">search methods</a>
+            
+     </li>
+    </ul>
+    
+        
+   
+    <h3>Return value</h3>
+    <p><code>array</code> - 
+      an array contains all filenames and name of
+      subdirectories, which matches the pattern.
+      Or a <strong>PEAR_Error</strong>.</p>
+            
+   
+    <h3>Throws</h3>
+    <table><caption>Possible PEAR_Error values</caption>
+            
+      
+       <thead>
+        <tr>
+         <th>Error code</th>
+         <th>Error message</th>        
+         <th>Reason</th>        
+         <th>Solution</th>        
+        </tr>
+
+       </thead>
+
+       <tbody>
+        <tr>
+         <td><strong>NULL</strong></td>
+         <td>
+          &quot;
+           Cannot open directory
+          &quot;
+         </td>
+         <td>
+          The given directory could not be opend.
+         </td>
+         <td>
+          Check typing and directory permissions.
+          This can not be caused by a competive processing the archive
+          with <strong>Archive_Tar</strong>
+         </td>
+        </tr>
+       
+
+       </tbody></table>
+
+    
+               
+   
+    <h3>Note</h3>
+    <p>This function can be called
+statically.</p>
+               
+   
+    <h3>Example</h3>
+    <p><strong>Find all PHP files in current directory</strong></p>
+     
+     <pre><code>&lt;?php
+include &quot;File/Find.php&quot;;
+
+$dir = &quot;.&quot;;
+$items = &amp;File_Find::glob( &#039;!.*\.php$!&#039;, $dir, &#039;perl&#039; );
+
+print_r($items);
+?&gt;</code></pre>
+</section>
+<section id="package-filesystem-file-find-maptree">
+<h2>File_Find::maptree()</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/Find.php&#039;;
+          
+    <p><code>
+     array
+     <strong>&amp;File_Find::maptree</strong> ( 
+     
+        string $directory
+     
+    )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Map the directory tree given by the directory_path parameter.</p>
+      
+   
+    <h3>Parameter</h3>
+    <ul>
+     <li>
+      
+       <code>string $directory</code> - contains the directory
+       path that you want to map
+      
+     </li>
+    </ul>
+    
+        
+   
+    <h3>Return value</h3>
+      <p><code>array</code> - a two element array, the first
+       element containing a list of all the directories, the second
+       element containing a list of all the files.</p>
+            
+   
+    <h3>Note</h3>
+    <p>This function can be called
+statically.</p>
+               
+   
+    <h3>Example</h3>
+    <p><strong>Get the map of a directory</strong></p>
+     
+     <pre><code>&lt;?php
+include &quot;File/Find.php&quot;;
+
+$dir = &quot;File_Find&quot;;
+list($directories, $files) = File_Find::maptree($dir);
+
+echo &quot;Directories &quot;;
+print_r($directories);
+
+echo &quot;Files &quot;;
+print_r($files);
+?&gt;</code></pre>
+     <p>The above example will output something similar to:</p>
+     <pre>
+<br>Directories Array<br>(<br>    [0] =&gt; File_Find<br>    [1] =&gt; File_Find\dir2<br>    [2] =&gt; File_Find\dir2\2<br>    [3] =&gt; File_Find\dir2\1<br>    [4] =&gt; File_Find\dir2\0<br>    [5] =&gt; File_Find\dir<br>    [6] =&gt; File_Find\dir\txtdir<br>    [7] =&gt; File_Find\dir\dir3<br>    [8] =&gt; File_Find\dir\dir2<br>)<br>Files Array<br>(<br>    [0] =&gt; File_Find\dir2\2\1.txt<br>    [1] =&gt; File_Find\dir2\1\1.txt<br>    [2] =&gt; File_Find\dir2\0\1.txt<br>    [3] =&gt; File_Find\dir\1.txt<br>    [4] =&gt; File_Find\dir\2.txt<br>    [5] =&gt; File_Find\dir\txtdir\5.txt<br>    [6] =&gt; File_Find\dir\dir3\4.bak<br>    [7] =&gt; File_Find\dir\dir3\4.txt<br>    [8] =&gt; File_Find\dir\dir2\3.bak<br>    [9] =&gt; File_Find\dir\dir2\3.txt<br>)<br>
+     </pre>
+</section>
+<section id="package-filesystem-file-find-maptreemultiple">
+<h2>File_Find::mapTreeMultiple()</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/Find.php&#039;;
+          
+    <p><code>
+     array
+     <strong>&amp;File_Find::mapTreeMultiple</strong> ( 
+     
+        string $directory
+     
+      , 
+      integer $maxrecursion = 0
+            
+      , 
+      integer $count = 0
+                 
+    )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Map the directory tree given by the 
+     <code>directory_path</code> parameter. 
+     Depending on <code>maxrecursion</code> you get the
+     content of the directory and the content of the subdirectories 
+     too.</p>
+      
+   
+    <h3>Parameter</h3>
+    <ul>
+     <li>
+      
+       <code>string $directory</code> - contains the directory
+       path that you want to map
+      
+     </li>
+     <li>
+      
+       <code>integer $maxrecursion</code> - defines the
+       deep of recursive mapping of subdirectories
+      
+     </li>     
+     <li>
+      
+       <code>integer $count</code> - can be ignored - 
+       internal parameter to track recursion level
+      
+     </li>          
+    </ul>
+    
+        
+   
+    <h3>Return value</h3>
+    <p><code>array</code> - 
+     a multidimensional array containing all subdirectories
+     and their files</p>
+            
+   
+    <h3>Note</h3>
+    <p>This function can be called
+statically.</p>
+               
+   
+    <h3>Example</h3>
+    <p><strong>Get the content of a directory including the content 
+      of subdirectories</strong></p>
+     
+     <pre><code>&lt;?php
+include &quot;File/Find.php&quot;;
+
+$file = File_Find::mapTreemultiple(&#039;/usr/&#039;, 1);
+
+print_r($file);
+?&gt;</code></pre>
+     <p>The above example will output something similar to:</p>
+     <pre>
+<br>Array<br>(<br>   [0] =&gt; file1.tmp<br>   [1] =&gt; file2.tmp<br>   [&#039;bin&#039;] =&gt; Array<br>      (<br>         [0] =&gt; readme.txt<br>      )<br>)<br>
+     </pre>
+</section>
+<section id="package-filesystem-file-find-search">
+<h2>File_Find::search()</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/Find.php&#039;;
+          
+     <p><code>
+      array
+      <strong>&amp;File_Find::search</strong> ( 
+      
+       string $pattern
+      
+       , 
+       string $dirpath
+      
+       , 
+        string $pattern_type = &#039;php&#039;
+      
+       , 
+        bool $fullpath = true
+      
+       , 
+        string $match = &#039;files&#039;
+      
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Search the directory to find matches for the specified pattern.</p>
+      
+   
+    <h3>Parameter</h3>
+    <ul>
+     <li>
+      
+       <code>$pattern</code> - a string containing the pattern
+       to search the directory for.
+      
+     </li>
+     <li>
+      
+       <code>$dirpath</code> - a string containing the
+       directory path to search.
+      
+     </li>
+     <li>
+      
+       <code>$pattern_type</code> - a string containing the type
+       of pattern matching functions to use (can either be &#039;php&#039;, &#039;perl&#039; or &#039;shell&#039;).
+      
+      
+       The format of the <code>$pattern</code> depends on the
+       <code>$pattern_type</code>-value. For more information see
+       <a href="package/File_Find/docs/index.html#package-filesystem-file-find-searchmethods">search methods</a>
+            
+     </li>
+     <li>
+      
+       <code>$fullpath</code> - whether the string should be
+       matched against the full path or only against the filename
+      
+     </li>
+     <li>
+      
+       <code>$match</code> -  can be either &#039;files&#039;, &#039;directories&#039; or
+       &#039;both&#039; to specify the kind of list to return 
+      
+     </li>
+    </ul>
+    
+        
+   
+    <h3>Return value</h3>
+    <p><code>array</code> - 
+      an array containing all filenames</p>
+            
+   
+    <h3>Note</h3>
+    <p>This function can be called
+statically.</p>  
+                  
+   
+    <h3>See</h3>
+    <p><a href="package/File_Find/docs/index.html#package-filesystem-file-find-glob">
+      <strong>File_Find::glob()</strong>
+     </a></p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

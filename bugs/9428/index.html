@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9428</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_Client/index.html">HTTP_Client</a> &#187; Bug #9428</h1>
+<p>problem with https calls</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-23 12:20 UTC</td></tr>
+<tr><th>From</th><td>jestershoot at inbox dot ru</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_Client/index.html">HTTP_Client</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>Win XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-23 12:20 UTC] jestershoot at inbox dot ru</h3>
+<p>Description:<br>
+------------<br>
+I have a problem with https call. when i try to call</p>
+<p>https://www.e-gold.com/acct/login.html</p>
+<p>for example, browser hangs. What am I doing wrong?</p>
+<p>If HTTP_Client works with https at all?</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php</p>
+<p>require_once &#039;HTTP/Client.php&#039;;</p>
+<p>$req =&amp; new HTTP_Client();</p>
+<p>if (!PEAR::isError($req-&gt;get(&#039;https://www.e-gold.com/acct/login.html&#039;))) {</p>
+<p>$a = $req-&gt;currentResponse();<br>
+	$f = $a[&#039;body&#039;];<br>
+}	<br>
+echo $f;<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+loaded page</p>
+<p>Actual result:<br>
+--------------<br>
+browser hangs</p>
+</section>
+<section>
+<h3>[2007-01-07 16:36 UTC] bugs dot pear dot php dot net at daskalou dot com</h3>
+<p>I&#039;m having this same problem.</p>
+<p>I tried doing it in CLI mode and I get this:</p>
+<p>Segmentation fault (core dumped)</p>
+<p>I managed to track down the problem to the Net_Socket PEAR class.</p>
+<p>Net_Socket opens a socket connection to send the HTTPS request using the PHP function fsockopen() in its connect() method. The Segmentation fault occurs when Net_Socket attempts to close the socket using the PHP function fclose().</p>
+<p>I have experienced the same problem when I tried using the curl_* functions instead of this HTTP_Client class to try to retrieve a response. Upon the call to the PHP function curl_close() I get the same Segmentation fault.</p>
+<p>Note that the problem only occurs when using the HTTPS protocol but not with the HTTP protocol.</p>
+<p>Others are having this same problem with HTTPS/SSL access but it looks like the PHP developers are saying it&#039;s not a bug with PHP but rather with MySQL:</p>
+<p>http://bugs.php.net/bug.php?id=39570<br>
+http://bugs.php.net/bug.php?id=38393</p>
+<p>My current installation details are:</p>
+<p>PHP 5.2<br>
+MySQL 5.0.27-0<br>
+Apache 1.3.37<br>
+Hosted on a CentOS 3.8 installation (which includes cPanel)</p>
+<p>This bug was not present when I had PHP 4.4.3 and MySQL 5.0.25 installed.</p>
+<p>I&#039;ll try and post this as part of the PHP bugs when I get a chance...</p>
+</section>
+<section>
+<h3>[2007-01-07 16:45 UTC] bugs dot pear dot php dot net at daskalou dot com</h3>
+<p>Submitted this as a new PHP bug here:</p>
+<p>http://bugs.php.net/bug.php?id=40049</p>
+</section>
+<section>
+<h3>[2007-01-07 19:12 UTC] bugs dot pear dot php dot net at daskalou dot com</h3>
+<p>Ok, so I&#039;ve been investigating this bug all damn night, and have concluded that it is most likely a MySQL bug (see http://bugs.mysql.com/bug.php?id=19810).</p>
+<p>As a temporary solution, if you want to access sites using the HTTPS protocol you can use the &quot;curl&quot; system command by using the backticks operator in PHP, for example:</p>
+<p>&lt;?php</p>
+<p>$url = &quot;https://www.e-gold.com/acct/login.html&quot;;<br>
+$username = &quot;blah&quot;;<br>
+$password = &quot;bleh&quot;;</p>
+<p>// Using the POST method<br>
+$command = &quot;curl \&quot;$url\&quot; --data-binary \&quot;&quot;.<br>
+           &quot;user=&quot;.urlencode($username).<br>
+           &quot;&amp;&quot;.<br>
+           &quot;password=&quot;.urlencode($password).<br>
+           &quot;\&quot;&quot;;</p>
+<p>$f = `$command`;</p>
+<p>// Using the GET method<br>
+$command = &quot;curl \&quot;$url?&quot;.<br>
+           &quot;user=&quot;.urlencode($username).<br>
+           &quot;&amp;&quot;.<br>
+           &quot;password=&quot;.urlencode($password).<br>
+           &quot;\&quot;&quot;;</p>
+<p>$f = `$command`;<br>
+?&gt;</p>
+<p>Oh yeah, I&#039;m assuming you&#039;re using Linux ;)</p>
+<p>There&#039;s an abundance of other useful parameters you can pass into the curl system command, just do a &quot;man curl&quot; at the command prompt to see what&#039;s on offer (the --max-redirs option, for example, sets the maximum number of redirections curl is allowed to follow).</p>
+<p>Also the &quot;wget&quot; command will work with this too using something like &quot;wget -O - \&quot;$url\&quot; 2&gt;/dev/null&quot; or even the &quot;lynx&quot; command (eg. &quot;lynx --source \&quot;$url\&quot;). View the man pages on those commands to see how to pass GET or POST data to the URLs.</p>
+<p>Hope that helps.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

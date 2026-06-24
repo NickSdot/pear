@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4379</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #4379</h1>
+<p>New DataSource driver (DBQuery)</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4379</th><td>New DataSource driver (DBQuery)</td></tr>
+<tr><th>Submitted</th><td>2005-05-18 12:31 UTC</td></tr>
+<tr><th>From</th><td>post at mark-wiesemann dot de</td></tr>
+<tr><th>Assigned</th><td>asnagy</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-18 12:31 UTC] post at mark-wiesemann dot de</h3>
+<p>Description:<br>
+------------<br>
+http://www.markwiesemann.de/php/DBQuery.phps is a new DataSource driver which expects a PEAR::DB object and a query string.</p>
+<p>Usage example:<br>
+$dsn = &#039;mysql://user:pass@localhost/database&#039;:<br>
+$db = DB::connect($dsn);<br>
+$dg =&amp; new Structures_DataGrid();<br>
+$query = &#039;SELECT * FROM table&#039;;<br>
+$result = $dg-&gt;bind($db, array(&#039;query&#039; =&gt; $query), &#039;DBQuery&#039;);<br>
+$dg-&gt;render();</p>
+<p>Code for DataSource.php, function _detectSourceType():<br>
+// DB query<br>
+case (strtolower(get_parent_class($source)) == &#039;db_common&#039;):<br>
+    return &#039;DBQuery&#039;;  // to be replaced by a new constant<br>
+    break;</p>
+<p>Attention: This is a very first implementation that may not work for every query string. If somebody has a query that fails: please send the query to me.</p>
+</section>
+<section>
+<h3>[2005-05-18 19:02 UTC] post at mark-wiesemann dot de</h3>
+<p>Don&#039;t know if I got your point right!?</p>
+<p>You want to add the possibility to pass either a PEAR::DB object or a dsn string as you do it in the init functions of the storage containers in LU_Admin? (Okay, good suggestion.)</p>
+<p>Or do you call the whole container class in question? (Then more details please.)</p>
+</section>
+<section>
+<h3>[2005-05-19 17:32 UTC] post at mark-wiesemann dot de</h3>
+<p>I have implemented Helgi&#039;s suggestion and some other small optimizations:<br>
+http://www.markwiesemann.de/php/DBQuery-new.phps</p>
+<p>New ways to call the bind function (first param is now the query string):<br>
+$dg-&gt;bind($query, array(&#039;connection&#039; =&gt; $db));<br>
+$dg-&gt;bind($query, array(&#039;dsn&#039; =&gt; $dsn));</p>
+<p>New code for DataSource.php:<br>
+case (is_string($source) &amp;&amp; preg_match(&#039;#SELECT\s.*\sFROM#is&#039;, $source) === 1):<br>
+    return &#039;DBQuery&#039;;  // to be replaced by a new constant<br>
+    break;</p>
+</section>
+<section>
+<h3>[2005-05-21 10:20 UTC] post at mark-wiesemann dot de</h3>
+<p>You&#039;re right, there is no need to use an array. I thought an array would be used in the bind function prototype in DataSource.php but that&#039;s not the case.</p>
+<p>I can&#039;t think of more options for this container so there is really no need of using an array.</p>
+<p>Thanks for the hint, I will change the code (also for the DB_Table container).</p>
+</section>
+<section>
+<h3>[2005-05-22 14:57 UTC] post at mark-wiesemann dot de</h3>
+<p>http://www.markwiesemann.de/php/DBQuery-new2.phps contains a bugfix for empty database tables (line 174).</p>
+<p>I did not remove the need to pass an array to the bind function because in Core.php there is the following line:</p>
+<p>function bind($rs, $options = array(), $type = null)</p>
+<p>As this bind function passes $options to the bind functions in the DataSource container classes it makes more sense to not change it there.</p>
+</section>
+<section>
+<h3>[2005-05-24 09:33 UTC] post at mark-wiesemann dot de</h3>
+<p>Sorry, but the last version contained a bug: When no row limit is specified, the DB query fetched zero rows.</p>
+<p>The fixed version can be found here:<br>
+http://www.markwiesemann.de/php/DBQuery-new3.phps</p>
+<p>The if statement and the call to $result = $this-&gt;_dbc-&gt;query() in line 158ff. is the fix for this problem.</p>
+</section>
+<section>
+<h3>[2005-05-29 15:34 UTC] post at mark-wiesemann dot de</h3>
+<p>The class itself works as expected.</p>
+<p>But #1: Please don&#039;t forget to add the code in _detectSourceType() funtion for the two new containers.</p>
+<p>But #2: If you use it like this:<br>
+$dg-&gt;bind(&#039;xSELECT * FROM test&#039;, array(&#039;dsn&#039; =&gt; $dsn), &#039;DBQuery&#039;);<br>
+// note the &quot;x&quot;! =&gt; query will fail</p>
+<p>In this case fetch function from DBQuery will return the result object of DB class.</p>
+<p>In HTMLTable renderer, getTable calls fetchDataSource() and gets the PEAR::Error object. This object is returned to toHTML function. A solution for this would be to change line 246 (return $table-&gt;toHTML();) to:<br>
+if (PEAR::isError($table)) {<br>
+    return $table;<br>
+}<br>
+else {<br>
+    return $table-&gt;toHTML();<br>
+}</p>
+<p>The same applies for the other renderers. But if one calls directly $dg-&gt;render() (contains echo $this-&gt;toHTML();) it would now echo &quot;Object&quot;. Maybe render() function should also get a check like the one above, e.g:<br>
+$html = $this-&gt;toHTML();<br>
+if (PEAR::isError($html)) {<br>
+    return $html;<br>
+}<br>
+else {<br>
+    echo $html;<br>
+    return true;<br>
+}</p>
+<p>This way one can check the returned value from $dg-&gt;render() and can display an error message.</p>
+<p>If you agree on these two changes I can provide a patch for all renderers.</p>
+</section>
+<section>
+<h3>[2005-10-31 19:38 UTC] olivierg at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>Excellent Job !</p>
+<p>You just forgot to call DataSource::setOptions() from DataSource_DBQuery::bind(). That caused general datasource options (such as &#039;generate_columns&#039;, &#039;fields&#039;, etc...) to be ignored. I fixed this little bug (and improved the Driver Howto, mentionning this point).</p>
+<p>The DataSource core now includes the detection routine you provided, and the DATAGRID_SOURCE_DBQUERY constant has been added.</p>
+<p>Since, the fetchDataSource() calls have been transformed into a single call performed by the Core, there&#039;s no need to tweak the Renderers anymore. If the query fails the bind() method will return a PEAR_Error.</p>
+<p>I have done basic testing on the new CVS code and it seems to work fine.</p>
+<p>Thanks !</p>
+</section>
+<section>
+<h3>[2005-11-21 18:26 UTC] post at mark-wiesemann dot de</h3>
+<p>Reopening, as the file DataSource/DBQuery.php is missing in package.xml.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

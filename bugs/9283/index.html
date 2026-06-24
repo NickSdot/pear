@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9283</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_mysql/index.html">MDB2_Driver_mysql</a> &#187; Bug #9283</h1>
+<p>Lack of support for MySQL&#039;s BINARY/VARBINARY makes the Driver explode</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-08 22:08 UTC</td></tr>
+<tr><th>From</th><td>tom at whyscream dot net</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_mysql/index.html">MDB2_Driver_mysql</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-08 22:08 UTC] tom at whyscream dot net</h3>
+<p>Description:<br>
+------------<br>
+The MySQL column types BINARY and VARBINARY are currently not supported by MDB2_Driver_mysql. After some research I found out that they don&#039;t exist in MDB2_Driver_Datatype_mysql::mapNativeDatatype(). When someone tries to use map the datatype ob such a column, the method returns a PEAR_Error, which is not handled properly by other code, f.i. MDB2_Driver_Reverse_mysql::tableInfo(), which never expects an object returned by mapNativeDatatype(). This makes the script end with a fatal error.</p>
+<p>I fixed it by mapping BINARY and VARBINARY equal to BLOB columns, and by making tableInfo() check for the PEAR_Error. Not sure if (VAR)BINARY treating as BLOB is really fair, but my main issue was keeping the driver from exploding. See patch below.</p>
+<p>Both issues also exist in the mysqli driver, and the problematic pattern in MDB2_Driver_Reverse_mysql::tableInfo() also exists in the pgsql and sqlite driver (and probably others as well), so when unknown column types will be mapped, the same problem will arise.</p>
+<p>Test script:<br>
+---------------<br>
+Patch for mysql driver:<br>
+Index: MDB2/Driver/Datatype/mysql.php<br>
+===================================================================<br>
+@@ -432,7 +432,9 @@<br>
+         case &#039;tinyblob&#039;:<br>
+         case &#039;mediumblob&#039;:<br>
+         case &#039;longblob&#039;:<br>
+         case &#039;blob&#039;:<br>
++        case &#039;binary&#039;:<br>
++        case &#039;varbinary&#039;:<br>
+             $type[] = &#039;blob&#039;;<br>
+             $length = null;<br>
+             break;<br>
+Index: MDB2/Driver/Reverse/mysql.php<br>
+===================================================================<br>
+@@ -97,7 +97,11 @@<br>
+                 $column = array_change_key_case($column, $db-&gt;options[&#039;field_case&#039;]);<br>
+             }<br>
+             if ($field_name == $column[&#039;name&#039;]) {<br>
+-                list($types, $length, $unsigned, $fixed) = $db-&gt;datatype-&gt;mapNativeDatatype($column);<br>
++                $mapped_datatype = $db-&gt;datatype-&gt;mapNativeDatatype($column);<br>
++                if(PEAR::IsError($mapped_datatype)) {<br>
++                  return $mapped_datatype;<br>
++                }<br>
++                list($types, $length, $unsigned, $fixed) = $mapped_datatype;<br>
+                 $notnull = false;<br>
+                 if (empty($column[&#039;null&#039;]) || $column[&#039;null&#039;] !== &#039;YES&#039;) {<br>
+                     $notnull = true;<br>
+===================================================================</p>
+<p>Expected result:<br>
+----------------<br>
+Return interesting data, or a PEAR_Error to handle.</p>
+<p>Actual result:<br>
+--------------<br>
+Following nice fatal error:</p>
+<p>Fatal error:  Cannot use object of type MDB2_Error as array in &lt;...&gt;/php/MDB2/Driver/Reverse/mysql.php on line 104</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

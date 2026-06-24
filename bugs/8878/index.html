@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8878</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #8878</h1>
+<p>Simplify autoExecute() behaviour to select some columns.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8878</th><td>Simplify autoExecute() behaviour to select some columns.</td></tr>
+<tr><th>Submitted</th><td>2006-10-06 23:16 UTC</td></tr>
+<tr><th>From</th><td>simon at ruderich dot com</td></tr>
+<tr><th>Assigned</th><td>davidc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Mac OS X 10.4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-10-06 23:16 UTC] simon at ruderich dot com</h3>
+<p>Description:<br>
+------------<br>
+I tried to get autoExecute() from MDB2 Extended to return all columns, but I only <br>
+got an error because of a wrong Query: &quot;SELECT  FROM&quot;. Now I looked up in CVS and <br>
+noticed that this bug is already fixed.<br>
+It would be nice if you make an official release to fix this bug which is quite a <br>
+problem (for me).</p>
+<p>But there is still a problem if I want to select only some columns.<br>
+It would be better to use autoExecute() this way:<br>
+autoExecute( &#039;table&#039;, array( &#039;column_one&#039;, &#039;column_two&#039;, ... ), <br>
+MDB2_AUTOQUERY_SELECT, &#039;where condition&#039;, null, true, MDB2_PREPARE_RESULT )<br>
+So you only have to specify the columns and not their types which is not necessary <br>
+with SELECT or UPDATE queries either.<br>
+Another possibility would be to allow the use of the last parameter of autoExecute<br>
+() $result_types as flat array of column names without the type as value.<br>
+I added a patch for my first idea. It can be run on the CVS version 1.54 of MDB2/<br>
+Extended.php. This patch would also not interfere with the &quot;old&quot; use of <br>
+autoExecute() with SELECTs where the last parameter is used.</p>
+<p>I hope you could add this feature to MDB2 Extended.<br>
+Thanks for your great work with MDB2,<br>
+Simon</p>
+<p>Test script:<br>
+---------------<br>
+--- Extended.php (CVS 1.54)	2006-10-07 00:36:33.000000000 +0200<br>
++++ Extended.php (my patch)	2006-10-07 01:06:05.000000000 +0200<br>
+@@ -135,6 +135,8 @@<br>
+         if ($mode == MDB2_AUTOQUERY_SELECT) {<br>
+             if (is_array($result_types)) {<br>
+                 $keys = array_keys($result_types);<br>
++            } elseif (!empty( $fields_values)) {<br>
++                $keys = $fields_values;<br>
+             } else {<br>
+                 $keys = array();<br>
+             }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

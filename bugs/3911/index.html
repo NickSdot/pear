@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3911</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Archive_Tar/index.html">Archive_Tar</a> &#187; Bug #3911</h1>
+<p>Easier error reporting, no PEAR overhead if not needed.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3911</th><td>Easier error reporting, no PEAR overhead if not needed.</td></tr>
+<tr><th>Submitted</th><td>2005-03-22 08:38 UTC</td></tr>
+<tr><th>From</th><td>makler at php dot net</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/Archive_Tar/index.html">Archive_Tar</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>any</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-22 08:38 UTC] makler at php dot net</h3>
+<p>Description:<br>
+------------<br>
+I have no clue how can I find in easy way the error message that is set in Archive_Tar::_error() internal method.<br>
+I think the easier method would be to set an internal wariable of the Archive_Tar object. To more functions defined: getError() and getWarnings() are then defined.<br>
+No PEAR is needed for extracting a file - only when errors are encountered, PEAR is included with include_once from _error().</p>
+<p>Reproduce code:<br>
+---------------<br>
+--- Tar.php.fixed       Tue Mar 22 09:20:46 2005<br>
++++ Tar.php.withoutpear Tue Mar 22 09:34:38 2005<br>
+@@ -21,2 +20,0 @@<br>
+-require_once &#039;PEAR.php&#039;;<br>
+-<br>
+@@ -30 +28 @@ require_once &#039;PEAR.php&#039;;<br>
+-class Archive_Tar extends PEAR<br>
++class Archive_Tar<br>
+@@ -51,0 +50,10 @@ class Archive_Tar extends PEAR<br>
++    /**<br>
++    * @var object PEAR::Error object from the last call to _error().<br>
++    */<br>
++    var $_errormsg;<br>
++<br>
++    /**<br>
++    * @var array Array of PEAR::Error objects set with calls to _warning().<br>
++    */<br>
++    var $_warningmsg=array();<br>
++<br>
+@@ -66 +73,0 @@ class Archive_Tar extends PEAR<br>
+-        $this-&gt;PEAR();<br>
+@@ -92 +98,0 @@ class Archive_Tar extends PEAR<br>
+-        $this-&gt;_PEAR();<br>
+@@ -388 +394,2 @@ class Archive_Tar extends PEAR<br>
+-        $this-&gt;raiseError($p_message);<br>
++        include_once(&#039;PEAR.php&#039;);<br>
++        $this-&gt;_errormsg = PEAR::raiseError($p_message);<br>
+@@ -395,2 +402,15 @@ class Archive_Tar extends PEAR<br>
+-        // ----- To be completed<br>
+-        $this-&gt;raiseError($p_message);<br>
++        $this-&gt;_warningmsg[] = $p_message;<br>
++        include_once(&#039;PEAR.php&#039;);<br>
++        PEAR::raiseError($p_message);<br>
++    }<br>
++    // }}}<br>
++<br>
++    // {{{ getError()<br>
++    function &amp;getError() {<br>
++        return $this-&gt;_errormsg;<br>
++    }<br>
++    // }}}<br>
++<br>
++    // {{{ getWarnings()<br>
++    function &amp;getWarnings() {<br>
++        return $this-&gt;_warningmsg;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8085</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_Bittorrent/index.html">File_Bittorrent</a> &#187; Bug #8085</h1>
+<p>announce_list does not return all trackers</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-06-30 08:51 UTC</td></tr>
+<tr><th>From</th><td>brent dot bb at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>tacker</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/File_Bittorrent/index.html">File_Bittorrent</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>FreeBSD 6.0-STABLE</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-30 08:51 UTC] brent dot bb at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Decode.php&#039;s announce_list parser returns a single dimensional array of the first tracker in each tracker group.  The announce_list should be a multidimensional array with all trackers in groups.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php require_once(&quot;File/Bittorrent/Decode.php&quot;);<br>
+	$File_Bittorrent_Decode = new File_Bittorrent_Decode();<br>
+/* http://www.gotwoot.net/torrents/%5BAonE-AnY%5D_Ah_My_Goddess_-_Sorezore_no_Tsubasa_-_04v2_%5BWS%5D%5BDD3442E4%5D.avi.torrent saved locally as AMG204v2.torrent */<br>
+	$infob = $File_Bittorrent_Decode-&gt;decodeFile(&quot;AMG204v2.torrent&quot;);<br>
+	print_r ($File_Bittorrent_Decode-&gt;announce_list); ?&gt;</p>
+<p>/* Patch replaces lines 253-260 of File/Bittorrent/Decode.php */<br>
+         // This contains a list of all known trackers for this torrent<br>
+         if (isset($decoded[&#039;announce-list&#039;]) and is_array($decoded[&#039;announce-list&#039;])) {<br>
+             $i=0;<br>
+             foreach($decoded[&#039;announce-list&#039;] as $group) {<br>
+               $j=0;<br>
+                 foreach($group as $item){<br>
+                       $this-&gt;announce_list[$i][$j] = $item;<br>
+                       $j++;<br>
+                 }<br>
+                 $i++;<br>
+             }<br>
+         }</p>
+<p>Expected result:<br>
+----------------<br>
+/* Patched code return */<br>
+Array (<br>
+	[0] =&gt; Array (<br>
+		[0] =&gt; http://tracker.gotwoot.net:6968/announce<br>
+	)<br>
+	[1] =&gt; Array (<br>
+		[0] =&gt; http://www.point-blank.cc:6969/announce<br>
+		[1] =&gt; http://www.point-blank.cc:7000/announce<br>
+		[2] =&gt; http://www.point-blank.cc:7001/announce<br>
+	)<br>
+) <br>
+/* btshowmetainfo 20030621 - decode BitTorrent metainfo files<br>
+Groups delimited by | and  trackers within group delimited by ,<br>
+ */<br>
+announce-list.: http://tracker.gotwoot.net:6968/announce|http://www.point-blank.cc:6969/announce,http://www.point-blank.cc:7000/announce,http://www.point-blank.cc:7001/announce</p>
+<p>Actual result:<br>
+--------------<br>
+/* 1.0.0 code returns this */<br>
+Array ( <br>
+	[0] =&gt; http://tracker.gotwoot.net:6968/announce<br>
+	[1] =&gt; http://www.point-blank.cc:6969/announce<br>
+)</p>
+</section>
+<section>
+<h3>[2006-07-02 16:51 UTC] tacker at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>ChangeSet: http://versions.tacker.org/trac/File_Bittorrent/changeset/55</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

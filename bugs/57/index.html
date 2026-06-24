@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #57</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #57</h1>
+<p>Auto Sequence problems with PostgreSql</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-10-02 19:30 UTC</td></tr>
+<tr><th>From</th><td>edvan at interativainternet dot com dot br</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>Linux Slackware 9.0</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-10-02 19:30 UTC] edvan at interativainternet dot com dot br</h3>
+<p>Description:<br>
+------------<br>
+The function insert() on DataObject.php arquive erroneous check for ignore_sequence_keys.</p>
+<p>Reproduce code:<br>
+---------------<br>
+        // big check for using sequences<br>
+        if (    ($key = @$keys[0]) &amp;&amp;<br>
+                ($dbtype != &#039;mysql&#039;) &amp;&amp;<br>
+                (@$options[&#039;ignore_sequence_keys&#039;] != &#039;ALL&#039;) &amp;&amp;<br>
+                (!is_array(@$options[&#039;ignore_sequence_keys&#039;]) ||<br>
+                    @!in_array($this-&gt;__table,$options[&#039;ignore_sequence_keys&#039;]))<br>
+            )</p>
+<p>Expected result:<br>
+----------------<br>
+This code checks whether to use the sequence when inserting data on a table. This check looks for table names  inserted on  ignore_sequence_keys label at the .ini file that configures the aplication. The expected result is that, it does not use Pear created sequence keys when exists a node whith the referred table name on the $options[ignore_sequencee_keys] array. But it does not work.</p>
+<p>Actual result:<br>
+--------------<br>
+Even if I insert a table_name on the ignore_sequence_keys label on .ini arquive, the insert() function uses a sequence on this table. I seggest that this code be changed to the code above or something like that:<br>
+        if (    ($key = @$keys[0]) &amp;&amp;<br>
+                ($dbtype != &#039;mysql&#039;) &amp;&amp;<br>
+                (@$options[&#039;ignore_sequence_keys&#039;] != &#039;ALL&#039;) &amp;&amp;<br>
+                (is_array(@$options[&#039;ignore_sequence_keys&#039;]) &amp;&amp;<br>
+                    @in_array($this-&gt;__table,$options[&#039;ignore_sequence_keys&#039;]))<br>
+            )</p>
+</section>
+<section>
+<h3>[2003-10-06 16:22 UTC] rodrigo dot rezende at magnetimarelli dot com dot br</h3>
+<p>function insert()<br>
+    {<br>
+        global $_DB_DATAOBJECT;<br>
+        // connect will load the config!<br>
+        $this-&gt;_connect();</p>
+<p>$__DB  = &amp;$_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5];<br>
+        $items = $this-&gt;table();<br>
+        if (!$items) {<br>
+            DB_DataObject::raiseError(&quot;insert:No table definition for {$this-&gt;__table}&quot;, DB_DATAOBJECT_ERROR_INVALIDCONFIG);<br>
+            return false;<br>
+        }<br>
+        $options= &amp;$_DB_DATAOBJECT[&#039;CONFIG&#039;];</p>
+<p>// turn the sequence keys into an array<br>
+        if ((@$options[&#039;ignore_sequence_keys&#039;]) &amp;&amp;<br>
+                (@$options[&#039;ignore_sequence_keys&#039;] != &#039;ALL&#039;) &amp;&amp;<br>
+                (!is_array($options[&#039;ignore_sequence_keys&#039;]))) {<br>
+            $options[&#039;ignore_sequence_keys&#039;]  = explode(&#039;,&#039;, $options[&#039;ignore_sequence_keys&#039;]);<br>
+        }</p>
+<p>$datasaved = 1;<br>
+        $leftq     = &#039;&#039;;<br>
+        $rightq    = &#039;&#039;;<br>
+        $key       = false;<br>
+        $keys      = $this-&gt;keys();<br>
+        $dbtype    = $_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5]-&gt;dsn[&quot;phptype&quot;];<br>
+        <br>
+	<br>
+	if (    ($key = @$keys[0]) &amp;&amp;<br>
+                ($dbtype == &#039;pgsql&#039;) &amp;&amp;<br>
+                (@$options[&#039;ignore_sequence_keys&#039;] != &#039;ALL&#039;) &amp;&amp;<br>
+                (!is_array(@$options[&#039;ignore_sequence_keys&#039;]) ||<br>
+                    @!in_array($this-&gt;__table,$options[&#039;ignore_sequence_keys&#039;]))            )<br>
+        {<br>
+            if (!($seq = @$options[&#039;sequence_&#039;. $this-&gt;__table])) {</p>
+<p>$dummy = explode(&#039;.&#039;,$this-&gt;__table);<br>
+	        $schema_name = $dummy[0];<br>
+	        $table_name  = $dummy[1];<br>
+	<br>
+	        $sql_seq = &quot;<br>
+	        SELECT<br>
+	                a.attname as attname, adef.adsrc  as sequence<br>
+	        FROM<br>
+	                pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_attrdef adef<br>
+	                ON a.attrelid=adef.adrelid<br>
+	                AND a.attnum=adef.adnum<br>
+	        WHERE<br>
+	                        a.atthasdef = &#039;t&#039; AND<br>
+	                        a.attname = &#039;$key&#039; AND<br>
+	                a.attrelid = (SELECT oid FROM pg_catalog.pg_class WHERE relname=&#039;$table_name&#039;<br>
+        	                AND relnamespace = (SELECT oid FROM pg_catalog.pg_namespace WHERE<br>
+                	        nspname = &#039;$schema_name&#039;))<br>
+	                AND a.attnum &gt; 0 AND NOT a.attisdropped<br>
+	        ;<br>
+        	&quot;;<br>
+	        $r = $__DB-&gt;getRow($sql_seq,DB_FETCHMODE_ASSOC);<br>
+	        $attrname_seq = $r[&#039;attname&#039;];	<br>
+	        $sequence_name = explode(&#039;\&#039;&#039;,$r[&#039;sequence&#039;]);<br>
+		$sequence_name = (isset($sequence_name[1]))?$sequence_name[1]:&#039;&#039;;<br>
+                $seq = $sequence_name;<br>
+            }<br>
+            $this-&gt;$key = $__DB-&gt;nextId($seq);<br>
+        }</p>
+<p>foreach($items as $k =&gt; $v) {<br>
+            if (!isset($this-&gt;$k) || $this-&gt;$k == &#039;&#039; || $this-&gt;$k === &#039;null&#039;)  {<br>
+                continue;<br>
+            }</p>
+<p>if ($leftq) {<br>
+                $leftq  .= &#039;, &#039;;<br>
+                $rightq .= &#039;, &#039;;<br>
+            }<br>
+            $leftq .= &quot;$k &quot;;</p>
+<p>if (strtolower($this-&gt;$k) === &#039;null&#039;) {<br>
+                $rightq .= &quot; NULL &quot;;<br>
+                continue;<br>
+            }<br>
+            if ($v &amp; DB_DATAOBJECT_STR) {<br>
+                $rightq .= $__DB-&gt;quote($this-&gt;$k) . &quot; &quot;;<br>
+                continue;<br>
+            }</p>
+<p>if (is_numeric($this-&gt;$k)) {<br>
+                $rightq .=&quot; {$this-&gt;$k} &quot;;<br>
+                continue;<br>
+            }<br>
+            // at present we only cast to integers<br>
+            // - V2 may store additional data about float/int<br>
+            $rightq .= &#039; &#039; . intval($this-&gt;$k) . &#039; &#039;;</p>
+<p>}<br>
+        if ($leftq) {<br>
+            $r = $this-&gt;_query(&quot;INSERT INTO {$this-&gt;__table} ($leftq) VALUES ($rightq) &quot;);<br>
+            if (PEAR::isError($r)) {<br>
+                DB_DataObject::raiseError($r);<br>
+                return false;<br>
+            }<br>
+            if ($r &lt; 1) {<br>
+                DB_DataObject::raiseError(&#039;No Data Affected By insert&#039;,DB_DATAOBJECT_ERROR_NOAFFECTEDROWS);<br>
+                return false;<br>
+            }</p>
+<p>if ($key &amp;&amp;<br>
+                ($items[$key] &amp; DB_DATAOBJECT_INT) &amp;&amp;<br>
+                ($dbtype == &#039;mysql&#039;) &amp;&amp;<br>
+                (@$options[&#039;ignore_sequence_keys&#039;] != &#039;ALL&#039;) &amp;&amp;<br>
+                    (<br>
+                        !@$options[&#039;ignore_sequence_keys&#039;] ||<br>
+                        (is_array(@$options[&#039;ignore_sequence_keys&#039;]) &amp;&amp;<br>
+                            in_array($this-&gt;__table,@$options[&#039;ignore_sequence_keys&#039;]))<br>
+                    )<br>
+                )<br>
+            {<br>
+                $this-&gt;$key = mysql_insert_id($_DB_DATAOBJECT[&#039;CONNECTIONS&#039;][$this-&gt;_database_dsn_md5]-&gt;connection);<br>
+            }</p>
+<p>$this-&gt;_clear_cache();<br>
+            if ($key) {<br>
+                return $this-&gt;$key;<br>
+            }<br>
+            return true;<br>
+        }<br>
+        DB_DataObject::raiseError(&quot;insert: No Data specifed for query&quot;, DB_DATAOBJECT_ERROR_NODATA);<br>
+        return false;<br>
+    }</p>
+</section>
+<section>
+<h3>[2003-10-06 17:05 UTC] edvan at interativainternet dot com dot br</h3>
+<p>Ok folks! I have downloaded the newer version of DataObjects.php and it seems work fine. Thanks.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

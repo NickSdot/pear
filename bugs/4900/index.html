@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4900</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #4900</h1>
+<p>storing connection</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-07-23 23:13 UTC</td></tr>
+<tr><th>From</th><td>alex_foe at gmx dot de</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>lamp (debian 3.1)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-07-23 23:13 UTC] alex_foe at gmx dot de</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m not absolutley sure, that this is a bug, I saw also an option field for database configurations, err compatibility<br>
+( $db_options = PEAR::getStaticProperty(&#039;DB&#039;,&#039;options&#039;); ) - But I&#039;m new and I&#039;ve chosen this way (see script below) of connection (over a unix socket) and got a warning, which might be in multiple db-sessions-situiation an error, in the module</p>
+<p>DataObject.php about the line 2101</p>
+<p>this is the wrong line:</p>
+<p>$this-&gt;_database_dsn_md5 = md5($dsn);</p>
+<p>For DB.php one might pass a dsn in an array form. for this, the code must be changed in DataObject.php into sth. like this:</p>
+<p>if (!is_array($dsn)) { $this-&gt;_database_dsn_md5 = md5($dsn); }<br>
+else { $this-&gt;_database_dsn_md5 = md5(join(&quot;&quot;, $dsn)); }</p>
+<p>Test script:<br>
+---------------<br>
+$options = &amp;PEAR::getStaticProperty(&#039;DB_DataObject&#039;,&#039;options&#039;);<br>
+$options = array<br>
+ (<br>
+  &#039;database&#039; =&gt; array<br>
+   (<br>
+    &#039;phptype&#039;   =&gt; &#039;mysql&#039;<br>
+    , &#039;database&#039; =&gt; &#039;your_db_name&#039;<br>
+    , &#039;username&#039; =&gt; &#039;db_user&#039;<br>
+    , &#039;password&#039; =&gt; &#039;db_pass&#039;<br>
+    , &#039;socket&#039;   =&gt; &#039;/var/run/mysqld/mysqld4.sock&#039;<br>
+    , &#039;protocol&#039; =&gt; &#039;unix&#039;<br>
+   )<br>
+  ,&#039;schema_location&#039;   =&gt; &#039;/tmp/DataObject&#039;<br>
+  , &#039;class_location&#039;    =&gt; &#039;/tmp/DataObject&#039;<br>
+  , &#039;require_prefix&#039;    =&gt; &#039;/tmp/DataObject&#039;<br>
+  , &#039;debug&#039;             =&gt; 0<br>
+ );</p>
+<p>require_once &#039;DB/DataObject/Generator.php&#039;;</p>
+<p>$generator = new DB_DataObject_Generator;<br>
+$generator-&gt;start();</p>
+<p>Expected result:<br>
+----------------<br>
+no errors, warnings -;)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

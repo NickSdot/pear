@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3301</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail/index.html">Mail</a> &#187; Bug #3301</h1>
+<p>Mail can not be sent from CLI</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-26 15:46 UTC</td></tr>
+<tr><th>From</th><td>tchoudinov at yahoo dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Mail/index.html">Mail</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>Windows2000 server SP4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-26 15:46 UTC] tchoudinov at yahoo dot com</h3>
+<p>Description:<br>
+------------<br>
+When using Mail_SMTP in command line environment class does not send mails at all. Send() function reports <br>
+&quot;unable to authenticate to smtp server&quot;</p>
+<p>And a couple of notices: <br>
+Notice: Array to string conversion in C:\php\pear\Net\SMTP.php on line 365</p>
+<p>Notice: Array to string conversion in C:\php\pear\Net\SMTP.php on line 363</p>
+<p>The same script in WEB environment (either Apache or IIS) works just fine.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$recipients = &#039;tchoudinov@yahoo.com&#039;;</p>
+<p>$headers[&#039;From&#039;]    = &#039;mikhail@adstate.com&#039;;<br>
+$headers[&#039;To&#039;]      = &#039;tchoudinov@yahoo.com&#039;;<br>
+$headers[&#039;Subject&#039;] = &#039;Test message YY&#039;;</p>
+<p>$body = &#039;Test message BB&#039;;</p>
+<p>//fill an array with parameters<br>
+$params[&quot;host&quot;] = MAIL_SMTP_HOST; //The server to connect. <br>
+$params[&quot;port&quot;] = MAIL_SMTP_PORT; //The port to connect. <br>
+$params[&quot;auth&quot;] = MAIL_SMTP_AUTH; //Whether or not to use SMTP authentication.<br>
+$params[&quot;username&quot;] = MAIL_SMTP_USERNAME; //The username to use for SMTP authentication.<br>
+$params[&quot;password&quot;] = MAIL_SMTP_PASSWORD; //The password to use for SMTP authenticat</p>
+<p>// Create the mail object using the Mail::factory method<br>
+$mail_object =&amp; Mail::factory(&#039;smtp&#039;, $params);<br>
+$Result = $mail_object-&gt;send($recipients, $headers, $body);<br>
+echo($Result-&gt;getMessage());</p>
+<p>Expected result:<br>
+----------------<br>
+We run the script from command line, but mail must be sent.</p>
+<p>Actual result:<br>
+--------------<br>
+Script repotrs about errors to command line:</p>
+<p>Notice: Array to string conversion in C:\php\pear\Net\SMTP.php on line 363<br>
+Notice: Array to string conversion in C:\php\pear\Net\SMTP.php on line 365<br>
+unable to authenticate to smtp server</p>
+</section>
+<section>
+<h3>[2005-01-26 16:34 UTC] tchoudinov at yahoo dot com</h3>
+<p>BTW I have Zend engine installed. May this is the problem.<br>
+PHP 4.3.9 (cli) (built: Sep 21 2004 14:04:30)<br>
+Copyright (c) 1997-2004 The PHP Group<br>
+Zend Engine v1.3.0, Copyright (c) 1998-2004 Zend Technologies<br>
+    with Zend Extension Manager v1.0.4, Copyright (c) 2003-2004, by Zend Technologies<br>
+    with Zend Optimizer v2.5.5, Copyright (c) 1998-2004, by Zend Technologies<br>
+    with Zend Debugger v3.5.2, Copyright (c) 1999-2004, by Zend Technologies</p>
+</section>
+<section>
+<h3>[2005-01-26 17:41 UTC] tchoudinov at yahoo dot com</h3>
+<p>Well. I have found the problem and how to solve it after a couple of hours.<br>
+The problem is Zend Optimizer. <br>
+The problem is &quot;Array to string conversion&quot;<br>
+If Optimizer is working on web server then simple code like this generates is a cause of errors in CLI mode:<br>
+---------------------------<br>
+$array = array();<br>
+$array[] = &quot;string_array&quot;;</p>
+<p>foreach ($array as $element) {<br>
+  //$verb = strtok($element, &#039; &#039;); //line like this generates a notice <br>
+  var_dump($element);<br>
+}<br>
+---------------------------</p>
+<p>Try this code in CLI and you will see a really strange result:<br>
+array(2) {<br>
+  [0]=&gt;<br>
+  string(12) &quot;string_array&quot;<br>
+  [1]=&gt;<br>
+  int(0)<br>
+}<br>
+Instead just string(12) &quot;string_array&quot;.</p>
+<p>Disable Optimizer and everything goes fine again!<br>
+To disable it comment out the line in php.ini<br>
+;zend_extension_manager.optimizer_ts=&quot;C:\Program Files\Zend\lib\Optimizer-2.5.5&quot;</p>
+<p>Just modification of optimization level zend_optimizer.optimization_level = 0<br>
+does not help.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9875</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #9875</h1>
+<p>SOAP response decoded incorrectly when duplicate xml elements present</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-19 06:14 UTC</td></tr>
+<tr><th>From</th><td>vanslyck at gmail dot com</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>5.2.0</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-19 06:14 UTC] vanslyck at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+When calling a web service which can return multiple XML elements with the same name, an array is returned rather than an object.</p>
+<p>For example the xml response below is incorrectly decoded<br>
+&lt;book&gt;<br>
+ &lt;author&gt;Bob&lt;/author&gt;<br>
+ &lt;author&gt;Sue&lt;/author&gt;<br>
+ &lt;title&gt;My Book&lt;/title&gt;<br>
+&lt;/book&gt;</p>
+<p>Test script:<br>
+---------------<br>
+Patch:<br>
+Base.php, Line 905<br>
+//$return = array($return-&gt;{$item-&gt;name}, $d);			$return-&gt;{$item-&gt;name} = array($return-&gt;{$item-&gt;name}, $d);</p>
+<p>Test Script:<br>
+&lt;?php</p>
+<p>require_once &#039;SOAP/Client.php&#039;;</p>
+<p>$wsdl_url =<br>
+&#039;http://webservices.amazon.com/AWSECommerceService/AWSECommerceService.wsdl&#039;;<br>
+$WSDL     = new SOAP_WSDL($wsdl_url);<br>
+$client   = $WSDL-&gt;getProxy();</p>
+<p>$params   = array(<br>
+        &#039;SearchIndex&#039;           =&gt; &#039;Books&#039;,<br>
+        &#039;Power&#039;                 =&gt; &#039;asin: 1592289800&#039;,<br>
+        &#039;Sort&#039;                  =&gt; &#039;salesrank&#039;,<br>
+        &#039;ResponseGroup&#039;         =&gt; &#039;ItemAttributes&#039;,<br>
+        &#039;AWSAccessKeyId&#039;        =&gt; &#039;XXXXXXXXXXXXXX&#039;,<br>
+        &#039;AssociateTag&#039;          =&gt; &#039;XXXXX-20&#039;,<br>
+        &#039;Version&#039;               =&gt; &#039;2006-11-14&#039;<br>
+);</p>
+<p>echo(&quot;&lt;pre&gt;&quot;);<br>
+print_r($client-&gt;ItemSearch($params));<br>
+echo(&quot;&lt;/pre&gt;&quot;);</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+[Item] =&gt; stdClass Object<br>
+                (<br>
+                    [ASIN] =&gt; 1592289800<br>
+                    [DetailPageURL] =&gt; http://www.amazon.com/gp/redirect.html%3FASIN=1592289800%26tag=sweetgeek-20%26lcode=sp1%26cID=2025%26ccmID=165953%26location=/o/ASIN/1592289800%253FSubscriptionId=1XCJZQH0D3BYHJMXGCG2<br>
+                    [ItemAttributes] =&gt; stdClass Object<br>
+                        (<br>
+                            [Author] =&gt; Array<br>
+                                (<br>
+                                    [0] =&gt; Jay Kopelman<br>
+                                    [1] =&gt; Melinda Roth<br>
+                                )</p>
+<p>[Binding] =&gt; Hardcover<br>
+...</p>
+<p>Actual result:<br>
+--------------<br>
+[Item] =&gt; stdClass Object<br>
+                (<br>
+                    [ASIN] =&gt; 1592289800<br>
+                    [DetailPageURL] =&gt; http://www.amazon.com/gp/redirect.html%3FASIN=1592289800%26tag=sweetgeek-20%26lcode=sp1%26cID=2025%26ccmID=165953%26location=/o/ASIN/1592289800%253FSubscriptionId=1XCJZQH0D3BYHJMXGCG2<br>
+                    [ItemAttributes] =&gt; Array<br>
+                        (<br>
+                            [0] =&gt; Jay Kopelman<br>
+                            [1] =&gt; Melinda Roth<br>
+                            [2] =&gt; Hardcover<br>
+...</p>
+</section>
+<section>
+<h3>[2007-01-19 06:17 UTC] vanslyck at gmail dot com</h3>
+<p>Sorry, I mangled the patch...</p>
+<p>Base.php, Line 905<br>
+//$return = array($return-&gt;{$item-&gt;name},$d);<br>
+$return-&gt;{$item-&gt;name} = array($return-&gt;{$item-&gt;name}, $d);</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5888</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #5888</h1>
+<p>System::rm doesn&#039;t properly handle symlinks</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-07 15:50 UTC</td></tr>
+<tr><th>From</th><td>murley at townnews dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.1</td></tr>
+<tr><th>OS</th><td>All unix systems</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-07 15:50 UTC] murley at townnews dot com</h3>
+<p>Description:<br>
+------------<br>
+The pear System::rm() method doesn&#039;t properly handle symlinks. Pear&#039;s method for removing files and directories is there to mock the unix style rm command. This function supports recursion as well.</p>
+<p>When calling System::rm the internal method <br>
+_dirToStruct() is called. This method builds an array of elements, testing each to see if it&#039;s a file or directory. The is_dir check should be followed by an &#039;&amp;&amp; !is_link&#039; check as no unix system in the world reads through symlinks. Doing so is *very* dangerous, and in your case it even support filesystem jumping.</p>
+<p>System::rm works fine on symlinks that are linked to files, but reads through the link when a symlink goes to a directory.</p>
+<p>Line 141 of System.php:<br>
+                <br>
+if (is_dir($path)) {<br>
+ $tmp = System::_dirToStruct($path, $maxinst, $aktinst+1);<br>
+ $struct = array_merge_recursive($tmp, $struct);<br>
+} else {</p>
+<p>On line 141 an &amp;&amp; !is_link should be added. This will cause the function to remove the link and not read into the directory. If left unchanged the linked directory&#039;s content is removed but the link isn&#039;t thus system::rm will fail.</p>
+<p>Change to: Line 141<br>
+if (is_dir($path) &amp;&amp; !is_link) {<br>
+ $tmp = System::_dirToStruct($path, $maxinst, $aktinst+1);<br>
+ $struct = array_merge_recursive($tmp, $struct);<br>
+} else {</p>
+<p>Test script:<br>
+---------------<br>
+#!/usr/bin/php<br>
+&lt;?php</p>
+<p>ini_set(&#039;error_reporting&#039;, E_ALL);</p>
+<p>require_once(&#039;System.php&#039;);</p>
+<p>mkdir(&#039;/tmp/testrm1&#039;);<br>
+ mkdir(&#039;/tmp/testrm2&#039;);<br>
+ touch(&#039;/tmp/testrm2/file1&#039;);<br>
+ symlink(&#039;/tmp/testrm2&#039;, &#039;/tmp/testrm1/linkeddir2&#039;);</p>
+<p>echo &quot;Calling system::rm on /tmp/testrm1\n&quot;;</p>
+<p>System::rm(&#039;-rf  /tmp/testrm1&#039;);</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+The expected result should be to remove the testrm1 dir and all it&#039;s contents while leaving the testrm2 dir untouched and intact.</p>
+<p>My sugessted changes above will fix this. Also note that once this is changed your rm() call will mock all unix style rm&#039;s.</p>
+<p>Actual result:<br>
+--------------<br>
+Notice that the file in testrm2 named file1 is gone and shouldnt be. Also notice that the testrm1 dir is still there and contains and the symlink to the directory testrm2 is still there.</p>
+</section>
+<section>
+<h3>[2005-11-07 15:54 UTC] murley at townnews dot com</h3>
+<p>Sorry, the code change should look like this:</p>
+<p>Change to: Line 141<br>
+if (is_dir($path) &amp;&amp; !is_link($path)) {<br>
+ $tmp = System::_dirToStruct($path, $maxinst, $aktinst+1);<br>
+ $struct = array_merge_recursive($tmp, $struct);<br>
+} else {</p>
+</section>
+<section>
+<h3>[2005-11-08 13:58 UTC] murley at townnews dot com</h3>
+<p>Changed bug category</p>
+</section>
+<section>
+<h3>[2005-11-10 02:41 UTC] murley at townnews dot com</h3>
+<p>Fixed category. Sorry about that.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

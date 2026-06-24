@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2348</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Bug #2348</h1>
+<p>incorrect warning about insufficient memory</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>#2348</th><td>incorrect warning about insufficient memory</td></tr>
+<tr><th>Submitted</th><td>2004-09-16 08:39 UTC</td></tr>
+<tr><th>From</th><td>swen dot thuemmler at telefonica dot de</td></tr>
+<tr><th>Assigned</th><td>rasmus</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>solaris 2.8</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-09-16 08:39 UTC] swen dot thuemmler at telefonica dot de</h3>
+<p>Description:<br>
+------------<br>
+I think there is an incorrect warning given when apc_cache_insert() fails,<br>
+because another process already cached a file. In apc_main.c we have:<br>
+    if (!apc_cache_insert(APCG(cache), key, cache_entry, t)) {<br>
+        apc_cache_free_entry(cache_entry);<br>
+        apc_cache_expunge(APCG(cache),t);<br>
+        /* apc_log(APC_WARNING, &quot;(apc_cache_insert) unable to cache &#039;%s&#039;: insufficient &quot; &quot;shared memory available&quot;, h-&gt;opened_path); */<br>
+    }<br>
+and in apc_cache.c, there is:<br>
+        if (key_equals((*slot)-&gt;key.data.file, key.data.file)) {<br>
+            /* If existing slot for the same device+inode is older, remove it and insert the new version */<br>
+            if ((*slot)-&gt;key.mtime &lt; key.mtime) {<br>
+                remove_slot(cache, slot);<br>
+                break;<br>
+            }<br>
+            UNLOCK(cache);<br>
+            return 0;<br>
+        }</p>
+<p>So it returns 0, when the same file is already cached by another process and should not be cached again. Question is, should the function return 1 in this case, or should the warning be moved into the function, given only when there is really no memory left?</p>
+<p>I&#039;ll have to check, whether this accounts for my comment on bug #1583 - the message might have been a red herring.</p>
+<p>Greetings, Swen</p>
+</section>
+<section>
+<h3>[2004-09-16 08:51 UTC] swen dot thuemmler at telefonica dot de</h3>
+<p>Nope, bug #1583 is unaffected, I&#039;ll add my comments there.</p>
+<p>--Swen</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2338</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #2338</h1>
+<p>Comparison of dates changes the time zone</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-09-15 14:50 UTC</td></tr>
+<tr><th>From</th><td>andrew at awarez dot net</td></tr>
+<tr><th>Assigned</th><td>firman</td></tr>
+<tr><th>Status</th><td>Suspended</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Fedora Core 3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-09-15 14:50 UTC] andrew at awarez dot net</h3>
+<p>Description:<br>
+------------<br>
+Comparison of two dates using the Date::before(), or Date::after() methods results in the timezone that the date() function uses being changed to UTC. As a result, after calling these Date class methods, any Date objects created using &quot;new Date()&quot; may have the wrong current time.</p>
+<p>In the following examples, &quot;BST&quot; is British Summer Time.</p>
+<p>Using Date v1.4.3.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php</p>
+<p>// Set the PEAR Date class location<br>
+ini_set(&#039;include_path&#039;, &#039;/home/andrew/pear&#039;);</p>
+<p>// Incluide the PEAR Date class<br>
+require_once &#039;Date.php&#039;;</p>
+<p>/**************************************************************************/<br>
+// Echo the timezone obtained via the getenv() function<br>
+echo &#039;Current timezone is: &#039; . getenv(&#039;TZ&#039;) . &#039;&lt;br&gt;&#039;;<br>
+// Echo the timezone obtained via the date() function<br>
+echo &#039;Current timezone is: &#039; . date(&#039;T&#039;) . &#039;&lt;br&gt;&#039;;<br>
+// Create a new date<br>
+$date1 = new Date();<br>
+// Echo the date<br>
+echo &#039;Current date is: &#039; . $date1-&gt;format(&#039;%Y-%m-%d %H:%M:%S&#039;) . &#039;&lt;br&gt;&#039;;<br>
+/**************************************************************************/</p>
+<p>// Do nothing...</p>
+<p>/**************************************************************************/<br>
+// Echo the timezone obtained via the getenv() function<br>
+echo &#039;Current timezone is: &#039; . getenv(&#039;TZ&#039;) . &#039;&lt;br&gt;&#039;;<br>
+// Echo the timezone obtained via the date() function<br>
+echo &#039;Current timezone is: &#039; . date(&#039;T&#039;) . &#039;&lt;br&gt;&#039;;<br>
+// Create a new date<br>
+$date2 = new Date();<br>
+// Echo the date<br>
+echo &#039;Current date is: &#039; . $date2-&gt;format(&#039;%Y-%m-%d %H:%M:%S&#039;) . &#039;&lt;br&gt;&#039;;<br>
+/**************************************************************************/</p>
+<p>// Compare date 1 and date 2<br>
+$date1-&gt;after($date2);</p>
+<p>/**************************************************************************/<br>
+// Echo the timezone obtained via the getenv() function<br>
+echo &#039;Current timezone is: &#039; . getenv(&#039;TZ&#039;) . &#039;&lt;br&gt;&#039;;<br>
+// Echo the timezone obtained via the date() function<br>
+echo &#039;Current timezone is: &#039; . date(&#039;T&#039;) . &#039;&lt;br&gt;&#039;;<br>
+// Create a new date<br>
+$date3 = new Date();<br>
+// Echo the date<br>
+echo &#039;Current date is: &#039; . $date3-&gt;format(&#039;%Y-%m-%d %H:%M:%S&#039;) . &#039;&lt;br&gt;&#039;;<br>
+/**************************************************************************/</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Current timezone is:<br>
+Current timezone is: BST<br>
+Current date is: 2004-09-15 15:46:06<br>
+Current timezone is:<br>
+Current timezone is: BST<br>
+Current date is: 2004-09-15 15:46:06<br>
+Current timezone is:<br>
+Current timezone is: BST<br>
+Current date is: 2004-09-15 15:46:06</p>
+<p>Actual result:<br>
+--------------<br>
+Current timezone is:<br>
+Current timezone is: BST<br>
+Current date is: 2004-09-15 15:46:06<br>
+Current timezone is:<br>
+Current timezone is: BST<br>
+Current date is: 2004-09-15 15:46:06<br>
+Current timezone is:<br>
+Current timezone is: UTC<br>
+Current date is: 2004-09-15 14:46:06</p>
+</section>
+<section>
+<h3>[2004-09-22 21:09 UTC] scragz at hotmail dot com</h3>
+<p>I just ran in to this problem and this is how I fixed it:</p>
+<p>Index: Date.php<br>
+===================================================================<br>
+--- Date.php    (revision 111)<br>
++++ Date.php    (working copy)<br>
+@@ -731,6 +731,8 @@<br>
+      */<br>
+     function compare($d1, $d2)<br>
+     {<br>
++        $d1 =&amp; new Date($d1);<br>
++        $d2 =&amp; new Date($d2);<br>
+         $d1-&gt;convertTZ(new Date_TimeZone(&#039;UTC&#039;));<br>
+         $d2-&gt;convertTZ(new Date_TimeZone(&#039;UTC&#039;));<br>
+         $days1 = Date_Calc::dateToDays($d1-&gt;day, $d1-&gt;month, $d1-&gt;year);</p>
+</section>
+<section>
+<h3>[2004-09-27 13:39 UTC] andrew at awarez dot net</h3>
+<p>Okay, that&#039;s a possible way to work around the bug, but what happens when I actually want the Dates to be in BST (which they should be)?</p>
+</section>
+<section>
+<h3>[2004-12-04 04:05 UTC] rbro at hotmail dot com</h3>
+<p>Has there been any update on this?  I just added a comment in bug 2217 which basically describes the same problem.  An additional side effect when running Date::compare in PHP 5 is that the 2 parameters passed to the compare function also get converted into UTC because objects are passed by reference in PHP 5.</p>
+</section>
+<section>
+<h3>[2004-12-20 01:19 UTC] skrald at amossen dot dk</h3>
+<p>A fix on this could be really nice. Date becomes quite unusefull when before(), after() and compare() resets the timezone.</p>
+<p>However, a fix is easily done by cloning the arguments for compare() before using them:</p>
+<p>function compare($d1, $d2)<br>
+    {<br>
+      $d1 = clone($d1);<br>
+      $d2 = clone($d2);<br>
+      ....</p>
+<p>This should also fix the errors in before() and after().</p>
+<p>Notice: In order to make the class thread safe, compare() must operate on a clone because another thread might access the arguments for compare() in the meantime.</p>
+</section>
+<section>
+<h3>[2004-12-20 09:55 UTC] christian at wenz dot org</h3>
+<p>I don&#039;t think &quot;clone $d1; clone $d2;&quot; would work as PEAR::Date only requires PHP &gt;= 4.2.</p>
+</section>
+<section>
+<h3>[2004-12-22 14:45 UTC] andrew at awarez dot net</h3>
+<p>Okay, I&#039;ve located where the problem is. On the system I have described, when the Date_TimeZone::inDaylightTime() method is called, the call to getenv(&quot;TZ&quot;) returns false. As a result, later on in the method, when the timezone is attempted to be restored, this means a call is made putenv(&quot;TZ=&quot;), which results in the UTC timezone.</p>
+<p>So, does anyone that know more about getenv and putenv than me know a way to actually remove the set TZ env &quot;variable&quot;, rather than setting it to a null string?</p>
+</section>
+<section>
+<h3>[2005-07-11 12:49 UTC] andrew at awarez dot net</h3>
+<p>I have tried the patch, but the error persists.</p>
+</section>
+<section>
+<h3>[2005-10-24 09:27 UTC] franek5 at wp dot pl</h3>
+<p>I think that problem is quite easy to solve... It&#039;s caused by null initial value of TZ enviroment variable. Method Date_TimeZone::inDaylightTime() converts time value to UTC timezone - value TC&#039;s variable is changed to UTC. Later this method try to convert time back to original TZ setting (this can&#039;t be done properly because original TZ value was NULL). In  result timezone setting in current script changes to UTC.</p>
+<p>Solution i used to bypass this problem is quite simple - <br>
+I set TZ&#039;s value on beginning of my script to my default timezone:</p>
+<p>putenv(&quot;TZ=CET&quot;);  -- for Central European Timezone</p>
+</section>
+<section>
+<h3>[2006-06-13 17:26 UTC] Nagy dot Attila dot Gabor at gmail dot com</h3>
+<p>Well, I believe this bug is serious enough to be patched in the current tree, without API change. Nathan&#039;s patch works well, and I believe it has a little resource impact.</p>
+<p>Here&#039;s how I&#039;ve patched (also php4-php5 safe):</p>
+<p>--- /tmp/Date.php       2006-06-13 18:48:41.000000000 +0200<br>
++++ Date.php    2006-06-13 18:53:48.000000000 +0200<br>
+@@ -763,6 +763,10 @@<br>
+      */<br>
+     function compare($d1, $d2)<br>
+     {<br>
++        if (version_compare(&#039;5.0.0&#039;, phpversion(), &#039;&lt;&#039;)) {<br>
++            $d1 = new Date($d1);<br>
++            $d2 = new Date($d2);<br>
++        }<br>
+         $d1-&gt;convertTZ(new Date_TimeZone(&#039;UTC&#039;));<br>
+         $d2-&gt;convertTZ(new Date_TimeZone(&#039;UTC&#039;));<br>
+         $days1 = Date_Calc::dateToDays($d1-&gt;day, $d1-&gt;month, $d1-&gt;year);</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1221</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_NestedSet/index.html">DB_NestedSet</a> &#187; Bug #1221</h1>
+<p>problems with quoted identifiers and Oracle</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-16 14:39 UTC</td></tr>
+<tr><th>From</th><td>priit at e-positive dot ee</td></tr>
+<tr><th>Assigned</th><td>datenpunk</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/DB_NestedSet/index.html">DB_NestedSet</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Win</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-16 14:39 UTC] priit at e-positive dot ee</h3>
+<p>Description:<br>
+------------<br>
+I think quotedIdentifiers should be used only in select clauses, because they are (at least) in Oracle case sensitive and cause problems.</p>
+<p>Usually the params look&#039;s like this:</p>
+<p>var $params = array(<br>
+    &#039;STRID&#039; =&gt; &#039;id&#039;,<br>
+    &#039;ROOTID&#039;=&gt; &#039;rootid&#039;,<br>
+    &#039;l&#039;     =&gt; &#039;l&#039;,<br>
+    &#039;r&#039;     =&gt; &#039;r&#039;,<br>
+    &#039;STREH&#039; =&gt; &#039;norder&#039;,<br>
+    &#039;STRLEVEL&#039; =&gt; &#039;level&#039;,<br>
+    &#039;parent&#039;=&gt;&#039;parent&#039;<br>
+    );</p>
+<p>Notice that f.e l &amp; r are in lower, strid in upper case.</p>
+<p>Table generated in Oracle like this</p>
+<p>CREATE TABLE tb_nodes (<br>
+	STRID number NOT NULL,<br>
+  	ROOTID number NOT NULL,<br>
+  	l number NOT NULL,<br>
+  	r number NOT NULL,<br>
+  	PARENT number NOT NULL,<br>
+  	STREH number default 0,<br>
+  	STRLEVEL number NOT NULL,<br>
+  	df_name varchar2(255) not null,</p>
+<p>get&#039;s internally converted into upper case, so desc tb_nodes <br>
+is like:</p>
+<p>Name                                      Null?    Type<br>
+ ----------------------------------------- -------- ---------<br>
+ STRID                                     NOT NULL NUMBER<br>
+ ROOTID                                    NOT NULL NUMBER<br>
+ L                                         NOT NULL NUMBER<br>
+ R                                         NOT NULL NUMBER<br>
+ PARENT                                    NOT NULL NUMBER<br>
+ STREH                                              NUMBER<br>
+ STRLEVEL                                  NOT NULL NUMBER</p>
+<p>No problem unless using quoted identifiers.</p>
+<p>Inserting a new node the sql clause is something like this:<br>
+INSERT INTO tb_nodes (&quot;strna&quot;, &quot;STRLEVEL&quot;, &quot;PARENT&quot;, &quot;STRID&quot;, &quot;ROOTID&quot;, &quot;l&quot;, &quot;r&quot;) <br>
+VALUES (&#039;Database&#039;, &#039;1&#039;, &#039;0&#039;, &#039;2&#039;, &#039;2&#039;, &#039;1&#039;, &#039;2&#039;);</p>
+<p>And that fails!</p>
+<p>INSERT INTO tb_nodes (&quot;DF_NAME&quot;, &quot;STRLEVEL&quot;, &quot;PARENT&quot;, &quot;STRID&quot;, &quot;ROOTID&quot;, &quot;L&quot;, &quot;R&quot;) <br>
+VALUES (&#039;Database&#039;, &#039;1&#039;, &#039;0&#039;, &#039;2&#039;, &#039;2&#039;, &#039;1&#039;, &#039;2&#039;);</p>
+<p>goes thru, also with</p>
+<p>INSERT INTO tb_nodes (df_name, STRLEVEL, parent, STRID, ROOTID, l, r) <br>
+VALUES (&#039;Database&#039;, &#039;1&#039;, &#039;0&#039;, &#039;2&#039;, &#039;2&#039;, &#039;1&#039;, &#039;2&#039;);</p>
+<p>Same in UPDATE,</p>
+<p>The solution is to modify _values2UpdateQuery and _values2InsertQuery</p>
+<p>$k = strtoupper( $this-&gt;_quoteIdentifier(trim($key)) );</p>
+<p>or</p>
+<p>$k = trim($key);</p>
+</section>
+<section>
+<h3>[2004-04-16 17:09 UTC] dk at webcluster dot at</h3>
+<p>Well - I don&#039;t know how to tell Oracle to use the fields in a create query case sensitive but I&#039;m sure there is a way. E.g. quote the fields of the create query - just a blind guess.<br>
+But - why don&#039;t you simply use uppercase column names inside the param array. Then you shouldn&#039;t have any problem:<br>
+ROOTID&#039;=&gt; &#039;rootid&#039;,<br>
+&#039;L&#039;     =&gt; &#039;l&#039;,<br>
+&#039;R&#039;     =&gt; &#039;r&#039;,</p>
+<p>The class doesn&#039;t care how you call the left part of the array. It only cares about the right part which is used to alias the internal used names for the fields to the fields in your table.</p>
+<p>-- <br>
+Daniel Khan</p>
+</section>
+<section>
+<h3>[2004-04-16 18:13 UTC] priit at e-positive dot ee</h3>
+<p>Sure I can use uppercase in $param, but it&#039;s correct to <br>
+change them in original NestedSet - because quoting is <br>
+(as I know now:-) ) always case-sensitive. Currently <br>
+NestedSet will not work with any correct SQL engine <br>
+supporting quoted identifiers.</p>
+<p>MySQL does not convert unquoted names and that is <br>
+incompatible with the SQL standard, which says that <br>
+unquoted  names should be folded to upper case. <br>
+PostreSQL seems to convert unquoted to lower case, which <br>
+is also incompatible...</p>
+</section>
+<section>
+<h3>[2005-10-25 22:14 UTC] datenpunk at php dot net</h3>
+<p>Well - the whole quoting thing is quite complicated and handled differently by different rdbms. I will close this for now as there haven&#039;t been any more complaints about this.<br>
+I will rethink the whole thing for new major releases.</p>
+<p>Thanks for your report</p>
+<p>-- <br>
+Daniel Khan</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

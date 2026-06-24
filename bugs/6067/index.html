@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6067</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a> &#187; Bug #6067</h1>
+<p>Warnings are thrown if using a cell format</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-25 10:46 UTC</td></tr>
+<tr><th>From</th><td>shadowlord at hltools dot com</td></tr>
+<tr><th>Status</th><td>Duplicate</td></tr>
+<tr><th>Package</th><td><a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.0</td></tr>
+<tr><th>OS</th><td>Any</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-25 10:46 UTC] shadowlord at hltools dot com</h3>
+<p>Description:<br>
+------------<br>
+PEAR version: 1.4.5<br>
+Spreadsheet_Excel_Writer version 0.9.0<br>
+Standard PHP 5.1.0 release (Windows binaries, zip file)<br>
+php.ini tuned for maximum error reporting.</p>
+<p>The problem:<br>
+A warning message is generated when writing to a cell with a format variable using the write() or writeBlank() functions. This is because the variable is a object, but internally it is compared against an integer (0) to see if a format was passed. This should be replaced with the is_object() function (or similar).<br>
+The warnings corrupt the outputted Excel file</p>
+<p>Note:<br>
+I have not extensivly tested for all occurences of this bug. There could be (and probably are) more instances of it.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?PHP<br>
+	// Set up<br>
+	error_reporting(E_ALL); // All errors except strict<br>
+	require_once(&quot;Spreadsheet/Excel/Writer.php&quot;); // Load excel file creator<br>
+	$workbook = new Spreadsheet_Excel_Writer();<br>
+	$workbook-&gt;send(&quot;Errors demonstration.xls&quot;);<br>
+	$worksheet =&amp; $workbook-&gt;addWorksheet(&#039;Demo worksheet&#039;);<br>
+	<br>
+	// Create demonstration format<br>
+	$format =&amp; $workbook-&gt;addFormat();<br>
+	$format-&gt;setBold();<br>
+	<br>
+	// Error on writing cell<br>
+	$worksheet-&gt;write(0, 0, &quot;Test&quot;, $format);<br>
+	<br>
+	// Error on writing blank cell<br>
+	$worksheet-&gt;writeBlank(0, 1, $format);<br>
+	<br>
+	// Output file<br>
+	$workbook-&gt;close();<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+An Excel file containing:<br>
+Cell A1 - The word &#039;Test&#039; in bold<br>
+Cell B1 - Blank and set to bold</p>
+<p>Actual result:<br>
+--------------<br>
+An Excel file containing:</p>
+<p>Notice: Object of class Spreadsheet_Excel_Writer_Format could not be converted to int in C:\PHP\PEAR\Spreadsheet\Excel\Writer\Worksheet.php on line 1233</p>
+<p>Notice: Object of class Spreadsheet_Excel_Writer_Format could not be converted to int in C:\PHP\PEAR\Spreadsheet\Excel\Writer\Worksheet.php on line 1686</p>
+<p>Notice: Object of class Spreadsheet_Excel_Writer_Format could not be converted to int in C:\PHP\PEAR\Spreadsheet\Excel\Writer\Worksheet.php on line 1233<br>
+&lt;BINARY CODE - presumably the completed (but now corrupt) Excel file&gt;</p>
+</section>
+<section>
+<h3>[2006-03-09 13:19 UTC] andrea dot busia at axis-sv dot it</h3>
+<p>with the following small changes i&#039;m not receiving noticies.</p>
+<p>Andrea Busia</p>
+<p>diff:<br>
+-----------------------<br>
+(&lt;)Worksheet_old.php (112151 byte)<br>
+(&gt;)Worksheet.php (112180 byte)</p>
+<p>1233c1233<br>
+&lt;         if ($format != 0) {<br>
+---<br>
+&gt;         if (is_object($format)) {<br>
+1686c1686<br>
+&lt;         if ($format == 0) {<br>
+---<br>
+&gt;         if (is_numeric($format) &amp;&amp; $format == 0) {</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

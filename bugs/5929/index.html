@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5929</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #5929</h1>
+<p>Pass CURL parameters to WSDL</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5929</th><td>Pass CURL parameters to WSDL</td></tr>
+<tr><th>Submitted</th><td>2005-11-10 19:06 UTC</td></tr>
+<tr><th>From</th><td>martin at malditainternet dot com</td></tr>
+<tr><th>Assigned</th><td>yunosh</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.0</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-10 19:06 UTC] martin at malditainternet dot com</h3>
+<p>Description:<br>
+------------<br>
+After adding CURL support in WSDL fetching, I needed to set some CURL options, so I used the $proxyOptions parameter in the WSDL constructor.</p>
+<p>Depends on patch in bug 5815</p>
+<p>Test script:<br>
+---------------<br>
+--- /tmp/SOAP-0.9.1/WSDL.php	2005-11-10 15:49:22.000000000 -0300<br>
++++ SOAP/WSDL.php	2005-11-10 15:49:25.000000000 -0300<br>
+@@ -911,6 +911,11 @@<br>
+                 $ch=curl_init();<br>
+                 curl_setopt($ch, CURLOPT_URL,				$wsdl_fname);<br>
+                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 	true);<br>
++				if (isset($proxy_params[&#039;curl&#039;]) &amp;&amp; is_array($proxy_params[&#039;curl&#039;])){<br>
++					foreach($proxy_params[&#039;curl&#039;] as $opc=&gt;$value){<br>
++                		curl_setopt($ch, $opc, $value);<br>
++					}<br>
++				}<br>
+                 $file_data=curl_exec($ch);<br>
+                 if (!$file_data) {<br>
+                     return $this-&gt;_raiseSoapFault(&quot;Unable to retrieve WSDL $wsdl_fname, no http body&quot;, $wsdl_fname);</p>
+<p>--- /tmp/SOAP-0.9.1/Client.php	2005-11-10 15:49:10.000000000 -0300<br>
++++ SOAP/Client.php	2005-11-10 15:51:00.000000000 -0300<br>
+@@ -181,7 +181,7 @@<br>
+      * @param boolean $wsdl        Whether the endpoint is a WSDL file.<br>
+      * @param string $portName<br>
+      * @param array $proxy_params  Options for the HTTP_Request class (see<br>
+-     *                             HTTP/Request.php)<br>
++     *                             HTTP/Request.php) or CURL<br>
+      */<br>
+     function SOAP_Client($endpoint, $wsdl = false, $portName = false,<br>
+                          $proxy_params = array())<br>
+@@ -208,6 +208,14 @@<br>
+                 $this-&gt;_raiseSoapFault($this-&gt;_wsdl-&gt;fault);<br>
+             }<br>
+         }<br>
++		/**<br>
++		 *  CURL parameters get screwed by array_merge_recursive (some lines ahead in function call) because the constants values are integers and get incremented when merged with another curl parameters array (from $options in &amp;call()), so we&#039;ll leave them available just for the WSDL class. <br>
++		 *	If you need to set CURL parameters for the soap client, set them on the Call function or use<br>
++		 *  setOpt()<br>
++		 */<br>
++		if (isset($this-&gt;__proxy_params[&#039;curl&#039;])){ <br>
++			unset($this-&gt;__proxy_params[&#039;curl&#039;]);<br>
++		}<br>
+     }<br>
+ <br>
+     function _reset()</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

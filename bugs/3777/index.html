@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3777</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/XML_RPC/index.html">XML_RPC</a> &#187; Bug #3777</h1>
+<p>HTTPS Support Broken on Windows</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-03-11 16:04 UTC</td></tr>
+<tr><th>From</th><td>dweingart at pobox dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/XML_RPC/index.html">XML_RPC</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-11 16:04 UTC] dweingart at pobox dot com</h3>
+<p>Description:<br>
+------------<br>
+XML_RPC_Client::sendPayloadHTTP10() relies on fsockopen to perform HTTP and HTTPS requests. fsockopen on the Windows platform does not support the SSL transport.</p>
+<p>See: http://marc.theaimsgroup.com/?l=php-windows&amp;m=108323973910989&amp;w=2</p>
+<p>The documentation refers to curl when discussing HTTPS/SSL support. Apparently at some point curl was removed. I would suggest going back to curl since its SSL support works quite well in my experience.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+$client = new XML_RPC_Client(&#039;/RPC&#039;, &#039;www.example.com&#039;);<br>
+$client-&gt;send ($xmlrpc_message, 30, &#039;https&#039;);<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+An XML_RPC_Response object</p>
+<p>Actual result:<br>
+--------------<br>
+Warning: fsockopen(): no SSL support in this build</p>
+</section>
+<section>
+<h3>[2005-03-13 20:04 UTC] dweingart at pobox dot com</h3>
+<p>&gt; Looking in the CVS repository indicates curl <br>
+&gt; was ever used in the package.</p>
+<p>I assume you meant &quot;never used in the package&quot;. The documentation for XML_RPC_Client states &quot;This requires the &quot;curl&quot; extensions to be compiled into your installation of PHP&quot; for setCertificate().</p>
+<p>I believe that the Usefulinc package from which this package is derived used curl functions for SSL support. curl support is widespread now in my experience, but that wasn&#039;t always the case.</p>
+<p>I have sent you a test url in private email as requested.</p>
+</section>
+<section>
+<h3>[2005-03-15 14:51 UTC] dweingart at pobox dot com</h3>
+<p>&gt; Getting openssl working right is really a system <br>
+&gt; configuration and/or PHP issue.</p>
+<p>It is a PHP issue, but one that can&#039;t be worked around in PHP 4 on Windows unless you use curl for the HTTP transport (or replace php4ts.dll as described in the message below):</p>
+<p>http://marc.theaimsgroup.com/?l=php-windows&amp;m=108323973910989&amp;w=2</p>
+<p>I guess strictly speaking this is more of a documentation bug. It would probably save people some time if you mentioned that HTTPS doesn&#039;t work on PHP 4/Win32.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

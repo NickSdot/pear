@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8392</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #8392</h1>
+<p>Handle sorting for multiple tables/page</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-08-08 21:45 UTC</td></tr>
+<tr><th>From</th><td>chris dot stone at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>wiesemann</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-08 21:45 UTC] chris dot stone at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Sorting does not work properly if you render multiple tables with different table column names on the same page.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php</p>
+<p>require &#039;Structures/DataGrid.php&#039;;</p>
+<p>$d1 = new Structures_DataGrid;<br>
+$d2 = new Structures_DataGrid;</p>
+<p>$d1-&gt;bind(&#039;SELECT * FROM table1&#039;, array(&#039;dsn&#039; =&gt; MY_DSN));<br>
+$d2-&gt;bind(&#039;SELECT * FROM table2&#039;, array(&#039;dsn&#039; =&gt; MY_DSN));</p>
+<p>$d1-&gt;render();                                                                   $d2-&gt;render();              <br>
+                                                                                                                                      ?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Rendering a table with an orderBy GET parameter that does not match any column names in a table should cause the table to be rendered with its default (or most recent) sorting order.</p>
+<p>Actual result:<br>
+--------------<br>
+Rendering a table with an orderBy GET parameter that does not match any column namess in a table causes the table to not be rendered at all.</p>
+</section>
+<section>
+<h3>[2006-08-08 21:47 UTC] chris dot stone at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Sorting does not work properly if you render multiple tables with different table column names on the same page.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php</p>
+<p>require &#039;Structures/DataGrid.php&#039;;</p>
+<p>$d1 = new Structures_DataGrid;<br>
+$d2 = new Structures_DataGrid;</p>
+<p>$d1-&gt;bind(&#039;SELECT * FROM table1&#039;, array(&#039;dsn&#039; =&gt; MY_DSN));<br>
+$d2-&gt;bind(&#039;SELECT * FROM table2&#039;, array(&#039;dsn&#039; =&gt; MY_DSN));</p>
+<p>$d1-&gt;render();                                    <br>
+$d2-&gt;render();<br>
+                                                                      <br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Rendering a table with an orderBy GET parameter that does not match any column names in a table should cause the table to be rendered with its default (or most recent) sorting order.</p>
+<p>Actual result:<br>
+--------------<br>
+Rendering a table with an orderBy GET parameter that does not match any column namess in a table causes the table to not be rendered at all.</p>
+</section>
+<section>
+<h3>[2006-08-09 10:18 UTC] olivierg at php dot net</h3>
+<p>There is a method for this sort of issue: setRequestPrefix()<br>
+Do you know about it?</p>
+<p>As you propose, we could try to detect if the orderBy argument contain known columns or not. However, in your example, that would oblige us to perform an additional SQL query. That&#039;s too heavy.</p>
+</section>
+<section>
+<h3>[2006-08-09 19:17 UTC] chris dot stone at gmail dot com</h3>
+<p>I didn&#039;t see the setRequestPrefix() method.  Perhaps a quick example in the docs on how to handle multiple tables on the same page would be helpful.</p>
+<p>This method should be enough to satisfy my problem, so this bug can be closed.  Thanks for the info.</p>
+</section>
+<section>
+<h3>[2006-08-09 19:59 UTC] chris dot stone at gmail dot com</h3>
+<p>I have updated my sample code to the following, but now the sorting links do not work.  Is there some extra processing I need to do?</p>
+<p>&lt;?php</p>
+<p>require &#039;Structures/DataGrid.php&#039;;</p>
+<p>$d1 = new Structures_DataGrid;<br>
+$d2 = new Structures_DataGrid;</p>
+<p>$d1-&gt;bind(&#039;SELECT * FROM trade&#039;, array(&#039;dsn&#039; =&gt; MY_DSN));<br>
+$d2-&gt;bind(&#039;SELECT * FROM stock&#039;, array(&#039;dsn&#039; =&gt; MY_DSN));</p>
+<p>$d1-&gt;setRequestPrefix(&#039;trade_&#039;);<br>
+$d2-&gt;setRequestPrefix(&#039;stock_&#039;);</p>
+<p>$d1-&gt;render();<br>
+$d2-&gt;render();</p>
+<p>?&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

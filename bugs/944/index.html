@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #944</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a> &#187; Bug #944</h1>
+<p>repeatRow() doesn&#039;t work with IE(!) as a client</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-04 06:52 UTC</td></tr>
+<tr><th>From</th><td>jan dot luebke at gmx dot de</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.0</td></tr>
+<tr><th>OS</th><td>SuSE 8.2/ Client: Win XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-04 06:52 UTC] jan dot luebke at gmx dot de</h3>
+<p>Description:<br>
+------------<br>
+When directly opening the Excel-File with Microsoft Internet Explorer (6.0), the repeatRows()-Function doesn&#039;t work.</p>
+<p>If you choose to save the file do disk and then open it, the repeatRows get repeatet.</p>
+<p>BUT: If you use Mozilla (1.6), it doesn&#039;t matter if you choose to open or save it (I use the Download-Manager).</p>
+<p>I don&#039;t have a clue how this happens, but it seems like a client-side problem.</p>
+<p>If you want to test it yourself, just run the following code:</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+require_once &#039;Spreadsheet/Excel/Writer.php&#039;;<br>
+$workbook = new Spreadsheet_Excel_Writer();<br>
+$worksheet =&amp; $workbook-&gt;addWorksheet(&#039;Sheet1&#039;);<br>
+$workbook-&gt;send(&#039;test.xls&#039;);</p>
+<p>$worksheet-&gt;write(0, 0, &#039;first Row (should appear on every page&#039;);<br>
+$worksheet-&gt;repeatRows(0,0);  // &lt;- Doesn&#039;t work<br>
+// Fill some pages<br>
+for ($i=3; $i &lt; 100; $i=$i+3) {<br>
+    $worksheet-&gt;write($i, 0, &#039;somedumbtext&#039;);<br>
+}</p>
+<p>$workbook-&gt;close();<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+The row should get repeated no matter if I choose to open or save the file.</p>
+<p>Actual result:<br>
+--------------<br>
+The row doesn&#039;t get repeatet if I choose to open.</p>
+<p>Hope this description helps. I haven&#039;t checked, but this bug might be related to the bug #581 (RepeatColumns).</p>
+</section>
+<section>
+<h3>[2004-06-04 14:17 UTC] scottfishr at aol dot com</h3>
+<p>For what we us this program for this is the only bug that really needs to be fixed. Has anyone come up with any sort of work around for this?</p>
+<p>I am using IE6 and get the same exact results as the original submission.</p>
+</section>
+<section>
+<h3>[2004-06-23 14:29 UTC] jan at traum-projekt dot com</h3>
+<p>Microsoft Excel XP has a problem with files named filename[1].xls - every file that is direktly opended by IE out of its cache is renamed in this style and get excel mixed up.</p>
+<p>So... it seems to be an excel-problem not Spreadsheet_Excel_Writer. Try it by renaming a local file to bla[1].xls and open it...</p>
+<p>btw: the behavior has some more effects:<br>
+- You can&#039;t set panes with Spreadsheet_Excel_Writer<br>
+- you can&#039;t rename the worksheet<br>
+...and so on</p>
+<p>I hope that helps!</p>
+<p>Jan</p>
+</section>
+<section>
+<h3>[2004-09-30 20:31 UTC] casep at tuxpan dot com</h3>
+<p>Ok, but if you directly from Excel create a file with name dummy[1].xls it does not happens. Or even if you create a file dummy.xls and then rename it to dummy[1].xls.<br>
+But, if you save the PEAR generated file as report.xls it&#039;s ok, but after remame it to report[1].xls there is no repeated rows :-(</p>
+</section>
+<section>
+<h3>[2004-11-09 13:58 UTC] todoit at rambler dot ru</h3>
+<p>I have the same problem, but i don&#039;t use this function. Just if open file directli form IE - my xls dosnt work. If i save file (never mind which name i call it) it&#039;s opened ok. There is a problem and how fix it?</p>
+</section>
+<section>
+<h3>[2004-11-29 14:54 UTC] linux at mbaierl dot com</h3>
+<p>Any update until now? This bug is open since March...</p>
+</section>
+<section>
+<h3>[2005-03-03 19:30 UTC] spowers at gotoami dot com</h3>
+<p>I cant seem to get this to work at all. I&#039;ve tried firefox 1.0 and IE 6.0.</p>
+<p>None of the work arounds posted here seem to work for me, and even if they did arent practical for my application.</p>
+<p>This bug (and the repeat cols bug) should def be top priority.</p>
+</section>
+<section>
+<h3>[2005-04-26 13:42 UTC] wongmanii at hotmail dot com</h3>
+<p>Hi,</p>
+<p>Is there really no way to use this Spreadsheet_Excel_Writer with an already existing file???</p>
+<p>Couldn&#039;t we change something in the source code to make that feasible? It does not seem so difficult...</p>
+<p>What do you think?</p>
+</section>
+<section>
+<h3>[2006-03-20 17:08 UTC] chris at nospam dot crystalfusion dot com</h3>
+<p>I find the same issue with Internet Explorer 7 Beta 1.  This is a big issue since it is one of the reasons I used Excel instead of trying to format HTML or a PDF.</p>
+</section>
+<section>
+<h3>[2006-06-08 18:10 UTC] somekindofemail at anemailaddress dot com</h3>
+<p>I&#039;ve got the same problem (repeatRows doesn&#039;t work) when <br>
+sending the spreadsheet as an attachment in an email.  When I <br>
+receive and open the email from entourage, the rows do not <br>
+repeat, but when I receive and open the same email with mail <br>
+(mac), the rows do repeat.  What is up with this?</p>
+</section>
+<section>
+<h3>[2007-01-16 16:20 UTC] alessandro at acqualba dot it</h3>
+<p>I can confirm this behaviour<br>
+ <br>
+direct excel opening from MSIE 6 : no repeat<br>
+download + save to disk + open : repeat ok</p>
+<p>BTW it seems an excel-related problem.</p>
+<p>I will test the effect of sending different headers, will report positive results here (if any).</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

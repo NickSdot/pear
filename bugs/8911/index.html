@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8911</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_Session/index.html">HTTP_Session</a> &#187; Bug #8911</h1>
+<p>Add the possibilty to change the session id after destroy of old one.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8911</th><td>Add the possibilty to change the session id after destroy of old one.</td></tr>
+<tr><th>Submitted</th><td>2006-10-08 14:12 UTC</td></tr>
+<tr><th>From</th><td>simon at ruderich dot com</td></tr>
+<tr><th>Assigned</th><td>troehr</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_Session/index.html">HTTP_Session</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Mac OS X 10.4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-10-08 14:12 UTC] simon at ruderich dot com</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m trying to destroy the current session id (and data) and create a new one with <br>
+new data in the same script. I&#039;m doing this to prevent session injections, because <br>
+the attacker could select the session id which I want to prevent.<br>
+So I need a possibility to change the session id after I destroyed the old one <br>
+when I create a new one within the same script.<br>
+I looked in the sources of HTTP/Session.php and came up with a small addition <br>
+which would add the possibility to HTTP_Session::start() to change the session id <br>
+if it&#039;s requested.</p>
+<p>I added an example script which uses my small addition and shows the difference <br>
+between the &quot;old&quot; and &quot;new&quot; behavior.</p>
+<p>--- Session.php (0.5.3b)	2006-10-08 15:57:47.000000000 +0200<br>
++++ Session.php (my change)	2006-10-08 15:59:17.000000000 +0200<br>
+@@ -140,15 +140,18 @@<br>
+      * @param  $name  string Name of a session, default is &#039;SessionID&#039;<br>
+      * @param  $id    string Id of a session which will be used<br>
+      *                       only when the session is new<br>
++     * @param $changeSID boolean change the session id to a new on, if $id is<br>
++     *                   specified this one is used, otherwise it is randomly<br>
++     *                   generated<br>
+      * @return void<br>
+      * @see    session_name()<br>
+      * @see    session_id()<br>
+      * @see    session_start()<br>
+      */<br>
+-    function start($name = &#039;SessionID&#039;, $id = null)<br>
++    function start($name = &#039;SessionID&#039;, $id = null, $changeSID = false)<br>
+     {<br>
+         HTTP_Session::name($name);<br>
+-        if (is_null(HTTP_Session::detectID())) {<br>
++        if (is_null(HTTP_Session::detectID()) or $changeSID) {<br>
+             HTTP_Session::id($id ? $id : uniqid(dechex(rand())));<br>
+         }<br>
+         session_start();</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+	require_once &#039;HTTP/Session.php&#039;;<br>
+	<br>
+	<br>
+	HTTP_Session::useCookies( true );<br>
+	HTTP_Session::start( &#039;mysession&#039; );<br>
+	<br>
+	echo &#039;session_id: &#039;, HTTP_Session::id(), &#039;&lt;br&gt;&#039;, &quot;\n&quot;;<br>
+	<br>
+	HTTP_SESSION::destroy();<br>
+	<br>
+	# &quot;old&quot; version (result in &quot;Actual result&quot;):<br>
+	HTTP_Session::useCookies( true );<br>
+	# &quot;new&quot; version (result in &quot;Expected result&quot;):<br>
+	HTTP_Session::useCookies( true, null, true ); # generate a new session id<br>
+	<br>
+	HTTP_SESSION::start( &#039;mysession&#039; );<br>
+	<br>
+	echo &#039;session_id: &#039;, HTTP_Session::id(), &#039;&lt;br&gt;&#039;, &quot;\n&quot;;<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+&quot;new&quot; result (just an example):</p>
+<p>session_id: 393f53b54529057b1aca2<br>
+session_id: 5e836a0f4529057f9b068</p>
+<p>Actual result:<br>
+--------------<br>
+&quot;old&quot; result (just an example):</p>
+<p>session_id: 14822e9845290214b48cf<br>
+session_id: 14822e9845290214b48cf</p>
+</section>
+<section>
+<h3>[2006-10-12 17:09 UTC] simon at ruderich dot com</h3>
+<p>But the problem with this solution is that I have to create the session id by <br>
+myself. I would be much better if I could delegate this task to HTTP_Session. If <br>
+the creation of the session id will ever change I would have to change all my own <br>
+session ids to match the creation; for example a new security advice to make the <br>
+sessions unique. This is an overhead.<br>
+I know how session_regenerate_id() works so it would be nice if HTTP_Session would <br>
+replicate this function. The best way would to achieve this would be to add a new <br>
+function: HTTP_SESSION::regenerate().<br>
+Thanks in advance,<br>
+Simon</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

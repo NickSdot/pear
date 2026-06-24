@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4035</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/SQL_Parser/index.html">SQL_Parser</a> &#187; Bug #4035</h1>
+<p>Update statements should recognize FROM clause</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-04-03 04:42 UTC</td></tr>
+<tr><th>From</th><td>epte at ruffdogs dot com</td></tr>
+<tr><th>Assigned</th><td>cybot</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SQL_Parser/index.html">SQL_Parser</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>0.5.1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-03 04:42 UTC] epte at ruffdogs dot com</h3>
+<p>Description:<br>
+------------<br>
+Some valid UPDATE statements have from clauses to set the table (or join) that the source data is coming from (that you&#039;re using to populate whatever it is that you&#039;re updating).</p>
+<p>(Should it error if the FROM clause isn&#039;t used?  Assuming no...)</p>
+<p>Reproduce code:<br>
+---------------<br>
+UPDATE tblTicklerPatientData<br>
+  SET tblTicklerPatientData.final_diagnosis = ptc.path_diagnosis_codes<br>
+FROM<br>
+  tblTicklerPatientData<br>
+    INNER JOIN `PatientTest(Case)` as ptc<br>
+      ON tblTicklerPatientData.PatientTest_key = ptc.PatientTest_key<br>
+WHERE<br>
+  ptc.path_diagnosis_codes Is Not Null<br>
+    and tblTicklerPatientData.final_diagnosis is null&#039;;<br>
+$_SQLParser = new SQL_Parser(NULL, &#039;MySQL&#039;);<br>
+$parseRes = $_SQLParser-&gt;parse($sql);</p>
+<p>Actual result:<br>
+--------------<br>
+Parse error: Expected &quot;where&quot; or &quot;,&quot; on line 4<br>
+FROM<br>
+^ found: &quot;FROM&quot;</p>
+</section>
+<section>
+<h3>[2005-04-03 05:00 UTC] epte at ruffdogs dot com</h3>
+<p>The following patch seems to fix this portion, but it is hard to tell until I get the other issues worked out of this query.  More to come.</p>
+<p>Index: Parser.php<br>
+===================================================================<br>
+RCS file: /repository/pear/SQL_Parser/Parser.php,v<br>
+retrieving revision 1.27<br>
+diff -u -r1.27 Parser.php<br>
+--- Parser.php  3 Jul 2004 04:49:44 -0000       1.27<br>
++++ Parser.php  3 Apr 2005 04:59:20 -0000<br>
+@@ -143,6 +143,7 @@<br>
+     // {{{ isVal()<br>
+     function isVal() {<br>
+        return (($this-&gt;token == &#039;real_val&#039;) ||<br>
++               ($this-&gt;token == &#039;function&#039;) ||<br>
+                ($this-&gt;token == &#039;int_val&#039;) ||<br>
+                ($this-&gt;token == &#039;text_val&#039;) ||<br>
+                ($this-&gt;token == &#039;null&#039;));<br>
+@@ -766,12 +767,25 @@<br>
+                 return $this-&gt;raiseError(&#039;Expected =&#039;);<br>
+             }<br>
+             $this-&gt;getTok();<br>
+-            if (!$this-&gt;isVal($this-&gt;token)) {<br>
+-                return $this-&gt;raiseError(&#039;Expected a value&#039;);<br>
++            if (!$this-&gt;isVal($this-&gt;token) &amp;&amp; $this-&gt;token != &#039;ident&#039;) {<br>
++                return $this-&gt;raiseError(&#039;Expected a value or column name&#039;);<br>
+             }<br>
+             $tree[&#039;values&#039;][] = array(&#039;value&#039;=&gt;$this-&gt;lexer-&gt;tokText,<br>
+                                       &#039;type&#039;=&gt;$this-&gt;token);<br>
+             $this-&gt;getTok();<br>
++            if ($this-&gt;token == &#039;,&#039;) {<br>
++                continue;<br>
++            }<br>
++<br>
++            if ($this-&gt;token == &#039;from&#039;) {<br>
++                $clause = $this-&gt;parseFromClause();<br>
++                if (PEAR::isError($clause)) {<br>
++                    return $clause;<br>
++                }<br>
++                $tree = array_merge($tree, $clause);<br>
++                $this-&gt;getTok();<br>
++            }<br>
++<br>
+             if ($this-&gt;token == &#039;where&#039;) {<br>
+                 $clause = $this-&gt;parseSearchClause();<br>
+                 if (PEAR::isError($clause)) {<br>
+@@ -780,7 +794,7 @@<br>
+                 $tree[&#039;where_clause&#039;] = $clause;<br>
+                 break;<br>
+             } elseif ($this-&gt;token != &#039;,&#039;) {<br>
+-                return $this-&gt;raiseError(&#039;Expected &quot;where&quot; or &quot;,&quot;&#039;);<br>
++                return $this-&gt;raiseError(&#039;Expected &quot;where&quot;&#039;);<br>
+             }<br>
+         }<br>
+         return $tree;<br>
+@@ -936,10 +950,97 @@<br>
+         } else {<br>
+             return $this-&gt;raiseError(&#039;Expected columns or a set function&#039;);<br>
+         }<br>
+-        if ($this-&gt;token != &#039;from&#039;) {<br>
++        if ($this-&gt;token == &#039;from&#039;) {<br>
++            $clause = $this-&gt;parseFromClause();<br>
++            if (PEAR::isError($clause)) {<br>
++                return $clause;<br>
++            }<br>
++            $tree = array_merge($tree, $clause);<br>
++            $this-&gt;getTok();<br>
++        } else {<br>
+             return $this-&gt;raiseError(&#039;Expected &quot;from&quot;&#039;);<br>
+         }<br>
++        while (!is_null($this-&gt;token) &amp;&amp; (!$subSelect || $this-&gt;token != &#039;)&#039;)<br>
++               &amp;&amp; $this-&gt;token != &#039;)&#039;) {<br>
++            switch ($this-&gt;token) {<br>
++                case &#039;where&#039;:<br>
++                    $clause = $this-&gt;parseSearchClause();<br>
++                    if (PEAR::isError($clause)) {<br>
++                        return $clause;<br>
++                    }<br>
++                    $tree[&#039;where_clause&#039;] = $clause;<br>
++                    break;<br>
++                case &#039;order&#039;:<br>
++                    $this-&gt;getTok();<br>
++                    if ($this-&gt;token != &#039;by&#039;) {<br>
++                        return $this-&gt;raiseError(&#039;Expected &quot;by&quot;&#039;);<br>
++                    }<br>
++                    $this-&gt;getTok();<br>
++                    while ($this-&gt;token == &#039;ident&#039;) {<br>
++                        $col = $this-&gt;lexer-&gt;tokText;<br>
++                        $this-&gt;getTok();<br>
++                        if (isset($this-&gt;synonyms[$this-&gt;token])) {<br>
++                            $order = $this-&gt;synonyms[$this-&gt;token];<br>
++                            if (($order != &#039;asc&#039;) &amp;&amp; ($order != &#039;desc&#039;)) {<br>
++                                return $this-&gt;raiseError(&#039;Unexpected token&#039;);<br>
++                            }<br>
++                            $this-&gt;getTok();<br>
++                        } else {<br>
++                            $order = &#039;asc&#039;;<br>
++                        }<br>
++                        if ($this-&gt;token == &#039;,&#039;) {<br>
++                            $this-&gt;getTok();<br>
++                        }<br>
++                        $tree[&#039;sort_order&#039;][$col] = $order;<br>
++                    }<br>
++                    break;<br>
++                case &#039;limit&#039;:<br>
++                    $this-&gt;getTok();<br>
++                    if ($this-&gt;token != &#039;int_val&#039;) {<br>
++                        return $this-&gt;raiseError(&#039;Expected an integer value&#039;);<br>
++                    }<br>
++                    $length = $this-&gt;lexer-&gt;tokText;<br>
++                    $start = 0;<br>
++                    $this-&gt;getTok();<br>
++                    if ($this-&gt;token == &#039;,&#039;) {<br>
++                        $this-&gt;getTok();<br>
++                        if ($this-&gt;token != &#039;int_val&#039;) {<br>
++                            return $this-&gt;raiseError(&#039;Expected an integer value&#039;);<br>
++                        }<br>
++                        $start = $length;<br>
++                        $length = $this-&gt;lexer-&gt;tokText;<br>
++                        $this-&gt;getTok();<br>
++                    }<br>
++                    $tree[&#039;limit_clause&#039;] = array(&#039;start&#039;=&gt;$start,<br>
++                                                  &#039;length&#039;=&gt;$length);<br>
++                    break;<br>
++                case &#039;group&#039;:<br>
++                    $this-&gt;getTok();<br>
++                    if ($this-&gt;token != &#039;by&#039;) {<br>
++                        return $this-&gt;raiseError(&#039;Expected &quot;by&quot;&#039;);<br>
++                    }<br>
++                    $this-&gt;getTok();<br>
++                    while ($this-&gt;token == &#039;ident&#039;) {<br>
++                        $col = $this-&gt;lexer-&gt;tokText;<br>
++                        $this-&gt;getTok();<br>
++                        if ($this-&gt;token == &#039;,&#039;) {<br>
++                            $this-&gt;getTok();<br>
++                        }<br>
++                        $tree[&#039;group_by&#039;][] = $col;<br>
++                    }<br>
++                    break;<br>
++                default:<br>
++                    return $this-&gt;raiseError(&#039;Unexpected clause&#039;);<br>
++            }<br>
++        }<br>
++        return $tree;<br>
++    }<br>
++    // }}}<br>
++<br>
++    // {{{ parseFromClause()<br>
++    function parseFromClause() {<br>
+         $this-&gt;getTok();<br>
++        $tree = array();<br>
+         while ($this-&gt;token == &#039;ident&#039;) {<br>
+             $tree[&#039;table_names&#039;][] = $this-&gt;lexer-&gt;tokText;<br>
+             $this-&gt;getTok();<br>
+@@ -1032,83 +1133,9 @@<br>
+                 break;<br>
+             }<br>
+         }<br>
+-        while (!is_null($this-&gt;token) &amp;&amp; (!$subSelect || $this-&gt;token != &#039;)&#039;)<br>
+-               &amp;&amp; $this-&gt;token != &#039;)&#039;) {<br>
+-            switch ($this-&gt;token) {<br>
+-                case &#039;where&#039;:<br>
+-                    $clause = $this-&gt;parseSearchClause();<br>
+-                    if (PEAR::isError($clause)) {<br>
+-                        return $clause;<br>
+-                    }<br>
+-                    $tree[&#039;where_clause&#039;] = $clause;<br>
+-                    break;<br>
+-                case &#039;order&#039;:<br>
+-                    $this-&gt;getTok();<br>
+-                    if ($this-&gt;token != &#039;by&#039;) {<br>
+-                        return $this-&gt;raiseError(&#039;Expected &quot;by&quot;&#039;);<br>
+-                    }<br>
+-                    $this-&gt;getTok();<br>
+-                    while ($this-&gt;token == &#039;ident&#039;) {<br>
+-                        $col = $this-&gt;lexer-&gt;tokText;<br>
+-                        $this-&gt;getTok();<br>
+-                        if (isset($this-&gt;synonyms[$this-&gt;token])) {<br>
+-                            $order = $this-&gt;synonyms[$this-&gt;token];<br>
+-                            if (($order != &#039;asc&#039;) &amp;&amp; ($order != &#039;desc&#039;)) {<br>
+-                                return $this-&gt;raiseError(&#039;Unexpected token&#039;);<br>
+-                            }<br>
+-                            $this-&gt;getTok();<br>
+-                        } else {<br>
+-                            $order = &#039;asc&#039;;<br>
+-                        }<br>
+-                        if ($this-&gt;token == &#039;,&#039;) {<br>
+-                            $this-&gt;getTok();<br>
+-                        }<br>
+-                        $tree[&#039;sort_order&#039;][$col] = $order;<br>
+-                    }<br>
+-                    break;<br>
+-                case &#039;limit&#039;:<br>
+-                    $this-&gt;getTok();<br>
+-                    if ($this-&gt;token != &#039;int_val&#039;) {<br>
+-                        return $this-&gt;raiseError(&#039;Expected an integer value&#039;);<br>
+-                    }<br>
+-                    $length = $this-&gt;lexer-&gt;tokText;<br>
+-                    $start = 0;<br>
+-                    $this-&gt;getTok();<br>
+-                    if ($this-&gt;token == &#039;,&#039;) {<br>
+-                        $this-&gt;getTok();<br>
+-                        if ($this-&gt;token != &#039;int_val&#039;) {<br>
+-                            return $this-&gt;raiseError(&#039;Expected an integer value&#039;);<br>
+-                        }<br>
+-                        $start = $length;<br>
+-                        $length = $this-&gt;lexer-&gt;tokText;<br>
+-                        $this-&gt;getTok();<br>
+-                    }<br>
+-                    $tree[&#039;limit_clause&#039;] = array(&#039;start&#039;=&gt;$start,<br>
+-                                                  &#039;length&#039;=&gt;$length);<br>
+-                    break;<br>
+-                case &#039;group&#039;:<br>
+-                    $this-&gt;getTok();<br>
+-                    if ($this-&gt;token != &#039;by&#039;) {<br>
+-                        return $this-&gt;raiseError(&#039;Expected &quot;by&quot;&#039;);<br>
+-                    }<br>
+-                    $this-&gt;getTok();<br>
+-                    while ($this-&gt;token == &#039;ident&#039;) {<br>
+-                        $col = $this-&gt;lexer-&gt;tokText;<br>
+-                        $this-&gt;getTok();<br>
+-                        if ($this-&gt;token == &#039;,&#039;) {<br>
+-                            $this-&gt;getTok();<br>
+-                        }<br>
+-                        $tree[&#039;group_by&#039;][] = $col;<br>
+-                    }<br>
+-                    break;<br>
+-                default:<br>
+-                    return $this-&gt;raiseError(&#039;Unexpected clause&#039;);<br>
+-            }<br>
+-        }<br>
+         return $tree;<br>
+     }<br>
+-    // }}}<br>
+-<br>
++<br>
+     // {{{ parse($string)<br>
+     function parse($string = null)<br>
+     {</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

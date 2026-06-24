@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #575</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #575</h1>
+<p>no autoPrepare with NULL-Values</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-01-14 13:56 UTC</td></tr>
+<tr><th>From</th><td>andreas dot schneider at scriptwriter dot ch</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.1</td></tr>
+<tr><th>OS</th><td>Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-01-14 13:56 UTC] andreas dot schneider at scriptwriter dot ch</h3>
+<p>Description:<br>
+------------<br>
+Hi!<br>
+I Think there must be an error with the autoprepare. I&#039;m getting my parameters by an formular and there is also an select-field. if there are no options in, then no value is set for my parameter &quot;land&quot;. var_dump gives me NULL. But this NULL makes, that Query is not executed.</p>
+<p>Reproduce code:<br>
+---------------<br>
+  require_once &#039;DB.php&#039;;<br>
+  $dsn = &quot;mysql://$mysql_user:$mysql_pw@$mysql_host/$mysql_db&quot;;<br>
+  $table_fields = array(&#039;name&#039;,&#039;strasse&#039;, &#039;land&#039;,&#039;plz&#039;);<br>
+  $table_values = array($form-&gt;exportValue(&#039;name&#039;),$form-&gt;exportValue(&#039;strasse&#039;),$form-&gt;exportValue(&#039;land&#039;),$_REQUEST[&#039;plz&#039;]);<br>
+    $sth = $db-&gt;autoPrepare($table_name, $table_fields, DB_AUTOQUERY_UPDATE, &quot;id=gebaeude_id&quot;);</p>
+</section>
+<section>
+<h3>[2004-01-16 07:18 UTC] andreas dot schneider at scriptwriter dot ch</h3>
+<p>OK, sorry, but i will hope to give you all information, you will need. At first here the dump of the table from phpmyadmin. Next I will give you a script, so you don&#039;t have to know something about my system.</p>
+<p>Thank you for your help.<br>
+#################################################<br>
+# phpMyAdmin SQL Dump<br>
+# version 2.5.2-rc1<br>
+# http://www.phpmyadmin.net<br>
+#<br>
+# Host: localhost<br>
+# Erstellungszeit: 16. Januar 2004 um 08:21<br>
+# Server Version: 4.0.12<br>
+# PHP-Version: 4.3.1<br>
+# <br>
+# Datenbank: `erp`<br>
+#</p>
+<p># --------------------------------------------------------</p>
+<p>#<br>
+# Tabellenstruktur für Tabelle `rauv_gebaeude`<br>
+#<br>
+# Erzeugt am: 08. Januar 2004 um 18:22<br>
+# Aktualisiert am: 15. Januar 2004 um 14:50<br>
+#</p>
+<p>CREATE TABLE `rauv_gebaeude` (<br>
+  `id` int(11) NOT NULL auto_increment,<br>
+  `name` varchar(50) NOT NULL default &#039;&#039;,<br>
+  `strasse` varchar(50) NOT NULL default &#039;&#039;,<br>
+  `land` varchar(5) NOT NULL default &#039;&#039;,<br>
+  `plz` varchar(6) NOT NULL default &#039;&#039;,<br>
+  `ort` varchar(20) NOT NULL default &#039;&#039;,<br>
+  `unterste_etage` int(11) NOT NULL default &#039;0&#039;,<br>
+  `oberste_etage` int(11) NOT NULL default &#039;0&#039;,<br>
+  `bemerkung` text NOT NULL,<br>
+  PRIMARY KEY  (`id`)<br>
+) TYPE=MyISAM AUTO_INCREMENT=18 ;</p>
+</section>
+<section>
+<h3>[2004-01-16 07:43 UTC] andreas dot schneider at scriptwriter dot ch</h3>
+<p>At first here you get the script. in my config.inc.php only the access-dates for the mysql-database are set. that you can do for yours directly in the $dsn.</p>
+<p>&lt;?php<br>
+  require_once &#039;DB.php&#039;;<br>
+  include_once &quot;config.inc.php&quot;;//here only variables for the dsn are set (user/pwd)</p>
+<p>$dsn = &quot;mysql://$mysql_user:$mysql_pw@$mysql_host/$mysql_db&quot;;<br>
+  $db = DB::connect($dsn);<br>
+  if (DB::isError($db)) {<br>
+      die ($db-&gt;getMessage());<br>
+  }</p>
+<p>require_once &#039;DB.php&#039;;<br>
+  $dsn = &quot;mysql://$mysql_user:$mysql_pw@$mysql_host/$mysql_db&quot;;<br>
+  $table_fields = array(&#039;name&#039;,&#039;strasse&#039;, &#039;land&#039;,&#039;plz&#039;);<br>
+//  $table_values = array(&#039;testname&#039;,&#039;teststrasse&#039;,&#039;sss&#039;,&#039;testplz&#039;);<br>
+  $table_values = array(&#039;testname&#039;,&#039;teststrasse&#039;,$_REQUEST[&#039;fehler&#039;],&#039;testplz&#039;);</p>
+<p>var_dump($table_fields);<br>
+  var_dump($table_values);<br>
+  $table_name   = &#039;rauv_gebaeude&#039;;</p>
+<p>$sth = $db-&gt;autoPrepare($table_name, $table_fields, DB_AUTOQUERY_INSERT);<br>
+  $db-&gt;execute($sth, $table_values);<br>
+?&gt;</p>
+<p>Here is the output of the vardump, if nothing is given for the cgi-parameter land. it displays then NULL and the execute failed.</p>
+<p>array(4) {<br>
+  [0]=&gt;<br>
+  string(4) &quot;name&quot;<br>
+  [1]=&gt;<br>
+  string(7) &quot;strasse&quot;<br>
+  [2]=&gt;<br>
+  string(4) &quot;land&quot;<br>
+  [3]=&gt;<br>
+  string(3) &quot;plz&quot;<br>
+}<br>
+array(4) {<br>
+  [0]=&gt;<br>
+  string(8) &quot;testname&quot;<br>
+  [1]=&gt;<br>
+  string(11) &quot;teststrasse&quot;<br>
+  [2]=&gt;<br>
+  NULL<br>
+  [3]=&gt;<br>
+  string(7) &quot;testplz&quot;<br>
+}</p>
+<p>I hope, that you can reproduce the error with that informations and the former database-dump. Thanx for your help!</p>
+</section>
+<section>
+<h3>[2004-01-20 07:56 UTC] andreas dot schneider at scriptwriter dot ch</h3>
+<p>I&#039;M very sorry to took your time!</p>
+<p>I did a script with a testtable (you&#039;ll find bottom) with only 2 cols. And you opened my eyes, because I&#039;ve seen, that the problem is the NOT NULL in the col I wanted to fill.</p>
+<p>I hope, you can forgive me, but I learned something.</p>
+<p>Best regards, Andreas</p>
+<p>########### new testscript ################################</p>
+<p>&lt;?php<br>
+  require_once &#039;DB.php&#039;;<br>
+  //here only variables for the dsn are set (user/pwd)<br>
+  include_once &quot;config.inc.php&quot;;<br>
+  $dsn = &quot;mysql://$mysql_user:$mysql_pw@$mysql_host/$mysql_db&quot;;<br>
+  //tablename for the tests<br>
+  $table_name   = &#039;test&#039;;<br>
+  //connecting database<br>
+  $db = DB::connect($dsn);<br>
+  //create table<br>
+//  $sql = &quot;CREATE TABLE  $table_name ( id int(11) NOT NULL auto_increment, name varchar(50) NOT NULL default &#039;&#039;,  PRIMARY KEY  (id))&quot;;<br>
+  $sql = &quot;CREATE TABLE  $table_name ( id int(11) NOT NULL auto_increment, name varchar(50)  NULL default &#039;&#039;,  PRIMARY KEY  (id))&quot;;<br>
+  $result = $db-&gt;query($sql);<br>
+  //prepare autoquery<br>
+  $table_fields = array(&#039;name&#039;);<br>
+  $table_values = array($_REQUEST[&#039;testname&#039;]);<br>
+  var_dump($table_fields);<br>
+  var_dump($table_values);<br>
+  //make the autoquery<br>
+  $sth = $db-&gt;autoPrepare($table_name, $table_fields, DB_AUTOQUERY_INSERT);<br>
+  $result=$db-&gt;execute($sth, $table_values);<br>
+  //getting possible error-output<br>
+  if (DB::isError($result)) {<br>
+    print $result-&gt;getMessage();<br>
+  }<br>
+  //drop table<br>
+  $sql = &quot;DROP TABLE  $table_name&quot;;<br>
+  $result = $db-&gt;query($sql);</p>
+<p>?&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

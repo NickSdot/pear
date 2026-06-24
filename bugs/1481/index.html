@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1481</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #1481</h1>
+<p>Controller/Hierselect conflict</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-24 15:09 UTC</td></tr>
+<tr><th>From</th><td>mfilizzi at ssi-c dot com</td></tr>
+<tr><th>Status</th><td>Duplicate</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Debian GNU/Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-24 15:09 UTC] mfilizzi at ssi-c dot com</h3>
+<p>Description:<br>
+------------<br>
+When using the controller and Hierselect I receive the <br>
+following error.  It happens when you change pages (ie. go <br>
+to the next page or previous page).</p>
+<p>Actual result:<br>
+--------------<br>
+Parse error: parse error, expecting `&#039;]&#039;&#039; <br>
+in /usr/share/php/HTML/QuickForm/hierselect.php(222) : <br>
+eval()&#039;d code on line 1</p>
+</section>
+<section>
+<h3>[2004-05-25 16:49 UTC] mfilizzi at ssi-c dot com</h3>
+<p>Here is one of the files in which this problem occurs.  As <br>
+noted having the eval lines use &#039; around the items inside <br>
+the [] appears to solve the problem with no ill effects. <br>
+-- CODE <br>
+&lt;?php <br>
+require_once (&quot;../lib/include.php&quot;); <br>
+require_once(TEMPLATE_PATH.&#039;EMS_Template_Default.php&#039;); <br>
+require_once &#039;HTML/QuickForm/Controller.php&#039;; <br>
+require_once &#039;HTML/QuickForm.php&#039;; <br>
+require_once &#039;HTML/QuickForm/element.php&#039;; <br>
+require_once &#039;HTML/QuickForm/Action/Display.php&#039;; <br>
+require_once &#039;HTML/QuickForm/input.php&#039;; <br>
+require_once(ACTION_PATH.&#039;QuickForm_Controller_Functions/Display.php&#039;); <br>
+require_once(DATA_PATH.&#039;EMS_DB_DataObjects/SF1449.php&#039;); <br>
+require_once(DATA_PATH.&#039;EMS_DB_DataObjects/Customer.php&#039;); <br>
+require_once(DATA_PATH.&#039;EMS_DB_DataObjects/Customer_Address.php&#039;); <br>
+require_once(DATA_PATH.&#039;EMS_DB_DataObjects/Equipment_Continuation.php&#039;); <br>
+require_once(DATA_PATH.&#039;EMS_DB_DataObjects/Equipment.php&#039;); <br>
+require_once(DATA_PATH.&#039;EMS_DB_DataObjects/Funding_Document.php&#039;); <br>
+require_once(DATA_PATH.&#039;EMS_DB_DataObjects/Equipment_FundDoc.php&#039;); <br>
+ <br>
+$view = new EMS_Template_Default; <br>
+//Change ME! <br>
+$auth = $view-&gt;auth(&quot;office_groups&quot;); <br>
+$labels = $view-&gt;getLabels(); <br>
+$template = $view-&gt;start(); <br>
+ <br>
+class ActionProcess extends HTML_QuickForm_Action <br>
+{ <br>
+	function perform(&amp;$page, $actionName) <br>
+	{ <br>
+		$values = <br>
+$page-&gt;controller-&gt;exportValues(&#039;Page2&#039;); <br>
+		//print_r($values); <br>
+		$fundoc = $values[fundoc]; <br>
+		unset($values[fundoc]); <br>
+		if (is_array($values[ef])) <br>
+		{ <br>
+			foreach($values[ef] as <br>
+$key=&gt;$value) <br>
+			{ <br>
+				$e_fd = new <br>
+Equipment_FundDoc; <br>
+				$e_fd-&gt;Funding_Document_id <br>
+= $fundoc; <br>
+				$e_fd-&gt;Equipment_id = <br>
+$key; <br>
+				$e_fd-&gt;find(); <br>
+				$e_fd-&gt;delete(); <br>
+			} <br>
+		} <br>
+		unset($_SESSION[equipmentItems]); <br>
+		<br>
+unset($_SESSION[_DeleteFunding_container]); <br>
+		header(&quot;Location: funding.php&quot;); <br>
+	} <br>
+} <br>
+ <br>
+//SQL 1 <br>
+$contracts = new SF1449; <br>
+$contracts-&gt;find(); <br>
+while ($contracts-&gt;fetch()) <br>
+{ <br>
+	$contractList[$contracts-&gt;id] = <br>
+$contracts-&gt;contract_no; <br>
+} <br>
+ <br>
+$customer = new Customer; <br>
+$address = new Customer_Address; <br>
+$equipment = new Equipment; <br>
+$continuation = new Equipment_Continuation; <br>
+$sf1449 = new SF1449; <br>
+//$customer-&gt;debugLevel(5); <br>
+ <br>
+$equipment-&gt;joinAdd($sf1449); <br>
+$continuation-&gt;joinAdd($equipment); <br>
+$address-&gt;joinAdd($continuation); <br>
+$customer-&gt;joinAdd($address); <br>
+$customer-&gt;selectAdd(); <br>
+$customer-&gt;selectAdd(&quot;DISTINCT SF1449.id as sfid, <br>
+Customer.id as cid, Customer.name as name&quot;); <br>
+ <br>
+$customer-&gt;find(); <br>
+while ($customer-&gt;fetch()) <br>
+{ <br>
+	$customerList[$customer-&gt;sfid][$customer-&gt;cid] = <br>
+$customer-&gt;name; <br>
+} <br>
+//EndSQL 1 <br>
+ <br>
+ <br>
+$page1 = new HTML_QuickForm_Page(&#039;Page1&#039;); <br>
+$page2 = new HTML_QuickForm_Page(&#039;Page2&#039;); <br>
+$page3 = new HTML_QuickForm_Page(&#039;Page3&#039;); <br>
+$renderer =&amp; $page3-&gt;defaultRenderer(); <br>
+$renderer-&gt;setHeaderTemplate(&#039;&lt;tr&gt;&lt;th <br>
+style=&quot;white-space:nowrap; background:#000066; <br>
+color:white; font-weight: bold&quot; align=&quot;left&quot; <br>
+colspan=&quot;2&quot;&gt;{header}&lt;/th&gt;&lt;/tr&gt;&#039;); <br>
+ <br>
+$controller =&amp; new <br>
+HTML_QuickForm_Controller(&#039;DeleteFunding&#039;); <br>
+ <br>
+//Page 1 <br>
+$list = array($contractList, $customerList); <br>
+print_r($list); <br>
+$hier =&amp; <br>
+$page1-&gt;addElement(&#039;hierselect&#039;,&#039;contract&#039;,&#039;Select <br>
+Contract&#039;,&#039;&#039;,&#039;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td align=&quot;right&quot;&gt;&lt;b&gt;Select <br>
+Customer&lt;/b&gt;&lt;/td&gt;&lt;td&gt;&#039;); <br>
+$hier-&gt;setOptions($list); <br>
+$page1-&gt;addElement(&#039;submit&#039;,<br>
+$page1-&gt;getButtonName(&#039;next&#039;),&#039;Next &gt;&gt;&#039;); <br>
+$page1-&gt;setDefaultAction(&#039;next&#039;); <br>
+//End Page 1 <br>
+ <br>
+//SQL 2 <br>
+if (isset($_GET[_qf_Page2_display])) <br>
+{ <br>
+	$cid = <br>
+$controller-&gt;exportValue(&#039;Page1&#039;,&#039;contract&#039;); <br>
+ <br>
+	$funding = new Funding_Document; <br>
+	$e_f = new Equipment_FundDoc; <br>
+	$continuation = new Equipment_Continuation; <br>
+	$address = new Customer_Address; <br>
+	$equipment = new Equipment; <br>
+	//$equipment-&gt;debugLevel(5); <br>
+	$e_f-&gt;joinAdd($funding); <br>
+	$equipment-&gt;joinAdd($e_f); <br>
+	$continuation-&gt;joinAdd($address); <br>
+	$equipment-&gt;joinAdd($continuation); <br>
+	$equipment-&gt;whereAdd(&quot;Equipment.SF1449_id = &#039;&quot; . <br>
+$cid[0] . &quot;&#039; AND Customer_Address.Customer_id = &#039;&quot; . <br>
+$cid[1] . &quot;&#039; AND ( <br>
+Equipment.status = &#039;installed&#039; OR Equipment.status = <br>
+&#039;pre-uninstall&#039; <br>
+)&quot;); <br>
+	$equipment-&gt;selectAdd(); <br>
+	$equipment-&gt;selectAdd(&quot;Equipment.id as id, <br>
+Equipment.serial_no as sn, <br>
+Funding_Document.funding_document as funding&quot;); <br>
+ <br>
+	if ($equipment-&gt;find() == 0) <br>
+	{ <br>
+		$template-&gt;assign(&quot;message&quot;,&quot;There are no <br>
+Installed Equipment for this Contract&quot;); <br>
+		$template-&gt;display(&quot;Form.tpl&quot;); <br>
+		die(); <br>
+	} <br>
+	while ($equipment-&gt;fetch()) <br>
+	{ <br>
+		$equipmentList[$equipment-&gt;id] =&#039;&lt;b&gt;&#039; . <br>
+$equipment-&gt;sn . &#039;&lt;/b&gt; - Funded - &#039; . $equipment-&gt;funding; <br>
+	} <br>
+	$e_f = new Equipment_FundDoc; <br>
+	$equip = new Equipment; <br>
+	$e_f-&gt;joinAdd($equip); <br>
+	$e_f-&gt;whereAdd(&quot;Equipment.SF1449_id = &#039;&quot; . <br>
+$cid[0] . &quot;&#039;&quot;); <br>
+	$e_f-&gt;find(); <br>
+	while($e_f-&gt;fetch()) <br>
+	{ <br>
+		if (!isset($equipmentList[$e_f-&gt;id])) <br>
+			unset($equipmentList[$e_f-&gt;id]); <br>
+	} <br>
+	if (count($equipmentList) == 0) <br>
+	{ <br>
+		$template-&gt;assign(&quot;message&quot;,&quot;There are no <br>
+Funded pieces of Equipment for this Contract&quot;); <br>
+		$template-&gt;display(&quot;Form.tpl&quot;); <br>
+		die(); <br>
+	} <br>
+	$_SESSION[equipmentItems] = $equipmentList; <br>
+} <br>
+//End SQL 2 <br>
+ <br>
+//Page 2 <br>
+$page2-&gt;addElement(&#039;html&#039;,&#039;&lt;tr&gt;&lt;td colspan=2&gt;&lt;b&gt;Check all <br>
+equipment to delete Funding from&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;&#039;); <br>
+if (is_array($_SESSION[equipmentItems])) <br>
+{ <br>
+	foreach($_SESSION[equipmentItems] as $key=&gt;$value) <br>
+		$equip_f[] =&amp; <br>
+$page2-&gt;createElement(&#039;checkbox&#039;, $key,&#039;&#039;,$value); <br>
+	$page2-&gt;addGroup($equip_f, &#039;ef&#039;,&#039;&#039;,&#039;&lt;br /&gt;&#039;); <br>
+} <br>
+$prevnext[] =&amp; $page2-&gt;createElement(&#039;submit&#039;, <br>
+$page2-&gt;getButtonName(&#039;back&#039;), &#039;&lt;&lt; Previous Step&#039;); <br>
+$prevnext[] =&amp; $page2-&gt;createElement(&#039;submit&#039;, <br>
+$page2-&gt;getButtonName(&#039;next&#039;), &#039;NEXT &gt;&gt;&#039;); <br>
+$page2-&gt;addGroup($prevnext, &#039;buttons&#039;, &#039;&#039;, &#039; &#039;, <br>
+false); <br>
+$page2-&gt;setDefaultAction(&#039;next&#039;); <br>
+//End Page 2 <br>
+ <br>
+//SQL Page 3 <br>
+if (isset($_GET[_qf_Page3_display])) <br>
+{ <br>
+	$p2 = $controller-&gt;exportValues(&#039;Page2&#039;); <br>
+	$fund = new Funding_Document; <br>
+	$fund-&gt;id = $p2[fundoc]; <br>
+	$fund-&gt;find(); <br>
+	$fund-&gt;fetch(); <br>
+	$doc = $fund-&gt;funding_document; <br>
+	$p2 = $controller-&gt;exportValue(&#039;Page2&#039;,&#039;ef&#039;); <br>
+} <br>
+//End SQL Page 3 <br>
+ <br>
+//Page 3 <br>
+$page3-&gt;addElement(&#039;header&#039;,&#039;&#039;,&#039;Please verify your <br>
+information&#039;); <br>
+$page3-&gt;addElement(&#039;static&#039;,&#039;&#039;,&#039;Funding Document&#039;,$doc); <br>
+$page3-&gt;addElement(&#039;html&#039;,&#039;&lt;tr&gt;&lt;td colspan=2 <br>
+align=center&gt;&lt;b&gt;Equipment to unfunded&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;&#039;); <br>
+if (is_array($p2)) <br>
+	foreach($p2 as $key=&gt;$value) <br>
+	{ <br>
+		$equipment = new Equipment; <br>
+		$equipment-&gt;id = $key; <br>
+		$equipment-&gt;find(true); <br>
+		$page3-&gt;addElement(&#039;static&#039;,&#039;&#039;,&#039;&#039;,<br>
+$equipment-&gt;serial_no); <br>
+	} <br>
+ <br>
+ <br>
+$pn[] =&amp; $page3-&gt;createElement(&#039;submit&#039;, <br>
+$page3-&gt;getButtonName(&#039;back&#039;), &#039;&lt;&lt; Previous Step&#039;); <br>
+$pn[] =&amp; $page3-&gt;createElement(&#039;submit&#039;, <br>
+$page3-&gt;getButtonName(&#039;next&#039;), &#039;Finish&#039;); <br>
+$page3-&gt;addGroup($pn, &#039;buttons&#039;, &#039;&#039;, &#039; &#039;, false); <br>
+$page3-&gt;setDefaultAction(&#039;next&#039;); <br>
+//End Page 3 <br>
+ <br>
+$controller-&gt;addPage($page1); <br>
+$controller-&gt;addPage($page2); <br>
+$controller-&gt;addPage($page3); <br>
+$controller-&gt;addAction(&#039;process&#039;, new ActionProcess()); <br>
+$controller-&gt;addAction(&#039;display&#039;, new DisplayProcess()); <br>
+$template-&gt;assign(&quot;form&quot;, $controller-&gt;run()); <br>
+$template-&gt;display(&quot;Form.tpl&quot;); <br>
+?&gt; <br>
+-- END CODE <br>
+This is the structure of &quot;$list&quot; as pulled from the DB. <br>
+-- $list <br>
+Array <br>
+( <br>
+    [0] =&gt; Array <br>
+        ( <br>
+            [1] =&gt; SA7007-02-A-0004 <br>
+            [2] =&gt; SP3100-02-A-0024 <br>
+            [26] =&gt; SA7007-02-A-0008 <br>
+            [27] =&gt; SA7007-02-A-0005 <br>
+            [28] =&gt; SA7007-02-A-0008 <br>
+            [29] =&gt; SA7007-02-A-0004 <br>
+            [30] =&gt; SA7007-02-A-0007 <br>
+            [31] =&gt; SA7007-02-A-0004 <br>
+            [32] =&gt; SA7007-02-A-0006 <br>
+            [33] =&gt; SA7007-01-A-0015 <br>
+        ) <br>
+    [1] =&gt; Array <br>
+        ( <br>
+            [2] =&gt; Array <br>
+                ( <br>
+                    [176GB00001] =&gt; Jane&#039;s House of Stuff <br>
+                ) <br>
+            [1] =&gt; Array <br>
+                ( <br>
+                    [176GB00001] =&gt; Jane&#039;s House of Stuff <br>
+                ) <br>
+            [32] =&gt; Array <br>
+                ( <br>
+                    [176GB00001] =&gt; Jane&#039;s House of Stuff <br>
+                ) <br>
+            [27] =&gt; Array <br>
+                ( <br>
+                    [176GB00001] =&gt; Jane&#039;s House of Stuff <br>
+                ) <br>
+            [30] =&gt; Array <br>
+                ( <br>
+                    [176GB00001] =&gt; Jane&#039;s House of Stuff <br>
+                ) <br>
+            [28] =&gt; Array <br>
+                ( <br>
+                    [176GB00001] =&gt; Jane&#039;s House of Stuff <br>
+                ) <br>
+            [26] =&gt; Array <br>
+                ( <br>
+                    [176GB00001] =&gt; Jane&#039;s House of Stuff <br>
+                ) <br>
+            [29] =&gt; Array <br>
+                ( <br>
+                    [176GB00001] =&gt; Jane&#039;s House of Stuff <br>
+                ) <br>
+            [33] =&gt; Array <br>
+                ( <br>
+                    [176GB00001] =&gt; Jane&#039;s House of Stuff <br>
+                ) <br>
+        ) <br>
+)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

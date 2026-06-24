@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9011</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Logging &#187; <a href="package/Log/index.html">Log</a> &#187; Bug #9011</h1>
+<p>register_shutdown_function() of Log child is called several times</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-10-12 21:55 UTC</td></tr>
+<tr><th>From</th><td>arne dot bippes at bippesbrandao dot de</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Log/index.html">Log</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-10-12 21:55 UTC] arne dot bippes at bippesbrandao dot de</h3>
+<p>Description:<br>
+------------<br>
+I have a Logging Class which adds a shutdown_function in its constructor.<br>
+Since I&#039;m using several channels i use Log composite.<br>
+Currently the shutdown Function called every time i do some logging. It should only be called once!</p>
+<p>The Bug seems to occur since Version 1.9.7 since in PEAR::Log Version 1.9.6 I&#039;m getting the expected result.</p>
+<p>Test script:<br>
+---------------<br>
+// Logging Class<br>
+class Log_bdowin extends Log<br>
+{<br>
+// Constructor<br>
+function Log_bdowin($name, $ident = &#039;&#039;, $conf = array(), $level = PEAR_LOG_DEBUG)<br>
+    {<br>
+        // lots of code ... //<br>
+        register_shutdown_function(array($this, &#039;open&#039;));<br>
+    }<br>
+    // Shutdownfunction<br>
+    function open()<br>
+    {<br>
+    	echo &quot;OPEN:&quot;;<br>
+    	echo &quot;&lt;&quot; . microtime() . &quot;&gt;\n&quot;;<br>
+        var_dump(debug_backtrace());<br>
+        // a lot of code which does my logging output<br>
+        return;</p>
+<p>}<br>
+}<br>
+// My Main Script (shortened ...)<br>
+$Log = &amp;Log::singleton(&#039;composite&#039;);<br>
+    $Log_bdowin = &amp;Log::singleton(&#039;bdowin&#039;, &#039;&#039;, &#039;bdowin&#039;, $bdowin_conf, PEAR_LOG_DEBUG);<br>
+echo &quot;&lt;br&gt;\n------------------MARKER1----------------------&lt;br&gt;\n&quot;;<br>
+    $Log-&gt;addChild($Log_bdowin);<br>
+echo &quot;&lt;br&gt;\n------------------MARKER2----------------------&lt;br&gt;\n&quot;;<br>
+    $Log-&gt;log(&#039;+++++Dummy Logging+++++&#039;,PEAR_LOG_DEBUG); <br>
+echo &quot;&lt;br&gt;\n------------------MARKER3----------------------&lt;br&gt;\n&quot;;<br>
+    $Log-&gt;log(&#039;+++++Dummy Logging+++++&#039;,PEAR_LOG_DEBUG); <br>
+echo &quot;&lt;br&gt;\n------------------MARKER4----------------------&lt;br&gt;\n&quot;;<br>
+exit;</p>
+<p>Expected result:<br>
+----------------<br>
+------------------MARKER1----------------------</p>
+<p>------------------MARKER2----------------------</p>
+<p>------------------MARKER3----------------------</p>
+<p>------------------MARKER4----------------------<br>
+OPEN:&lt;0.82545900 1160689984&gt; array(1) { [0]=&gt; array(4) { [&quot;function&quot;]=&gt; string(4) &quot;open&quot; [&quot;class&quot;]=&gt; string(10) &quot;log_bdowin&quot; [&quot;type&quot;]=&gt; string(2) &quot;-&gt;&quot; [&quot;args&quot;]=&gt; array(0) { } } }</p>
+<p>Actual result:<br>
+--------------<br>
+------------------MARKER1----------------------</p>
+<p>------------------MARKER2----------------------<br>
+OPEN:&lt;0.75105100 1160689255&gt; array(3) { [0]=&gt; array(6) { [&quot;file&quot;]=&gt; string(63) &quot;/home/arne/public_html/bdoproject/bdolib/pear/Log/composite.php&quot; [&quot;line&quot;]=&gt; int(63) [&quot;function&quot;]=&gt; string(4) &quot;open&quot; [&quot;class&quot;]=&gt; string(10) &quot;log_bdowin&quot; [&quot;type&quot;]=&gt; string(2) &quot;-&gt;&quot; [&quot;args&quot;]=&gt; array(0) { } } [1]=&gt; array(6) { [&quot;file&quot;]=&gt; string(63) &quot;/home/arne/public_html/bdoproject/bdolib/pear/Log/composite.php&quot; [&quot;line&quot;]=&gt; int(144) [&quot;function&quot;]=&gt; string(4) &quot;open&quot; [&quot;class&quot;]=&gt; string(13) &quot;log_composite&quot; [&quot;type&quot;]=&gt; string(2) &quot;-&gt;&quot; [&quot;args&quot;]=&gt; array(0) { } } [2]=&gt; array(6) { [&quot;file&quot;]=&gt; string(43) &quot;/home/arne/public_html/bdoproject/index.php&quot; [&quot;line&quot;]=&gt; int(88) [&quot;function&quot;]=&gt; string(3) &quot;log&quot; [&quot;class&quot;]=&gt; string(13) &quot;log_composite&quot; [&quot;type&quot;]=&gt; string(2) &quot;-&gt;&quot; [&quot;args&quot;]=&gt; array(2) { [0]=&gt; &amp;string(38) &quot;++++++++++++++++++++++++++++++++++++++&quot; [1]=&gt; ∫(7) } } }<br>
+------------------MARKER3----------------------<br>
+OPEN:&lt;0.75176400 1160689255&gt; array(3) { [0]=&gt; array(6) { [&quot;file&quot;]=&gt; string(63) &quot;/home/arne/public_html/bdoproject/bdolib/pear/Log/composite.php&quot; [&quot;line&quot;]=&gt; int(63) [&quot;function&quot;]=&gt; string(4) &quot;open&quot; [&quot;class&quot;]=&gt; string(10) &quot;log_bdowin&quot; [&quot;type&quot;]=&gt; string(2) &quot;-&gt;&quot; [&quot;args&quot;]=&gt; array(0) { } } [1]=&gt; array(6) { [&quot;file&quot;]=&gt; string(63) &quot;/home/arne/public_html/bdoproject/bdolib/pear/Log/composite.php&quot; [&quot;line&quot;]=&gt; int(144) [&quot;function&quot;]=&gt; string(4) &quot;open&quot; [&quot;class&quot;]=&gt; string(13) &quot;log_composite&quot; [&quot;type&quot;]=&gt; string(2) &quot;-&gt;&quot; [&quot;args&quot;]=&gt; array(0) { } } [2]=&gt; array(6) { [&quot;file&quot;]=&gt; string(43) &quot;/home/arne/public_html/bdoproject/index.php&quot; [&quot;line&quot;]=&gt; int(90) [&quot;function&quot;]=&gt; string(3) &quot;log&quot; [&quot;class&quot;]=&gt; string(13) &quot;log_composite&quot; [&quot;type&quot;]=&gt; string(2) &quot;-&gt;&quot; [&quot;args&quot;]=&gt; array(2) { [0]=&gt; &amp;string(38) &quot;++++++++++++++++++++++++++++++++++++++&quot; [1]=&gt; ∫(7) } } }<br>
+------------------MARKER4----------------------<br>
+OPEN:&lt;0.75225000 1160689255&gt; array(1) { [0]=&gt; array(4) { [&quot;function&quot;]=&gt; string(4) &quot;open&quot; [&quot;class&quot;]=&gt; string(10) &quot;log_bdowin&quot; [&quot;type&quot;]=&gt; string(2) &quot;-&gt;&quot; [&quot;args&quot;]=&gt; array(0) { } } }</p>
+</section>
+<section>
+<h3>[2006-10-15 12:14 UTC] arne dot bippes at bippesbrandao dot de</h3>
+<p>I looked inside the Log_composite code which led me to the problem. <br>
+The function i wanted to be called on shutdown was named &quot;open&quot;. &quot;open&quot; is used by Log_composite to check wheter the Logging class is instanciated (better &quot;openend&quot;) correctly. Since my function didn&#039;t return a boolean true . It was called again every time I did a logging request.<br>
+Changing the function to another name resolved the problem.</p>
+<p>The &quot;bug&quot; was my improper use of the Log-Class, which started showing in Version 1.9.7, so please feel free to close it. Thank you for your Feedback!</p>
+</section>
+<section>
+<h3>[2006-10-15 12:17 UTC] arne dot bippes at bippesbrandao dot de</h3>
+<p>... able to close it by myself.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

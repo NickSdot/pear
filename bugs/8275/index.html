@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8275</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Testing &#187; <a href="package/PHPUnit2/index.html">PHPUnit2</a> &#187; Bug #8275</h1>
+<p>PHPUnit2_Framework_TestResult::removeListener() not removing.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8275</th><td>PHPUnit2_Framework_TestResult::removeListener() not removing.</td></tr>
+<tr><th>Submitted</th><td>2006-07-24 15:40 UTC</td></tr>
+<tr><th>From</th><td>saggnic at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>sebastian</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PHPUnit2/index.html">PHPUnit2</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-24 15:40 UTC] saggnic at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Problem description and fix included here.</p>
+<p>The original body of removeListener() is a for statement, which suffers from the problem.  The solution is to replace it with a foreach() statement.  The description is in comments in the method&#039;s body below.</p>
+<p>public function removeListener(PHPUnit2_Framework_TestListener $listener) {<br>
+        //for ($i = 0; $i &lt; sizeof($this-&gt;listeners); $i++) {<br>
+        //    if ($this-&gt;listeners[$i] === $listener) {<br>
+        //        unset($this-&gt;listeners[$i]);<br>
+        //    }<br>
+        //}</p>
+<p>// The foreach below does the same thing as the commented-out for statement, above.<br>
+        // The for statement, however, has a problem in the following scenario.<br>
+        //  1) A listener is added and then removed.<br>
+        //  2) A second listener is added.<br>
+        //  3) The second listener is removed.<br>
+        // Step 3 is not carried out because the 0th index (key) is no longer accessible in the array<br>
+        // because of the unset() operation.  (Yes, unset($myArray[0]) actually gets rid of both the<br>
+        // element and the index so that executing statement $myArray[]=&#039;a&#039; assigns &#039;a&#039; to $myArray[1],<br>
+        // as opposed to assigning it to $myArray[0] as one might expect.)  Because of this, step 3<br>
+        // fails, producing &quot;PHP Notice:  Undefined offset:  0 in ...&quot; and not removing the second<br>
+        // listener. The foreach statement is immune to that particular behavior of unset(), which is<br>
+        // probably not a bug.<br>
+        //<br>
+        // Note: An alternate solution would be to use the following statement before the original<br>
+        // for statement: &quot;$this-&gt;listeners = array_merge($this-&gt;listeners);&quot;   array_merge() will<br>
+        // make the indexes continuous and start at 0.<br>
+        //<br>
+        foreach( $this-&gt;listeners as $key =&gt; $currListener ) {<br>
+            if ($currListener === $listener) {<br>
+                unset($this-&gt;listeners[$key]);<br>
+            }<br>
+        }</p>
+<p>//print_r($this-&gt;listeners).&quot;\n&quot;;  // For testing purposes.</p>
+<p>}</p>
+<p>Test script:<br>
+---------------<br>
+The behavior of PHP&#039;s unset(), which causes the problem for the for statement is reproduced by the script below.</p>
+<p>&lt;?php</p>
+<p>// Problem Scenario:<br>
+$arr[] = &#039;a&#039;;<br>
+unset($arr[0]);<br>
+$arr[] = &#039;a&#039;;    // Will &#039;a&#039; be assigned to $arr[0]?  Unfortunately, no.</p>
+<p>// Using array_merge() fixes the problem that unset() leaves, in the<br>
+// above scenario, for the for statement.</p>
+<p>//$arr = array_merge($arr);   // Fixes the problem.</p>
+<p>// If array_merge() is not used to fix the problem, the following for loop<br>
+// will fail and produce:  &quot;PHP Notice:  Undefined offset:  0 in ...&quot;<br>
+print &quot;for-statement output:\n&quot;;<br>
+for( $i=0; $i &lt; count($arr); $i++ )<br>
+{<br>
+	print &quot;[$i] = &quot;. $arr[$i];<br>
+}</p>
+<p>// foreach is immune to the problem.<br>
+print &quot;\n\nforeach-statement output:\n&quot;;<br>
+foreach( $arr as $key =&gt; $val )<br>
+{<br>
+	print &quot;[$key] = $val&quot;;<br>
+}</p>
+<p>print &quot;\n\nArray content:\n&quot;.print_r($arr,true);</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Refer to the comments in the script.  They explain what&#039;s going on.</p>
+</section>
+<section>
+<h3>[2006-08-01 07:50 UTC] sebastian at php dot net</h3>
+<p>Moved to http://www.phpunit.de/ticket/30.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

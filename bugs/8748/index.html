@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8748</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Benchmarking &#187; <a href="package/Benchmark/index.html">Benchmark</a> &#187; Bug #8748</h1>
+<p>class destructor behavior</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-09-20 22:02 UTC</td></tr>
+<tr><th>From</th><td>tkirby at vabest dot com</td></tr>
+<tr><th>Assigned</th><td>anant</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Benchmark/index.html">Benchmark</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>linux 2.6.8-022stab067.1-enterpr</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-09-20 22:02 UTC] tkirby at vabest dot com</h3>
+<p>Description:<br>
+------------<br>
+php class destructors behave differently in php 4.3.11 and php 5.1.6 (probably others, too). In 4.3.11, destructor is called AFTER class storage has been released. In 5.1.6 destructor is called BEFORE class storage has been released.<br>
+Problem shows up when using Benchmark in auto mode. initialize class, add markers, execution ends, then table is automatically displayed showing markers. But, no markers are displayed in 4.3.11 because marker storage was whacked before the destructor was called.</p>
+<p>Fix: in Timer.php file, comment out destructor code, and add duplicate function Close, call Close when you want output (yes, auto does not work).</p>
+<p>/**<br>
+     * Destructor.<br>
+     *<br>
+     * @access private<br>
+     */<br>
+    function _Benchmark_Timer() {<br>
+        /*if ($this-&gt;auto) {<br>
+            $this-&gt;stop();<br>
+            $this-&gt;display();<br>
+        }*/<br>
+    }</p>
+<p>function Close() {<br>
+        if ($this-&gt;auto) {<br>
+            $this-&gt;stop();<br>
+            $this-&gt;display();<br>
+        }<br>
+    }</p>
+<p>Might also be present in other two files associated with Benchmark... don&#039;t have time to check yet.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+require_once(&quot;Benchmark/Timer.php&quot;);</p>
+<p>print phpversion().&quot;&lt;br&gt;&quot;;</p>
+<p>function wait($amount) {<br>
+    for ($i=0; $i &lt; $amount; $i++) {<br>
+        for ($i=0; $i &lt; 100000; $i++) $x = sin($i / 1.2340);<br>
+	}<br>
+}</p>
+<p>$timer = new Benchmark_Timer(TRUE);<br>
+$timer-&gt;setMarker(&quot;Marker1&quot;);<br>
+wait(10);<br>
+$timer-&gt;setMarker(&quot;Marker2&quot;);<br>
+wait(100);<br>
+$timer-&gt;setMarker(&quot;Marker3&quot;);<br>
+wait(1000);</p>
+<p>//$timer-&gt;Close();<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+output should be Start, three markers, and Stop</p>
+<p>Actual result:<br>
+--------------<br>
+4.3.11 - output is Start and Stop markers only<br>
+5.1.6 - output includes three markers, too.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

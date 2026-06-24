@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services_GeoNames Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/Services_GeoNames/index.html">Services_GeoNames</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Services_GeoNames/docs/index.html#package-webservices-services-geonames-intro">Introduction</a>
+</li>
+<li><a href="package/Services_GeoNames/docs/index.html#package-webservices-services-geonames-getting-started">Getting started</a>
+</li>
+<li><a href="package/Services_GeoNames/docs/index.html#package-webservices-services-geonames-examples">Examples</a>
+</li></ul>
+</nav>
+<p>Services_GeoNames is a PHP interface to the various webservices offered by the GeoNames project.</p>
+<section id="package-webservices-services-geonames-intro">
+<h2>Introduction</h2>
+<h3>Introduction</h3>
+
+  
+  <p><a href="package/Services_GeoNames/docs/index.html">Services_GeoNames</a>
+    is a PHP interface to the various webservices offered by the 
+    <a href="http://www.geonames.org/">GeoNames project.</a></p>
+  <p>The GeoNames database contains over 8,000,000 geographical names
+   corresponding to over 6,500,000 unique features. All features are
+   categorized into one out of nine feature classes and further subcategorized
+   into one out of 645 feature codes. Beyond names of places in various
+   languages, data stored include latitude, longitude, elevation, population,
+   administrative subdivision and postal codes. All coordinates use the WGS84
+   system (World Geodetic System 1984).</p>
+  <p>Those data are accessible free of charge through a number of Web services
+   and a daily database export. The Web services include direct and reverse
+   geocoding, finding places through postal codes, finding places next to a
+   given place, and finding Wikipedia articles about neighbouring places.</p>
+ 
+
+ <h3>Installation</h3>
+
+  <p>To install the package with pear just do:</p>
+   <pre>
+$ pear install -f Services_GeoNames</pre>
+
+   <p>And to uninstall it:</p>
+   <pre>
+$ pear uninstall Services_GeoNames</pre>
+
+   
+  
+ 
+
+ <h3>Links</h3>
+
+  <ul>
+   <li>
+    
+     <a href="http://www.geonames.org/">GeoNames project homepage</a>
+    
+   </li>
+   <li>
+    
+     <a href="http://www.geonames.org/export/ws-overview.html">GeoNames API documentation.</a>
+    
+   </li>
+  </ul>
+</section>
+<section id="package-webservices-services-geonames-getting-started">
+<h2>Getting started</h2>
+<h3>Instanciating the <strong>Services_GeoNames</strong> class</h3>
+
+  <p>To instanciate the main class just do:</p><pre><code>&lt;?php
+
+require_once &#039;Services/GeoNames.php&#039;;
+
+$geo = new Services_GeoNames();
+
+?&gt;</code></pre><p>And if you have a commercial account:</p>
+   <pre>
+&lt;?php
+
+require_once &#039;Services/GeoNames.php&#039;;
+
+$geo = new Services_GeoNames(&#039;your_username&#039;, &#039;your_authtoken&#039;);
+
+?&gt;</pre>
+
+   
+  
+ 
+
+ <h3>Using <strong>Services_GeoNames</strong> methods</h3>
+
+  <p>To call a webservice method, just instanciate the class as described above
+   and call the desired method with an array of parameters, for example:</p><pre><code>&lt;?php
+
+require_once &#039;Services/GeoNames.php&#039;;
+
+$geonames  = new Services_GeoNames(&#039;username&#039;, &#039;some authtoken...&#039;);
+$countries = $geonames-&gt;countryInfo(array(&#039;lang&#039; =&gt; &#039;es&#039;));
+echo &quot;List of all countries in spanish language:\n&quot;;
+foreach ($countries as $country) {
+    printf(&quot; - %s (capital: %s)\n&quot;, $country-&gt;countryName, $country-&gt;capital);
+}
+
+?&gt;</code></pre><p>Every method take an array as single parameter, for example in the
+   <a href="http://www.geonames.org/export/ws-overview.html">GeoNames API documentation</a>
+   when you see something like:</p>
+   <pre>
+Webservice Type : REST
+Url : ws.geonames.org/citiesJSON?
+Parameters :
+north,south,east,west : coordinates of bounding box
+callback : name of javascript function (optional parameter)
+lang : language of placenames and wikipedia urls (default = en)
+maxRows : maximal number of rows returned (default = 10)</pre>
+
+   <p>That means that you can call the cities() method as follows:</p><pre><code>&lt;?php
+
+require_once &#039;Services/GeoNames.php&#039;;
+
+$geo    = new Services_GeoNames();
+$cities = $geo-&gt;cities(array(
+    &#039;north&#039;   =&gt; 44.1,
+    &#039;south&#039;   =&gt; -9.9,
+    &#039;east&#039;    =&gt; -22.4,
+    &#039;west&#039;    =&gt; 55.2,
+    &#039;lang&#039;    =&gt; &#039;de&#039;,
+    &#039;maxRows&#039; =&gt; 5,
+));
+
+?&gt;</code></pre><p>Note that for convenience, some methods can take a geonameId (integer)
+   instead of the array as unique parameter, for example, the following two
+   calls are equivalent:</p><pre><code>&lt;?php
+
+require_once &#039;Services/GeoNames.php&#039;;
+
+$geo = new Services_GeoNames();
+
+// theses two method calls are equivalent
+$children = $geo-&gt;children(3175395);
+$children = $geo-&gt;children(array(&#039;geonameId&#039; =&gt; 3175395));
+
+?&gt;</code></pre>
+  
+ 
+
+ <h3>Available methods</h3>
+
+  <table><caption>API methods</caption>
+   
+    <thead>
+     <tr>
+      <th>Method name</th>
+      <th>Parameters</th>
+      <th>Return type</th>
+     </tr>
+
+    </thead>
+
+    <tbody>
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/place-hierarchy.html#children">children()</a>
+      </td>
+      <td>int geonameId or array</td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/JSON-webservices.html#citiesJSON">cities()</a>
+      </td>
+      <td>int geonameId or array</td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/web-services.html#countrycode">countryCode()</a>
+      </td>
+      <td>array</td>
+      <td>stdclass</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/web-services.html#countryInfo">countryInfo()</a>
+      </td>
+      <td>array</td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/web-services.html#countrysubdiv">countrySubdivision()</a>
+      </td>
+      <td>array</td>
+      <td>stdclass</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/JSON-webservices.html#earthquakesJSON">earthquakes()</a>
+      </td>
+      <td>array</td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://forum.geonames.org/gforum/posts/list/581.page#2667">findNearby()</a>
+      </td>
+      <td>array</td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/web-services.html#findNearbyPlaceName">findNearbyPlaceName()</a>
+      </td>
+      <td>array</td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/web-services.html#findNearbyPostalCodes">findNearbyPostalCodes()</a>
+      </td>
+      <td>array</td>
+      <td>stdclass</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/maps/reverse-geocoder.html#findNearbyStreets">findNearbyStreets()</a>
+      </td>
+      <td>array</td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/JSON-webservices.html#findNearByWeatherJSON">findNearByWeather()</a>
+      </td>
+      <td>array</td>
+      <td>stdclass</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/wikipedia-webservice.html#findNearbyWikipedia">findNearbyWikipedia()</a>
+      </td>
+      <td>array</td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/maps/reverse-geocoder.html#findNearestAddress">findNearestAddress()</a>
+      </td>
+      <td>array</td>
+      <td>stdclass</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/maps/reverse-geocoder.html#findNearestIntersection">findNearestIntersection()</a>
+      </td>
+      <td>array</td>
+      <td>stdclass</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/">get()</a>
+      </td>
+      <td>array</td>
+      <td>stdclass</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/web-services.html#gtopo30">gtopo30()</a>
+      </td>
+      <td>array</td>
+      <td>stdclass</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/place-hierarchy.html#hierarchy">hierarchy()</a>
+      </td>
+      <td>int geonameId or array</td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/web-services.html#neighbourhood">neighbourhood()</a>
+      </td>
+      <td>array</td>
+      <td>stdclass</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/place-hierarchy.html#neighbours">neighbours()</a>
+      </td>
+      <td>int geonameId or array</td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+          <a href="http://www.geonames.org/export/web-services.html#postalCodeCountryInfo">postalCodeCountryInfo()</a>
+      </td>
+      <td> </td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/web-services.html#postalCodeLookupJSON">postalCodeLookup()</a>
+      </td>
+      <td>array</td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/web-services.html#postalCodeSearch">postalCodeSearch()</a>
+      </td>
+      <td>array</td>
+      <td>stdclass</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/geonames-search.html">search()</a>
+      </td>
+      <td>array</td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/place-hierarchy.html#siblings">siblings()</a>
+      </td>
+      <td>int geonameId or array</td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/web-services.html#srtm3">srtm3()</a>
+      </td>
+      <td>array</td>
+      <td>stdclass</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/web-services.html#timezone">timezone()</a>
+      </td>
+      <td>array</td>
+      <td>stdclass</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/JSON-webservices.html#weatherJSON">weather()</a>
+      </td>
+      <td>array</td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/JSON-webservices.html#weatherIcaoJSON">weatherIcao()</a>
+      </td>
+      <td>array</td>
+      <td>stdclass</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/wikipedia-webservice.html#wikipediaBoundingBox">wikipediaBoundingBox()</a>
+      </td>
+      <td>array</td>
+      <td>array</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="http://www.geonames.org/export/wikipedia-webservice.html#wikipediaSearch">wikipediaSearch()</a>
+      </td>
+      <td>array</td>
+      <td>array</td>
+     </tr>
+
+    </tbody></table>
+
+
+  <table><caption>Non API methods</caption>
+   
+    <thead>
+     <tr>
+      <th>Method name</th>
+      <th>Parameters</th>
+      <th>Return type</th>
+      <th>Description</th>
+     </tr>
+
+    </thead>
+
+    <tbody>
+     <tr>
+      <td>
+       <a href="package/Services_GeoNames/docs/index.html">Services_GeoNames::getSupportedEndpoints()</a>
+      </td>
+      <td> </td>
+      <td>array</td>
+      <td>returns an array of all supported services endpoints (aka methods)</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="package/Services_GeoNames/docs/index.html">Services_GeoNames::getRequest()</a>
+      </td>
+      <td> </td>
+      <td>HTTP_Request2</td>
+      <td>returns the HTTP_Request2 request instance</td>
+     </tr>
+
+     <tr>
+      <td>
+       <a href="package/Services_GeoNames/docs/index.html">Services_GeoNames::setRequest()</a>
+      </td>
+      <td>HTTP_Request2</td>
+      <td> </td>
+      <td>sets the HTTP_Request2 request instance</td>
+     </tr>
+
+    </tbody></table>
+
+ 
+
+ <h3>Handling exceptions</h3>
+
+  <p><strong>Services_GeoNames</strong> always raise either a 
+   <strong>Services_GeoNames_Exception</strong> or a
+   <strong>Services_GeoNames_HTTPException</strong> instance, if you
+   don&#039;t care of fine grained exceptions, you can just catch the 
+   <strong>Services_GeoNames_Exception</strong>, as it&#039;s the parent class
+   of the  <strong>Services_GeoNames_HTTPException</strong>.
+
+   Here&#039;s an example of fine grained exception handling:</p><pre><code>&lt;?php
+
+require_once &#039;Services/GeoNames.php&#039;;
+
+$geo = new Services_GeoNames();
+
+// now geonames uses your url
+try {
+    $children = $geo-&gt;children(3175395);
+} catch (Services_GeoNames_HTTPException $exc) {
+    // an http error occured
+    echo &quot;HTTP error: &quot; . $exc-&gt;getMessage();
+} catch (Services_GeoNames_Exception $exc) {
+    // a programming error or an api error occured
+    echo &quot;API error: &quot; . $exc-&gt;getMessage();
+}
+
+?&gt;</code></pre>
+  
+ 
+
+ <h3>Changing the default service url and adding failover servers</h3>
+
+  <p>If for some reason you need to change the web service url, you can do the
+   following:</p><pre><code>&lt;?php
+
+require_once &#039;Services/GeoNames.php&#039;;
+
+$geo = new Services_GeoNames();
+$geo-&gt;url = &#039;http://alternate.geonames.org&#039;;
+
+// now geonames uses your url
+try {
+    $children = $geo-&gt;children(3175395);
+} catch (Services_GeoNames_Exception $exc) {
+    echo &quot;Failed: &quot; . $exc-&gt;getMessage();
+}
+
+?&gt;</code></pre>
+  
+  <p>If you need high availability or if you are using the commercial version of
+   the web services, <strong>Services_GeoNames</strong> allows you to specify
+   an array of failover servers, you would just do:</p><pre><code>&lt;?php
+
+require_once &#039;Services/GeoNames.php&#039;;
+
+$geo = new Services_GeoNames();
+$geo-&gt;failoverServers[] = &#039;http://failover1.geonames.org&#039;;
+$geo-&gt;failoverServers[] = &#039;http://failover2.geonames.org&#039;;
+$geo-&gt;failoverServers[] = &#039;http://failover3.geonames.org&#039;;
+
+// now geonames will try the main url and if it fails, it will loop through
+// the failovers servers you have just configured
+try {
+    $children = $geo-&gt;children(3175395);
+} catch (Services_GeoNames_Exception $exc) {
+    echo &quot;Failed: &quot; . $exc-&gt;getMessage();
+}
+
+?&gt;</code></pre>
+  
+ 
+
+ <h3>Customizing the http request</h3>
+
+  <p>If you need a custom request, for example if you are behind a proxy,
+   you can modify the <strong>Services_GeoNames</strong> request
+   instance, for example:</p><pre><code>&lt;?php
+
+require_once &#039;Services/GeoNames.php&#039;;
+$geo = new Services_GeoNames();
+
+// customize the http request
+$geo-&gt;getRequest()-&gt;setConfig(array(
+    &#039;proxy_host&#039; =&gt; &#039;localhost&#039;,
+    &#039;proxy_port&#039; =&gt; 8118,
+));
+
+// now geonames uses your proxy
+try {
+    $children = $geo-&gt;children(3175395);
+} catch (Services_GeoNames_Exception $exc) {
+    echo &quot;Failed: &quot; . $exc-&gt;getMessage();
+}
+
+?&gt;</code></pre><p>For more infos please read the
+   <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2</a>
+   documentation.</p>
+</section>
+<section id="package-webservices-services-geonames-examples">
+<h2>Examples</h2>
+<h3>Search for all cities named Paris</h3>
+
+    
+      <pre><code>&lt;?php
+require_once &#039;Services/GeoNames.php&#039;;
+
+$geo = new Services_GeoNames();
+
+$cities = $geo-&gt;search(array(&#039;name_equals&#039; =&gt; &#039;Paris&#039;));
+echo &quot;List of cities named Paris:\n&quot;;
+foreach($cities as $city) {
+    printf(&quot; - %s (%s)\n&quot;, $city-&gt;name, $city-&gt;countryName);
+}
+echo &quot;\n&quot;;
+
+?&gt;</code></pre>
+      
+    
+  
+
+  <h3>Find all postal codes near by Toulouse in a radius of 10km</h3>
+
+    
+      <pre><code>&lt;?php
+
+require_once &#039;Services/GeoNames.php&#039;;
+
+$geo = new Services_GeoNames();
+
+$postalCodes = $geo-&gt;findNearbyPostalCodes(array(
+    &#039;lat&#039;     =&gt; 43.606,
+    &#039;lng&#039;     =&gt; 1.444,
+    &#039;radius&#039;  =&gt; 10, // 10km
+    &#039;maxRows&#039; =&gt; 100
+));
+echo &quot;List of postal codes near by Toulouse in a radius of 10km:\n&quot;;
+foreach ($postalCodes as $code) {
+    printf(&quot; - %s (%s)\n&quot;, $code-&gt;postalCode, $code-&gt;placeName);
+}
+echo &quot;\n&quot;;
+
+?&gt;</code></pre>
+      
+    
+  
+
+  <h3>List all countries and capitals in spanish</h3>
+
+    
+      <pre><code>&lt;?php
+require_once &#039;Services/GeoNames.php&#039;;
+
+$geo = new Services_GeoNames();
+$countries = $geo-&gt;countryInfo(array(&#039;lang&#039; =&gt; &#039;es&#039;));
+echo &quot;List of all countries in spanish language:\n&quot;;
+foreach ($countries as $country) {
+    printf(&quot; - %s (capital: %s)\n&quot;, $country-&gt;countryName, $country-&gt;capital);
+}
+echo &quot;\n&quot;;
+
+?&gt;</code></pre>
+      
+    
+  
+
+  <h3>List neightbours countries of France</h3>
+
+    
+      <pre><code>&lt;?php
+require_once &#039;Services/GeoNames.php&#039;;
+
+$geo = new Services_GeoNames();
+
+// retrieve the geonameId if we don&#039;t know it
+$array     = $geo-&gt;countryInfo(array(&#039;country&#039; =&gt; &#039;FR&#039;));
+$geonameId = $array[0]-&gt;geonameId;
+
+$neighbours = $geo-&gt;neighbours(array(&#039;geonameId&#039; =&gt; $geonameId));
+echo &quot;Neighbours of France are:\n&quot;;
+foreach ($neighbours as $neighbour) {
+    printf(&quot; - %s\n&quot;, $neighbour-&gt;countryName);
+}
+
+?&gt;</code></pre>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

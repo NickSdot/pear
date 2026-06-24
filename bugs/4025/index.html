@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4025</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_DNS/index.html">Net_DNS</a> &#187; Bug #4025</h1>
+<p>Net_DNS incompatible with BIND8 as cache</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-04-01 14:42 UTC</td></tr>
+<tr><th>From</th><td>cox at idecnet dot com</td></tr>
+<tr><th>Assigned</th><td>coz</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_DNS/index.html">Net_DNS</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>n/a</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-01 14:42 UTC] cox at idecnet dot com</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>Using BIND 9.3 as caching name server, Net_DNS always fails with &quot;time out&quot;.</p>
+<p>The problem is the function Net_DNS_Packet::parse_rr() when called from the Authority section of Net_DNS_Packet::parse() (line 268).</p>
+<p>Maybe that could be related: from the dnscache doc (http://cr.yp.to/djbdns/dnscache.html):</p>
+<p>&quot;According to RFC 1035, the AA bit ``specifies that the responding name server is an authority for the domain name in question section.&#039;&#039; dnscache is not an authority for any domain names. dnscache never sets the AA bit (except in NXDOMAIN responses, as required by RFC 2308, to work around a common client bug). In contrast, BIND often sets AA for positive responses even when it is not an authority for the domain name. (This appears to have been fixed in BIND 9.)&quot;</p>
+<p>Reproduce code:<br>
+---------------<br>
+Install Bind 9 as caching nameserver (http://vulcanonet.com/soft/dnscachhe). And:</p>
+<p>&lt;?php<br>
+require_once &#039;Net/DNS.php&#039;;<br>
+$dns = new Net_DNS_Resolver;<br>
+$dns-&gt;query(&#039;yahoo.com&#039;);<br>
+$dns-&gt;query(&#039;yahoo.com&#039;);<br>
+echo $dns-&gt;errorstring;<br>
+?&gt;</p>
+</section>
+<section>
+<h3>[2005-04-01 16:10 UTC] cox at idecnet dot com</h3>
+<p>The bug is at Net_DNS_Packet::parse_rr()</p>
+<p>Original line 542:</p>
+<p>if ( !strlen($name)) {</p>
+<p>should be:</p>
+<p>if ($name === NULL) {</p>
+<p>to match the perl code and to actually work.</p>
+<p>Tomas V.V.Cox</p>
+</section>
+<section>
+<h3>[2005-04-06 14:05 UTC] cox at idecnet dot com</h3>
+<p>Fixed in CVS, the bug could being reproduced under BIND8 as caching nameserver.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

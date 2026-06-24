@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2196</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_XUL/index.html">XML_XUL</a> &#187; Bug #2196</h1>
+<p>html chars</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-08-23 07:54 UTC</td></tr>
+<tr><th>From</th><td>me at camdaniel dot com</td></tr>
+<tr><th>Assigned</th><td>schst</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/XML_XUL/index.html">XML_XUL</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0</td></tr>
+<tr><th>OS</th><td>Gentoo Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-23 07:54 UTC] me at camdaniel dot com</h3>
+<p>Description:<br>
+------------<br>
+XML_XUL 0.8.1</p>
+<p>PHP was compiled fairly standard.</p>
+<p>Looks as though it&#039;s running the attributes through html_special_chars() or something. I can see why the conversion is needed but for oncommand it gets in the road.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+require_once &#039;XML/XUL.php&#039;;<br>
+$doc = &amp;XML_XUL::createDocument();<br>
+$doc-&gt;addStylesheet(&#039;chrome://global/skin/&#039;);</p>
+<p>$win = &amp;$doc-&gt;createElement(&#039;Window&#039;, array(<br>
+	&#039;title&#039; =&gt; &#039;site configuration&#039;)<br>
+);<br>
+$doc-&gt;addRoot($win);<br>
+$win-&gt;appendChild( $doc-&gt;createElement(&#039;Script&#039;, array(&#039;src&#039; =&gt; &#039;xul.js&#039;, &#039;type&#039; =&gt; &#039;application/x-javascript&#039;)) );</p>
+<p>$tbar = &amp;$doc-&gt;createElement(&#039;Toolbox&#039;, array(<br>
+	&#039;width&#039; =&gt; &#039;100%&#039;)<br>
+);<br>
+$bar = &amp;$tbar-&gt;addToolbar(array(&#039;id&#039; =&gt; &#039;toolbar&#039;, &#039;style&#039; =&gt; &#039;border-top: 3px black solid&#039;));<br>
+$bar-&gt;addButton(array(<br>
+	&#039;id&#039; =&gt; &#039;siteconfig&#039;,<br>
+	&#039;label&#039; =&gt; &#039;site config&#039;,<br>
+	&#039;oncommand&#039; =&gt; &#039;showConfig(\&#039;siteconfig\&#039;);&#039;)<br>
+);</p>
+<p>$doc-&gt;send();<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;?xml-stylesheet<br>
+href=&quot;chrome://global/skin/&quot; type=&quot;text/css&quot;<br>
+?&gt;<br>
+&lt;window title=&quot;site configuration&quot; xmlns=&quot;http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul&quot;&gt;<br>
+   &lt;script src=&quot;xul.js&quot; type=&quot;application/x-javascript&quot; /&gt;<br>
+   &lt;toolbox width=&quot;100%&quot;&gt;<br>
+      &lt;toolbar id=&quot;toolbar&quot; style=&quot;border-top: 3px black solid&quot;&gt;<br>
+         &lt;toolbarbutton id=&quot;siteconfig&quot; label=&quot;site config&quot; oncommand=&quot;showConfig(&#039;siteconfig&#039;);&quot; /&gt;<br>
+      &lt;/toolbar&gt;<br>
+   &lt;/toolbox&gt;<br>
+&lt;/window&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;?xml-stylesheet<br>
+href=&quot;chrome://global/skin/&quot; type=&quot;text/css&quot;<br>
+?&gt;<br>
+&lt;window title=&quot;site configuration&quot; xmlns=&quot;http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul&quot;&gt;<br>
+   &lt;script src=&quot;xul.js&quot; type=&quot;application/x-javascript&quot; /&gt;<br>
+   &lt;toolbox width=&quot;100%&quot;&gt;<br>
+      &lt;toolbar id=&quot;toolbar&quot; style=&quot;border-top: 3px black solid&quot;&gt;<br>
+         &lt;toolbarbutton id=&quot;siteconfig&quot; label=&quot;site config&quot; oncommand=&quot;showConfig(&amp;apos;siteconfig&amp;apos;);&quot; /&gt;<br>
+      &lt;/toolbar&gt;<br>
+   &lt;/toolbox&gt;<br>
+&lt;/window&gt;</p>
+</section>
+<section>
+<h3>[2004-08-23 07:59 UTC] me at camdaniel dot com</h3>
+<p>Just noticed, that code is cut-pasted and the real script is much bigger and I didn&#039;t $win-&gt;appendChild($tbar); in the code here but I have actually done that in the main script where I noticed the bug.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

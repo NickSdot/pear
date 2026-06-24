@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5880</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_Bittorrent/index.html">File_Bittorrent</a> &#187; Bug #5880</h1>
+<p>utf8 issues</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-06 20:30 UTC</td></tr>
+<tr><th>From</th><td>brian at matzon dot dk</td></tr>
+<tr><th>Assigned</th><td>tacker</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/File_Bittorrent/index.html">File_Bittorrent</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-06 20:30 UTC] brian at matzon dot dk</h3>
+<p>Description:<br>
+------------<br>
+When decoding strings, the $return should be wrapped with a utf8_decode. Fixes issues I had :)</p>
+</section>
+<section>
+<h3>[2005-11-06 20:38 UTC] brian at matzon dot dk</h3>
+<p>fixed summary</p>
+</section>
+<section>
+<h3>[2005-11-06 20:40 UTC] brian at matzon dot dk</h3>
+<p>whoops - this fix also breaks the hash so I am unable to call getStats afterwards...<br>
+ideally the values decoded should be utf8 decoded, and when used internally encoded as appropriate.<br>
+If not, using the api will be tedius at best</p>
+</section>
+<section>
+<h3>[2005-11-07 06:15 UTC] nagash at php dot net</h3>
+<p>Yer, originally everything was done in utf8 enc/dec, but the hash is broken. even if you encode the value, and later decode, it gives you the wrong hash!</p>
+<p>thats why utf8 was originally taken out, but maybe tacker has some ideas to fix it now.</p>
+</section>
+<section>
+<h3>[2005-11-07 08:32 UTC] tacker at php dot net</h3>
+<p>Thanks for the report. Could you please provide the torrent(s) you have problems with?</p>
+</section>
+<section>
+<h3>[2005-11-07 08:34 UTC] tacker at php dot net</h3>
+<p>Thanks for the report. Could you please provide the torrent(s) you have problems with?</p>
+</section>
+<section>
+<h3>[2005-11-19 17:16 UTC] tacker at php dot net</h3>
+<p>File_Bittorrent and the official Bittorrent client do produce the same output, so it is not a bug.</p>
+<p>$ php torrentinfo.php -t bugs/ticket-12/utf8-test.torrent<br>
+              name: æøåöüúù.png<br>
+          filename: utf8-test.torrent<br>
+           comment:<br>
+              date: 1131381448<br>
+        created_by: TorrentCreator 0.3<br>
+             files: (1)<br>
+                    1: æøåöüúù.png<br>
+              size: 2797<br>
+          announce: http://xxxxxx.xx:1250/announce<br>
+     announce_list:</p>
+<p>$ torrentinfo-console bugs/ticket-12/utf8-test.torrent<br>
+torrentinfo-console 4.1.7 - decode BitTorrent metainfo files</p>
+<p>metainfo file.......: utf8-test.torrent<br>
+info hash...........: f083668eaec3330e2f7ea54f7b948d0e82252643<br>
+file name...........: æøåöüúù.png<br>
+file size...........: 2797 (0 * 32768 + 2797)<br>
+tracker announce url: http://xxxxxx.xx:1250/announce<br>
+comment.............:</p>
+</section>
+<section>
+<h3>[2005-11-19 17:50 UTC] brian at matzon dot dk</h3>
+<p>Wow, thats a bit of a letdown. So just because torrentinfo-console doesn&#039;t handle utf8, File_Bittorrent wont either ?</p>
+</section>
+<section>
+<h3>[2005-11-19 18:23 UTC] brian at matzon dot dk</h3>
+<p>To the best of my knowledge, all strings in a torrent are UTF8 encoded. Therefore any usage of said strings in php must be decoded. However doing so results in some unknown errors when doing a hash. I am however unable to confirm this. Consider the following php code:</p>
+<p>$field = &#039;æøå&#039;;<br>
+echo &quot;Name:\t\t\t$field, &quot; . utf8_decode($field) . &quot;\n&quot;;<br>
+echo &quot;md5:\t\t\t&quot; . md5($field) . &quot;\n&quot;;<br>
+echo &quot;utf8&lt;-&gt;utf8, md5:\t&quot; . md5(utf8_encode(utf8_decode($field))) . &quot;\n&quot;;</p>
+<p>which yields the following correct names and hash:<br>
+Name:             Ã¦Ã¸Ã¥, æøå <br>
+md5:              93c0abe43cfa5d4f4fbdd46694442182 <br>
+utf8&lt;-&gt;utf8, md5: 93c0abe43cfa5d4f4fbdd46694442182</p>
+<p>If File_Bittorrent does not fix this UTF8 error, then it&#039;s going to be a PITA to use, since *every* field has to be accessed via an utf8_decode method.</p>
+</section>
+<section>
+<h3>[2005-11-26 22:17 UTC] brian at matzon dot dk</h3>
+<p>I am reopening bug since I have identified the cause and the fix (though I am unable to provide a patch file).</p>
+<p>Hacking around the encode and decode file, I have successfully made it utf8 aware (as it should be!).</p>
+<p>Basically by utf8 encoding and decoding the strings everything works as fine, except we&#039;re getting wrong hash&#039;es. The reason for this is because the string &#039;pieces&#039; is being en/de-coded too, which it shouldn&#039;t.</p>
+<p>The fix therefor must encode and decode only the correct strings and not any and all strings.<br>
+Currently this means that all strings should be handled, except the &#039;pieces&#039; string. I am unsure about the &#039;name&#039; in multi file mode since it&#039;s listed as a &quot;character string&quot; as opposed to a normal string.</p>
+</section>
+<section>
+<h3>[2006-09-04 08:59 UTC] tacker at php dot net</h3>
+<p>In an UTF-8 shell the output is correct. <br>
+$ php torrentinfo.php -t utf8.torrent<br>
+              name: æøåöüúù.png<br>
+          filename: utf8.torrent<br>
+           comment:<br>
+              date: 1131381448<br>
+        created_by: TorrentCreator 0.3<br>
+             files: (1)<br>
+                    1: æøåöüúù.png<br>
+              size: 2797<br>
+          announce: http://xxxxxx.xx:1250/announce<br>
+     announce_list:</p>
+<p>$ torrentinfo-console utf8.torrent<br>
+torrentinfo-console 4.4.0 - dekodiere BitTorrent <br>
+Metainformationsdateien</p>
+<p>Metainformationsdatei....: utf8.torrent<br>
+Informations-Hash........: <br>
+f083668eaec3330e2f7ea54f7b948d0e82252643<br>
+Dateiname................: æøåöüúù.png<br>
+Dateigröße.............: 2797 (0 * 32768 + 2797)<br>
+Tracker-Ankündigungs-URL: http://xxxxxx.xx:1250/announce<br>
+Kommentar................:</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3304</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #3304</h1>
+<p>requestPrefix still broken</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-26 20:43 UTC</td></tr>
+<tr><th>From</th><td>pm at phpshop dot org</td></tr>
+<tr><th>Assigned</th><td>olivierg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-26 20:43 UTC] pm at phpshop dot org</h3>
+<p>Description:<br>
+------------<br>
+I reported this earlier in the mailing list and it looks liek you tried to fix it in 0.6.1.</p>
+<p>Here&#039;s the code I am using:</p>
+<p>// Setup DataGrid<br>
+$dg =&amp; new Structures_DataGrid(SEARCH_ROWS, $_page);<br>
+$dg-&gt;requestPrefix = &quot;_&quot;;<br>
+$dg-&gt;bind($module);</p>
+<p>This works fine.</p>
+<p>However, if there is a page variable in the URL (i.e. isset($_REQUEST[&#039;page&#039;])) then the datagrid does not show any data.</p>
+<p>If I do this while page is being used in the URL:</p>
+<p>// Setup DataGrid<br>
+unset(_$REQUEST[&#039;page&#039;]);<br>
+$dg =&amp; new Structures_DataGrid(SEARCH_ROWS, $_page);<br>
+$dg-&gt;requestPrefix = &quot;_&quot;;<br>
+$dg-&gt;bind($module);</p>
+<p>Then it works fine.  I think it is ignoring the second argument of the Structures_DataGrid constructor.</p>
+</section>
+<section>
+<h3>[2005-01-26 22:10 UTC] asnagy at webitecture dot org</h3>
+<p>Thank you for taking the time to write to us, but this is not<br>
+a bug.</p>
+<p>In order to set the requestPrefix you must us the -&gt;setRequestPrefix() method.</p>
+<p>The requestPrefix variable should be listed as private and will be in the next release.</p>
+</section>
+<section>
+<h3>[2005-01-26 23:06 UTC] pm at phpshop dot org</h3>
+<p>I tried what you said but it still has trouble.</p>
+<p>This is what I changed it to:</p>
+<p>// Setup DataGrid<br>
+$dg =&amp; new Structures_DataGrid(SEARCH_ROWS, $_page);<br>
+$dg-&gt;setRequestPrefix(&quot;_&quot;);<br>
+$dg-&gt;bind($module);</p>
+<p>I am using a page argument in the URL and the datagrid is empty.  If I unset the page variable before the object is instantiated, it works.</p>
+<p>What I am doing wrong?</p>
+</section>
+<section>
+<h3>[2005-01-26 23:55 UTC] ylf at xung dot org</h3>
+<p>Hi,</p>
+<p>I can&#039;t reproduce the bug in here.</p>
+<p>Can you please :</p>
+<p>1 : place an &quot;echo $_page;&quot; before you instantiate the datagrid, so that we can see what this variable contains</p>
+<p>2 : try without the second argument, that is a simple :</p>
+<p>$dg =&amp; new Structures_DataGrid(SEARCH_ROWS);</p>
+<p>Usually you don&#039;t need to specify this second parameter, since Structures_DataGrid will extract it by itself from the GET variables.</p>
+</section>
+<section>
+<h3>[2005-01-27 00:41 UTC] pm at phpshop dot org</h3>
+<p>I echoes the $_page variable and it returns &quot;1&quot;.  This is what I expect it to be.</p>
+<p>If I do the following:</p>
+<p>$_REQUEST[&#039;page&#039;] = &quot;test&quot;;<br>
+$dg =&amp; new Structures_DataGrid(SEARCH_ROWS);<br>
+$dg-&gt;setRequestPrefix(&quot;_&quot;);<br>
+$dg-&gt;bind($module);</p>
+<p>It also breaks the grid.  Try that on your end to see if you can recreate the problem.</p>
+<p>Thanks.</p>
+</section>
+<section>
+<h3>[2005-02-03 19:10 UTC] pm at phpshop dot org</h3>
+<p>Hi,</p>
+<p>Were you able to recreate the problem?</p>
+</section>
+<section>
+<h3>[2005-02-03 19:49 UTC] ojai at nerim dot net</h3>
+<p>Yes I was. Thank you for reporting what definitely is a bug.</p>
+<p>Actually, at first, I couldn&#039;t reproduce it because I always had both a &quot;page&quot; and a &quot;_page&quot; GET parameters. The behaviour you describe happens when there only is a &quot;page&quot; GET parameter, and that this $_GET[&#039;page&#039;] variable evaluates to zero, as a string for example.</p>
+<p>Indeed, setRequestPrefix(&#039;_&#039;) doesn&#039;t help at all.</p>
+<p>Here&#039;s a patch that fixes this bug. It applies just fine against Structures_Datagrid 0.6.2 :</p>
+<p>http://samalyse.com/ln/0009.php</p>
+<p>I sent this patch one week ago to Andrew, the lead maintainer, I explained him the bug in detail. Since I&#039;m only a helper I can&#039;t access the cvs tree directly.</p>
+<p>Cheers</p>
+</section>
+<section>
+<h3>[2005-10-10 23:49 UTC] olivierg at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

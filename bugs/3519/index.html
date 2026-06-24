@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3519</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Sieve/index.html">Net_Sieve</a> &#187; Bug #3519</h1>
+<p>Net_Sieve w/ externally established sockets</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3519</th><td>Net_Sieve w/ externally established sockets</td></tr>
+<tr><th>Submitted</th><td>2005-02-18 21:06 UTC</td></tr>
+<tr><th>From</th><td>liamr at umich dot edu</td></tr>
+<tr><th>Assigned</th><td>amistry</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Sieve/index.html">Net_Sieve</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.1</td></tr>
+<tr><th>OS</th><td>linux 2.4.31</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-18 21:06 UTC] liamr at umich dot edu</h3>
+<p>Description:<br>
+------------<br>
+The bypassAuth boolean was added to Net_Sieve::login to facilitate using Net_Sieve with a sieve socket that had been established externally (using Cyrus&#039;s sivtest, for example).</p>
+<p>There doesn&#039;t seem to be a way to set bypassAuth from code invoking Net_Sieve.  I&#039;ve had to set it manually in Net/Sieve.php.</p>
+<p>Also - if the socket has been established externally, you cannot assume that Net_Sieve::connect is going to retrieve a CAPABILITY statement without specifically requesting one..</p>
+<p>if (PEAR::isError($res = $this-&gt;_doCmd())) {<br>
+        return $res;<br>
+    }<br>
+/*<br>
+    if(PEAR::isError($res = $this-&gt;_cmdCapability() )) {<br>
+        $msg=&#039;Failed to connect, server said: &#039; . $res-&gt;getMessage();<br>
+        $code=2;<br>
+        return $this-&gt;_raiseError($msg,$code);<br>
+    }<br>
+*/<br>
+    $this-&gt;_parseCapability($res);</p>
+<p>If you&#039;re going to try and parse the CAPABILITY statement, you probably should ask for one.  I&#039;d uncomment out the _cmdCapability line, and remove the if{} block above it.</p>
+</section>
+<section>
+<h3>[2005-12-08 18:18 UTC] liamr at umich dot edu</h3>
+<p>10mos later and this is still an issue.</p>
+</section>
+<section>
+<h3>[2006-01-27 19:35 UTC] amistry at php dot net</h3>
+<p>Can you try the following patch to see if it fixes your problem?<br>
+http://am-productions.biz/docs/Sieve.patch</p>
+<p>It also adds STARTTLS support for PHP5 and above.</p>
+</section>
+<section>
+<h3>[2006-02-03 18:45 UTC] liamr at umich dot edu</h3>
+<p>I still had to comment out the doCmd() around line 355, but otherwise the patch worked.  I&#039;m unsure what this block of code is trying to accomplish.  doCmd() doesn&#039;t have anything passed to it, the server connection attached to my socket keeps waiting for /something/.  Debugging shows an endless string of..</p>
+<p>S:<br>
+S:<br>
+S:</p>
+<p>as long as you care to let it go.</p>
+<p>Anyhoo.. here&#039;s my change:</p>
+<p>--- /tmp/Net_Sieve-1.1.1/Sieve.php      2006-02-03 13:41:55.000000000 -0500<br>
++++ Sieve.php   2006-02-03 13:37:47.000000000 -0500<br>
+@@ -355,7 +355,9 @@<br>
+         }<br>
+         $this-&gt;_state = NET_SIEVE_STATE_AUTHORISATION;<br>
++/*<br>
+         if (PEAR::isError($res = $this-&gt;_doCmd())) {<br>
+             return $res;<br>
+         }<br>
++*/<br>
+ <br>
+         // Explicitly ask for the capabilities in case the connection</p>
+</section>
+<section>
+<h3>[2006-02-03 21:37 UTC] amistry at php dot net</h3>
+<p>I&#039;ve uploaded a new patch in the same location.  Try that.  The updated contructor is: Net_Sieve($user = null , $pass  = null , $host = &#039;localhost&#039;, $port = 2000, $logintype = &#039;&#039;, $euser = &#039;&#039;, $debug = false, $bypassAuth = false)</p>
+<p>So you&#039;ll want to bypass the authentication step in connect by using something like this:<br>
+$sieve = Net_Sieve($user,$pass, $host, $port, &#039;&#039;,&#039;&#039;, false, true)</p>
+<p>If that doesn&#039;t work, can you reply with the code that you are using to connect?<br>
+Thanks,</p>
+</section>
+<section>
+<h3>[2006-02-06 19:56 UTC] liamr at umich dot edu</h3>
+<p>It&#039;s looking better...</p>
+<p>I think you&#039;re going to want to skip the login() call in _handleConnectAndLogin(), as the point of using the externally established socket is to allow something else (ie the cyrus &quot;sivtest&quot; utility) to establish the connection and handle the authorization.</p>
+<p>I&#039;m hoping at some point the PECL SASL extension will allow us to stop resorting to sivtest to do GSSAPI authentication to our sieve servers, but in the mean time, I offer this diff:</p>
+<p>diff -U 2 ~liamr/Public/html/Sieve.php Sieve.php <br>
+--- /home/liamr/Public/html/Sieve.php   2006-02-06 13:26:43.000000000 -0500<br>
++++ Sieve.php   2006-02-06 14:50:43.000000000 -0500<br>
+@@ -219,7 +219,9 @@<br>
+             return $res;<br>
+         }<br>
+-        if (PEAR::isError($res = $this-&gt;login($this-&gt;_data[&#039;user&#039;], $this-&gt;_data[&#039;pass&#039;], $this-&gt;_data[&#039;logintype&#039;] , $this-&gt;_data[&#039;euser&#039;] , $this-&gt;_bypassAuth) ) ) {<br>
+-            return $res;<br>
+-        }<br>
++        if ($this-&gt;_bypassAuth === false){<br>
++           if (PEAR::isError($res = $this-&gt;login($this-&gt;_data[&#039;user&#039;], $this-&gt;_data[&#039;pass&#039;], $this-&gt;_data[&#039;logintype&#039;] , $this-&gt;_data[&#039;euser&#039;] , $this-&gt;_bypassAuth) ) ) {<br>
++               return $res;<br>
++           }<br>
++       }<br>
+         return true;</p>
+</section>
+<section>
+<h3>[2006-02-06 20:20 UTC] amistry at php dot net</h3>
+<p>Thanks.  I&#039;ve updated the patch to included your diff.  I&#039;ll be updating the package sometime this week and will close this bug once I&#039;ve uploaded the release.</p>
+</section>
+<section>
+<h3>[2006-02-14 20:30 UTC] liamr at umich dot edu</h3>
+<p>Looks like a different version of my last diff made it into the release.. and it doesn&#039;t work.  We still need to do the this-&gt;connect() even if we skip the this-&gt;login() portion of handleConnectAndLogin().</p>
+<p>--- /usr/lib/php/Net/Sieve.php  2006-02-14 15:25:08.000000000 -0500<br>
++++ Sieve.php   2006-02-14 15:23:41.000000000 -0500<br>
+@@ -219,8 +219,8 @@<br>
+     function _handleConnectAndLogin()<br>
+     {<br>
+-        if($this-&gt;_bypassAuth === false) {<br>
+             if (PEAR::isError($res = $this-&gt;connect($this-&gt;_data[&#039;host&#039;] , $this-&gt;_data[&#039;port&#039;] ))) {<br>
+                 return $res;<br>
+             }<br>
++        if($this-&gt;_bypassAuth === false) {<br>
+             if (PEAR::isError($res = $this-&gt;login($this-&gt;_data[&#039;user&#039;], $this-&gt;_data[&#039;pass&#039;], $this-&gt;_data[&#039;logintype&#039;] , $this-&gt;_data[&#039;euser&#039;] , $this-&gt;_bypassAuth) ) ) {<br>
+                 return $res;</p>
+<p>Here&#039;s the code I&#039;m using:</p>
+<p>&lt;pre&gt;<br>
+&lt;?php</p>
+<p>require( &#039;Net/Sieve.php&#039; );</p>
+<p>$sock = &#039;/tmp/sieve.&#039; . posix_getpid();<br>
+    $SIVTEST = &#039;/usr/bin/sivtest&#039;;<br>
+    $host = &#039;sieve.example.com&#039;;</p>
+<p>if( substr( phpversion(), 0, 1 ) == &#039;5&#039; ) {<br>
+        $domain_socket = &#039;unix://&#039; . $sock;<br>
+    } else {<br>
+        $domain_socket = $sock;<br>
+    }</p>
+<p>$ps = shell_exec( &quot;/bin/ps -ef | /bin/grep $SIVTEST | /bin/grep $sock | /bin<br>
+/grep -v grep&quot; );</p>
+<p>if( !preg_match( &quot;|$sock|&quot;, $ps ) &amp;&amp; file_exists( $sock )) {<br>
+        unlink( $sock );<br>
+    }</p>
+<p>if( !file_exists( $sock )) {<br>
+        exec( &#039;KRB5CCNAME=&#039; . $_SERVER[ &#039;KRB5CCNAME&#039; ]<br>
+                . &quot; $SIVTEST -m GSSAPI&quot;<br>
+                . &#039; -u &#039; . $_SERVER[ &#039;REMOTE_USER&#039; ]<br>
+                . &#039; -a &#039; . $_SERVER[ &#039;REMOTE_USER&#039; ]<br>
+                . &#039; -w &#039; . $_SERVER[ &#039;REMOTE_USER&#039; ]<br>
+                . &#039; -p 2000&#039;<br>
+                . &quot; -X $sock &quot;<br>
+                . $host . &#039; &gt; /dev/null&#039; );<br>
+        sleep( 1 );<br>
+    }</p>
+<p>$sieve = new Net_Sieve( <br>
+            $_SERVER[ &#039;REMOTE_USER&#039; ],<br>
+            $_SERVER[ &#039;REMOTE_USER&#039; ],<br>
+            $domain_socket, <br>
+            0, <br>
+            NULL, <br>
+            NULL, <br>
+            true, <br>
+            true );</p>
+<p>if( PEAR::isError( $sieve )) {<br>
+        print_r( $sieve );<br>
+    }</p>
+<p>print_r( $sieve-&gt;listScripts());</p>
+<p>?&gt;</p>
+</section>
+<section>
+<h3>[2006-03-22 03:11 UTC] amistry at php dot net</h3>
+<p>Sorry about that.  I&#039;ve updated the CVS.  It should be fixed now.  If you could just double-check the version there I&#039;ll roll a release once you&#039;ve confirmed it.  Thanks.</p>
+</section>
+<section>
+<h3>[2006-03-23 17:50 UTC] liamr at umich dot edu</h3>
+<p>Looks good!</p>
+</section>
+<section>
+<h3>[2006-05-21 06:36 UTC] amistry at php dot net</h3>
+<p>Thank you for your bug report. This issue has been fixed<br>
+in the latest released version of the package, which you can download at<br>
+http://pear.php.net/get/Net_Sieve</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

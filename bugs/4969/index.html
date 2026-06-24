@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4969</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_FTP/index.html">Net_FTP</a> &#187; Bug #4969</h1>
+<p>Recursive rm ends in endless loop</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-02 12:03 UTC</td></tr>
+<tr><th>From</th><td>people05 at sopic dot com</td></tr>
+<tr><th>Assigned</th><td>toby</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_FTP/index.html">Net_FTP</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Debian GNU/Linux 3.1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-02 12:03 UTC] people05 at sopic dot com</h3>
+<p>Description:<br>
+------------<br>
+Recursive rm ends in endless loop, &#039;cos FTP.php tries to <br>
+delete &quot;.&quot; and &quot;..&quot;. So when you like to delete /httpdocs/<br>
+demo/, the script tries do delete</p>
+<p>/httpdocs/demo/./<br>
+/httpdocs/demo/././<br>
+/httpdocs/demo/./././<br>
+/httpdocs/demo/././././<br>
+/httpdocs/demo/./././././<br>
+/httpdocs/demo/././././././</p>
+<p>and so on.</p>
+<p>A possible patch can be found on http://www.sopic.com/test/<br>
+FTP.diff.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php</p>
+<p>require_once(&#039;Net/FTP.php&#039;);</p>
+<p>$ftp = new NET_FTP(&#039;localhost&#039;, 21);<br>
+$ftp-&gt;connect();<br>
+$ftp-&gt;login(&#039;demo&#039;, &#039;password&#039;);<br>
+var_dump($ftp-&gt;mkdir(&#039;/httpdocs/demo/test/My test directory/&#039;, true));<br>
+var_dump($ftp-&gt;ls(&#039;/httpdocs&#039;));<br>
+var_dump($ftp-&gt;rm(&#039;/httpdocs/demo/&#039;, true));<br>
+var_dump($ftp-&gt;ls(&#039;/httpdocs&#039;));<br>
+$ftp-&gt;disconnect();</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+true</p>
+<p>array<br>
+  0 =&gt; <br>
+    array<br>
+      &#039;name&#039; =&gt; &#039;.&#039;<br>
+      &#039;size&#039; =&gt; &#039;4096&#039;<br>
+      &#039;rights&#039; =&gt; &#039;rwxr-x---&#039;<br>
+      &#039;user&#039; =&gt; &#039;demo&#039;<br>
+      &#039;group&#039; =&gt; &#039;psaserv&#039;<br>
+      &#039;files_inside&#039; =&gt; &#039;4&#039;<br>
+      &#039;date&#039; =&gt; &#039;Aug  2 13:59&#039;<br>
+      &#039;is_dir&#039; =&gt; &#039;d&#039;<br>
+      &#039;stamp&#039; =&gt; 1122983940<br>
+  1 =&gt; <br>
+    array<br>
+      &#039;name&#039; =&gt; &#039;..&#039;<br>
+      &#039;size&#039; =&gt; &#039;4096&#039;<br>
+      &#039;rights&#039; =&gt; &#039;rwxr-xr-x&#039;<br>
+      &#039;user&#039; =&gt; &#039;root&#039;<br>
+      &#039;group&#039; =&gt; &#039;root&#039;<br>
+      &#039;files_inside&#039; =&gt; &#039;5&#039;<br>
+      &#039;date&#039; =&gt; &#039;Jul  2 20:53&#039;<br>
+      &#039;is_dir&#039; =&gt; &#039;d&#039;<br>
+      &#039;stamp&#039; =&gt; 1120330380<br>
+  2 =&gt; <br>
+    array<br>
+      &#039;name&#039; =&gt; &#039;demo&#039;<br>
+      &#039;size&#039; =&gt; &#039;4096&#039;<br>
+      &#039;rights&#039; =&gt; &#039;rwxr-xr-x&#039;<br>
+      &#039;user&#039; =&gt; &#039;demo&#039;<br>
+      &#039;group&#039; =&gt; &#039;psacln&#039;<br>
+      &#039;files_inside&#039; =&gt; &#039;3&#039;<br>
+      &#039;date&#039; =&gt; &#039;Aug  2 13:59&#039;<br>
+      &#039;is_dir&#039; =&gt; &#039;d&#039;<br>
+      &#039;stamp&#039; =&gt; 1122983940<br>
+  3 =&gt; <br>
+    array<br>
+      &#039;name&#039; =&gt; &#039;index.php&#039;<br>
+      &#039;size&#039; =&gt; &#039;579&#039;<br>
+      &#039;rights&#039; =&gt; &#039;rw-r--r--&#039;<br>
+      &#039;user&#039; =&gt; &#039;demo&#039;<br>
+      &#039;group&#039; =&gt; &#039;psacln&#039;<br>
+      &#039;files_inside&#039; =&gt; &#039;1&#039;<br>
+      &#039;date&#039; =&gt; &#039;Jul 19 16:13&#039;<br>
+      &#039;is_dir&#039; =&gt; &#039;&#039;<br>
+      &#039;stamp&#039; =&gt; 1121782380<br>
+true</p>
+<p>array<br>
+  0 =&gt; <br>
+    array<br>
+      &#039;name&#039; =&gt; &#039;.&#039;<br>
+      &#039;size&#039; =&gt; &#039;4096&#039;<br>
+      &#039;rights&#039; =&gt; &#039;rwxr-x---&#039;<br>
+      &#039;user&#039; =&gt; &#039;demo&#039;<br>
+      &#039;group&#039; =&gt; &#039;psaserv&#039;<br>
+      &#039;files_inside&#039; =&gt; &#039;3&#039;<br>
+      &#039;date&#039; =&gt; &#039;Aug  2 13:59&#039;<br>
+      &#039;is_dir&#039; =&gt; &#039;d&#039;<br>
+      &#039;stamp&#039; =&gt; 1122983940<br>
+  1 =&gt; <br>
+    array<br>
+      &#039;name&#039; =&gt; &#039;..&#039;<br>
+      &#039;size&#039; =&gt; &#039;4096&#039;<br>
+      &#039;rights&#039; =&gt; &#039;rwxr-xr-x&#039;<br>
+      &#039;user&#039; =&gt; &#039;root&#039;<br>
+      &#039;group&#039; =&gt; &#039;root&#039;<br>
+      &#039;files_inside&#039; =&gt; &#039;5&#039;<br>
+      &#039;date&#039; =&gt; &#039;Jul  2 20:53&#039;<br>
+      &#039;is_dir&#039; =&gt; &#039;d&#039;<br>
+      &#039;stamp&#039; =&gt; 1120330380<br>
+  2 =&gt; <br>
+    array<br>
+      &#039;name&#039; =&gt; &#039;index.php&#039;<br>
+      &#039;size&#039; =&gt; &#039;579&#039;<br>
+      &#039;rights&#039; =&gt; &#039;rw-r--r--&#039;<br>
+      &#039;user&#039; =&gt; &#039;demo&#039;<br>
+      &#039;group&#039; =&gt; &#039;psacln&#039;<br>
+      &#039;files_inside&#039; =&gt; &#039;1&#039;<br>
+      &#039;date&#039; =&gt; &#039;Jul 19 16:13&#039;<br>
+      &#039;is_dir&#039; =&gt; &#039;&#039;<br>
+      &#039;stamp&#039; =&gt; 1121782380</p>
+<p>Actual result:<br>
+--------------<br>
+true</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

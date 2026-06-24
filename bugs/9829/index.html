@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9829</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_Request2/index.html">HTTP_Request2</a> &#187; Bug #9829</h1>
+<p>Support for limiting the size of the response body</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #9829</th><td>Support for limiting the size of the response body</td></tr>
+<tr><th>Submitted</th><td>2007-01-14 21:15 UTC</td></tr>
+<tr><th>From</th><td>webmaster at christian-seiler dot de</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_Request2/index.html">HTTP_Request2</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>Any</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-14 21:15 UTC] webmaster at christian-seiler dot de</h3>
+<p>Description:<br>
+------------<br>
+It would be nice if the there was a mechanism in the class to limit the size of the request body. If a remote website is requested, not limiting the maximum size of the request body could either trigger the memory limit or - if that is disabled - cause the script to use more and more memory until it is exhausted (HTTP does not pose a general limit on the size of request bodies). Since it is not clear how much somebody using this class would want to download with it, the limit should be configurable.</p>
+<p>Furthermore, it should be discussed how the class should behave if the limit is exceeded, I could imagine three different actions:</p>
+<p>1) Immediately close the connection to the remote server and throw an error</p>
+<p>2) Immediately close the connection to the server but save the first $limit bytes so that they may be used by the application.</p>
+<p>3) Save the first $limit byes, leave the connection open and continue reading (while discarding the data) until the resource was completely transferred (this would only apply if Keep-Alive connections were used, else, action 2 would suffice)</p>
+<p>One could either settle on one of these three actions or create a setting to let the programmer decide (which I would prefer, since it may depend on your situation which of these methods is the best; but even then one should look for a sane default).</p>
+<p>Implementing this feature would mean:</p>
+<p>a) Checking the Content-Length Header field if set, so it would be possible to close the connection immediately after the request header was transfered - this would only apply to case 1 above. Or - if one would choose case 2, this could cause the class to read exact $limit bytes and then close the connection. Or - in case 3 - one could read $limit bytes, save them and then read the rest without saving them.</p>
+<p>b) Keeping track of the total size of the request body sent until now when using chunked encoding and either closing the connection if the limit is exceeded (cases 1 and 2) or continue reading but discarding data until the last chunk was transfered.</p>
+<p>c) Passing the limit on to the _decodeGzip function so it may cancel if the length it determines in the header of the stream ($dataSize) is larger than the limit. Since according to the PHP manual gzinflate() will always return false if the data stream is larger than the specified limit, it will not be possible to just pass on $limit bytes of the uncompressed content if it is to large. I see no way around that limitation.</p>
+<p>Also, it has to be discussed what shall happen if listeners are attached. In my eyes the best possibility would be to ignore them while implementing this and leave it to the programmer how to react to this; in case 3 the listeners would get all the data and would be responsible themselves for managing the maximum size, in case 2 the listeners would get only $limit bytes of the data and in case 1 the listeners will mostly get none of the data unless no content length header was specified - in which case this would be as in case 2. For cases 1 and 2 an additional event &#039;canceled&#039; would be necessary.</p>
+</section>
+<section>
+<h3>[2007-01-15 17:54 UTC] webmaster at christian-seiler dot de</h3>
+<p>Err... yes, of course I mean response body, sorry for the glitch.</p>
+<p>I know of the possibility to use listeners (also before having submitted this feature request) - but in my eyes there are three major drawbacks with this method:</p>
+<p>1) Having to implement a listener just in order to do a simple request (just having - additionally to the timeout - a limitation of the response body size) is overkill - at least from my point of view.</p>
+<p>2) If the remote server is about to send a _really_ large resource, this will consume a LOT of traffic AND a LOT of time - possibly even causing the time limit of PHP to respond (since on every tick a little bit code WILL be executed, the resource just has to be large enough). If one had the possibility to close the connection before the resource was completely transfered this problem would not occur.</p>
+<p>3) If gzip compression is used, the listener will have to completely re-implement the decompression code your package provides, because that code is only used if $saveBody is true. Only workaround for that would be to disable gzip compression which I don&#039;t like either.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

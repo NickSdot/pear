@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5294</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #5294</h1>
+<p>column names specified in &quot;alais&quot; should be backticked</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-09-05 00:25 UTC</td></tr>
+<tr><th>From</th><td>tommythekid at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>MacOS</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-09-05 00:25 UTC] tommythekid at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+if I specify that I want the &quot;passwd&quot; column to be named &quot;password&quot; (to be compliant with another application that will use this table as well).. I get a horrible crashdump. I believe this could be fixed by enclosing whatever the user specifies in &quot;alias&quot; with backticks so that, just incase it would conflict with a keyword like &quot;password&quot; it would still work.</p>
+<p>Test script:<br>
+---------------<br>
+                &#039;alias&#039; =&gt; array(<br>
+                    &#039;users&#039; =&gt;  &#039;wq_users&#039;,<br>
+                    &#039;auth_user_id&#039; =&gt; &#039;user_id&#039;,<br>
+                    &#039;handle&#039; =&gt; &#039;username&#039;,<br>
+                    &#039;passwd&#039; =&gt; &#039;password&#039;,<br>
+                ),</p>
+<p>Expected result:<br>
+----------------<br>
+it should work and name the password column `password`</p>
+<p>Actual result:<br>
+--------------<br>
+it barfs all over the place (probably a result of the error handler)</p>
+<p>Fudge:~/tmp tommy$ php install.php <br>
+&lt;pre&gt;int(1)<br>
+object(MDB2_Error)#9 (8) {<br>
+  [&quot;error_message_prefix&quot;]=&gt;<br>
+  string(0) &quot;&quot;<br>
+  [&quot;mode&quot;]=&gt;<br>
+  int(1)<br>
+  [&quot;level&quot;]=&gt;<br>
+  int(1024)<br>
+  [&quot;code&quot;]=&gt;<br>
+  int(-33)<br>
+  [&quot;message&quot;]=&gt;<br>
+  string(38) &quot;MDB2 Error: manager schema parse error&quot;<br>
+  [&quot;userinfo&quot;]=&gt;<br>
+  string(90) &quot;Parser error: fieldname &quot;password&quot; not allowed - No error - Byte: 591; Line: 35; Col: 275<br>
+&quot;<br>
+  [&quot;backtrace&quot;]=&gt;<br>
+  array(12) {<br>
+    [0]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(21) &quot;/usr/lib/php/MDB2.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(846)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(10) &quot;PEAR_Error&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(10) &quot;MDB2_Error&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(5) {<br>
+        [0]=&gt;<br>
+        string(38) &quot;MDB2 Error: manager schema parse error&quot;<br>
+        [1]=&gt;<br>
+        int(-33)<br>
+        [2]=&gt;<br>
+        int(1)<br>
+        [3]=&gt;<br>
+        int(1024)<br>
+        [4]=&gt;<br>
+        string(90) &quot;Parser error: fieldname &quot;password&quot; not allowed - No error - Byte: 591; Line: 35; Col: 275<br>
+&quot;<br>
+      }<br>
+    }<br>
+    [1]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(21) &quot;/usr/lib/php/PEAR.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(540)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(10) &quot;MDB2_Error&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(10) &quot;MDB2_Error&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(4) {<br>
+        [0]=&gt;<br>
+        int(-33)<br>
+        [1]=&gt;<br>
+        int(1)<br>
+        [2]=&gt;<br>
+        int(1024)<br>
+        [3]=&gt;<br>
+        string(90) &quot;Parser error: fieldname &quot;password&quot; not allowed - No error - Byte: 591; Line: 35; Col: 275<br>
+&quot;<br>
+      }<br>
+    }<br>
+    [2]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(21) &quot;/usr/lib/php/MDB2.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(486)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(10) &quot;raiseError&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(18) &quot;MDB2_Schema_Parser&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(7) {<br>
+        [0]=&gt;<br>
+        NULL<br>
+        [1]=&gt;<br>
+        int(-33)<br>
+        [2]=&gt;<br>
+        NULL<br>
+        [3]=&gt;<br>
+        NULL<br>
+        [4]=&gt;<br>
+        string(90) &quot;Parser error: fieldname &quot;password&quot; not allowed - No error - Byte: 591; Line: 35; Col: 275<br>
+&quot;<br>
+        [5]=&gt;<br>
+        string(10) &quot;MDB2_Error&quot;<br>
+        [6]=&gt;<br>
+        bool(true)<br>
+      }<br>
+    }<br>
+    [3]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(35) &quot;/usr/lib/php/MDB2/Schema/Parser.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(460)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(10) &quot;raiseError&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(18) &quot;MDB2_Schema_Parser&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(4) {<br>
+        [0]=&gt;<br>
+        int(-33)<br>
+        [1]=&gt;<br>
+        NULL<br>
+        [2]=&gt;<br>
+        NULL<br>
+        [3]=&gt;<br>
+        string(90) &quot;Parser error: fieldname &quot;password&quot; not allowed - No error - Byte: 591; Line: 35; Col: 275<br>
+&quot;<br>
+      }<br>
+    }<br>
+    [4]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(35) &quot;/usr/lib/php/MDB2/Schema/Parser.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(217)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(10) &quot;raiseError&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(18) &quot;MDB2_Schema_Parser&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(3) {<br>
+        [0]=&gt;<br>
+        string(32) &quot;fieldname &quot;password&quot; not allowed&quot;<br>
+        [1]=&gt;<br>
+        NULL<br>
+        [2]=&gt;<br>
+        resource(28) of type (xml)<br>
+      }<br>
+    }<br>
+    [5]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(27) &quot;/usr/lib/php/XML/Parser.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(500)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(10) &quot;endHandler&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(18) &quot;MDB2_Schema_Parser&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(2) {<br>
+        [0]=&gt;<br>
+        resource(28) of type (xml)<br>
+        [1]=&gt;<br>
+        string(5) &quot;FIELD&quot;<br>
+      }<br>
+    }<br>
+    [6]=&gt;<br>
+    array(4) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(27) &quot;/usr/lib/php/XML/Parser.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(500)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(9) &quot;xml_parse&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(3) {<br>
+        [0]=&gt;<br>
+        resource(28) of type (xml)<br>
+        [1]=&gt;<br>
+        string(1465) &quot;&lt;?xml version=&quot;1.0&quot; encoding=&quot;ISO-8859-1&quot; ?&gt;<br>
+&lt;database&gt;</p>
+<p>&lt;name&gt;&lt;variable&gt;database&lt;/variable&gt;&lt;/name&gt;<br>
+ &lt;create&gt;&lt;variable&gt;create&lt;/variable&gt;&lt;/create&gt;</p>
+<p>&lt;table&gt;</p>
+<p>&lt;name&gt;wq_users&lt;/name&gt;</p>
+<p>&lt;declaration&gt;</p>
+<p>&lt;field&gt;<br>
+    &lt;name&gt;user_id&lt;/name&gt;<br>
+    &lt;type&gt;text&lt;/type&gt;<br>
+    &lt;length&gt;32&lt;/length&gt;<br>
+    &lt;notnull&gt;1&lt;/notnull&gt;<br>
+    &lt;default&gt;&lt;/default&gt;<br>
+   &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+    &lt;name&gt;username&lt;/name&gt;<br>
+    &lt;type&gt;text&lt;/type&gt;<br>
+    &lt;length&gt;32&lt;/length&gt;<br>
+    &lt;notnull&gt;1&lt;/notnull&gt;<br>
+    &lt;default&gt;&lt;/default&gt;<br>
+   &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+    &lt;name&gt;password&lt;/name&gt;<br>
+    &lt;type&gt;text&lt;/type&gt;<br>
+    &lt;length&gt;32&lt;/length&gt;<br>
+    &lt;notnull&gt;1&lt;/notnull&gt;<br>
+    &lt;default&gt;&lt;/default&gt;<br>
+   &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+    &lt;name&gt;lastLogin&lt;/name&gt;<br>
+    &lt;type&gt;timestamp&lt;/type&gt;<br>
+    &lt;notnull&gt;1&lt;/notnull&gt;<br>
+    &lt;default&gt;&lt;/default&gt;<br>
+   &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+    &lt;name&gt;isActive&lt;/name&gt;<br>
+    &lt;type&gt;boolean&lt;/type&gt;<br>
+    &lt;notnull&gt;1&lt;/notnull&gt;<br>
+    &lt;default&gt;&lt;/default&gt;<br>
+   &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+    &lt;name&gt;owner_user_id&lt;/name&gt;<br>
+    &lt;type&gt;integer&lt;/type&gt;<br>
+   &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+    &lt;name&gt;owner_group_id&lt;/name&gt;<br>
+    &lt;type&gt;integer&lt;/type&gt;<br>
+   &lt;/field&gt;</p>
+<p>&lt;index&gt;<br>
+    &lt;name&gt;users_user_id&lt;/name&gt;<br>
+    &lt;unique&gt;1&lt;/unique&gt;<br>
+    &lt;field&gt;<br>
+     &lt;name&gt;user_id&lt;/name&gt;<br>
+    &lt;/field&gt;<br>
+   &lt;/index&gt;</p>
+<p>&lt;index&gt;<br>
+    &lt;name&gt;users_unique_i&lt;/name&gt;<br>
+    &lt;unique&gt;1&lt;/unique&gt;<br>
+    &lt;field&gt;<br>
+     &lt;name&gt;username&lt;/name&gt;<br>
+    &lt;/field&gt;<br>
+   &lt;/index&gt;</p>
+<p>&lt;/declaration&gt;</p>
+<p>&lt;/table&gt;</p>
+<p>&lt;sequence&gt;<br>
+  &lt;name&gt;wq_users&lt;/name&gt;<br>
+  &lt;on&gt;<br>
+   &lt;table&gt;wq_users&lt;/table&gt;<br>
+   &lt;field&gt;user_id&lt;/field&gt;<br>
+  &lt;/on&gt;<br>
+ &lt;/sequence&gt;</p>
+<p>&lt;/database&gt;<br>
+&quot;<br>
+        [2]=&gt;<br>
+        int(1)<br>
+      }<br>
+    }<br>
+    [7]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(27) &quot;/usr/lib/php/XML/Parser.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(470)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(12) &quot;_parseString&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(18) &quot;MDB2_Schema_Parser&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(2) {<br>
+        [0]=&gt;<br>
+        string(1465) &quot;&lt;?xml version=&quot;1.0&quot; encoding=&quot;ISO-8859-1&quot; ?&gt;<br>
+&lt;database&gt;</p>
+<p>&lt;name&gt;&lt;variable&gt;database&lt;/variable&gt;&lt;/name&gt;<br>
+ &lt;create&gt;&lt;variable&gt;create&lt;/variable&gt;&lt;/create&gt;</p>
+<p>&lt;table&gt;</p>
+<p>&lt;name&gt;wq_users&lt;/name&gt;</p>
+<p>&lt;declaration&gt;</p>
+<p>&lt;field&gt;<br>
+    &lt;name&gt;user_id&lt;/name&gt;<br>
+    &lt;type&gt;text&lt;/type&gt;<br>
+    &lt;length&gt;32&lt;/length&gt;<br>
+    &lt;notnull&gt;1&lt;/notnull&gt;<br>
+    &lt;default&gt;&lt;/default&gt;<br>
+   &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+    &lt;name&gt;username&lt;/name&gt;<br>
+    &lt;type&gt;text&lt;/type&gt;<br>
+    &lt;length&gt;32&lt;/length&gt;<br>
+    &lt;notnull&gt;1&lt;/notnull&gt;<br>
+    &lt;default&gt;&lt;/default&gt;<br>
+   &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+    &lt;name&gt;password&lt;/name&gt;<br>
+    &lt;type&gt;text&lt;/type&gt;<br>
+    &lt;length&gt;32&lt;/length&gt;<br>
+    &lt;notnull&gt;1&lt;/notnull&gt;<br>
+    &lt;default&gt;&lt;/default&gt;<br>
+   &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+    &lt;name&gt;lastLogin&lt;/name&gt;<br>
+    &lt;type&gt;timestamp&lt;/type&gt;<br>
+    &lt;notnull&gt;1&lt;/notnull&gt;<br>
+    &lt;default&gt;&lt;/default&gt;<br>
+   &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+    &lt;name&gt;isActive&lt;/name&gt;<br>
+    &lt;type&gt;boolean&lt;/type&gt;<br>
+    &lt;notnull&gt;1&lt;/notnull&gt;<br>
+    &lt;default&gt;&lt;/default&gt;<br>
+   &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+    &lt;name&gt;owner_user_id&lt;/name&gt;<br>
+    &lt;type&gt;integer&lt;/type&gt;<br>
+   &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+    &lt;name&gt;owner_group_id&lt;/name&gt;<br>
+    &lt;type&gt;integer&lt;/type&gt;<br>
+   &lt;/field&gt;</p>
+<p>&lt;index&gt;<br>
+    &lt;name&gt;users_user_id&lt;/name&gt;<br>
+    &lt;unique&gt;1&lt;/unique&gt;<br>
+    &lt;field&gt;<br>
+     &lt;name&gt;user_id&lt;/name&gt;<br>
+    &lt;/field&gt;<br>
+   &lt;/index&gt;</p>
+<p>&lt;index&gt;<br>
+    &lt;name&gt;users_unique_i&lt;/name&gt;<br>
+    &lt;unique&gt;1&lt;/unique&gt;<br>
+    &lt;field&gt;<br>
+     &lt;name&gt;username&lt;/name&gt;<br>
+    &lt;/field&gt;<br>
+   &lt;/index&gt;</p>
+<p>&lt;/declaration&gt;</p>
+<p>&lt;/table&gt;</p>
+<p>&lt;sequence&gt;<br>
+  &lt;name&gt;wq_users&lt;/name&gt;<br>
+  &lt;on&gt;<br>
+   &lt;table&gt;wq_users&lt;/table&gt;<br>
+   &lt;field&gt;user_id&lt;/field&gt;<br>
+  &lt;/on&gt;<br>
+ &lt;/sequence&gt;</p>
+<p>&lt;/database&gt;<br>
+&quot;<br>
+ [big snip]</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

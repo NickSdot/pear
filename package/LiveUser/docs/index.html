@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveUser Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/LiveUser/docs/index.html#package-authentication-liveuser-intro">Introduction</a>
+</li>
+<li><a href="package/LiveUser/docs/index.html#package-authentication-liveuser-setup">Setting it up</a>
+</li></ul>
+</nav>
+<section id="package-authentication-liveuser-intro">
+<h2>Introduction</h2>
+<h3>About <strong>LiveUser</strong></h3>
+
+   
+
+   <p><strong>LiveUser</strong> is an advanced authentication and permission
+    framework that comes with a large array of out of the box
+    features which can be used optionally.
+
+    In short, the LiveUser package, provides Access Control List (ACL) functionality.
+
+    The base class is called <strong>LiveUser</strong> and is often
+    referred to as the &quot;client&quot;
+    and is what will be commonly be used to authenticate a specific user
+    and then optionally make permission checks on this user.</p>
+
+   <p>LiveUser provides the following key features:
+
+    The LiveUser class takes care of the login process and can be configured to
+    use a certain permission container and one or more different
+    auth containers.
+
+    That means, you can have your users&#039; data scattered amongst many data
+    containers and have the LiveUser class try each defined container until
+    the user is found.
+
+    For example, you can have all website users who can apply for a new account
+    online on the webserver&#039;s local database.
+
+    Also, you want to enable all your company&#039;s employees to login to the site
+    without the need to create new accounts for all of  them.
+
+    To achieve that, a second container can be defined to be used by the
+    LiveUser class.</p>
+
+   <p>You can also define a permission container of your choice that will manage
+    the rights for each user.
+
+    Depending on the container, you can implement any kind of permission schemes
+    for your application while having one consistent API.</p>
+
+   <p>Using different permission and auth containers,
+    it&#039;s easily possible to integrate newly written applications with older ones
+    that have their own ways of storing permissions and user data.
+
+    Just make a new container type and you&#039;re ready to go!</p>
+
+   <p>Currently available are containers using:
+    PEAR::DB, PEAR::MDB, PEAR::MDB2, ext/PDO, PEAR::XML_Tree, Session and PEAR::Auth.</p>
+
+   <p>There is also an external <a href="http://wiki.pooteeweet.org/LiveUser/">wiki</a>
+    dedicated to LiveUser:</p>
+
+   <p>At this point LiveUser is still in beta stage.
+
+    Even so LiveUser is already being used
+    on a wide range of production websites.
+
+    A non exhaustive list can be found
+    <a href="http://wiki.pooteeweet.org/LiveUser/References">here</a>.</p>
+
+   <p>The current roadmap for LiveUser can be viewed
+    <a href="http://wiki.pooteeweet.org/LiveUser/Client">here</a>.</p>
+
+   <p>A detailed introduction to the core concepts of LiveUser can be found
+    in the following phpmag
+    <a href="http://web.archive.org/web/20071218224817/http://www.php-mag.net/magphpde/magphpde_article/psecom,id,595,nodeid,21.html">article</a>.</p>
+
+   <p>This article was published in april 2004 and is therefore not entirely
+    uptodate.
+
+    However the core principles remain unchanged and most of the recent changes
+    resolve around making the API more consistent and flexible.
+
+    As a result the API examples are mostly out of date.
+
+    The article also fails to mention the fact that the permission containers
+    are now separated in a logic and a storage layer.
+
+    This was done to remove logic duplication as well as to allow the
+    implementation of a stackable storage approach, where users could configure
+    LiveUser to first call a cache storage layer, which in turn would fetch
+    the necessary data on demand from the actual storage layer.</p>
+
+   <p>A more recent article providing a step by step guide to LiveUser and the
+    different permission containers can be found
+    <a href="http://www.gvngroup.be/doc/LiveUser/index.php">here</a>.</p>
+
+   <p>Before you can use LiveUser you will need to setup the necessary data
+    structures for the chosen container.
+
+    Through the use of the configuration options it is possible to customize
+    alot of the aspects of the storage layer.
+
+    Most notably it is possible to alias field and table names.
+
+    This should make it possible to integrate any legacy data into LiveUser.
+
+    Depending on the container chosen you may have to use the database schema
+    installer.
+
+    The installer requires the MDB2_Schema and MDB2 packages and is able to
+    handle most configuration options properly to be able to install the
+    database schema directly into your database.
+
+    You can find the install class in &quot;[PEAR]/data/misc/schema/install.php&quot;.
+
+    There is some sample code which is partially commented out at the top.
+
+    Basically it&#039;s a two step process for both the auth and perm: (1)
+    generate the schema xml file, (2) install the schema.</p>
+
+   <p>During the installation process the installer will create backup files of
+    the installed schema.
+
+    These files will enable the installer to attempt to alter the database if
+    run again with a different configuration.
+
+    However if these files exist the installer will always attempt to alter
+    instead of creating the tables from scratch as long as you are using the sam
+    DSN.
+
+    If for some reason you need to create the tables from scratch again then
+    please delete the backup files with the matching DSN.
+
+    You can find the installer inside the data directory of your pear install
+    directory.
+
+    Its called install.php and at the top of the file you will find a number of
+    sample API calls which are commented out.</p>
+
+   <p>An ER diagram of the database structure can be found
+    <a href="http://www.backendmedia.com/LiveUser/liveuser_db_schema.png">here</a>.</p>
+
+   <p>The diagram details what tables are needed
+    for what permission complexity level.
+
+    If you want to prevent the installer from installing tables you don&#039;t need
+    you can modify the &quot;tables&quot; property of the instance of the permission
+    container you pass to the generateSchema() method in the installer.</p>
+
+   <p>In order to get started with LiveUser the following
+    <a href="http://jystewart.net/process/archives/2005/07/configuring-liveuser/">two</a>
+    <a href="http://jystewart.net/process/archives/2005/08/getting-started-with-liveuser-permissions/">articles</a> should
+    help in getting off the ground.</p>
+
+   <p>The observer support in LiveUser allows users to automatically have LiveUser
+    call certain callbacks on a number of internal events.
+
+    It is documented
+    <a href="http://wiki.pooteeweet.org/LiveUser/Observers">here</a>.</p>
+
+   <p>LiveUser also ship with a wide range of examples.
+
+    These will be installed into the &quot;docs&quot; directory in your PEAR install
+    directory.
+    They try to illustrate various usage scenarios.
+
+    The database examples come with a schema file please see the demodata.php
+    in the examples root folder of the LiveUser package for details on how to
+    install these schema files from the command line or from a browser.
+    You will once again need MDB2_Schema to be able to install the schema files.</p>
+
+   <p>LiveUser package:</p><ul>
+     <li>
+      
+       example1 illustrates using only a single authentication source
+       (in this case XML)
+       with several aliased fields and a custom field.
+      
+     </li>
+     <li>
+      
+       example2 illustrates using a single authentication with permissions
+       (in this case XML)
+       with the optional remember me feature and several aliased fields
+      
+     </li>
+     <li>
+      
+       example4 illustrates using multiple authentication sources
+       (XML and database) with permissions (database) in a more real world news
+       administration scenario
+      
+     </li>
+     <li>
+      
+       example5 illustrates using single authentication sources (database) with
+       permissions (database) in a more real world news administration scenario
+      
+     </li>
+    </ul>
+</section>
+<section id="package-authentication-liveuser-setup">
+<h2>Setting it up</h2>
+<h3>Example Steps for Getting the Examples Going</h3>
+
+   
+
+   <p>Getting the LiveUser examples working can be somewhat difficult for
+    developers who are new to PHP and PEAR.
+    Here is a list of steps necessary to get the <code>example4</code>
+    and GVN examples working with a MySQL database in LiveUser
+    <code>0.16.12</code>.</p><ol>
+     <li>
+      
+       Install PHP and MySQL OR Sign up with a web host that provides
+       PHP and MySQL.
+      
+     </li>
+     <li>
+      
+       Install PEAR. This is done either with the
+       command line installer,
+       or by uploading <code>go-pear.php</code> to
+       your web host through FTP.
+      
+     </li>
+     <li>
+      
+       Now install the PEAR packages <code>LiveUser</code>,
+       <code>MDB2</code>, <code>MDB2_Driver_mysql</code>,
+       <code>HTML_Template_IT</code>, <code>HTML_QuickForm</code>,
+       and <code>Var_Dump</code>.
+       Command line will be something like
+       <strong>pear install --alldeps LiveUser-beta</strong> (repeat for each package).
+       If you used the <code>go-pear.php</code>, there&#039;s some web-based
+       way to install packages through that, but I haven&#039;t used it.
+      
+     </li>
+     <li>
+      
+       Now create your empty database in MySQL.
+      
+     </li>
+     <li>
+      
+       Now copy the files of <code>example4</code> to your web root.
+       On my Linux system the examples ended up in
+       <code>/usr/share/pear/docs/LiveUser/docs/examples</code>
+       and my Apache web root is at <code>/var/www</code>. You can find
+       out where the examples are by executing
+       <strong>pear list-files LiveUser</strong>.
+      
+     </li>
+     <li>
+      
+       Create the database by viewing the <code>demodata.php</code>
+       through your web browser with a URL like
+       <code>http://www.example.com/LU/demodata.php?dsn=mysql://dbuser:pwd@localhost/databasename&amp;file=/var/www/LU/demodata.xml&amp;create=1</code>.
+       You must replace the file path values and the database
+       <code>user</code>, <code>password</code>,
+       <code>host</code>, and <code>database name</code> with values
+       appropriate for your own system.
+       If this gives you a &quot;success&quot; message and you have phpMyAdmin or something,
+       you should be able to look at the database now and see tables with data
+       in them.
+      
+      <blockquote>
+
+       <p>It is reported that on some systems, you must make alterations to the
+        <code>demodata.xml</code> file before this will run properly.
+        Within all &lt;is_active&gt;..&lt;/is_active&gt; tags replace the value
+        &quot;<code>Y</code>&quot; with &quot;<code>1</code>&quot;
+        and &quot;<code>N</code>&quot; with &quot;<code>0</code>&quot;.</p>
+      </blockquote>
+
+     </li>
+     <li>
+      
+       Edit the <code>conf.php</code> file and enter your database information.
+      
+     </li>
+     <li>
+      
+       At this point you should be able to view the <code>index.html</code>
+       page through a web browser and log in and use <code>example4</code>.
+      
+     </li>
+     <li>
+      
+       To get the <a href="http://www.gvngroup.be/doc/LiveUser/index.php">GVN samples</a>
+       going, first create a &quot;GVN&quot; folder under your web root.
+      
+     </li>
+     <li>
+      
+       Go through the GVN tutorials, starting from the beginning because
+       there are dependencies, and save all of the sample files.
+      
+     </li>
+     <li>
+      
+       In most of the files I found that the include to
+       <code>LiveUser/LiveUser.php</code> had to be corrected to just be
+       <code>LiveUser.php</code>.
+      
+     </li>
+     <li>
+      
+       Copy the file <code>Auth_XML.xml</code> from
+       <code>example4</code> into the GVN folder.
+      
+     </li>
+     <li>
+      
+       Copy your database information and the LiveUser configuration array from
+       <code>example4/conf.php</code> into GVN&#039;s
+       <code>conf.php</code> and
+       <code>conf_admin.php</code> files.
+      
+     </li>
+     <li>
+      
+       In example4, the users that are in the database are deactivated for some reason...
+       in the <code>peoples</code> table change the values in the
+       <code>isactive</code> column to <code>1</code>.
+      
+     </li>
+    </ol>
+   
+
+   <p>The above steps got me to the point where I have the working sample app
+    and pages that demonstrate adding users, etc.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

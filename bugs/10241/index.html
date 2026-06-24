@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #10241</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #10241</h1>
+<p>Cascading joins when one involves composite keys fails</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-03-02 07:02 UTC</td></tr>
+<tr><th>From</th><td>dsanders at baselinesolutions dot com dot au</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>5.2.1</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-03-02 07:02 UTC] dsanders at baselinesolutions dot com dot au</h3>
+<p>Description:<br>
+------------<br>
+When calling joinAdd() using composite keys and using a joinee object that has already been joined to a third table, incorrect SQL is formed.</p>
+<p>Test script:<br>
+---------------<br>
+links.ini:</p>
+<p>[test_b]<br>
+fk_a,fk_b=test_a:key_a,key_b<br>
+fk_0 = test_0:id</p>
+<p>$test_0 = DB_DataObject::factory(&#039;test_0&#039;);<br>
+$test_a = DB_DataObject::factory(&#039;test_a&#039;);<br>
+$test_b = DB_DataObject::factory(&#039;test_b&#039;);</p>
+<p>$test_b-&gt;joinAdd($test_0);<br>
+$test_a-&gt;joinAdd($test_b);</p>
+<p>DB_DataObject::debugLevel(1);<br>
+$test_a-&gt;find();</p>
+<p>Expected result:<br>
+----------------<br>
+DO_Test_a: find:<br>
+DO_Test_a: QUERY: SELECT *<br>
+FROM test_a</p>
+<p>INNER JOIN test_b ON test_b.fk_a=test_a.key_a AND test_b.fk_b=test_a.key_b<br>
+INNER JOIN test_0 ON test_0.id=test_b.fk_0</p>
+<p>Actual result:<br>
+--------------<br>
+DO_Test_a: find:<br>
+DO_Test_a: QUERY: SELECT *<br>
+FROM test_a</p>
+<p>INNER JOIN test_b ON test_b.fk_a=test_a.key_a<br>
+INNER JOIN test_0 ON test_0.id=test_b.fk_0 AND test_b.fk_b=test_a.key_b<br>
+INNER JOIN test_0 ON test_0.id=test_b.fk_0</p>
+</section>
+<section>
+<h3>[2007-03-02 07:11 UTC] dsanders at baselinesolutions dot com dot au</h3>
+<p>Here&#039;s a patch (basically only use {$appendJoin} in the final iteration):</p>
+<p>@@ -3229,11 +3229,14 @@ class DB_DataObject extends DB_DataObjec<br>
+                     $key_count = count($ofield);<br>
+                     for($i = 0; $i &lt; $key_count; $i++) {<br>
+                         if ($i == 0) {<br>
+-                            $this-&gt;_join .= &quot; ON {$joinAs}.{$ofield[$i]}={$table}.{$tfield[$i]} {$appendJoin} &quot;;<br>
++                            $this-&gt;_join .= &quot; ON {$joinAs}.{$ofield[$i]}={$table}.{$tfield[$i]} &quot;;<br>
+                         }<br>
+-                        else {<br>
++                        else if ($i == $key_count - 1) {<br>
+                             $this-&gt;_join .= &quot; AND {$joinAs}.{$ofield[$i]}={$table}.{$tfield[$i]} {$appendJoin} &quot;;<br>
+                         }<br>
++                        else {<br>
++                            $this-&gt;_join .= &quot; AND {$joinAs}.{$ofield[$i]}={$table}.{$tfield[$i]} &quot;;<br>
++                        }<br>
+                      }<br>
+                 } else {<br>
+                     $this-&gt;_join .= &quot; ON {$joinAs}.{$ofield}={$table}.{$tfield} {$appendJoin} &quot;;</p>
+</section>
+<section>
+<h3>[2007-03-02 07:17 UTC] dsanders at baselinesolutions dot com dot au</h3>
+<p>Sorry I&#039;m an idiot, the correct package is DB_DataObject</p>
+</section>
+<section>
+<h3>[2007-03-02 07:22 UTC] dsanders at baselinesolutions dot com dot au</h3>
+<p>Added package version</p>
+</section>
+<section>
+<h3>[2007-03-02 07:40 UTC] dsanders at baselinesolutions dot com dot au</h3>
+<p>I see now it was fixed in CVS about a week ago.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1404</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #1404</h1>
+<p>xsd:dateTime members in complex types are serialized as xsd:string</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-14 02:47 UTC</td></tr>
+<tr><th>From</th><td>clawrence at optimiser dot com</td></tr>
+<tr><th>Status</th><td>Open</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>redhat 7.2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-14 02:47 UTC] clawrence at optimiser dot com</h3>
+<p>Description:<br>
+------------<br>
+DateTime members of complex types when used as output from a SOAP operation are mis-reported by PEAR::SOAP (0.8RC3 beta) as being string types (see echoDate2() for details).</p>
+<p>The echoDate1() operation correctly reports the dateTime datatype primitive in it&#039;s response.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+set_magic_quotes_runtime(0);<br>
+ini_set(&quot;magic_quotes_gpc&quot;, 0);</p>
+<p>class SOAPDateWrap {<br>
+  var $datefied;</p>
+<p>function SOAPDateWrap ($datefied = NULL) {<br>
+    $this-&gt;datefied = $datefied;<br>
+  }<br>
+}</p>
+<p>require_once &#039;SOAP/Value.php&#039;;</p>
+<p>class SOAPEchoDateService {<br>
+  var $__dispatch_map = array();<br>
+  var $__typedef = array();</p>
+<p>function SOAPEchoDateService() {<br>
+    // Define the SOAPDateWrap Type<br>
+    $this-&gt;__typedef[&#039;{http://www.optimiser.com/soap}SOAPDateWrap&#039;] = array(&#039;datefied&#039;     =&gt; &#039;dateTime&#039;);<br>
+    // Define the echoDate1 operation<br>
+    $this-&gt;__dispatch_map[&#039;echoDate1&#039;] = array(&#039;in&#039; =&gt; array(&#039;inDate&#039; =&gt; &#039;dateTime&#039;), &#039;out&#039; =&gt; array(&#039;outDate&#039; =&gt; &#039;dateTime&#039;));<br>
+    // Define the echoDate2 operation<br>
+    $this-&gt;__dispatch_map[&#039;echoDate2&#039;] = array(&#039;in&#039;  =&gt; array(&#039;inDate&#039; =&gt; &#039;dateTime&#039;), &#039;out&#039; =&gt; array(&#039;outDateWrap&#039; =&gt; &#039;{http://www.optimiser.com/soap}SOAPDateWrap&#039;));<br>
+  }</p>
+<p>function __dispatch($methodname) {<br>
+    if (isset($this-&gt;__dispatch_map[$methodname]))<br>
+      return $this-&gt;__dispatch_map[$methodname];<br>
+    return NULL;<br>
+  }</p>
+<p>function echoDate1($inDate) {<br>
+    $outDate = $inDate;<br>
+    return new SOAP_Value(&#039;outDate&#039;, &#039;dateTime&#039;, $outDate);<br>
+  }</p>
+<p>function echoDate2($inDate) {<br>
+    $outDate = $inDate;<br>
+    return new SOAP_Value(&#039;outDateWrap&#039;, &#039;{http://www.optimiser.com/soap}SOAPDateWrap&#039;, new SOAPDateWrap($outDate));<br>
+  }<br>
+}</p>
+<p>require_once &#039;Log.php&#039;;<br>
+require_once &#039;SOAP/Server.php&#039;;</p>
+<p>$log = &amp;Log::singleton(&#039;file&#039;, &#039;/tmp/echoDate.log&#039;, &#039;echoDate&#039;, array(&#039;mode&#039; =&gt; 0666), LOG_INFO);<br>
+$server = new SOAP_Server;<br>
+$server-&gt;_auto_translation = true;<br>
+$soapclass = new SOAPEchoDateService();<br>
+$server-&gt;addObjectMap($soapclass,&#039;urn:SOAPEchoDate&#039;);<br>
+if (isset($_SERVER[&#039;REQUEST_METHOD&#039;]) &amp;&amp;<br>
+    $_SERVER[&#039;REQUEST_METHOD&#039;] == &#039;POST&#039;) {<br>
+  $log-&gt;log(&quot;[&quot;.getmypid().&quot;] REQUEST: \n&quot;.$HTTP_RAW_POST_DATA);<br>
+  ob_start();<br>
+  $server-&gt;service($HTTP_RAW_POST_DATA);<br>
+  $log-&gt;log(&quot;[&quot;.getmypid().&quot;] RESPONSE: \n&quot;.ob_get_contents());<br>
+  ob_end_flush();<br>
+} else {<br>
+  require_once &#039;SOAP/Disco.php&#039;;<br>
+  $disco = new SOAP_DISCO_Server($server,&#039;SOAPEchoDate&#039;);<br>
+  header(&quot;Content-type: text/xml&quot;);<br>
+  if (isset($_SERVER[&#039;QUERY_STRING&#039;])<br>
+      &amp;&amp; strcasecmp($_SERVER[&#039;QUERY_STRING&#039;], &#039;wsdl&#039;) == 0) {<br>
+    echo $disco-&gt;getWSDL();<br>
+  } else {<br>
+    echo $disco-&gt;getDISCO();<br>
+  }<br>
+  exit;<br>
+}</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+The datefied member of the SOAPDateWrap complex type returned from the echoDate2() operation should be of type xsd:dateTime as follows:</p>
+<p>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</p>
+<p>&lt;SOAP-ENV:Envelope  xmlns:SOAP-ENV=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;<br>
+ xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;<br>
+ xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;<br>
+ xmlns:SOAP-ENC=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot;<br>
+ xmlns:ns4=&quot;http://www.optimiser.com/soap&quot;<br>
+ xmlns:ns5=&quot;urn:SOAPEchoDate&quot;<br>
+ SOAP-ENV:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot;&gt;<br>
+&lt;SOAP-ENV:Body&gt;</p>
+<p>&lt;ns5:echoDate2Response&gt;<br>
+&lt;outDateWrap xsi:type=&quot;ns4:SOAPDateWrap&quot;&gt;<br>
+&lt;datefied xsi:type=&quot;xsd:dateTime&quot;&gt;2004-05-14T10:21:18.6939682+08:00&lt;/datefied&gt;&lt;/outDateWrap&gt;&lt;/ns5:echoDate2Response&gt;<br>
+&lt;/SOAP-ENV:Body&gt;<br>
+&lt;/SOAP-ENV:Envelope&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+The datefied member of the SOAPDateWrap complex type returned from the echoDate2() operation is of type xsd:string as follows:</p>
+<p>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</p>
+<p>&lt;SOAP-ENV:Envelope  xmlns:SOAP-ENV=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;<br>
+ xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;<br>
+ xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;<br>
+ xmlns:SOAP-ENC=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot;<br>
+ xmlns:ns4=&quot;http://www.optimiser.com/soap&quot;<br>
+ xmlns:ns5=&quot;urn:SOAPEchoDate&quot;<br>
+ SOAP-ENV:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot;&gt;<br>
+&lt;SOAP-ENV:Body&gt;</p>
+<p>&lt;ns5:echoDate2Response&gt;<br>
+&lt;outDateWrap xsi:type=&quot;ns4:SOAPDateWrap&quot;&gt;<br>
+&lt;datefied xsi:type=&quot;xsd:string&quot;&gt;2004-05-14T10:21:18.6939682+08:00&lt;/datefied&gt;&lt;/outDateWrap&gt;&lt;/ns5:echoDate2Response&gt;<br>
+&lt;/SOAP-ENV:Body&gt;<br>
+&lt;/SOAP-ENV:Envelope&gt;</p>
+</section>
+<section>
+<h3>[2006-07-11 10:58 UTC] misc1 at elmerproductions dot com</h3>
+<p>I have the same problem with dateTime (and also had it with another type), so this is apparently still an issue in PEAR::SOAP version 0.9.4. However, there is a workaround by using the SOAP_Value class.</p>
+<p>My type is an array of struct with several fields (a,b,c). Assume &#039;b&#039; is the dateTime. To return this properly I use the following to define a single element of the array to return:</p>
+<p>function get_element($aval,$bval,$cval)<br>
+{<br>
+  return array(<br>
+    &#039;a&#039;=&gt;$aval, // simple value works automatically<br>
+    &#039;b&#039;=&gt;new SOAP_Value(&#039;b&#039;,&#039;dateTime&#039;,$bval), // more complex types need to use the SOAP_Value class<br>
+    &#039;c&#039;=&gt;$cval // simple value works automatically<br>
+  );<br>
+}</p>
+<p>When such an element is returned as response to a SOAP request, &#039;b&#039; is properly returned as dateTime instead of string.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

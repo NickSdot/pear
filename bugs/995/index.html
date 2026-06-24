@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #995</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_WebDAV_Client/index.html">HTTP_WebDAV_Client</a> &#187; Bug #995</h1>
+<p>Support for WebDAV authentication is lacking</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-11 11:42 UTC</td></tr>
+<tr><th>From</th><td>s dot binge at codefusion dot co dot za</td></tr>
+<tr><th>Assigned</th><td>hholzgra</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_WebDAV_Client/index.html">HTTP_WebDAV_Client</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Any</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-11 11:42 UTC] s dot binge at codefusion dot co dot za</h3>
+<p>Description:<br>
+------------<br>
+When opening a WebDAV stream using authentication information (e.g. fopen(&quot;webdav://user:pass@my.webdav.server/file.dat&quot;)) the function fails if the username or password contains an &#039;@&#039; character .</p>
+<p>The code appears to interpret the first &#039;@&#039; character as the end of the authentication information.</p>
+<p>Reproduce code:<br>
+---------------<br>
+fopen(&quot;webdav://user@host.com:p@ssword@my.webdav.server/file.dat&quot;</p>
+<p>Expected result:<br>
+----------------<br>
+The filestream should successfully be opened using authentication username &#039;user@host.com&#039; and password &#039;p@ssword&#039; (assuming the user has the relevant rights on the server).</p>
+<p>Actual result:<br>
+--------------<br>
+PHP Warning:  fopen(webdav://...@my.webdav.server/file.dat): failed to open stream: &quot;http_webdav_client_stream::stream_open&quot; call failed in /test.php on line XX</p>
+</section>
+<section>
+<h3>[2004-03-11 11:50 UTC] s dot binge at codefusion dot co dot za</h3>
+<p>A possible solution is to urlencode() the username and password in the webdav URL, meaning the first &#039;@&#039; symbol does denote the end of the authentication information, as any other &#039;@&#039; symbols that were present were encoded. This requires the following patch to the WebDAV class in order to support urlencode()&#039;ed authentication information:</p>
+<p>--- Stream.php.old	2003-12-20 03:00:15.000000000 +0200<br>
++++ Stream.php	2004-01-28 13:51:27.000000000 +0200<br>
+@@ -757,10 +757,10 @@<br>
+ <br>
+         // extract authentication information<br>
+         if (isset($url[&#039;user&#039;])) {<br>
+-            $this-&gt;user = $url[&#039;user&#039;];<br>
++            $this-&gt;user = urldecode($url[&#039;user&#039;]);<br>
+         }<br>
+         if (isset($url[&#039;pass&#039;])) {<br>
+-            $this-&gt;pass = $url[&#039;pass&#039;];<br>
++            $this-&gt;pass = urldecode($url[&#039;pass&#039;]);<br>
+         }<br>
+         <br>
+         return true;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

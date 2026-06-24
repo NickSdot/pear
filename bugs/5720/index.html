@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5720</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Testing &#187; <a href="package/PHPUnit2/index.html">PHPUnit2</a> &#187; Bug #5720</h1>
+<p>Class &#039;PHPUnit2_Framework_TestCase&#039; not found (Warning.php line 37)</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-10-19 19:02 UTC</td></tr>
+<tr><th>From</th><td>tom at tomhowells dot co dot uk</td></tr>
+<tr><th>Assigned</th><td>sebastian</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PHPUnit2/index.html">PHPUnit2</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.5</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-19 19:02 UTC] tom at tomhowells dot co dot uk</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m trying to execute a test suite through the PHP CLI, however it&#039;s reported that my PHP script contains a syntax error; when viewed through a browser, the following fatal error is given:</p>
+<p>Fatal error: Class &#039;PHPUnit2_Framework_TestCase&#039; not found in C:\PHP\PEAR\lib\PHPUnit2\Framework\Warning.php on line 37</p>
+<p>I found a closed bug very similar to this one (#3402), and I suspect the cause is the same, as the error appears almost identical under the same type of conditions; I&#039;m running PHPUnit2 2.3.0 under PHP 5.0.5 on Windows XP.</p>
+<p>See below for the source of the PHP script generating this error.</p>
+<p>Test script:<br>
+---------------<br>
+// all.php<br>
+&lt;?php<br>
+	require_once(&#039;PHPUnit2/Framework/TestCase.php&#039;);<br>
+	require_once(&#039;PHPUnit2/Framework/TestSuite.php&#039;);<br>
+	require_once(&#039;PHPUnit2/TextUI/TestRunner.php&#039;);<br>
+	require_once(&#039;external.php&#039;);<br>
+	<br>
+	$suite = new PHPUnit2_Framework_TestSuite;<br>
+	$suite-&gt;addTestSuite(&#039;ExternalDataTest&#039;);<br>
+	PHPUnit2_TextUI_TestRunner::run($suite);<br>
+?&gt;</p>
+<p>// external.php<br>
+&lt;?php<br>
+	require_once(&#039;../includes/errors.php&#039;);<br>
+	require_once(&#039;../includes/external.php&#039;);<br>
+	<br>
+	class ExtDataTest extends ExternalData {<br>
+		public static function getData($key, &amp;$array, $default, $type) {<br>
+			return parent::getData(key, $array, $default, $type);<br>
+		}<br>
+	}<br>
+	class ExternalDataTest extends PHPUnit2_Framework_TestCase {<br>
+		public static function testGetData() {<br>
+			static $array = array(&#039;one&#039; =&gt; &#039;test&#039;, &#039;two&#039; =&gt; &#039; testing &#039;, &#039;three&#039; =&gt; &#039;true&#039;, &#039;four&#039; =&gt; &#039; 1 &#039;, &#039;five&#039; =&gt; 0, &#039;six&#039; =&gt; array(1, 2, 3), &#039;seven&#039; =&gt; &#039;&#039;);<br>
+			static $default = &#039;Nothing&#039;;<br>
+			static $data_types = array(&#039;one&#039; =&gt; &#039;string&#039;, &#039;two&#039; =&gt; &#039;string&#039;, &#039;three&#039; =&gt; &#039;boolean&#039;, &#039;four&#039; =&gt; &#039;int&#039;, &#039;five&#039; =&gt; &#039;boolean&#039;, &#039;six&#039; =&gt; &#039;array&#039;, &#039;seven&#039; =&gt; &#039;string&#039;);<br>
+			static $expected = array(&#039;one&#039; =&gt; &#039;test&#039;, &#039;two&#039; =&gt; &#039;testing&#039;, &#039;three&#039; =&gt; true, &#039;four&#039; =&gt; 1, &#039;five&#039; =&gt; false, &#039;six&#039; =&gt; array(1, 2, 3), &#039;seven&#039; =&gt; &#039;Nothing&#039;);<br>
+			<br>
+			foreach ($array as $key =&gt; $value) {<br>
+				$result = ExtDataTest::getData($key, $array, $default, $data_types[$key]);<br>
+				self::assertTrue($result === $expected[$key], &quot;External data for array element: $key\n Expected result: $expected[$key]\n Actual result: $result\n&quot;);<br>
+			}<br>
+		}<br>
+	}<br>
+?&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+Fatal error: Class &#039;PHPUnit2_Framework_TestCase&#039; not found in C:\PHP\PEAR\lib\PHPUnit2\Framework\Warning.php on line 37<br>
+Call Stack<br>
+#	Function	Location<br>
+1	{main}()	c:\Apache\htdocs\all.php:0<br>
+2	require_once()	c:\Apache\htdocs\all.php:2<br>
+3	require_once()	C:\PHP\PEAR\lib\PHPUnit2\Framework\TestCase.php:26<br>
+4	require_once()	C:\PHP\PEAR\lib\PHPUnit2\Framework\TestResult.php:25<br>
+5	require_once()	C:\PHP\PEAR\lib\PHPUnit2\Framework\TestListener.php:24<br>
+6	require_once()	C:\PHP\PEAR\lib\PHPUnit2\Framework\TestSuite.php:26</p>
+</section>
+<section>
+<h3>[2005-10-19 20:33 UTC] mseo at fermatcapital dot com</h3>
+<p>Yes. I&#039;m having the same fatal error. I found a circular <br>
+dependency of require_once&#039;s, and in the class TestCase is <br>
+caught chasing its tail. I believe this was the problem in <br>
+#3402. See below for the dependencies. Note that Test...is <br>
+short for PHPUnit2_Framework_Test... and Warning is actually <br>
+PHPUNit2_Framework_Warning.</p>
+<p>TestCase-TestResult-TestListener-TestSuite-Warning-TestCase</p>
+<p>The require_once&#039;s are circular in the other versions as <br>
+well (e.g. v2.2.0 and v2.1.5), but appearantly, the class <br>
+PHPUnit2_Framework_TestCase is not being circularly <br>
+referenced.</p>
+<p>I&#039;m running Entropy&#039;s distribution of PHP-5.0.4-1 on MacOSX <br>
+10.4.2</p>
+</section>
+<section>
+<h3>[2005-10-20 05:00 UTC] sebastian at php dot net</h3>
+<p>I added a workaround for this and released PHPUnit 2.3.1.</p>
+<p>This issue will be properly fixed in PHPUnit 2.4, which will use the SPL Autoloader of PHP 5.1.0 to resolve the circular dependencies.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

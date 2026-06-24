@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4687</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_Template_Flexy/index.html">HTML_Template_Flexy</a> &#187; Bug #4687</h1>
+<p>Dynamic generated form elements are ignored</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-06-26 18:48 UTC</td></tr>
+<tr><th>From</th><td>jo at feuersee dot de</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_Template_Flexy/index.html">HTML_Template_Flexy</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-26 18:48 UTC] jo at feuersee dot de</h3>
+<p>Description:<br>
+------------<br>
+This is maybe related/similar to bug #204       <br>
+(http://pear.php.net/bugs/bug.php?id=204), however, the       <br>
+proposed solution there didn&#039;t help.       <br>
+       <br>
+I am using (the BTW superb) Flexy Template to generate a      <br>
+HTML document from session data to implement a shopping      <br>
+basket. Because of the nature of the circumstances, the      <br>
+names of the form data have to be dynamically generated.      <br>
+     <br>
+I am using PHP style configuration files to store the     <br>
+attributes of form elements, eg.:     <br>
+$conf = array(     <br>
+  &#039;shipping&#039; =&gt; array(     <br>
+	&#039;attributes&#039; =&gt;  array(     <br>
+	        &#039;type&#039; =&gt;	&#039;text&#039;,     <br>
+		&#039;size&#039; =&gt;	8,     <br>
+		&#039;maxlength&#039; =&gt;	8,     <br>
+		&#039;readonly&#039; =&gt;	&#039;readonly&#039;     <br>
+	),     <br>
+	&#039;setValue&#039; =&gt;	sprintf(&#039;%.2f&#039;, $this-&gt;country[0]   <br>
+[&#039;Shipping&#039;])     <br>
+   ),    <br>
+...    <br>
+);     <br>
+--eof    <br>
+This data is processed and passed to the appropriate    <br>
+HTML_Template_Flexy_Element method, which works perfectly    <br>
+for statically named form elements.    <br>
+For the dynamic named form elements I tried to add    <br>
+elements like this:    <br>
+    <br>
+// SQL query to get results into $this-&gt;summary    <br>
+$i = 0;    <br>
+foreach($this-&gt;summary as $key =&gt; $val) {    <br>
+        $conf[&quot;items$i&quot;] = array(    <br>
+		&#039;attributes&#039; =&gt; array(    <br>
+			&#039;type&#039; =&gt;	&#039;text&#039;,    <br>
+		),    <br>
+		&#039;setValue&#039; =&gt; $this-&gt;summary[&#039;items&#039;]    <br>
+	);    <br>
+}    <br>
+--eof   <br>
+   <br>
+However, the results aren&#039;t as expected (as seen below). <br>
+Any way to work artound this and still keep the template <br>
+approach?</p>
+<p>Reproduce code:<br>
+---------------<br>
+template:<br>
+{foreach:summary,key,row}<br>
+&lt;input name=&quot;price{key}&quot; butt=&quot;head&quot;&gt;<br>
+&lt;input name=&quot;items%s&quot; flexy:nameuses=&quot;member.line&quot; butt=&quot;head&quot;&gt;<br>
+{end:}<br>
+--eof</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;input name=&quot;price0&quot; type=&quot;text&quot; value=&quot;22.00&quot;&gt;   <br>
+&lt;input name=&quot;items0&quot; type=&quot;text&quot; value=&quot;1&quot;&gt;   <br>
+  <br>
+&lt;input name=&quot;price1&quot; type=&quot;text&quot; value=&quot;33.00&quot;&gt;   <br>
+&lt;input name=&quot;items1&quot; type=&quot;text&quot; value=&quot;2&quot;&gt;  <br>
+...  <br>
+--eof</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;input name=&quot;price0&quot; butt=&quot;head&quot;&gt;    <br>
+&lt;input name=&quot;items&quot; butt=&quot;head&quot;&gt;   <br>
+ <br>
+&lt;input name=&quot;price1&quot; butt=&quot;head&quot;&gt;    <br>
+&lt;input name=&quot;items&quot; butt=&quot;head&quot;&gt;</p>
+</section>
+<section>
+<h3>[2005-06-26 18:51 UTC] jo at feuersee dot de</h3>
+<p>Uhm, forgot the $i++; inside the foreach()...</p>
+</section>
+<section>
+<h3>[2005-06-27 09:40 UTC] jo at feuersee dot de</h3>
+<p>Nope, it still doesn&#039;t work.  <br>
+But the $i++ is obviously necessary in order for the <br>
+foreach loop to create a proper data structure, so I <br>
+posted it to prevent &quot;you need a $i++ inside your foreach&quot; <br>
+replies. <br>
+I double checked both the results of the SQL query and the <br>
+generated data, they are ok and not the problem here.</p>
+</section>
+<section>
+<h3>[2005-06-28 19:08 UTC] jo at feuersee dot de</h3>
+<p>test-4683.php: <br>
+&lt;?php <br>
+$options = array( <br>
+	&#039;templateDir&#039;   =&gt; dirname(__FILE__), <br>
+	&#039;compileDir&#039;    =&gt; dirname(__FILE__) . <br>
+DIRECTORY_SEPARATOR . &#039;tmp&#039;, <br>
+	&#039;forceCompile&#039;  =&gt; 0, <br>
+	&#039;debug&#039;         =&gt; 0, <br>
+	&#039;compiler&#039;      =&gt; &#039;Flexy&#039;, <br>
+); <br>
+require_once(&#039;HTML/Template/Flexy.php&#039;); <br>
+$flexy = new HTML_Template_Flexy($options); <br>
+ <br>
+$flexy-&gt;compile(&#039;template-test-4683.html&#039;); <br>
+ <br>
+require_once(&#039;HTML/Template/Flexy/Element.php&#039;); <br>
+$obj = new StdClass; <br>
+ <br>
+// static form element <br>
+$elem[&#039;formtest&#039;] = &amp;new HTML_Template_Flexy_Element(); <br>
+$elem[&#039;formtest&#039;]-&gt;attributes[&#039;method&#039;] = &#039;post&#039;; <br>
+$elem[&#039;formtest&#039;]-&gt;attributes[&#039;action&#039;] = <br>
+$_SERVER[&#039;PHP_SELF&#039;]; <br>
+ <br>
+$obj-&gt;data = array(); <br>
+for($i = 0; $i &lt; 10; $i++) { <br>
+	$obj-&gt;data[$i] = $i; <br>
+	$elem[&quot;data$i&quot;] = &amp;new <br>
+HTML_Template_Flexy_Element(); <br>
+	$elem[&quot;data$i&quot;]-&gt;attributes[&#039;type&#039;] = &#039;text&#039;; <br>
+	$elem[&quot;data$i&quot;]-&gt;attributes[&#039;size&#039;] = $i; <br>
+} <br>
+ <br>
+$flexy-&gt;outputObject($obj, $elem); <br>
+?&gt; <br>
+--eof <br>
+ <br>
+template-test-4683.php: <br>
+&lt;html&gt; <br>
+  &lt;head&gt; <br>
+    &lt;title&gt;test for PEAR bug#4683&lt;/title&gt; <br>
+    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; <br>
+charset=UTF-8&quot;&gt; <br>
+  &lt;/head&gt; <br>
+  &lt;body&gt; <br>
+    &lt;form name=&quot;formtest&quot;&gt; <br>
+{foreach:data,key,row} <br>
+      {key}: &lt;input name=&quot;data{key}&quot; type=&quot;text&quot; <br>
+size=&quot;10&quot;&gt;&lt;br&gt; <br>
+{end:} <br>
+    &lt;/form&gt; <br>
+  &lt;/body&gt; <br>
+&lt;/html&gt; <br>
+--eof <br>
+ <br>
+The result: <br>
+&lt;html&gt; <br>
+  &lt;head&gt; <br>
+    &lt;title&gt;test for PEAR bug#4683&lt;/title&gt; <br>
+    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; <br>
+charset=UTF-8&quot;&gt; <br>
+  &lt;/head&gt; <br>
+  &lt;body&gt; <br>
+    &lt;form name=&quot;formtest&quot; method=&quot;post&quot; <br>
+action=&quot;/~jo/test/test-4683.php&quot;&gt;      0: &lt;input <br>
+name=&quot;data0&quot; type=&quot;text&quot; size=&quot;10&quot;&gt;&lt;br&gt; <br>
+      1: &lt;input name=&quot;data1&quot; type=&quot;text&quot; size=&quot;10&quot;&gt;&lt;br&gt; <br>
+ <br>
+      2: &lt;input name=&quot;data2&quot; type=&quot;text&quot; size=&quot;10&quot;&gt;&lt;br&gt; <br>
+      3: &lt;input name=&quot;data3&quot; type=&quot;text&quot; size=&quot;10&quot;&gt;&lt;br&gt; <br>
+      4: &lt;input name=&quot;data4&quot; type=&quot;text&quot; size=&quot;10&quot;&gt;&lt;br&gt; <br>
+      5: &lt;input name=&quot;data5&quot; type=&quot;text&quot; size=&quot;10&quot;&gt;&lt;br&gt; <br>
+      6: &lt;input name=&quot;data6&quot; type=&quot;text&quot; size=&quot;10&quot;&gt;&lt;br&gt; <br>
+      7: &lt;input name=&quot;data7&quot; type=&quot;text&quot; size=&quot;10&quot;&gt;&lt;br&gt; <br>
+ <br>
+      8: &lt;input name=&quot;data8&quot; type=&quot;text&quot; size=&quot;10&quot;&gt;&lt;br&gt; <br>
+      9: &lt;input name=&quot;data9&quot; type=&quot;text&quot; size=&quot;10&quot;&gt;&lt;br&gt; <br>
+    &lt;/form&gt; <br>
+  &lt;/body&gt; <br>
+&lt;/html&gt; <br>
+--eof <br>
+ <br>
+I expected: <br>
+&lt;html&gt; <br>
+  &lt;head&gt; <br>
+    &lt;title&gt;test for PEAR bug#4683&lt;/title&gt; <br>
+    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; <br>
+charset=UTF-8&quot;&gt; <br>
+  &lt;/head&gt; <br>
+  &lt;body&gt; <br>
+    &lt;form name=&quot;formtest&quot; method=&quot;post&quot; <br>
+action=&quot;/~jo/test/test-4683.php&quot;&gt;      0: &lt;input <br>
+name=&quot;data0&quot; type=&quot;text&quot; size=&quot;0&quot;&gt;&lt;br&gt; <br>
+      1: &lt;input name=&quot;data1&quot; type=&quot;text&quot; size=&quot;1&quot;&gt;&lt;br&gt; <br>
+      2: &lt;input name=&quot;data9&quot; type=&quot;text&quot; size=&quot;2&quot;&gt;&lt;br&gt; <br>
+      2: &lt;input name=&quot;data2&quot; type=&quot;text&quot; size=&quot;3&quot;&gt;&lt;br&gt; <br>
+      3: &lt;input name=&quot;data3&quot; type=&quot;text&quot; size=&quot;4&quot;&gt;&lt;br&gt; <br>
+      4: &lt;input name=&quot;data4&quot; type=&quot;text&quot; size=&quot;5&quot;&gt;&lt;br&gt; <br>
+      5: &lt;input name=&quot;data5&quot; type=&quot;text&quot; size=&quot;6&quot;&gt;&lt;br&gt; <br>
+      6: &lt;input name=&quot;data6&quot; type=&quot;text&quot; size=&quot;7&quot;&gt;&lt;br&gt; <br>
+      7: &lt;input name=&quot;data7&quot; type=&quot;text&quot; size=&quot;8&quot;&gt;&lt;br&gt; <br>
+ <br>
+      8: &lt;input name=&quot;data8&quot; type=&quot;text&quot; size=&quot;9&quot;&gt;&lt;br&gt; <br>
+    &lt;/form&gt; <br>
+  &lt;/body&gt; <br>
+&lt;/html&gt;</p>
+</section>
+<section>
+<h3>[2005-06-29 11:20 UTC] jo at feuersee dot de</h3>
+<p>Ok, it does work now. I made a wrong use of the <br>
+undocumented flexy:nameuses=&quot;name&quot; feature. <br>
+It does work in the original project except in one place, <br>
+so I guess I still have something wrong there. <br>
+THX for your help. <br>
+Bug closed, the call for better documentation can be <br>
+heard...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

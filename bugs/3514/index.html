@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3514</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a> &#187; Bug #3514</h1>
+<p>Excel Cell Formatting to Text</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-18 09:39 UTC</td></tr>
+<tr><th>From</th><td>ankush dot mohile at patni dot com</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.2</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-18 09:39 UTC] ankush dot mohile at patni dot com</h3>
+<p>Description:<br>
+------------<br>
+I am trying to make a certain cell of the excel spreadsheet as Text so I could display a number with a leading zero. e.g. 07432 instead of 7432</p>
+<p>Reproduce code:<br>
+---------------<br>
+$text_format =&amp; $workbook-&gt;addFormat();<br>
+$text_format-&gt;setNumFormat(&#039;@&#039;);</p>
+<p>$worksheet-&gt;write($i,14,&quot;&#039; &quot;.$colO,$text_format);</p>
+<p>Expected result:<br>
+----------------<br>
+expected result 07432</p>
+<p>Actual result:<br>
+--------------<br>
+produces result as &#039;07432</p>
+</section>
+<section>
+<h3>[2005-02-22 11:03 UTC] smith at backendmedia dot com</h3>
+<p>doesnt look like a doc bug to me</p>
+</section>
+<section>
+<h3>[2005-03-16 16:26 UTC] christianm at amplix dot de</h3>
+<p>similar problem, maybe the same Bug:</p>
+<p>Description:<br>
+Two fields, formatted as time-value, contains a time value, but with leading &#039;, so another field, declared as a formula-field can&#039;t get the correct SUM of the other two fields.</p>
+<p>code:<br>
+$format_time =&amp; $workbook-&gt;addFormat();<br>
+$format_time-&gt;setNumFormat(&quot;hh:mm:ss&quot;);</p>
+<p>$worksheet-&gt;write($i,3,&quot;12:00:00&quot;,$format_time);</p>
+<p>expected result:<br>
+----------------<br>
+12:00:00</p>
+<p>produced result:<br>
+-----------------<br>
+&#039;12:00:00</p>
+</section>
+<section>
+<h3>[2005-10-19 09:07 UTC] stewartchu at gmail dot com</h3>
+<p>To cater for leading zero value, add the following to the function write in Worksheet.php</p>
+<p>function write($row, $col, $token, $format = 0)<br>
+{<br>
+    // leading zero or string format<br>
+    if ($format-&gt;_num_format==&#039;@&#039; || preg_match(&quot;/^0/&quot;, $token))<br>
+       return $this-&gt;writeString($row,$col,$token,$format);</p>
+<p>.........<br>
+}</p>
+</section>
+<section>
+<h3>[2005-10-25 21:14 UTC] xnoguer at php dot net</h3>
+<p>christianm, did you try using writeNumber() ?<br>
+write() actually calls other methods depending on the type of the third argument given, and you are giving it a string (&quot;12:00:00&quot;).</p>
+</section>
+<section>
+<h3>[2005-10-25 21:18 UTC] xnoguer at php dot net</h3>
+<p>ankush, if you want to use a numeric value as text in a cell, use writeString(). Is that what you want?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

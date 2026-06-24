@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6788</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #6788</h1>
+<p>backtrace memory leak</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-02-15 07:30 UTC</td></tr>
+<tr><th>From</th><td>touv at ouvaton dot org</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>hp-ux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-15 07:30 UTC] touv at ouvaton dot org</h3>
+<p>Description:<br>
+------------<br>
+with php version : 5.0.5, 4.4.2, 4.3.10, 4.3.3, 4.2.3<br>
+, they are no problem, but with 5.1.1 and 5.1.2 they are un memory leak...</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+require_once(&#039;PEAR.php&#039;);<br>
+set_time_limit(0);<br>
+for($i = 0; $i &lt; 500000; $i++) {<br>
+    $ret = PEAR::raiseError(&#039;error&#039;);<br>
+} <br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+nothing</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;br /&gt;<br>
+&lt;b&gt;Fatal error&lt;/b&gt;:  Allowed memory size of 8388608 bytes exhausted (tried to allocate 40 bytes) in &lt;b&gt;/usr/local/apache/pear/share/pear/PEAR.php&lt;/b&gt; on line &lt;b&gt;857&lt;/b&gt;&lt;br /&gt;</p>
+</section>
+<section>
+<h3>[2006-03-20 20:36 UTC] pz at ljseek dot com</h3>
+<p>Hm.  Why this would be bogus bug.  Is it just expected tor <br>
+RaiseError  to accocate more and more function in its calls.</p>
+<p>The limit of 8MB is not important here  - you always can have longer loop and longer running programms.</p>
+<p>If Pear developers think it is OK to leak memory this way I would appreciate if there is information outwhere on how to run long running programms with PEAR  so they do not leak.</p>
+<p>At this point I&#039;ve been seen similar effects with different PEAR modules  - it seems like it is common approach just no to care to free memory, assuming it is used for web page creation and so you can&#039;t leak too much anyway.</p>
+<p>Currently best approach for writing long running programms with PEAR seems to be forking and killing scripts after few objects were processed so leaks do not hurt you.</p>
+</section>
+<section>
+<h3>[2006-03-21 08:42 UTC] touv at ouvaton dot org</h3>
+<p>but if I add unset like this<br>
+&lt;?php<br>
+require_once(&#039;PEAR.php&#039;);<br>
+set_time_limit(0);<br>
+for($i = 9; $i &lt; 500000; $i++) {<br>
+    $ret = PEAR::raiseError(&#039;error&#039;);<br>
+    unset($ret);<br>
+} <br>
+?&gt;</p>
+<p>PEAR (or php,  I don&#039;t know) doesn&#039;t free $ret<br>
+You do not think that it is a problem ?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

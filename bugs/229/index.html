@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #229</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #229</h1>
+<p>getXxx methods return null result when used with $params array</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-11-12 18:02 UTC</td></tr>
+<tr><th>From</th><td>patrick dot lambert at noggin dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Solaris</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-11-12 18:02 UTC] patrick dot lambert at noggin dot com</h3>
+<p>Description:<br>
+------------<br>
+When a $params array is included in a getXxx call (as the <br>
+documentation indicates is valid and will cause the statement to go <br>
+through prepare/execute), a null result is returned.</p>
+<p>I tested this under PHP 4.3.4 and 4.3.3 with DB 1.5.0RC2 against <br>
+and Oracle 8.1.7 database on Solaris.</p>
+<p>Reproduce code:<br>
+---------------<br>
+supposing that you have a DB on the backend with appropriate data, this...<br>
+$param_array = array(147, 1);<br>
+$sql = &quot;select foo from bar where baz = ? and xyzzy = ?&quot;;<br>
+$row = $db-&gt;getRow($sql, $param_array);</p>
+<p>should produce the same results as this...</p>
+<p>$sql = &quot;select foo from bar where baz = 147 and xyzzy = 1&quot;;<br>
+$row = $db-&gt;getRow($sql);</p>
+<p>or this...</p>
+<p>$param_array = array(147, 1);<br>
+$sql = &quot;select foo from bar where baz = ? and xyzzy = ?&quot;;<br>
+$sth = $db-&gt;prepare($sql);<br>
+$result = $db-&gt;execute($sth, $param_array);<br>
+$row = $result-&gt;fetchRow();</p>
+<p>Expected result:<br>
+----------------<br>
+All three phrasings should produce the same value for $row.</p>
+<p>Actual result:<br>
+--------------<br>
+getRow with params returns a null result while the other <br>
+two phrasings return valid data.</p>
+</section>
+<section>
+<h3>[2003-11-21 18:37 UTC] cwhatley at pobox dot com</h3>
+<p>The problem lies with the freePrepared() method of <br>
+oci8.php&#039;s object. The call to ocifreestatement() within <br>
+that method trashes the result of the fetch. More <br>
+investigation coming.</p>
+</section>
+<section>
+<h3>[2003-11-23 14:12 UTC] cwhatley at pobox dot com</h3>
+<p>It looks like there&#039;s no memory leak when you take out <br>
+the offending ocifreestatement() call in oci8&#039;s <br>
+freePrepared() method. As I surmised, the resources are <br>
+being freed up as part of normal garbage collection. I <br>
+ran with a loop around the fetch with bind vars and <br>
+after 450,000 fetches, the memory usage was stable (see <br>
+below).</p>
+<p>This was the same fetch over and over again. One thing I <br>
+can&#039;t effectively test in isolation is how a wide <br>
+variety of fetches affect memory use. This may have <br>
+different results.</p>
+<p>PID COMMAND      %CPU   TIME   #TH #PRTS #MREGS RPRVT  <br>
+RSHRD  RSIZE  VSIZE<br>
+23909 php          1.3%  0:01.83   1    13    50  2.72M  <br>
+7.34M  6.82M  41.7M <br>
+23909 php          5.5%  0:04.28   1    13    51  2.75M  <br>
+7.34M  6.83M  41.7M <br>
+23909 php          4.1%  0:06.97   1    13    51  2.75M  <br>
+7.34M  6.83M  41.7M <br>
+23909 php          4.1%  0:08.80   1    13    52  2.75M  <br>
+7.34M  6.84M  41.9M <br>
+23909 php          1.4%  0:16.18   1    13    52  2.75M  <br>
+7.34M  6.84M  41.9M <br>
+23909 php          0.7%  0:19.32   1    13    52  2.76M  <br>
+7.34M  6.84M  41.9M<br>
+23909 php          2.2%  2:39.00   1    13    52  2.83M  <br>
+7.34M  6.91M  41.9M <br>
+23909 php          5.1%  2:58.01   1    13    52  2.84M  <br>
+7.34M  6.92M  41.9M <br>
+23909 php          2.7%  4:28.91   1    13    52  2.88M  <br>
+7.34M  6.96M  41.9M <br>
+23909 php          4.2%  6:27.26   1    13    52  2.88M  <br>
+7.34M  6.96M  41.9M <br>
+23909 php          4.8%  7:26.90   1    13    52  2.85M  <br>
+7.34M  6.96M  41.9M <br>
+23909 php          4.1%  7:56.90   1    13    52  2.85M  <br>
+7.34M  6.96M  41.9M <br>
+23909 php          4.1%  8:26.10   1    13    52  2.85M  <br>
+7.12M  6.96M  41.9M <br>
+23909 php          2.0%  9:50.96   1    13    52  2.85M  <br>
+7.12M  6.96M  41.9M <br>
+23909 php          8.6% 11:20.55   1    13    52  2.85M  <br>
+7.12M  6.96M  41.9M <br>
+23909 php          6.0% 12:50.39   1    13    52  2.85M  <br>
+7.12M  6.96M  41.9M <br>
+23909 php          7.0% 13:51.43   1    13    52  2.85M  <br>
+7.12M  6.96M  41.9M <br>
+450,000 fetches</p>
+<p>The change on 4.3.4&#039;s oci8.php:</p>
+<p>*** oci8.php    Sat Nov 22 22:18:43 2003<br>
+--- /usr/local/lib/php/DB/oci8.php      Tue Nov 11 23:<br>
+40:15 2003<br>
+***************<br>
+*** 246,252 ****<br>
+          if (!is_resource($stmt)) {<br>
+              return false;<br>
+          }<br>
+!         //ocifreestatement($stmt);<br>
+          unset($this-&gt;prepare_tokens[(int)$stmt]);<br>
+          unset($this-&gt;prepare_types[(int)$stmt]);<br>
+          unset($this-&gt;manip_query[(int)$stmt]);<br>
+--- 246,252 ----<br>
+          if (!is_resource($stmt)) {<br>
+              return false;<br>
+          }<br>
+!         ocifreestatement($stmt);<br>
+          unset($this-&gt;prepare_tokens[(int)$stmt]);<br>
+          unset($this-&gt;prepare_types[(int)$stmt]);<br>
+          unset($this-&gt;manip_query[(int)$stmt]);<br>
+***************</p>
+</section>
+<section>
+<h3>[2003-12-05 19:45 UTC] patrick dot lambert at noggin dot com</h3>
+<p>Can someone with cvs privs commit this patch?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

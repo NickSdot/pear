@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #272</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/SQL_Parser/index.html">SQL_Parser</a> &#187; Bug #272</h1>
+<p>Parser does not handle parentheses in where clause</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-11-18 16:44 UTC</td></tr>
+<tr><th>From</th><td>young at sl dot com dot ua</td></tr>
+<tr><th>Assigned</th><td>busterb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SQL_Parser/index.html">SQL_Parser</a></td></tr>
+<tr><th>PHP Version</th><td>0.4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-11-18 16:44 UTC] young at sl dot com dot ua</h3>
+<p>Description:<br>
+------------<br>
+Valid query: SELECT CLIENTS_TRANSLATION.ID_CLIENTS_PREFIX, CLIENTS_TRANSLATION.RULE_NUMBER, CLIENTS_TRANSLATION.PATTERN, CLIENTS_TRANSLATION.RULE FROM CLIENTS, CLIENTS_PREFIX, CLIENTS_TRANSLATION WHERE (CLIENTS.ID_SOFTSWITCH = 5) AND (CLIENTS.ID_CLIENTS = CLIENTS_PREFIX.ID_CLIENTS) and CLIENTS.ENABLE=&#039;Y&#039; and CLIENTS.UNUSED=&#039;N&#039; and (CLIENTS_TRANSLATION.ID_CLIENTS_PREFIX = CLIENTS_PREFIX.ID_CLIENTS_PREFIX) ORDER BY CLIENTS_TRANSLATION.ID_CLIENTS_PREFIX,CLIENTS_TRANSLATION.RULE_NUMBER</p>
+<p>Result: Parse error: Expected an operator on line 1</p>
+</section>
+<section>
+<h3>[2003-11-21 04:58 UTC] busterb at php dot net</h3>
+<p>Thanks for the report. It looks like the parser does not <br>
+understand parenthesis in where clauses (though <br>
+subselects do work in CVS). I will have a look to see if <br>
+this can be implmented. Try your query without the <br>
+extra parenthesis.  Don&#039;t worry; order of operations in <br>
+SQL makes them unnecessary anyway.</p>
+</section>
+<section>
+<h3>[2003-12-02 23:59 UTC] webmaster at kryptronic dot com</h3>
+<p>I am a user of the Perl SQL::Statement module which has it&#039;s own issues with parens, but does provide support for them (just not embedded).  An example of what works in SQL::Statement follows:</p>
+<p>SELECT column1,column2<br>
+FROM table1<br>
+WHERE (column1=&#039;1&#039; AND column2=&#039;1&#039;) OR (column3=&#039;1&#039; AND column4=&#039;1&#039;)</p>
+<p>In this statement parens are necessary.</p>
+<p>I am looking to use SQL_Parser as a basis for a driver module to tie into the DB package for managing CSV files via SQL.  Whether support can be added into SQL_Parser or a true SQL::Statement module is needed really depends on when and what updates can be made to SQL_Parser.</p>
+<p>I&#039;m willing to help get SQL_Parser working if needed.</p>
+</section>
+<section>
+<h3>[2003-12-15 20:37 UTC] none at none dot com</h3>
+<p>Was this error fixed in verison 4.3.4?  If not when is the expected date to fix this problem?</p>
+</section>
+<section>
+<h3>[2003-12-28 05:35 UTC] busterb at php dot net</h3>
+<p>I need to restructure how parseSearchClause handles <br>
+parentheses. Give me a few more days to sort it out; there <br>
+may be a patch in my queue.</p>
+</section>
+<section>
+<h3>[2004-01-22 17:27 UTC] busterb at php dot net</h3>
+<p>There is a partial fix in CVS. It doesn&#039;t fix these test cases, but is the beginning; essentially, parseSearchOptions needs to do a recursive call when finding parentheses. There is a bug in how I implemented this, but you are welcome to take a look.</p>
+</section>
+<section>
+<h3>[2004-01-22 17:29 UTC] busterb at php dot net</h3>
+<p>I meant parseSearchClause.</p>
+</section>
+<section>
+<h3>[2005-04-03 00:07 UTC] epte at ruffdogs dot com</h3>
+<p>Uh.. correct me if I&#039;m wrong, but this seems fixed.  At least it seems to be behaving correctly in CVS.</p>
+</section>
+<section>
+<h3>[2005-04-03 00:09 UTC] epte at ruffdogs dot com</h3>
+<p>Oh.  I see.  I was taking the simpler query farther down the page and not the original one.  The issue still remains.</p>
+</section>
+<section>
+<h3>[2005-04-03 00:19 UTC] epte at ruffdogs dot com</h3>
+<p>Actually... now that I realize that the parser only had difficulty with my whitespace at the end of the query, it seems to work fine, even for the hard initial case.  My choice of where to put the parentheses in the resultant parse tree would have been a bit different, but the parse tree that is returned does work.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

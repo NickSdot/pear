@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7561</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #7561</h1>
+<p>Mail_mimePart::_quotedPrintableEncode() misbehavior with mbstring overload</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-05-05 09:23 UTC</td></tr>
+<tr><th>From</th><td>php at diptyque dot net</td></tr>
+<tr><th>Assigned</th><td>cipri</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>FreeBSD</td></tr>
+<tr><th>Roadmaps</th><td>1.4.0, 1.4.0a1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-05-05 09:23 UTC] php at diptyque dot net</h3>
+<p>Description:<br>
+------------<br>
+Mail_mimePart::_quotedPrintableEncode() does not properly <br>
+encode multi-byte characters when mbstring overload is <br>
+enabled: it only encodes the first byte and skips any <br>
+following byte(s)</p>
+<p>; php.ini Multi-byte string setup<br>
+mbstring.language          = Neutral; (UTF-8)<br>
+mbstring.func_overload     = 6; see [1]<br>
+mbstring.internal_encoding = UTF-8<br>
+mbstring.http_output = UTF-8</p>
+<p>[1] <br>
+(http://www.php.net/manual/en/ref.mbstring.php#mbstring.ove<br>
+rload)</p>
+<p>Test script:<br>
+---------------<br>
+=begin TEST<br>
+&lt;?php</p>
+<p>require_once &#039;Mail/mimePart.php&#039;;</p>
+<p>// string is UTF-8 encoded<br>
+$input = &quot;Micha\xC3\xABl \xC3\x89ric St\xC3\xA9phane&quot;;</p>
+<p>$rv = Mail_mimePart::_quotedPrintableEncode($input);<br>
+echo $rv, &quot;\n&quot;;<br>
+ <br>
+?&gt;<br>
+=end TEST</p>
+<p>A multi-byte string agnostic patch:</p>
+<p>=begin DIFF<br>
+diff -u mimePart.php.bak mimePart.php<br>
+--- mimePart.php.bak    Thu Jan 19 13:09:40 2006<br>
++++ mimePart.php        Tue Apr 25 11:19:34 2006<br>
+@@ -318,11 +318,12 @@<br>
+ <br>
+         while(list(, $line) = each($lines)){<br>
+ <br>
+-            $linlen     = strlen($line);<br>
++            $line    = preg_split(&#039;//&#039;, $line, -1, PREG_SPLIT_NO_EMPTY);<br>
++            $linlen  = count($line);<br>
+             $newline = &#039;&#039;;<br>
+ <br>
+             for ($i = 0; $i &lt; $linlen; $i++) {<br>
+-                $char = substr($line, $i, 1);<br>
++                $char = $line[$i];<br>
+                 $dec  = ord($char);<br>
+ <br>
+                 if (($dec == 32) AND ($i == ($linlen - 1))){    // convert space at eol only<br>
+=end DIFF</p>
+<p>Expected result:<br>
+----------------<br>
+Micha=C3=ABl =C3=89ric St=C3=A9phane</p>
+<p>Actual result:<br>
+--------------<br>
+Micha=C3l =C3ric St=C3phane</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

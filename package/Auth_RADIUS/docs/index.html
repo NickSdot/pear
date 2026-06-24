@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth_RADIUS Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth_RADIUS/index.html">Auth_RADIUS</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Auth_RADIUS/docs/index.html#packages-authentication-auth-radius-intro">Introduction</a>
+</li></ul>
+</nav>
+<p>Client implementation of RADIUS. This package contains wrapper classes for the RADIUS PECL extension. Provides RADIUS Authentication (RFC2865) and RADIUS Accounting (RFC2866).</p>
+<section id="packages-authentication-auth-radius-intro">
+<h2>Introduction</h2>
+<h3>What is Auth_RADIUS?</h3>
+ 
+     
+     <p>Auth_RADIUS is a php wrapper around the php radius extension.
+      If you are unfamiliar with the RADIUS protocol, the
+      <a href="http://en.wikipedia.org/wiki/RADIUS">Wikipedia article</a>
+      provides an excellent introduction.</p>
+     <p>Auth_RADIUS is structured around the facilities built into the radius extension.
+      Understanding Auth_RADIUS generally first requires a basic understanding of
+      how the radius extension is designed.  Documentation of the radius extension
+      is available through the PHP manual at
+      <a href="http://www.php.net/radius">http://www.php.net/radius</a></p>
+     <p>There are different Classes for the different authentication methods available
+      through RADIUS.  If you are using CHAP-MD5 or MS-CHAP authentication, you will
+      also need the <a href="package/Crypt_CHAP/index.html">Crypt_CHAP</a> package.
+      In addition, if using MS-CHAP authentication, you will need to enable
+      the mhash and mcrypt extension in php.ini, or compile them in statically.</p>
+     <p>Note that if you have the latest radius extension (version 1.2 or newer), you will
+      not need to enable the mcrypt extension.</p>
+    
+    <h3>How do I use Auth_RADIUS?</h3>
+ 
+     
+     <p>Basic usage examples follow, pulled from the package itself.</p>
+     <pre><code>&lt;?php
+/* vim: set expandtab tabstop=4 shiftwidth=4: */
+/*
+Copyright (c) 2003, Michael Bretterklieber &lt;michael@bretterklieber.com&gt;
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without 
+modification, are permitted provided that the following conditions 
+are met:
+
+1. Redistributions of source code must retain the above copyright 
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright 
+   notice, this list of conditions and the following disclaimer in the 
+   documentation and/or other materials provided with the distribution.
+3. The names of the authors may not be used to endorse or promote products 
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND 
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY 
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+This code cannot simply be copied and put under the GNU Public License or 
+any other GPL-like (LGPL, GPL2) License.
+
+    $Id: intro.xml,v 1.4 2008-10-09 15:16:20 cweiske Exp $
+*/
+
+require_once &#039;Auth/RADIUS.php&#039;;
+require_once &#039;Crypt/CHAP.php&#039;;
+
+//$type = &#039;PAP&#039;;
+//$type = &#039;CHAP_MD5&#039;;
+$type = &#039;MSCHAPv1&#039;;
+//$type = &#039;MSCHAPv2&#039;;
+
+$username = &#039;sepp&#039;;
+$password = &#039;sepp&#039;;
+
+$classname = &#039;Auth_RADIUS_&#039; . $type;
+$rauth = new $classname($username, $password);
+$rauth-&gt;addServer(&#039;localhost&#039;, 0, &#039;testing123&#039;);
+$rauth-&gt;setConfigfile(&#039;/etc/radius.conf&#039;);
+$rauth-&gt;username = $username;
+
+switch($type) {
+case &#039;CHAP_MD5&#039;:
+case &#039;MSCHAPv1&#039;:
+    $classname = $type == &#039;MSCHAPv1&#039; ? &#039;Crypt_CHAP_MSv1&#039; : &#039;Crypt_CHAP_MD5&#039;;
+    $crpt = new $classname;
+    $crpt-&gt;password = $password;
+    $rauth-&gt;challenge = $crpt-&gt;challenge;
+    $rauth-&gt;chapid = $crpt-&gt;chapid;
+    $rauth-&gt;response = $crpt-&gt;challengeResponse();
+    $rauth-&gt;flags = 1;
+// If you must use deprecated and weak LAN-Manager-Responses use this:
+//    $rauth-&gt;lmResponse = $crpt-&gt;lmChallengeResponse();
+//    $rauth-&gt;flags = 0;
+    break;
+  
+case &#039;MSCHAPv2&#039;:
+    $crpt = new Crypt_CHAP_MSv2;
+    $crpt-&gt;username = $username;
+    $crpt-&gt;password = $password;
+    $rauth-&gt;challenge = $crpt-&gt;authChallenge;
+    $rauth-&gt;peerChallenge = $crpt-&gt;peerChallenge;
+    $rauth-&gt;chapid = $crpt-&gt;chapid;
+    $rauth-&gt;response = $crpt-&gt;challengeResponse();
+    break;
+    
+default:
+    $rauth-&gt;password = $password;
+    break;
+}
+
+if (!$rauth-&gt;start()) {
+    printf(&quot;Radius start: %s&lt;br&gt;\n&quot;, $rauth-&gt;getError());
+    exit;
+}
+
+$result = $rauth-&gt;send();
+if (PEAR::isError($result)) {
+    printf(&quot;Radius send failed: %s&lt;br&gt;\n&quot;, $result-&gt;getMessage());
+    exit;
+} else if ($result === true) {
+    printf(&quot;Radius Auth succeeded&lt;br&gt;\n&quot;);
+} else {
+    printf(&quot;Radius Auth rejected&lt;br&gt;\n&quot;);
+}
+
+// get attributes, even if auth failed
+if (!$rauth-&gt;getAttributes()) {
+    printf(&quot;Radius getAttributes: %s&lt;br&gt;\n&quot;, $rauth-&gt;getError());
+} else {
+    $rauth-&gt;dumpAttributes();
+}
+
+$rauth-&gt;close();
+
+
+?&gt;</code></pre>
+     
+     <p>Here is the second example:</p>
+     <pre><code>&lt;?php
+/* vim: set expandtab tabstop=4 shiftwidth=4: */
+/*
+Copyright (c) 2003, Michael Bretterklieber &lt;michael@bretterklieber.com&gt;
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without 
+modification, are permitted provided that the following conditions 
+are met:
+
+1. Redistributions of source code must retain the above copyright 
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright 
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The names of the authors may not be used to endorse or promote products 
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND 
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY 
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+This code cannot simply be copied and put under the GNU Public License or 
+any other GPL-like (LGPL, GPL2) License.
+
+    $Id: intro.xml,v 1.4 2008-10-09 15:16:20 cweiske Exp $
+*/
+
+require_once &#039;Auth/RADIUS.php&#039;;
+require_once &#039;Crypt/CHAP.php&#039;;
+$username = &#039;sepp&#039;;
+
+$starttime = time();
+
+$racct = new Auth_RADIUS_Acct_Start;
+$racct-&gt;addServer(&#039;localhost&#039;, 0, &#039;testing123&#039;);
+$racct-&gt;username = $username;
+// RADIUS_AUTH_RADIUS =&gt; authenticated via Radius
+// RADIUS_AUTH_LOCAL =&gt; authenicated local
+// RADIUS_AUTH_REMOTE =&gt; authenticated remote
+$racct-&gt;authentic = RADIUS_AUTH_LOCAL;
+$status = $racct-&gt;start();
+if(PEAR::isError($status)) {
+    printf(&quot;Radius start: %s&lt;br&gt;\n&quot;, $status-&gt;getMessage());
+    exit;
+}
+// you can put any additional attributes here
+// $racct-&gt;putAttribute(RADIUS_ACCT_INPUT_PACKETS, 45236);
+// $racct-&gt;putAttribute(RADIUS_ACCT_OUTPUT_PACKETS, 1212);
+$result = $racct-&gt;send();
+if (PEAR::isError($result)) {
+    printf(&quot;Radius send failed: %s&lt;br&gt;\n&quot;, $result-&gt;getMessage());
+    exit;
+} else if ($result === true) {
+    printf(&quot;Radius Acounting succeeded&lt;br&gt;\n&quot;);
+} else {
+    printf(&quot;Radius Acounting rejected&lt;br&gt;\n&quot;);
+}
+
+$racct-&gt;close();
+
+// Wait a bit, that we can put the session-time
+sleep(2);
+
+// send an accounting update
+$racct = new Auth_RADIUS_Acct_Update;
+$racct-&gt;addServer(&#039;localhost&#039;, 0, &#039;testing123&#039;);
+$racct-&gt;username = $username;
+$racct-&gt;session_time = time() - $starttime;
+$status = $racct-&gt;start();
+if(PEAR::isError($status)) {
+    printf(&quot;Radius start: %s&lt;br&gt;\n&quot;, $status-&gt;getMessage());
+    exit;
+}
+$result = $racct-&gt;send();
+if (PEAR::isError($result)) {
+    printf(&quot;Radius send failed: %s&lt;br&gt;\n&quot;, $result-&gt;getMessage());
+    exit;
+} else if ($result === true) {
+    printf(&quot;Radius Acounting succeeded&lt;br&gt;\n&quot;);
+} else {
+    printf(&quot;Radius Acounting rejected&lt;br&gt;\n&quot;);
+}
+
+// Wait a bit, that we can put the session-time
+sleep(2);
+
+// send the stop
+$racct = new Auth_RADIUS_Acct_Stop;
+$racct-&gt;addServer(&#039;localhost&#039;, 0, &#039;testing123&#039;);
+$racct-&gt;username = $username;
+$racct-&gt;session_time = time() - $starttime;
+$status = $racct-&gt;start();
+if(PEAR::isError($status)) {
+    printf(&quot;Radius start: %s&lt;br&gt;\n&quot;, $status-&gt;getMessage());
+    exit;
+}
+// you can put any additional attributes here
+// $racct-&gt;putAttribute(RADIUS_ACCT_TERMINATE_CAUSE, RADIUS_TERM_SESSION_TIMEOUT);
+$result = $racct-&gt;send();
+if (PEAR::isError($result)) {
+    printf(&quot;Radius send failed: %s&lt;br&gt;\n&quot;, $result-&gt;getMessage());
+    exit;
+} else if ($result === true) {
+    printf(&quot;Radius Acounting succeeded&lt;br&gt;\n&quot;);
+} else {
+    printf(&quot;Radius Acounting rejected&lt;br&gt;\n&quot;);
+}
+
+$racct-&gt;close();
+
+?&gt;</code></pre>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

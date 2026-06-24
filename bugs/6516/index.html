@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6516</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/OLE/index.html">OLE</a> &#187; Bug #6516</h1>
+<p>wrong usage of unpack()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-18 15:25 UTC</td></tr>
+<tr><th>From</th><td>ymettier at libertysurf dot fr</td></tr>
+<tr><th>Assigned</th><td>schmidt</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/OLE/index.html">OLE</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>Solaris</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-18 15:25 UTC] ymettier at libertysurf dot fr</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m using OLE-0.5</p>
+<p>The script, expected result and actual results are below.</p>
+<p>I tried to hack OLE.php and I noticed a lot of unpack() like this :<br>
+$type = unpack(&quot;c&quot;, substr($pps_wk, 66, 1));<br>
+ if (($type[&#039;&#039;] != OLE_PPS_TYPE_ROOT) ...<br>
+    return $this-&gt;raiseError(&quot;PPS at $pointer has unknown type: {$type[&#039;&#039;]}</p>
+<p>However, unpack seems to return an array where the first element is 1.</p>
+<p>Try to replace $type[&#039;&#039;] with $type[1] for example. It works better with that change.</p>
+<p>Test script:<br>
+---------------<br>
+$docfile = &quot;my_document.doc&quot;;<br>
+$ole =&amp; new OLE();<br>
+$pps = $ole-&gt;read($docfile);<br>
+if(PEAR::isError($pps)) {<br>
+  echo &quot;&lt;hr&gt;&lt;pre&gt;&quot;.$pps-&gt;getMessage().&quot;&lt;/pre&gt;&lt;hr&gt;\n&quot;;<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+Nothing, meaning that it works</p>
+<p>Actual result:<br>
+--------------<br>
+----------------<br>
+PPS at 1 has unknown type: <br>
+----------------</p>
+</section>
+<section>
+<h3>[2006-12-28 09:44 UTC] pear dot php dot net at chsc dot dk</h3>
+<p>Here is a patch that fixes this problem:<br>
+http://dev.peytz.dk/~dr/OLE.patch</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

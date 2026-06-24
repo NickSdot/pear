@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5841</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #5841</h1>
+<p>namespaces in params and minOccurs=0</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-01 16:13 UTC</td></tr>
+<tr><th>From</th><td>martin at malditainternet dot com</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.0</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-01 16:13 UTC] martin at malditainternet dot com</h3>
+<p>Description:<br>
+------------<br>
+Microsoft Sharepoint webservices don&#039;t like this requests<br>
+&lt;SOAP-ENV:Body&gt;</p>
+<p>&lt;ns4:GetList&gt;</p>
+<p>&lt;listName xsi:type=&quot;xsd:string&quot;&gt;{B38BE491-96F6-4DC5-9CC4-92440322F02E}&lt;/listName&gt;&lt;/ns4:GetList&gt;</p>
+<p>&lt;/SOAP-ENV:Body&gt;</p>
+<p>but do like this ones:</p>
+<p>&lt;SOAP-ENV:Body&gt;</p>
+<p>&lt;ns4:GetList&gt;</p>
+<p>&lt;ns4:listName xsi:type=&quot;xsd:string&quot;&gt;{B38BE491-96F6-4DC5-9CC4-92440322F02E}&lt;/ns4:listName&gt;&lt;/ns4:GetList&gt;</p>
+<p>&lt;/SOAP-ENV:Body&gt;</p>
+<p>I&#039;ve added a &quot;use_explicit_namespaces&quot; property to Client to  create this kind of messages</p>
+<p>Also, I found a bug where parameters where the class warned for missing parameters even if the param had minOccurs=0. I fixed that, too</p>
+<p>Test script:<br>
+---------------<br>
+--- SOAP_orig/Client.php	2005-05-30 18:55:00.000000000 -0300<br>
++++ SOAP/Client.php	2005-11-01 11:53:20.000000000 -0300<br>
+@@ -164,6 +164,14 @@<br>
+ <br>
+     var $_soap_transport = null;<br>
+ <br>
++	/**<br>
++	 * Add an explicit namespace for each param in the request<br>
++	 *<br>
++	 * This needed to speak with some soap implementations, like Microsoft Sharepoint<br>
++	 *<br>
++	 * @var $use_explicit_namespaces bool<br>
++	 */<br>
++	var $use_explicit_namespaces = false;<br>
+     /**<br>
+      * Constructor.<br>
+      *<br>
+@@ -505,13 +513,13 @@<br>
+                         if (isset($params[$name]) ||<br>
+                             $this-&gt;_wsdl-&gt;getDataHandler($name, $part[&#039;namespace&#039;])) {<br>
+                             $nparams[$name] =&amp; $params[$name];<br>
+-                        } else {<br>
++                        } elseif($part[&#039;minOccurs&#039;] &gt; 0) {<br>
+                             // We now force an associative array for<br>
+                             // parameters if using WSDL.<br>
+                             return $this-&gt;_raiseSoapFault(&quot;The named parameter $name is not in the call parameters.&quot;);<br>
+                         }<br>
+-                        if (gettype($nparams[$name]) != &#039;object&#039; ||<br>
+-                            !is_a($nparams[$name], &#039;SOAP_Value&#039;)) {<br>
++                        if (isset($nparams[$name]) &amp;&amp; (gettype($nparams[$name]) != &#039;object&#039; ||<br>
++                            !is_a($nparams[$name], &#039;SOAP_Value&#039;))) {<br>
+                             // Type is likely a qname, split it apart, and get<br>
+                             // the type namespace from WSDL.<br>
+                             $qname =&amp; new QName($part[&#039;type&#039;]);<br>
+@@ -527,7 +535,9 @@<br>
+                             $pqname = $name;<br>
+                             if ($xmlns) {<br>
+                                 $pqname = &#039;{&#039; . $xmlns . &#039;}&#039; . $name;<br>
+-                            }<br>
++                            }elseif(!empty($this-&gt;use_explicit_namespaces)){<br>
++                                $pqname = &#039;{&#039; . $namespace . &#039;}&#039; . $name;<br>
++							}<br>
+                             $nparams[$name] =&amp; new SOAP_Value($pqname,<br>
+                                                               $qname-&gt;fqn(),<br>
+                                                               $nparams[$name],</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

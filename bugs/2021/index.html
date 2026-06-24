@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2021</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth/index.html">Auth</a> &#187; Bug #2021</h1>
+<p>Session fixation attack vulnerability</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #2021</th><td>Session fixation attack vulnerability</td></tr>
+<tr><th>Submitted</th><td>2004-07-30 08:29 UTC</td></tr>
+<tr><th>From</th><td>cizek at webland dot cz</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Auth/index.html">Auth</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>All</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-30 08:29 UTC] cizek at webland dot cz</h3>
+<p>Description:<br>
+------------<br>
+On successful authentication using supplied username and password, the session id should be changed. It would be nice to add an object option to allow setting this behavior.<br>
+For now, I solve this by overriding the setAuth() method (see &quot;reproduce code&quot;), but there may be more appropriate place to put the code.<br>
+Auth Version: 1.2.3, 1.3.0r1</p>
+<p>Reproduce code:<br>
+---------------<br>
+function setAuth($username)<br>
+{<br>
+	if (session_id()) {<br>
+		$_SESSION = array();<br>
+		session_destroy();<br>
+	}<br>
+	session_id(md5(microtime().getmypid()));<br>
+	session_start();<br>
+	<br>
+	parent::setAuth($username);<br>
+}</p>
+</section>
+<section>
+<h3>[2006-10-30 13:57 UTC] alexiadeath at hot dot ee</h3>
+<p>session_regenerate_id(true); is not good!Ive been trying now for a day to use Auth in a framework(p4a) that heavily relies on and independently manages sessions and this behavioure  completely breaks this use.  For now Ive resorted to overloading this function without SID regeneration, but I really believe this should be a configurable option!</p>
+</section>
+<section>
+<h3>[2006-11-27 09:13 UTC] soenke dot ruempler at northclick dot de</h3>
+<p>Another problem occures if the old session cannot be destroyed:</p>
+<p>Warning: session_regenerate_id(): Session object destruction failed in [...]/pear/Auth.php on line 712</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

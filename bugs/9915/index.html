@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9915</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Tools and Utilities &#187; <a href="package/PhpDocumentor/index.html">PhpDocumentor</a> &#187; Bug #9915</h1>
+<p>PHP Notice in PDF Converter</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-22 17:02 UTC</td></tr>
+<tr><th>From</th><td>berdir at php dot net</td></tr>
+<tr><th>Assigned</th><td>ashnazg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PhpDocumentor/index.html">PhpDocumentor</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>1.3.2</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-22 17:02 UTC] berdir at php dot net</h3>
+<p>Description:<br>
+------------<br>
+When creating a PDF with phpDoc I got some of these error messages:</p>
+<p>Notice: Trying to get property of non-object in /usr/share/php/PhpDocumentor/phpDocumentor/Converters/PDF/default/PDFdefaultConverter.inc on line 400</p>
+<p>Call Stack:<br>
+    0.0003      42520   1. {main}() /usr/bin/phpdoc:0<br>
+    0.0009      51456   2. include(&#039;/usr/share/php/PhpDocumentor/phpDocumentor/phpdoc.inc&#039;) /usr/bin/phpdoc:37<br>
+    0.7520    9436384   3. phpDocumentor_setup-&gt;createDocs() /usr/share/php/PhpDocumentor/phpDocumentor/phpdoc.inc:61<br>
+   51.4230   51140528   4. phpDocumentor_IntermediateParser-&gt;Output() /usr/share/php/PhpDocumentor/phpDocumentor/Setup.inc.php:681<br>
+   53.7578   52701776   5. phpDocumentor_IntermediateParser-&gt;Convert() /usr/share/php/PhpDocumentor/phpDocumentor/IntermediateParser.inc:1802<br>
+   53.7578   52701776   6. Converter-&gt;walk() /usr/share/php/PhpDocumentor/phpDocumentor/IntermediateParser.inc:1589<br>
+   54.8160   53710528   7. Converter-&gt;walk_everything() /usr/share/php/PhpDocumentor/phpDocumentor/Converter.inc:1842<br>
+  201.3689   73667280   8. Converter-&gt;Convert() /usr/share/php/PhpDocumentor/phpDocumentor/Converter.inc:2380<br>
+  201.3689   73667280   9. PDFdefaultConverter-&gt;convertMethod() /usr/share/php/PhpDocumentor/phpDocumentor/Converter.inc:3970</p>
+</section>
+<section>
+<h3>[2007-02-15 18:50 UTC] ashnazg at php dot net</h3>
+<p>Sascha, are you able to isolate this error down to one particular file of yours that you are documenting?  If so, can you use it to construct a small example file that I can use to duplicate the error?</p>
+</section>
+<section>
+<h3>[2007-02-16 22:01 UTC] ashnazg at php dot net</h3>
+<p>Sascha, never mind... I can already duplicate this error with files I have in hand.</p>
+</section>
+<section>
+<h3>[2007-02-16 22:05 UTC] ashnazg at php dot net</h3>
+<p>I see these notices when running current CVS HEAD (v1.3.1+) against PHP v5.2.0 and v5.1.6, but NOT when running against v4.4.4.  Hmmm.</p>
+</section>
+<section>
+<h3>[2007-02-16 22:58 UTC] ashnazg at php dot net</h3>
+<p>In my initial testing, changing line 400 in PDFDefaultConverter.inc</p>
+<p>from:<br>
+if (isset($element-&gt;docblock-&gt;return))</p>
+<p>to:<br>
+if ($element-&gt;docblock-&gt;return)</p>
+<p>prevents those notices from occurring.  I still need to doublecheck the generated docs to see what difference (if any) that makes in the output.</p>
+<p>Sascha, can you apply this one-line change to your PhpDocumentor install, see if it clears up the PHP Notices for you, and see if the generated PDF doc looks any different than the one the normal v1.3.1 creates?</p>
+</section>
+<section>
+<h3>[2007-02-19 21:49 UTC] ashnazg at php dot net</h3>
+<p>That should have read &quot;line 398&quot; rather than &quot;line 400&quot;...</p>
+</section>
+<section>
+<h3>[2007-02-19 21:57 UTC] ashnazg at php dot net</h3>
+<p>In my comparisons of the PDF output with/without that one-line change, the only difference I&#039;m seeing is that with the change, all the functions with an implied &quot;void&quot; return type (i.e. no explicit return command AND no @return tag) are now successfully showing the return type, whereas without the one-line change no return type is shown in the PDF for those functions.</p>
+<p>It looks like this fix not only solves the PHP Notices, but also is necessary for the implied &quot;void&quot; return types to work properly with the PDF Converter.  I assume that means the notices were caused by the failure of the converter to derive what the return type was supposed to be.</p>
+</section>
+<section>
+<h3>[2007-02-20 14:27 UTC] ashnazg at php dot net</h3>
+<p>Fix ok&#039;d by Greg, committed to CVS.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

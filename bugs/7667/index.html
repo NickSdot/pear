@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7667</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_Transform/index.html">Image_Transform</a> &#187; Bug #7667</h1>
+<p>commandline imagick fails with crop and resize</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-05-19 00:08 UTC</td></tr>
+<tr><th>From</th><td>troelskn at gmail dot com</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/Image_Transform/index.html">Image_Transform</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>win xp pro</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-05-19 00:08 UTC] troelskn at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I don&#039;t have the time to produce a proper testcase to describe the problem, but it appears that when you call resize and crop in the same transformation, imagemagick crops the image, but puts some white &quot;padding&quot; on the part of the image that is &quot;cropped away&quot;. this may well be a feature of imagemagick, but it&#039;s not the expected behaviour. the gdlib drivers works as expected.</p>
+<p>i managed to fix the problem by rewriting the -crop option to two -chop instead :</p>
+<p>function crop($height, $width, $x, $y, $options=NULL) {<br>
+    $x = (int) $x;<br>
+    $y = (int) $y;<br>
+    $width = (int) $width;<br>
+    $height = (int) $height;<br>
+    $this-&gt;command[&#039;crop&#039;] = &quot;&quot;;<br>
+    if ($y &gt; 0 || $x &gt; 0) {<br>
+        $this-&gt;command[&#039;crop&#039;] .= &#039; -chop &#039;.$x.&#039;x&#039;.$y.&#039;+0+0&#039;;<br>
+    }<br>
+    if (($height + $y) &lt; $this-&gt;img_y || ($width + $x) &lt; $this-&gt;img_x) {<br>
+        $this-&gt;command[&#039;crop&#039;] .= &#039; -chop &#039;.$x.&#039;x&#039;.$y;<br>
+        if (($width + $x) &lt; $this-&gt;img_x) {<br>
+            $this-&gt;command[&#039;crop&#039;] .= &#039;+&#039;.$width;<br>
+        }<br>
+        if (($height + $y) &lt; $this-&gt;img_y) {<br>
+            $this-&gt;command[&#039;crop&#039;] .= &#039;+&#039;.$height;<br>
+        }<br>
+    }<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

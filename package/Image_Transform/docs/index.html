@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image_Transform Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_Transform/index.html">Image_Transform</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Image_Transform/docs/index.html#package-images-image-transform-general">General usage</a>
+</li>
+<li><a href="package/Image_Transform/docs/index.html#package-images-image-transform-drivers">Drivers</a>
+</li>
+<li><a href="package/Image_Transform/docs/index.html#package-images-image-transform-scaling">Scaling images</a>
+</li>
+<li><a href="package/Image_Transform/docs/index.html#package-images-image-transform-saving">Saving</a>
+</li>
+<li><a href="package/Image_Transform/docs/index.html#package-images-image-transform-othermethods">Other methods</a>
+</li></ul>
+</nav>
+<p>Image_Transform main use case is to create thumbnails of images.</p>
+<section id="package-images-image-transform-general">
+<h2>General usage</h2>
+<p>The first step to do when using <strong>Image_Transform</strong> is
+   to create an <strong>Image_Transform_Driver</strong> instance via
+   the static <strong>factory()</strong> method. Just pass the driver name
+   and you&#039;ve got your object.</p>
+
+  <blockquote>
+   <p>You may omit the driver name. In that case, <strong>Image_Transform</strong>
+    checks for <strong>Imagick2</strong>, <strong>GD</strong>
+    and <strong>Imlib</strong> and uses whatever driver is found first.</p>
+  </blockquote>
+
+
+  <p>Now you can <strong>load()</strong> your image by passing the filename
+   to this function. Use one of the scaling methods and then
+   <strong>save()</strong>.</p>
+
+  <blockquote>
+
+   <p>You may not execute several scaling functions
+    in a row without saving in between.</p>
+  </blockquote>
+
+
+  
+   <p><strong>Scaling an image down</strong></p>
+
+   <pre><code>&lt;?php
+require_once &#039;Image/Transform.php&#039;;
+
+//create transform driver object
+$it = Image_Transform::factory(&#039;GD&#039;);
+
+//load the original file
+$it-&gt;load(&#039;beach-large.jpg&#039;);
+
+//scale it to 150px
+$it-&gt;scaleMaxLength(150);
+
+//save it into a different file
+$it-&gt;save(&#039;beach-150px.jpg&#039;);
+?&gt;</code></pre>
+  
+
+  <p>The example above did not do any error checking. Principially, any method
+   may return a <strong>PEAR_Error</strong> object.
+   Either you check each return value or - in PHP 5 - set the global
+   
+   PEAR error handler to throw exceptions as soon as an error occurs. This
+   may interfere with other errors that are expected and can be hidden, so
+   be careful with this option (especially when using other packages).</p>
+  
+   <p><strong>Scaling an image and checking for all possible errors</strong></p>
+
+   <pre><code>&lt;?php
+require_once &#039;Image/Transform.php&#039;;
+
+//create transform driver object
+$it = Image_Transform::factory(&#039;GD&#039;);
+if (PEAR::isError($it)) {
+    die($it-&gt;getMessage());
+}
+
+//load the original file
+$ret = $it-&gt;load(&#039;beach-large.jpg&#039;);
+if (PEAR::isError($ret)) {
+    die($ret-&gt;getMessage());
+}
+
+//scale it to 150px
+$ret = $it-&gt;scaleByLength(150);
+if (PEAR::isError($ret)) {
+    die($ret-&gt;getMessage());
+}
+
+//save it into a different file
+$ret = $it-&gt;save(&#039;beach-150px.jpg&#039;);
+if (PEAR::isError($ret)) {
+    die($ret-&gt;getMessage());
+}
+?&gt;</code></pre>
+</section>
+<section id="package-images-image-transform-drivers">
+<h2>Drivers</h2>
+<p>The Image_Transform package is useless without a driver that encapsulates
+   some graphic libraries&#039; methods. As of April 2008, the package has
+   the following drivers you can install and use:</p>
+  <ul>
+   <li>
+    <strong>Image_Transform_Driver_GD</strong>
+    - uses methods of the GD 2 extension
+   </li>
+
+   <li>
+    <strong>Image_Transform_Driver_Imagick2</strong>
+    - for imagick PECL extension version
+    &lt; 2.0
+   </li>
+
+   <li>
+    <strong>Image_Transform_Driver_Imagick3</strong>
+    - for imagick PECL extension version
+    &gt;= 2.0
+   </li>
+
+   <li>
+    <strong>Image_Transform_Driver_Imlib</strong>
+    - uses PHP imlib extension
+   </li>
+
+   <li>
+    <strong>Image_Transform_Driver_IM</strong>
+    - Imagick binary executables (if you don&#039;t
+     have the extension)
+   </li>
+
+   <li>
+    <strong>Image_Transform_Driver_NetPBM</strong>
+    - uses the binary executable
+    <code>pnmscale</code> of the NetPBM software package.
+   </li>
+
+  </ul>
+</section>
+<section id="package-images-image-transform-scaling">
+<h2>Scaling images</h2>
+<p><strong>Image_Transform</strong> brings you a lot of methods to
+   scale images. Most of them call the basic resizing method with different
+   parameters, but still have their right to exist because they make your life
+   convenient. Here is a short list:</p>
+  <ul>
+   <li>
+    
+     <a href="package/Image_Transform/docs/index.html">resize</a>
+     - generic resizing method. Pass any size, percentage string
+     (with <code>%</code>) or a scaling factor for both
+     x and y values. Keep it 0 to keep that size. Does not necessarily
+     keep the aspect ratio.
+    
+   </li>
+
+   <li>
+    
+     <a href="package/Image_Transform/docs/index.html">scaleByX</a>
+     - scale the image by resizing the width of the image to the given pixel
+     size. Preserves aspect ratio.
+    
+   </li>
+
+   <li>
+    
+     <a href="package/Image_Transform/docs/index.html">scaleByY</a>
+     - scale the image by resizing the height of the image to the given pixel
+     size. Preserves aspect ratio.
+    
+   </li>
+
+   <li>
+    
+     <a href="package/Image_Transform/docs/index.html">scale</a>
+     - generig scaling function. Pass a pixel value, percentage (with
+     <code>%</code>) or scaling factor (&lt;1). Keeps aspect ratio.
+    
+   </li>
+
+   <li>
+    
+     <a href="package/Image_Transform/docs/index.html">scaleByPercentage</a>
+     - scales by the given percentage.
+    
+   </li>
+
+   <li>
+    
+     <a href="package/Image_Transform/docs/index.html">scaleByFactor</a>
+     - same as <strong>scaleByPercentage()</strong>, just that the numbers are
+     factor 100 smaller.
+    
+   </li>
+
+   <li>
+    
+     <a href="package/Image_Transform/docs/index.html">scaleByLength</a>
+     - scale so that the longest size has the desired size.
+    
+   </li>
+
+   <li>
+    
+     <a href="package/Image_Transform/docs/index.html">fit</a>
+     - scale the image so that it fits into the given box (width and height).
+     Nothing is done if the image is already smaller or equal than the box size.
+    
+   </li>
+
+   <li>
+    
+     <a href="package/Image_Transform/docs/index.html">fitX</a>
+     - scale the image so that the width is the given size. If the width
+     is already smaller, nothing is done.
+    
+   </li>
+
+   <li>
+    
+     <a href="package/Image_Transform/docs/index.html">fitY</a>
+     - scale the image so that the height is the given size. If the height
+     is already smaller, nothing is done.
+    
+   </li>
+  </ul>
+</section>
+<section id="package-images-image-transform-saving">
+<h2>Saving</h2>
+<p>The <a href="package/Image_Transform/docs/index.html"><strong>save()</strong></a>
+   method requires at least one parameter, the filename as which the scaled
+   image is to be saved as. With only one parameter, the type of the new image
+   is the same as the original type.</p>
+  <blockquote>
+   <p>File extensions are not appended if left out.</p>
+  </blockquote>
+
+  <p>The second parameter can be the extension of the file type you want to
+   save the image as, for example
+   <code>png</code> or <code>jpg</code>.</p>
+
+  <p>In case of an error - for example if the driver does not support to write
+   the file type - a <strong>PEAR_Error</strong> object is returned.</p>
+
+  <p>Instead of saving, you can directly put out the image to the browser using
+   <a href="package/Image_Transform/docs/index.html"><strong>display()</strong></a>.</p>
+</section>
+<section id="package-images-image-transform-othermethods">
+<h2>Other methods</h2>
+<table><caption>Driver support for transformation methods</caption>
+
+    
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>GD</th>
+          <th>Imagick2</th>
+          <th>Imagick3</th>
+          <th>Imlib</th>
+          <th>IM</th>
+          <th>NetPBM</th>
+        </tr>
+
+      </thead>
+
+
+      <tbody>
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>_resize()</strong></a></td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+        </tr>
+
+
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>save()</strong></a></td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+        </tr>
+
+
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>display()</strong></a></td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+        </tr>
+
+
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>free()</strong></a></td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+        </tr>
+
+
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>addText()</strong></a></td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+        </tr>
+
+
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>addDropShadow()</strong></a></td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+        </tr>
+
+
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>addBorder()</strong></a></td>
+          <td>yes</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+        </tr>
+
+
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>crop()</strong></a></td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+        </tr>
+
+
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>canvasResize()</strong></a></td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+        </tr>
+
+
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>fitOnCanvas()</strong></a></td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+        </tr>
+
+
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>flip()</strong></a></td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+        </tr>
+
+
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>gamma()</strong></a></td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>-</td>
+          <td>yes</td>
+          <td>yes</td>
+        </tr>
+
+
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>greyscale()</strong></a></td>
+          <td>yes</td>
+          <td>-</td>
+          <td>yes</td>
+          <td>-</td>
+          <td>yes</td>
+          <td>yes</td>
+        </tr>
+
+
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>mirror()</strong></a></td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+        </tr>
+
+
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>normalize()</strong></a></td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+        </tr>
+
+
+        <tr>
+          <td><a href="package/Image_Transform/docs/index.html"><strong>rotate()</strong></a></td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+          <td>yes</td>
+        </tr>
+
+      </tbody></table>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mail_Mbox Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mbox/index.html">Mail_Mbox</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-summary">Class Summary Mail_Mbox</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-tutorial">Tutorial</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-mail-mbox">constructor Mail_Mbox::Mail_Mbox</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-close">Mail_Mbox::close</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-get">Mail_Mbox::get</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-getdebug">Mail_Mbox::getDebug</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-gettmpdir">Mail_Mbox::getTmpDir</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-hasbeenmodified">Mail_Mbox::hasBeenModified</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-insert">Mail_Mbox::insert</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-open">Mail_Mbox::open</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-remove">Mail_Mbox::remove</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-setdebug">Mail_Mbox::setDebug</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-settmpdir">Mail_Mbox::setTmpDir</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-size">Mail_Mbox::size</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-update">Mail_Mbox::update</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-move">Mail_Mbox::_move</a>
+</li>
+<li><a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-process">Mail_Mbox::_process</a>
+</li></ul>
+</nav>
+<section id="package-mail-mail-mbox-mail-mbox-summary">
+<h2>Class Summary Mail_Mbox</h2>
+<h3>Reading and writing mbox files.</h3>
+
+     <p>An mbox mail file is contains plain emails concatenated in one big file.
+      Since each mail starts with &quot;From &quot;, and ends with a newline,
+      they can be separated from each other.</p>
+     <p>This class takes a mbox filename in the constructor, generates an
+      index where the mails start and end when calling
+      <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-open">open()</a>
+      and returns single mails with
+      <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-get">get()</a>,
+      using the positions in the index.</p>
+     <p>With the help of this class, you also can
+      <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-insert">insert()</a>,
+      <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-remove">remove()</a> and
+      <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-update">update()</a>
+      messages in the mbox file. When calling one of this methods, the class
+      checks if the file has been modified since the index was created -
+      changing the file with the wrong positions in the index would very likely
+      corrupt it. This check is not done when retrieving single messages via
+      <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-get">get()</a>,
+      as this would slow down the process if you retrieve thousands of mails.
+      You can, however, call
+      <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-hasbeenmodified">hasBeenModified()</a>
+      before using
+      <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-get">get()</a>
+      to check for modification yourself. If the method returns true,
+      you should
+      <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-close">close()</a>
+      and re-<a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-open">open()</a>
+      the file.</p>
+     <p>If something strange happens and you don&#039;t know why, activate
+      debugging with
+      <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-setdebug">setDebug(true)</a>.
+      You also can modify the temporary directory in which changed mboxes are
+      stored when adding/removing/modifying by using
+      <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-settmpdir">setTmpDir(&#039;/path/&#039;)</a></p>
+    
+    <h3>
+      Class Tree for
+      <strong>Mail_Mbox</strong>
+     </h3>
+
+     <ul>
+       <li>
+        
+         PEAR
+         <ul>
+          <li>
+           Mail_Mbox
+          </li>
+         </ul>
+        
+       </li>
+      </ul>
+</section>
+<section id="package-mail-mail-mbox-tutorial">
+<h2>Tutorial</h2>
+<h3>How to use Mail_Mbox</h3>
+
+  
+  <p>Before you can do anything with the mbox file, you
+   need to
+   <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-mail-mbox">create an
+   instance</a> of the <strong>Mail_Mbox</strong> class and
+   <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-open">open()</a>
+   it.</p>
+  <pre><code>&lt;?php
+require_once &#039;Mail/Mbox.php&#039;;
+$mbox = new Mail_Mbox(&#039;/path/to/mbox&#039;);
+$mbox-&gt;open();
+//do more here
+?&gt;</code></pre>
+  <p>After opening the file, you can retrieve single messages via
+   <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-get">get()</a>.
+   The
+   <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-size">size()</a>
+   method helps you to determine the number of messages:</p>
+  <pre><code>&lt;?php
+//... initialisation
+for ($n = 0; $n &lt; $mbox-&gt;size(); $n++) {
+    $message = $mbox-&gt;get($n);
+    //do something with the message text
+}
+?&gt;</code></pre>
+  <p>If you&#039;re done working with the file,
+   <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-close">close()</a>
+   it.</p>
+  <pre><code>&lt;?php
+//... other code
+$mbox-&gt;close();
+?&gt;</code></pre>
+  <p>Also have a look at the Mail_Mbox examples directory in
+   <code>/path/to/pear/docs/Mail_Mbox/examples/</code>.</p>
+</section>
+<section id="package-mail-mail-mbox-mail-mbox-mail-mbox">
+<h2>constructor Mail_Mbox::Mail_Mbox</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/Mbox.php&#039;;
+   <p><code>
+    
+     void      constructor
+     <strong>Mail_Mbox::Mail_Mbox</strong>
+     ( 
+    
+     string
+     $file
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>After creating a new instance, you should use
+   <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-open">open()</a> to open
+   an mbox file.</p>
+ 
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      string
+      <code>$file</code>
+     </dt>
+     <dd>
+      <p>Filename to open.</p>
+     </dd>
+    </dl>
+</section>
+<section id="package-mail-mail-mbox-mail-mbox-close">
+<h2>Mail_Mbox::close</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/Mbox.php&#039;;
+   <p><code>
+    
+     mixed
+     <strong>Mail_Mbox::close</strong>
+     ( 
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Close the Mbox file opened by
+   <a href="package/Mail_Mbox/docs/index.html#package-mail-mail-mbox-mail-mbox-open">open()</a>.</p>
+ 
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   true on success, else <strong>PEAR_Error</strong></p>
+</section>
+<section id="package-mail-mail-mbox-mail-mbox-get">
+<h2>Mail_Mbox::get</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/Mbox.php&#039;;
+   <p><code>
+    
+     string
+     <strong>Mail_Mbox::get</strong>
+     ( 
+    
+     int
+     $message
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Returns the full email message at the given position.</p>
+  <p>Note: Message number start from 0.</p>
+ 
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      integer
+      <code>$message</code>
+     </dt>
+     <dd>
+      <p>The number of the message to retrieve.</p>
+     </dd>
+    </dl>
+   
+  
+ 
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   Return the message, or <strong>PEAR_Error</strong> on error.</p>
+</section>
+<section id="package-mail-mail-mbox-mail-mbox-getdebug">
+<h2>Mail_Mbox::getDebug</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/Mbox.php&#039;;
+   <p><code>
+    
+     boolean
+     <strong>Mail_Mbox::getDebug</strong>
+     ( 
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Returns true if debugging is enabled.</p>
+ 
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   true if debug is enabled.</p>
+</section>
+<section id="package-mail-mail-mbox-mail-mbox-gettmpdir">
+<h2>Mail_Mbox::getTmpDir</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/Mbox.php&#039;;
+   <p><code>
+    
+     string
+     <strong>Mail_Mbox::getTmpDir</strong>
+     ( 
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Returns the temporary directory.</p>
+
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   The temporary directory.</p>
+</section>
+<section id="package-mail-mail-mbox-mail-mbox-hasbeenmodified">
+<h2>Mail_Mbox::hasBeenModified</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/Mbox.php&#039;;
+   <p><code>
+    
+     boolean
+     <strong>Mail_Mbox::hasBeenModified</strong>
+     ( 
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Checks if the mbox file has been modified since opening.
+   If this is true, the file needs to be re-opened.</p>
+ 
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   True if it has been modified.</p>
+</section>
+<section id="package-mail-mail-mbox-mail-mbox-insert">
+<h2>Mail_Mbox::insert</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/Mbox.php&#039;;
+   <p><code>
+    
+     mixed
+     <strong>Mail_Mbox::insert</strong>
+     ( 
+    
+     string
+     $content
+    
+     , 
+     mixed
+     $offset
+      = null
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Mail_Mbox will insert the message according to the specified offset.
+   (Remember: message 3 is the fourth message). The default is to insert
+   the message AFTER the last message (offset = null).</p>
+  <p>Note: Mail_Mbox automatically adds \n\n at end of the message.</p>
+ 
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      string
+      <code>$content</code>
+     </dt>
+     <dd>
+      <p>The content of the new message.</p>
+     </dd>
+    </dl>
+   
+   
+    <dl>
+     <dt>
+      mixed
+      <code>$offset</code>
+     </dt>
+     <dd>
+      
+     </dd>
+    </dl>
+   
+  
+ 
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   Return true or the <strong>PEAR_Error</strong> object on failure.</p>
+</section>
+<section id="package-mail-mail-mbox-mail-mbox-open">
+<h2>Mail_Mbox::open</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/Mbox.php&#039;;
+   <p><code>
+    
+     void
+     <strong>Mail_Mbox::open</strong>
+     ( 
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Also, this function will process the mbox file and create a cache that tells each message start and end bytes.</p>
+</section>
+<section id="package-mail-mail-mbox-mail-mbox-remove">
+<h2>Mail_Mbox::remove</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/Mbox.php&#039;;
+   <p><code>
+    
+     mixed
+     <strong>Mail_Mbox::remove</strong>
+     ( 
+    
+     int
+     $message
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Removes the message with the given id.</p>
+  <blockquote>
+   <p>Note: messages start with 0.</p>
+  </blockquote>
+
+ 
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      integer
+      <code>$message</code>
+     </dt>
+     <dd>
+      <p>The number of the message to remove, or
+       array of message ids to remove.</p>
+     </dd>
+    </dl>
+   
+  
+ 
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   Return true or PEAR_Error object on failure.</p>
+</section>
+<section id="package-mail-mail-mbox-mail-mbox-setdebug">
+<h2>Mail_Mbox::setDebug</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/Mbox.php&#039;;
+   <p><code>
+    
+     void
+     <strong>Mail_Mbox::setDebug</strong>
+     ( 
+    
+     boolean
+     $debug
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Sets the debug flag. If debugging is enabled, you will get more output.</p>
+
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      boolean
+      <code>$debug</code>
+     </dt>
+     <dd>
+      <p>True if debug is on, otherwise false.</p>
+     </dd>
+    </dl>
+   
+  
+ 
+ 
+  <h3>See</h3>
+  <p><em>see</em>
+   <code>Mail_Mbox::$debug</code></p>
+</section>
+<section id="package-mail-mail-mbox-mail-mbox-settmpdir">
+<h2>Mail_Mbox::setTmpDir</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/Mbox.php&#039;;
+   <p><code>
+    
+     void
+     <strong>Mail_Mbox::setTmpDir</strong>
+     ( 
+    
+     string
+     $tmpdir
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Sets the temporary directory in which new mbox files are stored.</p>
+
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      string
+      <code>$tmpdir</code>
+     </dt>
+     <dd>
+      <p>The new temporary directory.</p>
+     </dd>
+    </dl>
+   
+  
+ 
+ 
+  <h3>See</h3>
+  <p><em>see</em>
+   <code>Mail_Mbox::$tmpdir</code></p>
+</section>
+<section id="package-mail-mail-mbox-mail-mbox-size">
+<h2>Mail_Mbox::size</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/Mbox.php&#039;;
+   <p><code>
+    
+     int
+     <strong>Mail_Mbox::size</strong>
+     ( 
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Returns the number of messages in the mbox file.</p>
+ 
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   Number of messages on Mbox (starting on 1, 0 if no message exists).</p>
+</section>
+<section id="package-mail-mail-mbox-mail-mbox-update">
+<h2>Mail_Mbox::update</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/Mbox.php&#039;;
+   <p><code>
+    
+     mixed
+     <strong>Mail_Mbox::update</strong>
+     ( 
+    
+     int
+     $message
+    
+     , 
+     string
+     $content
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Replaces a given message with the text passed to this method.</p>
+  <blockquote><p>Mail_Mbox auto adds \n\n at end of the message</p></blockquote>
+
+  <blockquote><p>messages start with 0.</p></blockquote>
+
+ 
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      integer
+      <code>$message</code>
+     </dt>
+     <dd>
+      <p>The number of the Message to update.</p>
+     </dd>
+    </dl>
+   
+   
+    <dl>
+     <dt>
+      string
+      <code>$content</code>
+     </dt>
+     <dd>
+      <p>The new content of the Message.</p>
+     </dd>
+    </dl>
+   
+  
+ 
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   Return true if all is ok, otherwise <strong>PEAR_Error</strong></p>
+</section>
+<section id="package-mail-mail-mbox-mail-mbox-move">
+<h2>Mail_Mbox::_move</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/Mbox.php&#039;;
+   <p><code>
+    
+     void
+     <strong>Mail_Mbox::_move</strong>
+     ( 
+    
+     string
+     $ftempname
+    
+     , 
+     string
+     $filename
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Used internally to copy the content of the temp file to the mbox file.</p>
+ 
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      string
+      <code>$ftempname</code>
+     </dt>
+     <dd>
+      <p>Source file - will be removed</p>
+     </dd>
+    </dl>
+   
+   
+    <dl>
+     <dt>
+      string
+      <code>$filename</code>
+     </dt>
+     <dd>
+      <p>Output file</p>
+     </dd>
+    </dl>
+</section>
+<section id="package-mail-mail-mbox-mail-mbox-process">
+<h2>Mail_Mbox::_process</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/Mbox.php&#039;;
+   <p><code>
+    
+     void
+     <strong>Mail_Mbox::_process</strong>
+     ( 
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <ul>
+    <li>
+     Get start bytes and end bytes of each messages.
+    </li>
+   </ul>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

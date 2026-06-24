@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7909</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB_QueryTool/index.html">MDB_QueryTool</a> &#187; Bug #7909</h1>
+<p>nextID broken, prevents records from saving</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-06-15 16:39 UTC</td></tr>
+<tr><th>From</th><td>julieatwork at sethandjulie dot net</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB_QueryTool/index.html">MDB_QueryTool</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.2</td></tr>
+<tr><th>OS</th><td>debian</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-15 16:39 UTC] julieatwork at sethandjulie dot net</h3>
+<p>Description:<br>
+------------<br>
+The line in query.php: <br>
+(int)$this-&gt;db-&gt;nextId($this-&gt;sequenceName)</p>
+<p>gives me the error message &quot;InnoDB is not a supported table type by this MySQL database server&quot; if I remove the int and echo &quot;$this-&gt;db-&gt;nextId($this-&gt;sequenceName)&quot;.  Echoing $this-&gt;sequenceName by itself works fine; the problem is definitely with the nextId part.  I saw there was a bug on the MDB2 bug reports about a similar issue, but</p>
+<p>Ergo, the simple sample script (http://pear.php.net/manual/en/package.database.mdb-querytool.intro.php) fails out-of-the-box.</p>
+<p>Presumably this has something to do with my particular setup (else it would have been discovered already), but all the other methods seem to work, and the message itself is confusing, because my table definitely has a primary key (id) and it is set to auto_increment.</p>
+<p>I&#039;m using MDB2 and MySQL.</p>
+<p>Test script:<br>
+---------------<br>
+$data = array(<br>
+    &#039;name&#039; =&gt; &#039;this is a name&#039;,<br>
+    &#039;dgroup&#039;=&gt; 14<br>
+);<br>
+$newCarId = $car-&gt;save($data);<br>
+var_dump($newCarId);</p>
+<p>Expected result:<br>
+----------------<br>
+The id returned from the new row.</p>
+<p>Actual result:<br>
+--------------<br>
+It returns false, but if I remove the (int) declaration, it gives me the above error message, and if I modify Query.php to comment out these lines (around 649), it works perfectly:</p>
+<p>$id = (int)$this-&gt;db-&gt;nextId($this-&gt;sequenceName);<br>
+$newData[$this-&gt;primaryCol] = $id;</p>
+<p>The only problem with this &quot;solution&quot; is that then if you try to update a row that doesn&#039;t exist with &quot;save&quot; (i.e., specify an id that is assigned to no row), it still returns true, even though it does absolutely nothing.</p>
+</section>
+<section>
+<h3>[2006-06-15 16:41 UTC] julieatwork at sethandjulie dot net</h3>
+<p>Er, goodness, I didn&#039;t finish my sentence in that first part.  I meant to say that the problem in MDB2 has supposedly been fixed, and I am using the most recent version (including the fix).</p>
+</section>
+<section>
+<h3>[2006-06-15 16:52 UTC] julieatwork at sethandjulie dot net</h3>
+<p>It also seems to fix it if you change the capitalization of nextId to nextID.</p>
+<p>Any consequences to that for elsewhere?</p>
+</section>
+<section>
+<h3>[2006-06-15 20:37 UTC] julieatwork at sethandjulie dot net</h3>
+<p>I updated with the fix, but it&#039;s still not working on my system, unfortunately.  Now it gives me the message &quot;nextID: on demand sequence dealerships could not be created&quot; where dealerships is my table name.  It also says &quot;MDB2 Error: not supported&quot; and &quot;INNODB is not a supported table type by this MySQL database server[Native code: 0]&quot;.  This happens only when I&#039;m trying to ADD -- updating a row works perfectly.  This is still on the same code example.</p>
+</section>
+<section>
+<h3>[2006-06-19 12:38 UTC] julieatwork at sethandjulie dot net</h3>
+<p>No, it&#039;s not InnoDB, it&#039;s MyISAM -- sorry I didn&#039;t clarify that to begin with.  But why would InnoDB be required for simply *saving* rows?  Didn&#039;t see that in the docs anywhere.  And if I comment those lines out (in my earlier post) then it works fine.  Sorry if I&#039;m confused.</p>
+</section>
+<section>
+<h3>[2006-06-19 13:40 UTC] julieatwork at sethandjulie dot net</h3>
+<p>Just in case, I changed my table type to InnoDB, ran the query you asked (it returned YES), and tried again -- and got the exact same error message.</p>
+</section>
+<section>
+<h3>[2006-06-19 14:02 UTC] julieatwork at sethandjulie dot net</h3>
+<p>Downloaded the CVS of MDB2, and something seems to have fixed it.</p>
+</section>
+<section>
+<h3>[2006-06-19 14:02 UTC] julieatwork at sethandjulie dot net</h3>
+<p>see above</p>
+</section>
+<section>
+<h3>[2006-07-31 17:30 UTC] benjaminhill at gmail dot com</h3>
+<p>I ran into the same thing - for anyone that sees this, I SUSPECT it has to do with the fact that my service provider doesn&#039;t allow InnoDB tables, everything is only MyISAM.  So, when it tries to create the new sequence for the on-demand table, it bombs.</p>
+<p>Upgrading to the latest (not in CVS) fixed the problem.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

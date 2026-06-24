@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #946</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB/index.html">MDB</a> &#187; Bug #946</h1>
+<p>OCIFetchInto:ORA-01002:fetch out of sequence if numrows() called before</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-04 14:23 UTC</td></tr>
+<tr><th>From</th><td>thierrybo at freesurf dot fr</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB/index.html">MDB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>win32XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-04 14:23 UTC] thierrybo at freesurf dot fr</h3>
+<p>Description:<br>
+------------<br>
+[oci8.php 1.21.4.15]<br>
+Hi,</p>
+<p>since recent updates, seems bug #633 is back. I got the error &quot;OCIFetchInto:ORA-01002:fetch out of sequence&quot; if I just call fetchInto() after numRows() (yes, I now removed all numrows from my code where I just want to know if there are any rows and replaced them with fetchInto, but it remains places where I really need to know!).</p>
+<p>Here is an example with assuming there is only one row in the result set. The $rownum is not reset to 0 when I call fetchInto after numRows.</p>
+<p>When I leave numRows, variable:</p>
+<p>$this-&gt;highest_fetched_row[$result_value] == 1</p>
+<p>Entering fetchInto,  line 1532 $rownum == 2 because :</p>
+<p>$rownum = $this-&gt;highest_fetched_row[$result_value] + 1;</p>
+<p>then line 1552</p>
+<p>@OCIFetchInto($result, $buffer, OCI_RETURN_NULLS)</p>
+<p>fails because cursor is at 2 at this moment, thus &#039;out of sequence&#039;.</p>
+<p>Thierry Bothorel</p>
+<p>Reproduce code:<br>
+---------------<br>
+(simplified)</p>
+<p>$res = $mdb-&gt;query($sql);<br>
+$counte = $mdb-&gt;numRows($res); <br>
+while ($row = $mdb-&gt;fetchInto($res)) {}</p>
+</section>
+<section>
+<h3>[2004-03-04 23:31 UTC] thierrybo at freesurf dot fr</h3>
+<p>Well, I have a fix I have not fully tested. I assume that if numRows() needed to execute OCIFetchInto (highest_fetched_row was not set), the new $highest_fetched_row value is only valid for numRows purpose. Then I copy its value to a $temp variable (not found a better way), set $highest_fetched_row to -1 and return $temp.<br>
+This way, when I call fetchInto thereafter, $rownum = 0 (line 1532), <br>
+then $this-&gt;results[$result_value][$rownum] exist (line 1534),<br>
+then we can jump to line 1566 where we only read values in $this-&gt;results[$result_value][$rownum] (no need to run OCIFetchInto anymore).</p>
+<p>Meanwhile I also changed (line 900) $this-&gt;current_row[$result_value] into $this-&gt;highest_fetch_row[$result_value] as the last index of $this-&gt;results[$result_value], since this is the second one that is incremented in the loop.</p>
+<p>Again, please test if this works also if we call numRows AFTER fetchInto, not before.</p>
+<p>Diff file :</p>
+<p>900c900<br>
+&lt;                     $this-&gt;results[$result_value][$this-&gt;current_row[$result_value]] = $buffer;<br>
+---<br>
+&gt;                     $this-&gt;results[$result_value][$this-&gt;highest_fetched_row[$result_value]] = $buffer;<br>
+903a904,905<br>
+&gt;                 $temp = $this-&gt;highest_fetched_row[$result_value];<br>
+&gt;                 $this-&gt;highest_fetched_row[$result_value] = -1;<br>
+906c908<br>
+&lt;         return(max(0, $this-&gt;highest_fetched_row[$result_value]));<br>
+---<br>
+&gt;         return $temp;</p>
+<p>Thierry Bothorel</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

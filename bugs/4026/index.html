@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4026</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #4026</h1>
+<p>missing dst data for Europe/Tallinn and Europe/Vilnius</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-04-01 18:36 UTC</td></tr>
+<tr><th>From</th><td>glen at delfi dot ee</td></tr>
+<tr><th>Assigned</th><td>pajoye</td></tr>
+<tr><th>Status</th><td>Suspended</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-01 18:36 UTC] glen at delfi dot ee</h3>
+<p>Description:<br>
+------------<br>
+    &#039;Europe/Tallinn&#039; =&gt; array(<br>
+        &#039;offset&#039; =&gt; 7200000,<br>
+        &#039;longname&#039; =&gt; &quot;Eastern European Time&quot;,<br>
+        &#039;shortname&#039; =&gt; &#039;EET&#039;,<br>
+        &#039;hasdst&#039; =&gt; false ),<br>
+    &#039;Europe/Vilnius&#039; =&gt; array(<br>
+        &#039;offset&#039; =&gt; 7200000,<br>
+        &#039;longname&#039; =&gt; &quot;Eastern European Time&quot;,                       &#039;shortname&#039; =&gt; &#039;EET&#039;,                                        &#039;hasdst&#039; =&gt; false ),</p>
+<p>but they should both look like:<br>
+    &#039;Europe/Riga&#039; =&gt; array(<br>
+        &#039;offset&#039; =&gt; 7200000,<br>
+        &#039;longname&#039; =&gt; &quot;Eastern European Time&quot;,<br>
+        &#039;shortname&#039; =&gt; &#039;EET&#039;,<br>
+        &#039;hasdst&#039; =&gt; true,<br>
+        &#039;dstlongname&#039; =&gt; &quot;Eastern European Summer Time&quot;,<br>
+        &#039;dstshortname&#039; =&gt; &#039;EEST&#039;),</p>
+<p>but, the whole TimeZone class is wrong, because the isdst is dependant of year. and the dstoffset is also not constant in period of time.</p>
+<p>for example in period of 1999 to 2002 there is no daylight savings time in Europe/Tallinn timezone!</p>
+<p>here&#039;s zdump of Europe/Tallinn timezone:<br>
+/usr/share/zoneinfo/Europe/Tallinn  Fri Dec 13 20:45:52 1901 UTC = Fri Dec 13 22:24:52 1901 EET isdst=0 gmtoff=5940<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Dec 14 20:45:52 1901 UTC = Sat Dec 14 22:24:52 1901 EET isdst=0 gmtoff=5940<br>
+/usr/share/zoneinfo/Europe/Tallinn  Thu Jan 31 22:20:59 1918 UTC = Thu Jan 31 23:59:59 1918 EET isdst=0 gmtoff=5940<br>
+/usr/share/zoneinfo/Europe/Tallinn  Thu Jan 31 22:21:00 1918 UTC = Thu Jan 31 23:21:00 1918 EET isdst=0 gmtoff=3600<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Apr 15 00:59:59 1918 UTC = Mon Apr 15 01:59:59 1918 EET isdst=0 gmtoff=3600<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Apr 15 01:00:00 1918 UTC = Mon Apr 15 03:00:00 1918 EEST isdst=1 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Sep 16 00:59:59 1918 UTC = Mon Sep 16 02:59:59 1918 EEST isdst=1 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Sep 16 01:00:00 1918 UTC = Mon Sep 16 02:00:00 1918 EET isdst=0 gmtoff=3600<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Jun 30 22:59:59 1919 UTC = Mon Jun 30 23:59:59 1919 EET isdst=0 gmtoff=3600<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Jun 30 23:00:00 1919 UTC = Tue Jul  1 00:39:00 1919 EET isdst=0 gmtoff=5940<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Apr 30 22:20:59 1921 UTC = Sat Apr 30 23:59:59 1921 EET isdst=0 gmtoff=5940<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Apr 30 22:21:00 1921 UTC = Sun May  1 00:21:00 1921 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Aug  5 21:59:59 1940 UTC = Mon Aug  5 23:59:59 1940 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Aug  5 22:00:00 1940 UTC = Tue Aug  6 01:00:00 1940 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Sep 14 20:59:59 1941 UTC = Sun Sep 14 23:59:59 1941 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Sep 14 21:00:00 1941 UTC = Sun Sep 14 23:00:00 1941 EEST isdst=1 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Nov  2 00:59:59 1942 UTC = Mon Nov  2 02:59:59 1942 EEST isdst=1 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Nov  2 01:00:00 1942 UTC = Mon Nov  2 02:00:00 1942 EET isdst=0 gmtoff=3600<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Mar 29 00:59:59 1943 UTC = Mon Mar 29 01:59:59 1943 EET isdst=0 gmtoff=3600<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Mar 29 01:00:00 1943 UTC = Mon Mar 29 03:00:00 1943 EEST isdst=1 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Oct  4 00:59:59 1943 UTC = Mon Oct  4 02:59:59 1943 EEST isdst=1 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Oct  4 01:00:00 1943 UTC = Mon Oct  4 02:00:00 1943 EET isdst=0 gmtoff=3600<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Apr  3 00:59:59 1944 UTC = Mon Apr  3 01:59:59 1944 EET isdst=0 gmtoff=3600<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Apr  3 01:00:00 1944 UTC = Mon Apr  3 03:00:00 1944 EEST isdst=1 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Thu Sep 21 21:59:59 1944 UTC = Thu Sep 21 23:59:59 1944 EEST isdst=1 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Thu Sep 21 22:00:00 1944 UTC = Fri Sep 22 01:00:00 1944 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Tue Mar 31 20:59:59 1981 UTC = Tue Mar 31 23:59:59 1981 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Tue Mar 31 21:00:00 1981 UTC = Wed Apr  1 01:00:00 1981 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Wed Sep 30 19:59:59 1981 UTC = Wed Sep 30 23:59:59 1981 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Wed Sep 30 20:00:00 1981 UTC = Wed Sep 30 23:00:00 1981 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Wed Mar 31 20:59:59 1982 UTC = Wed Mar 31 23:59:59 1982 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Wed Mar 31 21:00:00 1982 UTC = Thu Apr  1 01:00:00 1982 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Thu Sep 30 19:59:59 1982 UTC = Thu Sep 30 23:59:59 1982 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Thu Sep 30 20:00:00 1982 UTC = Thu Sep 30 23:00:00 1982 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Thu Mar 31 20:59:59 1983 UTC = Thu Mar 31 23:59:59 1983 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Thu Mar 31 21:00:00 1983 UTC = Fri Apr  1 01:00:00 1983 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Fri Sep 30 19:59:59 1983 UTC = Fri Sep 30 23:59:59 1983 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Fri Sep 30 20:00:00 1983 UTC = Fri Sep 30 23:00:00 1983 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 31 20:59:59 1984 UTC = Sat Mar 31 23:59:59 1984 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 31 21:00:00 1984 UTC = Sun Apr  1 01:00:00 1984 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 29 22:59:59 1984 UTC = Sun Sep 30 02:59:59 1984 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 29 23:00:00 1984 UTC = Sun Sep 30 02:00:00 1984 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 30 22:59:59 1985 UTC = Sun Mar 31 01:59:59 1985 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 30 23:00:00 1985 UTC = Sun Mar 31 03:00:00 1985 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 28 22:59:59 1985 UTC = Sun Sep 29 02:59:59 1985 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 28 23:00:00 1985 UTC = Sun Sep 29 02:00:00 1985 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 29 22:59:59 1986 UTC = Sun Mar 30 01:59:59 1986 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 29 23:00:00 1986 UTC = Sun Mar 30 03:00:00 1986 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 27 22:59:59 1986 UTC = Sun Sep 28 02:59:59 1986 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 27 23:00:00 1986 UTC = Sun Sep 28 02:00:00 1986 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 28 22:59:59 1987 UTC = Sun Mar 29 01:59:59 1987 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 28 23:00:00 1987 UTC = Sun Mar 29 03:00:00 1987 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 26 22:59:59 1987 UTC = Sun Sep 27 02:59:59 1987 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 26 23:00:00 1987 UTC = Sun Sep 27 02:00:00 1987 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 26 22:59:59 1988 UTC = Sun Mar 27 01:59:59 1988 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 26 23:00:00 1988 UTC = Sun Mar 27 03:00:00 1988 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 24 22:59:59 1988 UTC = Sun Sep 25 02:59:59 1988 EEST isdst=1 gmtoff=14400<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 24 23:00:00 1988 UTC = Sun Sep 25 02:00:00 1988 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 25 22:59:59 1989 UTC = Sun Mar 26 01:59:59 1989 EET isdst=0 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 25 23:00:00 1989 UTC = Sun Mar 26 02:00:00 1989 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 23 23:59:59 1989 UTC = Sun Sep 24 02:59:59 1989 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Sep 24 00:00:00 1989 UTC = Sun Sep 24 02:00:00 1989 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 24 23:59:59 1990 UTC = Sun Mar 25 01:59:59 1990 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 25 00:00:00 1990 UTC = Sun Mar 25 03:00:00 1990 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 29 23:59:59 1990 UTC = Sun Sep 30 02:59:59 1990 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Sep 30 00:00:00 1990 UTC = Sun Sep 30 02:00:00 1990 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 30 23:59:59 1991 UTC = Sun Mar 31 01:59:59 1991 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 31 00:00:00 1991 UTC = Sun Mar 31 03:00:00 1991 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 28 23:59:59 1991 UTC = Sun Sep 29 02:59:59 1991 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Sep 29 00:00:00 1991 UTC = Sun Sep 29 02:00:00 1991 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 28 23:59:59 1992 UTC = Sun Mar 29 01:59:59 1992 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 29 00:00:00 1992 UTC = Sun Mar 29 03:00:00 1992 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 26 23:59:59 1992 UTC = Sun Sep 27 02:59:59 1992 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Sep 27 00:00:00 1992 UTC = Sun Sep 27 02:00:00 1992 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 27 23:59:59 1993 UTC = Sun Mar 28 01:59:59 1993 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 28 00:00:00 1993 UTC = Sun Mar 28 03:00:00 1993 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 25 23:59:59 1993 UTC = Sun Sep 26 02:59:59 1993 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Sep 26 00:00:00 1993 UTC = Sun Sep 26 02:00:00 1993 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 26 23:59:59 1994 UTC = Sun Mar 27 01:59:59 1994 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 27 00:00:00 1994 UTC = Sun Mar 27 03:00:00 1994 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 24 23:59:59 1994 UTC = Sun Sep 25 02:59:59 1994 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Sep 25 00:00:00 1994 UTC = Sun Sep 25 02:00:00 1994 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 25 23:59:59 1995 UTC = Sun Mar 26 01:59:59 1995 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 26 00:00:00 1995 UTC = Sun Mar 26 03:00:00 1995 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Sep 23 23:59:59 1995 UTC = Sun Sep 24 02:59:59 1995 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Sep 24 00:00:00 1995 UTC = Sun Sep 24 02:00:00 1995 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 30 23:59:59 1996 UTC = Sun Mar 31 01:59:59 1996 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 31 00:00:00 1996 UTC = Sun Mar 31 03:00:00 1996 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Oct 26 23:59:59 1996 UTC = Sun Oct 27 02:59:59 1996 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 27 00:00:00 1996 UTC = Sun Oct 27 02:00:00 1996 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 29 23:59:59 1997 UTC = Sun Mar 30 01:59:59 1997 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 30 00:00:00 1997 UTC = Sun Mar 30 03:00:00 1997 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Oct 25 23:59:59 1997 UTC = Sun Oct 26 02:59:59 1997 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 26 00:00:00 1997 UTC = Sun Oct 26 02:00:00 1997 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sat Mar 28 23:59:59 1998 UTC = Sun Mar 29 01:59:59 1998 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 29 00:00:00 1998 UTC = Sun Mar 29 03:00:00 1998 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 25 00:59:59 1998 UTC = Sun Oct 25 03:59:59 1998 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 25 01:00:00 1998 UTC = Sun Oct 25 03:00:00 1998 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 28 00:59:59 1999 UTC = Sun Mar 28 02:59:59 1999 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 28 01:00:00 1999 UTC = Sun Mar 28 04:00:00 1999 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 31 00:59:59 1999 UTC = Sun Oct 31 03:59:59 1999 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 31 01:00:00 1999 UTC = Sun Oct 31 03:00:00 1999 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 31 00:59:59 2002 UTC = Sun Mar 31 02:59:59 2002 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 31 01:00:00 2002 UTC = Sun Mar 31 04:00:00 2002 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 27 00:59:59 2002 UTC = Sun Oct 27 03:59:59 2002 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 27 01:00:00 2002 UTC = Sun Oct 27 03:00:00 2002 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 30 00:59:59 2003 UTC = Sun Mar 30 02:59:59 2003 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 30 01:00:00 2003 UTC = Sun Mar 30 04:00:00 2003 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 26 00:59:59 2003 UTC = Sun Oct 26 03:59:59 2003 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 26 01:00:00 2003 UTC = Sun Oct 26 03:00:00 2003 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 28 00:59:59 2004 UTC = Sun Mar 28 02:59:59 2004 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 28 01:00:00 2004 UTC = Sun Mar 28 04:00:00 2004 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 31 00:59:59 2004 UTC = Sun Oct 31 03:59:59 2004 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 31 01:00:00 2004 UTC = Sun Oct 31 03:00:00 2004 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 27 00:59:59 2005 UTC = Sun Mar 27 02:59:59 2005 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 27 01:00:00 2005 UTC = Sun Mar 27 04:00:00 2005 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 30 00:59:59 2005 UTC = Sun Oct 30 03:59:59 2005 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 30 01:00:00 2005 UTC = Sun Oct 30 03:00:00 2005 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 26 00:59:59 2006 UTC = Sun Mar 26 02:59:59 2006 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 26 01:00:00 2006 UTC = Sun Mar 26 04:00:00 2006 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 29 00:59:59 2006 UTC = Sun Oct 29 03:59:59 2006 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 29 01:00:00 2006 UTC = Sun Oct 29 03:00:00 2006 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 25 00:59:59 2007 UTC = Sun Mar 25 02:59:59 2007 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 25 01:00:00 2007 UTC = Sun Mar 25 04:00:00 2007 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 28 00:59:59 2007 UTC = Sun Oct 28 03:59:59 2007 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 28 01:00:00 2007 UTC = Sun Oct 28 03:00:00 2007 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 30 00:59:59 2008 UTC = Sun Mar 30 02:59:59 2008 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 30 01:00:00 2008 UTC = Sun Mar 30 04:00:00 2008 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 26 00:59:59 2008 UTC = Sun Oct 26 03:59:59 2008 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 26 01:00:00 2008 UTC = Sun Oct 26 03:00:00 2008 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 29 00:59:59 2009 UTC = Sun Mar 29 02:59:59 2009 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 29 01:00:00 2009 UTC = Sun Mar 29 04:00:00 2009 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 25 00:59:59 2009 UTC = Sun Oct 25 03:59:59 2009 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 25 01:00:00 2009 UTC = Sun Oct 25 03:00:00 2009 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 28 00:59:59 2010 UTC = Sun Mar 28 02:59:59 2010 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 28 01:00:00 2010 UTC = Sun Mar 28 04:00:00 2010 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 31 00:59:59 2010 UTC = Sun Oct 31 03:59:59 2010 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 31 01:00:00 2010 UTC = Sun Oct 31 03:00:00 2010 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 27 00:59:59 2011 UTC = Sun Mar 27 02:59:59 2011 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 27 01:00:00 2011 UTC = Sun Mar 27 04:00:00 2011 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 30 00:59:59 2011 UTC = Sun Oct 30 03:59:59 2011 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 30 01:00:00 2011 UTC = Sun Oct 30 03:00:00 2011 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 25 00:59:59 2012 UTC = Sun Mar 25 02:59:59 2012 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 25 01:00:00 2012 UTC = Sun Mar 25 04:00:00 2012 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 28 00:59:59 2012 UTC = Sun Oct 28 03:59:59 2012 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 28 01:00:00 2012 UTC = Sun Oct 28 03:00:00 2012 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 31 00:59:59 2013 UTC = Sun Mar 31 02:59:59 2013 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 31 01:00:00 2013 UTC = Sun Mar 31 04:00:00 2013 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 27 00:59:59 2013 UTC = Sun Oct 27 03:59:59 2013 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 27 01:00:00 2013 UTC = Sun Oct 27 03:00:00 2013 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 30 00:59:59 2014 UTC = Sun Mar 30 02:59:59 2014 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 30 01:00:00 2014 UTC = Sun Mar 30 04:00:00 2014 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 26 00:59:59 2014 UTC = Sun Oct 26 03:59:59 2014 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 26 01:00:00 2014 UTC = Sun Oct 26 03:00:00 2014 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 29 00:59:59 2015 UTC = Sun Mar 29 02:59:59 2015 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 29 01:00:00 2015 UTC = Sun Mar 29 04:00:00 2015 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 25 00:59:59 2015 UTC = Sun Oct 25 03:59:59 2015 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 25 01:00:00 2015 UTC = Sun Oct 25 03:00:00 2015 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 27 00:59:59 2016 UTC = Sun Mar 27 02:59:59 2016 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 27 01:00:00 2016 UTC = Sun Mar 27 04:00:00 2016 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 30 00:59:59 2016 UTC = Sun Oct 30 03:59:59 2016 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 30 01:00:00 2016 UTC = Sun Oct 30 03:00:00 2016 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 26 00:59:59 2017 UTC = Sun Mar 26 02:59:59 2017 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 26 01:00:00 2017 UTC = Sun Mar 26 04:00:00 2017 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 29 00:59:59 2017 UTC = Sun Oct 29 03:59:59 2017 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 29 01:00:00 2017 UTC = Sun Oct 29 03:00:00 2017 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 25 00:59:59 2018 UTC = Sun Mar 25 02:59:59 2018 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 25 01:00:00 2018 UTC = Sun Mar 25 04:00:00 2018 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 28 00:59:59 2018 UTC = Sun Oct 28 03:59:59 2018 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 28 01:00:00 2018 UTC = Sun Oct 28 03:00:00 2018 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 31 00:59:59 2019 UTC = Sun Mar 31 02:59:59 2019 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 31 01:00:00 2019 UTC = Sun Mar 31 04:00:00 2019 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 27 00:59:59 2019 UTC = Sun Oct 27 03:59:59 2019 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 27 01:00:00 2019 UTC = Sun Oct 27 03:00:00 2019 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 29 00:59:59 2020 UTC = Sun Mar 29 02:59:59 2020 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 29 01:00:00 2020 UTC = Sun Mar 29 04:00:00 2020 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 25 00:59:59 2020 UTC = Sun Oct 25 03:59:59 2020 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 25 01:00:00 2020 UTC = Sun Oct 25 03:00:00 2020 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 28 00:59:59 2021 UTC = Sun Mar 28 02:59:59 2021 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 28 01:00:00 2021 UTC = Sun Mar 28 04:00:00 2021 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 31 00:59:59 2021 UTC = Sun Oct 31 03:59:59 2021 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 31 01:00:00 2021 UTC = Sun Oct 31 03:00:00 2021 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 27 00:59:59 2022 UTC = Sun Mar 27 02:59:59 2022 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 27 01:00:00 2022 UTC = Sun Mar 27 04:00:00 2022 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 30 00:59:59 2022 UTC = Sun Oct 30 03:59:59 2022 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 30 01:00:00 2022 UTC = Sun Oct 30 03:00:00 2022 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 26 00:59:59 2023 UTC = Sun Mar 26 02:59:59 2023 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 26 01:00:00 2023 UTC = Sun Mar 26 04:00:00 2023 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 29 00:59:59 2023 UTC = Sun Oct 29 03:59:59 2023 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 29 01:00:00 2023 UTC = Sun Oct 29 03:00:00 2023 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 31 00:59:59 2024 UTC = Sun Mar 31 02:59:59 2024 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 31 01:00:00 2024 UTC = Sun Mar 31 04:00:00 2024 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 27 00:59:59 2024 UTC = Sun Oct 27 03:59:59 2024 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 27 01:00:00 2024 UTC = Sun Oct 27 03:00:00 2024 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 30 00:59:59 2025 UTC = Sun Mar 30 02:59:59 2025 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 30 01:00:00 2025 UTC = Sun Mar 30 04:00:00 2025 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 26 00:59:59 2025 UTC = Sun Oct 26 03:59:59 2025 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 26 01:00:00 2025 UTC = Sun Oct 26 03:00:00 2025 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 29 00:59:59 2026 UTC = Sun Mar 29 02:59:59 2026 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 29 01:00:00 2026 UTC = Sun Mar 29 04:00:00 2026 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 25 00:59:59 2026 UTC = Sun Oct 25 03:59:59 2026 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 25 01:00:00 2026 UTC = Sun Oct 25 03:00:00 2026 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 28 00:59:59 2027 UTC = Sun Mar 28 02:59:59 2027 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 28 01:00:00 2027 UTC = Sun Mar 28 04:00:00 2027 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 31 00:59:59 2027 UTC = Sun Oct 31 03:59:59 2027 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 31 01:00:00 2027 UTC = Sun Oct 31 03:00:00 2027 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 26 00:59:59 2028 UTC = Sun Mar 26 02:59:59 2028 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 26 01:00:00 2028 UTC = Sun Mar 26 04:00:00 2028 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 29 00:59:59 2028 UTC = Sun Oct 29 03:59:59 2028 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 29 01:00:00 2028 UTC = Sun Oct 29 03:00:00 2028 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 25 00:59:59 2029 UTC = Sun Mar 25 02:59:59 2029 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 25 01:00:00 2029 UTC = Sun Mar 25 04:00:00 2029 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 28 00:59:59 2029 UTC = Sun Oct 28 03:59:59 2029 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 28 01:00:00 2029 UTC = Sun Oct 28 03:00:00 2029 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 31 00:59:59 2030 UTC = Sun Mar 31 02:59:59 2030 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 31 01:00:00 2030 UTC = Sun Mar 31 04:00:00 2030 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 27 00:59:59 2030 UTC = Sun Oct 27 03:59:59 2030 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 27 01:00:00 2030 UTC = Sun Oct 27 03:00:00 2030 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 30 00:59:59 2031 UTC = Sun Mar 30 02:59:59 2031 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 30 01:00:00 2031 UTC = Sun Mar 30 04:00:00 2031 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 26 00:59:59 2031 UTC = Sun Oct 26 03:59:59 2031 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 26 01:00:00 2031 UTC = Sun Oct 26 03:00:00 2031 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 28 00:59:59 2032 UTC = Sun Mar 28 02:59:59 2032 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 28 01:00:00 2032 UTC = Sun Mar 28 04:00:00 2032 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 31 00:59:59 2032 UTC = Sun Oct 31 03:59:59 2032 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 31 01:00:00 2032 UTC = Sun Oct 31 03:00:00 2032 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 27 00:59:59 2033 UTC = Sun Mar 27 02:59:59 2033 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 27 01:00:00 2033 UTC = Sun Mar 27 04:00:00 2033 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 30 00:59:59 2033 UTC = Sun Oct 30 03:59:59 2033 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 30 01:00:00 2033 UTC = Sun Oct 30 03:00:00 2033 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 26 00:59:59 2034 UTC = Sun Mar 26 02:59:59 2034 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 26 01:00:00 2034 UTC = Sun Mar 26 04:00:00 2034 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 29 00:59:59 2034 UTC = Sun Oct 29 03:59:59 2034 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 29 01:00:00 2034 UTC = Sun Oct 29 03:00:00 2034 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 25 00:59:59 2035 UTC = Sun Mar 25 02:59:59 2035 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 25 01:00:00 2035 UTC = Sun Mar 25 04:00:00 2035 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 28 00:59:59 2035 UTC = Sun Oct 28 03:59:59 2035 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 28 01:00:00 2035 UTC = Sun Oct 28 03:00:00 2035 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 30 00:59:59 2036 UTC = Sun Mar 30 02:59:59 2036 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 30 01:00:00 2036 UTC = Sun Mar 30 04:00:00 2036 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 26 00:59:59 2036 UTC = Sun Oct 26 03:59:59 2036 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 26 01:00:00 2036 UTC = Sun Oct 26 03:00:00 2036 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 29 00:59:59 2037 UTC = Sun Mar 29 02:59:59 2037 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Mar 29 01:00:00 2037 UTC = Sun Mar 29 04:00:00 2037 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 25 00:59:59 2037 UTC = Sun Oct 25 03:59:59 2037 EEST isdst=1 gmtoff=10800<br>
+/usr/share/zoneinfo/Europe/Tallinn  Sun Oct 25 01:00:00 2037 UTC = Sun Oct 25 03:00:00 2037 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Mon Jan 18 03:14:07 2038 UTC = Mon Jan 18 05:14:07 2038 EET isdst=0 gmtoff=7200<br>
+/usr/share/zoneinfo/Europe/Tallinn  Tue Jan 19 03:14:07 2038 UTC = Tue Jan 19 05:14:07 2038 EET isdst=0 gmtoff=7200</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

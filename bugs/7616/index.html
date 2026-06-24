@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7616</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail/index.html">Mail</a> &#187; Bug #7616</h1>
+<p>nestGroups defaults to true, not false</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-05-12 18:45 UTC</td></tr>
+<tr><th>From</th><td>truth at proposaltech dot com</td></tr>
+<tr><th>Assigned</th><td>jon</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail/index.html">Mail</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-05-12 18:45 UTC] truth at proposaltech dot com</h3>
+<p>Description:<br>
+------------<br>
+Mail/RFC822.php speaks for itself.  The member<br>
+nestGroups is true by default and is only changed<br>
+if a non-null parameter is passed.  The code<br>
+for the constructor and member variable is the<br>
+same.  I&#039;ll paste a bit of RFC822.php into the<br>
+&quot;Test script&quot; section below.  Actually, the<br>
+behavior seems to be more complicated than<br>
+true/false.  We&#039;ve been using the default (true)<br>
+for years thinking the default was false because<br>
+the results hadn&#039;t included nesting.  It turns<br>
+out that is because we&#039;d never encountered a &quot;:&quot;<br>
+in a &quot;From&quot; before.  If there&#039;s no grouping to<br>
+be done, it seems that it doesn&#039;t nest even<br>
+though nestGroups is true.  Tricky!  I&#039;m not<br>
+sure whether this is a bug in the docs or a bug in<br>
+the code.</p>
+<p>(BTW, php5 doesn&#039;t like the check for &quot;$this&quot; on<br>
+line 164 of RFC822.php.)</p>
+<p>Test script:<br>
+---------------<br>
+Here is a bit of the RFC822.php:</p>
+<p>var $nestGroups = true;<br>
+...<br>
+    function Mail_RFC822($address = null, $default_domain = null, $nest_groups = null, $validate = null, $limit = null)<br>
+...<br>
+        if (isset($nest_groups))    $this-&gt;nestGroups     = $nest_groups;</p>
+<p>I&#039;m not sure which part of the code decides not<br>
+to test if there were no &quot;:&quot;s even though nestGroups<br>
+is true.  Maybe that should be a separate bug report.</p>
+<p>Here&#039;s the problem we hit:</p>
+<p>&lt;?php<br>
+require_once &quot;Mail/RFC822.php&quot;;</p>
+<p>$raw = &quot; Melitta One:One&lt;MelittaOneOne80337751@sunildada.com&gt;\n&quot;;</p>
+<p>class A {<br>
+   function f($raw) {<br>
+        $addresses = Mail_RFC822::parseAddressList<br>
+            ($raw, &#039;proposaltech.com&#039;);<br>
+var_dump($addresses);<br>
+        if(is_array($addresses) and count($addresses) != 0){<br>
+            $adr = $addresses[0];<br>
+            print &quot;$adr-&gt;host\n&quot;;<br>
+        } else {<br>
+            print &quot;Huh?\n&quot;;<br>
+        }<br>
+   }<br>
+};</p>
+<p>$a = new A;<br>
+$a-&gt;f($raw);</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+The docs say nestGroups defaults to false, so<br>
+I didn&#039;t expect nesting.  Now that I know<br>
+nestGroups actually defaults to true, I would<br>
+expect nesting even if I removed the &quot;:&quot; from<br>
+the address.</p>
+<p>Actual result:<br>
+--------------<br>
+I got nesting with the example.  If I remove<br>
+the &quot;:&quot;, the nesting goes away.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

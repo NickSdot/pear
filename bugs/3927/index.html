@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3927</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_DNS/index.html">Net_DNS</a> &#187; Bug #3927</h1>
+<p>Net_DNS ignoring authority section</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-03-23 12:17 UTC</td></tr>
+<tr><th>From</th><td>jcardona at allglobalnames dot com</td></tr>
+<tr><th>Assigned</th><td>ekilfoil</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Net_DNS/index.html">Net_DNS</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-23 12:17 UTC] jcardona at allglobalnames dot com</h3>
+<p>Description:<br>
+------------<br>
+I&#039;ve noticed that Resolver.php is failing (return false) when querying nameservers that only return authority section (but no answer). It should recurse (if $recurse is set) or return such authority section.</p>
+<p>i.e.: co.uk servers do this.<br>
+      when querying for nameservers for coca-cola.co.uk (and other) it fails instead of returning the authority section which contain the correct nameservers.</p>
+<p>In fact I&#039;ve noticed that &#039;host&#039; works similarly but &#039;dig&#039; does return the correct answers.</p>
+<p>I&#039;ve patched this behaviour by changing line 607 (+ or -) in Resolver.php</p>
+<p>Original:</p>
+<p>if (is_object($ans) &amp;&amp; $ans-&gt;header-&gt;ancount &gt; 0) {</p>
+<p>Patched:</p>
+<p>if (is_object($ans) &amp;&amp; ($ans-&gt;header-&gt;ancount &gt; 0 || $ans-&gt;header-&gt;nscount &gt; 0 )) {</p>
+<p>Sorry, dont know how to use diff and too lazy/busy/whatever to learn ;-)</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+        require_once ( &quot;Net/DNS.php&quot; );</p>
+<p>$resolver = new Net_DNS_Resolver();<br>
+        // We set the co.uk nameservers as resolvers (dig -t ns co.uk.)<br>
+        $resolver-&gt;nameservers = array ( &quot;ns1.nic.uk&quot;, &quot;ns2.nic.uk&quot;, &quot;ns3.nic.uk&quot;, &quot;ns4.nic.uk&quot;, &quot;ns5.nic.uk&quot;, &quot;ns6.nic.uk&quot;, &quot;ns7.nic.uk&quot;, &quot;nsa.nic.uk&quot;, &quot;nsb.nic.uk&quot; );<br>
+        if ( $resolver-&gt;query ( &quot;coca-cola.co.uk&quot;, &quot;NS&quot; ) )<br>
+                echo &quot;Worked\n&quot;;<br>
+        else<br>
+                echo &quot;Failed\n&quot;;<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Worked</p>
+<p>Actual result:<br>
+--------------<br>
+Failed</p>
+</section>
+<section>
+<h3>[2005-04-01 16:34 UTC] cox at idecnet dot com</h3>
+<p>Maybe this one is related to http://pear.php.net/bugs/bug.php?id=4025 too. Could you try with the suggested patch?</p>
+<p>Tomas V.V.Cox</p>
+</section>
+<section>
+<h3>[2005-04-04 10:32 UTC] jcardona at allglobalnames dot com</h3>
+<p>Suggested patch in http://pear.php.net/bugs/bug.php?id=4025 does not solve the problem.</p>
+<p>Problem is in Resolver.php query() function that does not check answer in nscount (only checks ancount).</p>
+<p>So where it says (line 607):</p>
+<p>if (is_object($ans) &amp;&amp; $ans-&gt;header-&gt;ancount &gt; 0) {</p>
+<p>It should say:</p>
+<p>if (is_object($ans) &amp;&amp; ($ans-&gt;header-&gt;ancount &gt; 0 || $ans-&gt;header-&gt;nscount &gt; 0 )) {</p>
+<p>As you can see by using dig, answer is 0 but authority is 2, which translates to ancount being 0 but nscount being 2. So only checking ancount will give a failed query but also checking nscount gives a succesful query.</p>
+<p>$ dig @ns1.nic.uk -t ns cocacola.co.uk</p>
+<p>; &lt;&lt;&gt;&gt; DiG 9.2.1 &lt;&lt;&gt;&gt; @ns1.nic.uk -t ns cocacola.co.uk<br>
+;; global options:  printcmd<br>
+;; Got answer:<br>
+;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 57031<br>
+;; flags: qr rd; QUERY: 1, ANSWER: 0, AUTHORITY: 2, ADDITIONAL: 2</p>
+<p>;; QUESTION SECTION:<br>
+;cocacola.co.uk.                IN  NS</p>
+<p>;; AUTHORITY SECTION:<br>
+cocacola.co.uk.         172800  IN  NS  ns.coca-cola.co.uk.<br>
+cocacola.co.uk.         172800  IN  NS  ns2.coca-cola.co.uk.</p>
+<p>;; ADDITIONAL SECTION:<br>
+ns.coca-cola.co.uk.     172800  IN  A   217.199.173.167<br>
+ns2.coca-cola.co.uk.    172800  IN  A   217.199.173.168</p>
+<p>;; Query time: 77 msec<br>
+;; SERVER: 195.66.240.130#53(ns1.nic.uk)<br>
+;; WHEN: Mon Apr  4 12:25:57 2005<br>
+;; MSG SIZE  rcvd: 109</p>
+</section>
+<section>
+<h3>[2005-04-06 15:06 UTC] cox at idecnet dot com</h3>
+<p>Just a note: this bug is also present in perl Net::DNS</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

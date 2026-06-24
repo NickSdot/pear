@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #107</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #107</h1>
+<p>pgsql does not handle BYTEA througth the &#039;&amp;&#039; placeholder in the prepare method</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-10-15 20:33 UTC</td></tr>
+<tr><th>From</th><td>giacomo at tesio dot it</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>all</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-10-15 20:33 UTC] giacomo at tesio dot it</h3>
+<p>Description:<br>
+------------<br>
+The DB quote method doesn&#039;t care about the field type it has to quote but just of the php type of the content it has to quote.</p>
+<p>This cause that the content of a file passed through &#039;&amp;&#039; placeholder in a prepare statement is quoted just like a &#039;?&#039;.</p>
+<p>But to insert binary data in a PostgreSQL db (and I think in many other) you should quote them with an apropiate function (like pg_escape_bytea )</p>
+<p>So I think that the quote method should also get (always) another parameters to switch the TYPE in a better way.</p>
+<p>I hope I could make myself clear.</p>
+<p>I could fix this bug and send you my patches, but changing the DB/common interface is a too heavy fix to make it without your permission :-D</p>
+<p>Reproduce code:<br>
+---------------<br>
+FROM DB/pgsql.php:<br>
+    function quote($str = null)<br>
+    {<br>
+        switch (strtolower(gettype($str))) {<br>
+            case &#039;null&#039;:<br>
+                return &#039;NULL&#039;;<br>
+            case &#039;integer&#039;:<br>
+            case &#039;double&#039; :<br>
+                return $str;<br>
+            case &#039;boolean&#039;:<br>
+                return $str ? &#039;TRUE&#039; : &#039;FALSE&#039;;<br>
+            case &#039;string&#039;:<br>
+            default:<br>
+                $str = str_replace(&quot;&#039;&quot;, &quot;&#039;&#039;&quot;, $str);<br>
+                //PostgreSQL treats a backslash as an escape character.<br>
+                $str = str_replace(&#039;\\&#039;, &#039;\\\\&#039;, $str);<br>
+                return &quot;&#039;$str&#039;&quot;;<br>
+        }<br>
+    }</p>
+<p>Expected result:<br>
+----------------<br>
+My solution:<br>
+    function quote($str = null, $type)<br>
+    {<br>
+        if($type == DB_PARAM_OPAQUE)<br>
+        {<br>
+            return &quot;&#039;&quot;.pg_escape_bytea($str).&quot;&#039;&quot;;<br>
+        }<br>
+        switch (strtolower(gettype($str))) {<br>
+            case &#039;null&#039;:<br>
+                return &#039;NULL&#039;;<br>
+            case &#039;integer&#039;:<br>
+            case &#039;double&#039; :<br>
+                return $str;<br>
+            case &#039;boolean&#039;:<br>
+                return $str ? &#039;TRUE&#039; : &#039;FALSE&#039;;<br>
+            case &#039;string&#039;:<br>
+            default:<br>
+                $str = str_replace(&quot;&#039;&quot;, &quot;&#039;&#039;&quot;, $str);<br>
+                //PostgreSQL treats a backslash as an escape character.<br>
+                $str = str_replace(&#039;\\&#039;, &#039;\\\\&#039;, $str);<br>
+                return &quot;&#039;$str&#039;&quot;;<br>
+        }<br>
+    }</p>
+</section>
+<section>
+<h3>[2005-05-20 07:54 UTC] dau at developer dot bg</h3>
+<p>I made a patch for this bug</p>
+<p>here is <br>
+common.patch<br>
+--------------------------------------------------------------<br>
+--- common.php	2005-04-07 17:27:35.000000000 +0300<br>
++++ /home/dau/common.php	2005-04-26 13:35:32.000000000 +0300<br>
+@@ -42,7 +42,7 @@<br>
+  * @author     Daniel Convissor &lt;danielc@php.net&gt;<br>
+  * @copyright  1997-2005 The PHP Group<br>
+  * @license    http://www.php.net/license/3_0.txt  PHP License 3.0<br>
+- * @version    Release: @package_version@<br>
++ * @version    Release: 1.7.6<br>
+  * @link       http://pear.php.net/package/DB<br>
+  */<br>
+ class DB_common extends PEAR<br>
+@@ -1006,7 +1006,7 @@<br>
+                 if (!$fp) {<br>
+                     return $this-&gt;raiseError(DB_ERROR_ACCESS_VIOLATION);<br>
+                 }<br>
+-                $realquery .= $this-&gt;quoteSmart(fread($fp, filesize($value)));<br>
++                $realquery .= $this-&gt;quoteSmart(fread($fp, filesize($value)), DB_PARAM_OPAQUE);<br>
+                 fclose($fp);<br>
+             } else {<br>
+                 $realquery .= $value;<br>
+------------------------------------------------------------</p>
+<p>and here is the pgsql.patch<br>
+------------------------------------------------------------<br>
+--- pgsql.php	2005-03-05 01:12:36.000000000 +0200<br>
++++ /home/dau/pgsql.php	2005-04-26 13:35:59.659293320 +0300<br>
+@@ -43,7 +43,7 @@<br>
+  * @author     Daniel Convissor &lt;danielc@php.net&gt;<br>
+  * @copyright  1997-2005 The PHP Group<br>
+  * @license    http://www.php.net/license/3_0.txt  PHP License 3.0<br>
+- * @version    Release: @package_version@<br>
++ * @version    Release: 1.7.6<br>
+  * @link       http://pear.php.net/package/DB<br>
+  */<br>
+ class DB_pgsql extends DB_common<br>
+@@ -490,8 +490,9 @@<br>
+      * @see DB_common::quoteSmart()<br>
+      * @since Method available since Release 1.6.0<br>
+      */<br>
+-    function quoteSmart($in)<br>
++    function quoteSmart($in, $type = &quot;&quot;)<br>
+     {<br>
++		global $param_type;<br>
+         if (is_int($in) || is_double($in)) {<br>
+             return $in;<br>
+         } elseif (is_bool($in)) {<br>
+@@ -499,7 +500,11 @@<br>
+         } elseif (is_null($in)) {<br>
+             return &#039;NULL&#039;;<br>
+         } else {<br>
+-            return &quot;&#039;&quot; . $this-&gt;escapeSimple($in) . &quot;&#039;&quot;;<br>
++			if($type == DB_PARAM_OPAQUE) {<br>
++            	return &quot;&#039;&quot;.$this-&gt;escByteA($in).&quot;&#039;&quot;;<br>
++        	} else {<br>
++				return &quot;&#039;&quot; . $this-&gt;escapeSimple($in) . &quot;&#039;&quot;;<br>
++            }<br>
+         }<br>
+     }<br>
+ <br>
+@@ -528,6 +533,31 @@<br>
+     }<br>
+ <br>
+     // }}}<br>
++    // {{{ escByteA()<br>
++<br>
++    /**<br>
++     * Escapes a binary data according to the current DBMS&#039;s standards<br>
++     *<br>
++     * {@internal PostgreSQL treats a backslash, NULL and Single Quote characters,<br>
++     * as a special characters when the field is binary.<br>
++     *<br>
++     * Not using pg_escape_bytea() yet because it requires PostgreSQL<br>
++     * to be at version 7.2 or greater.}}<br>
++     *<br>
++     * @param string $str  the string to be escaped<br>
++     *<br>
++     * @return string  the escaped string<br>
++     *<br>
++     * @see DB_common::quoteSmart()<br>
++     */<br>
++    function escByteA($binData) <br>
++    {<br>
++        $search = array(chr(92), chr(0), chr(39));<br>
++        $replace = array(&#039;\\\134&#039;, &#039;\\\000&#039;, &#039;\\\047&#039;);<br>
++        return str_replace($search, $replace, $binData);<br>
++     }<br>
++<br>
++    // }}}<br>
+     // {{{ numCols()<br>
+ <br>
+     /**<br>
+------------------------------------------------------------</p>
+<p>I hope this can be usefull<br>
+Best Regards <br>
+Anastas</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

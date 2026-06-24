@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6573</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_oci8/index.html">MDB2_Driver_oci8</a> &#187; Bug #6573</h1>
+<p>Patch to support quoted table names in DB_oci8::tableInfo</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-24 23:15 UTC</td></tr>
+<tr><th>From</th><td>aaron at 100-acre dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_oci8/index.html">MDB2_Driver_oci8</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-24 23:15 UTC] aaron at 100-acre dot com</h3>
+<p>Description:<br>
+------------<br>
+The following small change in the oci8.php driver should fix this. Sorry for not including a proper diff.</p>
+<p>In...<br>
+$Id: oci8.php,v 1.103 2005/04/11 15:10:22 danielc Exp $<br>
+Insert the following *replacing line 1004*.</p>
+<p>//quoted table names should be passed through unchanged (expect for removing the quotes themselves<br>
+            if (strstr($result, &#039;&quot;&#039;)) {<br>
+                $result = str_replace(&#039;&quot;&#039;,&#039;&#039;,$result);<br>
+            } else {<br>
+                $result = strtoupper($result);<br>
+            }</p>
+<p>Test script:<br>
+---------------<br>
+/*<br>
+in oracle:<br>
+create table &quot;Test&quot; (<br>
+  testcolumn int not null<br>
+)<br>
+*/</p>
+<p>$db = DB::connect(&#039;oci8://user:pwd@tcp(hostspec)&#039;);<br>
+print_r($db-&gt;tableInfo(&#039;&quot;Test&quot;&#039;));</p>
+<p>Expected result:<br>
+----------------<br>
+Array<br>
+(<br>
+    [0] =&gt; Array<br>
+        (<br>
+            [table] =&gt; Test<br>
+            [name] =&gt; TESTCOLUMN<br>
+            [type] =&gt; NUMBER<br>
+            [len] =&gt; 22<br>
+            [flags] =&gt; not_null<br>
+        )</p>
+<p>)</p>
+<p>Actual result:<br>
+--------------<br>
+Array ( )</p>
+</section>
+<section>
+<h3>[2006-01-25 19:01 UTC] aaron at 100-acre dot com</h3>
+<p>As is often the case, the delimited identifiers are there for &quot;historical&quot; reasons (namely that the database in question was ported from MSSQL where mixed case table names are allowed and  tons of code uses this convention).</p>
+<p>The quotes need to be striped because the user_* views list quoted-identfiers without the quotes (at least in 10g).</p>
+<p>Oracle says [1] that quoted indentifers cannot contain a the (&quot;) character so str_replace should be safe to remove the quotes at the start and end of the $result.</p>
+<p>[1] http://oracleheva1.oracle.com/docs/cd/B19306_01/server.102/b14200/sql_elements008.htm</p>
+<p>(Rule 6)</p>
+</section>
+<section>
+<h3>[2006-01-25 19:08 UTC] aaron at 100-acre dot com</h3>
+<p>Forgot to mention what may or may not be obivous: while user_* views don&#039;t include the quotes they do store the rest of the tablename in it&#039;s original form and that it is possible (if painful) to have &quot;TestTable&quot;, &quot;Testtable&quot; and &quot;TestTABLE&quot; as three different tables in the same schema so we do need to perserve the case when looking up quoted table names.</p>
+</section>
+<section>
+<h3>[2006-02-07 19:13 UTC] aaron at 100-acre dot com</h3>
+<p>Also related to quotedIdentifiers....</p>
+<p>class DB_oci8 should override getSequenceName to allow the quote (&quot;) character. Like so perhaps...</p>
+<p>function getSequenceName($sqn)<br>
+    {<br>
+        return sprintf($this-&gt;getOption(&#039;seqname_format&#039;),<br>
+                       preg_replace(&#039;/[^a-z0-9_&quot;.]/i&#039;, &#039;_&#039;, $sqn));<br>
+    }</p>
+</section>
+<section>
+<h3>[2006-03-23 18:12 UTC] aaron at 100-acre dot com</h3>
+<p>The problem is that it is impossible to access tableInfo on mixed case named tables currently. If you can find a better way to support that then I&#039;m all ears.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

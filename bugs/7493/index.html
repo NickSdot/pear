@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7493</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #7493</h1>
+<p>Error from incorrect char in element name (WSDL)</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-04-26 13:56 UTC</td></tr>
+<tr><th>From</th><td>karsten dot kuehnel at akb-net dot de</td></tr>
+<tr><th>Assigned</th><td>yunosh</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.0</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-26 13:56 UTC] karsten dot kuehnel at akb-net dot de</h3>
+<p>Description:<br>
+------------<br>
+element name with &#039;:&#039; generate error:</p>
+<p>Parse error: parse error, unexpected &#039;:&#039;, expecting &#039;)&#039; in /usr/lib/php/SOAP/WSDL.php(730) : eval()&#039;d code on line 7</p>
+<p>Example from wsdl output:<br>
+...<br>
+&lt;element name=&quot;tns1:benutzer&quot; type=&quot;xsd:string&quot;/&gt;<br>
+...</p>
+<p>my temp fix in WSDL.php:<br>
+add &#039;:&#039; in preg_replace functions and add two new lines to replace characters in element names.</p>
+<p>here the diff -u output:</p>
+<p>--- /usr/lib/php/SOAP/WSDL.php	2006-04-26 15:44:38.000000000 +0200<br>
++++ WSDL.php	2006-04-26 15:43:16.000000000 +0200<br>
+@@ -542,7 +542,7 @@<br>
+             } else {<br>
+                 $classname = &#039;WebService_&#039; . $this-&gt;service;<br>
+             }<br>
+-            $classname = preg_replace(&#039;/[ .\-\(\)]+/&#039;, &#039;_&#039;, $classname);<br>
++            $classname = preg_replace(&#039;/[ :.\-\(\)]+/&#039;, &#039;_&#039;, $classname);<br>
+         }<br>
+ <br>
+         if (!$this-&gt;_validateString($classname)) {<br>
+@@ -611,6 +611,7 @@<br>
+             foreach ($operation[&#039;input&#039;] as $argname =&gt; $argtype) {<br>
+                 if ($argname == &#039;message&#039;) {<br>
+                     foreach ($this-&gt;messages[$argtype] as $_argname =&gt; $_argtype) {<br>
++		        $_argname = preg_replace(&#039;/[ :.\-\(\)]+/&#039;, &#039;_&#039;, $_argname);<br>
+                         if ($opstyle == &#039;document&#039; &amp;&amp; $use == &#039;literal&#039; &amp;&amp;<br>
+                             $_argtype[&#039;name&#039;] == &#039;parameters&#039;) {<br>
+                             // The type or element refered to is used for<br>
+@@ -626,6 +627,7 @@<br>
+                             }<br>
+                             if (isset($el[&#039;elements&#039;])) {<br>
+                                 foreach ($el[&#039;elements&#039;] as $elname =&gt; $elattrs) {<br>
++				    $elname=preg_replace(&#039;/[ :.\-\(\)]+/&#039;, &#039;_&#039;, $elname);<br>
+                                     // Is the element a complex type?<br>
+                                     if (isset($this-&gt;complexTypes[$elattrs[&#039;namespace&#039;]][$elname])) {<br>
+                                         $comments .= $this-&gt;_complexTypeArg($args, $argarray, $_argtype, $_argname);<br>
+@@ -658,7 +660,7 @@<br>
+             // legal. This could potentially cause collisions, but let&#039;s try<br>
+             // to make everything callable and see how many problems that<br>
+             // causes.<br>
+-            $opname_php = preg_replace(&#039;/[ .\-\(\)]+/&#039;, &#039;_&#039;, $opname);<br>
++            $opname_php = preg_replace(&#039;/[ :.\-\(\)]+/&#039;, &#039;_&#039;, $opname);<br>
+             if (!$this-&gt;_validateString($opname_php)) {<br>
+                 return null;<br>
+             }<br>
+@@ -720,7 +722,7 @@<br>
+             $classname = $name . &#039;_&#039; . $classname;<br>
+         }<br>
+ <br>
+-        $classname = preg_replace(&#039;/[ .\-\(\)]+/&#039;, &#039;_&#039;, $classname);<br>
++        $classname = preg_replace(&#039;/[ :.\-\(\)]+/&#039;, &#039;_&#039;, $classname);<br>
+         if (!class_exists($classname)) {<br>
+             $proxy = $this-&gt;generateProxyCode($port, $classname);<br>
+             require_once &#039;SOAP/Client.php&#039;;</p>
+</section>
+<section>
+<h3>[2006-06-19 15:58 UTC] karsten dot kuehnel at akb-net dot de</h3>
+<p>your patch work&#039;s, client can call functions and retrive data.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

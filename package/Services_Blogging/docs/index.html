@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services_Blogging Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/Services_Blogging/index.html">Services_Blogging</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Services_Blogging/docs/index.html#package-webservices-services-blogging-intro">Introduction to Services_Blogging</a>
+</li>
+<li><a href="package/Services_Blogging/docs/index.html#package-webservices-services-blogging-connecting">Connecting your blog server</a>
+</li>
+<li><a href="package/Services_Blogging/docs/index.html#package-webservices-services-blogging-drivers">Drivers</a>
+</li>
+<li><a href="package/Services_Blogging/docs/index.html#package-webservices-services-blogging-posts">Blog posts / entries</a>
+</li>
+<li><a href="package/Services_Blogging/docs/index.html#package-webservices-services-blogging-example">Example</a>
+</li></ul>
+</nav>
+<p>Generic driver-based package to post and read blog entries.</p>
+<section id="package-webservices-services-blogging-intro">
+<h2>Introduction to Services_Blogging</h2>
+<p>Weblogs are an important part of the internet: They allow normal
+   people to express their opinions and thoughts to their family, friends
+   and the whole world by simply publishing some text on a server. This
+   process is very easy and you don&#039;t need a grade in computer science to
+   even host a blog on your own or a rented server.</p>
+
+ <p>One drawback of blog software is mostly their user interface: Since it is
+  browser based, it requires you to be either online all the time while writing
+  your blog post, or write it in a normal text editor and copy&amp;paste it
+  when going online. Using a text editor you cannot apply font styles to your
+  text.. An offline tool to write blog entries would be really nice in this
+  case.</p>
+
+ <p>Considering the idea of an offline tool for writing blog entries leads to
+  the availability of access to your blog from outside the normal web interface
+  - e.g via web services. Most blog hosters and blogging software packages
+  have support for such a web services API, mostly via XML-RPC.</p>
+
+ <p>Unfortunately, there are many different of these application programming
+  interfaces in the wild. Some of them support only posting of blog entries,
+  other ones also allow reading. Some blog softwares support images and tags
+  in their posts, others not. The variety is large, and so you could end up
+  writing custom code for every blog server you want to access because of the
+  differences in their API.</p>
+
+ <p>This is the point at which <strong>Services_Blogging</strong> comes into
+  play: It provides a unified API to post and read blog entries, independent of
+  the API supported by the server software hosting the blog. It uses a
+  driver-based approach to communicate with different APIs out there.
+  If a new blogging API is invented, someone just needs to write a driver for
+  the <strong>Services_Blogging</strong> package, and everyone can access
+  also this blogs.</p>
+
+ <p>As of April 2007, the package has the following drivers:</p><ul>
+   <li>Blogger</li>
+   <li>LiveJournal</li>
+   <li>MetaWeblog</li>
+  </ul>
+</section>
+<section id="package-webservices-services-blogging-connecting">
+<h2>Connecting your blog server</h2>
+<p>To post entries to your blog, you first need to obtain an instance of
+  the <strong>Services_Blogging_Driver</strong> suitable for your blog.
+  You need to either find out which API your blog system supports,
+  or let <strong>Services_Blogging</strong> magically autodiscover
+  those settings.</p>
+
+ <p>Creating a driver is done using <strong>Services_Blogging</strong>&#039;s
+  <strong>factory()</strong> method. It requires five parameters: The
+  driver name, username, password, server URL and the path of the API on the
+  server.</p>
+
+ <p><strong>Instantiating a driver using Services_Blogging::factory()</strong></p>
+  
+  <pre><code>&lt;?php
+require_once &#039;Services/Blogging.php&#039;;
+$bl = Services_Blogging::factory(
+    &#039;metaWeblog&#039;, //driver name
+    &#039;username&#039;,
+    &#039;password&#039;,
+    &#039;http://blog.example.com&#039;,
+    &#039;/xmlrpc.php&#039;
+);
+?&gt;</code></pre>
+ 
+
+ <p>Some blog drivers don&#039;t need server and path variables, just fill in
+  <code>null</code> in this case.</p>
+
+
+ <h3>Autodiscovering settings</h3>
+  
+
+  <p>Since it can be tedious to find out which settings are needed for your
+   own blog, this package has a feature called autodiscovery. You either
+   can automatically detect the settings needed to create an instance of
+   the driver needed, or let the class automatically detect and return
+   an instance of the driver needed for your blog system.</p>
+
+  <p>Autodiscovering the settings of your blog can be done via
+   <strong>Services_Blogging</strong>&#039;s
+   <strong>discoverSettings()</strong>, passing the URL
+   of your blog as only parameter. It returns an array with all the needed
+   settings.</p>
+
+  <p>Most of the blogging softwares today support multiple blogging APIs. After
+   getting a list of supported APIs via autodiscovery, you need to choose which
+   one fits you best; it&#039;s usually the one supporting the most features.
+   <strong>Services_Blogging</strong> also helps you with this task by
+   providing a method called <strong>getBestAvailableDriver()</strong>, just
+   passing the array of recently discovered settings to it. Now you have all
+   data needed to instantiate the driver itself.</p>
+
+  <p><strong>Auto-discovering settings</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &#039;Services/Blogging.php&#039;;
+
+$settings = Services_Blogging::discoverSettings(&#039;http://blog.example.com&#039;);
+var_dump($settings);
+echo Services_Blogging::getBestAvailableDriver($settings) . &quot;\r\n&quot;;
+//go on with factory()
+?&gt;</code></pre>
+  
+
+  <p>If that all is still too much work for you, you can let do
+   <strong>Services_Blogging</strong> everything by calling
+   <strong>discoverDriver()</strong>, passing the URL of your blog, your
+   username and password to it. It returns a the driver object.</p>
+
+  <p><strong>Creating a driver automatically</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &#039;Services/Blogging.php&#039;;
+
+$bl = Services_Blogging::discoverDriver(
+    &#039;http://blog.example.com&#039;,
+    &#039;username&#039;,
+    &#039;password&#039;
+);
+?&gt;</code></pre>
+  
+
+  <blockquote>
+   <p>The autodiscovery methods throw an exception of type
+    <strong>Services_Blogging_Exception</strong> if something
+    goes wrong (either autodiscovery fails because your blog software does
+    not support it, or there is no suitable driver for your blog).</p>
+  </blockquote>
+</section>
+<section id="package-webservices-services-blogging-drivers">
+<h2>Drivers</h2>
+<p>Due to the difference of features in the existing blogging APIs, there are
+  two driver classes: <strong>Services_Blogging_Driver</strong> and
+  <strong>Services_Blogging_ExtendetDriver</strong> (which extends the
+  first).</p>
+
+ <p>Drivers extending <strong>Services_Blogging_Driver</strong> do only
+  support creating, saving and deleting posts. They are not able to list
+  (or modify) existing posts.</p>
+
+ <p>Drivers extending from <strong>Services_Blogging_ExtendetDriver</strong>
+  do have more features: Reading existing posts, get a list of recent posts,
+  and getting a list of the titles of the recent posts.</p>
+</section>
+<section id="package-webservices-services-blogging-posts">
+<h2>Blog posts / entries</h2>
+<p>Beside the difference in features regarding reading and listing existing
+  posts, the APIs have different support for blog post properties.
+  While some simple APIs only allow to define the text of a post, better
+  ones allow to set the title and other ones also support extendet properties
+  like date, date to publish, categories and other.</p>
+
+ <p>Once you have the driver object for your blog, you should get a list of
+  post properties supported by your driver. The method is
+  <strong>getSupportedPostProperties()</strong>; it returns an array
+  of property names. Currently, the following properties are possible:</p>
+
+ <ul>
+  <li><code>title</code></li>
+  <li><code>content</code></li>
+  <li><code>publishdate</code></li>
+  <li><code>date</code></li>
+  <li><code>url</code></li>
+  <li><code>categories</code></li>
+ </ul>
+
+ <p>See the API documentation of <strong>Services_Blogging_Post</strong>
+  for the data types.</p>
+</section>
+<section id="package-webservices-services-blogging-example">
+<h2>Example</h2>
+<p><strong>Posting an entry</strong></p>
+  
+  <pre><code>&lt;?php
+require_once &#039;Services/Blogging.php&#039;;
+
+$bl = Services_Blogging::factory(
+    &#039;metaWeblog&#039;,
+    &#039;username&#039;, &#039;password&#039;,
+    &#039;http://blog.example.com&#039;, &#039;/xmlrpc.php&#039;
+);
+
+
+$post = $bl-&gt;createNewPost();
+//$post-&gt;setId(&#039;14&#039;);
+$post-&gt;title = &#039;Modified post title&#039;;
+$post-&gt;content = &quot;This is a modified test post by&quot;
+               . &quot; Services_Blogging\r\n\r\nSecond line\r\nThird one&quot;;
+$post-&gt;categories = array(&#039;cat1&#039;, &#039;cat3&#039;);
+
+$bl-&gt;savePost($post);
+$nLastPostId = $post-&gt;id;
+echo &#039;post id: &#039; . $nLastPostId . &quot;\r\n&quot;;
+
+//$bl-&gt;deletePost(17);
+
+var_dump($bl-&gt;getPost($nLastPostId));
+var_dump($bl-&gt;getRecentPostTitles(2));
+var_dump($bl-&gt;getRecentPosts());
+
+?&gt;</code></pre>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

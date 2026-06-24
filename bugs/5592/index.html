@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5592</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Tools and Utilities &#187; <a href="package/CodeGen_PECL/index.html">CodeGen_PECL</a> &#187; Bug #5592</h1>
+<p>extskel compatibility broken in CVS</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-10-03 17:27 UTC</td></tr>
+<tr><th>From</th><td>stephen dot leavitt at nukote dot com</td></tr>
+<tr><th>Assigned</th><td>hholzgra</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/CodeGen_PECL/index.html">CodeGen_PECL</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-03 17:27 UTC] stephen dot leavitt at nukote dot com</h3>
+<p>Description:<br>
+------------<br>
+The extname compatibility in the current CVS version of CodeGen_PECL is broken because the command object fails to set the dirpath property of it&#039;s extension object prior to calling it&#039;s extension object&#039;s generateSource() method. This yields numerous &quot;Notice: Undefined property:  CodeGen_PECL_Extension::$dirpath in /usr/share/php/CodeGen/PECL/Extension.php&quot; error messages on various line numbers, and if pecl_gen is run as root, will cause all of the generated files to be dumped into the root directory (/).</p>
+<p>Test script:<br>
+---------------<br>
+The patch below is against current CVS and appears to fix the problem:</p>
+<p>--- Command.php.orig    2005-10-03 12:13:27.000000000 -0500<br>
++++ Command.php 2005-10-03 12:15:16.000000000 -0500<br>
+@@ -233,6 +233,8 @@<br>
+                 $command-&gt;terminate($err-&gt;getMessage());<br>
+             }</p>
+<p>+            $this-&gt;extension-&gt;dirpath = realpath(&quot;./$extname&quot;);<br>
++<br>
+             $err = $this-&gt;extension-&gt;generateSource(&quot;./$extname&quot;);<br>
+             if (PEAR::isError($err)) {<br>
+                 $command-&gt;terminate($err-&gt;getMessage());</p>
+<p>Expected result:<br>
+----------------<br>
+$ pecl-gen --extname=extension<br>
+Your extension has been created in directory ./extension.<br>
+See extension/README for further instructions.</p>
+<p>Actual result:<br>
+--------------<br>
+$ pecl-gen --extname=extension<br>
+Notice: Undefined property:  CodeGen_PECL_Extension::$dirpath in /usr/share/php/CodeGen/PECL/Extension.php on line 1253<br>
+Notice: Undefined property:  CodeGen_PECL_Extension::$dirpath in /usr/share/php/CodeGen/PECL/Extension.php on line 1645<br>
+Notice: Undefined property:  CodeGen_PECL_Extension::$dirpath in /usr/share/php/CodeGen/PECL/Extension.php on line 1719<br>
+Notice: Undefined property:  CodeGen_PECL_Extension::$dirpath in /usr/share/php/CodeGen/PECL/Extension.php on line 1943<br>
+Notice: Undefined property:  CodeGen_PECL_Extension::$dirpath in /usr/share/php/CodeGen/PECL/Extension.php on line 1889<br>
+Notice: Undefined property:  CodeGen_PECL_Extension::$dirpath in /usr/share/php/CodeGen/PECL/Extension.php on line 2395<br>
+Notice: Undefined property:  CodeGen_PECL_Extension::$dirpath in /usr/share/php/CodeGen/PECL/Extension.php on line 2149<br>
+Notice: Undefined property:  CodeGen_PECL_Extension::$dirpath in /usr/share/php/CodeGen/PECL/Extension.php on line 2382<br>
+Notice: Undefined property:  CodeGen_PECL_Extension::$dirpath in /usr/share/php/CodeGen/PECL/Extension.php on line 2383<br>
+Warning: rmdir(/tests): No such file or directory in /usr/share/php/CodeGen/PECL/Extension.php on line 2383<br>
+Notice: Undefined property:  CodeGen_PECL_Extension::$dirpath in /usr/share/php/CodeGen/PECL/Extension.php on line 2204<br>
+Notice: Undefined property:  CodeGen_PECL_Extension::$dirpath in /usr/share/php/CodeGen/PECL/Extension.php on line 2280<br>
+Notice: Undefined property:  CodeGen_PECL_Extension::$dirpath in /usr/share/php/CodeGen/PECL/Extension.php on line 2485<br>
+Notice: Undefined property:  CodeGen_PECL_Extension::$dirpath in /usr/share/php/CodeGen/PECL/Extension.php on line 2466<br>
+Notice: Undefined property:  CodeGen_PECL_Extension::$dirpath in /usr/share/php/CodeGen/PECL/Extension.php on line 2470<br>
+Your extension has been created in directory .<br>
+See /README for further instructions.</p>
+</section>
+<section>
+<h3>[2005-10-03 17:39 UTC] stephen dot leavitt at nukote dot com</h3>
+<p>Please replace the patch I submitted with the following one that addresses the same issue and one other I discovered. The command object calls it&#039;s extension object&#039;s write_readme() method, except there is no write_readme() method in the extension object. The correct method name appears to be writeReadme(). The effect of this is that the script dies and outputs the following:</p>
+<p>$ pecl-gen --extname=extension</p>
+<p>Fatal error: Call to undefined method CodeGen_PECL_Extension::write_readme() in /usr/share/php/CodeGen/PECL/Command.php on line 257</p>
+<p>The updated patch is below:</p>
+<p>--- Command.php.orig    2005-10-03 12:33:00.000000000 -0500<br>
++++ Command.php 2005-10-03 12:32:45.000000000 -0500<br>
+@@ -233,6 +233,8 @@<br>
+                 $command-&gt;terminate($err-&gt;getMessage());<br>
+             }</p>
+<p>+            $this-&gt;extension-&gt;dirpath = realpath(&quot;./$extname&quot;);<br>
++<br>
+             $err = $this-&gt;extension-&gt;generateSource(&quot;./$extname&quot;);<br>
+             if (PEAR::isError($err)) {<br>
+                 $command-&gt;terminate($err-&gt;getMessage());<br>
+@@ -252,7 +254,7 @@<br>
+                 }<br>
+             }</p>
+<p>-            $this-&gt;extension-&gt;write_readme(&quot;./$extname&quot;);<br>
++            $this-&gt;extension-&gt;writeReadme(&quot;./$extname&quot;);</p>
+<p>if (!$this-&gt;options-&gt;have(&quot;quiet&quot;)) {<br>
+                 echo $this-&gt;extension-&gt;successMsg();</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

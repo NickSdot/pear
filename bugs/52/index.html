@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #52</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/XML_RPC/index.html">XML_RPC</a> &#187; Bug #52</h1>
+<p>XML_RPC processes data as UTF-8 regardless of actual encoding</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-10-01 09:16 UTC</td></tr>
+<tr><th>From</th><td>daniel at ilse dot net</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_RPC/index.html">XML_RPC</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-10-01 09:16 UTC] daniel at ilse dot net</h3>
+<p>Description:<br>
+------------<br>
+The PEAR XMLRPC package handles xmldata as a UTF-8 stream, <br>
+even if it&#039;s encoded otherwise. In my case data was being sent with <br>
+encoding=&#039;ISO-8859-1&#039; and containing valid 8bit characters, the result was an XMLRPC error &#039;invalid_return&#039;.</p>
+<p>Fix: get the encoding from the actual xml data, something like this:<br>
+(patch against $Id: RPC.php,v 1.11 2002/10/02 21:10:19 ssb Exp $)</p>
+<p>--- /usr/local/lib/php/XML/RPC.php.orig   Tue Sep 30 15:17:25 2003<br>
++++ /usr/local/lib/php/XML/RPC.php  Tue Sep 30 15:20:31 2003<br>
+@@ -616,12 +616,46 @@<br>
+         return $this-&gt;parseResponse($ipd);<br>
+     }</p>
+<p>+    function getEncoding($str)<br>
++    {<br>
++        $rc=$GLOBALS[&#039;XML_RPC_defencoding&#039;];<br>
++    <br>
++        $lines=preg_split(&#039;/(\r\n|\r|\n)/&#039;,$str);<br>
++    <br>
++        foreach($lines as $line)<br>
++        {<br>
++            if(preg_match(&#039;/&lt;\?xml[^&gt;]*\s*encoding\s*=\s*[\&#039;&quot;]([^&quot;\&#039;]*)[\&#039;&quot;]/i&#039;,$line,$match))<br>
++            {<br>
++                $rc=trim($match[1]);<br>
++    <br>
++                break;<br>
++            }<br>
++        }<br>
++    <br>
++        return $rc;<br>
++    }<br>
++<br>
+     function parseResponse($data=&quot;&quot;)<br>
+     {<br>
+         global $XML_RPC_xh,$XML_RPC_err,$XML_RPC_str;<br>
+         global $XML_RPC_defencoding;</p>
+<p>-        $parser = xml_parser_create($XML_RPC_defencoding);<br>
++        if($data!=&quot;&quot;)<br>
++        {<br>
++            $encoding=$this-&gt;getEncoding($data);<br>
++        }<br>
++        else<br>
++        {<br>
++            $encoding=$XML_RPC_defencoding;<br>
++        }<br>
++<br>
++        $parser = xml_parser_create($encoding);</p>
+<p>$XML_RPC_xh[$parser]=array();</p>
+</section>
+<section>
+<h3>[2004-03-12 14:42 UTC] daniel at ilse dot net</h3>
+<p>|Why not only overwrite the default enconding?</p>
+<p>Because I don&#039;t know (and shouldn&#039;t care) what the encoding will be... For example I get my xml messages from a third party, if they change their output encoding I don&#039;t want to have to change my code.</p>
+<p>The XMLRPC (in combination with mbstring or iconv) should be able do gracefully handle this.</p>
+<p>I&#039;ll look further into this myself and will propably supply a more useful patch in the not so near future.</p>
+</section>
+<section>
+<h3>[2004-05-02 00:33 UTC] pear dot php dot net at chsc dot dk</h3>
+<p>I believe this is a genuine bug that should be fixed. The XML-RPC standard does not specify that the XML must be in UTF-8, so the code should not assume it is. Different clients may choose to send data in different encodings, so hardcoding the default encoding will not work.</p>
+<p>The fix mentioned above is not correct, though. According to RFC 3023 section 3.1, the encoding specified in the &lt;?xml encoding=... ?&gt; tag should be ignored for XML received over HTTP in favor of the encoding specified in the Content-Type header (e.g. &quot;Content-Type: text/xml; charset=iso-8859-1).</p>
+<p>I have made a patch, that examines the Content-Type header and uses the charset specified there. If no charset is specified, RFC 3023 states that the data should be treated as US-ASCII, even though a different encoding is specified using &lt;?xml encoding=...?&gt;.</p>
+<p>However, since some clients do not properly specify the encoding, the patch checks the &lt;?xml?&gt; tag for an encoding attribute and used the encoding specified there. If there isn&#039;t any encoding specified here either, it defaults to UTF-8. This will not break standards compliant clients, since all encodings supported by the XML parser (UTF-8 and ISO-8859-1) are a superset of US-ASCII. I chose UTF-8 as the default so that XML_RPC_Server would remain compatible with earlier versions.</p>
+<p>The patch also adds the possibility of specifying the charset used in PHP strings that are passed as arguments to and returned from methods in XML_RPC_Server. Currently all strings are assumed to be UTF-8. The encoding is specified as the third optional argument in the constructor. If this is omitted, the code defaults to UTF-8 for compatiblity with earlier versions of XML_RPC_Server.</p>
+<p>The patch can be downloaded from http://serber.chsc.dk/misc/XML_RPC_Server.patch</p>
+</section>
+<section>
+<h3>[2004-05-09 21:06 UTC] pear dot php dot net at chsc dot dk</h3>
+<p>I suggest reopening this bug based on the new arguments and the availability of a patch. I do not have sufficient permissions to reopen it myself.</p>
+</section>
+<section>
+<h3>[2004-05-31 19:38 UTC] daniel at ilse dot net</h3>
+<p>I&#039;d love to reopen the bug, but this form only let&#039;s me select either the current status (won&#039;t fix) or close.</p>
+<p>I suggest that some reports the bug again, I&#039;ll stick to my patch</p>
+</section>
+<section>
+<h3>[2004-12-16 23:35 UTC] techtonik at tut dot by</h3>
+<p>I don&#039;t think this would be useful taking into account that <br>
+supported encodings for xml_parser_create() are only ISO-8859-1, UTF-8 and US-ASCII. What will it return with &quot;Content-Encoding: Windows-1251&quot; header?</p>
+<p>I prefer to have an automatic conversion from source encoding to UTF-8 done by Client methods and leave Server side operate only with UTF-8.</p>
+</section>
+<section>
+<h3>[2004-12-19 21:39 UTC] pear dot php dot net at chsc dot dk</h3>
+<p>&gt;I prefer to have an automatic conversion from source<br>
+&gt;encoding to UTF-8 done by Client methods and leave Server<br>
+&gt;side operate only with UTF-8.<br>
+This is only possible when you control both the client and the server. When providing a public XML-RPC service you have no control over which character sets the clients use. Some client programs and XML-RPC libraries may not even allow the user to specify which character is used when generating the XML (the actual character set that is sent over the wire should be transparent to both the client and the server applications).</p>
+<p>The parser may not support any character set in the world, but supporting both UTF-8 and ISO-8859-1 is much better than supporting only UTF-8, especially since this can be accomplished very easily (as shown in the patch).</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

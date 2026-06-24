@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #931</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #931</h1>
+<p>[feature request] define names as arrays</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-01 19:36 UTC</td></tr>
+<tr><th>From</th><td>smith at backendmedia dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-01 19:36 UTC] smith at backendmedia dot com</h3>
+<p>Description:<br>
+------------<br>
+I remember that we discussed this point a while back and decided to go with having to pass the right id to LiveUser instead of some unique name instead. This was done for efficiency reasons both on the caching side, the actually comparing etc.</p>
+<p>I guess we could provide an alternative script that doesnt generate constants, but instead generates an array with key (define name) and value (right id) pairs. So instead of having to use get_defined_constants() which could result in a rather large array you would only have a much smaller array containing only the right id from LU (or a given application or area).</p>
+</section>
+<section>
+<h3>[2004-03-01 20:31 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>This patch might do the trick.  It adds the ability in the outputRightsConstants() method in MDB_Simple to output the constants as an array.  You can pass in $varName to give it a name for the output.  If the $type=&#039;array&#039; and the mode is not &#039;file&#039; the method will return the array.</p>
+<p>Here&#039;s the patch:</p>
+<p>--- MDB_Simple.php	2004-03-01 20:30:04.786052500 +0000<br>
++++ MDB_Simple.php.new.php	2004-03-01 20:34:25.864177500 +0000<br>
+@@ -1684,9 +1684,9 @@<br>
+      * @access public<br>
+      * @param  array   options for constants generation<br>
+      * @param  string  output mode desired<br>
+-     * @return mixed   boolean or DB Error object<br>
++     * @return mixed   boolean, array or DB Error object<br>
+      */<br>
+-    function outputRightsConstants($options = array(), $mode = &#039;file&#039;)<br>
++    function outputRightsConstants($options = array(), $mode = &#039;file&#039;, $type = &#039;constant&#039;, $varName = &#039;&#039;)<br>
+     {<br>
+         $opt = array();<br>
+ <br>
+@@ -1750,13 +1750,27 @@<br>
+ <br>
+         $strDef = &quot;&lt;?php\n&quot;;<br>
+         foreach ($generate as $k =&gt; $v) {<br>
+-            if ($mode == &#039;file&#039;) {<br>
++            if ($mode == &#039;file&#039; &amp;&amp; $type == &#039;constant&#039;) {<br>
+                 $strDef .= sprintf(&quot;define(&#039;%s&#039;, %s);\n&quot;,<br>
+                                strtoupper($v),<br>
+                                $k<br>
+                            );<br>
+-            } else { // if not file then constant definition is wanted<br>
++<br>
++            } elseif ($type == &#039;array&#039;) {<br>
++                $export[strtoupper($v)] = $k;<br>
++            } else {<br>
+                 define(strtoupper($v), $k);<br>
++            }    <br>
++        }<br>
++<br>
++        if (isset($export)) {<br>
++            if ($mode == &#039;file&#039;) {<br>
++                $strDef .= sprintf(&quot;\$%s = %s;\n&quot;,<br>
++                               $varName,<br>
++                               var_export($export)<br>
++                           );<br>
++            } else {<br>
++                return $export;<br>
+             }<br>
+         }<br>
+         $strDef .= &quot;?&gt;&quot;;</p>
+<p>Hope it works :)</p>
+<p>--<br>
+Simon H</p>
+</section>
+<section>
+<h3>[2004-03-01 23:06 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Here&#039;s an updated patch.  It seems cleaner and I&#039;ve tested it to return an array of rights with the define_name as the key name.</p>
+<p>I can then dynamically check rights like so:</p>
+<p>function outputRights()<br>
+{<br>
+    $luAdmin = new <br>
+        LiveUser_Admin_Perm_Container_MDB_Complex(<br>
+	    $conf[&#039;permContainer&#039;]);<br>
+    $luAdmin-&gt;setCurrentLanguage(&#039;EN&#039;);<br>
+    $res = $luAdmin-&gt;outputRightsConstants(array(<br>
+                &#039;naming&#039; =&gt; 3), &#039;other&#039;, &#039;array&#039;);<br>
+    return $res;<br>
+}</p>
+<p>$rights = outputRights();</p>
+<p>if (!$lu-&gt;checkRight($rights[$pagePerm])) {<br>
+    $page = &#039;error403&#039;; // Permission Denied<br>
+}</p>
+<p>--- MDB_Simple.php	2004-03-01 23:05:35.067302500 +0000<br>
++++ MDB_Simple.php.new.php	2004-03-01 23:06:53.879802500 +0000<br>
+@@ -1686,7 +1686,7 @@<br>
+      * @param  string  output mode desired<br>
+      * @return mixed   boolean or DB Error object<br>
+      */<br>
+-    function outputRightsConstants($options = array(), $mode = &#039;file&#039;)<br>
++    function outputRightsConstants($options = array(), $mode = &#039;file&#039;, $type = &#039;constant&#039;, $varName = &#039;&#039;)<br>
+     {<br>
+         $opt = array();<br>
+ <br>
+@@ -1749,14 +1749,32 @@<br>
+         }<br>
+ <br>
+         $strDef = &quot;&lt;?php\n&quot;;<br>
++        if ($type == &#039;array&#039;) $export = array();<br>
++<br>
+         foreach ($generate as $k =&gt; $v) {<br>
+-            if ($mode == &#039;file&#039;) {<br>
+-                $strDef .= sprintf(&quot;define(&#039;%s&#039;, %s);\n&quot;,<br>
+-                               strtoupper($v),<br>
++            $v = strtoupper($v);<br>
++            if ($type == &#039;constant&#039;) {<br>
++                if ($mode == &#039;file&#039;) {<br>
++                    $strDef .= sprintf(&quot;define(&#039;%s&#039;, %s);\n&quot;,<br>
++                               $v,<br>
+                                $k<br>
+                            );<br>
+-            } else { // if not file then constant definition is wanted<br>
+-                define(strtoupper($v), $k);<br>
++                } else {<br>
++                    define($v, $k);<br>
++                }<br>
++            } else {<br>
++                $export[$v] = $k;<br>
++            }<br>
++        }<br>
++<br>
++        if ($type == &#039;array&#039;) {<br>
++            if ($mode == &#039;file&#039;) {<br>
++                $strDef .= sprintf(&quot;\$%s = %s;\n&quot;,<br>
++                               $varName,<br>
++                               var_export($export)<br>
++                           );<br>
++            } else {<br>
++                return $export;<br>
+             }<br>
+         }<br>
+         $strDef .= &quot;?&gt;&quot;;</p>
+<p>--<br>
+Simon H</p>
+</section>
+<section>
+<h3>[2004-03-02 07:50 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>For some reason I couldn&#039;t get var_export($export) to output properly in this patch, so arrays won&#039;t output to a file properly until fixed.  It seems like var_export() doesn&#039;t like sprintf or something.  Any ideas?</p>
+<p>--<br>
+Simon H</p>
+</section>
+<section>
+<h3>[2004-03-02 19:23 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>I&#039;ve done some tests with var_export:</p>
+<p>1. My machine supports it as I can get an output ok...Good start. (PHP 4.3.3).<br>
+2. I removed the sprintf() completely just trying to output the results of var_export to the file...no joy.</p>
+<p>I&#039;m all out of ideas, other than to revert to my version that didn&#039;t contain var_export but wrote out lines in the loop like:</p>
+<p>&lt;?php<br>
+$export[&#039;APP_AREA_CAN_READ&#039;]  = 4;<br>
+$export[&#039;APP_AREA_CAN_WRITE&#039;] = 3;<br>
+?&gt;</p>
+<p>Anyone got an answer?  You and your bright ideas Lukas...lol.</p>
+<p>--<br>
+Simon H</p>
+</section>
+<section>
+<h3>[2004-03-03 20:30 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Third time lucky :-)!  OK, I deserve abuse for this one, but hey, its now fixed and working with var_export...every feel really stooopid?</p>
+<p>I&#039;ve tested it:<br>
+ - returning arrays<br>
+ - writing a formatted array to a file<br>
+ - writing defines to a file (as usual)</p>
+<p>Here&#039;s da patch -</p>
+<p>--- MDB_Simple.php	2004-03-01 23:05:35.067302500 +0000<br>
++++ MDB_Simple.php.new.php	2004-03-03 20:32:48.765625000 +0000<br>
+@@ -1686,7 +1686,7 @@<br>
+      * @param  string  output mode desired<br>
+      * @return mixed   boolean or DB Error object<br>
+      */<br>
+-    function outputRightsConstants($options = array(), $mode = &#039;file&#039;)<br>
++    function outputRightsConstants($options = array(), $mode = &#039;file&#039;, $type = &#039;constant&#039;, $varName = &#039;&#039;)<br>
+     {<br>
+         $opt = array();<br>
+ <br>
+@@ -1749,14 +1749,32 @@<br>
+         }<br>
+ <br>
+         $strDef = &quot;&lt;?php\n&quot;;<br>
++        if ($type == &#039;array&#039;) $export = array();<br>
++<br>
+         foreach ($generate as $k =&gt; $v) {<br>
+-            if ($mode == &#039;file&#039;) {<br>
+-                $strDef .= sprintf(&quot;define(&#039;%s&#039;, %s);\n&quot;,<br>
+-                               strtoupper($v),<br>
++            $v = strtoupper($v);<br>
++            if ($type == &#039;constant&#039;) {<br>
++                if ($mode == &#039;file&#039;) {<br>
++                    $strDef .= sprintf(&quot;define(&#039;%s&#039;, %s);\n&quot;,<br>
++                               $v,<br>
+                                $k<br>
+                            );<br>
+-            } else { // if not file then constant definition is wanted<br>
+-                define(strtoupper($v), $k);<br>
++                } else {<br>
++                    define($v, $k);<br>
++                }<br>
++            } else {<br>
++                $export[$v] = $k;<br>
++            }<br>
++        }<br>
++<br>
++        if ($type == &#039;array&#039;) {<br>
++            if ($mode == &#039;file&#039;) {<br>
++                $strDef .= sprintf(&quot;\$%s = %s;\n&quot;,<br>
++                               $varName,<br>
++                               var_export($export, true)<br>
++                           );<br>
++            } else {<br>
++                return $export;<br>
+             }<br>
+         }<br>
+         $strDef .= &quot;?&gt;&quot;;</p>
+<p>Could someone please apply this as soon as possible...its proving (at least to me) to be a very useful feature addition.</p>
+<p>--<br>
+Simon H</p>
+</section>
+<section>
+<h3>[2004-03-06 18:22 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Your patch seems ok apart from 2 things:</p>
+<p>1. You made the same mistake I was making with var_export().  It needs to be var_export($generate, true) - The true makes var_export return a variable value rather than outputting it.</p>
+<p>2. You have used strtoupper() in the define only an not for the array option.  Perhaps it would be good to have a final foreach when building the $generate array just to do teh strtoupper rather than adding it to each naming bit, then both arrays and defines will be in upper case, just for convention.</p>
+<p>--<br>
+Simon H</p>
+</section>
+<section>
+<h3>[2004-03-06 23:20 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Yup!</p>
+<p>With the fix to var_export, I&#039;ve successfully tested the array output to file.</p>
+<p>The strToUpper isnt that important to me as I have used caps in my define names anyway.  It was just to keep the output similar to defines for convention, and maybe even portability if necessary..not a problem though.</p>
+<p>--<br>
+Simon H</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

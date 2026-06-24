@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6061</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_NestedSet/index.html">DB_NestedSet</a> &#187; Bug #6061</h1>
+<p>problem creating root node with Oracle</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-24 19:41 UTC</td></tr>
+<tr><th>From</th><td>omansour at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>datenpunk</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB_NestedSet/index.html">DB_NestedSet</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-24 19:41 UTC] omansour at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+wrong SQL is generated while creating a root node</p>
+<p>Test script:<br>
+---------------<br>
+line 975<br>
+replace : $parent[&#039;norder&#039;] = is_null($tmp_order) ? 0 : $tmp_order;<br>
+by : $parent[&#039;norder&#039;] = (is_null($tmp_order) or empty($tmp_order)) ? 0 : $tmp_order;</p>
+<p>Expected result:<br>
+----------------<br>
+$tmp_order should&#039;nt be empty</p>
+<p>Actual result:<br>
+--------------<br>
+$tmp_order is empty with Oracle - DB - DB_PORTABILITY_ALL</p>
+</section>
+<section>
+<h3>[2005-11-24 21:19 UTC] datenpunk at php dot net</h3>
+<p>Could you please provide a little more info what you are trying to do. I don&#039;t understand your test script. Please use some lines of code which lead to this problem.</p>
+<p>Thanks for your help</p>
+<p>-- <br>
+Daniel Khan</p>
+</section>
+<section>
+<h3>[2005-11-25 08:48 UTC] omansour at gmail dot com</h3>
+<p>The test-scrip is just the hack written in your package to <br>
+make the create root node work with Oracle.</p>
+<p>Maybe adding a is_empty test is not the good solution but <br>
+before the code commented <br>
+// Let&#039;s open a gap for a new node<br>
+was generated a SQL like that : <br>
+UPDATE (ok) SET (ok) WHERE (ok) AND streh &gt;</p>
+<p>without the last variable whis $parent[&#039;norder&#039;]</p>
+<p>maybe it&#039;s because I have actived portablity options in my <br>
+DB configuration but I need them.</p>
+<p>(I have also an other problem, see bug #6060, maybe related <br>
+to Nestedset)</p>
+</section>
+<section>
+<h3>[2005-12-18 17:06 UTC] dv at allyoucanthink dot de</h3>
+<p>in function createRootNode() with DB::oci8 driver (DB_PORTABILITY_ALL):  following call ´$tmp_order = $this-&gt;_getOne($qry)´ returns empty string and not NULL as expected ...</p>
+</section>
+<section>
+<h3>[2006-01-11 17:38 UTC] omansour at gmail dot com</h3>
+<p>The proposed patch need to be applied to each version of <br>
+Nestedset I use. Is it possible to think to a further <br>
+integration and another release of DB_Nestedset ?</p>
+</section>
+<section>
+<h3>[2006-01-13 09:59 UTC] datenpunk at php dot net</h3>
+<p>yes - I will roll out a new release including your fix within this weekend.</p>
+<p>Thanks for your patch &amp; patience</p>
+<p>-- <br>
+Daniel Khan</p>
+</section>
+<section>
+<h3>[2006-01-15 20:55 UTC] datenpunk at php dot net</h3>
+<p>Looking closely at this issue I am not sure if this has anything to do with DB_NestedSet.<br>
+I will talk to some ppl - maybe anyone could explain this to me.</p>
+</section>
+<section>
+<h3>[2006-01-16 16:25 UTC] omansour at gmail dot com</h3>
+<p>Hey</p>
+<p>I have noticed this problem on several plateforms, with <br>
+Oracle and MySQL. You right, I am not sure if this bug is <br>
+directly coming from DB_Nestedset but , at least, it&#039;s <br>
+bullet proofing the code ;-) and it&#039;s not dangerous for the <br>
+rest of the class.</p>
+<p>So, for me, I would be cool to patch the code.</p>
+<p>greetings<br>
+Olivier</p>
+</section>
+<section>
+<h3>[2006-02-26 13:45 UTC] datenpunk at php dot net</h3>
+<p>I won&#039;t work around a bug inside another package within my package.<br>
+Especially because I don&#039;t want to risk breaking BC.<br>
+Sorry. Maybe I will take this into account for a new major version.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

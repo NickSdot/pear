@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5665</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Traceroute/index.html">Net_Traceroute</a> &#187; Bug #5665</h1>
+<p>Improved _parseResult...() using RegExp</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5665</th><td>Improved _parseResult...() using RegExp</td></tr>
+<tr><th>Submitted</th><td>2005-10-12 07:25 UTC</td></tr>
+<tr><th>From</th><td>pear dot php dot net at tjworld dot net</td></tr>
+<tr><th>Assigned</th><td>neufeind</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Traceroute/index.html">Net_Traceroute</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>Windows/*</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-12 07:25 UTC] pear dot php dot net at tjworld dot net</h3>
+<p>Description:<br>
+------------<br>
+I had some problems running this on Windows 2003 Server, experiencing the bugs already mentioned here and more.</p>
+<p>The problems are in the way the Class parses the output of the &quot;traceroute&quot; commands - its inflexible and can&#039;t cope well with change.</p>
+<p>Debugging the logic of the functions is also problematic, so I decided to write a replacement function that uses regular expressions.</p>
+<p>Here&#039;s the result. You can paste this into the package&#039;s &quot;Traceroute.php&quot;. **MAKE SURE** to remove the line-feeds that have been inserted by the HTML form here - all statements are on one line unless inside a {...} block!</p>
+<p>If you find your particular &quot;traceroute&quot; confuses the _parse function it is easy to tinker with the regular expressions.</p>
+<p>To allow the new function to be used the existing code, that calls the appropriate parse function, needs to be edited:</p>
+<p>function _parseResult()<br>
+  {<br>
+-    $this-&gt;{&#039;_parseResult&#039; . $this-&gt;_sysname}();<br>
++    $this-&gt;_parseResultRegExp();</p>
+<p>}</p>
+<p>---- Add to Traceroute.php -----------<br>
+/**<br>
+* parses generic traceroute command output using Regular Expressions<br>
+* written by TJ &lt;hacker@tjworld.net&gt; 12 October, 2005<br>
+* http://tjworld.net/<br>
+*<br>
+* @ access private<br>
+*/<br>
+function _parseResultRegExp() {<br>
+ // define RegExp for each type of response line<br>
+ $reTraceTo             = &#039;/^\s*(\w+\b)*.*to\s([\w\.\-\_]+)*\s\[*(\d+\.\d+\.\d+\.\d+)\]*/&#039;;<br>
+ $reHopCount            = &#039;/^.*maximum of\s(\d+)\shops/i&#039;;<br>
+ $reHop                 = &#039;/\s*(\d+)\s+(?:\s|\&lt;)(\d+|\*)\s.*(?:\s|\&lt;)(\d+|\*)\s.*(?:\s|\&lt;)(\d+|\*)*\s.*\s([\w\.\-\_]+)*\s\[*(\d+\.\d+\.\d+\.\d+)\]*/&#039;;<br>
+ $reHopFailed           = &#039;/^\s*(\d+)\s+(\d+|\*)\s.+\s(\d+|\*)\s.+\s(\d+|\*)*/&#039;;<br>
+ $reReqTimedOut         = &#039;/^\s+\*\s+\*\s+\*\s+Request\btimed\bout\b/i&#039;;<br>
+ $reDestHostUnreachable = &#039;/^\s*(\d+).*\s([\w\.\-\_]+)*\s\[*(\d+\.\d+\.\d+\.\d+)\]*/s+(?:\w+)\:\s+Destination\bhost\bunreachable.*/i&#039;;<br>
+ $reTraceComplete       = &#039;/Trace complete/i&#039;;</p>
+<p>$hops = array();<br>
+ $data = $this-&gt;_raw_data;<br>
+ for($row=0; $row &lt; count($this-&gt;_raw_data); $row++) {<br>
+  if(!empty($this-&gt;_raw_data[$row])) {<br>
+   $match = array(); <br>
+ <br>
+   $target = preg_match($reTraceTo, $this-&gt;_raw_data[$row], $match); // Destination, trace starting<br>
+   if($target) $this-&gt;_target_ip = $match[3];</p>
+<p>$target = preg_match($reHopCount, $this-&gt;_raw_data[$row], $match); // number of hops (TTL)<br>
+   if($target) $this-&gt;_ttl = $match[1];</p>
+<p>$reqTimedOut = preg_match($reReqTimedOut, $this-&gt;_raw_data[$row], $match); // Request timed out</p>
+<p>$target = preg_match($reHop, $this-&gt;_raw_data[$row], $match); // Request received<br>
+   if($target || $reqTimedOut) { // two types of hop-response handled in one code block<br>
+    $responsetimes = array();  // add the min/max/avg response times<br>
+    $responsetimes[] = (float) ($reqTimedOut ? -1 : ($match[2] == &quot;*&quot; ? -1 : $match[2])); <br>
+    $responsetimes[] = (float) ($reqTimedOut ? -1 : ($match[3] == &quot;*&quot; ? -1 : $match[3])); <br>
+    $responsetimes[] = (float) ($reqTimedOut ? -1 : ($match[4] == &quot;*&quot; ? -1 : $match[4]));<br>
+    $hop = array(); <br>
+    $hop[&#039;responsetimes&#039;] = $responsetimes;<br>
+    $hop[&#039;machine&#039;] = $reqTimedOut ? &quot;&quot; : $match[5];<br>
+    $hop[&#039;ip&#039;] = $reqTimedOut ? &quot;&quot; : $match[6];<br>
+    $hops[] = $hop; // add the hop to the array<br>
+   }<br>
+   $target = preg_match($reTraceComplete, $this-&gt;_raw_data[$row], $match);<br>
+   if($target);  // Trace finished<br>
+  }<br>
+  // else &quot;empty&quot;<br>
+ }<br>
+ $this-&gt;_hops = $hops;<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #263</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_FTP/index.html">Net_FTP</a> &#187; Bug #263</h1>
+<p>Net_FTP listing errors</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-11-17 03:22 UTC</td></tr>
+<tr><th>From</th><td>mattias dot guns at student dot kuleuven dot ac dot be</td></tr>
+<tr><th>Assigned</th><td>toby</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_FTP/index.html">Net_FTP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-11-17 03:22 UTC] mattias dot guns at student dot kuleuven dot ac dot be</h3>
+<p>Description:<br>
+------------<br>
+When you use the Net_FTP package to connect to an ftp server,<br>
+and you ask for a listing [$ftp-&gt;ls($dir)]<br>
+This will fail with error: Raw directory-list in wrong format.<br>
+if one of the directory&#039;s in this listing has a &#039;sticky bit&#039;<br>
+Because the defined constant &#039;NET_FTP_DIR_EREG&#039; is not set up in a way to recognize the letter &#039;s&#039; in the representation of the properties of a dir (dwrxr-s---)<br>
+And apparently there can be a &#039;t&#039; in there too...<br>
+[that&#039;s all i know about]</p>
+<p>The following line (line 11 in Net_FTP 1.2):<br>
+define(&quot;NET_FTP_DIR_EREG&quot;, &quot;([-dl])([rwx-]{9})[ ]*([0-9]*)[ ]*([a-zA-Z0-9_-]*)[ ]*([a-zA-Z0-9_-]*)[ ]*([0-9]*)[ ]*([A-Za-z]+ [0-9: ]*) (.+)&quot;, true);</p>
+<p>should be changed to:<br>
+define(&quot;NET_FTP_DIR_EREG&quot;, &quot;([-dl])([rwxst-]{9})[ ]*([0-9]*)[ ]*([a-zA-Z0-9_-]*)[ ]*([a-zA-Z0-9_-]*)[ ]*([0-9]*)[ ]*([A-Za-z]+ [0-9: ]*) (.+)&quot;, true);</p>
+<p>(notice the change from [rwx-] to [rwxst-] )</p>
+<p>Once this is fixed, it will still fail, because the server first sais &#039;total &lt;nr&gt;&#039; before it starts listing..<br>
+Net_FTP sees this and stops with an error..</p>
+<p>If you look at line 926 and following, u see the problem, it is fixed by adding following 3 lines:<br>
+            //if server prepends with &#039;total &lt;nr&gt;&#039; shift it of<br>
+            if (substr($dir_list[0], 0, 6) == &#039;total &#039;)<br>
+                array_shift($dir_list);<br>
+&lt;after which starts the foreach&gt;<br>
+            foreach ($dir_list as $entry) {</p>
+<p>u can get the 2 in one patch at:<br>
+http://xylofaan.studentenweb.org/pear/Net_FTP_1.2_ls_fix.diff</p>
+<p>Reproduce code:<br>
+---------------<br>
+$ftp = new Net_FTP(&#039;ftp.belnet.be&#039;, &#039;21&#039;);<br>
+$ftp-&gt;connect();<br>
+$ftp-&gt;login(&#039;anon&#039;, &#039;ymous&#039;);<br>
+print_r($ftp-&gt;ls());</p>
+<p>Expected result:<br>
+----------------<br>
+the listing of the ftp server:<br>
+(too much to paste)</p>
+<p>Actual result:<br>
+--------------<br>
+&#039;s&#039; sticky bit problem:<br>
+(from another server:) string(56) &quot;drwxrwsr-x 8 ftpadm ftpadm 280 Aug 24 12:07 .&quot; Raw directory-list in wrong format.</p>
+<p>&#039;t&#039; bit problem:<br>
+string(63) &quot;d-wx-wx-wt 3 BELNET Archive 512 Nov 17 03:13 incoming&quot; Raw directory-list in wrong format.</p>
+<p>&#039;total&#039; problem:<br>
+string(8) &quot;total 45&quot; Raw directory-list in wrong format.</p>
+</section>
+<section>
+<h3>[2003-11-28 12:51 UTC] bs at hi dot is</h3>
+<p>The bits &#039;S&#039; and &#039;T&#039; are bits that have to be considered too.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

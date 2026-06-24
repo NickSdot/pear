@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1427</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Socket/index.html">Net_Socket</a> &#187; Bug #1427</h1>
+<p>Net_Socket::eof() hangs due to use of feof()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-17 18:39 UTC</td></tr>
+<tr><th>From</th><td>tomsommer at php dot net</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Socket/index.html">Net_Socket</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>Linux Fedora Core 1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-17 18:39 UTC] tomsommer at php dot net</h3>
+<p>Description:<br>
+------------<br>
+As commented on in the php manual, the feof() php function is exteremly slow when using blocking sockets.</p>
+<p>I discovered this annoyance while playing with Net_IMAP and traced the problem to Net_Socket::eof().</p>
+<p>I found this workaround to the eof() function withing Net_Socket:</p>
+<p>function eof()<br>
+    {<br>
+        if ($this-&gt;isBlocking()) {<br>
+                $status = $this-&gt;getStatus();<br>
+                return $status[&#039;eof&#039;];<br>
+        }<br>
+        return (is_resource($this-&gt;fp) &amp;&amp; feof($this-&gt;fp));<br>
+    }</p>
+<p>Which seems to do the trick</p>
+</section>
+<section>
+<h3>[2004-07-20 15:31 UTC] php at alterego dot dp dot ua</h3>
+<p>Here is what that comment in the PHP manual says:<br>
+&gt; I found feof() to be a slow function when using<br>
+&gt; a non-blocking connection. The function<br>
+&gt; stream_get_meta_data() returns much quicker<br>
+&gt; and has a return field &#039;eof&#039;.</p>
+<p>As you can see, it says &#039;non-blocking&#039;, as opposed to &#039;blocking&#039; in this bug report. So what exactly were you fixing?</p>
+<p>There is also a hidden danger in this fix. get_socket_status (which is deprecated alias to stream_get_meta_data) official documentation says:<br>
+&gt; Note that for socket streams eof member can be TRUE<br>
+&gt; even when unread_bytes is non-zero. To determine if<br>
+&gt; there is more data to be read, use feof() instead of<br>
+&gt; reading this item.</p>
+<p>I&#039;ve never ran into such situation, but I just believe it can happen. In such case eof will return true, while still there&#039;s data in the buffer. So at the very least check should be extended:<br>
+return $status[&#039;eof&#039;] &amp;&amp; ($status[&#039;unread_bytes&#039;] == 0);</p>
+<p>As it became very interesting, I made further investigation and traced down feof() behavior in the PHP sources. It showed that feof() logic is exactly the same as in this proposed fix with a small, but significant difference: when there is no data in the buffer and stream-&gt;eof was not set by another stream function before, it calls _php_network_is_stream_alive() function to find out if the socket is still alive. That function starts with an interesting comment:<br>
+/* logic: if the select call indicates that there is data to<br>
+* be read, but a read returns 0 bytes of data, then the socket<br>
+* has been closed.<br>
+*/<br>
+And then goes select call with timeout set to zero (no timeout, wait forever). So it really doesn&#039;t matter whether the socket is blocking or not: you&#039;ll block here. And that&#039;s why foef() function can be extremely slow, regardless of the type of the socket.</p>
+<p>Conclusion: the bug was not related to this PEAR package. Having fixed it broke PHP&#039;s standard feof() functionality (which is strongly expected from this wrapper class), which could lead to unpredictable results with another projects, although fixes an issue with Net_IMAP.</p>
+<p>I&#039;d suggest reverting to old function logic. If some kind of workaround is needed, another method (something like oefCheckHalfway) can be defined and used where appropriate. If Net_IMAP works better without strong eof check, that should be reported and fixed with that package.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

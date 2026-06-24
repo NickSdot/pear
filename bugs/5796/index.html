@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5796</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #5796</h1>
+<p>Add Schema support to _pgFieldFlags in pgsql driver</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-10-27 18:13 UTC</td></tr>
+<tr><th>From</th><td>skeemer+peardev at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>aharvey</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-27 18:13 UTC] skeemer+peardev at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+This patch will make it so _pgFieldFlags will accurately <br>
+handle multiple schemas and the tablename form <br>
+&quot;schema.table&quot;.  This is related to:<br>
+Bug #4235 - closed, fix not in CSV like said<br>
+Bug #5405 - bogus, solution proposed does not fix problem, <br>
+tables with same name in multiple schemas will break it<br>
+Bug #305 - won&#039;t fix, possibly doesn&#039;t need implemented <br>
+across all DBMS&#039;s since they don&#039;t all use &#039;schema.table&#039;</p>
+<p>function _pgFieldFlags($resource, $num_field, <br>
+$table_name)<br>
+    {<br>
+        $field_name =3D @pg_fieldname($resource, <br>
+$num_field);</p>
+<p>// &lt;ADDED&gt;<br>
+        if( strpos($table_name, &#039;.&#039;)=3D=3D=3Dfalse )<br>
+        {<br>
+            $names =3D explode(&#039;.&#039;,$table_name);<br>
+            $schema_name =3D $names[0];<br>
+            $table_name =3D $names[1];<br>
+        } else {<br>
+            $result =3D @pg_exec($this-&gt;connection, &quot;SELECT <br>
+current_schema()<br>
+                    FROM category LIMIT 1&quot;);</p>
+<p>//MISSING CHECK HERE, NOT SURE HOW TO HANDLE IT WITHIN PEAR</p>
+<p>$row =3D @pg_fetch_row($result, 0);<br>
+            $schema_name =3D $row[0];<br>
+        }<br>
+// &lt;/ADDED&gt;</p>
+<p>// IN THE QUERIES I CHANGED<br>
+//  tab.relname =3D typ.typnamespace<br>
+//  TO tab.relname||tab.relnamespace =<br>
+//    typ.typname||typ.typnamespace<br>
+// ADDED<br>
+//  AND ns.nspname =3D &#039;$schema_name&#039;<br>
+//  AND tab.relnamespace =3D ns.oid<br>
+        $result =3D @pg_exec($this-&gt;connection, &quot;SELECT <br>
+f.attnotnull, f.att=<br>
+hasdef<br>
+                                FROM pg_attribute f, <br>
+pg_class tab,<br>
+pg_type typ, pg_namespace ns<br>
+                                WHERE tab.relname||<br>
+tab.relnamespace =3D<br>
+typ.typname||typ.typnamespace<br>
+                                AND typ.typrelid =3D <br>
+f.attrelid<br>
+                                AND tab.relnamespace =3D <br>
+ns.oid<br>
+                                AND f.attname =3D <br>
+&#039;$field_name&#039;<br>
+                                AND tab.relname =3D <br>
+&#039;$table_name&#039;<br>
+                                AND ns.nspname =3D <br>
+&#039;$schema_name&#039;&quot;);<br>
+        if (@pg_numrows($result) &gt; 0) {<br>
+            $row =3D @pg_fetch_row($result, 0);<br>
+            $flags  =3D ($row[0] =3D=3D &#039;t&#039;) ? &#039;not_null &#039; : <br>
+&#039;&#039;;</p>
+<p>if ($row[1] =3D=3D &#039;t&#039;) {<br>
+                $result =3D @pg_exec($this-&gt;connection, <br>
+&quot;SELECT a.adsrc<br>
+                                    FROM pg_attribute f, <br>
+pg_class tab,<br>
+pg_type typ, pg_attrdef a<br>
+                                    WHERE<br>
+tab.relname||tab.relnamespace =3D typ.typname||<br>
+typ.typnamespace<br>
+                                    AND typ.typrelid =3D <br>
+f.attrelid<br>
+                                    AND f.attrelid =3D <br>
+a.adrelid<br>
+=09                                AND tab.relnamespace =3D <br>
+ns.oid<br>
+                                    AND f.attname =3D <br>
+&#039;$field_name&#039;<br>
+                                    AND tab.relname =3D <br>
+&#039;$table_name&#039;<br>
+                                    AND ns.oid =3D <br>
+&#039;$schema_name&#039;<br>
+                                    AND f.attnum =3D <br>
+a.adnum&quot;);<br>
+                $row =3D @pg_fetch_row($result, 0);<br>
+                $num =3D preg_replace(&quot;/&#039;(.*)&#039;::\w+/&quot;, &quot;\<br>
+\1&quot;, $row[0]);<br>
+                $flags .=3D &#039;default_&#039; . rawurlencode($num) <br>
+. &#039; &#039;;<br>
+            }<br>
+        } else {<br>
+            $flags =3D &#039;&#039;;<br>
+        }<br>
+        $result =3D @pg_exec($this-&gt;connection, &quot;SELECT <br>
+i.indisunique,<br>
+i.indisprimary, i.indkey<br>
+                                FROM pg_attribute f, <br>
+pg_class tab,<br>
+pg_type typ, pg_index i, pg_namespace ns<br>
+                                WHERE tab.relname||<br>
+tab.relnamespace =3D<br>
+typ.typname||typ.typnamespace<br>
+                                AND typ.typrelid =3D <br>
+f.attrelid<br>
+                                AND f.attrelid =3D <br>
+i.indrelid<br>
+                                AND tab.relnamespace =3D <br>
+ns.oid<br>
+                                AND f.attname =3D <br>
+&#039;$field_name&#039;<br>
+                                AND tab.relname =3D <br>
+&#039;$table_name&#039;<br>
+                                AND ns.nspname =3D <br>
+&#039;$schema_name&#039;&quot;);<br>
+        $count =3D @pg_numrows($result);</p>
+<p>for ($i =3D 0; $i &lt; $count ; $i++) {<br>
+            $row =3D @pg_fetch_row($result, $i);<br>
+            $keys =3D explode(&#039; &#039;, $row[2]);</p>
+<p>if (in_array($num_field + 1, $keys)) {<br>
+                $flags .=3D ($row[0] =3D=3D &#039;t&#039; &amp;&amp; $row[1] <br>
+=3D=3D &#039;f&#039;) ?<br>
+&#039;unique_key &#039; : &#039;&#039;;<br>
+                $flags .=3D ($row[1] =3D=3D &#039;t&#039;) ? <br>
+&#039;primary_key &#039; : &#039;&#039;;<br>
+                if (count($keys) &gt; 1)<br>
+                    $flags .=3D &#039;multiple_key &#039;;<br>
+            }<br>
+        }<br>
+        return trim($flags);<br>
+    }</p>
+</section>
+<section>
+<h3>[2005-10-27 23:20 UTC] skeemer+peardev at gmail dot com</h3>
+<p>sorry about the 3D, don&#039;t know where that came from.<br>
+if( strpos($table_name, &#039;.&#039;)===false )<br>
+should have been a !==</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

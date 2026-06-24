@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1845</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #1845</h1>
+<p>Additional check in isLoggedIn() for additional security</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #1845</th><td>Additional check in isLoggedIn() for additional security</td></tr>
+<tr><th>Submitted</th><td>2004-07-11 17:31 UTC</td></tr>
+<tr><th>From</th><td>roehr at zilleon dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-11 17:31 UTC] roehr at zilleon dot com</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>I would like to see a feature added to provide additional security and hamper session hijacking.</p>
+<p>An additional check in isLoggedIn() should be made optionally available to check for certain $_SERVER values to better verify if the user accessing the site is the one who originally logged in.</p>
+<p>It should be possible to supply the key names of the $_SERVER array that should be checked:</p>
+<p>$LUconfig = array(//...<br>
+                  &#039;server_values&#039; =&gt; array(&#039;HTTP_USER_AGENT&#039;, &#039;ROMETE_ADDR&#039;)<br>
+                  //...<br>
+                 );</p>
+<p>When the user logs in and the login was successful the specified values from $_SERVER are stored as an associative array in a new LiveUser_Auth_Common property called server_values.</p>
+<p>var $server_values = array(<br>
+                           &#039;HTTP_USER_AGENT&#039; =&gt; &#039;Opera/7.23&#039;,<br>
+                           &#039;ROMETE_ADDR&#039; =&gt; &#039;127.0.0.1&#039;<br>
+                          );</p>
+<p>Then whenever isLoggedIn() is called and the property contains at least one key/value pair the stored value(s) is/are compared to the current value(s) from $_SERVER. If all stored values are equal to the current values and loggedIn is true as well then true is returned from isLoggedIn().</p>
+<p>If you feel this would be a valuable feature I would be glad to contribute the required code changes.</p>
+<p>Thanks in advance for having a look.</p>
+<p>Best regards,<br>
+Torsten Roehr</p>
+</section>
+<section>
+<h3>[2004-10-08 13:48 UTC] ms at oscag dot de</h3>
+<p>Hi,</p>
+<p>in some cases ISP´s change the IP´s dynamicly in one user-session. So the check of &#039;REMOTE_ADDR&#039; would fall.</p>
+<p>Best regards<br>
+Michael Strehlau</p>
+</section>
+<section>
+<h3>[2004-10-08 14:14 UTC] roehr at zilleon dot com</h3>
+<p>Thanks, Michael. I know about this. But there are other values in $_SERVER that might be used to check for the user&#039;s identity. I would appreciate if LiveUser would provide a(n optional) way to check the values of user-specified keys in $_SERVER - if people take advantage of this is another case.</p>
+<p>Regards, Torsten</p>
+</section>
+<section>
+<h3>[2004-10-11 11:16 UTC] smith at backendmedia dot com</h3>
+<p>Well I have a client that also wanted an IP based check. I simply extended the MDB2 container and added the feature. All I had todo was overwrite the _readUserData() method with my additional IP checks.</p>
+</section>
+<section>
+<h3>[2004-10-20 09:47 UTC] roehr at zilleon dot com</h3>
+<p>Thanks for your suggestion, Lukas. But what I have in mind is different to only allowing certain IPs:</p>
+<p>When the user (successfully) logs in the values of the specified keys from $_SERVER are stored in the Auth object (e.g. the browser ident string). Then whenever the user is accessing a protected page isLoggedIn() checks if the stored values are identical to the current $_SERVER values (e.g. if the browser used is still the same).</p>
+<p>This would be an additional burden for session hijacking. Which values from $_SERVER should be verified on each page request would be defined in the LU config array.</p>
+<p>It would be purely optional - if you don&#039;t define any $_SERVER keys in config they won&#039;t be checked by isLoggedIn().</p>
+<p>I really would like to see this feature added and would happily contribute the required changes to the LiveUser and Auth classes. What do you think?</p>
+<p>Regards, Torsten</p>
+</section>
+<section>
+<h3>[2004-12-08 18:08 UTC] smith at backendmedia dot com</h3>
+<p>So these additional checks would need to happen inside LiveUser::unfreeze(). I guess the best option would be to allow the unfreeze() method to return a boolean to denote if unfreeze() was able to recognize the user and restore the session data. Recognize would mean running the checks that you mentioned. In that case you would then extend the auth container while redefining  the unfreeze() method (and what ever else you may choose).</p>
+<p>Is that about it?</p>
+</section>
+<section>
+<h3>[2004-12-08 20:00 UTC] smith at backendmedia dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+<p>LiveUser now expexts a boolean value from the auth container unfreeze() method in order to accept the values from the unfreeze() method as a valid login. You can now extend the auth container and replace the unfreeze() implementation as you see fit.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

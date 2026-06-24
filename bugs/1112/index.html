@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1112</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #1112</h1>
+<p>Memory Leak in Pear DB</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-01 16:10 UTC</td></tr>
+<tr><th>From</th><td>bemis at docutronsystems dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Fedora Core 1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-01 16:10 UTC] bemis at docutronsystems dot com</h3>
+<p>Description:<br>
+------------<br>
+The row-&gt;free() function doesn&#039;t work when the Results are empty.<br>
+I wanted a basic daemon that selected every two seconds, and did an action based upon the select results.<br>
+most of the time the select will return nothing.<br>
+I am finding that after two days of running this piece of my daemon my computer is hanging.<br>
+I can rewrite this in c, but my whole project is in PHP so I wanted to use PHP in case the project ever needs to be passed on.</p>
+<p>Reproduce code:<br>
+---------------<br>
+#!/usr/bin/php -q<br>
+&lt;?php<br>
+include &#039;DB.php&#039;;<br>
+$db_object = DB::connect(&#039;mysql://root:root@localhost/client_files&#039;, TRUE);<br>
+$db_object-&gt;setFetchMode(DB_FETCHMODE_ASSOC);<br>
+while(true)<br>
+{<br>
+   usleep(500000);//dont go crazy<br>
+   $res=$db_object-&gt;query( &quot;select doc_id from this_should_work where doc_id=2&quot; );<br>
+   $row=$res-&gt;fetchRow();<br>
+   //this is a dumbed down version, but does the memleak<br>
+   $res-&gt;free();<br>
+   unset($row);<br>
+   unset($res);<br>
+   echo memory_get_usage().&quot;\n&quot;;<br>
+}<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+I expect that the memory doesn&#039;t increase:<br>
+so I&#039;d like to see the script output<br>
+502608<br>
+502608<br>
+502608<br>
+502608<br>
+502608<br>
+502608<br>
+502608<br>
+502608<br>
+502608<br>
+502608<br>
+502608<br>
+502608<br>
+502608</p>
+<p>Actual result:<br>
+--------------<br>
+what I actually see is our script increasing at a rate of about 120 bytes per loop:<br>
+502608<br>
+502784<br>
+502904<br>
+503024<br>
+503144<br>
+503264<br>
+503384<br>
+503504<br>
+503656<br>
+503776<br>
+503896<br>
+504016<br>
+504136<br>
+504256<br>
+504376<br>
+504496<br>
+504680<br>
+504800</p>
+</section>
+<section>
+<h3>[2004-04-01 20:36 UTC] bemis at docutronsystems dot com</h3>
+<p>new script as you requested<br>
+#!/usr/bin/php -q<br>
+&lt;?php<br>
+include &#039;DB.php&#039;;<br>
+$db_object = DB::connect(&#039;mysql://root:root@localhost/client_files&#039;,<br>
+TRUE);<br>
+$db_object-&gt;setFetchMode(DB_FETCHMODE_ASSOC);<br>
+for( $i=0;$i&lt;1000;$i++)<br>
+{<br>
+   $res=$db_object-&gt;query( &quot;select doc_id from this_should_work where doc_id=2&quot; );<br>
+   $row=$res-&gt;fetchRow();<br>
+   //this is a dumbed down version, but does the memleak<br>
+   $res-&gt;free();<br>
+   unset($row);<br>
+   unset($res);<br>
+   if( $i%50==1 )<br>
+	   echo memory_get_usage().&quot;\n&quot;;<br>
+}<br>
+?&gt;</p>
+<p>new results of that script<br>
+[root@death poll]# ./try.php<br>
+503456<br>
+509680<br>
+515936<br>
+522448<br>
+528448<br>
+534448<br>
+538464<br>
+541264<br>
+544064<br>
+546864<br>
+549664<br>
+554512<br>
+557312<br>
+560112<br>
+562912<br>
+565712<br>
+568512<br>
+571312<br>
+574112<br>
+576912<br>
+-matt</p>
+</section>
+<section>
+<h3>[2004-04-01 20:44 UTC] bemis at docutronsystems dot com</h3>
+<p>I upgraded with pear upgrade db, and got the following output<br>
+[root@death poll]# pear upgrade DB<br>
+downloading DB-1.6.1.tgz ...<br>
+Starting to download DB-1.6.1.tgz (89,932 bytes)<br>
+.....................done: 89,932 bytes<br>
+upgrade ok: DB 1.6.1</p>
+<p>then I ran it again<br>
+[root@death poll]# ./try.php<br>
+521288<br>
+524488<br>
+527688<br>
+530888<br>
+534088<br>
+537288<br>
+537480<br>
+537480<br>
+537480<br>
+537480<br>
+537480<br>
+537480<br>
+537480<br>
+537480<br>
+537480<br>
+537480<br>
+537480<br>
+537480<br>
+537480<br>
+537480<br>
+I use yum upgrade as often as I see available upgrades.  I dont think it upgraded pear though.<br>
+I am sorry for any problems<br>
+-matt</p>
+</section>
+<section>
+<h3>[2004-04-01 20:56 UTC] bemis at docutronsystems dot com</h3>
+<p>after upgrading it does not seem to be a problem any more.<br>
+I cranked the for loop up to 100000 and the memory size stayed the same after the 5th iteration.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

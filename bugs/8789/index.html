@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8789</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #8789</h1>
+<p>Cannot validate file with &#039;required&#039; on the client side</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-09-25 19:57 UTC</td></tr>
+<tr><th>From</th><td>paweusz at wp dot pl</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.3</td></tr>
+<tr><th>OS</th><td>irrevelant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-09-25 19:57 UTC] paweusz at wp dot pl</h3>
+<p>Description:<br>
+------------<br>
+Sometimes it is desired to check if the file is to be uploaded BEFORE &#039;submit&#039; was hit. So i understand a similar bug was solved, but not thoroughly.</p>
+<p>When you add a rule &#039;required&#039; to field type &#039;file&#039;, it shows a notice &#039;array to string conversion&#039; after file was uploaded. It isn&#039;t what we want, when we need to make user not forget to upload the file, so why not to change it? There is no other way to check if the file is to be uploaded on the client-side.</p>
+<p>I&#039;m not convinced if the to-string conversion is needed in this case. We could use well-known identity: &#039;&#039; == Array() == null (Solution 2). If the conversion IS needed, then we should repair it after solution 1.</p>
+<p>Test script:<br>
+---------------<br>
+==== CAUSING ERROR ====<br>
+$form-&gt;addElement(&#039;file&#039;, &#039;file&#039;, &#039;file&#039;, array(&#039;class&#039; =&gt; &#039;file&#039;));</p>
+<p>...</p>
+<p>$form-&gt;addRule(&#039;file&#039;, &#039;you must upload a file&#039;, &#039;required&#039;, &#039;&#039;, &#039;client&#039;);</p>
+<p>-------------------------------------------</p>
+<p>File: HTML/QuickForm/Rule.php ==<br>
+==== SOLUTION 1 ====<br>
+39: if (@(string)$value == &#039;&#039;) {</p>
+<p>==== SOLUTION 2 ====<br>
+39: if ($value == &#039;&#039;) {</p>
+<p>Expected result:<br>
+----------------<br>
+Error - &quot;array to string conversion&quot; notice.</p>
+<p>After applying sol.1 or 2 - it will disappear</p>
+</section>
+<section>
+<h3>[2006-10-07 17:12 UTC] paweusz at wp dot pl</h3>
+<p>I really know that now I cannot use &#039;required&#039; rule to <br>
+field type &#039;file&#039; :) That is what this BUG report is <br>
+about.  <br>
+ <br>
+Although, I THINK, that it should be available to use <br>
+&#039;required&#039; rule or something similar, because it would <br>
+make many people not to FORGET about submitting a file <br>
+(because many people fills other fields at first, and <br>
+forgets to fill the FILE field). I understand that it <br>
+wouldn&#039;t be sufficient, and I should also check <br>
+&#039;uploadedfile&#039; rule. <br>
+ <br>
+Another solution to this problem is adding relevant <br>
+javascript to &#039;uploaded&#039; rule for testing if the field is <br>
+at least filled (and I understand, that it is not possible <br>
+to check if the string points to a valid file).</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

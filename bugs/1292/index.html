@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1292</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB/index.html">MDB</a> &#187; Bug #1292</h1>
+<p>[MDB1] mssql feature request: listTableIndexes()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-26 22:57 UTC</td></tr>
+<tr><th>From</th><td>thierry dot bo at netcourrier dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB/index.html">MDB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>win32XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-26 22:57 UTC] thierry dot bo at netcourrier dot com</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>here is my proposal for listTableIndexes() method for MDB1 mssql driver.</p>
+<p>The important thing is that I get it working no matter the value of &#039;optimize&#039; option. That is what I want the method behaves, but as mysql method does not behaves like that,  I don&#039;t know if this is a bug or a feature:</p>
+<p>If you call &#039;$mdb-&gt;listTableIndexes(&#039;my_table&#039;)&#039; with MDB1.3 and mysql with &#039;portability&#039; option, you get a null result instead of an array.</p>
+<p>Reproduce code:<br>
+---------------<br>
+http://www.thierrybo.freesurf.fr/temp/</p>
+</section>
+<section>
+<h3>[2004-05-19 09:23 UTC] smith at backendmedia dot com</h3>
+<p>I have added the method.<br>
+I cant reproduce your problems on MySQL though. Could you provide more details about your MySQl setup? Or better yet paste the output of the following query:<br>
+SHOW INDEX FROM [table]</p>
+<p>where [table] is a table with a bunch of different indexes</p>
+</section>
+<section>
+<h3>[2004-05-19 17:54 UTC] thierry dot bo at netcourrier dot com</h3>
+<p>Well, now I can&#039;t reproduce the problem, instead but it fails whatever option I choose. This is with 1.3, not cvs. The problem is at the begining of fetchCol() in common.php:</p>
+<p>function fetchCol($result, $colnum = 0)<br>
+    {<br>
+        $fetchmode = is_numeric($colnum) ? MDB_FETCHMODE_ORDERED : MDB_FETCHMODE_ASSOC;<br>
+        $column = array();<br>
+        $row = $this-&gt;fetchInto($result, $fetchmode);<br>
+        if (is_array($row)) {<br>
+            if (!array_key_exists($colnum, $row)) {<br>
+                return($this-&gt;raiseError(MDB_ERROR_TRUNCATED));<br>
+            }</p>
+<p>If optimize is set to &#039;portability&#039;, $colnum == &#039;Key_name&#039; and keys in $row are lowercased (&#039;key_name&#039;), so this raise error MDB_ERROR_TRUNCATED.</p>
+<p>If optimize is set to &#039;performance&#039;, $colnum == &#039;key_name&#039; but keys in $row are left unchanged (&#039;Key_name&#039;), so this also raise error MDB_ERROR_TRUNCATED.</p>
+<p>TB</p>
+</section>
+<section>
+<h3>[2004-05-19 18:01 UTC] smith at backendmedia dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+<p>actually I lied in my last commit .. I just flipped things around to be more clear. I will try to reproduce the problem. Can you give me the information I asked in my previous reply (mysql version and output from the sql query)?</p>
+</section>
+<section>
+<h3>[2004-05-19 18:19 UTC] thierry dot bo at netcourrier dot com</h3>
+<p>Actually I reproduced my initial behavior (bug only with portability). This is againt the cvs version, but at the moment I did not updated it since 09 april 2004.</p>
+<p>SHOW index FROM mrbs_entry</p>
+<p>mrbs_entry, 0, mrbs_entry_pkey, 1, id, A, 0, , , , BTREE, ,<br>
+mrbs_entry, 1, idxStartTime, 1, start_time, A, 0, , , , BTREE, ,<br>
+mrbs_entry, 1, idxEndTime, 1, end_time, A, 0, , , , BTREE,</p>
+<p>Mysql version: Mysql 4.0.13-nt --standalone</p>
+<p>SHOW STATUS:<br>
+Aborted_clients, 24,<br>
+Aborted_connects, 0,<br>
+Bytes_received, 3526,<br>
+Bytes_sent, 20190,<br>
+Com_admin_commands, 0,<br>
+Com_alter_table, 0,<br>
+Com_analyze, 0,<br>
+Com_backup_table, 0,<br>
+Com_begin, 0,<br>
+Com_change_db, 48,<br>
+Com_change_master, 0,<br>
+Com_check, 0,<br>
+Com_commit, 0,<br>
+Com_create_db, 0,<br>
+Com_create_function, 0,<br>
+Com_create_index, 0,<br>
+Com_create_table, 0,<br>
+Com_delete, 0,<br>
+Com_delete_multi, 0,<br>
+Com_drop_db, 0,<br>
+Com_drop_function, 0,<br>
+Com_drop_index, 0,<br>
+Com_drop_table, 0,<br>
+Com_flush, 0,<br>
+Com_grant, 0,<br>
+Com_ha_close, 0,<br>
+Com_ha_open, 0,<br>
+Com_ha_read, 0,<br>
+Com_insert, 0,<br>
+Com_insert_select, 0,<br>
+Com_kill, 0,<br>
+Com_load, 0,<br>
+Com_load_master_data, 0,<br>
+Com_load_master_table, 0,<br>
+Com_lock_tables, 0,<br>
+Com_optimize, 0,<br>
+Com_purge, 0,<br>
+Com_rename_table, 0,<br>
+Com_repair, 0,<br>
+Com_replace, 0,<br>
+Com_replace_select, 0,<br>
+Com_reset, 0,<br>
+Com_restore_table, 0,<br>
+Com_revoke, 0,<br>
+Com_rollback, 0,<br>
+Com_select, 31,<br>
+Com_set_option, 0,<br>
+Com_show_binlog_events, 0,<br>
+Com_show_binlogs, 0,<br>
+Com_show_create, 0,<br>
+Com_show_databases, 2,<br>
+Com_show_fields, 8,<br>
+Com_show_grants, 0,<br>
+Com_show_keys, 24,<br>
+Com_show_logs, 0,<br>
+Com_show_master_status, 0,<br>
+Com_show_new_master, 0,<br>
+Com_show_open_tables, 0,<br>
+Com_show_processlist, 0,<br>
+Com_show_slave_hosts, 0,<br>
+Com_show_slave_status, 0,<br>
+Com_show_status, 1,<br>
+Com_show_innodb_status, 0,<br>
+Com_show_tables, 3,<br>
+Com_show_variables, 0,<br>
+Com_slave_start, 0,<br>
+Com_slave_stop, 0,<br>
+Com_truncate, 0,<br>
+Com_unlock_tables, 0,<br>
+Com_update, 0,<br>
+Connections, 27,<br>
+Created_tmp_disk_tables, 0,<br>
+Created_tmp_tables, 0,<br>
+Created_tmp_files, 0,<br>
+Delayed_insert_threads, 0,<br>
+Delayed_writes, 0,<br>
+Delayed_errors, 0,<br>
+Flush_commands, 1,<br>
+Handler_commit, 0,<br>
+Handler_delete, 0,<br>
+Handler_read_first, 12,<br>
+Handler_read_key, 0,<br>
+Handler_read_next, 0,<br>
+Handler_read_prev, 0,<br>
+Handler_read_rnd, 0,<br>
+Handler_read_rnd_next, 25,<br>
+Handler_rollback, 0,<br>
+Handler_update, 0,<br>
+Handler_write, 0,<br>
+Key_blocks_used, 1,<br>
+Key_read_requests, 2,<br>
+Key_reads, 1,<br>
+Key_write_requests, 0,<br>
+Key_writes, 0,<br>
+Max_used_connections, 1,<br>
+Not_flushed_key_blocks, 0,<br>
+Not_flushed_delayed_rows, 0,<br>
+Open_tables, 3,<br>
+Open_files, 6,<br>
+Open_streams, 0,<br>
+Opened_tables, 11,<br>
+Questions, 119,<br>
+Qcache_queries_in_cache, 0,<br>
+Qcache_inserts, 0,<br>
+Qcache_hits, 0,<br>
+Qcache_lowmem_prunes, 0,<br>
+Qcache_not_cached, 0,<br>
+Qcache_free_memory, 0,<br>
+Qcache_free_blocks, 0,<br>
+Qcache_total_blocks, 0,<br>
+Rpl_status, NULL,<br>
+Select_full_join, 0,<br>
+Select_full_range_join, 0,<br>
+Select_range, 0,<br>
+Select_range_check, 0,<br>
+Select_scan, 0,<br>
+Slave_open_temp_tables, 0,<br>
+Slave_running, OFF,<br>
+Slow_launch_threads, 0,<br>
+Slow_queries, 0,<br>
+Sort_merge_passes, 0,<br>
+Sort_range, 0,<br>
+Sort_rows, 0,<br>
+Sort_scan, 0,<br>
+Table_locks_immediate, 13,<br>
+Table_locks_waited, 0,<br>
+Threads_cached, 0,<br>
+Threads_created, 26,<br>
+Threads_connected, 1,<br>
+Threads_running, 1,<br>
+Uptime, 3832</p>
+<p>SHOW VARIABLES:<br>
+back_log, 50,<br>
+basedir, F:\MYSQL\,<br>
+binlog_cache_size, 32768,<br>
+bulk_insert_buffer_size, 8388608,<br>
+character_set, latin1,<br>
+character_sets, latin1 big5 czech euc_kr gb2312 gbk latin1_de sjis tis620 ujis dec8 dos german1 hp8 koi8_ru latin2 swe7 usa7 cp1251 danish hebrew win1251 estonia hungarian koi8_ukr win1251ukr greek win1250 croat cp1257 latin5,<br>
+concurrent_insert, ON,<br>
+connect_timeout, 5,<br>
+convert_character_set, ,<br>
+datadir, F:\MYSQL\data\,<br>
+delay_key_write, ON,<br>
+delayed_insert_limit, 100,<br>
+delayed_insert_timeout, 300,<br>
+delayed_queue_size, 1000,<br>
+flush, OFF,<br>
+flush_time, 1800,<br>
+ft_boolean_syntax, + -&gt;&lt;()~*:&quot;&quot;&amp;|,<br>
+ft_min_word_len, 4,<br>
+ft_max_word_len, 254,<br>
+ft_max_word_len_for_sort, 20,<br>
+ft_stopword_file, (built-in),<br>
+have_bdb, NO,<br>
+have_crypt, NO,<br>
+have_innodb, YES,<br>
+have_isam, YES,<br>
+have_raid, NO,<br>
+have_symlink, YES,<br>
+have_openssl, NO,<br>
+have_query_cache, YES,<br>
+init_file, ,<br>
+innodb_additional_mem_pool_size, 1048576,<br>
+innodb_buffer_pool_size, 8388608,<br>
+innodb_data_file_path, ibdata1:10M:autoextend,<br>
+innodb_data_home_dir, ,<br>
+innodb_file_io_threads, 4,<br>
+innodb_force_recovery, 0,<br>
+innodb_thread_concurrency, 8,<br>
+innodb_flush_log_at_trx_commit, 1,<br>
+innodb_fast_shutdown, ON,<br>
+innodb_flush_method, ,<br>
+innodb_lock_wait_timeout, 50,<br>
+innodb_log_arch_dir, .\,<br>
+innodb_log_archive, OFF,<br>
+innodb_log_buffer_size, 1048576,<br>
+innodb_log_file_size, 5242880,<br>
+innodb_log_files_in_group, 2,<br>
+innodb_log_group_home_dir, .\,<br>
+innodb_mirrored_log_groups, 1,<br>
+innodb_max_dirty_pages_pct, 90,<br>
+interactive_timeout, 28800,<br>
+join_buffer_size, 131072,<br>
+key_buffer_size, 8388600,<br>
+language, F:\MYSQL\share\french\,<br>
+large_files_support, ON,<br>
+local_infile, ON,<br>
+log, OFF,<br>
+log_update, OFF,<br>
+log_bin, OFF,<br>
+log_slave_updates, OFF,<br>
+log_slow_queries, OFF,<br>
+log_warnings, OFF,<br>
+long_query_time, 10,<br>
+low_priority_updates, OFF,<br>
+lower_case_table_names, ON,<br>
+max_allowed_packet, 1048576,<br>
+max_binlog_cache_size, 4294967295,<br>
+max_binlog_size, 1073741824,<br>
+max_connections, 100,<br>
+max_connect_errors, 10,<br>
+max_delayed_threads, 20,<br>
+max_heap_table_size, 16777216,<br>
+max_join_size, 4294967295,<br>
+max_sort_length, 1024,<br>
+max_user_connections, 0,<br>
+max_tmp_tables, 32,<br>
+max_write_lock_count, 4294967295,<br>
+myisam_max_extra_sort_file_size, 268435456,<br>
+myisam_max_sort_file_size, 2147483647,<br>
+myisam_repair_threads, 1,<br>
+myisam_recover_options, OFF,<br>
+myisam_sort_buffer_size, 8388608,<br>
+named_pipe, OFF,<br>
+net_buffer_length, 16384,<br>
+net_read_timeout, 30,<br>
+net_retry_count, 10,<br>
+net_write_timeout, 60,<br>
+new, OFF,<br>
+open_files_limit, 0,<br>
+pid_file, F:\MYSQL\data\thierry.pid,<br>
+log_error, .\thierry.err,<br>
+port, 3306,<br>
+protocol_version, 10,<br>
+read_buffer_size, 131072,<br>
+read_rnd_buffer_size, 262144,<br>
+rpl_recovery_rank, 0,<br>
+query_cache_limit, 1048576,<br>
+query_cache_size, 0,<br>
+query_cache_type, ON,<br>
+server_id, 0,<br>
+slave_net_timeout, 3600,<br>
+skip_external_locking, ON,<br>
+skip_networking, OFF,<br>
+skip_show_database, OFF,<br>
+slow_launch_time, 2,<br>
+sort_buffer_size, 2097144,<br>
+sql_mode, 0,<br>
+table_cache, 64,<br>
+table_type, MYISAM,<br>
+thread_cache_size, 0,<br>
+thread_stack, 196608,<br>
+tx_isolation, REPEATABLE-READ,<br>
+timezone, Amér. du Sud occid.,<br>
+tmp_table_size, 33554432,<br>
+tmpdir, C:\DOCUME~1\T6C56~1.BOT\LOCALS~1\Temp\,<br>
+version, 4.0.13-nt,<br>
+wait_timeout, 28800</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

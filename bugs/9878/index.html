@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9878</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_BibTex/index.html">Structures_BibTex</a> &#187; Bug #9878</h1>
+<p>Unable to parse bibtex without authors being spit into an array</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #9878</th><td>Unable to parse bibtex without authors being spit into an array</td></tr>
+<tr><th>Submitted</th><td>2007-01-19 14:50 UTC</td></tr>
+<tr><th>From</th><td>p dot baker at ieee dot org</td></tr>
+<tr><th>Assigned</th><td>hugoki</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_BibTex/index.html">Structures_BibTex</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>FC6</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-19 14:50 UTC] p dot baker at ieee dot org</h3>
+<p>Description:<br>
+------------<br>
+It is not possible to use Structures_BibTex with the OSBib rendering package (http://bibliophile.sf.net), as the authors field is split into associative arrays when parsing the .bib database.</p>
+<p>It would be more flexible if a runtime option allowed for the authors field _not_ to be parsed, so the parsing could either be handled further down the line, or not at all.</p>
+<p>I propose a simple configuration option to allow this: &#039;extractAuthors&#039;.</p>
+<p>Test script:<br>
+---------------<br>
+--- BibTex.php  2007-01-19 14:41:14.000000000 +0000<br>
++++ BibTexOld.php       2007-01-19 14:34:01.000000000 +0000</p>
+<p>@@ -163,6 +163,7 @@<br>
+             &#039;wordWrapBreak&#039;     =&gt; &quot;\n&quot;,<br>
+             &#039;wordWrapCut&#039;       =&gt; 0,<br>
+             &#039;removeCurlyBraces&#039; =&gt; false,<br>
++            &#039;extractAuthors&#039;    =&gt; true,<br>
+         );<br>
+         foreach ($options as $option =&gt; $value) {<br>
+             $test = $this-&gt;setOption($option, $value);<br>
+@@ -427,7 +428,7 @@<br>
+                 }<br>
+             }<br>
+             //Handling the authors<br>
+-            if (in_array(&#039;author&#039;, array_keys($ret))) {<br>
++            if (in_array(&#039;author&#039;, array_keys($ret)) &amp;&amp; $this-&gt;_options[&#039;extractAuthors&#039;]) {<br>
+                 $ret[&#039;author&#039;] = $this-&gt;_extractAuthors($ret[&#039;author&#039;]);<br>
+             }<br>
+         }</p>
+</section>
+<section>
+<h3>[2007-01-23 23:02 UTC] hugoki at php dot net</h3>
+<p>Thank you for taking the time to report a problem with the package.<br>
+This problem may have been already fixed by a previous change that<br>
+is in the CVS of the package.  Please log into CVS with:</p>
+<p>cvs -d :pserver:cvsread@cvs.php.net:/repository login</p>
+<p>and check out the CVS repository of this package and upgrade</p>
+<p>cvs -d :pserver:cvsread@cvs.php.net:/repository co pear/Structures_BibTex<br>
+pear upgrade pear/Structures_BibTex/package2.xml</p>
+<p>or</p>
+<p>pear upgrade pear/Structures_BibTex/package.xml</p>
+<p>If you are able to reproduce the bug with the latest CVS,<br>
+please change the status back to &quot;Open&quot;.<br>
+Again, thank you for your continued support of PEAR.</p>
+<p>I added the changes to CVS. Do you want the author field as whole string (Version 1) or still splitted into an array but the single author not splitted (Version 2)?</p>
+<p>Example:<br>
+author=&quot;John Doe and Jane Doe&quot;</p>
+<p>Version 1:<br>
+$data[&#039;author&#039;]=&quot;John Doe and Jane Doe&quot;;</p>
+<p>Version 2:<br>
+$data[&#039;author&#039;][0]=&quot;John Doe&quot;;<br>
+$data[&#039;author&#039;][1]=&quot;Jane Doe&quot;;</p>
+<p>Currently the version one is implemented. Please give me a short feedback if that is ok or version two is wanted.</p>
+</section>
+<section>
+<h3>[2007-01-24 09:51 UTC] p dot baker at ieee dot org</h3>
+<p>I think the first version is easiest to work with, although you could easily implement both versions accessible through a configuration option.  Depends on exactly on what functionality you want to include in the package.</p>
+<p>When it comes down to it, parsing the names list using &#039;and&#039; as a delimiter is easy to implement inside or outside the package.</p>
+<p>Personally I&#039;ll be using the first version you outlined, as I don&#039;t parse the names at all - they get passed down through the OSBib renderer and end up as a properly formatted reference with the authors field intact.</p>
+</section>
+<section>
+<h3>[2007-01-25 20:27 UTC] hugoki at php dot net</h3>
+<p>Thank you for your bug report. This issue has been fixed<br>
+in the latest released version of the package, which you can download at<br>
+http://pear.php.net/get/Structures_BibTex</p>
+<p>I do not want to have to much configuration options so i will stick to the first version as you requested.<br>
+Thanks very much for the feedback!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

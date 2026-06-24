@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1238</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_Tree/index.html">XML_Tree</a> &#187; Bug #1238</h1>
+<p>Parsing files strips all new line characters</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-19 09:25 UTC</td></tr>
+<tr><th>From</th><td>mborowka at clever-age dot com</td></tr>
+<tr><th>Assigned</th><td>davey</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_Tree/index.html">XML_Tree</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-19 09:25 UTC] mborowka at clever-age dot com</h3>
+<p>Description:<br>
+------------<br>
+I am using the XMLTree to parse some files with big, mutliline, CDATA sections. Unfortunately, XML_Tree strips all the new line characters. I checked the code and to my big surprise, the function cdataHandler trims all the data before storing them:<br>
+        if (trim($data)) {<br>
+            $this-&gt;cdata .= $data;<br>
+        }</p>
+<p>This makes no sense to me. CDATA sections should be parsed as-is and no modification should be performed...</p>
+<p>Reproduce code:<br>
+---------------<br>
+$xmlTree = new XML_Tree();<br>
+$content = &quot;&lt;?xml version=&#039;1.0&#039;?&gt;<br>
+&lt;ala atrr=&#039;aaa&#039;&gt;&lt;beta&gt;&lt;![CDATA[Line one<br>
+Ligne Two]]&gt;&lt;/beta&gt;&lt;/ala&gt;&quot;;<br>
+$xmlTree-&gt;getTreeFromString($content);<br>
+$xmlTree-&gt;dump();</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;?xml version=&quot;1.0&quot;?&gt;<br>
+&lt;ala atrr=&quot;aaa&quot;&gt;<br>
+  &lt;beta&gt;Line one<br>
+Ligne Two&lt;/beta&gt;<br>
+&lt;/ala&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;?xml version=&quot;1.0&quot;?&gt;<br>
+&lt;ala atrr=&quot;aaa&quot;&gt;<br>
+  &lt;beta&gt;Line oneLigne Two&lt;/beta&gt;<br>
+&lt;/ala&gt;</p>
+</section>
+<section>
+<h3>[2004-05-18 08:06 UTC] mborowka at clever-age dot com</h3>
+<p>The problem is not with the &quot;trim&quot; but with the &quot;if&quot; itself.<br>
+Think about a situation where you have only a \r in the string... if is false and your \r is not added to the resulting cdata.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2125</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #2125</h1>
+<p>GET parameters are intrusive and forbid using several DataGrids</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-08-15 12:52 UTC</td></tr>
+<tr><th>From</th><td>ylf at xung dot org</td></tr>
+<tr><th>Assigned</th><td>asnagy</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Linux Debian (testing)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-15 12:52 UTC] ylf at xung dot org</h3>
+<p>Description:<br>
+------------<br>
+As it has been mentioned on the pear-dev mailing list, there&#039;s a need for namespacing the orderBy, direction and page GET parameters.</p>
+<p>About this issue, Jackson Miller stated :</p>
+<p>&lt;jackson&gt;<br>
+I am not so sure this is a good thing.  If SDG not only displays the UI but <br>
+also processes incoming requests ($_GET[&#039;page&#039;], $_GET[&#039;orderBy&#039;]) then we <br>
+have to do something to make the SDG request vars not so global.  Mybe <br>
+something like this:<br>
+$_GET[&#039;sdg[page]&#039;]<br>
+$_GET[&#039;sdg[orderBy]&#039;]<br>
+$_GET[&#039;sdg[direction]&#039;]<br>
+(order by and direction should probably be arrays themselves but...)<br>
+&lt;/jackson&gt;</p>
+<p>So, for sure, a prefix is needed. But there&#039;s another problem : if several grids are displayed on the same page, an arbitrary &#039;sdg&#039; prefix will turn into a conflict.</p>
+<p>This means the prefix must be customizable.</p>
+<p>Side note : I don&#039;t think orderBy and direction should be arrays themselves. I don&#039;t see how the DataGrid would render that.</p>
+</section>
+<section>
+<h3>[2004-10-02 15:31 UTC] joern_h at gmx dot net</h3>
+<p>Here is a patch for using multiple datagrids on one page. It adds methods for setting a &quot;namespace&quot; to Core.php which is then used by HTMLTable.php. I have also added code for indicating the current sort order with arrows in the table header.</p>
+<p>diff -r -d -U 4 c:\temp\Structures_DataGrid-0.5.3\DataGrid/Core.php structures\datagrid/Core.php<br>
+--- c:\temp\Structures_DataGrid-0.5.3\DataGrid/Core.php	Tue Aug 10 13:17:32 2004<br>
++++ structures\datagrid/Core.php	Sat Oct  2 15:26:45 2004<br>
+@@ -79,8 +79,14 @@<br>
+      */<br>
+     var $pager;<br>
+ <br>
+     /**<br>
++     * The namespace for GET parameters<br>
++     * @var string<br>
++     */<br>
++    var $namespace = &#039;_sdg&#039;;<br>
++<br>
++    /**<br>
+      * Constructor<br>
+      *<br>
+      * Creates default table style settings<br>
+      *<br>
+@@ -94,8 +100,45 @@<br>
+         $this-&gt;page = $page;<br>
+     }<br>
+ <br>
+     /**<br>
++     * Sets the namepace for GET parameters<br>
++     *<br>
++     * @param string $ns The new namespace<br>
++     * @access public<br>
++     */<br>
++    function setNamespace($ns)<br>
++    {<br>
++        $this-&gt;namespace = $ns;<br>
++    }<br>
++<br>
++    /**<br>
++     * Retrieves the current namespace for GET parameters<br>
++     * @return string The current namespace<br>
++     * @access public<br>
++     */<br>
++    function getNamespace()<br>
++    {<br>
++        return $this-&gt;namespace;<br>
++    }<br>
++<br>
++    /**<br>
++     * Sets the sort order, direction and page number from the GET parameters<br>
++     * without actually sorting. Useful if sorting is done by a database.<br>
++     *<br>
++     * @access public<br>
++     */<br>
++    function setRequestParams()<br>
++    {<br>
++        if (isset($_GET[$this-&gt;namespace . &#039;_orderBy&#039;]))<br>
++            $this-&gt;sortArray[0] = $_GET[$this-&gt;namespace . &#039;_orderBy&#039;];<br>
++        if (isset($_GET[$this-&gt;namespace . &#039;_direction&#039;]))<br>
++            $this-&gt;sortArray[1] = $_GET[$this-&gt;namespace . &#039;_direction&#039;];<br>
++        if (isset($_GET[$this-&gt;namespace . &#039;_page&#039;]))<br>
++            $this-&gt;page = $_GET[$this-&gt;namespace . &#039;_page&#039;];<br>
++    }<br>
++<br>
++    /**<br>
+      * Retrieves the current page number when paging is implemented<br>
+      *<br>
+      * @return string    the current page number<br>
+      * @access public<br>
+@@ -226,9 +269,9 @@<br>
+     function buildPaging($options)<br>
+     {<br>
+         $defaults = array(&#039;totalItems&#039; =&gt; count($this-&gt;recordSet),<br>
+                           &#039;perPage&#039; =&gt; $this-&gt;rowLimit,<br>
+-                          &#039;urlVar&#039; =&gt; &#039;page&#039;);<br>
++                          &#039;urlVar&#039; =&gt; $this-&gt;namespace . &#039;_page&#039;);<br>
+         $options = array_merge($defaults, $options);<br>
+         $this-&gt;pager =&amp; Pager::factory($options);<br>
+     }<br>
+ <br>
+diff -r -d -U 4 c:\temp\Structures_DataGrid-0.5.3\DataGrid/Renderer/HTMLTable.php structures\datagrid/Renderer/HTMLTable.php<br>
+--- c:\temp\Structures_DataGrid-0.5.3\DataGrid/Renderer/HTMLTable.php	Tue Aug 10 15:54:44 2004<br>
++++ structures\datagrid/Renderer/HTMLTable.php	Sat Oct  2 15:21:54 2004<br>
+@@ -271,33 +271,35 @@<br>
+      */<br>
+     function _buildHTMLTableHeader()<br>
+     {<br>
+         $cnt = 0;<br>
++        $directionstr = $this-&gt;_dg-&gt;namespace . &#039;_direction=&#039;;<br>
++        $orderbystr   = $this-&gt;_dg-&gt;namespace . &#039;_orderBy=&#039;;<br>
+         foreach ($this-&gt;_dg-&gt;columnSet as $column) {<br>
+             //Define Content<br>
+             if ($column-&gt;orderBy != null) {<br>
+                 // Determine Direction<br>
+                 if ($this-&gt;_dg-&gt;sortArray[1] == &#039;ASC&#039;) {<br>
+-                    $direction = &#039;direction=DESC&#039;;<br>
++                    $direction = $directionstr . &#039;DESC&#039;;<br>
+                 } else {<br>
+-                    $direction = &#039;direction=ASC&#039;;<br>
++                    $direction = $directionstr . &#039;ASC&#039;;<br>
+                 }<br>
+ <br>
+                 // Build URL -- This needs much refinement :)<br>
+                 if (isset($this-&gt;path)) {<br>
+                     $url = $this-&gt;path . &#039;?&#039;;<br>
+                 } else {<br>
+                     $url = $_SERVER[&#039;PHP_SELF&#039;] . &#039;?&#039;;<br>
+                 }<br>
+-                if (isset($_SERVER[&#039;QUERY_STRING&#039;])) {<br>
++                if (!empty($_SERVER[&#039;QUERY_STRING&#039;])) {<br>
+                     $qString = explode(&#039;&amp;&#039;, $_SERVER[&#039;QUERY_STRING&#039;]);<br>
+                     $i = 0;<br>
+                     foreach($qString as $element) {<br>
+                         if ($element != &#039;&#039;) {<br>
+-                            if (stristr($element, &#039;orderBy&#039;)) {<br>
+-                                $url .= &#039;orderBy=&#039; . $column-&gt;orderBy;<br>
++                            if (stristr($element, $orderbystr)) {<br>
++                                $url .= $orderbystr . $column-&gt;orderBy;<br>
+                                 $orderByExists = true;<br>
+-                            } elseif (stristr($element, &#039;direction&#039;)) {<br>
++                            } elseif (stristr($element, $directionstr)) {<br>
+                                 $url .= $direction;<br>
+                             } else {<br>
+                                 $url .= $element;<br>
+                             }<br>
+@@ -308,16 +310,24 @@<br>
+                         }<br>
+                     }<br>
+ <br>
+                     if (!isset($orderByExists)) {<br>
+-                        $url .= &#039;&amp;orderBy=&#039; . $column-&gt;orderBy . &#039;&amp;&#039; .<br>
++                        $url .= &#039;&amp;&#039; . $orderbystr . $column-&gt;orderBy . &#039;&amp;&#039; .<br>
+                                 $direction;<br>
+                     }<br>
+                 } else {<br>
+-                    $url .= &#039;orderBy=&#039; . $column-&gt;orderBy . &#039;&amp;&#039; . $direction;<br>
++                    $url .= $orderbystr . $column-&gt;orderBy . &#039;&amp;&#039; . $direction;<br>
+                 }<br>
+ <br>
+-                $str = &#039;&lt;a href=&quot;&#039; . $url . &#039;&quot;&gt;&lt;b&gt;&#039; . $column-&gt;columnName .<br>
++                $name = $column-&gt;columnName;<br>
++                // if sorted by this column display an arrow indicating the order<br>
++                if ($this-&gt;_dg-&gt;sortArray[0] == $name) {<br>
++                    if ($this-&gt;_dg-&gt;sortArray[1] == &#039;ASC&#039;)<br>
++                        $name .= &#039; ↓&#039;;<br>
++                    elseif ($this-&gt;_dg-&gt;sortArray[1] == &#039;DESC&#039;)<br>
++                        $name .= &#039; ↑&#039;;<br>
++                }<br>
++                $str = &#039;&lt;a href=&quot;&#039; . $url . &#039;&quot;&gt;&lt;b&gt;&#039; . $name .<br>
+                        &#039;&lt;/b&gt;&lt;/a&gt;&#039;;<br>
+             } else {<br>
+                 $str = &#039;&lt;b&gt;&#039; . $column-&gt;columnName . &#039;&lt;/b&gt;&#039;;<br>
+             }</p>
+</section>
+<section>
+<h3>[2004-10-20 21:05 UTC] asnagy at webitecture dot org</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

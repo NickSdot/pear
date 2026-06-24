@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6928</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #6928</h1>
+<p>Joins inside non-default database fail</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-02-24 19:13 UTC</td></tr>
+<tr><th>From</th><td>fnjordy at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.2</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-24 19:13 UTC] fnjordy at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+With two databases a join on two tables in the non-default database fail because the database name is not used in the query string.</p>
+<p>-- <br>
+Steve-o</p>
+<p>Test script:<br>
+---------------<br>
+For example:</p>
+<p>$items = DB_DataObject::factory(&#039;db1_items&#039;);<br>
+$styles = DB_DataObject::factory(&#039;db1_styles&#039;);<br>
+$items-&gt;join($styles);</p>
+<p>$sizes = DB_DataObject::factory(&#039;db2_sizes&#039;);<br>
+$products = DB_DataObject::factory(&#039;db2_products&#039;);<br>
+$products-&gt;join($sizes);</p>
+<p>$items-&gt;joinAdd($products);</p>
+<p>Expected result:<br>
+----------------<br>
+What is expected is the following join instead:</p>
+<p>SELECT * FROM `invoice_items`<br>
+ INNER JOIN `can3`.`styles`   ON `can3`.`styles`.`style_id`=`invoice_items`.`style_id`<br>
+ INNER JOIN `can3`.`products`   ON `can3`.`products`.`product_id`=`invoice_items`.`product_id`<br>
+ INNER JOIN `can3`.`sizes`   ON `can3`.`sizes`.`size_id`=`can3`.`products`.`size_id`</p>
+<p>Actual result:<br>
+--------------<br>
+Results in the following trace output:</p>
+<p>DataObjects_Invoice_items   : QUERY       : SELECT * FROM `invoice_items`<br>
+ INNER JOIN `can3`.`styles`   ON `can3`.`styles`.`style_id`=`invoice_items`.`style_id`<br>
+ INNER JOIN `can3`.`products`   ON `can3`.`products`.`product_id`=`invoice_items`.`product_id`<br>
+ INNER JOIN `sizes`   ON `sizes`.`size_id`=`products`.`size_id`<br>
+DataObjects_Invoice_items   : Query Error       : [db_error: message=&quot;DB Error: no such table&quot; code=-18 mode=return level=notice prefix=&quot;&quot; info=&quot;SELECT * FROM `invoice_items`</p>
+</section>
+<section>
+<h3>[2006-02-24 20:01 UTC] fnjordy at gmail dot com</h3>
+<p>This is because the subjoin has no knowledge of the database of the original query.  As the join is generated on the fly, as opposed to at the query, this suggests one of two solutions:</p>
+<p>a) Enable forcing of database.table combination, e.g.</p>
+<p>DataObject.php:3075:</p>
+<p>if (                in_array($DB-&gt;dsn[&#039;phptype&#039;],array(&#039;mysql&#039;,&#039;mysqli&#039;)) &amp;&amp;<br>
+   ($this-&gt;_force_database || $obj-&gt;_database != $this-&gt;_database) &amp;&amp;<br>
+    strlen($obj-&gt;_database)<br>
+            )</p>
+<p>b) Re-write join on adding to a query with a different base database.</p>
+<p>-- <br>
+Steve-o</p>
+</section>
+<section>
+<h3>[2006-02-24 20:26 UTC] fnjordy at gmail dot com</h3>
+<p>As a workaround I am modifying the _join string to add the database.  Here &#039;colours&#039; &amp; &#039;sizes&#039; are part of the subjoin, and &#039;products&#039; is the parent join to the original query.</p>
+<p>$products-&gt;_join = str_replace(<br>
+        array(&#039;`colours`&#039;, &#039;`sizes`&#039;, &#039;`products`&#039;),<br>
+        array(&#039;`can3`.`colours`&#039;, &#039;`can3`.`sizes`&#039;, &#039;`can3`.`products`&#039;),<br>
+        $products-&gt;_join);</p>
+<p>I&#039;m not sure about getting SelectAs() working, by magic I can get the columns I need without renaming.</p>
+<p>-- <br>
+Steve-o</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

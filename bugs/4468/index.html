@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4468</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #4468</h1>
+<p>BDT DST timezone setting error</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-29 16:11 UTC</td></tr>
+<tr><th>From</th><td>hossy at hossy dot com</td></tr>
+<tr><th>Assigned</th><td>pajoye</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-29 16:11 UTC] hossy at hossy dot com</h3>
+<p>Description:<br>
+------------<br>
+When creating a new instance of Date, it initializes &#039;tz&#039; which is a Date_TimeZone instance.  The constructor of Date_TimeZone causes the errors shown in &quot;Actual result.&quot;</p>
+<p>After looking at the code, I found the problem (see excerpts of TimeZone.php in Reproduce code).  The problem is that the constructor assumes because hasdst is true, dstlongname and dstshortname are defined.  This might be accurate and just an oversight in the data structure.  I&#039;m using TimeZone.php,v 1.6 2004/05/16 12:48:06 which was the file included in the Date v1.4.3 package.</p>
+<p>I think this was cuased from the fix in bug #1250: http://pear.php.net/bugs/bug.php?id=1250&amp;edit=2</p>
+<p>Reproduce code:<br>
+---------------<br>
+//$gmdate is a UNIX timestamp for the current GMT date/time.<br>
+$tzdate = new Date($gmdate);</p>
+<p>Excerpt from TimeZone.php (lines 112-120):<br>
+            if($_DATE_TIMEZONE_DATA[$id][&#039;hasdst&#039;]) {<br>
+                $this-&gt;hasdst = true;<br>
+                $this-&gt;dstlongname = $_DATE_TIMEZONE_DATA[$id][&#039;dstlongname&#039;];<br>
+                $this-&gt;dstshortname = $_DATE_TIMEZONE_DATA[$id][&#039;dstshortname&#039;];<br>
+            } else {<br>
+                $this-&gt;hasdst = false;<br>
+                $this-&gt;dstlongname = $this-&gt;longname;<br>
+                $this-&gt;dstshortname = $this-&gt;shortname;<br>
+            }</p>
+<p>~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~<br>
+Excerpt from TimeZone.php (lines 2973-2977):<br>
+    &#039;BDT&#039; =&gt; array(<br>
+        &#039;offset&#039; =&gt; 21600000,<br>
+        &#039;longname&#039; =&gt; &quot;Bangladesh Time&quot;,<br>
+        &#039;shortname&#039; =&gt; &#039;BDT&#039;,<br>
+        &#039;hasdst&#039; =&gt; true ),</p>
+<p>Expected result:<br>
+----------------<br>
+no errors =)</p>
+<p>Actual result:<br>
+--------------<br>
+Notice: Undefined index: dstlongname in C:\Inetpub\hossy.com v2\private_html\Date\TimeZone.php on line 114</p>
+<p>Notice: Undefined index: dstshortname in C:\Inetpub\hossy.com v2\private_html\Date\TimeZone.php on line 115</p>
+</section>
+<section>
+<h3>[2005-10-02 17:48 UTC] hossy at hossy dot com</h3>
+<p>That *is* the latest stable release.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

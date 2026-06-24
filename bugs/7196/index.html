@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7196</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #7196</h1>
+<p>PEAR crashes when using autoload_prepend_file</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-03-24 14:07 UTC</td></tr>
+<tr><th>From</th><td>RQuadling at GMail dot com</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5_1 CVS-2006-03-24</td></tr>
+<tr><th>OS</th><td>Windows XP SP2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-03-24 14:07 UTC] RQuadling at GMail dot com</h3>
+<p>Description:<br>
+------------<br>
+I&#039;ve just started using an autoload file and have set the PHP-CLI.INI/PHP-ISAPI.INI setting of auto_prepend_file</p>
+<p>The include path in the ini files contains ...</p>
+<p>include_path=&quot;C:\PEAR\pear\;.\;D:\Data\PHP\Includes\&quot;</p>
+<p>The autoload.inc is in D:\Data\PHP\Includes\.</p>
+<p>At the command prompt, if I type PEAR[ENTER] I get ...</p>
+<p>Warning: Unknown: failed to open stream: No such file or directory in Unknown on line 0</p>
+<p>Warning: Unknown: Failed opening &#039;auto_loader.php&#039; for inclusion (include_path=&#039;C:\PEAR\PEAR&#039;) in Unknown on line 0</p>
+<p>In looking at the pear.bat file, I put an echo in front of the run line and then re-ran pear.bat and got ...</p>
+<p>&quot;C:\PHP5\php.exe&quot; -C -d output_buffering=1 -d safe_mode=0 -d open_basedir=&quot;&quot; -d include_path=&quot;C:\PEAR\PEAR&quot; -f &quot;C:\PEAR\PEAR\pearcmd.php&quot; --</p>
+<p>This is the issue. The include path has been amended to NOT include the directory for my include files. No problem with that.</p>
+<p>I would recommend that adding</p>
+<p>-d auto_prepend_file=</p>
+<p>to the run line ...</p>
+<p>:RUN<br>
+&quot;%PHP_PEAR_PHP_BIN%&quot; -C -d output_buffering=1 -d safe_mode=0 -d open_basedir=&quot;&quot; -d auto_prepend_file= -d include_path=&quot;%PHP_PEAR_INSTALL_DIR%&quot; -f &quot;%PHP_PEAR_INSTALL_DIR%\pearcmd.php&quot; -- %1 %2 %3 %4 %5 %6 %7 %8 %9<br>
+:END</p>
+<p>would alleviate this problem.</p>
+<p>The following patch should achieve this.</p>
+<p>Index: pear.bat<br>
+===================================================================<br>
+RCS file: /repository/pear-core/scripts/pear.bat,v<br>
+retrieving revision 1.24<br>
+diff -u -r1.24 pear.bat<br>
+--- pear.bat	23 Jan 2006 16:30:14 -0000	1.24<br>
++++ pear.bat	24 Mar 2006 14:05:40 -0000<br>
+@@ -110,6 +110,6 @@<br>
+ ECHO %PHP_PEAR_PHP_BIN%<br>
+ GOTO END<br>
+ :RUN<br>
+-&quot;%PHP_PEAR_PHP_BIN%&quot; -C -d output_buffering=1 -d safe_mode=0 -d open_basedir=&quot;&quot; -d include_path=&quot;%PHP_PEAR_INSTALL_DIR%&quot; -f &quot;%PHP_PEAR_INSTALL_DIR%\pearcmd.php&quot; -- %1 %2 %3 %4 %5 %6 %7 %8 %9<br>
++&quot;%PHP_PEAR_PHP_BIN%&quot; -C -d output_buffering=1 -d safe_mode=0 -d open_basedir=&quot;&quot; -d auto_prepend_file= -d include_path=&quot;%PHP_PEAR_INSTALL_DIR%&quot; -f &quot;%PHP_PEAR_INSTALL_DIR%\pearcmd.php&quot; -- %1 %2 %3 %4 %5 %6 %7 %8 %9<br>
+ :END<br>
+ @ECHO ON<br>
+\ No newline at end of file</p>
+</section>
+<section>
+<h3>[2006-03-24 14:09 UTC] RQuadling at GMail dot com</h3>
+<p>Oh. Cutting and pasting the patch has made a mess.</p>
+<p>Basically adding</p>
+<p>-d auto_prepend_file=</p>
+<p>is needed to not use any autoloading.</p>
+</section>
+<section>
+<h3>[2006-03-27 07:39 UTC] RQuadling at GMail dot com</h3>
+<p>Dozy me!</p>
+<p>If PEAR is going to crash with auto_prepend_file, PEAR will also crash with auto_append_file!</p>
+<p>-d auto_append_file=&quot;&quot;</p>
+<p>also needed.</p>
+<p>P.S. Sorry for re-opening the bug.</p>
+<p>Patch for pear.bat / pear.sh / peardev.bat / peardev.sh</p>
+<p>Index: pear.bat<br>
+===================================================================<br>
+RCS file: /repository/pear-core/scripts/pear.bat,v<br>
+retrieving revision 1.25<br>
+diff -u -r1.25 pear.bat<br>
+--- pear.bat	25 Mar 2006 21:15:29 -0000	1.25<br>
++++ pear.bat	27 Mar 2006 07:36:29 -0000<br>
+@@ -110,6 +110,6 @@<br>
+ ECHO %PHP_PEAR_PHP_BIN%<br>
+ GOTO END<br>
+ :RUN<br>
+-&quot;%PHP_PEAR_PHP_BIN%&quot; -C -d output_buffering=1 -d safe_mode=0 -d open_basedir=&quot;&quot; -d auto_prepend_file=&quot;&quot; -d register_argc_argv=&quot;On&quot; -d include_path=&quot;%PHP_PEAR_INSTALL_DIR%&quot; -f &quot;%PHP_PEAR_INSTALL_DIR%\pearcmd.php&quot; -- %1 %2 %3 %4 %5 %6 %7 %8 %9<br>
++&quot;%PHP_PEAR_PHP_BIN%&quot; -C -d output_buffering=1 -d safe_mode=0 -d open_basedir=&quot;&quot; -d auto_prepend_file=&quot;&quot; -d auto_append_file=&quot;&quot; -d register_argc_argv=&quot;On&quot; -d include_path=&quot;%PHP_PEAR_INSTALL_DIR%&quot; -f &quot;%PHP_PEAR_INSTALL_DIR%\pearcmd.php&quot; -- %1 %2 %3 %4 %5 %6 %7 %8 %9<br>
+ :END<br>
+ @ECHO ON<br>
+\ No newline at end of file<br>
+Index: pear.sh<br>
+===================================================================<br>
+RCS file: /repository/pear-core/scripts/pear.sh,v<br>
+retrieving revision 1.5<br>
+diff -u -r1.5 pear.sh<br>
+--- pear.sh	25 Mar 2006 21:15:29 -0000	1.5<br>
++++ pear.sh	27 Mar 2006 07:36:29 -0000<br>
+@@ -25,4 +25,4 @@<br>
+   fi<br>
+ fi<br>
+ <br>
+-exec $PHP -C -q $INCARG -d output_buffering=1 -d open_basedir=&quot;&quot; -d safe_mode=0 -d register_argc_argv=&quot;On&quot; -d auto_prepend_file=&quot;&quot; $INCDIR/pearcmd.php &quot;$@&quot;<br>
++exec $PHP -C -q $INCARG -d output_buffering=1 -d open_basedir=&quot;&quot; -d safe_mode=0 -d register_argc_argv=&quot;On&quot; -d auto_prepend_file=&quot;&quot; -d auto_append_file=&quot;&quot; $INCDIR/pearcmd.php &quot;$@&quot;<br>
+Index: peardev.bat<br>
+===================================================================<br>
+RCS file: /repository/pear-core/scripts/peardev.bat,v<br>
+retrieving revision 1.4<br>
+diff -u -r1.4 peardev.bat<br>
+--- peardev.bat	25 Mar 2006 21:15:29 -0000	1.4<br>
++++ peardev.bat	27 Mar 2006 07:36:29 -0000<br>
+@@ -110,6 +110,6 @@<br>
+ ECHO %PHP_PEAR_PHP_BIN%<br>
+ GOTO END<br>
+ :RUN<br>
+-&quot;%PHP_PEAR_PHP_BIN%&quot; -C -d memory_limit=&quot;-1&quot; -d safe_mode=0 -d register_argc_argv=&quot;On&quot; -d auto_prepend_file=&quot;&quot; -d open_basedir=&quot;&quot; -d output_buffering=1 -d include_path=&quot;%PHP_PEAR_INSTALL_DIR%&quot; -f &quot;%PHP_PEAR_INSTALL_DIR%\pearcmd.php&quot; -- %1 %2 %3 %4 %5 %6 %7 %8 %9<br>
++&quot;%PHP_PEAR_PHP_BIN%&quot; -C -d memory_limit=&quot;-1&quot; -d safe_mode=0 -d register_argc_argv=&quot;On&quot; -d auto_prepend_file=&quot;&quot; -d auto_append_file=&quot;&quot; -d open_basedir=&quot;&quot; -d output_buffering=1 -d include_path=&quot;%PHP_PEAR_INSTALL_DIR%&quot; -f &quot;%PHP_PEAR_INSTALL_DIR%\pearcmd.php&quot; -- %1 %2 %3 %4 %5 %6 %7 %8 %9<br>
+ :END<br>
+ @ECHO ON<br>
+\ No newline at end of file<br>
+Index: peardev.sh<br>
+===================================================================<br>
+RCS file: /repository/pear-core/scripts/peardev.sh,v<br>
+retrieving revision 1.4<br>
+diff -u -r1.4 peardev.sh<br>
+--- peardev.sh	25 Mar 2006 21:15:29 -0000	1.4<br>
++++ peardev.sh	27 Mar 2006 07:36:29 -0000<br>
+@@ -25,4 +25,4 @@<br>
+   fi<br>
+ fi<br>
+ <br>
+-exec $PHP -d memory_limit=&quot;-1&quot; -C -q $INCARG -d output_buffering=1 -d open_basedir=&quot;&quot; -d safe_mode=0 -d register_argc_argv=&quot;On&quot; -d auto_prepend_file=&quot;&quot; $INCDIR/pearcmd.php &quot;$@&quot;<br>
++exec $PHP -d memory_limit=&quot;-1&quot; -C -q $INCARG -d output_buffering=1 -d open_basedir=&quot;&quot; -d safe_mode=0 -d register_argc_argv=&quot;On&quot; -d auto_prepend_file=&quot;&quot; -d auto_append_file=&quot;&quot; $INCDIR/pearcmd.php &quot;$@&quot;</p>
+<p>Is this the best way to submit patches for bugs?</p>
+<p>As an aside, the pecl.bat / pecl.sh use PHP -n ... no php.ini file. Could this be appropriate for PEAR? Save having to add all these -d&#039;s?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

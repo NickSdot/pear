@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4272</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #4272</h1>
+<p>tableInfo breaks in mysql.php when crossing database boundaries</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4272</th><td>tableInfo breaks in mysql.php when crossing database boundaries</td></tr>
+<tr><th>Submitted</th><td>2005-05-03 18:05 UTC</td></tr>
+<tr><th>From</th><td>douglas dot day at calendarsystems dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-03 18:05 UTC] douglas dot day at calendarsystems dot com</h3>
+<p>Description:<br>
+------------<br>
+If I call tableInfo() with a &quot;fully-qualified&quot; table name (ie &quot;dbname.tablename&quot;), it won&#039;t work.  This is because the MySQL wrapper uses the mysql_list_fields(), which does not allow this, and is a deprecated function.</p>
+<p>PHP suggests using &quot;SHOW COLUMNS FROM table&quot; instead.  I&#039;ve included a partial patch in the following section (It doesn&#039;t handle passing a result resource to tableInfo(), only table names).</p>
+<p>Reproduce code:<br>
+---------------<br>
+$info = $db-&gt;tableInfo(&quot;dbname.tablename&quot;);</p>
+<p>//<br>
+// Partial Patch<br>
+// (only handles passing a table name)<br>
+//<br>
+function tableInfo($table, $mode = null)<br>
+{<br>
+    if (is_string($table)) {<br>
+        /*<br>
+         * Probably received a table name.<br>
+         * Create a result resource identifier.<br>
+         */<br>
+        $id = @mysql_query(&quot;SHOW COLUMNS FROM {$table}&quot;, $this-&gt;connection);<br>
+        $got_string = true;<br>
+    }<br>
+    else return null;<br>
+    <br>
+    if (!is_resource($id)) {<br>
+        return $this-&gt;mysqlRaiseError(DB_ERROR_NEED_MORE_DATA);<br>
+    }</p>
+<p>if ($this-&gt;options[&#039;portability&#039;] &amp; DB_PORTABILITY_LOWERCASE) {<br>
+        $case_func = &#039;strtolower&#039;;<br>
+    } else {<br>
+        $case_func = &#039;strval&#039;;<br>
+    }</p>
+<p>$count = @mysql_num_fields($id);<br>
+    $res   = array();</p>
+<p>if ($mode) {<br>
+        $res[&#039;num_fields&#039;] = $count;<br>
+    }</p>
+<p>for ($i = 0; $i &lt; $count; $i++) {<br>
+        $this-&gt;fetchInto($id, $v, DB_FETCHMODE_ORDERED);</p>
+<p>$res[$i] = array(&#039;table&#039; =&gt; $table);<br>
+        $res[$i][&quot;name&quot;] = $v[0];<br>
+        $res[$i][&quot;type&quot;] = $v[1];<br>
+        if ($len = strpos($res[$i][&quot;type&quot;], &quot;(&quot;)) {<br>
+            $res[$i][&quot;len&quot;] = (int)substr($res[$i][&quot;type&quot;],$len+1);<br>
+            $res[$i][&quot;type&quot;] = substr($res[$i][&quot;type&quot;],0,$len);<br>
+        }<br>
+        else $res[$i][&quot;len&quot;] = null;</p>
+<p>// Get some flags<br>
+        $res[$i][&quot;flags&quot;] = array();<br>
+        if (empty($v[2]) || $v[2] == &quot;NO&quot;)<br>
+            $res[$i][&quot;flags&quot;][] = &quot;not_null&quot;;<br>
+        if ($v[3] == &quot;PRI&quot;)<br>
+            $res[$i][&quot;flags&quot;][] = &quot;primary_key&quot;;<br>
+        if (isset($v[5]))<br>
+            $res[$i][&quot;flags&quot;][] = $v[5];<br>
+        // FIXME: get &quot;unique_key&quot;, &quot;multiple_key&quot;, &quot;blob&quot;, &quot;unsigned&quot;, &quot;zerofill&quot;, &quot;binary&quot;, &quot;enum&quot;, and &quot;timestamp&quot;</p>
+<p>if ($mode &amp; DB_TABLEINFO_ORDER) {<br>
+            $res[&#039;order&#039;][$res[$i][&#039;name&#039;]] = $i;<br>
+        }<br>
+        if ($mode &amp; DB_TABLEINFO_ORDERTABLE) {<br>
+            $res[&#039;ordertable&#039;][$res[$i][&#039;table&#039;]][$res[$i][&#039;name&#039;]] = $i;<br>
+        }<br>
+    }<br>
+    <br>
+    // free the result only if we were called on a table<br>
+    if ($got_string) {<br>
+        @mysql_free_result($id);<br>
+    }<br>
+    return $res;<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+Table info</p>
+<p>Actual result:<br>
+--------------<br>
+mysql_list_fields() returns with an error saying &quot;dbname.dbname&quot; does not exist.</p>
+</section>
+<section>
+<h3>[2005-05-03 22:52 UTC] douglas dot day at calendarsystems dot com</h3>
+<p>Thanks. I&#039;ll see if I can get that working in the next couple of days, and I&#039;ll repost it here when I&#039;m sure it&#039;s working.</p>
+</section>
+<section>
+<h3>[2005-05-04 15:21 UTC] douglas dot day at calendarsystems dot com</h3>
+<p>Okay, I&#039;ve been working with the code to find a good solution.  Looks like the only function that&#039;s being used that&#039;s deprecated is mysql_list_fields().  So, instead of rewriting a bunch of stuff and probably losing performance along the way, I replace mysql_list_fields() with this query: &quot;SELECT * FROM {$table} LIMIT 1&quot; and then pull info from that.  This fixes the problem, and entails very few changes in the code.</p>
+<p>Also, I reordered the if/elseif/else statements to determine what $result really is.  I was encountering buggy behavior with it -- it was recognizing a string as a resource object, which clearly broke things.  This implementation is less error-prone.</p>
+<p>Index: mysql.php<br>
+===================================================================<br>
+RCS file: /repository/pear/DB/DB/mysql.php,v<br>
+retrieving revision 1.117<br>
+diff -u -r1.117 mysql.php<br>
+--- mysql.php	29 Mar 2005 15:03:26 -0000	1.117<br>
++++ mysql.php	4 May 2005 08:19:17 -0000<br>
+@@ -932,17 +932,10 @@<br>
+              * Probably received a table name.<br>
+              * Create a result resource identifier.<br>
+              */<br>
+-            $id = @mysql_list_fields($this-&gt;dsn[&#039;database&#039;],<br>
+-                                     $result, $this-&gt;connection);<br>
++            $id = @mysql_query(&quot;SELECT * FROM {$result} LIMIT 1&quot;, $this-&gt;connection);<br>
+             $got_string = true;<br>
+-        } elseif (isset($result-&gt;result)) {<br>
+-            /*<br>
+-             * Probably received a result object.<br>
+-             * Extract the result resource identifier.<br>
+-             */<br>
+-            $id = $result-&gt;result;<br>
+-            $got_string = false;<br>
+-        } else {<br>
++        }<br>
++        else if (is_resource($result)) {<br>
+             /*<br>
+              * Probably received a result resource identifier.<br>
+              * Copy it.<br>
+@@ -950,6 +943,13 @@<br>
+              */<br>
+             $id = $result;<br>
+             $got_string = false;<br>
++        } else {<br>
++            /*<br>
++             * Probably received a result object.<br>
++             * Extract the result resource identifier.<br>
++             */<br>
++            $id = $result-&gt;result;<br>
++            $got_string = false;<br>
+         }<br>
+ <br>
+         if (!is_resource($id)) {<br>
+@@ -989,6 +989,7 @@<br>
+         if ($got_string) {<br>
+             @mysql_free_result($id);<br>
+         }<br>
++<br>
+         return $res;<br>
+     }</p>
+<p>Thanks,<br>
+-Doug</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

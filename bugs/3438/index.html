@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3438</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_IMAP/index.html">Net_IMAP</a> &#187; Bug #3438</h1>
+<p>disconnect() method generates PHP error</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-11 21:30 UTC</td></tr>
+<tr><th>From</th><td>miker at life-captured dot com</td></tr>
+<tr><th>Assigned</th><td>amistry</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_IMAP/index.html">Net_IMAP</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>GNU/Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-11 21:30 UTC] miker at life-captured dot com</h3>
+<p>Description:<br>
+------------<br>
+When calling disconnect() method for Net_IMAP object, a PHP fatal error is generated.</p>
+<p>Reproduce code:<br>
+---------------<br>
+...<br>
+require_once(&#039;Net/IMAP.php&#039;);<br>
+...<br>
+$imap = new Net_IMAP($host, $port);<br>
+print (&quot;Connected successfully...\n&quot;);<br>
+...<br>
+$ret = $imap-&gt;disconnect();<br>
+/*<br>
+  ERROR OCCURS HERE!!!!<br>
+*/<br>
+print &quot;Logout result = &quot; . $ret . &quot;\n&quot;;</p>
+<p>Expected result:<br>
+----------------<br>
+Connected successfully...<br>
+Logout result = * BYE IMAP4rev1 Server terminating connection</p>
+<p>Actual result:<br>
+--------------<br>
+Connected successfully...<br>
+&lt;br /&gt;<br>
+&lt;b&gt;Fatal error&lt;/b&gt;:  Cannot use string offset as an array in &lt;b&gt;/usr/local/lib/php/Net/IMAP.php&lt;/b&gt; on line &lt;b&gt;180&lt;/b&gt;&lt;br /&gt;</p>
+</section>
+<section>
+<h3>[2005-10-15 18:21 UTC] oliver at realtsp dot com</h3>
+<p>Hi there</p>
+<p>I was getting the same error for some time. Net_IMAP v1.0.3 php version 5.0.3.</p>
+<p>I looked at the code in IMAPProtocol.php Line 701 in the cmdLogout() function.</p>
+<p>if you change this:<br>
+return $args;<br>
+// not for now<br>
+//return $this-&gt;_genericImapResponseParser($args,$cmdid);</p>
+<p>to this</p>
+<p>return $this-&gt;_genericImapResponseParser($args,$cmdid);</p>
+<p>(ie uncomment the proper processing of the return arguments)</p>
+<p>then it works fine!</p>
+<p>Not sure why these were ever commented out..??</p>
+<p>Regards</p>
+<p>Oliver</p>
+</section>
+<section>
+<h3>[2006-03-22 04:38 UTC] amistry at php dot net</h3>
+<p>I&#039;ve committed a fix for this in the CVS.  Please verify it works for you.</p>
+</section>
+<section>
+<h3>[2006-08-09 07:01 UTC] tom at tiri dot li</h3>
+<p>I tried out the above setting, then the fatal error is gone away - but now I got the error</p>
+<p>Notice: Undefined variable: command in /usr/share/php/Net/IMAPProtocol.php on line 2709</p>
+<p>Greetings</p>
+<p>Thomas<br>
+http://inhalt.serviert.de</p>
+</section>
+<section>
+<h3>[2006-09-09 21:40 UTC] amistry at php dot net</h3>
+<p>Do you see this in the CVS version?</p>
+</section>
+<section>
+<h3>[2006-11-08 07:44 UTC] feathercat317 at yahoo dot com</h3>
+<p>ALL I WANT IS OUT</p>
+</section>
+<section>
+<h3>[2006-11-26 18:19 UTC] mortonda at dgrmm dot net</h3>
+<p>I also ran into the Undefined variable: command  problem, and resolved by changing $command to $token on line around 2707 or 2709</p>
+</section>
+<section>
+<h3>[2007-02-12 22:00 UTC] hudeldudel at php dot net</h3>
+<p>I can not reproduce this with current CVS version.<br>
+My unit tests don&#039;t show this error.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

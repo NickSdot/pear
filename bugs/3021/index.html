@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3021</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #3021</h1>
+<p>have quoteSmart() convert floats to strings</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3021</th><td>have quoteSmart() convert floats to strings</td></tr>
+<tr><th>Submitted</th><td>2004-12-23 14:38 UTC</td></tr>
+<tr><th>From</th><td>glideraerobatics at hotmail dot com</td></tr>
+<tr><th>Assigned</th><td>aharvey</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-23 14:38 UTC] glideraerobatics at hotmail dot com</h3>
+<p>Description:<br>
+------------<br>
+When using a non-english locale (see setlocale() function) where the decimal seperator is a comma, the binding of floats into a SQL statement fails for these reasons.<br>
+1. The float is converted to it&#039;s string representation when binding.<br>
+2. The string representation of the float isn&#039;t quoted either.</p>
+<p>The result is that the SQL statement contains one value too many compared to the number of fields for each binded parameter that has a floating value.</p>
+<p>The temporary workaround is to call this function on every float passed as bind parameter to the execute() method:<br>
+number_format($number, 2, &#039;.&#039;, &#039;&#039;);<br>
+(assuming you want your numbers rounded to 2 decimal places)</p>
+<p>F.y.i. I&#039;m using the DB_mysql &#039;driver&#039;.</p>
+<p>Reproduce code:<br>
+---------------<br>
+setlocale(LC_NUMERIC, &#039;nl_NL@euro&#039;, &#039;nl_NL&#039;, &#039;nl&#039;, &#039;nl_NL.ISO_8859-2&#039;, &#039;nl_NL.ISO_8859-1&#039;, &#039;Dutch&#039;);</p>
+<p>$percent = 10.3 * 2; // string representation: 20,6<br>
+$sql = &#039;INSERT INTO tmp (percent) VALUES (?)&#039;;<br>
+$sth = $dbh-&gt;prepare($sql);<br>
+if (DB::isError($sth)) {<br>
+  // handle error<br>
+} <br>
+$res = $dbh-&gt;execute($sth, array($percent));<br>
+if (DB::isError($res)) { <br>
+  // Definately handle error here <br>
+  // because SQL statement is sent to the database as:<br>
+  // INSERT INTO tmp (percent) VALUES (20,6)<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+I expected it to work and I expected to see nothing.</p>
+<p>Actual result:<br>
+--------------<br>
+This is sent to the database:<br>
+INSERT INTO tmp (percent) VALUES (20,6)</p>
+<p>instead of this:</p>
+<p>INSERT INTO tmp (percent) VALUES (20.6)</p>
+</section>
+<section>
+<h3>[2004-12-23 19:54 UTC] glideraerobatics at hotmail dot com</h3>
+<p>It of course works with mysql_query() because there the user is responsible for manually building the SQL statement (using number_format on floats etc).</p>
+<p>Since the DB package supports parameter binding (through emulation sometimes), it should be the responsibility of the DB package to detect the types of these scalar parameters (strings, floats, ints, etc) and &#039;bind&#039; them correctly independent of the current locale setting. In the case of the DB_mysql class (and perhaps others) where parameter binding is emulated, floats should be formatted with the number_format() function so that they appear in the correct SQL format. The same probably applies other scalar types for example booleans or ints &gt;= 1000 where in many locales the thousands seperator is a &quot;.&quot;.</p>
+</section>
+<section>
+<h3>[2004-12-23 22:09 UTC] glideraerobatics at hotmail dot com</h3>
+<p>This is the error I get running your sample code:<br>
+Column count doesn&#039;t match value count at row 1</p>
+<p>...which is the same kind of error I get using the DB classes.</p>
+<p>This is my mysql version string (sorry I overlooked your question the 1st time):<br>
+mysql  Ver 14.7 Distrib 4.1.7, for pc-linux (i686)</p>
+</section>
+<section>
+<h3>[2004-12-23 23:26 UTC] glideraerobatics at hotmail dot com</h3>
+<p>I think there&#039;s a misunderstanding here. I don&#039;t expect DB to place floats in SQL statements in localized formats. A float in an SQL string should always have this format:<br>
+/^\d+(\.\d+)$/</p>
+<p>That&#039;s if it is part of an SQL string, i.e. not binded. When you really bind a float, you&#039;re not binding a string representation of your float, but the float itself. That&#039;s why in low-level bind functions you have to specify the data type. Doing this avoids all problems with localization.</p>
+<p>The DB classes (well at least DB_mysql) don&#039;t use real parameter binding internally. Externally they do: the execute() and query() methods let the user believe he/she is really passing bind parameters to the database when in fact the DB class simply replaces the question marks in the SQL statement with safe string representations of the data (side node: PHP automatically converts all scalar types into their string representation as soon as the are glued into part of another string). This is exactly where it goes wrong, as soon as string representations are made of non-string variables, the result is locale dependent, and things can start going (really) wrong.</p>
+<p>The solution is:<br>
+1. Know the data type for each column. I think the DB classes fetch this metadata from the database, but I&#039;m not sure yet. If not, calling gettype() on each parameter will indicate if they are non-strings.<br>
+2. For each non-string type parameter force it into the correct SQL format. That means for floats, call number_format($value, $precision, &#039;.&#039;, &#039;&#039;) or something similar on them.</p>
+<p>Another example based on your previous example:<br>
+This example uses mysqli and goes to show that when a PHP float variable is not automatically converted into a string by PHP that the insert statement works. Note that when using mysqli&#039;s real binding that one must indicate the data type (in this case &quot;d&quot;). This example prints &quot;1.5&quot;.</p>
+<p>&lt;?php<br>
+setlocale(LC_NUMERIC, &#039;nl_NL@euro&#039;, &#039;nl_NL&#039;, &#039;nl&#039;, &#039;nl_NL.ISO_8859-2&#039;, &#039;nl_NL.ISO_8859-1&#039;, &#039;Dutch&#039;);</p>
+<p>$host   = &#039;localhost&#039;;<br>
+$usr    = &#039;me&#039;;<br>
+$pwd    = &#039;secret&#039;;<br>
+$dbname = &#039;test&#039;;<br>
+$value = 1.5; // string representation is 1,5 !</p>
+<p>$link = mysqli_connect($host, $usr, $pwd, $dbname);<br>
+mysqli_query($link, &#039;CREATE TABLE blah (a FLOAT)&#039;);<br>
+$stmt = mysqli_prepare($link, &#039;INSERT INTO blah (a) VALUES (?)&#039;);<br>
+mysqli_stmt_bind_param($stmt, &#039;d&#039;, $value);<br>
+mysqli_stmt_execute($stmt);<br>
+mysqli_stmt_close($stmt);<br>
+$res = mysqli_query($link, &#039;SELECT * FROM blah&#039;);<br>
+$row = mysqli_fetch_row($res);<br>
+echo $row[0] . &quot;\n&quot;;<br>
+mysqli_query($link, &#039;DROP TABLE blah&#039;);<br>
+mysqli_close($link);</p>
+<p>?&gt;</p>
+</section>
+<section>
+<h3>[2004-12-23 23:38 UTC] glideraerobatics at hotmail dot com</h3>
+<p>Here&#039;s another example based on my previous example. This is just to show that the same code without the real binding but placing the float into a string will fail for the reasons I&#039;ve already explained.</p>
+<p>&lt;?php<br>
+setlocale(LC_NUMERIC, &#039;nl_NL@euro&#039;, &#039;nl_NL&#039;, &#039;nl&#039;, &#039;nl_NL.ISO_8859-2&#039;, &#039;nl_NL.ISO_8859-1&#039;, &#039;Dutch&#039;);</p>
+<p>$host   = &#039;localhost&#039;;<br>
+$usr    = &#039;me&#039;;<br>
+$pwd    = &#039;secret&#039;;<br>
+$dbname = &#039;test&#039;;<br>
+$value = 1.5; // string representation is 1,5 !</p>
+<p>$link = mysqli_connect($host, $usr, $pwd, $dbname);<br>
+mysqli_query($link, &#039;CREATE TABLE blah (a FLOAT)&#039;);<br>
+$sql = &#039;INSERT INTO blah (a) VALUES (&#039; . $value . &#039;)&#039;;<br>
+print &quot;About to execute: $sql\n&quot;;<br>
+if (!mysqli_query($link, $sql)) { // this will croak now!<br>
+  die(&#039;Query failed as expected: &#039; . mysqli_error($link));<br>
+}<br>
+$res = mysqli_query($link, &#039;SELECT * FROM blah&#039;);<br>
+$row = mysqli_fetch_row($res);<br>
+echo $row[0] . &quot;\n&quot;;<br>
+mysqli_query($link, &#039;DROP TABLE blah&#039;);<br>
+mysqli_close($link);</p>
+<p>?&gt;</p>
+</section>
+<section>
+<h3>[2004-12-24 00:45 UTC] glideraerobatics at hotmail dot com</h3>
+<p>Just set status back to &quot;Open&quot;.</p>
+</section>
+<section>
+<h3>[2004-12-24 11:54 UTC] glideraerobatics at hotmail dot com</h3>
+<p>uhh, I think the point is still being missed here. It&#039;s not about mysqli. It&#039;s about DB in general. The bind emulation in DB simply does not work correctly. As a matter of fact I discovered it using the DB_mysql class which has nothing to do with mysqli. As I see it it is clearly a bug, not &quot;Bogus&quot; or a &quot;feature request&quot;. I&#039;m only trying to help but am losing hope here.</p>
+</section>
+<section>
+<h3>[2004-12-26 00:44 UTC] glideraerobatics at hotmail dot com</h3>
+<p>Well that then is another misinterpretation. There are more scalar types in PHP than just &#039;string&#039;. A float type cannot be formatted by the programmer. A float remains a float (it is not a string and is not influenced by locale settings)and is passed that way as a bind parameter to the DB&#039;s execute method. It&#039;s within DB&#039;s execute method that the float type is converted to a string type. You can blame the programmer for that, but the way I see it it&#039;s the DB&#039;s problem as it does the converting from float to string. Anyway, nevermind, I&#039;ve given up on DB and attempting to get the crux of the problem through to you.</p>
+</section>
+<section>
+<h3>[2004-12-26 01:53 UTC] glideraerobatics at hotmail dot com</h3>
+<p>Well I&#039;ll say it once more:<br>
+In PHP, when you place a float in string context then you are converting it to a string and applying locale formatting. It&#039;s not the programmer using DB doing this, it&#039;s DB. It&#039;s happening within DB when you call the execute() or query() methods.</p>
+<p>Your example:<br>
+$value = 12345.67; // Here it&#039;s a float, really, believe me, gettype() will return &#039;double&#039; for this. You can do arithmatic on it for it is still really a float. A float is not a string. By float I don&#039;t mean string representation of a float, I really mean float.</p>
+<p>print &#039;INSERT INTO blah (a) VALUES (&#039; . $value . &#039;)&#039;; // Here the float $value is being converted to a string since you are using it in string context, and when a float is converted to a string in PHP, locale formatting takes place automatically. This happens IN DB because the DB code can&#039;t bother with checking the types of the scalar data it&#039;s &#039;binding&#039;.</p>
+<p>The solution (for DB) lays in the PHP functions gettype(), is_float, is_int, sprintf(&#039;%F&#039;,..), number_format().</p>
+<p>This is the check and the formatting DB should be doing:</p>
+<p>if (gettype($value) == &#039;double&#039;) {<br>
+  $value = floatToStringNoLocale($value);<br>
+}</p>
+<p>function floatToStringNoLocale($float) {<br>
+  $precision = strlen($float) - strlen(intval($float));<br>
+  // For all PHP versions:<br>
+  return rtrim(number_format($float, $precision, &#039;.&#039;, &#039;&#039;),0);<br>
+  // or for PHP versions from PHP 4.3.10 and PHP 5.0.3:<br>
+  //return rtrim(sprintf(&quot;%.${precision}F&quot;,$float),0);<br>
+}</p>
+</section>
+<section>
+<h3>[2004-12-26 02:59 UTC] glideraerobatics at hotmail dot com</h3>
+<p>For those who do believe this is a bug and understand the problem, I&#039;ve included the patch below to fix it. This is the test script to test PEAR DB before and after patching:</p>
+<p>&lt;?php<br>
+setlocale(LC_NUMERIC, &#039;nl_NL@euro&#039;, &#039;nl_NL&#039;, &#039;nl&#039;, &#039;nl_NL.ISO_8859-2&#039;, &#039;nl_NL.ISO_8859-1&#039;, &#039;Dutch&#039;);</p>
+<p>$dbh = .... connect to database here.<br>
+$value = 1.5; // string representation is 1,5 !</p>
+<p>print &quot;Create table.\n&quot;;<br>
+@$dbh-&gt;execute(&#039;CREATE TABLE blah (a FLOAT)&#039;);<br>
+print &quot;About to prepare.\n&quot;;<br>
+$sth = $dbh-&gt;prepare(&#039;INSERT INTO blah (a) VALUES (?)&#039;);<br>
+print &quot;About to execute.\n&quot;;<br>
+$dbh-&gt;execute($sth, array($value)); // passing a float here.<br>
+$res = $dbh-&gt;query(&#039;SELECT * FROM blah&#039;);<br>
+$row = $res-&gt;fetchRow(DB_FETCHMODE_ORDERED);<br>
+print_r($row);<br>
+print &quot;Drop table.\n&quot;;<br>
+$dbh-&gt;execute(&#039;DROP TABLE blah&#039;);</p>
+<p>?&gt;</p>
+<p>This is the somewhat smarter quoteSmart() function after patching PEAR/DB/common.php version 1.103:</p>
+<p>function quoteSmart($in)<br>
+    {<br>
+        if (is_int($in)) {<br>
+           return $in;<br>
+        }<br>
+        elseif (is_double($in)) {<br>
+           // From Craig Manley:<br>
+           // Make sure that you don&#039;t end up with locale dependent string representations of floats.<br>
+           // Do this by converting the float type into a string type here and apply SQL standard formatting.<br>
+           return rtrim(number_format($in, strlen($in) - strlen(intval($in)), &#039;.&#039;, &#039;&#039;),0);<br>
+        } elseif (is_bool($in)) {<br>
+            return $in ? 1 : 0;<br>
+        } elseif (is_null($in)) {<br>
+            return &#039;NULL&#039;;<br>
+        } else {<br>
+            return &quot;&#039;&quot; . $this-&gt;escapeSimple($in) . &quot;&#039;&quot;;<br>
+        }<br>
+    }</p>
+<p>This is the diff patch for PEAR/DB/common.php version 1.103:<br>
+d349 1<br>
+a349 1<br>
+        if (is_int($in)) {<br>
+a350 6<br>
+        }<br>
+        elseif (is_double($in)) {<br>
+           // From Craig Manley:<br>
+           // Make sure that you don&#039;t end up with locale dependent string representations of floats.<br>
+           // Do this by converting the float type into a string type here and apply SQL standard formatting.<br>
+           return rtrim(number_format($in, strlen($in) - strlen(intval($in)), &#039;.&#039;, &#039;&#039;),0);</p>
+</section>
+<section>
+<h3>[2004-12-30 16:09 UTC] glideraerobatics at hotmail dot com</h3>
+<p>No offence, but it&#039;s very clear to me (and probably other readers) that you just don&#039;t have a clue what I&#039;m talking about. <br>
+Perhaps you should re-read and think over everything I&#039;<br>
+ve said.<br>
+Anyway, what you do or not do about this bug is up to you. I&#039;m using ADODB from now on. It&#039;s designed better and has better support.</p>
+</section>
+<section>
+<h3>[2004-12-31 14:13 UTC] glideraerobatics at hotmail dot com</h3>
+<p>Ok, so just in case this does get fixed, this is the corrected float to string conversion function (my previous one wasn&#039;t 100% correct:</p>
+<p>function floatToStringNoLocale($float) {<br>
+  $precision = strlen($float) - strlen(intval($float));<br>
+  if ($precision) {<br>
+    $precision--; // don&#039;t count decimal seperator<br>
+  }<br>
+  return number_format($float, $precision, &#039;.&#039;, &#039;&#039;);<br>
+}</p>
+<p>The alternative of simply replacing comma&#039;s with dots is not 100% safe because some locales such as Farsi use neither of these seperators but others instead.</p>
+</section>
+<section>
+<h3>[2005-02-26 01:03 UTC] yy at fort-knox dot org</h3>
+<p>I ran into the same problem as the original submitter. I wrote my code without using setlocale. After adding a setlocale(LC_ALL, &#039;nl_BE&#039;) my original code which contained db-&gt;execute would not work anymore. I received this error message: &quot;DB Error: value count on row&quot;. Applying the function provided by glide solved the problem. I have to agree with glide, I didn&#039;t expect my float to be turned into a string that would not be understandable by mysql before submission to the database.</p>
+</section>
+<section>
+<h3>[2005-08-25 17:01 UTC] php at ter dot dk</h3>
+<p>Another implementation could be that PEAR DB changed to a &quot;known-good&quot; locale (for decimal separator purposes), e.g.</p>
+<p>$original_locale = setlocale(LC_NUMERIC,0);<br>
+setlocale(LC_NUMERIC, &#039;C&#039;);<br>
+.. execute stuff ..<br>
+setlocale(LC_NUMERIC, $original_locale);</p>
+<p>(though I don&#039;t know whether C is available under Windows or not)</p>
+<p>- Peter</p>
+</section>
+<section>
+<h3>[2005-12-15 08:51 UTC] okurzweg at hotmail dot com</h3>
+<p>I have exactly the same issue. Not fixing it means that you&#039;re basically requiring programmers to be running locale en_* when they call the DB API... which is not a very happy situation.</p>
+</section>
+<section>
+<h3>[2006-01-28 14:11 UTC] sylvain at jamendo dot com</h3>
+<p>I also ran into this issue.</p>
+<p>This is a 1-year old bug. I see there is a patch. Can somebody explain why the bug is still open ?</p>
+</section>
+<section>
+<h3>[2006-03-02 03:49 UTC] nickn4me at hotmail dot com</h3>
+<p>I also have to agree that this is a bug. A working script in the US locale will suddenly break when run on another locale because of this. Since the db package takes care of abstracting the generation of the complete SQL statement, it should also abstract the proper formatting of parameters.</p>
+<p>The Java JDBC api uses a setFloat() function to handle this, and does not require the user to convert floats differently depending on what locale is set. PHP can do it even more transparently, as glider suggested.</p>
+<p>It seems to me that any of the patch provided by glider and Peter is an adequate solution. We should not have to put float conversions functions all over the place when there is a natural single place to put it. I believe properly handling locales is also part of an api&#039;s responsibilities.</p>
+<p>Still hoping for a fix...</p>
+</section>
+<section>
+<h3>[2006-04-12 15:06 UTC] pear dot php dot net at chsc dot dk</h3>
+<p>&gt;It&#039;s not DB&#039;s job to baby sit or encourage programmers<br>
+&gt;to submit non-SQL-standard data.<br>
+danielc, would you elaborate on what you mean by &quot;non-SQL-standard data&quot;?</p>
+<p>The documentation isn&#039;t very explicit about which PHP data types are allowed in the data array for $db-&gt;execute($st, $data). Are floats assumed to be submitted as PHP strings?</p>
+<p>&gt; What you want can only be done by binding variables<br>
+&gt; directly to the prepared statements using a given DBMS&#039;s<br>
+&gt; native API.<br>
+I don&#039;t understand why we don&#039;t want to mimic this behaviour in the emulated API?</p>
+</section>
+<section>
+<h3>[2006-04-27 22:32 UTC] anter1 at gmail dot com</h3>
+<p>The current state of things is that floats can&#039;t be passed <br>
+(are not supported) as the &#039;$params&#039; parameter of the <br>
+function &#039;query&#039;.</p>
+<p>The current documentation says that $params is an &#039;array, <br>
+string or numeric data to be used in execution of the <br>
+statement ...&#039; That is incorrect. floats are numeric. try <br>
+this: echo is_numeric(1.5); the result is obvious.</p>
+<p>Please patch this bug or change the documentation in such <br>
+a way that it would be obvious that floats can&#039;t be passed <br>
+as $params and should be manually converted to strings by <br>
+the user.</p>
+</section>
+<section>
+<h3>[2006-05-22 15:12 UTC] spam at lynweb dot net</h3>
+<p>This is silly, please fix this bug.<br>
+Some people is offenced a little _too_ much and doesn&#039;t see <br>
+their own faults.<br>
+I feel with you glideraerobatics. I don&#039;t know if I had <br>
+bothered trying to explain the issue so many times.<br>
+Just stepped into this problem myself, guess I&#039;ll have to <br>
+manually use your patch for the moment...<br>
+Just to state this explicitly: <br>
+PEOPLE THAT USES LOCALE SETTINGS WHERE THE DECIMAL SEPERATOR <br>
+IS COMMA WILL NOT BE ABLE TO USE PEAR::DB&#039;S PREPARED <br>
+STATEMENTS WITH FLOAT DATATYPES<br>
+Come&#039;on ppl, this bug is _OLD_, you have received a patch, <br>
+patch it in!</p>
+</section>
+<section>
+<h3>[2006-09-06 20:45 UTC] florian dot grandel at gmx dot net</h3>
+<p>This bug made us upgrade from DB to MDB2 as it is still not fixed in the current PEAR::DB release. :-( Please could the PEAR::DB team comment on the many postings that clearly state that this is a bug? Why do you not patch PEAR::DB as proposed?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

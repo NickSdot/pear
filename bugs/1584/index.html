@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1584</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #1584</h1>
+<p>Column formatter does not work due to a typo</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-06-08 23:09 UTC</td></tr>
+<tr><th>From</th><td>jackson at jaxn dot org</td></tr>
+<tr><th>Assigned</th><td>asnagy</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.5</td></tr>
+<tr><th>OS</th><td>Linux (SuSE)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-06-08 23:09 UTC] jackson at jaxn dot org</h3>
+<p>Description:<br>
+------------<br>
+Using the formatter in Structures_DataGrid_Column results <br>
+in the following error: <br>
+[pear_error: message=&quot;Unable to process formatter&quot; code=0 <br>
+mode=return level=notice prefix=&quot;&quot; info=&quot;&quot;] <br>
+ <br>
+It can be fixed with the following .diff (just fixes a <br>
+typo). <br>
+ <br>
+ <br>
+--- ../../../usr/share/php/Structures/DataGrid/Column.php	<br>
+2004-06-08 18:10:24.311603488 -0500 <br>
++++ ../Code/Column.php	2004-06-08 18:11:21.624890544 <br>
+-0500 <br>
+@@ -175,18 +175,24 @@ <br>
+                     $vars = split(&#039;=&#039;, $param); <br>
+                     $paramList[$vars[0]] = $vars[1]; <br>
+                 } else { <br>
+-                    $paramList[$param] = $result; <br>
++                    $paramList[$param] = $record; <br>
+                 } <br>
+             } <br>
+         } else { <br>
+             $formatter = $this-&gt;formatter; <br>
+             $paramList = null; <br>
+         } <br>
++         <br>
++        // allow for OOP callbacks <br>
++        if (strstr($formatter,&#039;-&gt;&#039;)) { <br>
++            $formatter = explode(&#039;-&gt;&#039;,$formatter); <br>
++        } <br>
+  <br>
+         // Call the formatter <br>
+         if (is_callable($formatter)) { <br>
+             $result = call_user_func_array($formatter, <br>
+$paramList); <br>
+         } else { <br>
++            print_r($formatter); <br>
+             $result = new PEAR_Error(&#039;Unable to process <br>
+formatter&#039;); <br>
+         }</p>
+<p>Reproduce code:<br>
+---------------<br>
+$column = new Structures_DataGrid_Column(&#039;Edit&#039;, null, null, array(&#039;align&#039; =&gt; &#039;center&#039;), null, null, &#039;cepUserList::printLinkClass())&#039;);</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;a href=&quot;http://example.com/edit.php&quot;&gt;Edit&lt;/a&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+[pear_error: message=&quot;Unable to process formatter&quot; code=0 <br>
+mode=return level=notice prefix=&quot;&quot; info=&quot;&quot;]</p>
+</section>
+<section>
+<h3>[2004-06-25 14:36 UTC] asnagy at webitecture dot org</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

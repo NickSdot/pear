@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3576</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #3576</h1>
+<p>oci8 - connect() params totally broken</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-24 14:18 UTC</td></tr>
+<tr><th>From</th><td>sbeam at onsetcorps dot net</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-24 14:18 UTC] sbeam at onsetcorps dot net</h3>
+<p>Description:<br>
+------------<br>
+Passing of params in oci8::connect() was totally b0rked. DNSParse() was working fine, but connect() was assembling the parameters to pass to _doConnect() wrong.</p>
+<p>Also in _doConnect(), $sid was being set to hostspec, not the actual DB/TNSNAME.</p>
+<p>So that in _doConnect, OCI*Logon was actually being called like this<br>
+&gt; OCILogon(database_name, password, hostdef)<br>
+which of course won&#039;t work.</p>
+<p>Attached patch fixes the problem.</p>
+<p>Using last stable release, beta.</p>
+<p>Reproduce code:<br>
+---------------<br>
+--- MDB2-2.0.0beta2/MDB2/Driver/oci8.php        2004-04-23 13:06:46.000000000 -0400<br>
++++ /usr/local/share/pear/MDB2/Driver/oci8.php  2005-02-24 09:02:14.196104158 -0500<br>
+@@ -242,8 +242,8 @@<br>
+                 &#039;extension &#039;.$this-&gt;phptype.&#039; is not compiled into PHP&#039;);<br>
+         }</p>
+<p>-        if (isset($this-&gt;dsn[&#039;hostspec&#039;])) {<br>
+-            $sid = $this-&gt;dsn[&#039;hostspec&#039;];<br>
++        if (isset($this-&gt;database_name)) {<br>
++            $sid = $this-&gt;database_name;<br>
+         } else {<br>
+             $sid = getenv(&#039;ORACLE_SID&#039;);<br>
+         }<br>
+@@ -259,7 +259,7 @@<br>
+         $function = ($persistent ? &#039;OCIPLogon&#039; : &#039;OCINLogon&#039;);<br>
+         $connection = @$function($username, $password, $sid);<br>
+         if (!$connection) {<br>
+-            $connection =  $this-&gt;raiseError();<br>
++            $connection =  $this-&gt;raiseError(&quot;connection failure in {$function}()&quot;);<br>
+         }<br>
+         return $connection;<br>
+     }<br>
+@@ -284,9 +284,12 @@<br>
+             $this-&gt;_close();<br>
+         }</p>
+<p>-        if ($this-&gt;database_name) {<br>
++        if (!$this-&gt;database_name) {<br>
++            $this-&gt;raiseError(&#039;no databse specified!&#039;);<br>
++        }<br>
++        else {<br>
+             $database_name = $this-&gt;options[&#039;database_name_prefix&#039;].$this-&gt;database_name;<br>
+-            $connection = $this-&gt;_doConnect($database_name, $this-&gt;dsn[&#039;password&#039;], $this-&gt;options[&#039;persistent&#039;]);<br>
++            $connection = $this-&gt;_doConnect($this-&gt;dsn[&#039;username&#039;], $this-&gt;dsn[&#039;password&#039;], $this-&gt;options[&#039;persistent&#039;]);<br>
+             if (MDB2::isError($connection)) {<br>
+                 return $connection;<br>
+             }<br>
+@@ -515,7 +518,7 @@<br>
+                     }<br>
+                 }<br>
+             } else {<br>
+-                return $this-&gt;raiseError();<br>
++                return $this-&gt;raiseError(&#039;could not prepare statement&#039;);<br>
+             }<br>
+         }<br>
+         for (reset($descriptors), $descriptor = 0;</p>
+</section>
+<section>
+<h3>[2005-02-24 15:29 UTC] sbeam at onsetcorps dot net</h3>
+<p>Just found this bug,<br>
+http://pear.php.net/bugs/bug.php?id=2532</p>
+<p>But don&#039;t understand what the problem is there, Oracle can either use a TNSNAME to connect to or, if not provided, it will connect to the user&#039;s default tablespace. Users should know if they are connecting to a given TNSNAME or not, which they usually are. So, the same way as DB::connect did, _doConnect() should just send the $db string per normal if is is in the DSN...</p>
+</section>
+<section>
+<h3>[2005-02-24 21:34 UTC] smith at backendmedia dot com</h3>
+<p>The point is that there is also a createDatabase() method and there is also a setDatabase() method etc. This kind of stuff works radically different on other RDBMS and the approach taken provides a way to make Oracle behave more or less the same. I also added $this-&gt;options[&#039;emulate_database&#039;] to this disable this behavior. As such I recommend you take a look at CVS and let me know if this works for you?</p>
+</section>
+<section>
+<h3>[2005-03-17 17:13 UTC] smith at backendmedia dot com</h3>
+<p>No feedback was provided. The bug is being suspended because<br>
+we assume that you are no longer experiencing the problem.<br>
+If this is not the case and you are able to provide the<br>
+information that was requested earlier, please do so and<br>
+change the status of the bug back to &quot;Open&quot;. Thank you.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

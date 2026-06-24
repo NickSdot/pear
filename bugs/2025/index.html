@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2025</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_UserAgent_Detect/index.html">Net_UserAgent_Detect</a> &#187; Bug #2025</h1>
+<p>UserAgent_detect should detect more than one brower per page</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #2025</th><td>UserAgent_detect should detect more than one brower per page</td></tr>
+<tr><th>Submitted</th><td>2004-07-30 16:50 UTC</td></tr>
+<tr><th>From</th><td>thomas dot moulard at wanadoo dot fr</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_UserAgent_Detect/index.html">Net_UserAgent_Detect</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-30 16:50 UTC] thomas dot moulard at wanadoo dot fr</h3>
+<p>Description:<br>
+------------<br>
+The static data which are stored can&#039;t be reset, so only one ip can be parsed per page!</p>
+<p>The aim of this example is printing a &quot;who is online&quot; page ($session is the result of a query...)</p>
+<p>Reproduce code:<br>
+---------------<br>
+while ($session-&gt;fetch()) {<br>
+$UserAgent =&amp; new Net_UserAgent_Detect($session-&gt;UserAgent, array(NET_USERAGENT_DETECT_BROWSER, NET_USERAGENT_DETECT_OS, NET_USERAGENT_DETECT_FEATURES));</p>
+<p>$session-&gt;browser = $UserAgent-&gt;getBrowserString();<br>
+$session-&gt;os = $UserAgent-&gt;getOSString();<br>
+$session-&gt;js = &quot;v. &quot;.$UserAgent-&gt;getFeature(&#039;javascript&#039;);<br>
+$session-&gt;dhtml = ($UserAgent-&gt;getFeature(&#039;dhtml&#039;)==&#039;1&#039;)?&#039;enable&#039;:&#039;disable&#039;;<br>
+$session-&gt;dom = ($UserAgent-&gt;getFeature(&#039;dom&#039;)==&#039;1&#039;)?&#039;enable&#039;:&#039;disable&#039;;<br>
+$session-&gt;sidebar = $UserAgent-&gt;getFeature(&#039;sidebar&#039;);<br>
+$session-&gt;gecko = $UserAgent-&gt;getFeature(&#039;gecko&#039;);</p>
+<p>unset($UserAgent);<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+For example:</p>
+<p>array {<br>
+ array {<br>
+  browser =&gt; Ms ie<br>
+  os =&gt; windows XP<br>
+  etc...<br>
+ }<br>
+ array {<br>
+  browser =&gt; Firefox<br>
+  os =&gt; debian<br>
+  etc...<br>
+ }<br>
+}</p>
+<p>Actual result:<br>
+--------------<br>
+array {<br>
+ array {<br>
+  browser =&gt; Ms ie<br>
+  os =&gt; windows XP<br>
+  etc...<br>
+ }<br>
+ array { // EVEN IF I PUT A DIFFERENT USERAGENT, THE RESULT DOES NOT CHANGE!!<br>
+  browser =&gt; Ms ie<br>
+  os =&gt; windows XP<br>
+  etc...<br>
+ }<br>
+}</p>
+</section>
+<section>
+<h3>[2004-12-08 00:12 UTC] philip at projectie dot com</h3>
+<p>Had the same problem, I agree it worked slightly counter-intuitive. Fixed it by altering the detect() function slightly. See below:</p>
+<p>Altered code:<br>
+-------------</p>
+<p>function detect($in_userAgent = null, $in_detect = null)<br>
+{</p>
+<p>// {{{ set up static properties<br>
+static $hasRun;</p>
+<p>$options = &amp;Net_UserAgent_Detect::_getStaticProperty[&#039;options&#039;);</p>
+<p>if (!isset($options[&#039;re-evaluate&#039;]) OR $options[&#039;re-evaluate&#039;] == TRUE)<br>
+{<br>
+    // echo &quot;Doing regular run (as before) &lt;br /&gt;&quot;;<br>
+    if (!empty($hasRun))<br>
+    {<br>
+        return;<br>
+    }<br>
+} else {<br>
+    // re-evaluating the options properly set up (such as the user agent<br>
+}<br>
+$hasRun = TRUE;</p>
+<p>$in_userAgent = isset($options[&#039;userAgent&#039;]) &amp;&amp; is_null($in_userAgent) ? $options[&#039;userAgent&#039;] : null;</p>
+<p>etc.</p>
+<p>How to call it:<br>
+---------------<br>
+while ($session-&gt;fetch()) {<br>
+    Net_UserAgent_Detect::setOption(&#039;userAgent&#039;, $session-&gt;UserAgent);<br>
+    Net_UserAgent_Detect::setOption(&#039;re-evaluate, TRUE);</p>
+<p>$session-&gt;browser = $UserAgent-&gt;getBrowserString();<br>
+$session-&gt;os = $UserAgent-&gt;getOSString();</p>
+<p>Notes:<br>
+------<br>
+This will re-evaluate the userAgent string on each request. If you are evaluating different user agents in a loop, but using the same user agent to retrieve multiple properties, then you can set re-evaluate to FALSE after the first property of the loop is called. So this means adding the following line after your $session-&gt;browser line:</p>
+<p>Net_UserAgent_Detect::setOption(&#039;re-evaluate, FALSE);</p>
+<p>This will make it a tiny bit faster.</p>
+</section>
+<section>
+<h3>[2004-12-08 00:15 UTC] philip at projectie dot com</h3>
+<p>OOOPS!</p>
+<p>TRUE should be FALSE in my submitted line of course (its rather self-explanatory):</p>
+<p>if (!isset($options[&#039;re-evaluate&#039;]) OR $options[&#039;re-evaluate&#039;] == FALSE)<br>
+{</p>
+<p>etc.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

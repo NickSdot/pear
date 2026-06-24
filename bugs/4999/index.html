@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4999</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_DNS/index.html">Net_DNS</a> &#187; Bug #4999</h1>
+<p>Mishandling of TXT record data</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-04 18:26 UTC</td></tr>
+<tr><th>From</th><td>rdalverny at mandriva dot com</td></tr>
+<tr><th>Assigned</th><td>bate</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Net_DNS/index.html">Net_DNS</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-04 18:26 UTC] rdalverny at mandriva dot com</h3>
+<p>Description:<br>
+------------<br>
+Using Net_DNS 1.0.0rc1.</p>
+<p>Text data seems to mishandled when querying and updating a nameserver.</p>
+<p>I encountered the problem when trying to update a DNS record, and found that the handling of the text data did not work properly when fetching records as well.</p>
+<p>I rewrote parts of the Net_DNS_RR_TXT class after the Perl Net::DNS relative class.</p>
+<p>It seems to work, but it all comes down to having a working shellwords() equivalent function in PHP, which I could not do at this time.</p>
+<p>Here is the rewritten class:<br>
+http://people.mandriva.com/~rdalverny/tmp/Net_DNS_RR_TXT.phps</p>
+<p>Test script:<br>
+---------------<br>
+Here is a sample zone:</p>
+<p>$ORIGIN example.com.<br>
+host                    TXT     &quot;hello&quot;<br>
+                        TXT     &quot;hello&quot; &quot;world&quot; &quot;?&quot;<br>
+                        TXT     &quot;hello world&quot;<br>
+                        TXT     &quot;hello&quot; &quot;world&quot; &quot;hey you&quot;</p>
+<p>Expected result:<br>
+----------------<br>
+$ dig -t TXT host.example.com</p>
+<p>;; QUESTION SECTION:<br>
+;host.example.com. IN        TXT</p>
+<p>;; ANSWER SECTION:<br>
+host.example.com. 3600 IN TXT &quot;hello&quot;<br>
+host.example.com. 3600 IN TXT &quot;hello&quot; &quot;world&quot;<br>
+host.example.com. 3600 IN TXT &quot;hello world&quot;<br>
+host.example.com. 3600 IN TXT &quot;hello&quot; &quot;world&quot; &quot;hey you&quot;</p>
+<p>Actual result:<br>
+--------------<br>
+Querying with Net_DNS returns this:</p>
+<p>;; QUESTION SECTION:<br>
+;host.example.com. IN        TXT</p>
+<p>;; ANSWER SECTION:<br>
+host.example.com. 3600 IN TXT &quot;hello&quot;<br>
+host.example.com. 3600 IN TXT &quot;hello&quot;<br>
+host.example.com. 3600 IN TXT &quot;hello world&quot;<br>
+host.example.com. 3600 IN TXT &quot;hello&quot;</p>
+</section>
+<section>
+<h3>[2005-11-29 01:13 UTC] fa at art-core dot org</h3>
+<p>I haven&#039;t yet got afull grasp on it, but as it seems to me, <br>
+object(net_dns_rr_txt)(8) { [&quot;text&quot;] } is always set to NULL and instead [&quot;char_str_list&quot;] is used, doesn&#039;t this break BC?</p>
+<p>Also [&quot;rdata&quot;] in the unpatched version holds the content of all TXT fields in a form like<br>
+[&quot;rdata&quot;]=&gt;<br>
+    string(17) &quot;.das.ist.ein.test&quot;<br>
+[&quot;text&quot;]=&gt;<br>
+    string(3) &quot;das&quot;<br>
+- can&#039;t this be stripped of . and be used instead?</p>
+<p>And I&#039;m undecided on the shellwords thing. A quick google search for shellwords only shows the perl/python/ruby implementations and no real usage.</p>
+</section>
+<section>
+<h3>[2005-11-29 13:25 UTC] rdalverny at mandriva dot com</h3>
+<p>I found an other way to solve it. Below is a diff for the Net/DNS/RR/TXT.php file.</p>
+<p>It actually stores a string _or_ an array of strings in the text member of the class. Method rdatastr() is then updated to handle it. Maybe should we put it as an array all the time?</p>
+<p>At least this returns what is expected.</p>
+<p>[romain@zeb pear]# diff Net/DNS/RR/TXT.php /home/romain/TXT.php<br>
+50c50<br>
+&lt;<br>
+---<br>
+&gt;         $maxoffset = $this-&gt;rdlength + $offset;<br>
+53,55c53,56<br>
+&lt;                 list($text, $offset) = Net_DNS_Packet::label_extract($data, $offset);<br>
+&lt;<br>
+&lt;                 $this-&gt;text = $text;<br>
+---<br>
+&gt;                 while( $maxoffset &gt; $offset ) {<br>
+&gt;                     list($text, $offset) = Net_DNS_Packet::label_extract($data, $offset);<br>
+&gt;                     $this-&gt;text[] = $text;<br>
+&gt;                 }<br>
+67a69<br>
+&gt;         print_r($this-&gt;text);<br>
+75c77,85<br>
+&lt;             return(&#039;&quot;&#039; . addslashes($this-&gt;text) . &#039;&quot;&#039;);<br>
+---<br>
+&gt;             if( is_array( $this-&gt;text ) ) {<br>
+&gt;                 $tmp = &#039;&#039;;<br>
+&gt;                 foreach( $this-&gt;text as $t ) {<br>
+&gt;                     $tmp[] = &#039;&quot;&#039;.addslashes($t).&#039;&quot;&#039;;<br>
+&gt;                 }<br>
+&gt;                 return implode(&#039; &#039;,$tmp);<br>
+&gt;             } else {<br>
+&gt;                 return(&#039;&quot;&#039; . addslashes($this-&gt;text) . &#039;&quot;&#039;);<br>
+&gt;             }</p>
+</section>
+<section>
+<h3>[2005-11-29 13:36 UTC] rdalverny at mandriva dot com</h3>
+<p>I forgot to mention it: this diff applies to the current 1.0.0rc1 Net/DNS/RR/TXT.php file, of course.</p>
+<p>And I forgot a print_r() in the code, by the way.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

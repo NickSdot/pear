@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5881</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #5881</h1>
+<p>Put parens around whereAdd&#039;s if &#039;or&#039; is present</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5881</th><td>Put parens around whereAdd&#039;s if &#039;or&#039; is present</td></tr>
+<tr><th>Submitted</th><td>2005-11-06 22:41 UTC</td></tr>
+<tr><th>From</th><td>ken at restivo dot org</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-06 22:41 UTC] ken at restivo dot org</h3>
+<p>Description:<br>
+------------<br>
+If an &quot;or&quot; is present in a whereAdd() condition, it wreaks havoc if the user forgets to enclose it in parens.</p>
+<p>i.e. this will not do what the user thinks it&#039;ll do:<br>
+$obj-&gt;whereAdd(&#039;foo = &quot;bar&quot;&#039;);<br>
+$obj-&gt;whereAdd(&#039;baz = 2 or floop &lt; 2934&#039;);</p>
+<p>Test script:<br>
+---------------<br>
+It was an easy fix:</p>
+<p>@@ -586,6 +586,9 @@ class DB_DataObject extends DB_DataObjec<br>
+             return $this-&gt;raiseError(&quot;WhereAdd: No Valid Arguments&quot;, DB_DATAOBJECT_ERROR_INVALIDARGS);<br>
+         }<br>
+         $r = $this-&gt;_query[&#039;condition&#039;];<br>
++        if(stristr($cond, &#039; or &#039;)){<br>
++            $cond = &quot;({$cond})&quot;;<br>
++        }<br>
+         if ($this-&gt;_query[&#039;condition&#039;]) {<br>
+             $this-&gt;_query[&#039;condition&#039;] .= &quot; {$logic} {$cond}&quot;;<br>
+             return $r;</p>
+<p>Expected result:<br>
+----------------<br>
+Which would give the naive user what they&#039;d expect to see:</p>
+<p>WHERE foo = &quot;bar&quot; AND (baz = 2 or floop &lt; 2934)&#039;</p>
+<p>Actual result:<br>
+--------------<br>
+Without the patch, whereAdd currently produces:</p>
+<p>&#039;WHERE foo = &quot;bar&quot; AND baz = 2 or floop &lt; 2934&#039;</p>
+<p>... which (IMHO) certainly violates the principle of least surprise.</p>
+<p>This caused some pretty major heartburn in my app, anyway.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

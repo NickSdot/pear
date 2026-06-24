@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9507</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_mimeDecode/index.html">Mail_mimeDecode</a> &#187; Bug #9507</h1>
+<p>Envelope FROM isn&#039;t decoded properly</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-30 04:40 UTC</td></tr>
+<tr><th>From</th><td>david at blue-labs dot org</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_mimeDecode/index.html">Mail_mimeDecode</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-30 04:40 UTC] david at blue-labs dot org</h3>
+<p>Description:<br>
+------------<br>
+Mail header&#039;s envelope from isn&#039;t decoded properly</p>
+<p>Scott PHP # grep &quot;^From &quot; ../src/debug/mime.mgt3<br>
+From - Tue Nov 28 23:42:23 2006</p>
+<p>a) the header isn&#039;t properly split<br>
+b) it&#039;s lowercased because of (a)</p>
+<p>Test script:<br>
+---------------<br>
+./bluelist.php &lt;  ../src/debug/mime.mgt3</p>
+<p>/*<br>
+ * caution is prudent when using this mime stuff as the entire message is<br>
+ * loaded into memory ...<br>
+ */<br>
+$input = stream_get_contents($config[&#039;msg on disk handle&#039;]);</p>
+<p>$params[&#039;include_bodies&#039;] = true;<br>
+$params[&#039;decode_bodies&#039;]  = true;<br>
+$params[&#039;decode_headers&#039;] = true;</p>
+<p>$mime_obj = new Mail_mimeDecode($input);<br>
+$config[&#039;mime struct&#039;] = $mime_obj-&gt;decode($params);</p>
+<p>var_dump($config[&#039;mime struct&#039;]);</p>
+<p>Expected result:<br>
+----------------<br>
+./bluelist.php &lt;  ../src/debug/mime.mgt3<br>
+object(stdClass)#2 (5) {<br>
+  [&quot;headers&quot;]=&gt;<br>
+  array(28) {<br>
+    [&quot;from&quot;]=&gt;<br>
+    string(27) &quot; - Tue Nov 28 23:42:23 2006&quot;</p>
+<p>Actual result:<br>
+--------------<br>
+./bluelist.php &lt;  ../src/debug/mime.mgt3<br>
+object(stdClass)#2 (5) {<br>
+  [&quot;headers&quot;]=&gt;<br>
+  array(28) {<br>
+    [&quot;from - tue nov 28 23&quot;]=&gt;<br>
+    string(10) &quot;42:23 2006&quot;</p>
+</section>
+<section>
+<h3>[2006-12-07 00:06 UTC] glen at delfi dot ee</h3>
+<p>&quot;From Tue Nov 28 23:42:23 2006&quot; is not email header. email <br>
+headers are separated by colon. use for example shell <br>
+command &#039;tail +1&#039; to skip that line.</p>
+</section>
+<section>
+<h3>[2006-12-16 16:50 UTC] david at blue-labs dot org</h3>
+<p>I beg to differ.  It is a header added by the delivering MTA /MDA and many do it.  It is part of the header block as defined by RFC.  It is nonsense to pipe all incoming emails through &quot;tail +1&quot; before delivering to the LDA or to expect any LDA to accept a message then pipe it through &quot;tail +1&quot; before attempting to process it.</p>
+<p>The envelope from header is referenced in numerous RFCs and there are particular rules for it&#039;s use and what should and should not be present in it at any given time.</p>
+<p>There are many SMTP based applications that rely on the envelope from header, one such is SPF.  Message Disposition Notification may also utilize envelope-from.</p>
+<p>Envelope from is also used with some IMAP servers and for the Extended Facsimile via Internet Mail.</p>
+<p>Envelope from is decidedly a header and Mail_mimeDecode already parses it as a header, it just parses it incorrectly.</p>
+<p>Please support it&#039;s use.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

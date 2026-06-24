@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2394</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Validate &#187; <a href="package/Validate_US/index.html">Validate_US</a> &#187; Bug #2394</h1>
+<p>Validate_US needs updating</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-09-24 21:05 UTC</td></tr>
+<tr><th>From</th><td>memeyou at memeyou dot net</td></tr>
+<tr><th>Assigned</th><td>busterb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Validate_US/index.html">Validate_US</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>0.5.3</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-09-24 21:05 UTC] memeyou at memeyou dot net</h3>
+<p>Description:<br>
+------------<br>
+Validate/US.php (Validate_US), by default, checks an old  <br>
+url and expects to parse html.  The content it points to  <br>
+is now not html.  <br>
+ <br>
+I have a patch to fix this.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Validate_US::ssn($ssn);</p>
+<p>Expected result:<br>
+----------------<br>
+TRUE</p>
+<p>Actual result:<br>
+--------------<br>
+NULL</p>
+</section>
+<section>
+<h3>[2004-10-19 01:54 UTC] memeyou at memeyou dot net</h3>
+<p>Aloha!  Here is what I fixed to get it working fine on  <br>
+both cached and live-download highland retreival.  <br>
+  <br>
+I counldn&#039;t figure out any other way to send the patch.  <br>
+  <br>
+--- US-20040924.php     2004-09-24 08:50:11.525186544  <br>
+-1000  <br>
++++ US.php      2004-09-24 10:27:27.808936552 -1000  <br>
+@@ -46,7 +46,7 @@  <br>
+         $group  = intval(substr($ssn, 3, 2));  <br>
+         $serial = intval(substr($ssn, 5, 4));  <br>
+  <br>
+-        if (is_null($high_groups)) {  <br>
++        if (!$high_groups) {  <br>
+             $high_groups =  <br>
+Validate_US::ssnGetHighGroups();  <br>
+         }  <br>
+         return Validate_US::ssnCheck($area, $group,  <br>
+$serial, $high_groups);  <br>
+@@ -95,10 +95,10 @@  <br>
+      * @param array $high_groups array of highest issued  <br>
+group numbers  <br>
+      *                           area number=&gt;group  <br>
+number  <br>
+      */  <br>
+-    function ssnCheck($ssnCheck, $group, $serial,  <br>
+$high_groups)  <br>
++    function ssnCheck($area, $group, $serial,  <br>
+$high_groups)  <br>
+     {  <br>
+-        if(is_array($ssnCheck)){  <br>
+-            extract($ssnCheck);  <br>
++        if(is_array($area)){  <br>
++            extract($area);  <br>
+         }  <br>
+         // perform trivial checks  <br>
+         // no field should contain all zeros  <br>
+@@ -141,7 +141,7 @@  <br>
+      * @param bool   $is_text Take the $highgroup_htm  <br>
+param as directly the contents  <br>
+      * @returns array  <br>
+      */  <br>
+-    function ssnGetHighGroups($uri =  <br>
+&#039;http://www.ssa.gov/foia/highgroup.htm&#039;,  <br>
++    function ssnGetHighGroups($uri =  <br>
+&#039;http://www.ssa.gov/employer/highgroup.txt&#039;,  <br>
+                               $is_text = false)  <br>
+     {  <br>
+         if (!$is_text) {  <br>
+@@ -156,24 +156,19 @@  <br>
+             fclose($fd);  <br>
+         }  <br>
+  <br>
+-        $search = array  <br>
+(&quot;&#039;&lt;script[^&gt;]*?&gt;.*?&lt;/script&gt;&#039;si&quot;,  // Strip javascript  <br>
+-                         &quot;&#039;&lt;[\/\!]*? <br>
+[^&lt;&gt;]*?&gt;&#039;si&quot;,           // Strip html tags  <br>
+-                         &quot;&#039;([\r\n]) <br>
+[\s]+&#039;&quot;,                 // Strip white space  <br>
+-                         &quot;&#039;\*&#039;si&quot;);  <br>
+-  <br>
+-        $replace = array (&#039;&#039;,&#039;&#039;,&#039;\\1&#039;,&#039;&#039;);  <br>
+-  <br>
+-        $lines = explode(&quot;\n&quot;, preg_replace($search,  <br>
+$replace, $source));  <br>
++        $lines =  <br>
+explode(&quot;\n&quot;,ereg_replace(&quot;[^\n0-9]*&quot;,&#039;&#039;,$source));  <br>
+         $high_groups = array();  <br>
+         foreach ($lines as $line) {  <br>
+-            $line = trim($line);  <br>
+-            if ((strlen($line) == 3) &amp;&amp;  <br>
+is_numeric($line)) {  <br>
+-                $current_group = $line;  <br>
+-            } elseif ((strlen($line) == 2) &amp;&amp;  <br>
+is_numeric($line)) {  <br>
+-                $high_groups[$current_group] = $line;  <br>
++            if(ereg(&quot;^([0-9]{3})([0-9]{2})([0-9]{3}) <br>
+([0-9]{2})([0-9]{3})([0-9]{2})([0-9]{3})([0-9]{2})([0-9] <br>
+{3})([0-9]{2})([0-9]{3})([0-9]{2})$&quot;,$line,$grouping)) {  <br>
++                $high_groups[$grouping[1]] =  <br>
+$grouping[2];  <br>
++                $high_groups[$grouping[3]] =  <br>
+$grouping[4];  <br>
++                $high_groups[$grouping[5]] =  <br>
+$grouping[6];  <br>
++                $high_groups[$grouping[7]] =  <br>
+$grouping[8];  <br>
++                $high_groups[$grouping[9]] =  <br>
+$grouping[10];  <br>
++                $high_groups[$grouping[11]] =  <br>
+$grouping[12];  <br>
+             }  <br>
+         }  <br>
+         return $high_groups;  <br>
+     }  <br>
+ }  <br>
+-?&gt;  <br>
+\ No newline at end of file  <br>
++?&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5760</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_Wiki_BBCode/index.html">Text_Wiki_BBCode</a> &#187; Bug #5760</h1>
+<p>[size=(+/-)\d] format not supported</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5760</th><td>[size=(+/-)\d] format not supported</td></tr>
+<tr><th>Submitted</th><td>2005-10-23 22:24 UTC</td></tr>
+<tr><th>From</th><td>me at ben-xo dot com</td></tr>
+<tr><th>Status</th><td>Suspended</td></tr>
+<tr><th>Package</th><td><a href="package/Text_Wiki_BBCode/index.html">Text_Wiki_BBCode</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-23 22:24 UTC] me at ben-xo dot com</h3>
+<p>Description:<br>
+------------<br>
+No support for relative sizes in [size], which makes Text_Wiki_BBCode&#039;s markup incompatible with vBulletin.</p>
+<p>Test script:<br>
+---------------<br>
+the correct regex to match size tags is something like</p>
+<p>[size=((\+|-)?\d+)...</p>
+<p>Actual result:<br>
+--------------<br>
+[size=+1]...[/size] is rendered instead of as &lt;font size=&quot;+1&quot;&gt;...&lt;/font&gt;</p>
+</section>
+<section>
+<h3>[2005-10-24 03:36 UTC] me at ben-xo dot com</h3>
+<p>I&#039;ve fixed this to my satisfaction by editing the two following files.</p>
+<p>Render/Xhtml/Font.php<br>
+$Id: Font.php,v 1.1 2005/08/06 11:36:45 toggg Exp $</p>
+<p>uncomment class var $size</p>
+<p>function token($options)<br>
+    {<br>
+        if ($options[&#039;type&#039;] == &#039;end&#039;) {<br>
+            return &#039;&lt;/span&gt;&#039;;<br>
+        }<br>
+        if ($options[&#039;type&#039;] != &#039;start&#039;) {<br>
+            return &#039;&#039;;<br>
+        }</p>
+<p>$ret = &#039;&lt;span style=&quot;&#039;;<br>
+        if (isset($options[&#039;size&#039;])) {<br>
+            $size = trim($options[&#039;size&#039;]);<br>
+            if (is_numeric($size)) {<br>
+                switch($options[&#039;relative&#039;]) {<br>
+                    case &#039;+&#039;:<br>
+                        $size = (100+($size*5)).&#039;%&#039;;<br>
+                        break;<br>
+                    case &#039;-&#039;:<br>
+                        $size = (100-($size*5)).&#039;%&#039;;<br>
+                        break;<br>
+                    default:<br>
+                        /* use $size as an index into $this-&gt;size */<br>
+                        $size = min(7,$size);<br>
+                        $size = max(1,$size);<br>
+                        $size = $this-&gt;size[$size-1];<br>
+                }<br>
+            }<br>
+            $ret .= &quot;font-size: $size;&quot;;<br>
+        }</p>
+<p>return $ret.&#039;&quot;&gt;&#039;;<br>
+    }</p>
+<p>***</p>
+<p>Parse/BBCode/Font.php <br>
+$Id: Font.php,v 1.3 2005/08/11 10:23:50 toggg Exp $</p>
+<p>var $regex = &quot;#\[size=(\+|\-|)(\d+)]((?:((?R))|.)*?)\[/size]#msi&quot;;</p>
+<p>69:        if (array_key_exists(4, $matches)) {<br>
+74:                $matches[3]<br>
+78:            $expsub = $matches[3];<br>
+82:        $options = array(&#039;type&#039; =&gt; &#039;start&#039;, &#039;level&#039; =&gt; $this-&gt;_level, &#039;size&#039; =&gt; $matches[2], &#039;relative&#039; =&gt; $matches[1]);</p>
+<p>there. looks lovely in Wordpress now.</p>
+</section>
+<section>
+<h3>[2005-10-24 12:23 UTC] me at ben-xo dot com</h3>
+<p>Here is the patch in unified diff format.</p>
+<p>diff -ur Text_Wiki-1.0.1/Text/Wiki/Render/Xhtml/Font.php Text_Wiki-1.0.1-benxo/Text/Wiki/Render/Xhtml/Font.php<br>
+--- Text_Wiki-1.0.1/Text/Wiki/Render/Xhtml/Font.php     2005-08-06 12:36:46.000000000 +0100<br>
++++ Text_Wiki-1.0.1-benxo/Text/Wiki/Render/Xhtml/Font.php       2005-10-24 13:10:58.000000000 +0100<br>
+@@ -28,7 +28,7 @@<br>
+  */<br>
+ class Text_Wiki_Render_Xhtml_Font extends Text_Wiki_Render {<br>
+     <br>
+-/*    var $size = array(<br>
++    var $size = array(<br>
+         &#039;xx-small&#039;,<br>
+         &#039;x-small&#039;,<br>
+         &#039;small&#039;,<br>
+@@ -49,7 +49,7 @@<br>
+         &#039;pt&#039;,<br>
+         &#039;pc&#039;<br>
+     );<br>
+-*/    <br>
++    <br>
+     <br>
+     /**<br>
+       * Renders a token into text matching the requested format.<br>
+@@ -70,9 +70,25 @@<br>
+ <br>
+         $ret = &#039;&lt;span style=&quot;&#039;;<br>
+         if (isset($options[&#039;size&#039;])) {<br>
++<br>
++            // size between 1 and 7<br>
+             $size = trim($options[&#039;size&#039;]);<br>
++            $size = min(7,max(1,$size));<br>
++<br>
+             if (is_numeric($size)) {<br>
+-                $size .= &#039;px&#039;;<br>
++                switch($options[&#039;relative&#039;]) {<br>
++                    // relative size: from 65% to 135%<br>
++                    case &#039;+&#039;:<br>
++                        $size = (100+($size*5)).&#039;%&#039;;<br>
++                        break;<br>
++                    case &#039;-&#039;:<br>
++                        $size = (100-($size*5)).&#039;%&#039;;<br>
++                        break;<br>
++<br>
++                    // default: use $size as an index into $this-&gt;size for an absolute size<br>
++                    default:<br>
++                        $size = $this-&gt;size[$size-1];<br>
++                }<br>
+             }<br>
+             $ret .= &quot;font-size: $size;&quot;;<br>
+         }<br>
+diff -ur Text_Wiki_BBCode-0.0.1/Text/Wiki/Parse/BBCode/Font.php Text_Wiki_BBCode-0.0.1-benxo/Text/Wiki/Parse/BBCode/Font.php<br>
+--- Text_Wiki_BBCode-0.0.1/Text/Wiki/Parse/BBCode/Font.php      2005-08-11 11:23:50.000000000 +0100<br>
++++ Text_Wiki_BBCode-0.0.1-benxo/Text/Wiki/Parse/BBCode/Font.php        2005-10-24 03:49:59.000000000 +0100<br>
+@@ -41,7 +41,7 @@<br>
+      * @var string<br>
+      * @see parse()<br>
+      */<br>
+-    var $regex = &quot;#\[size=(\d+)]((?:((?R))|.)*?)\[/size]#msi&quot;;<br>
++    var $regex = &quot;#\[size=(\+|\-|)(\d+)]((?:((?R))|.)*?)\[/size]#msi&quot;;<br>
+ <br>
+     /**<br>
+      * The current font nesting depth, starts by zero<br>
+@@ -66,20 +66,20 @@<br>
+     function process(&amp;$matches)<br>
+     {<br>
+         // nested block ?<br>
+-        if (array_key_exists(3, $matches)) {<br>
++        if (array_key_exists(4, $matches)) {<br>
+             $this-&gt;_level++;<br>
+             $expsub = preg_replace_callback(<br>
+                 $this-&gt;regex,<br>
+                 array(&amp;$this, &#039;process&#039;),<br>
+-                $matches[2]<br>
++                $matches[3]<br>
+             );<br>
+             $this-&gt;_level--;<br>
+         } else {<br>
+-            $expsub = $matches[2];<br>
++            $expsub = $matches[3];<br>
+         }<br>
+ <br>
+         // builds the option array<br>
+-        $options = array(&#039;type&#039; =&gt; &#039;start&#039;, &#039;level&#039; =&gt; $this-&gt;_level, &#039;size&#039; =&gt; $matches[1]);<br>
++        $options = array(&#039;type&#039; =&gt; &#039;start&#039;, &#039;level&#039; =&gt; $this-&gt;_level, &#039;size&#039; =&gt; $matches[2], &#039;relative&#039; =&gt; $matches[1]);<br>
+         $statok = $this-&gt;wiki-&gt;addToken($this-&gt;rule, $options);<br>
+         $options[&#039;type&#039;] = &#039;end&#039;;<br>
+         return $statok . $expsub . $this-&gt;wiki-&gt;addToken($this-&gt;rule, $options);</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

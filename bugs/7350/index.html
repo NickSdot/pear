@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7350</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_DNS/index.html">Net_DNS</a> &#187; Bug #7350</h1>
+<p>Fatal error in pear\Net\DNS\RR.php</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-04-09 11:53 UTC</td></tr>
+<tr><th>From</th><td>flatron123 at freemail dot hu</td></tr>
+<tr><th>Assigned</th><td>bate</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_DNS/index.html">Net_DNS</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>Windows XP Pro SP2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-09 11:53 UTC] flatron123 at freemail dot hu</h3>
+<p>Description:<br>
+------------<br>
+When I run this script, I get a fatal error:<br>
+Fatal error: Cannot re-assign $this in C:\Program Files\xampp\php\pear\Net\DNS\RR.php on line 60</p>
+<p>Test script:<br>
+---------------<br>
+$resolver = new Net_DNS_Resolver();<br>
+	$response = $resolver-&gt;query(&#039;freemail.hu&#039;, &#039;MX&#039;);<br>
+	if ($response) {<br>
+		foreach ($response-&gt;answer as $rr) {<br>
+			$rr-&gt;display();			<br>
+		}<br>
+		if (count($response-&gt;additional)) {<br>
+			foreach ($response-&gt;additional as $rr) {<br>
+				$rr-&gt;display();<br>
+			}<br>
+		}<br>
+	}</p>
+<p>Expected result:<br>
+----------------<br>
+I expect that script to resolve the MXs of freemail.hu, this script is an example written on this page under the Net_DNS class documentation.</p>
+<p>Actual result:<br>
+--------------<br>
+Fatal error: Cannot re-assign $this in C:\Program Files\xampp\php\pear\Net\DNS\RR.php on line 60</p>
+</section>
+<section>
+<h3>[2006-04-14 07:37 UTC] bb at wavecon dot de</h3>
+<p>I hit this bug also and found a simple solution:</p>
+<p>Just replace &quot;$this&quot; with &quot;return&quot; in the constructor of the RR.php.</p>
+</section>
+<section>
+<h3>[2006-07-26 06:56 UTC] matthew at cosnet dot net dot au</h3>
+<p>Tried the above suggestion with result:</p>
+<p>PHP Warning: preg_match() expects parameter 2 to be string, object given in /usr/share/pear/Net/DNS/Resolver.php on line 1025<br>
+PHP Notice: Object of class Net_DNS_Packet to string conversion in /usr/share/pear/Net/DNS/Packet.php on line 327<br>
+PHP Notice: Trying to get property of non-object in dodns.php on line 13<br>
+PHP Fatal error: Call to a member function display() on a non-object in dodns.php on line 13</p>
+</section>
+<section>
+<h3>[2006-08-01 14:50 UTC] astylman at hotmail dot com</h3>
+<p>In addition to the fix proposed by Benjamin, I tried the following with success:</p>
+<p>First open the C:\Program\Files\xampp\php\pear\Net\DNS\Resolver.php file.</p>
+<p>In the implementation of the function make_query_packet(), i.e. on line 1010, do the following change:</p>
+<p>replace</p>
+<p>if (is_object($packetORname) &amp;&amp; get_class($packetORname) == &quot;net_dns_packet&quot;)</p>
+<p>with</p>
+<p>if (is_object($packetORname) &amp;&amp; strtolower(get_class($packetORname)) == &quot;net_dns_packet&quot;)</p>
+<p>Its seems that when we have a packet, the function get_class($packetORname) returns the string &quot;Net_DNS_Packet&quot;. When trying to compare this string with the &quot;net_dns_packet&quot; string the comparison returns false instead of true (as expected), as there is a problem of case sensitivity. Converting to lowercase the result returned by the function get_class($packetORname) with the help of the function strtolower(get_class($packetORname)) seemed to solve the problem (at least for me).</p>
+<p>Hope this will help.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

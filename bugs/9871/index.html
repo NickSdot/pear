@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9871</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid_DataSource_MDB2/index.html">Structures_DataGrid_DataSource_MDB2</a> &#187; Bug #9871</h1>
+<p>Field names like SPEED_LIMIT truncated</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-18 19:00 UTC</td></tr>
+<tr><th>From</th><td>michael dot mauch at gmx dot de</td></tr>
+<tr><th>Assigned</th><td>olivierg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid_DataSource_MDB2/index.html">Structures_DataGrid_DataSource_MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-18 19:00 UTC] michael dot mauch at gmx dot de</h3>
+<p>Description:<br>
+------------<br>
+A query like</p>
+<p>select SPEED_LIMIT<br>
+  from MY_TABLE</p>
+<p>is truncated at LIMIT.</p>
+<p>The culprit is in Structures/DataGrid/DataSource/MDB2.php:</p>
+<p>// drop LIMIT statement<br>
+        $query = preg_replace(&#039;#LIMIT\s.*$#isD&#039;, &#039;&#039;, $query);</p>
+<p>Test script:<br>
+---------------<br>
+SQL to create a test table:</p>
+<p>create table xxx_test (speed_limit integer);<br>
+insert into xxx_test values(100);<br>
+commit;<br>
+ <br>
+&lt;?php<br>
+require &#039;Structures/DataGrid.php&#039;;<br>
+$datagrid =&amp; new Structures_DataGrid();<br>
+require &#039;sql_user_and_password&#039;;<br>
+$options = array(&#039;dsn&#039; =&gt; &quot;mysql://$sql_user:$sql_password@localhost/test&quot;);<br>
+$test = $datagrid-&gt;bind(&#039;select SPEED_LIMIT from XXX_TEST&#039;, $options);<br>
+if (PEAR::isError($test)) {<br>
+  echo $test-&gt;getMessage(),&#039; | &#039;,$test-&gt;getUserInfo(); <br>
+}<br>
+$test = $datagrid-&gt;render();<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+The query should work and field names should not be truncated.<br>
+It works with the above line changed to:</p>
+<p>$query = preg_replace(&#039;#\sLIMIT\s.*$#isD&#039;, &#039; &#039;, $query);</p>
+<p>(The &#039;\s&#039; before LIMIT is new, and the replacement is now a space instead of an empty string.)</p>
+<p>Actual result:<br>
+--------------<br>
+MDB2 Error: no such field | _doQuery: [Error message: Could not execute statement] [Last executed query: select SPEED_] [Native code: 1054] [Native message: Unknown column &#039;SPEED_&#039; in &#039;field list&#039;]</p>
+</section>
+<section>
+<h3>[2007-01-19 10:35 UTC] olivierg at php dot net</h3>
+<p>Thank you for your bug report. This issue has been fixed<br>
+in the latest released version of the package, which you can download at<br>
+http://pear.php.net/get/Structures_DataGrid_DataSource_MDB2</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

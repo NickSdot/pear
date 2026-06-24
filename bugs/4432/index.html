@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4432</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #4432</h1>
+<p>hierselect doesn&#039;t work with special characters (/ &amp; blank) in string array key</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-25 19:11 UTC</td></tr>
+<tr><th>From</th><td>chris-r at gmx dot de</td></tr>
+<tr><th>Assigned</th><td>avb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>4.2.2</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-25 19:11 UTC] chris-r at gmx dot de</h3>
+<p>Description:<br>
+------------<br>
+HierSelect worked fine for me until today when I coincidently entered a /(slash) and a space (blank)  sign into one of the array fields. The Result was, that i still could select an entry in the first drop down, but the second dropdown menu didn&#039;t change. The second dropdown menu even didn&#039;t had any values inside, if one of the entries of the first dropdown were a special character like / (slash)</p>
+<p>I also found out that other special characters like &quot;&amp;&quot; also don&#039;t work. When I put a special character in the second array and I only have 2 arrays in total then it works as well.<br>
+For me it seems, that special characters in the first dropdown menu cause problems, but i don&#039;t know why.</p>
+<p>As you can see in the sourcecode I use strings as array keys and not integers, because I need the string in the database query.</p>
+<p>Would be nice if you could fix this, because I don&#039;t want to  make my customer any regulations of what kind of signs the can use in their lists.</p>
+<p>Thank  you very much.<br>
+Christoph</p>
+<p>Reproduce code:<br>
+---------------<br>
+http://www.artistnews.de/temp/hierselectproblemsource.txt</p>
+<p>Expected result:<br>
+----------------<br>
+expected result should be that it works like if there were no special signs in the dropdown menus. when there are only words without space than it works.</p>
+</section>
+<section>
+<h3>[2005-05-28 15:15 UTC] pear at felixdd dot de</h3>
+<p>This patch for version 1.12 of hierselect.php will fix all issues concerning usage of nontrivial key values (containing characters javascript variables must not contain).</p>
+<p>Also contains a better fix for &quot;hierselect element name contains brackets&quot;-fix of v1.13 (in CVS) - not only [] can now be used.</p>
+<p>--- hierselect.php	11 Mar 2005 21:05:34 -0000	1.1.1.1<br>
++++ hierselect.php	28 May 2005 15:12:38 -0000<br>
+@@ -237,7 +237,7 @@<br>
+                     $select-&gt;loadArray($array);<br>
+ <br>
+                     $value  = is_array($v = $select-&gt;getValue()) ? $v[0] : key($array);<br>
+-                    $toLoad .= &#039;[\&#039;&#039;.$value.&#039;\&#039;]&#039;;<br>
++                    $toLoad .= &#039;[\&#039;&#039;.str_replace(&#039;\\&#039;, &#039;\\\\&#039;, $value).&#039;\&#039;]&#039;;<br>
+                 }<br>
+             }<br>
+         }<br>
+@@ -289,8 +289,9 @@<br>
+      */<br>
+     function _setJS()<br>
+     {<br>
+-        $this-&gt;_js = $js = &#039;&#039;;<br>
+-        $this-&gt;_jsArrayName = &#039;hs_&#039; . $this-&gt;getName();<br>
++        $js = &#039;&#039;;<br>
++        $this-&gt;_jsArrayName = &#039;hs_&#039; . preg_replace(&#039;/\W/&#039;, &#039;_&#039;, $this-&gt;getName());<br>
++        $this-&gt;_js .= $this-&gt;_jsArrayName . &quot; = new Array();\n&quot;;<br>
+         for ($i = 1; $i &lt; $this-&gt;_nbElements; $i++) {<br>
+             $this-&gt;_setJSArray($this-&gt;_jsArrayName, $this-&gt;_options[$i], $js);<br>
+         }<br>
+@@ -313,6 +314,7 @@<br>
+      */<br>
+     function _setJSArray($grpName, $options, &amp;$js, $optValue = &#039;&#039;)<br>
+     {<br>
++        $optValue = str_replace(array(&#039;\\&#039;, &#039;&quot;&#039;), array(&#039;\\\\&#039;, &#039;\&quot;&#039;), $optValue);<br>
+         if (is_array($options)) {<br>
+             $js = &#039;&#039;;<br>
+             // For a hierselect containing 3 elements:<br>
+@@ -320,20 +322,20 @@<br>
+             //      and option 3 has been selected for the 2nd element,<br>
+             //      then the javascript array containing the values to load <br>
+             //      on the 3rd element will have the following name:   grpName_1_3<br>
+-            $name  = ($optValue === &#039;&#039;) ? $grpName : $grpName.&#039;_&#039;.$optValue;<br>
++            $name  = ($optValue === &#039;&#039;) ? $grpName : $grpName.&#039;[&quot;&#039;.$optValue.&#039;&quot;]&#039;;<br>
+             foreach($options AS $k =&gt; $v) {<br>
+                 $this-&gt;_setJSArray($name, $v, $js, $k);<br>
+             }<br>
+             <br>
+             // if $js !== &#039;&#039; add it to the JavaScript<br>
+-            $this-&gt;_js .= ($js !== &#039;&#039;) ? $name.&quot; = {\n&quot;.$js.&quot;\n}\n&quot; : &#039;&#039;;<br>
++            $this-&gt;_js .= ($js !== &#039;&#039;) ? $name.&quot; = new Array();\n&quot;.$name.&quot;[\&quot;_\&quot;] = {\n&quot;.$js.&quot;\n}\n&quot; : &#039;&#039;;<br>
+             $js = &#039;&#039;;<br>
+         } else {<br>
+             // $js empty means that we are adding the first element to the JavaScript.<br>
+             if ($js != &#039;&#039;) {<br>
+                 $js .= &quot;,\n&quot;;<br>
+             }<br>
+-            $js .= &#039;&quot;&#039;.$optValue.&#039;&quot;:&quot;&#039;.$options.&#039;&quot;&#039;;<br>
++            $js .= &#039;&quot;&#039;.$optValue.&#039;&quot;:&quot;&#039;.str_replace(array(&#039;\\&#039;, &#039;&quot;&#039;), array(&#039;\\\\&#039;, &#039;\&quot;&#039;), $options).&#039;&quot;&#039;;<br>
+         }<br>
+     }<br>
+ <br>
+@@ -374,13 +376,23 @@<br>
+                              .&quot;            ctl = frm.form[grpName+&#039;[&#039;+i+&#039;][]&#039;];\n&quot;<br>
+                              .&quot;        }\n&quot;<br>
+                              .&quot;        if (i &lt;= eleIndex) {\n&quot;<br>
+-                             .&quot;            n += \&quot;_\&quot;+ctl.value;\n&quot;<br>
++                             .&quot;            n += &#039;[\&quot;&#039; + ctl.value.replace(/\\\\/g, &#039;\\\\\\\\&#039;).replace(/\&quot;/g,&#039;\\\\\&quot;&#039;) + &#039;\&quot;]&#039;;\n&quot;<br>
+                              .&quot;        } else {\n&quot;<br>
+                              .&quot;            ctl.length = 0;\n&quot;<br>
+                              .&quot;        }\n&quot;<br>
+                              .&quot;    }\n\n&quot;<br>
+-                             .&quot;    var t = eval(\&quot;typeof(\&quot;+arName + n +\&quot;)\&quot;);\n&quot;<br>
+-                             .&quot;    if (t != &#039;undefined&#039;) {\n&quot;<br>
++                             .&quot;    n += &#039;[\&quot;_\&quot;]&#039;;\n&quot;<br>
++                             .&quot;    var s = (arName + n).split(&#039;[&#039;);\n&quot;<br>
++                             .&quot;    var t = true;\n&quot;<br>
++                             .&quot;    for (var i = 0; i &lt; s.length; i++) {\n&quot;<br>
++                             .&quot;      if (i &gt; 0)\n&quot;<br>
++                             .&quot;        s[i] = &#039;[&#039; + s[i];\n&quot;<br>
++                             .&quot;      if (eval(&#039;typeof(&#039; + s.slice(0, i + 1).join(&#039;&#039;) + &#039;)&#039;) == &#039;undefined&#039;) {\n&quot;<br>
++                             .&quot;        t = false;\n&quot;<br>
++                             .&quot;        break;\n&quot;<br>
++                             .&quot;      }\n&quot;<br>
++                             .&quot;    }\n&quot;<br>
++                             .&quot;    if (t) {\n&quot;<br>
+                              .&quot;        var the_array = eval(arName+n);\n&quot;<br>
+                              .&quot;        var j = 0;\n&quot;<br>
+                              .&quot;        n = eleIndex + 1;\n&quot;<br>
+@@ -393,7 +405,7 @@<br>
+                              .&quot;            ctl.options[j++] = opt;\n&quot;<br>
+                              .&quot;        }\n&quot;<br>
+                              .&quot;    }\n&quot;<br>
+-                             .&quot;    if (eleIndex+1 &lt; nbElements) {\n&quot;<br>
++                             .&quot;    if ((eleIndex + 1) &lt; (nbElements - 1)) {\n&quot;<br>
+                              .&quot;        swapOptions(frm, grpName, eleIndex+1, nbElements, arName);\n&quot;<br>
+                              .&quot;    }\n&quot;<br>
+                              .&quot;}\n&quot;;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

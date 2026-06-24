@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mail_Queue Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Queue/index.html">Mail_Queue</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Mail_Queue/docs/index.html#package-mail-mail-queue-mail-queue-summary">Class Summary Mail_Queue</a>
+</li>
+<li><a href="package/Mail_Queue/docs/index.html#package-mail-mail-queue-mail-queue-tutorial">Tutorial</a>
+</li>
+<li><a href="package/Mail_Queue/docs/index.html#package-mail-mail-queue-mail-queue-mail-queue">constructor Mail_Queue::Mail_Queue</a>
+</li>
+<li><a href="package/Mail_Queue/docs/index.html#package-mail-mail-queue-mail-queue-deletemail">Mail_Queue::deleteMail</a>
+</li>
+<li><a href="package/Mail_Queue/docs/index.html#package-mail-mail-queue-mail-queue-factorysendmail">Mail_Queue::factorySendMail</a>
+</li>
+<li><a href="package/Mail_Queue/docs/index.html#package-mail-mail-queue-mail-queue-get">Mail_Queue::get</a>
+</li>
+<li><a href="package/Mail_Queue/docs/index.html#package-mail-mail-queue-mail-queue-put">Mail_Queue::put</a>
+</li>
+<li><a href="package/Mail_Queue/docs/index.html#package-mail-mail-queue-mail-queue-sendmail">Mail_Queue::sendMail</a>
+</li>
+<li><a href="package/Mail_Queue/docs/index.html#package-mail-mail-queue-mail-queue-sendmailbyid">Mail_Queue::sendMailById</a>
+</li>
+<li><a href="package/Mail_Queue/docs/index.html#package-mail-mail-queue-mail-queue-sendmailsinqueue">Mail_Queue::sendMailsInQueue</a>
+</li></ul>
+</nav>
+<section id="package-mail-mail-queue-mail-queue-summary">
+<h2>Class Summary Mail_Queue</h2>
+<h3>Mail_Queue - base class for mail queue managment.</h3>
+
+    <p>This class allows you to queue mails for later delivery.</p>
+   
+   <h3>Class Trees for <strong>Mail_Queue</strong></h3>
+
+    <ul>
+      <li>
+       Pear
+      </li>
+      <li>
+       Mail_Queue
+      </li>
+     </ul>
+</section>
+<section id="package-mail-mail-queue-mail-queue-tutorial">
+<h2>Tutorial</h2>
+<h3>Mail_Queue usage with a simple example</h3>
+
+
+<p>We are using the db-container for the example and a mysql database.
+You need to create some tables in the mysql-database to store the messages:</p>
+
+
+
+
+
+
+<p><strong>mysql.sql</strong></p>
+  
+  
+<pre>
+CREATE TABLE mail_queue (
+  id bigint(20) NOT NULL default &#039;0&#039;,
+  create_time datetime NOT NULL default &#039;0000-00-00 00:00:00&#039;,
+  time_to_send datetime NOT NULL default &#039;0000-00-00 00:00:00&#039;,
+  sent_time datetime default NULL,
+  id_user bigint(20) NOT NULL default &#039;0&#039;,
+  ip varchar(20) NOT NULL default &#039;unknown&#039;,
+  sender varchar(50) NOT NULL default &#039;&#039;,
+  recipient text NOT NULL,
+  headers text NOT NULL,
+  body longtext NOT NULL,
+  try_sent tinyint(4) NOT NULL default &#039;0&#039;,
+  delete_after_send tinyint(1) NOT NULL default &#039;1&#039;,
+  PRIMARY KEY  (id),
+  KEY id (id),
+  KEY time_to_send (time_to_send),
+  KEY id_user (id_user)
+);</pre>
+
+
+
+
+
+
+
+
+
+
+
+<p>First you need to define some options.
+As you need them two times (once for adding messages, once for sending the messages)
+its always good to add them to a config-file. Let&#039;s call it config.php</p>
+
+
+
+
+
+ <p><strong>config.php</strong></p>
+  
+  <pre><code>&lt;?php
+
+require_once &quot;Mail/Queue.php&quot;;
+
+// options for storing the messages
+// type is the container used, currently there are &#039;creole&#039;, &#039;db&#039;, &#039;mdb&#039; and &#039;mdb2&#039; available
+$db_options[&#039;type&#039;]       = &#039;mdb2&#039;;
+// the others are the options for the used container
+// here are some for db
+$db_options[&#039;dsn&#039;]        = &#039;mysql://user:password@host/database&#039;;
+$db_options[&#039;mail_table&#039;] = &#039;mail_queue&#039;;
+
+// here are the options for sending the messages themselves
+// these are the options needed for the Mail-Class, especially used for Mail::factory()
+$mail_options[&#039;driver&#039;]    = &#039;smtp&#039;;
+$mail_options[&#039;host&#039;]      = &#039;your_server_smtp.com&#039;;
+$mail_options[&#039;port&#039;]      = 25;
+$mail_options[&#039;localhost&#039;] = &#039;localhost&#039;; //optional Mail_smtp parameter
+$mail_options[&#039;auth&#039;]      = false;
+$mail_options[&#039;username&#039;]  = &#039;&#039;;
+$mail_options[&#039;password&#039;]  = &#039;&#039;;
+
+?&gt;</code></pre>
+
+
+
+
+
+
+
+<p>So we are done configuring it, now let&#039;s use it.
+
+First we need to construct a mail-message and add it to the queue:</p>
+
+
+
+
+
+
+ <p><strong>add_message.php</strong></p>
+  
+  <pre><code>&lt;?php
+include &#039;./config.php&#039;;
+/* we use the db_options and mail_options here */
+$mail_queue =&amp; new Mail_Queue($db_options, $mail_options);
+
+
+$from = &#039;user@server.com&#039;;
+$to = &quot;user2@server.com&quot;;
+$message = &#039;Hi! This is test message!! :)&#039;;
+
+$hdrs = array( &#039;From&#039;    =&gt; $from,
+               &#039;To&#039;      =&gt; $to,
+               &#039;Subject&#039; =&gt; &quot;test message body&quot;  );
+
+/* we use Mail_mime() to construct a valid mail */
+$mime =&amp; new Mail_mime();
+$mime-&gt;setTXTBody($message);
+$body = $mime-&gt;get();
+// the 2nd parameter allows the header to be overwritten
+// @see http://pear.php.net/bugs/18256
+$hdrs = $mime-&gt;headers($hdrs, true); 
+
+
+/* Put message to queue */
+$mail_queue-&gt;put($from, $to, $hdrs, $body);
+
+?&gt;</code></pre>
+
+<p>NB: the first time you call <strong>put()</strong>, PEAR::DB and
+    PEAR::MDB2 will create a new table to keep the sequence number, so
+    make sure the db user you are using has &quot;CREATE TABLE&quot; privileges.
+    Or you can create the table separately, calling the <strong>createSequence()</strong>
+    method of PEAR::DB or PEAR::MDB2 (you should also be aware that the 
+    two DBAL will create a table with a different field name: &quot;id&quot; for DB, 
+    &quot;sequence&quot; for MDB2).</p>
+
+
+
+
+
+
+<p>Ok, now we&#039;ve used the simple way to add a message ... there are more advanced options, please check
+docs of the put-function for these.
+
+Now we need to send the messages. This is most often done by using a cron-job which regularly runs
+a script to send the messages.
+
+Here is a simple script to achieve this:</p>
+
+
+
+
+
+ <p><strong>send_messages.php</strong></p>
+  
+  <pre><code>&lt;?php
+include &#039;./config.php&#039;;
+
+/* How many mails could we send each time the script is called */
+$max_amount_mails = 50;
+
+/* we use the db_options and mail_options from the config again  */
+$mail_queue =&amp; new Mail_Queue($db_options, $mail_options);
+
+/* really sending the messages */
+$mail_queue-&gt;sendMailsInQueue($max_amount_mails);
+?&gt;</code></pre>
+
+
+
+
+
+
+<p>We are done.
+Now run the last script regularly and add your mails to the queue as needed.</p>
+
+
+
+
+<p>Since <strong>Mail_Queue</strong> v.1.1, the <strong>preload()</strong>
+method doesn&#039;t preload ALL the mails in memory, but just a few of them each time.
+When the buffer is empty, it is filled again automatically. You can set the size
+of the buffer via the new <strong>setBufferSize()</strong> method.</p>
+
+
+
+
+<p>You can also send the stored emails one by one.
+Here is a simple script to achieve this:</p>
+
+
+
+
+ <p><strong>send_messages_one_by_one.php</strong></p>
+  
+  <pre><code>&lt;?php
+// set the internal buffer size according your
+// memory resources (the number indicates how
+// many emails can stay in the buffer at any
+// given time)
+
+$mail_queue-&gt;setBufferSize(20);
+
+//set the queue size (i.e. the number of mails to send)
+$limit = 50;
+$mail_queue-&gt;container-&gt;setOption($limit);
+
+// loop through the stored emails and send them
+while ($mail = $mail_queue-&gt;get()) {
+    $result = $mail_queue-&gt;sendMail($mail);
+}
+?&gt;</code></pre>
+
+
+
+<h3>Utilising Callbacks for Report Generation</h3>
+
+
+<p>The sendMailsInQueue method, since version 1.2.3, has callback support. This may be utilised for report generation and postprocessing.</p>
+<p>The callback function is called before the relevant entry is deleted from the mail_queue table in the database so if necessary you could add extra fields to it for inserting into your log/report table. The function should accept only one parameter - an associative array of values; &#039;id&#039;, &#039;queued_as&#039; and &#039;greeting&#039;.</p>
+<p>You&#039;ll need to use recent releases of the <strong>PEAR::Mail</strong> (version 1.2.0b3 or higher) and <strong>PEAR::Net_SMTP</strong> (version 1.3.3 or higher) packages to be able to retrieve the esmtp id and greeting details if you need them for your reports. Also, if you want to decode the body of the email and store that for your report you&#039;ll need to install the <strong>PEAR::Mail_mimeDecode</strong> package.</p>
+<p>Provide the callback function like so:</p>
+  <pre><code>&lt;?php
+$returned = $mail_queue-&gt;sendMailsInQueue(
+    MAILQUEUE_ALL,
+    MAILQUEUE_START,  
+    MAILQUEUE_TRY,
+    &#039;mailqueue_callback&#039;);
+
+function mailqueue_callback($args) {
+    $row = get_mail_queue_row($args[&#039;id&#039;]);
+    $headers = unserialize($row[&#039;headers&#039;]);
+    $subject = $headers[&#039;Subject&#039;];
+    $body = unserialize($row[&#039;body&#039;]);
+
+    $mail_headers = &#039;&#039;;
+    foreach($headers as $key=&gt;$value) {
+        $mail_headers .= &quot;$key:$value\n&quot;;
+    }
+    $mail = $mail_headers . &quot;\n&quot; . $body;
+    $decoder = new Mail_mimeDecode($mail);
+    $decoded = $decoder-&gt;decode(array(
+        &#039;include_bodies&#039; =&gt; TRUE,
+        &#039;decode_bodies&#039;  =&gt; TRUE,
+        &#039;decode_headers&#039;  =&gt; TRUE,
+    ));
+    $body = $decoded-&gt;body;
+
+    $esmtp_id = $args[&#039;queued_as&#039;];
+    if (isset($args[&#039;greeting&#039;])) {
+        $greeting = $args[&#039;greeting&#039;];
+        $greets = explode(&#039; &#039;, $greeting);
+        $server = $greets[0];
+    } else {
+        $server = &#039;localhost&#039;;
+    }
+
+    insert_to_log(compact(&#039;server&#039;, &#039;esmtp_id&#039;, &#039;subject&#039;, &#039;body&#039;));
+}
+
+?&gt;</code></pre>
+</section>
+<section id="package-mail-mail-queue-mail-queue-mail-queue">
+<h2>constructor Mail_Queue::Mail_Queue</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Mail/Queue.php&#039;;
+     
+     <p><code>
+      mixed      constructor <strong>Mail_Queue::Mail_Queue</strong> ( 
+      array $container_options
+       , array $mail_options
+     )</code></p>
+    
+    
+
+    
+     <h3>Description</h3>
+     <p>Creates a new mail queue object to store mails in, fetch mails from
+     and send mails with.</p>
+    
+   
+    <h3>Parameter</h3>
+    
+      <dl>
+       <dt>
+        array
+        <code>$container_options</code>
+       </dt>
+       <dd>
+        <p>Array of container (mail storage) options. See tutorial for details.</p>
+       </dd>
+      </dl>     
+     
+     
+      <dl>
+       <dt>
+        array
+        <code>$mail_options</code>
+       </dt>
+       <dd>
+        <p>Array of mailer options. See tutorial for details.</p>
+       </dd>
+      </dl>     
+     
+    
+   
+   
+   
+   
+     
+     <pre><code>&lt;?php
+
+require_once &#039;Mail/Queue.php&#039;;
+
+$container_options = array(
+    &#039;type&#039;        =&gt; &#039;db&#039;,
+    &#039;database&#039;    =&gt; &#039;dbname&#039;,
+    &#039;phptype&#039;     =&gt; &#039;mysql&#039;,
+    &#039;username&#039;    =&gt; &#039;root&#039;,
+    &#039;password&#039;    =&gt; &#039;&#039;,
+    &#039;mail_table&#039;  =&gt; &#039;mail_queue&#039;,
+);
+//optionally, a &#039;dns&#039; string can be provided instead of db parameters.
+//look at DB::connect() method or at DB or MDB docs for details.
+//you could also use mdb container instead db
+$mail_options = array(
+    &#039;driver&#039;   =&gt; &#039;smtp&#039;,
+    &#039;host&#039;     =&gt; &#039;your_smtp_server.com&#039;,
+    &#039;port&#039;     =&gt; 25,
+    &#039;auth&#039;     =&gt; false,
+    &#039;username&#039; =&gt; &#039;&#039;,
+    &#039;password&#039; =&gt; &#039;&#039;,
+);
+
+$mail_queue =&amp; new Mail_Queue($container_options, $mail_options);
+
+* *****************************************************************
+* // TO ADD AN EMAIL TO THE QUEUE
+* *****************************************************************
+$from             = &#039;user@server.com&#039;;
+$from_name        = &#039;admin&#039;;
+$recipient        = &#039;recipient@other_server.com&#039;;
+$recipient_name   = &#039;recipient&#039;;
+$message          = &#039;Test message&#039;;
+$from_params      = empty($from_name) ? &#039;&lt;&#039;.$from.&#039;&gt;&#039; : &#039;&quot;&#039;.$from_name.&#039;&quot; &lt;&#039;.$from.&#039;&gt;&#039;;
+$recipient_params = empty($recipient_name) ? &#039;&lt;&#039;.$recipient.&#039;&gt;&#039; : &#039;&quot;&#039;.$recipient_name.&#039;&quot; &lt;&#039;.$recipient.&#039;&gt;&#039;;
+$hdrs = array(
+    &#039;From&#039;    =&gt; $from_params,
+    &#039;To&#039;      =&gt; $recipient_params,
+    &#039;Subject&#039; =&gt; &#039;test message body&#039;,
+);
+$mime =&amp; new Mail_mime();
+$mime-&gt;setTXTBody($message);
+$body = $mime-&gt;get();
+$hdrs = $mime-&gt;headers($hdrs);
+
+// Put message to queue
+$mail_queue-&gt;put($from, $recipient, $hdrs, $body);
+
+// Also you could put this msg in more advanced mode
+$seconds_to_send = 3600;
+$delete_after_send = false;
+$id_user = 7;
+$mail_queue-&gt;put( $from, $recipient, $hdrs, $body, $seconds_to_send, $delete_after_send, $id_user );
+
+// TO SEND EMAILS IN THE QUEUE
+
+// How many mails could we send each time
+$max_ammount_mails = 50;
+$mail_queue =&amp; new Mail_Queue($container_options, $mail_options);
+$mail_queue-&gt;sendMailsInQueue($max_ammount_mails);
+
+?&gt;</code></pre>
+    
+   
+   
+   
+    <h3>Return value</h3>
+        <p><em>returns</em>True on success else pear error class.</p>
+   
+   
+    <h3>Throws</h3>
+        <p><em>throws</em> no exceptions thrown</p>
+   
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-mail-mail-queue-mail-queue-deletemail">
+<h2>Mail_Queue::deleteMail</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Mail/Queue.php&#039;;
+     
+     <p><code>
+      boolean      <strong>Mail_Queue::deleteMail</strong> ( 
+      integer $id
+     )</code></p>
+    
+    
+
+    
+     <h3>Description</h3>
+     <p>Deletes a mail from the queue by identifier.</p>
+    
+   
+    <h3>Parameter</h3>
+    
+      <dl>
+       <dt>
+        integer
+        <code>$id</code>
+       </dt>
+       <dd>
+        <p>Mail identifier.</p>
+       </dd>
+      </dl>     
+     
+    
+   
+   
+    <h3>Throws</h3>
+        <p><em>throws</em> no exceptions thrown</p>
+       
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-mail-mail-queue-mail-queue-factorysendmail">
+<h2>Mail_Queue::factorySendMail</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Mail/Queue.php&#039;;
+     
+     <p><code>
+      void      <strong>Mail_Queue::factorySendMail</strong> ( 
+
+     )</code></p>
+    
+    
+
+    
+     <h3>Description</h3>
+     <p>Creates the necessary Mail object.</p>
+    
+   
+    <h3>Throws</h3>
+        <p><em>throws</em> no exceptions thrown</p>
+       
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-mail-mail-queue-mail-queue-get">
+<h2>Mail_Queue::get</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Mail/Queue.php&#039;;
+     
+     <p><code>
+      object <strong>Mail_Queue_Container::get</strong> ( 
+
+     )</code></p>
+    
+    
+
+    
+     <h3>Description</h3>
+     <p>Get next mail from queue. The emails are preloaded into an internal memory
+     buffer to speed up the process. Since <strong>Mail_Queue</strong> v.1.1,
+     the <strong>preload()</strong> method doesn&#039;t preload ALL the mails in memory,
+     but just a few of them each time. When the buffer is empty, it is filled again
+     automatically. You can set the size of the buffer via the
+     <strong>setBufferSize()</strong> method.</p>
+    
+   
+    <h3>Return value</h3>
+        <p><em>returns</em>Mail_Queue_Body object</p>
+       
+   
+    <h3>Throws</h3>
+        <p><em>throws</em> no exceptions thrown</p>
+       
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-mail-mail-queue-mail-queue-put">
+<h2>Mail_Queue::put</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Mail/Queue.php&#039;;
+     
+     <p><code>
+      int <strong>Mail_Queue::put</strong> ( 
+      string $from
+       , string $to
+       , array $hdrs
+       , array $body
+       , integer $sec_to_send = 0
+       , bool $delete_after_send
+        = true
+      
+       , integer $id_user = MAILQUEUE_SYSTEM
+     )</code></p>
+    
+    
+
+    
+     <h3>Description</h3>
+     <p>Injects a new mail into the mail queue.</p>
+
+    
+   
+    <h3>Parameter</h3>
+    
+      <dl>
+       <dt>
+        string
+        <code>$from</code>
+       </dt>
+       <dd>
+        <p>Sender e-mail address.</p>
+       </dd>
+      </dl>
+     
+     
+      <dl>
+       <dt>
+        string
+        <code>$to</code>
+       </dt>
+       <dd>
+        <p>Recipient e-mail address.</p>
+       </dd>
+      </dl>
+     
+     
+      <dl>
+       <dt>
+        array
+        <code>$hdrs</code>
+       </dt>
+       <dd>
+        <p>Array of mail headers as returned by Mail_Mime::headers().</p>
+       </dd>
+      </dl>
+     
+     
+      <dl>
+       <dt>
+        array
+        <code>$body</code>
+       </dt>
+       <dd>
+        <p>Mail body array as returned by Mail_Mime::get().</p>
+       </dd>
+      </dl>
+     
+     
+      <dl>
+       <dt>
+        mixed
+        <code>$sec_to_send</code>
+       </dt>
+       <dd>
+        <p>Optional - Seconds to pass before delivery is attempted.</p>
+       </dd>
+      </dl>
+     
+     
+      <dl>
+       <dt>
+        mixed
+        <code>$delete_after_send</code>
+       </dt>
+       <dd>
+        <p>Optional - Whether or not to delete the mail after delivery.</p>
+       </dd>
+      </dl>
+     
+     
+      <dl>
+       <dt>
+        integer
+        <code>$id_user</code>
+       </dt>
+       <dd>
+        <p>Optional - user ID. Stored in queue and readable from mail body object with getIdUser() at a later point.</p>
+       </dd>
+      </dl>
+     
+    
+   
+   
+    <h3>Return value</h3>
+        <p><em>returns</em> ID of the record where this mail has been put or Mail_Queue_Error on error</p>
+       
+   
+    <h3>Throws</h3>
+        <p><em>throws</em> no exceptions thrown</p>
+       
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-mail-mail-queue-mail-queue-sendmail">
+<h2>Mail_Queue::sendMail</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Mail/Queue.php&#039;;
+     
+     <p><code>
+      mixed      <strong>Mail_Queue::sendMail</strong> ( 
+      object MailBody $mail
+     )</code></p>
+    
+    
+
+    
+     <h3>Description</h3>
+     <p>Sends mail object returned by Mail_Queue::get().</p>
+    
+   
+    <h3>Parameter</h3>
+    
+      <dl>
+       <dt>
+        object MailBody
+        <code>$mail</code>
+       </dt>
+       <dd>
+        <p>Mail object.</p>
+       </dd>
+      </dl>     
+     
+    
+   
+   
+    <h3>Return value</h3>
+        <p><em>returns</em> True on success else pear error class</p>
+       
+   
+    <h3>Throws</h3>
+        <p><em>throws</em> no exceptions thrown</p>
+       
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-mail-mail-queue-mail-queue-sendmailbyid">
+<h2>Mail_Queue::sendMailById</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Mail/Queue.php&#039;;
+     
+     <p><code>
+      bool      <strong>Mail_Queue::sendMailById</strong> ( 
+      integer $id
+     )</code></p>
+    
+    
+
+    
+     <h3>Description</h3>
+     <p>Sends a single mail from the queue specified by $id. Note: The queue entry will
+     not be deleted automatically after delivery!</p>
+    
+   
+    <h3>Parameter</h3>
+    
+      <dl>
+       <dt>
+        integer
+        <code>$id</code>
+       </dt>
+       <dd>
+        <p>Mail identifier</p>
+       </dd>
+      </dl>     
+     
+    
+   
+   
+    <h3>Return value</h3>
+        <p><em>returns</em> True on success else false</p>
+       
+   
+    <h3>Throws</h3>
+        <p><em>throws</em> no exceptions thrown</p>
+       
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-mail-mail-queue-mail-queue-sendmailsinqueue">
+<h2>Mail_Queue::sendMailsInQueue</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Mail/Queue.php&#039;;
+     
+     <p><code>
+      mixed      <strong>Mail_Queue::sendMailsInQueue</strong> ( 
+      integer  $limit = MAILQUEUE_ALL
+       , integer  $offset = MAILQUEUE_START
+       , integer  $try = MAILQUEUE_TRY
+       , string or array  $callback = null
+     )</code></p>
+    
+    
+
+    
+     <h3>Description</h3>
+     <p>Sends mails remaining in queue.</p>
+    
+   
+    <h3>Parameter</h3>
+    
+      <dl>
+       <dt>
+         integer
+         <code>$limit</code>
+       </dt>
+       <dd>
+        <p>Optional - maximum number of mails to send.</p>
+       </dd>
+      </dl>     
+     
+     
+      <dl>
+       <dt>
+         integer
+         <code>$offset</code>
+       </dt>
+       <dd>
+        <p>Optional - skip $offset mails and start sending from there.</p>
+       </dd>
+      </dl>
+     
+     
+      <dl>
+       <dt>
+         integer
+         <code>$try</code>
+       </dt>
+       <dd>
+        <p>Optional - count of tries before mail returns to queue for later delivery.</p>
+       </dd>
+      </dl>     
+     
+     
+      <dl>
+       <dt>
+         string
+         <code>$callback</code>
+       </dt>
+       <dd>
+        <p>Optional - details of callback function to be used after mail has been sent.</p>
+       </dd>
+      </dl>     
+     
+    
+   
+   
+    <h3>Return value</h3>
+        <p><em>returns</em>True on success else Mail_Queue_Error object.</p>
+       
+   
+    <h3>Throws</h3>
+        <p><em>throws</em> no exceptions thrown</p>
+       
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

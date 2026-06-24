@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4497</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #4497</h1>
+<p>New feature , flexy datagrid renderer</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4497</th><td>New feature , flexy datagrid renderer</td></tr>
+<tr><th>Submitted</th><td>2005-06-01 03:30 UTC</td></tr>
+<tr><th>From</th><td>danielr at electroteque dot org</td></tr>
+<tr><th>Assigned</th><td>olivierg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>N/A</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-01 03:30 UTC] danielr at electroteque dot org</h3>
+<p>Description:<br>
+------------<br>
+I have modified the smarty renderer which now allows for <br>
+a flexy renderer. I have added extra methods, so the <br>
+flexy datagrid template can use Pager options, so its a <br>
+combination of HtmlTable and Smarty renderer. There is a <br>
+rowcolour method, and a sort method, maybe this can come <br>
+from dg itself ?? There is also the number of results <br>
+per page list.</p>
+<p>Here is the php source, I have found this quite useful.</p>
+<p>www.electroteque.org/pear/Flexy.phps</p>
+</section>
+<section>
+<h3>[2005-06-05 12:41 UTC] post at mark-wiesemann dot de</h3>
+<p>I&#039;d like to give some comments to your code:</p>
+<p>- you are mixing tabs/spaces, PEAR CS require 4 spaces for indentations</p>
+<p>- switch_row_colours() is not a valid function name according to PEAR CS, switchRowColours() would be correct</p>
+<p>- maybe you should rework this function and do it the way HTMLTable renderer does it</p>
+<p>- sorting is done by DG, no need to do this in the renderer</p>
+<p>- you are using a DB_DataObject object in render method, but I think renderer classes should not be restricted to one special DataSource</p>
+<p>- dirname($_SERVER[&#039;SCRIPT_FILENAME&#039;]).&#039;/compile&#039; is not very flexible (although it is done the same way in Smarty renderer) and this applies also to the other options; I think it&#039;s better to add $option as a second parameter to setTemplate and then merge it with your array to have default values for values the user did not set</p>
+<p>- I think getResults() function does not belong into the renderer but in the script using the renderer / the DataGrid; maybe you also want to use the new functions that were added to Core.php (CVS) instead of using numItems() and numPages() from Pager</p>
+<p>- and finally: maybe you can provide some example code so that other people can test it without having to figure out how to use your renderer</p>
+<p>Just my opinions about this ...</p>
+</section>
+<section>
+<h3>[2005-06-10 01:32 UTC] danielr at electroteque dot org</h3>
+<p>Hi there I have made the perPage fix, aswell as some <br>
+other tweaks, getPaging now returns the entire array, I <br>
+call getPaging in the _buildPaging method which returns <br>
+as a casted object, flexy can then use this so i can <br>
+setup the paginging links in the template. Here is the <br>
+usage again, I tried a simple bind($do) however it didnt <br>
+work, it broke !</p>
+<p>function data_grid($do, $template, $limit = 10, $obj = <br>
+null)<br>
+	{<br>
+		/**<br>
+		 * Require the DataGrid and DataSource<br>
+		 */<br>
+		require_once &#039;Structures/DataGrid.php&#039;;<br>
+		require_once &#039;Structures/DataGrid/<br>
+DataSource.php&#039;;<br>
+		<br>
+		/*<br>
+		 * Collect the Pager options<br>
+		 */<br>
+		$paging_options =<br>
+&amp;PEAR::getStaticProperty(&#039;Pager&#039;,&#039;options&#039;);<br>
+		<br>
+		$options = array(<br>
+						&#039;prevImg&#039;=&gt;&quot;&lt;img<br>
+name=\&quot;Back$i\&quot; src=\&quot;images/nav_back_off.gif\&quot; <br>
+border=\&quot;0\&quot;<br>
+alt=\&quot;Previous Page\&quot; onmouseover=\&quot;this.src=&#039;images/<br>
+nav_back_on.gif&#039;\&quot;<br>
+onmouseout=\&quot;this.src=&#039;images/nav_back_off.gif&#039;\&quot;&gt;&quot;,<br>
+						&#039;nextImg&#039;=&gt;&quot;&lt;img<br>
+name=\&quot;Forward$i\&quot; src=\&quot;images/nav_forward_off.gif\&quot; <br>
+border=\&quot;0\&quot;<br>
+alt=\&quot;Next Page\&quot; onmouseover=\&quot;this.src=&#039;images/<br>
+nav_forward_on.gif&#039;\&quot;<br>
+onmouseout=\&quot;this.src=&#039;images/nav_forward_off.gif&#039;\&quot;&gt;&quot;,<br>
+						&#039;firstPageText&#039;=&gt;&quot;&lt;img<br>
+name=\&quot;First$i\&quot; src=\&quot;images/nav_first_off.gif\&quot; <br>
+border=\&quot;0\&quot;<br>
+alt=\&quot;First Page\&quot; onmouseover=\&quot;this.src=&#039;images/<br>
+nav_first_on.gif&#039;\&quot;<br>
+onmouseout=\&quot;this.src=&#039;images/nav_first_off.gif&#039;\&quot;&gt;&quot;,<br>
+						&#039;lastPageText&#039;=&gt;&quot;&lt;img<br>
+name=\&quot;Last$i\&quot; src=\&quot;images/nav_last_off.gif\&quot; <br>
+border=\&quot;0\&quot; alt=\&quot;Last<br>
+Page\&quot; onmouseover=\&quot;this.src=&#039;images/nav_last_on.gif&#039;\&quot;<br>
+onmouseout=\&quot;this.src=&#039;images/nav_last_off.gif&#039;\&quot;&gt;&quot;,<br>
+						&#039;firstPagePre&#039;=&gt;&#039;&#039;,<br>
+						&#039;firstPagePost&#039;=&gt;&#039;&#039;,<br>
+						&#039;lastPagePre&#039;=&gt; &#039;&#039;,<br>
+						&#039;lastPagePost&#039;=&gt; &#039;&#039;<br>
+						);<br>
+		<br>
+		if (is_array($this-&gt;settings[&#039;Pager&#039;])) {<br>
+			$paging_options =<br>
+array_merge($this-&gt;settings[&#039;Pager&#039;],$options);<br>
+		}<br>
+		<br>
+		/*<br>
+		 * Setup the DataGrid<br>
+		 */<br>
+		 <br>
+		$dg =&amp; new <br>
+Structures_DataGrid($_GET[&#039;setPerPage&#039;] ?<br>
+$_GET[&#039;setPerPage&#039;] : $limit,$_GET[&#039;page&#039;] ? <br>
+$_GET[&#039;page&#039;] : 1,&#039;Flexy&#039;);<br>
+		<br>
+		$dg-&gt;sortRecordSet(isset($_GET[&#039;orderBy&#039;]) ?<br>
+$_GET[&#039;orderBy&#039;] : &#039;&#039;,  isset($_GET[&#039;direction&#039;]) ? <br>
+$_GET[&#039;direction&#039;] :<br>
+&#039;ASC&#039;);<br>
+		<br>
+		<br>
+		if (is_object($do)) {<br>
+			/*<br>
+		 	 * Setup the DataObject as the DataSource<br>
+		 	 */<br>
+			$data =<br>
+Structures_DataGrid_DataSource::<br>
+create($do,false,&#039;DataObject&#039;);	<br>
+			$dg-&gt;bindDataSource($data);	<br>
+			$this-&gt;dg = $dg;<br>
+			/*<br>
+			 * Send the flexy object to the flexy <br>
+renderer<br>
+			 */<br>
+			$dg-&gt;renderer-&gt;setFlexyObj($this-&gt;tpl);<br>
+			<br>
+			/*<br>
+			 * Send the template to the flexy renderer<br>
+			 */<br>
+			 <br>
+			$dg-&gt;renderer-&gt;setTemplate($template);<br>
+			$this-&gt;datagrid =  $dg-&gt;renderer-<br>
+&gt;render($obj);<br>
+			$dg-&gt;renderer-&gt;_flexy-<br>
+&gt;compile(&#039;datagrid.html&#039;);<br>
+          	return $dg-&gt;renderer-&gt;_flexy-&gt;output($this);<br>
+			<br>
+		} elseif (is_array($do) &amp;&amp; !empty($do)) {<br>
+			/*<br>
+			 * Setup an array as the DataSource<br>
+			 */<br>
+			$data =<br>
+Structures_DataGrid_DataSource::create($do);<br>
+			$dg-&gt;bindDataSource($data);<br>
+			$this-&gt;dg = $dg;<br>
+			$dg-&gt;renderer-&gt;setTemplate($template);<br>
+			$this-&gt;datagrid =  $dg-&gt;renderer-<br>
+&gt;render($obj);<br>
+			$dg-&gt;renderer-&gt;_flexy-<br>
+&gt;compile(&#039;datagrid.html&#039;);<br>
+          	return $dg-&gt;renderer-&gt;_flexy-&gt;output($this);<br>
+		}<br>
+	}</p>
+<p>www.electroteque.org/pear/DataGrid</p>
+</section>
+<section>
+<h3>[2005-06-12 20:07 UTC] post at mark-wiesemann dot de</h3>
+<p>- the tabs/spaces problem is still there</p>
+<p>- bind problems: &quot;it didnt work, it broke&quot; is not very helpful (if you want help regarding this problem: describe it better, show the code you tried and the errors you got [and, as this has nothing to do with this feature request, you might better send me an email])</p>
+<p>- Please use minimal examples that show the functionality of the extension you propose. In the case of your new renderer it would be better to not use the images in the pager options (e.g. just use pagers default values for it) and to not have a function that needs to be called but instead code that directly works without having to add any line of code. I think the way I did it for the new DataSource drivers in #4254 and #4379 can be seen as an example (altough one needs to define a DBTable object or specify a DSN).</p>
+<p>Just a few suggestions that makes it easier for people that are interested in this request and especially for the package maintainer, too.</p>
+</section>
+<section>
+<h3>[2006-02-27 22:12 UTC] danielr at electroteque dot org</h3>
+<p>Hi i just got an email, what is the status of this ? Ill <br>
+fix it up if need be ?</p>
+</section>
+<section>
+<h3>[2006-02-28 12:47 UTC] danielr at electroteque dot org</h3>
+<p>ill take a look then, i didnt think i was going to be <br>
+maintaining this mostly a suggestion :)</p>
+</section>
+<section>
+<h3>[2006-03-02 16:41 UTC] danielr at electroteque dot org</h3>
+<p>This is kinda of one of the reasons i didnt get back in <br>
+time, I cant host the example, im on a crap host sorry, <br>
+it runs php 4.2 can u believe.</p>
+<p>all the examples and renderer class is here</p>
+<p>www.electroteque.org/pear/Structures_DataGrid.tar.gz</p>
+</section>
+<section>
+<h3>[2006-03-05 02:04 UTC] danielr at electroteque dot org</h3>
+<p>I was wondering if I could get a reply if possible , i <br>
+took time to make the example, even though knowing I <br>
+cant host it just yet :\</p>
+</section>
+<section>
+<h3>[2006-03-06 13:44 UTC] danielr at electroteque dot org</h3>
+<p>Ok i think im being messed around here, is this DG in <br>
+CVS ? I have the latest updated datagrid which is what i <br>
+have worked off , the code example in the tarball is <br>
+working ..</p>
+</section>
+<section>
+<h3>[2006-03-06 13:59 UTC] danielr at electroteque dot org</h3>
+<p>Ok thanks for ellaborating, are the updated renderers <br>
+and examples available in cvs ? Ill have to work from <br>
+them of course. There is one chunk of code i had to grab <br>
+from the HTMLTable renderer which dealt with the column <br>
+titles and sorting etc , maybe there should be a method <br>
+in the core classes for this ?</p>
+<p>Ill have to download the CVS now and rework my stuff <br>
+please give me a few days thanks.</p>
+</section>
+<section>
+<h3>[2006-03-06 14:35 UTC] danielr at electroteque dot org</h3>
+<p>Ok that would be great thanks, when will that be ?</p>
+</section>
+<section>
+<h3>[2006-03-06 16:22 UTC] olivierg at php dot net</h3>
+<p>Daniel and Mark, I have started to work on the Smarty renderer last week, and found some lacks in the new driver interface.</p>
+<p>The refactoring is not yet finished. I strongly recommend that you wait until the end of march before working on the Flexy renderer, or any other new one.</p>
+</section>
+<section>
+<h3>[2006-04-04 12:20 UTC] danielr at electroteque dot org</h3>
+<p>can someone let me know the status if possible</p>
+</section>
+<section>
+<h3>[2006-04-27 21:16 UTC] olivierg at php dot net</h3>
+<p>Okay, the refactoring (bug #5859) is quite finished. Now, we can talk about new drivers.</p>
+<p>I&#039;ve just had a look at http://www.electroteque.org/pear/Structures_DataGrid.tar.gz</p>
+<p>Your work is quite interesting. I think you should look at the Smarty renderer in CVS. It&#039;s been rewritten.</p>
+<p>Especially, to support the new Structures_DataGrid::fill() method, you must replace setFlexyObj() with setContainer(), and add a getContainer() method.</p>
+<p>This will allow the user to do, for example :<br>
+$flexy = new HTML_Template_Flexy($options);<br>
+$datagrid-&gt;fill($flexy);<br>
+$flexy-&gt;compile(&#039;..&#039;);</p>
+<p>Setting the template, as for Smarty, should be done by the user, out of the driver IMO.</p>
+<p>You may also want to wait a few more weeks. Structures_DataGrid 0.7 will be out, and there should soon be a detailed section in the manual, explaining exactly how to write rendering drivers.</p>
+<p>Last but not least : we are splitting drivers apart.</p>
+<p>This means that :<br>
+- your new driver will be a separated package named Structures_DataGrid_Renderer_Flexy.<br>
+- we will certainly ask you to be the lead of this new package, and as such, you will have to maintain it, fix bugs, etc...</p>
+<p>Is it ok with you ?</p>
+</section>
+<section>
+<h3>[2006-04-28 13:50 UTC] danielr at electroteque dot org</h3>
+<p>ok i checked out from cvs, can you give me the weekend <br>
+to go over it thanks heaps.</p>
+</section>
+<section>
+<h3>[2006-05-01 09:49 UTC] danielr at electroteque dot org</h3>
+<p>the docs havent been updated im assuming ill wait for <br>
+the release</p>
+</section>
+<section>
+<h3>[2006-06-23 16:43 UTC] danielr at electroteque dot org</h3>
+<p>Hi its been a few months now, is there an update <br>
+regarding the documentated changes, is this the renderer <br>
+to work from now, or is it still the old one</p>
+<p>http://cvs.php.net/viewvc.cgi/pear/Structures_DataGrid/<br>
+DataGrid/Renderer/Smarty.php?revision=1.22&amp;view=markup</p>
+</section>
+<section>
+<h3>[2006-06-23 17:03 UTC] olivierg at php dot net</h3>
+<p>The CVS version is the brand new Smarty renderer, and is also released as a separate driver :<br>
+http://pear.php.net/package/Structures_DataGrid_Renderer_Smarty</p>
+<p>Feel free to build your flexy renderer by reading it.</p>
+</section>
+<section>
+<h3>[2006-06-26 04:44 UTC] danielr at electroteque dot org</h3>
+<p>Hi ive been trying to upgrade all my packages to get <br>
+structures datagrid installed. I ran the command pear <br>
+upgrade-all and it exited with version deps,</p>
+<p>pear/Structures_DataGrid requires PEAR Installer <br>
+(version &gt;= 1.4.9), installed version is 1.4.6</p>
+<p>My PEAR version is 1.4.9 ?</p>
+<p>I then ran with --alldeps and gave me this any ideas ?</p>
+<p>iElectro:~ electroteque$ pear upgrade-all --alldeps<br>
+Console_Getopt: unrecognized option --alldeps</p>
+<p>Where is the pear installer i dont get it ?</p>
+</section>
+<section>
+<h3>[2006-06-26 08:20 UTC] olivierg at php dot net</h3>
+<p>Try : pear upgrade pear</p>
+</section>
+<section>
+<h3>[2006-06-26 09:41 UTC] danielr at electroteque dot org</h3>
+<p>^XiElectro:~ electroteque$ pear upgrade pear<br>
+Skipping package &quot;pear/PEAR&quot;, already installed as <br>
+version 1.4.9<br>
+No valid packages found<br>
+upgrade failed</p>
+<p>sorry to hassle u, emails to pear general are being <br>
+bounced atm.</p>
+</section>
+<section>
+<h3>[2006-06-26 10:25 UTC] olivierg at php dot net</h3>
+<p>And what about :</p>
+<p>pear upgrade -o structures_datagrid<br>
+pear install -o structures_datagrid_renderer_smarty</p>
+<p>?</p>
+</section>
+<section>
+<h3>[2006-06-26 10:55 UTC] danielr at electroteque dot org</h3>
+<p>Ive downloaded the files manually, i cant be mucking <br>
+around with a broken installer, or the package file is <br>
+broken ?? :)</p>
+<p>Can you explain how to add config settings for the <br>
+renderer, if this only allows for defaults ?</p>
+<p>function Structures_DataGrid_Renderer_Smarty()<br>
+    {<br>
+        parent::Structures_DataGrid_Renderer();<br>
+        $this-&gt;_addDefaultOptions(<br>
+            array(<br>
+                &#039;selfPath&#039;            =&gt; <br>
+$_SERVER[&#039;PHP_SELF&#039;],<br>
+                &#039;convertEntities&#039;     =&gt; true,<br>
+                &#039;sortingResetsPaging&#039; =&gt; true,<br>
+            )<br>
+        );<br>
+    }</p>
+<p>I have an issue with setting args for getPaging inside a <br>
+template file itself, as it would have to be duplicated <br>
+on each template file obviouslly ..</p>
+</section>
+<section>
+<h3>[2006-06-26 11:36 UTC] danielr at electroteque dot org</h3>
+<p>btw</p>
+<p>iElectro:~ electroteque$ pear upgrade -o <br>
+structures_datagrid<br>
+pear/Structures_DataGrid requires PEAR Installer <br>
+(version &gt;= 1.4.9), installed version is 1.4.6<br>
+No valid packages found<br>
+upgrade failed</p>
+<p>Also there is no examples in cvs ??</p>
+<p>http://cvs.php.net/viewvc.cgi/pear/Structures_DataGrid/<br>
+docs/examples/</p>
+</section>
+<section>
+<h3>[2006-06-26 12:02 UTC] danielr at electroteque dot org</h3>
+<p>Well where is the updated docs for renderer method <br>
+usage, im trying to do the renderer as we speak ?? :\</p>
+<p>http://pear.php.net/manual/en/<br>
+package.structures.structures-datagrid.example-<br>
+advanced.php</p>
+<p>This seems outdated also , im getting a depecated method <br>
+render here. Also I use the MDB2 dirver in DB Dataobject <br>
+and seems to be broken for the DO datasource, its adding <br>
+limits incorrectly and sorts are adding when not asked <br>
+to and no field is being presented here for the sort.</p>
+<p>FROM producers</p>
+<p>ORDER BY ASC</p>
+<p>Pear Errors with the system <br>
+Info: MDB2 Error: syntax error<br>
+_doQuery: Could not execute statement[Native code: 1064]<br>
+[Native message: You have an error in your SQL syntax; <br>
+check the manual that corresponds to your MySQL server <br>
+version for the right syntax to use near &#039;ASC LIMIT 0, <br>
+10&#039; at line 7]</p>
+</section>
+<section>
+<h3>[2006-06-26 12:21 UTC] danielr at electroteque dot org</h3>
+<p>I think ill wait for oliver to reply as he was before, <br>
+ive been waiting for a while for months to do this and <br>
+was promised some documentation, the smarty render <br>
+doesnt have any comments on how to load the renderer <br>
+etc, and obviouslly things have changed so its not <br>
+exactly like my current renderer, im trying to track <br>
+things down as I go, firstly I have to use fill it <br>
+seems, Im assuming it dynamically adds properties to the <br>
+template object ?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

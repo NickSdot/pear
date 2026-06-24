@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5987</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Queue/index.html">Mail_Queue</a> &#187; Bug #5987</h1>
+<p>Support for Cc and Bcc recipients (patch supplied)</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5987</th><td>Support for Cc and Bcc recipients (patch supplied)</td></tr>
+<tr><th>Submitted</th><td>2005-11-16 16:30 UTC</td></tr>
+<tr><th>From</th><td>msmulders at pronexus dot nl</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Queue/index.html">Mail_Queue</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Any</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-16 16:30 UTC] msmulders at pronexus dot nl</h3>
+<p>Description:<br>
+------------<br>
+Mail::send() supports an Array as recipient to be able to send CC and BCC emails (see http://pear.php.net/manual/en/package.mail.mail.send.php).<br>
+I have modified Mail_Queue to support this. See &#039;Test Script&#039; below for the appropriate patches. Hereafter you can use an array like array(&#039;To&#039;=&gt;&#039;user@address.com&#039;, &#039;Cc&#039;=&gt;&#039;user2@domain.com,user3@domain.uk&#039;) as the $to parameter of Queue::put()</p>
+<p>NB: the field &quot;recipient&quot; in the database needs to be changed to type &quot;text&quot; instead of &quot;varchar&quot;:<br>
+ALTER TABLE `mail_queue` CHANGE `recipient` `recipient` TEXT NOT NULL;</p>
+<p>Test script:<br>
+---------------<br>
+diff of Mail/Queue.php:</p>
+<p>409a410,411<br>
+&gt;         if (is_array($to))<br>
+&gt;             $to = serialize($to);</p>
+<p>---------------------------------------------------------<br>
+diff of Mail/Queue/Body.php:</p>
+<p>92c92<br>
+&lt;      * @var string<br>
+---<br>
+&gt;      * @var mixed<br>
+134c134<br>
+&lt;      * @param string $recipient Reciepient e-mail<br>
+---<br>
+&gt;      * @param mixed $recipient Reciepient e-mail<br>
+146a147,149<br>
+&gt;         $rcpt_array = @unserialize($recipient);<br>
+&gt;         if ($rcpt_array!==FALSE)<br>
+&gt;             $recipient=$rcpt_array;<br>
+260c263,266<br>
+&lt;         return stripslashes($this-&gt;recipient);<br>
+---<br>
+&gt;         if (!is_array($this-&gt;recipient))<br>
+&gt;             return stripslashes($this-&gt;recipient);<br>
+&gt;         else<br>
+&gt;             return $this-&gt;recipient;</p>
+</section>
+<section>
+<h3>[2005-11-17 07:21 UTC] msmulders at pronexus dot nl</h3>
+<p>Well, that would mean no package can ever update if it involves a database patch like this. IMO this is just as valid as a source patch. But I see your point.</p>
+<p>However, in the case of Mail_Queue it&#039;s a db table that functions as stack ... meaning it is supposed to and will be empty on a regular basis. So the breaking of existing data is almost a non-existant issue.</p>
+<p>Third I believe this is a critical bug for Mail_Queue. Any serious use of this package will want to have the functionality. That is why this should be implemented asap and that is also why I put this patch online for the general public. This is Open Source - people need this fixed and this way they can fix it if they want.</p>
+<p>Concluding; I really like this package and it&#039;s potential... but it&#039;s quite unuseable without cc/bcc. So even if it involves going a major version higher or something to be &#039;allowed&#039; to release this BC breaking patch... I would urge you to do so :)</p>
+<p>Thanks for all your work!</p>
+</section>
+<section>
+<h3>[2005-12-12 08:11 UTC] msmulders at pronexus dot nl</h3>
+<p>I&#039;ve tested the CVS version with MySQL backend. Used the mysql.sql from CVS (v1.2)<br>
+Tested both ways like:<br>
+	$to = array (<br>
+		&#039;To&#039;=&gt;&#039;user1@server1.com,user2@server2.com&#039;,<br>
+		&#039;Cc&#039;=&gt;&#039;user3@server3.com&#039;<br>
+	);<br>
+and<br>
+	$to = &#039;oneuser@server.com&#039;;</p>
+<p>The recipient gets saved to the database OK (serialized) and sending the mail functions properly. I may conclude the CVS version properly implements the multiple recipients functionality. Great job!</p>
+<p>I only have one remark; it&#039;s kind of odd to see the mail delivered at the recipient without &#039;To&#039; or &#039;Cc&#039; fields visible to the client. Apparently these have to get set explicitly in the headers by the coder before mailqueue-&gt;put(). Not a bad thing IMO, experienced programmers will have no trouble. But with the multiple recipients it&#039;s easy to forget to put for example the Cc recipient into the headers.<br>
+Therefor it would be nice if Mail_Queue also had some friendlier wrapper function(s) to relieve the coder from the Mail::Mime stuff to get headers and body. For example:<br>
+function put ($from, $to, $subject, $body, $bodytype=&#039;text&#039;) {} or something similar.<br>
+Mail_Queue itself would then use the Mail::Mime functions to produce the proper headers and body like in the tutorial.<br>
+Just a thought :)</p>
+<p>Thanx.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

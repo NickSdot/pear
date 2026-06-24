@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4062</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #4062</h1>
+<p>SOAPclient does not correctly decode BASE64 encoded values received</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-04-05 13:34 UTC</td></tr>
+<tr><th>From</th><td>incoming at pronet-romania dot com</td></tr>
+<tr><th>Assigned</th><td>chagenbu</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.1</td></tr>
+<tr><th>OS</th><td>Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-05 13:34 UTC] incoming at pronet-romania dot com</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m calling using soapclient a SOAP server that uses Perl. It returns (amongst other things) values that are base64 encoded (and sets the type=&quot;SOAP-ENC:base64&quot; attribute on the corresponding XML tag).</p>
+<p>The type gets propagated to the $soapvalue-&gt;type property, however, it is never decoded, and $soap_client-&gt;_parse returns the base64 encoded value, in the corresponding structure. The problem is the fact that in this structure, there is no way of knowing if I should further process it and apply base64_encode on the value or not.</p>
+<p>Also, sorry, the SOAP service is only available in local network.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Here is the patch (sorry, text, being on windows, not too confortable with patch/diff tools):</p>
+<p>in SOAP/Base.php, in the method _decode (line 835), replace:</p>
+<p>return $soapval-&gt;value;</p>
+<p>with</p>
+<p>if ($soapval-&gt;type == &#039;base64&#039;) {<br>
+          return base64_decode($soapval-&gt;value);<br>
+        } else {<br>
+          return $soapval-&gt;value;<br>
+        }</p>
+<p>Expected result:<br>
+----------------<br>
+This should correct the problem, and decode the string when it is needed.</p>
+</section>
+<section>
+<h3>[2005-04-06 15:38 UTC] incoming at pronet-romania dot com</h3>
+<p>Sorry, I spoke too soon, one more modification needed:</p>
+<p>Base.php, line 808:<br>
+replace: <br>
+ if ($soapval-&gt;arrayType &amp;&amp; $this-&gt;_isSoapValue($item)) {<br>
+   $item-&gt;type = $soapval-&gt;arrayType;<br>
+ }</p>
+<p>with:<br>
+if ($soapval-&gt;arrayType &amp;&amp; $this-&gt;_isSoapValue($item)) {<br>
+  if ($item-&gt;type == &#039;base64&#039; &amp;&amp; $soapval-&gt;arrayType != &#039;base64&#039;) {<br>
+    // must decode if we are losing the base64 information<br>
+    $item-&gt;value = base64_decode($item-&gt;value);<br>
+  }<br>
+  $item-&gt;type = $soapval-&gt;arrayType;<br>
+}</p>
+</section>
+<section>
+<h3>[2005-04-10 19:41 UTC] incoming at pronet-romania dot com</h3>
+<p>Sorry, no file attachment permitted. Here is the result XML (search for &quot;mission&quot; to get to the base64 part)</p>
+<p>Let me know if you need more information, and thanks for your response.</p>
+<p>-------8&lt;-------<br>
+&lt;?xml version=&#039;1.0&#039; encoding=&#039;UTF-8&#039;?&gt;<br>
+&lt;SOAP-ENV:Envelope xmlns:SOAP-ENC=&#039;http://schemas.xmlsoap.org/soap/encoding/&#039; SOAP-ENV:encodingStyle=&#039;http://schemas.xmlsoap.org/soap/encoding/&#039; xmlns:xsi=&#039;http://www.w3.org/2001/XMLSchema-instance&#039; xmlns:SOAP-ENV=&#039;http://schemas.xmlsoap.org/soap/envelope/&#039; xmlns:xsd=&#039;http://www.w3.org/2001/XMLSchema&#039;&gt;<br>
+   &lt;SOAP-ENV:Body&gt;<br>
+      &lt;namesp1:WSgetProfilesResponse xmlns:namesp1=&#039;http://people.epfl.ch/PeopleWS&#039;&gt;<br>
+         &lt;s-gensym3&gt;<br>
+            &lt;arrayOfPubItems SOAP-ENC:arrayType=&#039;xsd:anyType[1]&#039; xsi:type=&#039;SOAP-ENC:Array&#039;&gt;<br>
+               &lt;item&gt;<br>
+                  &lt;urlpub xsi:type=&#039;xsd:string&#039;&gt;<br>
+                     http://ditwww.epfl.ch/publications-spip/auteur.php3?id_auteur=236<br>
+                  &lt;/urlpub&gt;<br>
+                  &lt;indexpub xsi:type=&#039;xsd:int&#039;&gt;<br>
+                     1508<br>
+                  &lt;/indexpub&gt;<br>
+                  &lt;ordrepub xsi:type=&#039;xsd:int&#039;&gt;<br>
+                     0<br>
+                  &lt;/ordrepub&gt;<br>
+                  &lt;revuepub xsi:type=&#039;xsd:string&#039;/&gt;<br>
+                  &lt;titrepub xsi:type=&#039;xsd:string&#039;&gt;<br>
+                     Articles dans le Flash Informatique<br>
+                  &lt;/titrepub&gt;<br>
+                  &lt;auteurspub xsi:type=&#039;xsd:string&#039;&gt;<br>
+                     I.Cionca<br>
+                  &lt;/auteurspub&gt;<br>
+               &lt;/item&gt;<br>
+            &lt;/arrayOfPubItems&gt;<br>
+            &lt;encv&gt;<br>
+               &lt;creator xsi:type=&#039;xsd:int&#039;&gt;<br>
+                  104782<br>
+               &lt;/creator&gt;<br>
+               &lt;lastmodby xsi:type=&#039;xsd:int&#039;&gt;<br>
+                  104782<br>
+               &lt;/lastmodby&gt;<br>
+               &lt;sciper xsi:type=&#039;xsd:int&#039;&gt;<br>
+                  104782<br>
+               &lt;/sciper&gt;<br>
+               &lt;datecr xsi:type=&#039;xsd:string&#039;&gt;<br>
+                  2004-08-31 18:56:59<br>
+               &lt;/datecr&gt;<br>
+               &lt;cvlang xsi:type=&#039;xsd:string&#039;&gt;<br>
+                  en<br>
+               &lt;/cvlang&gt;<br>
+               &lt;datemod xsi:type=&#039;xsd:string&#039;&gt;<br>
+                  2004-12-01 16:28:31<br>
+               &lt;/datemod&gt;<br>
+            &lt;/encv&gt;<br>
+            &lt;web_perso xsi:type=&#039;xsd:string&#039;&gt;<br>
+               http://kis.epfl.ch/page44412.html<br>
+            &lt;/web_perso&gt;<br>
+            &lt;frcv&gt;<br>
+               &lt;creator xsi:type=&#039;xsd:int&#039;&gt;<br>
+                  104782<br>
+               &lt;/creator&gt;<br>
+               &lt;lastmodby xsi:type=&#039;xsd:int&#039;&gt;<br>
+                  104782<br>
+               &lt;/lastmodby&gt;<br>
+               &lt;sciper xsi:type=&#039;xsd:int&#039;&gt;<br>
+                  104782<br>
+               &lt;/sciper&gt;<br>
+               &lt;datecr xsi:type=&#039;xsd:string&#039;&gt;<br>
+                  2004-08-31 18:57:05<br>
+               &lt;/datecr&gt;<br>
+               &lt;cvlang xsi:type=&#039;xsd:string&#039;&gt;<br>
+                  fr<br>
+               &lt;/cvlang&gt;<br>
+               &lt;datemod xsi:type=&#039;xsd:string&#039;&gt;<br>
+                  2005-02-19 00:27:11<br>
+               &lt;/datemod&gt;<br>
+               &lt;mission xsi:type=&#039;xsd:base64Binary&#039;&gt;<br>
+                  UOhyZSBkZSBHQVNQQVIsIGRlcyBhcHBsaWNhdGlvbnMgZGUgZ2VzdGlvbiBkZXMgYWJzZW5jZXMgZXQgculzZXJ2YXRpb25zLCBjb21tYW5kZXMgZGUgY2FydGVzIGRlIHZpc2l0ZXMsIOljb25vbWF0IGVuIGxpZ25lLCBsZXMgcGFnZXMgcGVvcGxlQEVQRkwsIGxlIFNob3AgRVBGTCAoZW5jb3JlIGF1IGZvdXIpLg0KDQpE6XZlbG9wcGVtZW50IGQnYXBwbGljYXRpb25zIGF2ZWMgaW50ZXJmYWNlcyB3ZWI6IGNvdOkgbHVtaehyZSAoUGVybCwgbXlzcWwsIEFwYWNoZSksIGNvdOkgb2JzY3VyIChBU1AsIE1TU1FMU2VydmVyLCBJSVMpLCBzaW5vbiBsZXMgdmFsZXVycyBkZSBiYXNlOiBIVE1MLCBDU1MsIEphdmFTY3JpcHQsIFhNTC4=<br>
+               &lt;/mission&gt;<br>
+               &lt;curriculum xsi:type=&#039;xsd:base64Binary&#039;&gt;<br>
+                  MTk4MiA6IERpcGz0bWUgZCdpbmfpbmlldXIgaW5mb3JtYXRpY2llbiAoQ29tcHV0ZXIgU2NpZW5jZSkg4CBsJ0luc3RpdHV0IFBvbHl0ZWNobmlxdWUgZGUgQnVjYXJlc3QsIFJvdW1hbmllDQoxOTgyLTE5ODcgOiBpbmfpbmlldXIgc3lzdOhtZSBhdSBDZW50cmUgZGUgQ2FsY3VsIGRlIFBsb2llc3RpLCBSb3VtYW5pZQ0KMTk4NyA6IFByZXNzZXMgQ2VudHJhbGVzIExhdXNhbm5lOyBk6XZlbG9wcGVtZW50IFBhc2NhbA0KMTk4OC0xOTg5IDogaW5n6W5pZXVyIHN5c3TobWUgYXUgQ2VudHJlIGRlIENhbGN1bCBkdSBk6XBhcnRlbWVudCBkJ0VsZWN0cmljaXTpLCBFUEZMIChWQVgtVk1TKQ0KMTk4OS0xOTkyIDogaW5n6W5pZXVyIHN5c3TobWUgYXUgTGFib3JhdG9pcmUgZGUgQ29uY2VwdGlvbiBBc3Npc3TpZSBwYXIgT3JkaW5hdGV1ciBkdSBk6XBhcnRlbWVudCBkZSBN6WNhbmlxdWUgKEFwb2xsby9Eb21haW4sIEhQLVVYKQ0KMTk5Mi0xOTk3IDogc3VwcG9ydCBIUC1VWCBhdSBTZXJ2aWNlIEluZm9ybWF0aXF1ZSBDZW50cmFsIGRlIGwnRVBGTA0KMTk5Ny0yMDA0IDogc3VwcG9ydCBhdSBk6XZlbG9wcGVtZW50IHdlYiBldCBiYXNlcyBkZSBkb25u6WVzLCBTZXJ2aWNlIEluZm9ybWF0aXF1ZSBDZW50cmFsIGRlIGwnRVBGTA0KMjAwNC0yMDA1IDogZOl2ZWxvcHBlbWVudCBkJ2FwcGxpY2F0aW9ucyB3ZWIsIGJhc2VzIGRlIGRvbm7pZXMsIHNlcnZpY2VzIGRpc3RyaWJ16WVzIGF1IEtJUw0K<br>
+               &lt;/curriculum&gt;<br>
+            &lt;/frcv&gt;<br>
+            &lt;nbfunct xsi:type=&#039;xsd:int&#039;&gt;<br>
+               2<br>
+            &lt;/nbfunct&gt;<br>
+            &lt;phones xsi:type=&#039;xsd:string&#039;&gt;<br>
+               [+41 21 69] 34586<br>
+            &lt;/phones&gt;<br>
+            &lt;rooms xsi:type=&#039;xsd:string&#039;&gt;<br>
+               MAC1652<br>
+            &lt;/rooms&gt;<br>
+            &lt;mail xsi:type=&#039;xsd:string&#039;&gt;<br>
+               ion.cionca@epfl.ch<br>
+            &lt;/mail&gt;<br>
+            &lt;sciper xsi:type=&#039;xsd:int&#039;&gt;<br>
+               104782<br>
+            &lt;/sciper&gt;<br>
+            &lt;arrayOfBoxes SOAP-ENC:arrayType=&#039;xsd:anyType[1]&#039; xsi:type=&#039;SOAP-ENC:Array&#039;&gt;<br>
+               &lt;item&gt;<br>
+                  &lt;boxcontent xsi:type=&#039;xsd:base64Binary&#039;&gt;<br>
+                     PGltZyBzcmM9aHR0cDovL3NpaXBjMTcuZXBmbC5jaC9teXBob3Rvcy9pb25za2kvaS1jb2xvci5qcGcgYWxpZ249bGVmdCB2c3BhY2U9NXB4IHdpZHRoPTUwPjxpbWcgc3JjPWh0dHA6Ly93d3cuY3NzbS1tb3JnZXMuY2gvaW1ncy9jYXJ0ZTYuZ2lmIGFsaWduPWxlZnQgdnNwYWNlPTVweCBoc3BhY2U9NXB4IGhlaWdodD01MD4tIHBsb25n6WUgKGVudHJlIGF1dHJlcywgYXUgPGEgaHJlZj1odHRwOi8vd3d3LmNzc20tbW9yZ2VzLmNoLz48Yj5DU1NNIGRlIE1vcmdlczwvYj48L2E+OyA8YSBocmVmPWh0dHA6Ly9zaWlwYzE3LmVwZmwuY2gvd2ViZnVuL3Bsb25nZWUuaHRtPm1lcyBzb3J0aWVzIG3pbW9yYWJsZXM8L2E+KQ0KLSB2b2lsZSAoY2F0YW1hcmFuIDxhIGhyZWY9aHR0cDovL3NpaXBjMTcuZXBmbC5jaC9tYXR0aWEvRGVmYXVsdC5odG0+TWF0dGlhIDE4PC9hPikNCi0gcGhvdG8gbnVt6XJpcXVlIChQYW5hc29uaWMgRloyMCBldCBDYW5vbiBJeHVzIDMwKQ0KLSBtdXNpcXVlcyAoZGVzIHZpZWlsbGVyaWVzIGRlcyBhbm7pZXMgcG9wLXJvY2ssIGVuIHBhc3NhbnQgcGFyIGxlIGZ1bmNrIGRlIFByaW5jZSBldCBmaW5pciBhdmVjIGR1IGphenosIGhpcC1ob3Agb3UgcmFwOyBjbGFzc2lxdWUgYXVzc2kgYXBwculjaek7IGV0aG5vOiBpbmRlLXBha2lzdGFuLCBhcmFiZSwgYWZyaXF1ZSkNCi0gZmlsbXMgKGZhbiBkZSBkZSBOaXJvIGRhbnMgc2EgamV1bmVzc2UgU2NvcnNlc2UgZXQgU2VyZ2lvIExlb25lLCBUYXJrb3Zza2ksIEZvcm1hbiwgTW9udHkgUHl0aG9ucywgVGFyYW50aW5vLi4uIGV0IGonZW4gcGFzc2UpDQotIGRlc3NpbiwgcG90ZXJpZQ0KLSBsZXMgZ2FkZ2V0cyDpbGVjdHJvbmlxdWVz<br>
+                  &lt;/boxcontent&gt;<br>
+                  &lt;boxordre xsi:type=&#039;xsd:int&#039;&gt;<br>
+                     0<br>
+                  &lt;/boxordre&gt;<br>
+                  &lt;boxpos xsi:type=&#039;xsd:string&#039;&gt;<br>
+                     C<br>
+                  &lt;/boxpos&gt;<br>
+                  &lt;boxlang xsi:type=&#039;xsd:string&#039;&gt;<br>
+                     fr<br>
+                  &lt;/boxlang&gt;<br>
+                  &lt;boxlabel xsi:type=&#039;xsd:string&#039;&gt;<br>
+                     LOISIRS<br>
+                  &lt;/boxlabel&gt;<br>
+               &lt;/item&gt;<br>
+            &lt;/arrayOfBoxes&gt;<br>
+            &lt;affects SOAP-ENC:arrayType=&#039;xsd:string[2]&#039; xsi:type=&#039;SOAP-ENC:Array&#039;&gt;<br>
+               &lt;item xsi:type=&#039;xsd:string&#039;&gt;<br>
+                  DIT-DEV,EPFL PL PL-DIT DIT-DEV,Informaticien-ne,1<br>
+               &lt;/item&gt;<br>
+               &lt;item xsi:type=&#039;xsd:string&#039;&gt;<br>
+                  KIS,EPFL PL PL-DIT KIS,Informaticien-ne,2<br>
+               &lt;/item&gt;<br>
+            &lt;/affects&gt;<br>
+            &lt;prenom xsi:type=&#039;xsd:string&#039;&gt;<br>
+               Ion<br>
+            &lt;/prenom&gt;<br>
+            &lt;photourl xsi:type=&#039;xsd:string&#039;&gt;<br>
+               http://infowww.epfl.ch/photos/SCIPERpublic.Photo<br>
+            &lt;/photourl&gt;<br>
+            &lt;nom xsi:type=&#039;xsd:string&#039;&gt;<br>
+               Cionca<br>
+            &lt;/nom&gt;<br>
+         &lt;/s-gensym3&gt;<br>
+      &lt;/namesp1:WSgetProfilesResponse&gt;<br>
+   &lt;/SOAP-ENV:Body&gt;<br>
+&lt;/SOAP-ENV:Envelope&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

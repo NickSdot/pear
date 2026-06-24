@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2657</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_IMAP/index.html">Net_IMAP</a> &#187; Bug #2657</h1>
+<p>cmdSetQuota does not allow to remove quota</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #2657</th><td>cmdSetQuota does not allow to remove quota</td></tr>
+<tr><th>Submitted</th><td>2004-11-01 10:21 UTC</td></tr>
+<tr><th>From</th><td>jan at jgc dot homeip dot net</td></tr>
+<tr><th>Assigned</th><td>amistry</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Net_IMAP/index.html">Net_IMAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>Linux 2.6</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-11-01 10:21 UTC] jan at jgc dot homeip dot net</h3>
+<p>Description:<br>
+------------<br>
+cmdSetQuota does not support unsetting quota. To remove quota, you have to supply this command: &quot;. SETQUOTA mailbox ()&quot;</p>
+</section>
+<section>
+<h3>[2006-02-14 16:00 UTC] bluecamel at imap dot cc</h3>
+<p>This patch to IMAPProtocol.php solves the following problems:</p>
+<p>* remove quota by setting:<br>
+    $ret = $imap-&gt;setStorageQuota(&#039;user.mailbox&#039;, -1);</p>
+<p>* Cyrus IMAPd rmquota patch to delete the quota:<br>
+    $ret = $imap-&gt;setStorageQuota(&#039;user.mailbox&#039;, &#039;remove&#039;);</p>
+<p>* Don&#039;t spit protocol errors when the following happens<br>
+    for $ret = $imap-&gt;getStorageQuota(&#039;user.mailbox&#039;);</p>
+<p>C: A0004 GETQUOTA user.damian<br>
+    S: * QUOTA user.damian ()<br>
+    S: A0004 OK Completed</p>
+<p>--- IMAPProtocol.php.orig       2006-02-14 10:38:00.833484319 -0500<br>
++++ IMAPProtocol.php    2006-02-14 10:53:17.212881536 -0500<br>
+@@ -1466,7 +1466,16 @@<br>
+         //Make the command request<br>
+         $param=sprintf(&quot;%s (&quot;,$mailbox_name);<br>
+         if($storageQuota != null ){<br>
+-            $param=sprintf(&quot;%sSTORAGE %s&quot;,$param,$storageQuota);<br>
++            if ($storageQuota == -1) {<br>
++                // set -1 to remove a quota<br>
++                $param = sprintf(&quot;%s&quot;, $param);<br>
++            } elseif ($storageQuota == strtolower(&#039;remove&#039;)) {<br>
++                // this is a cyrus rmquota specific feature<br>
++                // see http://email.uoa.gr/projects/cyrus/quota-patches/rmquota/<br>
++                $param = sprintf(&quot;%sREMOVE 1&quot;, $param);<br>
++            } else {<br>
++                $param = sprintf(&quot;%sSTORAGE %s&quot;, $param, $storageQuota);<br>
++            }<br>
+             if( $messagesQuota != null ){<br>
+                 //if we have both types of quota on the same call we must append an space between<br>
+                 // those parameters<br>
+@@ -2545,6 +2554,12 @@<br>
+                 C: A0004 GETQUOTA user.damian<br>
+                 S: * QUOTA user.damian (STORAGE 1781460 4000000)<br>
+                 S: A0004 OK Completed<br>
++<br>
++            RFC 2087 section 5.1 says the list could be empty:<br>
++<br>
++                C: A0004 GETQUOTA user.damian<br>
++                S: * QUOTA user.damian ()<br>
++                S: A0004 OK Completed<br>
+             */</p>
+<p>$mailbox = $this-&gt;_parseOneStringResponse( $str,__LINE__ , __FILE__ );<br>
+@@ -2553,6 +2568,10 @@</p>
+<p>$ret_aux = array(&quot;MAILBOX&quot;=&gt;$this-&gt;utf_7_decode($mailbox) );<br>
+             $this-&gt;_getNextToken( $str , $quota_resp );<br>
++            if ($quota_resp == &#039;)&#039; ) {<br>
++                // empty list, apparently no STORAGE or MESSAGE quota set<br>
++                return array($token =&gt; $ret_aux);<br>
++            }<br>
+             if( ( $ext = $this-&gt;_retrParsedResponse( $str , $quota_resp )) == false){<br>
+                     $this-&gt;_prot_error(&quot;bogus response!!!!&quot; , __LINE__ , __FILE__ );<br>
+             }</p>
+</section>
+<section>
+<h3>[2006-02-14 16:12 UTC] bluecamel at imap dot cc</h3>
+<p>Due to line wraps the above patch is also available from http://files.bluecamel.imap.cc/</p>
+</section>
+<section>
+<h3>[2006-03-22 05:00 UTC] amistry at php dot net</h3>
+<p>I&#039;ve fixed this in the CVS.  Please confirm it works for you.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

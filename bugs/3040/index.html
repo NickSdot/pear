@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3040</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_Transform/index.html">Image_Transform</a> &#187; Bug #3040</h1>
+<p>If Clause within the resize function / GD Driver not satistied.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-12-27 18:33 UTC</td></tr>
+<tr><th>From</th><td>n dot leutner at all2e dot com</td></tr>
+<tr><th>Assigned</th><td>jausions</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Image_Transform/index.html">Image_Transform</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Win32</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-27 18:33 UTC] n dot leutner at all2e dot com</h3>
+<p>Description:<br>
+------------<br>
+If Clause within the resize function / GD Driver not satistied.<br>
+I`m using GD bundled (2.0.28 compatible) and had to change that function.</p>
+<p>Reproduce code:<br>
+---------------<br>
+    function _resize($new_x, $new_y) {<br>
+        if ($this-&gt;resized === true) {<br>
+            return PEAR::raiseError(&#039;You have already resized the image without saving it.  Your previous resizing will be overwritten&#039;, null, PEAR_ERROR_TRIGGER, E_USER_NOTICE);<br>
+        }<br>
+        //if (function_exists(&#039;ImageCreateTrueColor&#039;) &amp;&amp; @ImageCreateTrueColor()) {<br>
+        if (function_exists(&#039;ImageCreateTrueColor&#039;)) {<br>
+            $new_img =ImageCreateTrueColor($new_x,$new_y);<br>
+        } else {<br>
+            $new_img =ImageCreate($new_x,$new_y);<br>
+        }<br>
+        //if (function_exists(&#039;ImageCopyResampled&#039;) &amp;&amp; @ImageCopyResampled()) {<br>
+        if (function_exists(&#039;ImageCopyResampled&#039;)) {<br>
+            ImageCopyResampled($new_img, $this-&gt;imageHandle, 0, 0, 0, 0, $new_x, $new_y, $this-&gt;img_x, $this-&gt;img_y);<br>
+        } else {<br>
+            ImageCopyResized($new_img, $this-&gt;imageHandle, 0, 0, 0, 0, $new_x, $new_y, $this-&gt;img_x, $this-&gt;img_y);<br>
+        }<br>
+        $this-&gt;old_image = $this-&gt;imageHandle;<br>
+        $this-&gt;imageHandle = $new_img;<br>
+        $this-&gt;resized = true;</p>
+<p>$this-&gt;new_x = $new_x;<br>
+        $this-&gt;new_y = $new_y;<br>
+        return true;<br>
+    }</p>
+<p>Expected result:<br>
+----------------<br>
+If you change the clauses from<br>
+if (function_exists(&#039;ImageCreateTrueColor&#039;) &amp;&amp; @ImageCreateTrueColor())<br>
+to<br>
+if (function_exists(&#039;ImageCreateTrueColor&#039;))<br>
+the resize function works fine.</p>
+</section>
+<section>
+<h3>[2005-03-14 05:42 UTC] pear at tannesen dot com</h3>
+<p>I also had problems with this section of the _resize method in the Driver/GD.php file. The method did not correctly detect the existence of the imagecreatetruecolor method. When I resized a jpeg, the colors were very distorted. I changed line 187 from</p>
+<p>if (function_exists(&#039;ImageCreateTrueColor&#039;) &amp;&amp; @ImageCreateTrueColor()) {</p>
+<p>to</p>
+<p>if (function_exists(&#039;imagecreatetruecolor&#039;) &amp;&amp; @ImageCreateTrueColor(1,1)) {</p>
+<p>The if statement correctly returned true for the first half, but incorrectly returned false on the second half.</p>
+<p>PHP Version 4.3.10</p>
+<p>gd<br>
+GD Support 	enabled<br>
+GD Version 	bundled (2.0.28 compatible)<br>
+FreeType Support 	enabled<br>
+FreeType Linkage 	with freetype<br>
+T1Lib Support 	enabled<br>
+GIF Read Support 	enabled<br>
+GIF Create Support 	enabled<br>
+JPG Support 	enabled<br>
+PNG Support 	enabled<br>
+WBMP Support 	enabled<br>
+XBM Support 	enabled</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

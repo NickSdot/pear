@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4423</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #4423</h1>
+<p>Using JOIN results in corrupt result set</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-25 04:42 UTC</td></tr>
+<tr><th>From</th><td>karl at posmaster dot com dot au</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-25 04:42 UTC] karl at posmaster dot com dot au</h3>
+<p>Description:<br>
+------------<br>
+Environment:<br>
+PHP 5.0.4<br>
+PostgreSQL 7.4.6<br>
+DB 1.7.6</p>
+<p>PHP Configure line:<br>
+&#039;./configure&#039; &#039;--prefix=/usr&#039; &#039;--disable-static&#039; &#039;--with-apxs=/usr/sbin/apxs&#039; &#039;--sysconfdir=/etc&#039; &#039;--enable-discard-path&#039; &#039;--with-config-file-path=/etc/apache&#039; &#039;--enable-safe-mode&#039; &#039;--with-openssl&#039; &#039;--with-mhash&#039; &#039;--enable-bcmath&#039; &#039;--with-bz2&#039; &#039;--with-pic&#039; &#039;--enable-calendar&#039; &#039;--enable-ctype&#039; &#039;--with-gdbm&#039; &#039;--with-db3&#039; &#039;--enable-dbase&#039; &#039;--enable-ftp&#039; &#039;--with-iconv&#039; &#039;--with-exif&#039; &#039;--with-gd&#039; &#039;--enable-gd-native-ttf&#039; &#039;--with-jpeg-dir=/usr&#039; &#039;--with-png&#039; &#039;--with-gmp&#039; &#039;--with-gettext=shared,/usr&#039; &#039;--with-expat-dir=/usr&#039; &#039;--with-xml&#039; &#039;--enable-wddx&#039; &#039;--with-mm=/usr&#039; &#039;--enable-trans-sid&#039; &#039;--enable-shmop&#039; &#039;--enable-sockets&#039; &#039;--with-regex=php&#039; &#039;--enable-sysvsem&#039; &#039;--enable-sysvshm&#039; &#039;--enable-yp&#039; &#039;--enable-memory-limit&#039; &#039;--with-tsrm-pthreads&#039; &#039;--enable-shared&#039; &#039;--disable-debug&#039; &#039;--with-zlib=/usr&#039; &#039;--with-pgsql&#039; &#039;--with-mysql&#039; &#039;--with-mssql=/usr/local/freetds&#039;</p>
+<p>Reproduce code:<br>
+---------------<br>
+$db = DB::connect(&#039;pgsql://user:pass@localhost/db_name&#039;);<br>
+$db-&gt;setFetchMode(DB_FETCHMODE_ASSOC);</p>
+<p>$query = &#039;SELECT &quot;Customer&quot;.* , &quot;CustomerInfo&quot;.*<br>
+FROM &quot;Customer&quot; <br>
+LEFT JOIN &quot;CustomerInfo&quot; USING (&quot;CustomerID&quot;)&#039;;</p>
+<p>$res = $db-&gt;getAll($query);</p>
+<p>Expected result:<br>
+----------------<br>
+CustomerID | CustomerName | CustomerInfo<br>
+1          | foo          |<br>
+2          | bar          | blah</p>
+<p>Actual result:<br>
+--------------<br>
+CustomerID | CustomerName | CustomerInfo<br>
+           | foo          |<br>
+2          | bar          | blah</p>
+<p>In the cases where there is no matching record in the CustomerInfo table, the CustomerID in the results returned is blank (empty string), otherwise it is populated correctly<br>
+ (when there is a matching record in the CustomerInfo table)<br>
+The rest of the details from the Customer table are populated correctly.</p>
+<p>When this query is entered directly into the postgres shell, the CustomerID is populated correctly.</p>
+<p>Note:<br>
+Changeing the first line of the query to:<br>
+SELECT &quot;CustomerInfo&quot;.*, &quot;Customer&quot;.*<br>
+or:<br>
+SELECT *<br>
+results in the CustomerID being populated correctly.</p>
+</section>
+<section>
+<h3>[2005-05-27 01:59 UTC] karl at posmaster dot com dot au</h3>
+<p>Hope this helps, the behaviour can be seen with this example</p>
+<p>As before making the select query begin with &#039;SELECT *&#039; shows the desired behaviour.</p>
+<p>Apart from having to use quotes all over the place, what issues can delimited identifiers introduce?</p>
+<p>Thanks for your input,<br>
+Karl.</p>
+<p>&lt;?php<br>
+require_once &#039;DB.php&#039;;</p>
+<p>$db = DB::connect(&#039;pgsql://root:@localhost/db_name&#039;);<br>
+$db-&gt;setFetchMode(DB_FETCHMODE_ASSOC);</p>
+<p>$query = &#039;CREATE TABLE &quot;Customer&quot; (<br>
+    &quot;CustomerID&quot; serial NOT NULL,<br>
+    &quot;CustomerName&quot; varchar DEFAULT \&#039;AName\&#039; NOT NULL)&#039;;<br>
+$res = $db-&gt;query($query);<br>
+$query = &#039;CREATE TABLE &quot;CustomerInfo&quot; (<br>
+    &quot;CustomerID&quot; serial NOT NULL,<br>
+    &quot;SomeInfo&quot; varchar DEFAULT \&#039;Info\&#039; NOT NULL)&#039;;<br>
+$res = $db-&gt;query($query);</p>
+<p>$query = &#039;INSERT INTO &quot;Customer&quot; VALUES (\&#039;1\&#039;, \&#039;Customer1 Name\&#039;)&#039;;<br>
+$res = $db-&gt;query($query);<br>
+$query = &#039;INSERT INTO &quot;Customer&quot; VALUES (\&#039;2\&#039;, \&#039;Customer2 Name\&#039;)&#039;;<br>
+$res = $db-&gt;query($query);<br>
+$query = &#039;INSERT INTO &quot;CustomerInfo&quot; VALUES (\&#039;1\&#039;, \&#039;Some Info\&#039;)&#039;;<br>
+$res = $db-&gt;query($query);</p>
+<p>$query = &#039;SELECT &quot;Customer&quot;.* , &quot;CustomerInfo&quot;.*<br>
+FROM &quot;Customer&quot;<br>
+LEFT JOIN &quot;CustomerInfo&quot; USING (&quot;CustomerID&quot;)&#039;;<br>
+$res = $db-&gt;getAll($query);</p>
+<p>echo &#039;&lt;pre&gt;&#039;;print_r($res);echo &#039;&lt;/pre&gt;&#039;;</p>
+<p>$query = &#039;DROP TABLE &quot;Customer&quot;&#039;;<br>
+$res = $db-&gt;query($query);<br>
+$query = &#039;DROP TABLE &quot;CustomerInfo&quot;&#039;;<br>
+$res = $db-&gt;query($query);<br>
+?&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

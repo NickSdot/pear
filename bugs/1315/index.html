@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1315</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #1315</h1>
+<p>$object-&gt;toArray not &quot;arrayizing&quot; all elements</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-29 17:43 UTC</td></tr>
+<tr><th>From</th><td>asnagy at webitecture dot org</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-29 17:43 UTC] asnagy at webitecture dot org</h3>
+<p>Description:<br>
+------------<br>
+My dataObject ocassionally will have a special query where it will include some addition fields from other tables.  When calling $object-&gt;toArray() the additional fields get left out.</p>
+</section>
+<section>
+<h3>[2004-05-20 15:05 UTC] asnagy at php dot net</h3>
+<p>What about replacing the toArray method with the get_object_vars function?  I am using this as my workaround:</p>
+<p>while ($object-&gt;fetch()) {<br>
+    //$objectList[] = $object-&gt;toArray();<br>
+    $objectList[] = get_object_vars($object);<br>
+}</p>
+<p>You could just change the code in the toArray method to just one line with the get_object_vars function.  Probably be faster too since its a core function :)</p>
+</section>
+<section>
+<h3>[2004-11-16 20:20 UTC] asnagy at webitecture dot org</h3>
+<p>This works now; however it is turning the other table values into dataobjects.</p>
+<p>Array<br>
+(<br>
+    [id] =&gt; 1<br>
+    [standard_number] =&gt; NULL<br>
+    [callnumber] =&gt; <br>
+    [title] =&gt; ATLA Religion Database<br>
+    [holding] =&gt; <br>
+    [status] =&gt; <br>
+    [format] =&gt; <br>
+    [department_id] =&gt; <br>
+    [cost] =&gt; <br>
+    [location] =&gt; <br>
+    [type_id] =&gt; 2<br>
+    [type] =&gt; resourcetype Object<br>
+        (<br>
+            [_DB_DataObject_version] =&gt; 1.7.2<br>
+            [__table] =&gt; resourcetype<br>
+            [N] =&gt; 1<br>
+            [_database_dsn] =&gt; <br>
+            [_database_dsn_md5] =&gt; eb8bf4877f5e951f4eb46d5f0efbf157<br>
+            [_database] =&gt; libSGR2<br>
+            [_DB_resultid] =&gt; 2<br>
+            [_link_loaded] =&gt; <br>
+            [_join] =&gt; <br>
+            [_lastError] =&gt; <br>
+            [id] =&gt; 2<br>
+            [title] =&gt; Database<br>
+            [_query] =&gt; Array<br>
+                (<br>
+                    [condition] =&gt; <br>
+                    [group_by] =&gt; <br>
+                    [order_by] =&gt; <br>
+                    [having] =&gt; <br>
+                    [limit] =&gt; <br>
+                    [data_select] =&gt; *<br>
+                )</p>
+<p>)</p>
+<p>)</p>
+<p>Here is my code:<br>
+$resource = new Resource();<br>
+$sql = &quot;SELECT resource.*, resourcetype.title as type FROM resource, resourcetype WHERE resource.type_id = resourcetype.id&quot;;<br>
+$resource-&gt;query($sql);<br>
+if ($resource-&gt;N) {<br>
+    while ($resource-&gt;fetch()) {<br>
+        print_r($resource-&gt;toArray());<br>
+    }<br>
+}</p>
+<p>What I would expect as a result from this is:</p>
+<p>Array<br>
+(<br>
+    [id] =&gt; 1<br>
+    [standard_number] =&gt; NULL<br>
+    [callnumber] =&gt; <br>
+    [title] =&gt; ATLA Religion Database<br>
+    [holding] =&gt; <br>
+    [status] =&gt; <br>
+    [format] =&gt; <br>
+    [department_id] =&gt; <br>
+    [cost] =&gt; <br>
+    [location] =&gt; <br>
+    [type_id] =&gt; 2<br>
+    [type] =&gt; Database<br>
+)</p>
+<p>This may not be a bug, but is this what you meant for the toArray method to do?  I am not using the resourcetype table as a dataobject, but from running the create table script I get the dataobject file created.</p>
+</section>
+<section>
+<h3>[2004-11-16 20:47 UTC] asnagy at webitecture dot org</h3>
+<p>Sorry for reopenning this, my last comment is bogus.</p>
+</section>
+<section>
+<h3>[2004-11-16 20:52 UTC] asnagy at webitecture dot org</h3>
+<p>Rough day!  Ignore the last statement :)</p>
+<p>Here is my before and after toArray();</p>
+<p>resource Object<br>
+(<br>
+    [_DB_DataObject_version] =&gt; 1.7.2<br>
+    [__table] =&gt; resource<br>
+    [N] =&gt; 27<br>
+    [_database_dsn] =&gt; <br>
+    [_database_dsn_md5] =&gt; eb8bf4877f5e951f4eb46d5f0efbf157<br>
+    [_database] =&gt; libSGR2<br>
+    [_DB_resultid] =&gt; 1<br>
+    [_link_loaded] =&gt; <br>
+    [_join] =&gt; <br>
+    [_lastError] =&gt; <br>
+    [id] =&gt; 1<br>
+    [standard_number] =&gt; NULL<br>
+    [callnumber] =&gt; <br>
+    [title] =&gt; ATLA Religion Database<br>
+    [holding] =&gt; <br>
+    [status] =&gt; <br>
+    [format] =&gt; Electronic<br>
+    [department_id] =&gt; <br>
+    [cost] =&gt; <br>
+    [location] =&gt; <br>
+    [type_id] =&gt; 2<br>
+    [type] =&gt; Database<br>
+)<br>
+Array<br>
+(<br>
+    [id] =&gt; 1<br>
+    [standard_number] =&gt; NULL<br>
+    [callnumber] =&gt; <br>
+    [title] =&gt; ATLA Religion Database<br>
+    [holding] =&gt; <br>
+    [status] =&gt; <br>
+    [format] =&gt; <br>
+    [department_id] =&gt; <br>
+    [cost] =&gt; <br>
+    [location] =&gt; <br>
+    [type_id] =&gt; 2<br>
+    [type] =&gt; resourcetype Object<br>
+        (<br>
+            [_DB_DataObject_version] =&gt; 1.7.2<br>
+            [__table] =&gt; resourcetype<br>
+            [N] =&gt; 1<br>
+            [_database_dsn] =&gt; <br>
+            [_database_dsn_md5] =&gt; eb8bf4877f5e951f4eb46d5f0efbf157<br>
+            [_database] =&gt; libSGR2<br>
+            [_DB_resultid] =&gt; 2<br>
+            [_link_loaded] =&gt; <br>
+            [_join] =&gt; <br>
+            [_lastError] =&gt; <br>
+            [id] =&gt; 2<br>
+            [title] =&gt; Database<br>
+            [_query] =&gt; Array<br>
+                (<br>
+                    [condition] =&gt; <br>
+                    [group_by] =&gt; <br>
+                    [order_by] =&gt; <br>
+                    [having] =&gt; <br>
+                    [limit] =&gt; <br>
+                    [data_select] =&gt; *<br>
+                )</p>
+<p>)</p>
+<p>)</p>
+<p>Upon calling toArray, the field is being turned into an object</p>
+<p>Here is the code:</p>
+<p>if ($resource-&gt;find()) {<br>
+    while ($resource-&gt;fetch()) {<br>
+        print_r($resource);<br>
+        print_r($resource-&gt;toArray());<br>
+    }<br>
+}</p>
+</section>
+<section>
+<h3>[2005-01-24 14:43 UTC] asnagy at webitecture dot org</h3>
+<p>I do not have a method called &quot;getType&quot; but since I have a field in my database by the name of &quot;type&quot; (which is probably not the best column name) I&#039;m assuming the that get* method is being called.  Could you rename your method?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

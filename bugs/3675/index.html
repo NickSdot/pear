@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3675</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #3675</h1>
+<p>MDB2_Iterator changes</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3675</th><td>MDB2_Iterator changes</td></tr>
+<tr><th>Submitted</th><td>2005-03-02 21:29 UTC</td></tr>
+<tr><th>From</th><td>justinh at superglobals dot com</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-02 21:29 UTC] justinh at superglobals dot com</h3>
+<p>Description:<br>
+------------<br>
+I was just going though the MDB2_(Buffered)Iterator class and thought I&#039;d submit a small patch to update the interfaces and return values to the SPL stated interfaces.</p>
+<p>Changes:<br>
+MDB2_Iterator implements the SeekableIterator interface<br>
+MDB2_Iterator return values now match the interface<br>
+MDB2_BufferedIterator implements the Countable interface<br>
+MDB2_BuffererIterator size method renamed count<br>
+Updated PHPDocs where changes were made</p>
+<p>It might also be a good idea to toss an MDB2_Error when rewinding the MDB2_Iterator, since this operation is illegal.</p>
+<p>Here&#039;s the patch:<br>
+--- Iterator.php        Wed Mar  2 15:42:10 2005<br>
++++ public_html/sVote/Libraries/MDB2/Iterator.php       Sun Jan  2 21:41:00 2005<br>
+@@ -50,7 +50,7 @@<br>
+  * @author   Lukas Smith &lt;smith@backendmedia.com&gt;<br>
+  */</p>
+<p>-class MDB2_Iterator extends MDB2_Result implements SeekableIterator<br>
++class MDB2_Iterator extends MDB2_Result implements Iterator<br>
+ {<br>
+     private $result;<br>
+     private $row;<br>
+@@ -73,13 +73,20 @@<br>
+     * seek forward to a specific row in a result set<br>
+     *<br>
+     * @param int    $rownum    number of the row where the data can be found<br>
++    * @return mixed MDB2_OK on success, a MDB2 error on failure<br>
+     * @access public<br>
+     */<br>
+     function seek($rownum = 0)<br>
+     {<br>
++        if ($this-&gt;result-&gt;rownum == $rownum) {<br>
++            return true;<br>
++        }<br>
++        if ($this-&gt;result-&gt;rownum &lt; $rownum) {<br>
++            return false;<br>
++        }<br>
+         $this-&gt;row = null;<br>
+         $this-&gt;buffer = null;<br>
+-        $this-&gt;result-&gt;seek($rownum);<br>
++        return $this-&gt;result-&gt;seek($rownum);<br>
+     }</p>
+<p>// }}}<br>
+@@ -88,6 +95,7 @@<br>
+     /**<br>
+     * Fetch next row of data<br>
+     *<br>
++    * @return mixed data array on success, a MDB2 error on failure<br>
+     * @access public<br>
+     */<br>
+     function next()<br>
+@@ -95,12 +103,15 @@<br>
+         if ($this-&gt;buffer) {<br>
+             $this-&gt;row = $this-&gt;buffer;<br>
+             $this-&gt;buffer = null;<br>
++            return true;<br>
+         }<br>
+         $row = $this-&gt;result-&gt;fetchRow();<br>
+         if (MDB2::isError($row)) {<br>
+             $this-&gt;row = null;<br>
++            return false;<br>
+         }<br>
+         $this-&gt;row = $row;<br>
++        return true;<br>
+     }</p>
+<p>// }}}<br>
+@@ -176,6 +187,7 @@<br>
+     /**<br>
+     * seek to the first row in a result set<br>
+     *<br>
++    * @return mixed MDB2_OK on success, a MDB2 error on failure<br>
+     * @access public<br>
+     */<br>
+     function rewind()<br>
+@@ -183,7 +195,7 @@<br>
+     }<br>
+ }</p>
+<p>-class MDB2_BufferedIterator extends MDB2_Iterator implements Countable<br>
++class MDB2_BufferedIterator extends MDB2_Iterator implements Iterator<br>
+ {<br>
+     // {{{ seek()</p>
+<p>@@ -197,7 +209,7 @@<br>
+     function seek($rownum = 0)<br>
+     {<br>
+         $this-&gt;row = null;<br>
+-        $this-&gt;result-&gt;seek($rownum);<br>
++        return $this-&gt;result-&gt;seek($rownum);<br>
+     }</p>
+<p>// }}}<br>
+@@ -220,6 +232,7 @@<br>
+     /**<br>
+     * Fetch next row of data<br>
+     *<br>
++    * @return mixed data array on success, a MDB2 error on failure<br>
+     * @access public<br>
+     */<br>
+     function next()<br>
+@@ -227,8 +240,10 @@<br>
+         $row = $this-&gt;result-&gt;fetchRow();<br>
+         if (MDB2::isError($row)) {<br>
+             $this-&gt;row = null;<br>
++            return false;<br>
+         }<br>
+         $this-&gt;row = $row;<br>
++        return true;<br>
+     }</p>
+<p>// }}}<br>
+@@ -240,7 +255,7 @@<br>
+      * @return mixed MDB2 Error Object or the number of rows<br>
+      * @access public<br>
+      */<br>
+-    function count()<br>
++    function size()<br>
+     {<br>
+         return $this-&gt;result-&gt;numRows();<br>
+     }<br>
+@@ -270,7 +285,7 @@<br>
+     */<br>
+     function rewind()<br>
+     {<br>
+-        $this-&gt;seek(0);<br>
++        return $this-&gt;seek(0);<br>
+     }</p>
+<p>// }}}<br>
+@@ -294,4 +309,4 @@<br>
+     }<br>
+ }</p>
+<p>-?&gt;<br>
++?&gt;<br>
+\ No newline at end of file</p>
+<p>Reproduce code:<br>
+---------------<br>
+-</p>
+<p>Expected result:<br>
+----------------<br>
+-</p>
+<p>Actual result:<br>
+--------------<br>
+-</p>
+</section>
+<section>
+<h3>[2005-03-04 13:13 UTC] smith at backendmedia dot com</h3>
+<p>Does the SeekableIterator also apply when you can only seek forward, which is the case for the unbuffered iterator?</p>
+</section>
+<section>
+<h3>[2005-03-06 19:10 UTC] smith at backendmedia dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+<p>I am holding off of the Countable since its PHP 5.1 only. Also I will for now keep the SeekableIterator for the buffered result sets only as the unbuffered doesnt allow rewinding.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #351</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #351</h1>
+<p>Groups with default values seems off by one</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-12-04 07:05 UTC</td></tr>
+<tr><th>From</th><td>gmerrall at team dot aol7 dot cm dot au</td></tr>
+<tr><th>Assigned</th><td>avb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.1</td></tr>
+<tr><th>OS</th><td>Linux i386 (RedHat 8)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-12-04 07:05 UTC] gmerrall at team dot aol7 dot cm dot au</h3>
+<p>Description:<br>
+------------<br>
+Based on information from this thread http://marc.theaimsgroup.com/?t=106553837900001&amp;r=1&amp;w=2</p>
+<p>When adding a number of groups of the same types, there appears to be an off-by-one error when assigning the defaults to the group. The first value always appears to be omitted.</p>
+<p>I can&#039;t explain it much better than that so I&#039;ll let the output do the talking.</p>
+<p>Let me know if you need more sample code</p>
+<p>Reproduce code:<br>
+---------------<br>
+// the edit data comes from a database query<br>
+foreach ($editdata as $row) {<br>
+    $defaults[$i] = array(&#039;user_name&#039;=&gt;$row[&#039;heading&#039;], <br>
+                          &#039;user_type&#039;=&gt;$row[&#039;type&#039;], <br>
+                          &#039;user_required&#039;=&gt;$row[&#039;required&#039;],<br>
+                          &#039;user_special&#039;=&gt;$row[&#039;special&#039;]<br>
+                         );<br>
+    $i++;<br>
+}</p>
+<p>for ($i=0; $i &lt; $form_fields; $i++) {<br>
+    $fields = array();<br>
+    $fields[] =&amp; HTML_QuickForm::createElement(&#039;text&#039;, &#039;user_name&#039;, NULL);<br>
+    $fields[] =&amp; HTML_QuickForm::createElement(&#039;select&#039;, &#039;user_type&#039;, NULL , $data);<br>
+    $fields[] =&amp; HTML_QuickForm::createElement(&#039;advcheckbox&#039;, &#039;user_required&#039;, NULL, NULL, NULL, array(&#039;t&#039;,&#039;f&#039;));<br>
+    $fields[] =&amp; HTML_QuickForm::createElement(&#039;select&#039;, &#039;user_special&#039;, NULL, $specials);<br>
+    $form-&gt;addGroup($fields, $i, &quot;Field $i&quot;);</p>
+<p>}</p>
+<p>$form-&gt;addElement(&#039;submit&#039;, null, &#039;Send&#039;);<br>
+$form-&gt;setDefaults($defaults);<br>
+$form-&gt;display();</p>
+<p>Expected result:<br>
+----------------<br>
+Here&#039;s the default values array.</p>
+<p>[_defaultValues] =&gt; Array<br>
+(<br>
+	[0] =&gt; Array<br>
+		(<br>
+			[user_name] =&gt; Field 1<br>
+			[user_type] =&gt; text<br>
+			[user_required] =&gt; f<br>
+			[user_special] =&gt; email<br>
+		)</p>
+<p>[1] =&gt; Array<br>
+		(<br>
+			[user_name] =&gt; Field 2<br>
+			[user_type] =&gt; radio<br>
+			[user_required] =&gt; t<br>
+			[user_special] =&gt; <br>
+		)</p>
+<p>[2] =&gt; Array<br>
+		(<br>
+			[user_name] =&gt; Field 3<br>
+			[user_type] =&gt; check<br>
+			[user_required] =&gt; f<br>
+			[user_special] =&gt; <br>
+		)</p>
+<p>[3] =&gt; Array<br>
+		(<br>
+			[user_name] =&gt; Field 4<br>
+			[user_type] =&gt; hidden<br>
+			[user_required] =&gt; t<br>
+			[user_special] =&gt; <br>
+		)</p>
+<p>)</p>
+<p>Actual result:<br>
+--------------<br>
+Here&#039;s the first object from the first group. Note the default is empty.</p>
+<p>[_elements] =&gt; Array<br>
+	(<br>
+		[0] =&gt; html_quickform_text Object<br>
+			(<br>
+				[_attributes] =&gt; Array<br>
+					(<br>
+						[name] =&gt; user_name<br>
+						[type] =&gt; text<br>
+					)</p>
+<p>[_tabOffset] =&gt; 0<br>
+				[_tab] =&gt; 	<br>
+				[_lineEnd] =&gt;</p>
+<p>[_comment] =&gt; <br>
+				[_label] =&gt; <br>
+				[_type] =&gt; text<br>
+				[_flagFrozen] =&gt; <br>
+				[_persistantFreeze] =&gt; 1<br>
+			)</p>
+<p>Here&#039;s the first object from the second group which has been correctly populated with the default value.<br>
+[_elements] =&gt; Array<br>
+	(<br>
+		[0] =&gt; html_quickform_text Object<br>
+			(<br>
+				[_attributes] =&gt; Array<br>
+					(<br>
+						[name] =&gt; user_name<br>
+						[type] =&gt; text<br>
+						[value] =&gt; Field 2<br>
+					)</p>
+<p>[_tabOffset] =&gt; 0<br>
+				[_tab] =&gt; 	<br>
+				[_lineEnd] =&gt;</p>
+<p>[_comment] =&gt; <br>
+				[_label] =&gt; <br>
+				[_type] =&gt; text<br>
+				[_flagFrozen] =&gt; <br>
+				[_persistantFreeze] =&gt; 1<br>
+			)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3498</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/Translation2/index.html">Translation2</a> &#187; Bug #3498</h1>
+<p>XML container: several add() produce encoding junk</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-16 20:01 UTC</td></tr>
+<tr><th>From</th><td>ojai at nerim dot net</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Translation2/index.html">Translation2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux Debian</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-16 20:01 UTC] ojai at nerim dot net</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>When calling several times add() the encoding conversion routine is called over and over, so that already utf8 converted data is converted again and again...</p>
+<p>It produces so horrible junk inside the XML file that I can&#039;t paste in here ;-)</p>
+<p>Actually there are two bugs :</p>
+<p>- when save_on_shutdown is set to false, the _data property is victim or redundant conversion performed by _convertLangEncodings() and _convertEncodings(). Indeed, these method are called by _saveData() which itself is called several times. The problem here comes from the fact that encoding conversion is performed &quot;in-place&quot;, in the _data property</p>
+<p>- when save_on_shutdown is set to true, this problem should not happen, because _saveData() is supposed to be called only once. But the current implementation of _scheduledSaving() actually register it as a shutdown function several times... So that encoded data is reencoded as well.</p>
+<p>Here&#039;s a patch that fix these issues. I attempted to reduce memory usage by using a buffer (the _dataBuffer property) instead of returning converted data from convert[Lang]Encodings() :</p>
+<p>http://samalyse.com/ln/0012.php</p>
+<p>It applies fine on the current CVS.</p>
+<p>Cheers</p>
+<p>--<br>
+  Olivier Guilyardi</p>
+</section>
+<section>
+<h3>[2005-02-17 13:42 UTC] ojai at nerim dot net</h3>
+<p>You&#039;re right, I did observe the reencoding bug with save_on_shutdown set to true, but I assumed it for save_on_shutdown set to false by simply reading the code.</p>
+<p>I didn&#039;t see the _loadFile() call in _scheduleSaving()...</p>
+<p>But, my patch provide a performance enhancement : why loadFile()&#039;ing everytime _saveData() is called ? That&#039;s very heavy : serializing + unserializing each time.</p>
+<p>With save_on_shutdown set to false, it already takes a pretty long time for my script to perform about 10 add()&#039;s, and I&#039;m using the bufferized version as my patch provide.</p>
+<p>However, having thought about it, I don&#039;t really like this _dataBuffer property I created. I think it would be better to optionally pass a buffer reference to the convert*Encodings() method :</p>
+<p>function _convertEncodings($direction, &amp;$buffer=null) <br>
+    {<br>
+        &lt;snip&gt;</p>
+<p>if ($buffer) {<br>
+            $data =&amp; $buffer;<br>
+        } else {<br>
+            $data =&amp; $this-&gt;_data;<br>
+        }</p>
+<p>foreach ($data[&#039;pages&#039;] as $page_id =&gt; $page_content) {</p>
+<p>&lt;snip&gt;<br>
+    }</p>
+</section>
+<section>
+<h3>[2005-02-17 18:07 UTC] ojai at nerim dot net</h3>
+<p>Here&#039;s an updated patch to optimize saving when save_on_shutdown is set to false :</p>
+<p>- it removes the need to reload data after saving it<br>
+- it does not use a _dataBuffer property anymore, but a buffer reference which is passed to the convert*Encodings() methods<br>
+- it does not contain the &quot;_isScheduledSaving&quot; fix anymore, since I see that you implemented that in cvs</p>
+<p>http://samalyse.com/ln/0013.php</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6738</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR_Command_Packaging/index.html">PEAR_Command_Packaging</a> &#187; Bug #6738</h1>
+<p>Various problems with &#039;pear makerpm&#039;</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #6738</th><td>Various problems with &#039;pear makerpm&#039;</td></tr>
+<tr><th>Submitted</th><td>2006-02-09 19:48 UTC</td></tr>
+<tr><th>From</th><td>dlutter at redhat dot com</td></tr>
+<tr><th>Assigned</th><td>timj</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR_Command_Packaging/index.html">PEAR_Command_Packaging</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Fedora Core 4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-09 19:48 UTC] dlutter at redhat dot com</h3>
+<p>Description:<br>
+------------<br>
+The spec files that &#039;pear makerpm&#039; produces deviate from recommended practices for building rpm&#039;s in a number of ways:</p>
+<p>- The %files section claims ownership of &#039;/&#039;; this is a big nono. Instead, the package should only claim ownership of the actual files that belong to the pear</p>
+<p>- The specfile needs to have Requires and BuildRequires tags for the package pear came in (php-pear for FC)</p>
+<p>- BuildRoot should by default be set to &#039;%{_tmppath}/%{name}-%{version}-root-%(%{__id_u} -n)&#039;</p>
+<p>- The default name for the spec file should not contain the version number of the pear. Also, naming the rpm&#039;s and specfiles something like &#039;php-pear-PEARNAME&#039; (e.g. php-pear-Log) instead of PEAR::Log would be more in line with standard packaging practice</p>
+</section>
+<section>
+<h3>[2006-02-10 12:15 UTC] timj at php dot net</h3>
+<p>David,</p>
+<p>There is a lot going on in this area at the moment. First take a look back home (at Red Hat) at some of the pear makerpm bugs, e.g.:</p>
+<p>https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=176725</p>
+<p>Also do a search for &quot;pear makerpm&quot; on the PEAR bug system.</p>
+<p>Myself &amp; jorton@redhat have been working hard on cleaning things up a bit for Fedora. The latest version of php-pear in Fedora CVS is a significant improvement although still not quite there.</p>
+<p>Also by way of a proof-of-concept I have submitted php-pear-DB as an FE package:<br>
+https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=176733</p>
+<p>My goal there is to establish what is a &quot;good&quot; spec file and work backwards from that.  My goal is that Fedora, out of the box, should generate spec files that are as close to Fedora/RH packaging conventions as possible. Bear in mind as well that there is a need to divide what is &quot;good&quot; into &quot;generally applicable&quot; and &quot;distro-specific&quot; stuff. As you will see from the many PEAR and Red Hat bugs filed by me in the last 2 months, I have been trying to push &quot;general&quot; stuff upstream whilst pushing &quot;local&quot; stuff into Fedora.</p>
+<p>To further that goal I am taking over the pear makerpm stuff in the separate package PEAR_Command_Packaging. I am working to make as many changes as possible here upstream, so long as they are generally applicable. Indeed, if you check CVS for PEAR_Command_Packaging this morning you will see a number of important fixes, not least ones that make it easier to make distro-specific changes downstream (see PEAR bug #6375).</p>
+<p>As for naming conventions, I intend to stick with PEAR::XXX_YYY here upstream (at least for the time being) to avoid causing grief to those who have been using the PEAR defaults in the past. However with the patch discussed above, Fedora/Red Hat should only need a couple-of-lines patch to convert that to php-pear-XXX-YYY.</p>
+<p>Hope that explains things. Hang in there, and any testing/comments on PEAR_Command_Packaging as it develops are most welcome. Once a release is made, I will submit php-pear-PEAR-Command-Packaging to Fedora Extras, with appropriate distro-naming-convention patches.</p>
+</section>
+<section>
+<h3>[2006-02-10 13:00 UTC] timj at php dot net</h3>
+<p>Most of these issues are now fixed in CVS.<br>
+David, to do what you want:</p>
+<p>pear make-rpm-spec -d &quot;php-pear(%s)&quot; -p &quot;php-pear-%S&quot; ../SOURCES/Net_Socket-1.0.6.tgz</p>
+<p>will give you something that is quite close to what you want, including a BuildRequire on base PEAR.<br>
+Making sure that the package owns the correct files (rather than /) is a slightly more complex deal and will be addressed soon.</p>
+</section>
+<section>
+<h3>[2006-02-21 22:54 UTC] timj at php dot net</h3>
+<p>Claiming ownership of / isn&#039;t, but isn&#039;t a blocker (it&#039;s been like that forever, and does work) and needs some thought to get it working generically. Will investigate/fix when I get a chance but this doesn&#039;t need to block an initial release.</p>
+</section>
+<section>
+<h3>[2006-03-15 23:37 UTC] timj at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>/ is no longer owned in the CVS version.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

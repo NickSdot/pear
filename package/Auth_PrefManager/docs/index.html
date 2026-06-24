@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth_PrefManager Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth_PrefManager/index.html">Auth_PrefManager</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Auth_PrefManager/docs/index.html#package-authentication-auth-prefmanager-intro">Introduction to Auth_PrefManager</a>
+</li>
+<li><a href="package/Auth_PrefManager/docs/index.html#package-authentication-auth-prefmanager-tutorial">Tutorial</a>
+</li>
+<li><a href="package/Auth_PrefManager/docs/index.html#package-authentication-auth-prefmanager-auth-prefmanager-auth-prefmanager">constructor Auth_PrefManager::Auth_PrefManager</a>
+</li>
+<li><a href="package/Auth_PrefManager/docs/index.html#package-authentication-auth-prefmanager-auth-prefmanager-clearcache">Auth_PrefManager::clearCache</a>
+</li>
+<li><a href="package/Auth_PrefManager/docs/index.html#package-authentication-auth-prefmanager-auth-prefmanager-deletedefaultpref">Auth_PrefManager::deleteDefaultPref</a>
+</li>
+<li><a href="package/Auth_PrefManager/docs/index.html#package-authentication-auth-prefmanager-auth-prefmanager-deletepref">Auth_PrefManager::deletePref</a>
+</li>
+<li><a href="package/Auth_PrefManager/docs/index.html#package-authentication-auth-prefmanager-auth-prefmanager-getdefaultpref">Auth_PrefManager::getDefaultPref</a>
+</li>
+<li><a href="package/Auth_PrefManager/docs/index.html#package-authentication-auth-prefmanager-auth-prefmanager-getpref">Auth_PrefManager::getPref</a>
+</li>
+<li><a href="package/Auth_PrefManager/docs/index.html#package-authentication-auth-prefmanager-auth-prefmanager-setdefaultpref">Auth_PrefManager::setDefaultPref</a>
+</li>
+<li><a href="package/Auth_PrefManager/docs/index.html#package-authentication-auth-prefmanager-auth-prefmanager-setpref">Auth_PrefManager::setPref</a>
+</li>
+<li><a href="package/Auth_PrefManager/docs/index.html#package-authentication-auth-prefmanager-auth-prefmanager-setreturndefaults">Auth_PrefManager::setReturnDefaults</a>
+</li>
+<li><a href="package/Auth_PrefManager/docs/index.html#package-authentication-auth-prefmanager-auth-prefmanager-usecache">Auth_PrefManager::useCache</a>
+</li></ul>
+</nav>
+<p>Provides a framework for managing preferences in applications.</p>
+<section id="package-authentication-auth-prefmanager-intro">
+<h2>Introduction to Auth_PrefManager</h2>
+<h3>
+    A simple preference manager.
+   </h3>
+
+   
+   <p>Supported features include:</p><ul>
+       <li>
+         Setting of default values.
+       </li>
+       <li>
+         Serialization of values before saving to the database.
+       </li>
+       <li>
+         Support for any database supported by <strong>DB</strong>
+       </li>
+     </ul>
+</section>
+<section id="package-authentication-auth-prefmanager-tutorial">
+<h2>Tutorial</h2>
+<h3>
+    Setting up the database
+   </h3>
+
+   
+   <p>The first step is to setup a database to store the values in. 
+     For this tutorial it&#039;s assumed that you already know 
+     the basics of using the PEAR 
+     DB class.</p>
+   <p>To set up the default table layout run the following SQL statement:</p>
+   <p><strong>SQL to setup the table</strong></p>
+     
+     
+     <pre>
+CREATE TABLE `preferences` (
+   `user_id` varchar( 255 ) NOT NULL default &#039;&#039;,
+   `pref_id` varchar( 32 ) NOT NULL default &#039;&#039;,
+   `pref_value` longtext NOT NULL ,
+    PRIMARY KEY ( `user_id` , `pref_id` )
+);</pre>
+
+      
+   
+  
+  <h3>Setting up your first PrefManager object</h3>
+
+    
+    <p>To use Auth_PrefManager we must first create an instance of the base object, as shown below.</p>
+    <p><strong>Setting up the object</strong></p>
+     
+     <pre><code>&lt;?php
+require_once(&#039;Auth/PrefManager.php&#039;);
+$dsn = &#039;mysql://user:password@localhost/database&#039;;   // Change the DSN to fit your database.
+$options = array(&#039;serialize&#039; =&gt; true);               // Enable serialization of data before saving, this ensures that the values are retrieved cleanly.
+$prefmanager = new Auth_PrefManager($dsn, $options); // Create the object.
+?&gt;</code></pre> 
+   
+  
+  <h3>Setting and displaying default preferences</h3>
+
+   
+    <p>Now that we have a PrefManager object, 
+	  we can make use of it to set some preferences.</p>
+    <p>For this tutorial we&#039;re going 
+	  to allow users to specify their country, 
+	  and assume that any user who hasn&#039;t 
+	  set their country is somewhere on Earth.</p>
+    <p>First we need to set the default value, using 
+	  <a href="package/Auth_PrefManager/docs/index.html#package-authentication-auth-prefmanager-auth-prefmanager-setdefaultpref">setDefaultPref</a>.</p>
+    <p><strong>Setting up the object</strong></p>
+     
+     <pre><code>&lt;?php
+// Continued from example 1.
+$prefmanager-&gt;setDefaultPref(&quot;country&quot;, &quot;Earth&quot;);
+?&gt;</code></pre> 
+   
+   <p>Now that the default is set, 
+	 we can create a (very) basic page, 
+	 welcoming users with a customised message.</p>
+   <p>Currently this message will only ever display 
+	 &quot;Welcome to the people of Earth!&quot;, 
+	 since no users have their country set.</p>
+   <p><strong>Getting preferences</strong></p>
+     
+     <pre><code>$username = &quot;guest&quot;;
+&lt;h1&gt;Welcome to the people of &lt;?=$prefmanager-&gt;getPref($username, &quot;country&quot;)?&gt;!&lt;/h1&gt;</code></pre>
+   
+  
+  <h3>Setting a user&#039;s preferences</h3>
+
+    
+    <p>Finally we need a way for people to choose which country they&#039;re in.</p>
+    <p>This is going to be done with a simple text box, 
+	  and you should obviously be a little more careful 
+	  in a real application about allowing users to set preferences for people!</p>
+    <p>The Reset Country button will delete the user&#039;s preference, 
+	  and cause the default to be displayed again.</p>
+    <p><strong>Setting preferences</strong></p>
+     
+     <pre><code>&lt;h1&gt;Set Country&lt;/h1&gt;
+// Allow users to set their country and username.
+if (isset($_POST[&#039;submit&#039;])) {
+    $username = htmlspecialchars($_POST[&#039;username&#039;]);
+    $prefmanager-&gt;setPref($username, &#039;country&#039;, $_POST[&#039;country&#039;]);
+} else if (isset($_POST[&#039;reset&#039;])) {
+    $username = htmlspecialchars($_POST[&#039;username&#039;]);
+    $prefmanager-&gt;deletePref($username, &#039;country&#039;);
+} else {
+    $username = &#039;guest&#039;;
+}
+?&gt;
+&lt;h1&gt;Welcome to the people of &lt;?=$prefmanager-&gt;getPref($username, &quot;country&quot;)?&gt;!&lt;/h1&gt;
+&lt;h2&gt;Set Country And Username&lt;/h2&gt;
+&lt;form method=&quot;post&quot; action=&quot;&lt;?php echo htmlspecialchars($_SERVER[&#039;PHP_SELF&#039;]) ?&gt;&quot;&gt;
+  &lt;label for=&quot;username&quot;&gt;Username&lt;/label&gt; &lt;input name=&quot;username&quot; value=&quot;&lt;?=$username?&gt;&quot; /&gt;&lt;br/&gt;
+  &lt;label for=&quot;country&quot;&gt;Country&lt;/label&gt; &lt;input name=&quot;country&quot; value=&quot;&lt;?=$prefmanager-&gt;getPref($username, &#039;country&#039;)?&gt;&quot;/&gt;&lt;br/&gt;
+  &lt;input type=&quot;submit&quot; name=&quot;submit&quot; value=&quot;Set Country&quot; /&gt; &lt;input type=&quot;submit&quot; name=&quot;reset&quot; value=&quot;Reset Country&quot; /&gt;
+&lt;/form&gt;</code></pre>
+   
+   <p>Now once a user has entered their username, 
+	 and their country, whenever they login they&#039;ll get a personalized welcome.</p>
+  
+  <h3>Full sourcecode</h3>
+
+    
+    <p><strong>Sourcecode for the example page</strong></p>
+     
+     <pre><code>&lt;h1&gt;Set Country&lt;/h1&gt;
+&lt;?php
+require_once(&#039;Auth/PrefManager.php&#039;);
+
+// Create the PrefManager object.
+
+// Change the DSN to fit your database.
+$dsn = &#039;mysql://user:password@localhost/database&#039;;   
+
+// Enable serialization of data before saving, this ensures that the values are retrieved cleanly.
+$options = array(&#039;serialize&#039; =&gt; true);               
+
+// Create the object.
+$prefmanager = new Auth_PrefManager($dsn, $options); 
+
+// Set the default value (this doesn&#039;t need to be done everytime the script is run).
+$prefmanager-&gt;setDefaultPref(&quot;country&quot;, &quot;Earth&quot;);
+
+// Allow users to set their country and username.
+if (isset($_POST[&#039;submit&#039;])) {
+    $username = htmlspecialchars($_POST[&#039;username&#039;]);
+    $prefmanager-&gt;setPref($username, &#039;country&#039;, $_POST[&#039;country&#039;]);
+} else if (isset($_POST[&#039;reset&#039;])) {
+    $username = htmlspecialchars($_POST[&#039;username&#039;]);
+    $prefmanager-&gt;deletePref($username, &#039;country&#039;);
+} else {
+    $username = &#039;guest&#039;;
+}
+?&gt;
+&lt;h1&gt;Welcome to the people of &lt;?=$prefmanager-&gt;getPref($username, &quot;country&quot;)?&gt;!&lt;/h1&gt;
+&lt;h2&gt;Set Country And Username&lt;/h2&gt;
+&lt;form method=&quot;post&quot; action=&quot;&lt;?php echo htmlspecialchars($_SERVER[&#039;PHP_SELF&#039;]) ?&gt;&quot;&gt;
+  &lt;label for=&quot;username&quot;&gt;Username&lt;/label&gt; &lt;input name=&quot;username&quot; value=&quot;&lt;?=$username?&gt;&quot; /&gt;&lt;br/&gt;
+  &lt;label for=&quot;country&quot;&gt;Country&lt;/label&gt; &lt;input name=&quot;country&quot; value=&quot;&lt;?=$prefmanager-&gt;getPref($username, &#039;country&#039;)?&gt;&quot;/&gt;&lt;br/&gt;
+  &lt;input type=&quot;submit&quot; name=&quot;submit&quot; value=&quot;Set Country&quot; /&gt; &lt;input type=&quot;submit&quot; name=&quot;reset&quot; value=&quot;Reset Country&quot; /&gt;
+&lt;/form&gt;</code></pre>
+</section>
+<section id="package-authentication-auth-prefmanager-auth-prefmanager-auth-prefmanager">
+<h2>constructor Auth_PrefManager::Auth_PrefManager</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/PrefManager.php&#039;;
+   <p><code>
+    
+     bool constructor
+     <strong>Auth_PrefManager::Auth_PrefManager</strong>
+     ( 
+    
+     string
+     $dsn
+    
+     , 
+     array
+     
+      $properties = NULL
+     
+    
+     , 
+     string
+     $defaultUser
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>The <code>$properties</code> property should be an associative array, with the structure below. Any options not set will be set to the default.</p>
+  
+      <dl>
+        <dt>
+          <code>&#039;table&#039;</code>
+        </dt>
+        <dd>
+          <p>The table to retrieve preferences from. [preferences]</p>
+        </dd>
+      </dl>
+      <dl>
+        <dt>
+          <code>&#039;userColumn&#039;</code>
+        </dt>
+        <dd>
+          <p>The field to use for matching user IDs. [user_id]</p>
+        </dd>
+      </dl>
+      <dl>
+        <dt>
+          <code>&#039;nameColumn&#039;</code>
+        </dt>
+        <dd>
+          <p>The field to use for matching preference names. [pref_name]</p>
+        </dd>
+      </dl>
+      <dl>
+        <dt>
+          <code>&#039;valueColumn&#039;</code>
+        </dt>
+        <dd>
+          <p>The field to retrieve preference values from. [pref_value]</p>
+        </dd>
+      </dl>
+      <dl>
+        <dt>
+          <code>&#039;defaultUser&#039;</code>
+        </dt>
+        <dd>
+          <p>The user ID to use for retrieving default values. [__default__]</p>
+        </dd>
+      </dl>
+      <dl>
+        <dt>
+          <code>&#039;cacheName&#039;</code>
+        </dt>
+        <dd>
+          <p>The key to use for the cache in <code>$_SESSION</code>. [prefsCache]</p>
+        </dd>
+      </dl>
+      <dl>
+        <dt>
+          <code>&#039;useCache&#039;</code>
+        </dt>
+        <dd>
+          <p>Should values be cached for later use. [true]</p>
+        </dd>
+      </dl>
+      <dl>
+        <dt>
+          <code>&#039;serialize&#039;</code>
+        </dt>
+        <dd>
+          <p>Should values be serialized before saving to the database, and unserialized on retrieval. [false]</p>
+        </dd>
+      </dl>
+    
+  
+ 
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      string
+      <code>$dsn</code>
+     </dt>
+     <dd>
+      <p>The DSN of the database connection to make, or a DB object.</p>
+     </dd>
+    </dl>
+   
+   
+    <dl>
+     <dt>
+      array
+      <code>$properties</code>
+     </dt>
+     <dd>
+      <p>An array of properties to set.</p>
+     </dd>
+    </dl>
+   
+   
+    <dl>
+     <dt>
+      string
+      <code>$defaultUser</code>
+     </dt>
+     <dd>
+      <p>The default user to manage for.</p>
+     </dd>
+    </dl>
+   
+  
+ 
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   Success or failure.</p>
+ 
+ 
+  <h3>Throws</h3>
+  <p>No exceptions thrown.</p>
+ 
+ 
+  <h3>Note</h3>
+  <p>This function can not be called
+statically.</p>
+  <p>Users with preferences created using Auth_PrefManager 1.0.4 or earlier shouldn&#039;t enable the serialize option, as it may result in data loss.</p>
+</section>
+<section id="package-authentication-auth-prefmanager-auth-prefmanager-clearcache">
+<h2>Auth_PrefManager::clearCache</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/PrefManager.php&#039;;
+   <p><code>
+    
+     void
+     <strong>Auth_PrefManager::clearCache</strong>
+     ( 
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Clears the cache of preferences stored in the current user&#039;s session.</p>
+
+ 
+  <h3>Throws</h3>
+  <p>No exceptions thrown.</p>
+ 
+ 
+  <h3>Note</h3>
+  <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-authentication-auth-prefmanager-auth-prefmanager-deletedefaultpref">
+<h2>Auth_PrefManager::deleteDefaultPref</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/PrefManager.php&#039;;
+   <p><code>
+    
+     bool
+     <strong>Auth_PrefManager::deleteDefaultPref</strong>
+     ( 
+    
+     string
+     $pref_id
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Deletes the default value for the preference passed as <code>$pref_id</code>.</p>
+
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      string
+      <code>$pref_id</code>
+     </dt>
+     <dd>
+      <p>The preference to delete.</p>
+     </dd>
+    </dl>
+   
+  
+ 
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   Success/Failure</p>
+ 
+ 
+  <h3>Throws</h3>
+  <p>No exceptions thrown.</p>
+ 
+ 
+  <h3>Note</h3>
+  <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-authentication-auth-prefmanager-auth-prefmanager-deletepref">
+<h2>Auth_PrefManager::deletePref</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/PrefManager.php&#039;;
+   <p><code>
+    
+     bool
+     <strong>Auth_PrefManager::deletePref</strong>
+     ( 
+    
+     string
+     $user_id
+    
+     , 
+     string
+     $pref_id
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Deletes the preference <code>$pref_id</code> for <code>$user_id</code> if one is set.</p>
+
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      string
+      <code>$user_id</code>
+     </dt>
+     <dd>
+      <p>The userid of the user to delete from.</p>
+     </dd>
+    </dl>
+   
+   
+    <dl>
+     <dt>
+      string
+      <code>$pref_id</code>
+     </dt>
+     <dd>
+      <p>The preference to delete.</p>
+     </dd>
+    </dl>
+   
+  
+ 
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   Success/Failure</p>
+ 
+ 
+  <h3>Throws</h3>
+  <p>No exceptions thrown.</p>
+ 
+ 
+  <h3>Note</h3>
+  <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-authentication-auth-prefmanager-auth-prefmanager-getdefaultpref">
+<h2>Auth_PrefManager::getDefaultPref</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/PrefManager.php&#039;;
+   <p><code>
+    
+     mixed
+     <strong>Auth_PrefManager::getDefaultPref</strong>
+     ( 
+    
+     string
+     $pref_id
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Retrieves the default value for <code>$pref_id</code>, even if there is currently a user ID set for the object being used.</p>
+
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      string
+      <code>$pref_id</code>
+     </dt>
+     <dd>
+      <p>The name of the preference to get.</p>
+     </dd>
+    </dl>
+   
+  
+ 
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   The value if it&#039;s found, or NULL if it isn&#039;t.</p>
+ 
+ 
+  <h3>Throws</h3>
+  <p>No exceptions thrown.</p>
+ 
+ 
+  <h3>Note</h3>
+  <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-authentication-auth-prefmanager-auth-prefmanager-getpref">
+<h2>Auth_PrefManager::getPref</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/PrefManager.php&#039;;
+   <p><code>
+    
+     mixed
+     <strong>Auth_PrefManager::getPref</strong>
+     ( 
+    
+     string
+     $user_id
+    
+     , 
+     string
+     $pref_id
+    
+     , 
+     bool
+     $showDefaults
+      = true
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Retrieves the preference specified for a user, or, if returning default values is enabled, the default.</p>
+
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      string
+      <code>$user_id</code>
+     </dt>
+     <dd>
+      <p>The user to get the preference for.</p>
+     </dd>
+    </dl>
+   
+   
+    <dl>
+     <dt>
+      string
+      <code>$pref_id</code>
+     </dt>
+     <dd>
+      <p>The preference to get.</p>
+     </dd>
+    </dl>
+   
+   
+    <dl>
+     <dt>
+      boolean
+      <code>$showDefaults</code>
+     </dt>
+     <dd>
+      <p>Should default values be searched (overrides the global setting).</p>
+     </dd>
+    </dl>
+   
+  
+ 
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   The value if it&#039;s found, or NULL if it isn&#039;t.</p>
+ 
+ 
+  <h3>Throws</h3>
+  <p>No exceptions thrown.</p>
+ 
+ 
+  <h3>Note</h3>
+  <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-authentication-auth-prefmanager-auth-prefmanager-setdefaultpref">
+<h2>Auth_PrefManager::setDefaultPref</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/PrefManager.php&#039;;
+   <p><code>
+    
+     bool
+     <strong>Auth_PrefManager::setDefaultPref</strong>
+     ( 
+    
+     string
+     $pref_id
+    
+     , 
+     mixed
+     $value
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Sets the default value for <code>$pref_id</code>, which will be retrieved if a user doesn&#039;t have the preference set.</p>
+
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      string
+      <code>$pref_id</code>
+     </dt>
+     <dd>
+      <p>The name of the preference to set.</p>
+     </dd>
+    </dl>
+   
+   
+    <dl>
+     <dt>
+      mixed
+      <code>$value</code>
+     </dt>
+     <dd>
+      <p>The value to set it to.</p>
+     </dd>
+    </dl>
+   
+  
+ 
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   Success or failure.</p>
+ 
+ 
+  <h3>Throws</h3>
+  <p>No exceptions thrown.</p>
+ 
+ 
+  <h3>Note</h3>
+  <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-authentication-auth-prefmanager-auth-prefmanager-setpref">
+<h2>Auth_PrefManager::setPref</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/PrefManager.php&#039;;
+   <p><code>
+    
+     bool
+     <strong>Auth_PrefManager::setPref</strong>
+     ( 
+    
+     string
+     $user_id
+    
+     , 
+     string
+     $pref_id
+    
+     , 
+     mixed
+     $value
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Sets the value for <code>$pref_id</code>.</p>
+
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      string
+      <code>$user_id</code>
+     </dt>
+     <dd>
+      <p>The user to set for.</p>
+     </dd>
+    </dl>
+   
+   
+    <dl>
+     <dt>
+      string
+      <code>$pref_id</code>
+     </dt>
+     <dd>
+      <p>The preference to set.</p>
+     </dd>
+    </dl>
+   
+   
+    <dl>
+     <dt>
+      mixed
+      <code>$value</code>
+     </dt>
+     <dd>
+      <p>The value it should be set to.</p>
+     </dd>
+    </dl>
+   
+  
+ 
+ 
+  <h3>Return value</h3>
+  <p><em>returns</em>
+   Success or failure.</p>
+ 
+ 
+  <h3>Throws</h3>
+  <p>No exceptions thrown.</p>
+ 
+ 
+  <h3>Note</h3>
+  <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-authentication-auth-prefmanager-auth-prefmanager-setreturndefaults">
+<h2>Auth_PrefManager::setReturnDefaults</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/PrefManager.php&#039;;
+   <p><code>
+    
+     void
+     <strong>Auth_PrefManager::setReturnDefaults</strong>
+     ( 
+    
+     mixed
+     $returnDefaults
+      = true
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Set whether a default value should be returned by <a href="package/Auth_PrefManager/docs/index.html#package-authentication-auth-prefmanager-auth-prefmanager-getpref"><strong>getPref()</strong></a> if no value was set for the specified user.</p>
+
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      mixed
+      <code>$returnDefaults</code>
+     </dt>
+     <dd>
+      
+     </dd>
+    </dl>
+   
+  
+ 
+ 
+  <h3>Throws</h3>
+  <p>No exceptions thrown.</p>
+ 
+ 
+  <h3>Note</h3>
+  <p>This function can not be called
+statically.</p>
+  <p><a href="package/Auth_PrefManager/docs/index.html#package-authentication-auth-prefmanager-auth-prefmanager-getdefaultpref"><strong>getDefaultPref()</strong></a> will always return the default value.</p>
+</section>
+<section id="package-authentication-auth-prefmanager-auth-prefmanager-usecache">
+<h2>Auth_PrefManager::useCache</h2>
+<h3>Synopsis</h3>
+  
+   require_once &#039;/PrefManager.php&#039;;
+   <p><code>
+    
+     void
+     <strong>Auth_PrefManager::useCache</strong>
+     ( 
+    
+     bool
+     $use
+      = true
+    
+   )</code></p>
+  
+ 
+ 
+  <h3>Description</h3>
+  <p>Sets whether the caching system should be used or not.</p>
+  <p>If the cache is enabled then any values retrieved will be saved in the user&#039;s session to reduce load on the database.</p>
+
+ 
+  <h3>Parameter</h3>
+  
+    <dl>
+     <dt>
+      boolean
+      <code>$use</code>
+     </dt>
+     <dd>
+      <p>Should the cache be used.</p>
+     </dd>
+    </dl>
+   
+  
+ 
+ 
+  <h3>Throws</h3>
+  <p>No exceptions thrown.</p>
+ 
+ 
+  <h3>Note</h3>
+  <p>This function can not be called
+statically.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

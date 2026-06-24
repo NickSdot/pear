@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6053</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Schema/index.html">MDB2_Schema</a> &#187; Bug #6053</h1>
+<p>create sequence error and a warning</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-24 09:23 UTC</td></tr>
+<tr><th>From</th><td>alex at cgi-central dot net</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Schema/index.html">MDB2_Schema</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>any</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-24 09:23 UTC] alex at cgi-central dot net</h3>
+<p>Description:<br>
+------------<br>
+1. There was a warning if array element is not exists in $changes array. It is eliminated by first change in diff.</p>
+<p>2. alterDatabaseSequences() function passed $sequence variable to createSequence function. But in $changes array this set to &quot;1&quot;, of course it does not look like a valid sequence definition. Fixed.</p>
+<p>Test script:<br>
+---------------<br>
++++ MDB2/Schema.php     24 Nov 2005 09:18:54 -0000<br>
+@@ -1234,6 +1234,7 @@<br>
+     function verifyAlterDatabase($changes)<br>
+     {<br>
+         if (array_key_exists(&#039;tables&#039;, $changes) &amp;&amp; is_array($changes[&#039;tables&#039;]<br>
+)<br>
++            &amp;&amp; array_key_exists(&#039;tables&#039;, $changes[&#039;tables&#039;])<br>
+             &amp;&amp; array_key_exists(&#039;tables&#039;, $changes[&#039;tables&#039;][&#039;change&#039;])<br>
+         ) {<br>
+             foreach ($changes[&#039;tables&#039;][&#039;change&#039;] as $table_name =&gt; $table) {<br>
+@@ -1445,7 +1446,7 @@</p>
+<p>if (array_key_exists(&#039;add&#039;, $changes)) {<br>
+             foreach ($changes[&#039;add&#039;] as $sequence_name =&gt; $sequence) {<br>
+-                $result = $this-&gt;createSequence($sequence_name, $sequence);<br>
++                $result = $this-&gt;createSequence($sequence_name, $current_defini<br>
+tion[$sequence_name]);<br>
+                 if (PEAR::isError($result)) {<br>
+                     return $result;<br>
+                 }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

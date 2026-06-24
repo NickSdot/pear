@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4835</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File System &#187; <a href="package/File/index.html">File</a> &#187; Bug #4835</h1>
+<p>ReadLine causes memory exhaustion</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-07-14 20:42 UTC</td></tr>
+<tr><th>From</th><td>chris dot stone at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>mike</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/File/index.html">File</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>RHEL4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-07-14 20:42 UTC] chris dot stone at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+File::readLine() doesn&#039;t work.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$foo = File::readLine(&#039;bar&#039;);</p>
+<p>Expected result:<br>
+----------------<br>
+it works?</p>
+<p>Actual result:<br>
+--------------<br>
+it doesn&#039;t work</p>
+</section>
+<section>
+<h3>[2005-07-20 07:35 UTC] chris dot stone at gmail dot com</h3>
+<p>From bug 4865 (hope this is enough info)</p>
+<p>Description:<br>
+------------<br>
+Using File::readLine with PHP5 is totally broken, I don&#039;t know how else to describe it.  When I load the test page below absolutely nothing happens at all.  No errors, no page refresh, nothing.  It&#039;s like PHP is breaking or something??</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php</p>
+<p>require_once &#039;File.php&#039;;</p>
+<p>var_dump(File::readLine(&#039;foo.txt&#039;));</p>
+<p>?&gt;</p>
+<p>foo.txt contains:<br>
+This is a file test.<br>
+With two lines in it.</p>
+<p>Expected result:<br>
+----------------<br>
+var_dump of &quot;This is a file test.&quot;</p>
+<p>Actual result:<br>
+--------------<br>
+Complete breakage, page doesn&#039;t even start, for example, if you have another page already loaded and try to load file.php, the old page just remains on the screen.</p>
+</section>
+<section>
+<h3>[2005-07-20 09:27 UTC] chris dot stone at gmail dot com</h3>
+<p>I modified my example program to this:</p>
+<p>&lt;?php</p>
+<p>error_reporting(E_ALL);<br>
+ini_set(&#039;display_errors&#039;, &#039;On&#039;);</p>
+<p>require &#039;File.php&#039;;<br>
+var_dump(File::readLine(&#039;foo.txt&#039;));</p>
+<p>?&gt;</p>
+<p>And as I said, absolutely nothing happens.  No headers are sent, no errors are shown, no page is loaded, no output is printed.  The previous page I have loaded does not even go away.  It basically just dies and does nothing.</p>
+<p>Is there a file where errors are logged?</p>
+</section>
+<section>
+<h3>[2005-07-20 09:28 UTC] chris dot stone at gmail dot com</h3>
+<p>Oh forgot to mention version info:</p>
+<p>$ pear info file<br>
+About File-1.2.0</p>
+</section>
+<section>
+<h3>[2005-07-20 09:38 UTC] chris dot stone at gmail dot com</h3>
+<p>If I try to browse to the example.php file from a new window (no previous page loaded), I do get some headers on the output:</p>
+<p>&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD HTML 4.01 Transitional//EN&quot;&gt;&lt;html&gt;&lt;head&gt;&lt;title&gt;&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;</p>
+<p>but that is all it prints.</p>
+</section>
+<section>
+<h3>[2005-07-20 09:47 UTC] chris dot stone at gmail dot com</h3>
+<p>I&#039;m not sure if this will help you, but I also tried it on my local server at home using Fedora Core 4 which also uses PHP 5.0.4 and I get the same results.  You can see the results at:</p>
+<p>http://xulchris.dyndns.org/example.php</p>
+<p>Please let me know if you need me to modify the example script at all.  If I change readLine to readAll, the script runs correctly.</p>
+</section>
+<section>
+<h3>[2005-07-20 10:12 UTC] chris dot stone at gmail dot com</h3>
+<p>Apache is giving me an error message:</p>
+<p>[client 209.78.16.118] PHP Fatal error:  Allowed memory size of 8388608 bytes ex<br>
+hausted (tried to allocate 8192001 bytes) in /usr/share/pear/File.php on line 32<br>
+6<br>
+Allowed memory size of 8388608 bytes exhausted (tried to allocate 256 bytes)</p>
+<p>hope this helps.</p>
+</section>
+<section>
+<h3>[2005-07-20 10:21 UTC] chris dot stone at gmail dot com</h3>
+<p>The following patch fixes the problem:</p>
+<p>--- File.php.orig       2005-07-20 03:20:15.000000000 -0700<br>
++++ File.php    2005-07-20 03:20:34.000000000 -0700<br>
+@@ -323,7 +323,7 @@<br>
+             return false;<br>
+         }</p>
+<p>-        return rtrim(fgets($fp, FILE_MAX_LINE_READSIZE), &quot;\r\n&quot;);<br>
++        return rtrim(fgets($fp, FILE_DEFAULT_READSIZE), &quot;\r\n&quot;);<br>
+     }</p>
+<p>/**</p>
+</section>
+<section>
+<h3>[2005-07-20 15:31 UTC] chris dot stone at gmail dot com</h3>
+<p>Yes, this will work, but it seems that this is a work-around to the real problem.  It seems as if PHP is not detecting EOL or EOF characters.  I&#039;ve reviewed the code in File.php, and nothing seems incorrect.  The length parameter to fgets should  not allocate 8M of RAM on a simple two line file thats &lt; 1k.  fgets() is supposed to return the smallest of string to EOL, EOF or length.  I think I should try to recreate this problem using standard PHP calls such as fopen and fgets and file a bug report with PHP or RedHat.  Please let me know if you have any insight on what might be going wrong.  Thanks for the help, I&#039;m glad we atleast have a working work-around to the problem! :)</p>
+</section>
+<section>
+<h3>[2005-07-21 01:56 UTC] chris dot stone at gmail dot com</h3>
+<p>&lt;?php<br>
+define(&#039;FILE_MAX_LINE_READSIZE&#039;, 8192000, true);<br>
+define(&#039;FILE_MODE_READ&#039;, &#039;rb&#039;, true);<br>
+$fp = @fopen(&#039;foo.txt&#039;, FILE_MODE_READ);<br>
+var_dump(rtrim(fgets($fp, FILE_MAX_LINE_READSIZE), &quot;\r\n&quot;));<br>
+?&gt;</p>
+<p>Okay I tried using standard PHP calls (see above), and it works just fine when I do it this way.  For some reason, the fgets() call is not working under the File class. :/</p>
+<p>Any ideas?</p>
+</section>
+<section>
+<h3>[2005-07-21 02:57 UTC] chris dot stone at gmail dot com</h3>
+<p>&lt;?php</p>
+<p>require &#039;PEAR.php&#039;;</p>
+<p>error_reporting(E_ALL);<br>
+ini_set(&#039;display_errors&#039;, &#039;On&#039;);</p>
+<p>define(&#039;FILE_MAX_LINE_READSIZE&#039;, 8192000, true);<br>
+define(&#039;FILE_MODE_READ&#039;, &#039;rb&#039;, true);</p>
+<p>class MyFile<br>
+{<br>
+    function myReadLine($filename, $lock = false)<br>
+    {<br>
+        $fp = @fopen($filename, FILE_MODE_READ);<br>
+        var_dump(rtrim(fgets($fp, FILE_MAX_LINE_READSIZE), &quot;\r\n&quot;));<br>
+    }<br>
+}</p>
+<p>MyFile::MyReadLine(&#039;foo.txt&#039;);</p>
+<p>?&gt;</p>
+<p>Okay, I&#039;ve reduced the error down to the simplest code possible to reproduce the error.  This code will cause the following error:</p>
+<p>Fatal error: Allowed memory size of 8388608 bytes exhausted (tried to allocate 8192 bytes) in /var/www/html/example2.php on line 16</p>
+<p>However, if I comment out the require &#039;PEAR.php&#039;; line, the code will work!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

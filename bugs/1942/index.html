@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1942</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_POP3/index.html">Net_POP3</a> &#187; Bug #1942</h1>
+<p>wrong parameter-type specification in Net_POP3::login</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-07-22 00:05 UTC</td></tr>
+<tr><th>From</th><td>swolfsheimer at netz98 dot de</td></tr>
+<tr><th>Assigned</th><td>damian</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_POP3/index.html">Net_POP3</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-22 00:05 UTC] swolfsheimer at netz98 dot de</h3>
+<p>Description:<br>
+------------<br>
+In the PEAR manual following declaration is specified:<br>
+  <br>
+boolean Net_POP3::login (string $user string $pass boolean $apop)</p>
+<p>Am I right, that the last parameter $apop is not of type boolean, but of type &quot;boolean or string&quot;? By looking into the source code and following the parameter over serval function-calls, one can find a switch (in function _cmdAuthenticate) between the strings &#039;DIGEST-MD5&#039;, &#039;CRAM-MD5&#039;, <br>
+&#039;APOP&#039;, &#039;PLAIN&#039; , &#039;LOGIN&#039;, &#039;USER&#039; or alternativly a false - value for this parameter.</p>
+<p>following code gives not the result as <br>
+expected according to the documentation:<br>
+$pop3-&gt;login($user, $pass,true);</p>
+<p>this would be the correct call:<br>
+$pop3-&gt;login($user, $pass,&quot;APOP&quot;);</p>
+<p>Another thing:<br>
+Since the last(?) update of the Net_POP3 class-documentation there are the wrong classnames (Net_Ping instead of Net_POP3) given on the overview page (<br>
+Net_Ping::Net_POP3() and so on)</p>
+<p>Reproduce code:<br>
+---------------</p>
+</section>
+<section>
+<h3>[2004-08-02 18:23 UTC] swolfsheimer at netz98 dot de</h3>
+<p>in my case neither $apop=true nor $apop=false worked. Only $apop &quot;USER&quot; was correct. <br>
+I am not very familar with the POP3 protocol, so I only can try to obtain my opion by logical arguments:</p>
+<p>the login functions calls _cmdAuthenticat($user,$pass,$apop)<br>
+with the critical parameter $apop (see pseudo code below).</p>
+<p>From _cmdAuthenticate($uid , $pwd , $userMethod = null first _getBestAuthMethod($userMethod) is called, and the result ist stored in $method, followed by a switch, which desides between serval string statements.</p>
+<p>Well, let&#039;s have a look how _getBestAuthMethod($userMethod)works in my case:<br>
+Consider the case, that no $this-&gt;_capability[&#039;sasl&#039;] was found, e.g. $serverMethods are set to array(&#039;APOP&#039;,&#039;USER&#039;). <br>
+Now consider, that I want to login with the &#039;USER&#039;-method, according to the documentation this would be the boolean value false. <br>
+The statement &quot;if($userMethod !== null &amp;&amp; $userMethod !== true )&quot; would be true (because false is not of the same type as null), and false would be returned by the function. But this causes the default switch in the _cmdAuthenticate - function, which is an error-handler.<br>
+But if $apop would be a string of the value &quot;USER&quot; everything works fine.</p>
+<p>function login($user, $pass, $apop = true)<br>
+{<br>
+	...<br>
+	$this-&gt;_cmdAuthenticate($user , $pass , $apop )<br>
+	...<br>
+}</p>
+<p>function _cmdAuthenticate($uid , $pwd , $userMethod = null )<br>
+{<br>
+	...<br>
+	$method = $this-&gt;_getBestAuthMethod($userMethod);<br>
+	...<br>
+	switch($method)<br>
+	{<br>
+	    case &#039;DIGEST-MD5&#039;: ...<br>
+            case &#039;CRAM-MD5&#039;:<br>
+            case &#039;LOGIN&#039;:  <br>
+            case &#039;PLAIN&#039;:<br>
+            case &#039;APOP&#039;:<br>
+            case &#039;USER&#039;:<br>
+            default :<br>
+		ERROR<br>
+	}<br>
+	...<br>
+}</p>
+<p>function _getBestAuthMethod($userMethod = null)<br>
+{<br>
+	...<br>
+	if( isset($this-&gt;_capability[&#039;sasl&#039;]) ){<br>
+           $serverMethods=$this-&gt;_capability[&#039;sasl&#039;];<br>
+       	}else{<br>
+            $serverMethods=array(&#039;APOP&#039;,&#039;USER&#039;);<br>
+       	}<br>
+	...<br>
+	if($userMethod !== null &amp;&amp; $userMethod !== true )<br>
+	{<br>
+            $methods = array();<br>
+            $methods[] = $userMethod;<br>
+            return $userMethod;<br>
+        }<br>
+	...<br>
+}</p>
+</section>
+<section>
+<h3>[2005-08-08 12:09 UTC] g dot o dot crawford at gmail dot com</h3>
+<p>As far as I can see, this bug is still very much alive in <br>
+the latest release - v1.3.6. I can&#039;t use TRUE or FALSE as <br>
+the third parameter for login(), I am forced instead to use <br>
+&#039;APOP&#039; or &#039;USER&#039;.</p>
+<p>I am slightly concerned by the internal ID line at the top <br>
+of the POP3.php file:</p>
+<p>$Id: POP3.php,v 1.2 2004/12/05 16:34:39 damian Exp $</p>
+<p>Does this suggest the file is not v1.3.6 at all, but an <br>
+older version?</p>
+<p>I would appreciate some other feedback - do other users find <br>
+that the bug is fixed or not?</p>
+</section>
+<section>
+<h3>[2005-10-27 05:37 UTC] aavaria at gmail dot com</h3>
+<p>I ran into this problem today also. I had written a script to check multiple email boxes and it would only work with one of them. I ended up having to use the following to get it to work correctly:</p>
+<p>if(PEAR::isError( $ret=$myPop3-&gt;login($this-&gt;User,$this-&gt;Pass, &#039;USER&#039;) )){<br>
+    echo &quot;ERROR: &quot; . $ret-&gt;getMessage() . &quot;\n&quot;;<br>
+}</p>
+<p>using release v1.3.6</p>
+</section>
+<section>
+<h3>[2006-11-30 15:23 UTC] rbolzendahl at netzkraefte dot de</h3>
+<p>Bug is still not fixed.</p>
+<p>Tried to login with $pop3-&gt;login(&#039;user&#039;,&#039;pass&#039;, FALSE)<br>
+error (using the toString() method on PEAR_ERROR object): <br>
+pear_error: message=&quot; is not a supported authentication method&quot;</p>
+<p>using &#039;USER&#039; instead of FALSE works perfectly.<br>
+A fix in the docs or the method would be nice!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

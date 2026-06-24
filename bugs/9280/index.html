@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9280</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #9280</h1>
+<p>cannot install with --packagingroot package from non-php.net channel</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-08 19:53 UTC</td></tr>
+<tr><th>From</th><td>glen at delfi dot ee</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5.2.0 RC4</td></tr>
+<tr><th>OS</th><td>PLD Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-08 19:53 UTC] glen at delfi dot ee</h3>
+<p>Description:<br>
+------------<br>
+pear expects channel registered and even when channel <br>
+registered if tails to register package in packagingroot.</p>
+<p>using --packagingroot should not touch/look any file <br>
+outside $packagingroot, and if it really needs to play <br>
+with registry, it should duplicate one found from real <br>
+system instead of creating blank one (thus failing on <br>
+external channels).</p>
+<p>to reproduce bug:</p>
+<p>first get tarball by downloading:<br>
+http://pearified.com/get/DB_DataObject_FormBuilder_Frontend-0.7.0.tgz</p>
+<p>or issue these commands:<br>
+$ sudo pear channel-discover pearified.com<br>
+$ pear download DB_DataObject_FormBuilder-beta<br>
+you need to clear pear registry after using pear to <br>
+download.</p>
+<p>the bug itself:</p>
+<p>$ pear -v  <br>
+install --packagingroot=/home/glen/rpm/pld/BUILD/DB_DataObject_FormBuilder_Frontend-0.7.0 --offline --nodeps <br>
+DB_DataObject_FormBuilder_Frontend-0.7.0.tgz<br>
+Parsing of package.xml from <br>
+file &quot;/home/glen/tmp/pear/cache/package.xml&quot; failed<br>
+Cannot download non-local <br>
+package &quot;DB_DataObject_FormBuilder_Frontend-0.7.0.tgz&quot;<br>
+Package &quot;DB_DataObject_FormBuilder_Frontend-0.7.0.tgz&quot; is <br>
+not valid<br>
+install failed<br>
+$ ls -l /home/glen/tmp/pear/cache/package.xml <br>
+DB_DataObject_FormBuilder_Frontend-0.7.0.tgz<br>
+-rw-r--r--  1 glen glen 14545 Oct 10 <br>
+08:14 /home/glen/tmp/pear/cache/package.xml<br>
+-rw-rw-r--  1 glen glen 25960 Oct 10 08:18 <br>
+DB_DataObject_FormBuilder_Frontend-0.7.0.tgz</p>
+<p>ok, i hacked the source to display exception from &quot;Parsing <br>
+of package.xml&quot; line 227 of PackageFile.php: <br>
+print_r($pf-&gt;getValidationWarnings());:<br>
+Array<br>
+(<br>
+    [0] =&gt; Array<br>
+        (<br>
+            [code] =&gt; _unknownChannel<br>
+            [params] =&gt; Array<br>
+                (<br>
+                    [channel] =&gt; pearified.com<br>
+                )</p>
+<p>[package] =&gt; PEAR_PackageFile_v2<br>
+            [level] =&gt; error<br>
+            [time] =&gt; 1163015078.3213<br>
+            [context] =&gt;<br>
+            [message] =&gt; Unknown channel &quot;pearified.com&quot;<br>
+        )</p>
+<p>)</p>
+<p>ok. discover it then (but why i need it for local files? <br>
++ --packagingroot!)</p>
+<p>$ sudo pear channel-discover pearified.com<br>
+Adding Channel &quot;pearified.com&quot; succeeded<br>
+Discovery of channel &quot;pearified.com&quot; succeeded<br>
+$</p>
+<p>retry....</p>
+<p>$ pear -v  <br>
+install --packagingroot=/home/glen/rpm/pld/BUILD/DB_DataObject_FormBuilder_Frontend-0.7.0 --offline --nodeps <br>
+DB_DataObject_FormBuilder_Frontend-0.7.0.tgz<br>
+warning: <br>
+channel://pearified.com/DB_DataObject_FormBuilder_Frontend-0.7.0 <br>
+requires package &quot;pear/DB_DataObject_FormBuilder&quot; (version <br>
+&gt;= 1.0.0RC5)<br>
+warning: <br>
+channel://pearified.com/DB_DataObject_FormBuilder_Frontend-0.7.0 <br>
+requires package &quot;pear/Structures_Datagrid&quot; (version &gt;= <br>
+0.7.1)<br>
+warning: <br>
+channel://pearified.com/DB_DataObject_FormBuilder_Frontend-0.7.0 <br>
+requires package &quot;pear/HTML_Table&quot; (version &gt;= 1.7.3)<br>
+md5sum <br>
+ok: /home/glen/rpm/pld/BUILD/DB_DataObject_FormBuilder_Frontend-0.7.0/usr/share/doc/DB_DataObject_FormBuilder_Frontend/docs/DataObject.ini<br>
+md5sum <br>
+ok: /home/glen/rpm/pld/BUILD/DB_DataObject_FormBuilder_Frontend-0.7.0/usr/share/doc/DB_DataObject_FormBuilder_Frontend/docs/index.php<br>
+md5sum <br>
+ok: /home/glen/rpm/pld/BUILD/DB_DataObject_FormBuilder_Frontend-0.7.0/usr/share/doc/DB_DataObject_FormBuilder_Frontend/docs/LGPL.txt<br>
+md5sum <br>
+ok: /home/glen/rpm/pld/BUILD/DB_DataObject_FormBuilder_Frontend-0.7.0/usr/share/doc/DB_DataObject_FormBuilder_Frontend/docs/readme.txt<br>
+md5sum <br>
+ok: /home/glen/rpm/pld/BUILD/DB_DataObject_FormBuilder_Frontend-0.7.0/usr/share/pear/Pearified/DB/DataObject/FormBuilder/Frontend/AddRecord.php<br>
+md5sum <br>
+ok: /home/glen/rpm/pld/BUILD/DB_DataObject_FormBuilder_Frontend-0.7.0/usr/share/pear/Pearified/DB/DataObject/FormBuilder/Frontend/ChooseTable.php<br>
+md5sum <br>
+ok: /home/glen/rpm/pld/BUILD/DB_DataObject_FormBuilder_Frontend-0.7.0/usr/share/pear/Pearified/DB/DataObject/FormBuilder/Frontend/Controller.php<br>
+md5sum <br>
+ok: /home/glen/rpm/pld/BUILD/DB_DataObject_FormBuilder_Frontend-0.7.0/usr/share/pear/Pearified/DB/DataObject/FormBuilder/Frontend/DeleteRecords.php<br>
+md5sum <br>
+ok: /home/glen/rpm/pld/BUILD/DB_DataObject_FormBuilder_Frontend-0.7.0/usr/share/pear/Pearified/DB/DataObject/FormBuilder/Frontend/EditRecord.php<br>
+md5sum <br>
+ok: /home/glen/rpm/pld/BUILD/DB_DataObject_FormBuilder_Frontend-0.7.0/usr/share/pear/Pearified/DB/DataObject/FormBuilder/Frontend/LimitColumn.php<br>
+md5sum <br>
+ok: /home/glen/rpm/pld/BUILD/DB_DataObject_FormBuilder_Frontend-0.7.0/usr/share/pear/Pearified/DB/DataObject/FormBuilder/Frontend/ShowTable.php<br>
+md5sum <br>
+ok: /home/glen/rpm/pld/BUILD/DB_DataObject_FormBuilder_Frontend-0.7.0/usr/share/pear/Pearified/DB/DataObject/FormBuilder/Frontend/Search.php<br>
+md5sum <br>
+ok: /home/glen/rpm/pld/BUILD/DB_DataObject_FormBuilder_Frontend-0.7.0/usr/share/pear/Pearified/DB/DataObject/FormBuilder/Frontend.php<br>
+about to commit 39 file operations<br>
+successfully committed 39 file operations<br>
+ERROR: Adding package <br>
+pearified.com/DB_DataObject_FormBuilder_Frontend to <br>
+registry failed<br>
+$</p>
+</section>
+<section>
+<h3>[2006-11-08 19:54 UTC] glen at delfi dot ee</h3>
+<p>forgot to add PEAR version</p>
+<p>$ pear -V<br>
+PEAR Version: 1.5.0a1<br>
+PHP Version: 5.2.0<br>
+Zend Engine Version: 2.2.0<br>
+Running on: Linux builder-ac 2.6.13.5-1smp #1 SMP Thu Feb <br>
+9 02:45:39 EET 2006 i686</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

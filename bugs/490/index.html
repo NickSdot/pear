@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #490</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PHP &#187; <a href="package/Var_Dump/index.html">Var_Dump</a> &#187; Bug #490</h1>
+<p>Recursions not managed</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-12-24 12:29 UTC</td></tr>
+<tr><th>From</th><td>coil at strangebuzz dot com</td></tr>
+<tr><th>Assigned</th><td>fredericpoeydomenge</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Var_Dump/index.html">Var_Dump</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>2K + Easy PHP 1.7</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-12-24 12:29 UTC] coil at strangebuzz dot com</h3>
+<p>Description:<br>
+------------<br>
+When Dumping an object that contains cross reference, it bugs. ( because of recursions )</p>
+<p>Reproduce code:<br>
+---------------<br>
+class class1<br>
+{<br>
+	var $string = &#039;Kikoo1&#039;;<br>
+	<br>
+	var $Classe2Tab = array();</p>
+<p>function class1()<br>
+	{<br>
+		print($this-&gt;string);<br>
+	}<br>
+	<br>
+	function ajoutObject2()<br>
+	{<br>
+		$this-&gt;Classe2Tab[] = new class2($this);<br>
+	}<br>
+}</p>
+<p>class class2<br>
+{<br>
+	var $string = &#039;Kikoo2&#039;;<br>
+	<br>
+	var $Class1ObjectRef = null;<br>
+	<br>
+	function class2(&amp; $Class1Object)<br>
+	{<br>
+		$this-&gt;Class1ObjectRef = &amp; $Class1Object;<br>
+		print(&quot;contr class2&lt;br&gt;&quot;);<br>
+	}<br>
+	<br>
+	function class2_func()<br>
+	{<br>
+		print(&quot;class2_func()&lt;br&gt;&quot;);<br>
+		$this-&gt;Class1ObjectRef-&gt;class1_func();<br>
+	}	<br>
+}</p>
+<p>$obj1 = new class1();<br>
+$obj1-&gt;ajoutObject2();<br>
+$obj1-&gt;ajoutObject2();<br>
+$obj1-&gt;ajoutObject2();<br>
+$obj1-&gt;ajoutObject2();</p>
+<p>/*<br>
+print(&#039;&lt;pre&gt;&#039;);<br>
+print_r($obj1);<br>
+print(&#039;&lt;/pre&gt;&#039;);<br>
+* */</p>
+<p>Var_Dump::display($obj1);</p>
+<p>//Debug::DumpObj($obj1,&#039;$obj1&#039;);<br>
+//Debug::DumpArr($obj1,&#039;$obj1&#039;);</p>
+<p>Expected result:<br>
+----------------<br>
+Classe should manage recurcions as print_r function does.</p>
+<p>Actual result:<br>
+--------------<br>
+Make Apache crash !!</p>
+</section>
+<section>
+<h3>[2004-04-19 08:25 UTC] marceman at gmx dot at</h3>
+<p>Any Chance this gets fixed soon ?</p>
+</section>
+<section>
+<h3>[2004-04-28 14:41 UTC] frederic dot poeydomenge at free dot fr</h3>
+<p>Thank you for your bug report. This issue has been fixed<br>
+in the latest released version of the package, which you can download at <br>
+http://pear.php.net/packages.php</p>
+<p>Complete refactoring of the class in v0.9 : now the package directly captures the output of the var_dump function, by using output control functions, and so the recursion is managed through the use of var_dump.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

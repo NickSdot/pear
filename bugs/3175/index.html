@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3175</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_DNS/index.html">Net_DNS</a> &#187; Bug #3175</h1>
+<p>Invalid IPv6 addresses</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-12 15:54 UTC</td></tr>
+<tr><th>From</th><td>t dot jagel at web dot de</td></tr>
+<tr><th>Assigned</th><td>ekilfoil</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Net_DNS/index.html">Net_DNS</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.1</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-12 15:54 UTC] t dot jagel at web dot de</h3>
+<p>Description:<br>
+------------<br>
+The package Net_DNS returns invalid IPv6 addresses if they contain <br>
+multiple 0: sequences. The compression seems to compress every 0: <br>
+sequence. But it is only allowed to compress one seqence. <br>
+ <br>
+The resulting ip address for kite-www.ripe.net is 2001:610:24::a843::8, <br>
+which is wrong. (It contains two times &quot;::&quot;!) <br>
+The original address is: 2001:610:240:0:a843::8</p>
+<p>Reproduce code:<br>
+---------------<br>
+$ndr = new Net_DNS_Resolver();<br>
+$res = $ndr-&gt;search(&quot;kite-www.ripe.net&quot;,&quot;AAAA&quot;);<br>
+var_dump($res);</p>
+<p>Expected result:<br>
+----------------<br>
+host -a -v kite-www.ripe.net <br>
+Trying &quot;kite-www.ripe.net&quot; <br>
+;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 30593 <br>
+;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 5, <br>
+ADDITIONAL: 9 <br>
+ <br>
+;; QUESTION SECTION: <br>
+;kite-www.ripe.net.             IN      ANY <br>
+ <br>
+;; ANSWER SECTION: <br>
+kite-www.ripe.net.      172077  IN      A       193.0.0.214 <br>
+kite-www.ripe.net.      172086  IN      AAAA    2001:610:240:0:a843::8 <br>
+ <br>
+;; AUTHORITY SECTION: <br>
+ripe.net.               116998  IN      NS      sunic.sunet.se. <br>
+ripe.net.               116998  IN      NS      auth03.ns.uu.net. <br>
+ripe.net.               116998  IN      NS      ns-pri.ripe.net. <br>
+ripe.net.               116998  IN      NS      munnari.OZ.AU. <br>
+ripe.net.               116998  IN      NS      ns2.nic.fr. <br>
+ <br>
+;; ADDITIONAL SECTION: <br>
+ns2.nic.fr.             306856  IN      A       192.93.0.4 <br>
+ns2.nic.fr.             306856  IN      AAAA    2001:660:3005:1::1:2 <br>
+sunic.sunet.se.         58684   IN      A       192.36.125.2 <br>
+auth03.ns.uu.net.       1457    IN      A       198.6.1.83 <br>
+ns-pri.ripe.net.        122058  IN      A       193.0.0.195 <br>
+ns-pri.ripe.net.        122058  IN      AAAA    2001:610:240:0:53::3 <br>
+munnari.OZ.AU.          136853  IN      A       128.250.1.21 <br>
+munnari.OZ.AU.          136853  IN      A       128.250.22.2 <br>
+munnari.OZ.AU.          1364    IN      AAAA    2001:388:c02:4000::1:21 <br>
+ <br>
+Received 386 bytes from 192.168.81.2#53 in 33 ms</p>
+<p>Actual result:<br>
+--------------<br>
+object(net_dns_rr_aaaa)(7) { <br>
+  [&quot;name&quot;]=&gt; <br>
+  string(17) &quot;kite-www.ripe.net&quot; <br>
+  [&quot;type&quot;]=&gt; <br>
+  string(4) &quot;AAAA&quot; <br>
+  [&quot;class&quot;]=&gt; <br>
+  string(2) &quot;IN&quot; <br>
+  [&quot;ttl&quot;]=&gt; <br>
+  int(169605) <br>
+  [&quot;rdlength&quot;]=&gt; <br>
+  int(16) <br>
+  [&quot;rdata&quot;]=&gt; <br>
+  string(16) &quot; @¨&quot; <br>
+  [&quot;address&quot;]=&gt; <br>
+  string(20) &quot;2001:610:24::a843::8&quot; <br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

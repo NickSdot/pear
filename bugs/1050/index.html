@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1050</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail/index.html">Mail</a> &#187; Bug #1050</h1>
+<p>Missing EHLO/HELO string</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-22 08:43 UTC</td></tr>
+<tr><th>From</th><td>jacob dot rief at tiscover dot com</td></tr>
+<tr><th>Assigned</th><td>jon</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail/index.html">Mail</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-22 08:43 UTC] jacob dot rief at tiscover dot com</h3>
+<p>Description:<br>
+------------<br>
+The Mail_smtp class does not allow to specify an EHLO or HELO string in Mail::factory initialization. Since many receiving smtp-servers do not allow this string to be &#039;localhost&#039;, Mail_smtp is unable to deliver Mail to them. Also, sending &#039;localhost&#039; HELO string is not RFC821 conform.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$mailer = Mail::factory(&quot;smtp&quot;, array(&quot;host&quot;=&gt;$smtphost, &quot;port&quot;=&gt;25, &quot;auth&quot;=&gt;false));<br>
+$mailer-&gt;send($entry[&quot;email&quot;], $headers, $body);</p>
+<p>Actual result:<br>
+--------------<br>
+This small patch will add this required faeture:</p>
+<p>--- Mail/smtp.php.orig       2003-08-22 16:37:38.000000000 +0200<br>
++++ Mail/smtp.php    2004-03-22 09:12:55.000000000 +0100<br>
+@@ -40,6 +40,12 @@<br>
+     var $port = 25;</p>
+<p>/**<br>
++     * The SMTP EHLO or HELO.<br>
++     * @var    string<br>
++     */<br>
++    var $localhost = &#039;localhost&#039;;<br>
++<br>
++       /**<br>
+      * Whether or not to attempt to authenticate to the SMTP server.<br>
+      * @var boolean<br>
+      */<br>
+@@ -79,6 +85,7 @@<br>
+     {<br>
+         if (isset($params[&#039;host&#039;])) $this-&gt;host = $params[&#039;host&#039;];<br>
+         if (isset($params[&#039;port&#039;])) $this-&gt;port = $params[&#039;port&#039;];<br>
++        if (isset($params[&#039;localhost&#039;])) $this-&gt;localhost = $params[&#039;localhost&#039;];<br>
+         if (isset($params[&#039;auth&#039;])) $this-&gt;auth = $params[&#039;auth&#039;];<br>
+         if (isset($params[&#039;username&#039;])) $this-&gt;username = $params[&#039;username&#039;];<br>
+         if (isset($params[&#039;password&#039;])) $this-&gt;password = $params[&#039;password&#039;];<br>
+@@ -112,7 +119,7 @@<br>
+     {<br>
+         include_once &#039;Net/SMTP.php&#039;;</p>
+<p>-        if (!($smtp = new Net_SMTP($this-&gt;host, $this-&gt;port))) { return new PEAR_Error(&#039;unable to instantiate Net_SMTP object&#039;); }<br>
++        if (!($smtp = new Net_SMTP($this-&gt;host, $this-&gt;port, $this-&gt;localhost))) { return new PEAR_Error(&#039;unable to instantiate Net_SMTP object&#039;); }<br>
+         if (PEAR::isError($smtp-&gt;connect())) { return new PEAR_Error(&#039;unable to connect to smtp server &#039; . $this-&gt;host . &#039;:&#039; . $this-&gt;port); }</p>
+<p>if ($this-&gt;auth) {</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

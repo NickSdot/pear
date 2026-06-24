@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8208</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PHP &#187; <a href="package/PHP_Compat/index.html">PHP_Compat</a> &#187; Bug #8208</h1>
+<p>is_callable missing in php 4.0.4, 4.0.5</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8208</th><td>is_callable missing in php 4.0.4, 4.0.5</td></tr>
+<tr><th>Submitted</th><td>2006-07-13 14:19 UTC</td></tr>
+<tr><th>From</th><td>giunta dot gaetano at sea-aeroportimilano dot it</td></tr>
+<tr><th>Assigned</th><td>arpad</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PHP_Compat/index.html">PHP_Compat</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.2</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>1.6.0a1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-13 14:19 UTC] giunta dot gaetano at sea-aeroportimilano dot it</h3>
+<p>Description:<br>
+------------<br>
+Maybe not the most important function in the world, but I found a very old install of PHP 4.0.4 hanging around (in production!), so I whipped up a replacement. Here it is, complete w. unit test</p>
+<p>&lt;?php<br>
+/**<br>
+ * Replace function is_callable()<br>
+ *<br>
+ * @category    PHP<br>
+ * @package     PHP_Compat<br>
+ * @link        http://php.net/function.is_callable<br>
+ * @author      Gaetano Giunta &lt;giunta.gaetano@sea-aeroportimilano.it&gt;<br>
+ * @version     $Revision: 0.1 $<br>
+ * @since       PHP 4.0.6<br>
+ * @require     PHP 4.0.0 (true, false, etc...)<br>
+ * @todo        add the 3rd parameter syntax...<br>
+ */<br>
+if (!function_exists(&#039;is_callable&#039;)) {<br>
+    function is_callable($var, $syntax_only=false)<br>
+    {<br>
+        if ($syntax_olny)<br>
+        {<br>
+            /* from The Manual:<br>
+            * If the syntax_only argument is TRUE the function only verifies<br>
+            * that var might be a function or method. It will only reject simple<br>
+            * variables that are not strings, or an array that does not have a<br>
+            * valid structure to be used as a callback. The valid ones are<br>
+            * supposed to have only 2 entries, the first of which is an object<br>
+            * or a string, and the second a string<br>
+            */<br>
+            return (is_string($var) || (is_array($var) &amp;&amp; count($var) == 2 &amp;&amp; is_string(end($var)) &amp;&amp; (is_string(reset($var)) || is_object(reset($var)))));<br>
+        }<br>
+        else<br>
+        {<br>
+            if (is_string($var))<br>
+            {<br>
+                return function_exists($var);<br>
+            }<br>
+            else if (is_array($var) &amp;&amp; count($var) == 2 &amp;&amp; is_string($method = end($var)))<br>
+            {<br>
+                $obj = reset($var);<br>
+                if (is_string($obj))<br>
+                {<br>
+                    $methods = get_class_methods($obj);<br>
+                    return (bool)(is_array($methods) &amp;&amp; in_array(strtolower($method), $methods));<br>
+                }<br>
+                else if (is_object($obj))<br>
+                {<br>
+                    return method_exists($obj, $method);<br>
+                }<br>
+            }<br>
+            return false;<br>
+        }<br>
+    }<br>
+}</p>
+<p>?&gt;</p>
+<p>Test script:<br>
+---------------<br>
+include(&#039;is_callable.php&#039;);<br>
+include(&#039;xmlrpc.inc&#039;);<br>
+$a = new xmlrpcval(&#039;hello world&#039;);</p>
+<p>var_dump(is_callable(1));<br>
+var_dump(is_callable(false));<br>
+var_dump(is_callable(array(&#039;xmlrpcval&#039;, &#039;serialize&#039;, &#039;me&#039;)));<br>
+var_dump(is_callable(array(&#039;xmlrpcvaz&#039;, &#039;serialize&#039;)));<br>
+var_dump(is_callable(array(&#039;xmlrpcval&#039;, &#039;serializez&#039;)));<br>
+var_dump(is_callable(array($a, &#039;serializez&#039;)));<br>
+var_dump(is_callable(array($a, &#039;serialize&#039;, &#039;me&#039;)));</p>
+<p>var_dump(is_callable(&#039;is_callable&#039;));<br>
+var_dump(is_callable(&#039;is_cAllable&#039;));<br>
+var_dump(is_callable(array(&#039;xmlrpcval&#039;, &#039;serialize&#039;)));<br>
+var_dump(is_callable(array(&#039;Xmlrpcval&#039;, &#039;serialize&#039;)));<br>
+var_dump(is_callable(array(&#039;Xmlrpcval&#039;, &#039;Serialize&#039;)));<br>
+var_dump(is_callable(array($a, &#039;serialize&#039;)));<br>
+var_dump(is_callable(array($a, &#039;Serialize&#039;)));</p>
+<p>Expected result:<br>
+----------------<br>
+(tested against php 4.4...)</p>
+<p>bool(false)<br>
+bool(false)<br>
+bool(false)<br>
+bool(false)<br>
+bool(false)<br>
+bool(false)<br>
+bool(false) <br>
+bool(true)<br>
+bool(true)<br>
+bool(true)<br>
+bool(true)<br>
+bool(true)<br>
+bool(true)<br>
+bool(true)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

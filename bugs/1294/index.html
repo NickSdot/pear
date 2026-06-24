@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1294</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Geo/index.html">Net_Geo</a> &#187; Bug #1294</h1>
+<p>Call-time pass-by-reference has been deprecated</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-27 14:28 UTC</td></tr>
+<tr><th>From</th><td>peter dot albertsson at moreforyou dot se</td></tr>
+<tr><th>Assigned</th><td>graeme</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Geo/index.html">Net_Geo</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>winXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-27 14:28 UTC] peter dot albertsson at moreforyou dot se</h3>
+<p>Description:<br>
+------------<br>
+Installed the Net_Geo package today (2004-04-27) with the command &#039;pear install&#039;.</p>
+<p>PACKAGE        VERSION STATE<br>
+Archive_Tar    1.1     stable<br>
+Cache          1.5.4   stable<br>
+Console_Getopt 1.0     stable<br>
+HTML_Common    1.2.1   stable<br>
+HTML_QuickForm 3.2.2   stable<br>
+HTTP           1.2.3   stable<br>
+HTTP_Request   1.2     stable<br>
+I18Nv2         0.3.0   alpha<br>
+Net_Geo        1.0     stable<br>
+Net_Socket     1.0.2   stable<br>
+Net_URL        1.0.11  stable<br>
+PEAR           1.3b1   beta<br>
+XML_RPC        1.0.4   stable</p>
+<p>This bug has been reported before, and is said to have been fixed, but it is not.</p>
+<p>Warning: Call-time pass-by-reference has been deprecated - argument passed by value; If you would like to pass it by reference, modify the declaration of fsockopen(). If you would like to enable call-time pass-by-reference, you can set allow_call_time_pass_reference to true in your INI file. However, future versions may not support this any longer. in C:\php\PEAR\PEARLib\Net\Geo.php on line 567</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php</p>
+<p>require_once(&#039;Net/Geo.php&#039;);</p>
+<p>// new Net_Geo object<br>
+$net_geo = new Net_Geo();</p>
+<p>// fetch the client&#039;s IP<br>
+$ip = &#039;212.209.185.194&#039;;</p>
+<p>// fetch information array from net_geo<br>
+$results = $net_geo-&gt;getRecord($ip);</p>
+<p>// output<br>
+echo &quot;Single IP results:&lt;br /&gt;&quot;;<br>
+echo &quot;&lt;pre&gt;&quot;;<br>
+print_r($results);<br>
+echo &quot;&lt;/pre&gt;&quot;;</p>
+<p>// example array of multiple IPs<br>
+$arr_ips = array<br>
+(<br>
+  gethostbyname(&quot;www.google.com&quot;),<br>
+  gethostbyname(&quot;www.heise.de&quot;),<br>
+  gethostbyname(&quot;www.college.ch&quot;)<br>
+);</p>
+<p>// fetch information array from net_geo<br>
+$results = $net_geo-&gt;getRecord($arr_ips);</p>
+<p>// output<br>
+echo &quot;Multiple IP results:&lt;br /&gt;&quot;;<br>
+echo &quot;&lt;pre&gt;&quot;;<br>
+print_r($results);<br>
+echo &quot;&lt;/pre&gt;&quot;;</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Array<br>
+(<br>
+    [TARGET] =&gt; 212.209.185.194<br>
+    [NAME] =&gt; NATURES-OWN-SE<br>
+    [NUMBER] =&gt; 212.209.185.192 - 212.209.185.223<br>
+    [CITY] =&gt; MOLNDAL<br>
+    [STATE] =&gt; GOTEBORG OCH BOHUS (county)<br>
+    [COUNTRY] =&gt; SE<br>
+    [LAT] =&gt; 57.67<br>
+    [LONG] =&gt; 12.00<br>
+    [LAT_LONG_GRAN] =&gt; City<br>
+    [NIC] =&gt; RIPE<br>
+    [LOOKUP_TYPE] =&gt; Block Allocation<br>
+    [DOMAIN_GUESS] =&gt; naturesown.se<br>
+    [STATUS] =&gt; OK<br>
+)</p>
+<p>Multiple IP results:</p>
+<p>Array<br>
+(<br>
+    [0] =&gt; Array<br>
+        (<br>
+            [TARGET] =&gt; 216.239.51.99<br>
+            [NAME] =&gt; GOOGLE<br>
+            [NUMBER] =&gt; 216.239.32.0 - 216.239.63.255<br>
+            [CITY] =&gt; MOUNTAIN VIEW<br>
+            [STATE] =&gt; CALIFORNIA<br>
+            [COUNTRY] =&gt; US<br>
+            [LAT] =&gt; 37.41<br>
+            [LONG] =&gt; -122.08<br>
+            [LAT_LONG_GRAN] =&gt; City<br>
+            [LAST_UPDATED] =&gt; 11-May-2001<br>
+            [NIC] =&gt; ARIN<br>
+            [LOOKUP_TYPE] =&gt; Block Allocation<br>
+            [DOMAIN_GUESS] =&gt; google.com<br>
+            [STATUS] =&gt; OK<br>
+        )</p>
+<p>[1] =&gt; Array<br>
+        (<br>
+            [TARGET] =&gt; 193.99.144.71<br>
+            [NAME] =&gt; HEISE-NET<br>
+            [NUMBER] =&gt; 193.99.144.0 - 193.99.144.255<br>
+            [CITY] =&gt; HANOVER<br>
+            [STATE] =&gt; LOWER SAXONY (state)<br>
+            [COUNTRY] =&gt; DE<br>
+            [LAT] =&gt; 52.40<br>
+            [LONG] =&gt; 9.73<br>
+            [LAT_LONG_GRAN] =&gt; City<br>
+            [NIC] =&gt; RIPE<br>
+            [LOOKUP_TYPE] =&gt; Block Allocation<br>
+            [DOMAIN_GUESS] =&gt; heise.de<br>
+            [STATUS] =&gt; OK<br>
+        )</p>
+<p>[2] =&gt; Array<br>
+        (<br>
+            [TARGET] =&gt; 69.93.118.202<br>
+            [NAME] =&gt; IANA-NETBLOCK-69<br>
+            [NUMBER] =&gt; 69.0.0.0 - 69.255.255.255<br>
+            [COUNTRY] =&gt; AU<br>
+            [LAT] =&gt; -25.00<br>
+            [LONG] =&gt; 135.00<br>
+            [LAT_LONG_GRAN] =&gt; Country<br>
+            [NIC] =&gt; APNIC<br>
+            [LOOKUP_TYPE] =&gt; Block Allocation<br>
+            [DOMAIN_GUESS] =&gt; apnic.net<br>
+            [STATUS] =&gt; OK<br>
+        )</p>
+<p>)</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;br /&gt;<br>
+&lt;b&gt;Warning&lt;/b&gt;:  Call-time pass-by-reference has been deprecated - argument passed by value;  If you would like to pass it by reference, modify the declaration of fsockopen().  If you would like to enable call-time pass-by-reference, you can set allow_call_time_pass_reference to true in your INI file.  However, future versions may not support this any longer.  in &lt;b&gt;C:\php\PEAR\PEARLib\Net\Geo.php&lt;/b&gt; on line &lt;b&gt;567&lt;/b&gt;&lt;br /&gt;<br>
+&lt;br /&gt;<br>
+&lt;b&gt;Warning&lt;/b&gt;:  Call-time pass-by-reference has been deprecated - argument passed by value;  If you would like to pass it by reference, modify the declaration of fsockopen().  If you would like to enable call-time pass-by-reference, you can set allow_call_time_pass_reference to true in your INI file.  However, future versions may not support this any longer.  in &lt;b&gt;C:\php\PEAR\PEARLib\Net\Geo.php&lt;/b&gt; on line &lt;b&gt;567&lt;/b&gt;&lt;br /&gt;<br>
+Single IP results:&lt;br /&gt;&lt;pre&gt;Array<br>
+(<br>
+    [TARGET] =&gt; 212.209.185.194<br>
+    [NAME] =&gt; NATURES-OWN-SE<br>
+    [NUMBER] =&gt; 212.209.185.192 - 212.209.185.223<br>
+    [CITY] =&gt; MOLNDAL<br>
+    [STATE] =&gt; GOTEBORG OCH BOHUS (county)<br>
+    [COUNTRY] =&gt; SE<br>
+    [LAT] =&gt; 57.67<br>
+    [LONG] =&gt; 12.00<br>
+    [LAT_LONG_GRAN] =&gt; City<br>
+    [NIC] =&gt; RIPE<br>
+    [LOOKUP_TYPE] =&gt; Block Allocation<br>
+    [DOMAIN_GUESS] =&gt; naturesown.se<br>
+    [STATUS] =&gt; OK<br>
+)</p>
+<p>&lt;/pre&gt;Multiple IP results:&lt;br /&gt;&lt;pre&gt;Array<br>
+(<br>
+    [0] =&gt; Array<br>
+        (<br>
+            [TARGET] =&gt; 216.239.51.99<br>
+            [NAME] =&gt; GOOGLE<br>
+            [NUMBER] =&gt; 216.239.32.0 - 216.239.63.255<br>
+            [CITY] =&gt; MOUNTAIN VIEW<br>
+            [STATE] =&gt; CALIFORNIA<br>
+            [COUNTRY] =&gt; US<br>
+            [LAT] =&gt; 37.41<br>
+            [LONG] =&gt; -122.08<br>
+            [LAT_LONG_GRAN] =&gt; City<br>
+            [LAST_UPDATED] =&gt; 11-May-2001<br>
+            [NIC] =&gt; ARIN<br>
+            [LOOKUP_TYPE] =&gt; Block Allocation<br>
+            [DOMAIN_GUESS] =&gt; google.com<br>
+            [STATUS] =&gt; OK<br>
+        )</p>
+<p>[1] =&gt; Array<br>
+        (<br>
+            [TARGET] =&gt; 193.99.144.71<br>
+            [NAME] =&gt; HEISE-NET<br>
+            [NUMBER] =&gt; 193.99.144.0 - 193.99.144.255<br>
+            [CITY] =&gt; HANOVER<br>
+            [STATE] =&gt; LOWER SAXONY (state)<br>
+            [COUNTRY] =&gt; DE<br>
+            [LAT] =&gt; 52.40<br>
+            [LONG] =&gt; 9.73<br>
+            [LAT_LONG_GRAN] =&gt; City<br>
+            [NIC] =&gt; RIPE<br>
+            [LOOKUP_TYPE] =&gt; Block Allocation<br>
+            [DOMAIN_GUESS] =&gt; heise.de<br>
+            [STATUS] =&gt; OK<br>
+        )</p>
+<p>[2] =&gt; Array<br>
+        (<br>
+            [TARGET] =&gt; 69.93.118.202<br>
+            [NAME] =&gt; IANA-NETBLOCK-69<br>
+            [NUMBER] =&gt; 69.0.0.0 - 69.255.255.255<br>
+            [COUNTRY] =&gt; AU<br>
+            [LAT] =&gt; -25.00<br>
+            [LONG] =&gt; 135.00<br>
+            [LAT_LONG_GRAN] =&gt; Country<br>
+            [NIC] =&gt; APNIC<br>
+            [LOOKUP_TYPE] =&gt; Block Allocation<br>
+            [DOMAIN_GUESS] =&gt; apnic.net<br>
+            [STATUS] =&gt; OK<br>
+        )</p>
+<p>)<br>
+&lt;/pre&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

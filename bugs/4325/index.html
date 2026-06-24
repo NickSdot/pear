@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4325</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_Serializer/index.html">XML_Serializer</a> &#187; Bug #4325</h1>
+<p>Can&#039;t serialize an array with multiple identical keys</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-11 07:23 UTC</td></tr>
+<tr><th>From</th><td>consulting at jtroiano dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/XML_Serializer/index.html">XML_Serializer</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.7</td></tr>
+<tr><th>OS</th><td>Linux 2.4.25-ow1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-11 07:23 UTC] consulting at jtroiano dot com</h3>
+<p>Description:<br>
+------------<br>
+PEAR.php,v 1.80<br>
+Serializer.php,v 1.34<br>
+Util.php,v 1.24</p>
+<p>When attempting to serialize an associative array <br>
+containing multiple keys of the same name (in this case <br>
+&#039;field&#039;), only the last key/value pair is returned as an <br>
+XML element.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$this-&gt;_xmlQuery = array(<br>
+	&quot;requestby&quot;	=&gt;	array(<br>
+		&quot;office&quot;	=&gt; &quot;OfficeID&quot;,<br>
+		&quot;branch&quot;	=&gt;	&quot;BranchID&quot;,<br>
+		&quot;webid&quot;	=&gt;	&quot;WebID&quot;,<br>
+		&quot;password&quot; =&gt; &quot;Password&quot;<br>
+	),<br>
+	&quot;query&quot;   =&gt;  array(<br>
+		&quot;querytype&quot;	=&gt; &quot;customfieldlistbywhere&quot;,<br>
+		&quot;querydata&quot;	=&gt; &quot;SQL WHERE clause&quot;,<br>
+		&quot;fieldlist&quot;	=&gt; array(<br>
+			&quot;field&quot; =&gt; &quot;cl_class&quot;,<br>
+			&quot;field&quot; =&gt; &quot;mls_num&quot;,<br>
+			&quot;field&quot; =&gt; &quot;lp_list_price&quot;,<br>
+			&quot;field&quot; =&gt; &quot;sf_square_feet&quot;<br>
+		)<br>
+	)<br>
+);<br>
+$result = $serializer-&gt;serialize($this-&gt;_xmlQuery);</p>
+<p>Expected result:<br>
+----------------<br>
+Expected to have multiple &lt;field&gt; elements as children <br>
+to the &lt;fieldlist&gt; element.  The &lt;field&gt; elements tell <br>
+the database server the exact subset of data to return <br>
+in reponse to the request.</p>
+<p>FWIW, I tried tweaking the loop structures w/in <br>
+_serializeArray() myself, to no avail.  Wound up hand-<br>
+coding the XML for the contents of &lt;fieldlist&gt;, setting <br>
+replaceEntities to XML_SERIALIZER_ENTITIES_NONE, and <br>
+calling htmlspecialchars() on the string passed into <br>
+&lt;querydata&gt; - as a work-around.  It works fine that way.</p>
+<p>The package itself has greatly simplified my task. <br>
+Thanks for the good work.</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;fieldlist&gt;&lt;field&gt;sf_square_feet&lt;/field&gt;&lt;/fieldlist&gt;</p>
+</section>
+<section>
+<h3>[2005-05-11 22:22 UTC] consulting at jtroiano dot com</h3>
+<p>Ah, I see.  Each assignment was overwriting the <br>
+previous.  I guess my &quot;work-around&quot; is actually the only <br>
+way to build such a structure from an array.</p>
+<p>Sorry for wasting your time.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

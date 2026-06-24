@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7692</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Socket/index.html">Net_Socket</a> &#187; Bug #7692</h1>
+<p>readLine exits silently on error</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-05-22 10:58 UTC</td></tr>
+<tr><th>From</th><td>jason dot e dot stewart at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>chagenbu</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Socket/index.html">Net_Socket</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.2</td></tr>
+<tr><th>OS</th><td>Windows NT</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-05-22 10:58 UTC] jason dot e dot stewart at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+because readLine() calls @fgets(...) any error will cause the function to exit silently with no trace of what happened.</p>
+<p>This happens if max_execution_time is set low and there is a long process at the other end of the socket. This caused a really dificult to trace error. Because the error was a fatal error my custom error handler didn&#039;t even catch it...</p>
+<p>Why is @fgets() called and not just fgets()??</p>
+</section>
+<section>
+<h3>[2006-05-22 11:01 UTC] jason dot e dot stewart at gmail dot com</h3>
+<p>this bug is linked to BUG# 7691</p>
+</section>
+<section>
+<h3>[2006-05-22 18:05 UTC] chagenbu at php dot net</h3>
+<p>Well, not everyone is using a custom error handler that would catch warnings. For some scripts, if a warning was generated (say a request times out), they might just want to get back a return false and redirect somewhere else - but oops, headers have already been sent.</p>
+<p>Since fgets() will only ever generate a warning, not a fatal error (by itself), we silence it.</p>
+</section>
+<section>
+<h3>[2006-05-23 05:24 UTC] jason dot e dot stewart at gmail dot com</h3>
+<p>Maybe I was unclear.</p>
+<p>When the socket read exceeds the max_execution_time setting it causes a FATAL ERROR - this error is discarded  because of @fgets():</p>
+<p>PHP Fatal Error: maximum execution time of 30 secs exceeded in c:\Program Files\php5\PEAR\Net\Socket.php on line 448</p>
+<p>My script exits completely because of this error - and nothing I do can trap it - so I am clueless what is happening.</p>
+<p>I was only able to get the above text by removing the &#039;@&#039; operator.</p>
+<p>Discarding warnings is one thing - but discarding errors is a righteous pain in the a**...</p>
+</section>
+<section>
+<h3>[2006-05-26 18:18 UTC] chagenbu at php dot net</h3>
+<p>Okay, I did misunderstand you. I have very mixed feelings about this. On the one hand, silencing a fatal error is never a good thing - completely with you on that. However there are probably a ton of applications and packages out there that expect Net_Socket not to generate warnings, thus potentially breaking header() calls, or generally mucking things up.</p>
+<p>I&#039;m not sure what the answer is here. I wonder what would happen if we called ob_start() before the fgets/fread calls in question, assigned the data instead of returning it, then ob_end_clean(), finally return the result. That&#039;d effectively silence warnings still; the question is if it&#039;d silence the fatal error. Would you be willing to test this?</p>
+</section>
+<section>
+<h3>[2006-05-27 17:02 UTC] jason dot e dot stewart at gmail dot com</h3>
+<p>yes, I still have my application set up on the test server. It would be easy to test. Send my a patch and I&#039;ll try it out.</p>
+</section>
+<section>
+<h3>[2006-05-29 01:44 UTC] chagenbu at php dot net</h3>
+<p>Here you are:</p>
+<p>Index: Socket.php<br>
+===================================================================<br>
+RCS file: /repository/pear/Net_Socket/Socket.php,v<br>
+retrieving revision 1.25<br>
+diff -u -r1.25 Socket.php<br>
+--- Socket.php  15 Nov 2005 03:48:06 -0000      1.25<br>
++++ Socket.php  29 May 2006 01:44:26 -0000<br>
+@@ -441,14 +441,17 @@<br>
+             return $this-&gt;raiseError(&#039;not connected&#039;);<br>
+         }</p>
+<p>+        ob_start();<br>
+         $line = &#039;&#039;;<br>
+         $timeout = time() + $this-&gt;timeout;<br>
+         while (!feof($this-&gt;fp) &amp;&amp; (!$this-&gt;timeout || time() &lt; $timeout)) {<br>
+-            $line .= @fgets($this-&gt;fp, $this-&gt;lineLength);<br>
++            $line .= fgets($this-&gt;fp, $this-&gt;lineLength);<br>
+             if (substr($line, -1) == &quot;\n&quot;) {<br>
++                ob_end_clean();<br>
+                 return rtrim($line, &quot;\r\n&quot;);<br>
+             }<br>
+         }<br>
++        ob_end_clean();<br>
+         return $line;<br>
+     }</p>
+</section>
+<section>
+<h3>[2006-06-02 09:14 UTC] jason dot e dot stewart at gmail dot com</h3>
+<p>yup, that does the trick for me.</p>
+<p>without the @fgets(), the error gets propagated.</p>
+<p>Thanks.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

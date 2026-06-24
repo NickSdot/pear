@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9633</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_Serializer/index.html">XML_Serializer</a> &#187; Bug #9633</h1>
+<p>Array indexes are not leveled.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-12-15 22:52 UTC</td></tr>
+<tr><th>From</th><td>admin at singlesburg dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/XML_Serializer/index.html">XML_Serializer</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-12-15 22:52 UTC] admin at singlesburg dot com</h3>
+<p>Description:<br>
+------------<br>
+When I import my XML doc into multi dimensional array, sinlge element index is not leveled as multiple elements indexes.</p>
+<p>For example, in my XML, I have a single element as:<br>
+&lt;subitems&gt;<br>
+&lt;msulabel&gt;Index Page&lt;/msulabel&gt;<br>
+&lt;msufilename&gt;index.php&lt;/msufilename&gt;<br>
+&lt;/subitems&gt;</p>
+<p>this will generate an array without an index key, but when I have multiple elements as:</p>
+<p>&lt;subitems&gt;<br>
+&lt;msulabel&gt;My Info&lt;/msulabel&gt;<br>
+&lt;msufilename&gt;my_info.php?mm_id=6&lt;/msufilename&gt;<br>
+&lt;/subitems&gt;<br>
+&lt;subitems&gt;<br>
+&lt;msulabel&gt;My Login&lt;/msulabel&gt;<br>
+&lt;msufilename&gt;my_login.php?mm_id=6&lt;/msufilename&gt;<br>
+&lt;/subitems&gt;</p>
+<p>this will generate multiple index keys. The problem is that when I am building my array to export, it looks fine, but when I import, original first index (0) for a single array, it won&#039;t show up.</p>
+<p>This cause a problem for me when I use foreach or while loops, because, loop expect a multi dimensional array.</p>
+<p>Thank you.<br>
+Nizzy</p>
+<p>Test script:<br>
+---------------<br>
+$unserializer = &amp;new XML_Unserializer();<br>
+$unserializer-&gt;unserialize($xmldoc, true);   <br>
+$menu_arr = $unserializer-&gt;getUnserializedData();</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;?xml version=&quot;1.0&quot;?&gt;<br>
+&lt;Menus&gt;<br>
+	&lt;subitems&gt;<br>
+		&lt;mmuid&gt;1&lt;/mmuid&gt;<br>
+		&lt;mmulabel&gt;Main Menu&lt;/mmulabel&gt;<br>
+		&lt;submenus&gt;<br>
+			&lt;subitems&gt;<br>
+				&lt;msulabel&gt;Index Page&lt;/msulabel&gt;<br>
+				&lt;msufilename&gt;index.php&lt;/msufilename&gt;<br>
+			&lt;/subitems&gt;<br>
+		&lt;/submenus&gt;<br>
+	&lt;/subitems&gt;<br>
+	&lt;subitems&gt;<br>
+		&lt;mmuid&gt;2&lt;/mmuid&gt;<br>
+		&lt;mmulabel&gt;My Control Panel&lt;/mmulabel&gt;<br>
+		&lt;submenus&gt;<br>
+			&lt;subitems&gt;<br>
+				&lt;msulabel&gt;My Info&lt;/msulabel&gt;<br>
+				&lt;msufilename&gt;my_info.php?mm_id=6&lt;/msufilename&gt;<br>
+			&lt;/subitems&gt;<br>
+			&lt;subitems&gt;<br>
+				&lt;msulabel&gt;My Login&lt;/msulabel&gt;<br>
+				&lt;msufilename&gt;my_login.php?mm_id=6&lt;/msufilename&gt;<br>
+			&lt;/subitems&gt;<br>
+........................<br>
+........................</p>
+<p>Array<br>
+(<br>
+    [subitems] =&gt; Array<br>
+        (<br>
+            [0] =&gt; Array<br>
+                (<br>
+                    [mmuid] =&gt; 1<br>
+                    [mmulabel] =&gt; Main Menu<br>
+                    [submenus] =&gt; Array<br>
+                        (<br>
+                            [subitems] =&gt; Array<br>
+                                (<br>
+                                    [0] =&gt; Array<br>
+                                        (<br>
+                                            [msulabel] =&gt; Index Page<br>
+                                            [msufilename] =&gt; index.php<br>
+                                        )<br>
+                                )<br>
+                        )<br>
+                )</p>
+<p>[1] =&gt; Array<br>
+                (<br>
+                    [mmuid] =&gt; 2<br>
+                    [mmulabel] =&gt; My Control Panel<br>
+                    [submenus] =&gt; Array<br>
+                        (<br>
+                            [subitems] =&gt; Array<br>
+                                (<br>
+                                    [0] =&gt; Array<br>
+                                        (<br>
+                                            [msulabel] =&gt; My Info<br>
+                                            [msufilename] =&gt; my_info.php?mm_id=6<br>
+                                        )</p>
+<p>[1] =&gt; Array<br>
+                                        (<br>
+                                            [msulabel] =&gt; My Login<br>
+                                            [msufilename] =&gt; my_login.php?mm_id=6<br>
+                                        )<br>
+........................<br>
+........................</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;?xml version=&quot;1.0&quot;?&gt;<br>
+&lt;Menus&gt;<br>
+	&lt;subitems&gt;<br>
+		&lt;mmuid&gt;1&lt;/mmuid&gt;<br>
+		&lt;mmulabel&gt;Main Menu&lt;/mmulabel&gt;<br>
+		&lt;submenus&gt;<br>
+			&lt;subitems&gt;<br>
+				&lt;msulabel&gt;Index Page&lt;/msulabel&gt;<br>
+				&lt;msufilename&gt;index.php&lt;/msufilename&gt;<br>
+			&lt;/subitems&gt;<br>
+		&lt;/submenus&gt;<br>
+	&lt;/subitems&gt;<br>
+	&lt;subitems&gt;<br>
+		&lt;mmuid&gt;2&lt;/mmuid&gt;<br>
+		&lt;mmulabel&gt;My Control Panel&lt;/mmulabel&gt;<br>
+		&lt;submenus&gt;<br>
+			&lt;subitems&gt;<br>
+				&lt;msulabel&gt;My Info&lt;/msulabel&gt;<br>
+				&lt;msufilename&gt;my_info.php?mm_id=6&lt;/msufilename&gt;<br>
+			&lt;/subitems&gt;<br>
+			&lt;subitems&gt;<br>
+				&lt;msulabel&gt;My Login&lt;/msulabel&gt;<br>
+				&lt;msufilename&gt;my_login.php?mm_id=6&lt;/msufilename&gt;<br>
+			&lt;/subitems&gt;<br>
+........................<br>
+........................</p>
+<p>Array<br>
+(<br>
+    [subitems] =&gt; Array<br>
+        (<br>
+            [0] =&gt; Array<br>
+                (<br>
+                    [mmuid] =&gt; 1<br>
+                    [mmulabel] =&gt; Main Menu<br>
+                    [submenus] =&gt; Array<br>
+                        (<br>
+                            [subitems] =&gt; Array<br>
+                                (<br>
+                                    [msulabel] =&gt; Index Page<br>
+                                    [msufilename] =&gt; index.php<br>
+                                )<br>
+                        )<br>
+                )</p>
+<p>[1] =&gt; Array<br>
+                (<br>
+                    [mmuid] =&gt; 2<br>
+                    [mmulabel] =&gt; My Control Panel<br>
+                    [submenus] =&gt; Array<br>
+                        (<br>
+                            [subitems] =&gt; Array<br>
+                                (<br>
+                                    [0] =&gt; Array<br>
+                                        (<br>
+                                            [msulabel] =&gt; My Info<br>
+                                            [msufilename] =&gt; my_info.php?mm_id=6<br>
+                                        )</p>
+<p>[1] =&gt; Array<br>
+                                        (<br>
+                                            [msulabel] =&gt; My Login<br>
+                                            [msufilename] =&gt; my_login.php?mm_id=6<br>
+                                        )<br>
+........................<br>
+........................</p>
+</section>
+<section>
+<h3>[2006-12-16 17:12 UTC] admin at singlesburg dot com</h3>
+<p>Dear developer</p>
+<p>This is very interesting. I finally solve the problem without even forcing the elements to be enum. I used the following built function to load my classes in PHP 5.1. If I use call you function outside this function, I get enum for single elements, but if I call your function inside that __autoload, then all single elements cannot be forced to be enum. FYI.</p>
+<p>Thanks for help.<br>
+Nizzy</p>
+<p>function __autoload($classname)<br>
+{<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

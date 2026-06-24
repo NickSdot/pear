@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3165</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Payment &#187; <a href="package/Payment_DTA/index.html">Payment_DTA</a> &#187; Bug #3165</h1>
+<p>leading zero after comma in amount is ignored if more than 2 digits after comma</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-11 16:20 UTC</td></tr>
+<tr><th>From</th><td>mc at spiess dot de</td></tr>
+<tr><th>Assigned</th><td>hstainer</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Payment_DTA/index.html">Payment_DTA</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Linux ds80-237-204-40 2.6.8.1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-11 16:20 UTC] mc at spiess dot de</h3>
+<p>Description:<br>
+------------<br>
+If in amount the first digit after the comma is zero, the the digit will be missed in the DTA.</p>
+<p>e.g.:<br>
+Amount of EUR 1.05 will result in EUR 0.15 in the DTA.</p>
+<p>error is presumably produced here:</p>
+<p>DTA.php row 274<br>
+$parts = explode(&quot;.&quot;, $amount);</p>
+</section>
+<section>
+<h3>[2005-01-12 16:10 UTC] mc at spiess dot de</h3>
+<p>$amount= 1.023;<br>
+    //begin: taken from DTA.php<br>
+            if (substr_count($amount, &quot;.&quot;) == 1) {<br>
+                $parts = explode(&quot;.&quot;, $amount);</p>
+<p>//$amount = $parts[0] . str_pad(round($parts[1] / ((strlen($parts[1])-2) * 10)), 2, &quot;0&quot;, STR_PAD_RIGHT);</p>
+<p>if (count($parts)&gt;1) {<br>
+					switch (strlen($parts[1])) {<br>
+						case 1:<br>
+							$amount = $parts[0] . $parts[1] . &quot;0&quot;;<br>
+							break;<br>
+						case 2:<br>
+							$amount = $parts[0] . $parts[1];<br>
+							break;<br>
+						default:<br>
+							if (strlen($parts[1])&gt;2) {<br>
+								//$amount = $parts[0] . substr($parts[1], 0, 2);<br>
+								$amount = $parts[0] . round($parts[1] / pow(10, strlen($parts[1])-2));<br>
+							}<br>
+							break;<br>
+					}<br>
+				} else {<br>
+					$amount = $parts[0] . &quot;00&quot;;<br>
+				}<br>
+			} else {<br>
+                $amount = $amount * 100;<br>
+            }<br>
+    //end: taken from DTA.php<br>
+echo &#039;&lt;pre&gt;&#039; . $amount . &#039;&lt;/pre&gt;&#039;;</p>
+<p>will be 0012 instead of 0123.</p>
+<p>To avoid this effect, please make sure to round before using Payment_DTA.</p>
+<p>round ($amount,2);</p>
+</section>
+<section>
+<h3>[2005-01-17 17:19 UTC] m dot hosse at geodigital dot org</h3>
+<p>This code is more difficult as it has to be.<br>
+Correct me if i am wrong, but IMO you can replace lines 273-298 <br>
+--- SNIP ---<br>
+            if (substr_count($amount, &quot;.&quot;) == 1) {<br>
+                $parts = explode(&quot;.&quot;, round($amount, 2));</p>
+<p>//$amount = $parts[0] . str_pad(round($parts[1] / ((strlen($parts[1])-2) * 10)), 2, &quot;0&quot;, STR_PAD_RIGHT);</p>
+<p>if (count($parts)&gt;1) {<br>
+					switch (strlen($parts[1])) {<br>
+						case 1:<br>
+							$amount = $parts[0] . $parts[1] . &quot;0&quot;;<br>
+							break;<br>
+						case 2:<br>
+							$amount = $parts[0] . $parts[1];<br>
+							break;<br>
+						default:<br>
+							if (strlen($parts[1])&gt;2) {<br>
+								//$amount = $parts[0] . substr($parts[1], 0, 2);<br>
+								$amount = $parts[0] . round($parts[1] / pow(10, strlen($parts[1])-2));<br>
+							}<br>
+							break;<br>
+					}<br>
+				} else {<br>
+					$amount = $parts[0] . &quot;00&quot;;<br>
+				}<br>
+			} else {<br>
+                $amount = $amount * 100;<br>
+            }<br>
+--- SNAP ---</p>
+<p>with just one line of code:</p>
+<p>$amount = round($amount*100,0);</p>
+</section>
+<section>
+<h3>[2005-01-25 09:29 UTC] m dot hosse at geodigital dot org</h3>
+<p>If you use my solution you do not have to add more zeros because you already have the amount in cent.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

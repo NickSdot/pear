@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7965</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid_DataSource_DBQuery/index.html">Structures_DataGrid_DataSource_DBQuery</a> &#187; Bug #7965</h1>
+<p>Please reintroduce sorting in DBQuery or MDB2</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #7965</th><td>Please reintroduce sorting in DBQuery or MDB2</td></tr>
+<tr><th>Submitted</th><td>2006-06-22 16:34 UTC</td></tr>
+<tr><th>From</th><td>bennythebee at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>olivierg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid_DataSource_DBQuery/index.html">Structures_DataGrid_DataSource_DBQuery</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Debian Sarge</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-22 16:34 UTC] bennythebee at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I would really appreciate if sorting would be brought back into this (and MDB2) datasource driver.</p>
+<p>Right now, if I choose the HTML_SORTFORM or PAGER renderers, and try to use the sort links in the table header, there is no sorting taking place.</p>
+<p>If this functionality has been included in the renderers, wouldn&#039;t it make sense to make it work without userspace additions to the queries?</p>
+<p>The &quot;old&quot; way of using a DB Result object to bind and then Structures_DataGrid taking care of altering the queries to sort was the absolute best.</p>
+<p>Is it correct that rewriting the queries right now is a user task?</p>
+</section>
+<section>
+<h3>[2006-06-22 16:47 UTC] bennythebee at gmail dot com</h3>
+<p>I just found out that it is also not working in the very Bug list on pear.php.net - try  it out:</p>
+<p>http://pear.php.net/bugs/search.php?cmd=display&amp;package_name[]=Structures_DataGrid&amp;package_name[]=Structures_DataGrid_DataSource_Array&amp;package_name[]=Structures_DataGrid_DataSource_CSV&amp;package_name[]=Structures_DataGrid_DataSource_DataObject&amp;package_name[]=Structures_DataGrid_DataSource_DB&amp;package_name[]=Structures_DataGrid_DataSource_DBQuery&amp;package_name[]=Structures_DataGrid_DataSource_DBTable&amp;package_name[]=Structures_DataGrid_DataSource_MDB2&amp;package_name[]=Structures_DataGrid_DataSource_RSS&amp;package_name[]=Structures_DataGrid_DataSource_XML&amp;package_name[]=Structures_DataGrid_Renderer_Console&amp;package_name[]=Structures_DataGrid_Renderer_CSV&amp;package_name[]=Structures_DataGrid_Renderer_HTMLSortForm&amp;package_name[]=Structures_DataGrid_Renderer_HTMLTable&amp;package_name[]=Structures_DataGrid_Renderer_Pager&amp;package_name[]=Structures_DataGrid_Renderer_Smarty&amp;package_name[]=Structures_DataGrid_Renderer_XLS&amp;package_name[]=Structures_DataGrid_Renderer_XML&amp;package_name[]=Structures_DataGrid_Renderer_XUL&amp;status=All&amp;search_for=sort&amp;php_os=&amp;boolean=0&amp;author_email=&amp;bug_type=&amp;bug_age=0&amp;bug_updated=0&amp;order_by=status&amp;direction=ASC&amp;packagever=&amp;phpver=&amp;limit=40&amp;handle=&amp;assign=&amp;maintain=&amp;reorder_by=status</p>
+<p>Regardless what table header column you click on, the sorting never takes place.</p>
+<p>Tried with 2 OSs and 4 Browsers...</p>
+</section>
+<section>
+<h3>[2006-06-22 16:49 UTC] olivierg at php dot net</h3>
+<p>The DB_Query and MDB2 drivers both support sorting by transparently modifying the queries. That&#039;s no user task.</p>
+<p>What is this &quot;old way of using a DB Result object to bind and then Structures_DataGrid taking care of altering the queries to sort&quot;?</p>
+<p>If you bind a DB_Result, how could Structures_DataGrid know about your original SQL queries? Actually, with a DB_Result, the whole data needs to be fetched, and sorting happens within the resulting PHP array. That&#039;s pretty inefficient.</p>
+<p>Don&#039;t confuse: <br>
+$datagrid-&gt;bind($db_result); // use inefficient driver DB</p>
+<p>and:<br>
+$datagrid-&gt;bind(&quot;select foo from bar&quot;); // use DB_Query or MDB2</p>
+<p>AFAICS, sorting works great with the MDB2 and DB_Query drivers.</p>
+<p>Maybe that you&#039;re using addColumn() and did not provide an $orderBy (third) argument to the Structures_DataGrid_Column constructor?</p>
+<p>Please post a test script.</p>
+</section>
+<section>
+<h3>[2006-06-22 17:03 UTC] bennythebee at gmail dot com</h3>
+<p>Hello Olivier,</p>
+<p>I meant the old, inefficient way with the result object being fetched every time. Actually - I don&#039;t want to go back there either. I want to use DBQuery.</p>
+<p>What you say sounds interesting:</p>
+<p>&quot;Maybe that you&#039;re using addColumn() and did not provide an $orderBy<br>
+(third) argument to the Structures_DataGrid_Column constructor?&quot;</p>
+<p>I am in fact using addColumn and a 3rd parameter:</p>
+<p>&lt;?php<br>
+require_once(&#039;Structures/DataGrid.php&#039;);<br>
+require_once(&#039;Structures/DataGrid/DataSource.php&#039;);</p>
+<p>$datagrid =&amp; new Structures_DataGrid(20);</p>
+<p>$datagrid-&gt;renderer-&gt;setTableAttribute(&#039;class&#039;, &#039;DataGrid&#039;);<br>
+$datagrid-&gt;renderer-&gt;sortIconASC = &#039;⇑&#039;;<br>
+$datagrid-&gt;renderer-&gt;sortIconDESC = &#039;⇓&#039;;<br>
+$datagrid-&gt;renderer-&gt;setTableEvenRowAttributes(array(&#039;class&#039; =&gt; &#039;rEven&#039;));<br>
+$datagrid-&gt;renderer-&gt;setTableOddRowAttributes(array(&#039;class&#039; =&gt; &#039;rOdd&#039;));</p>
+<p>$dg = $datagrid-&gt;bind(&quot;SELECT POS,artist,title1,articlegroupcode,articleid FROM artist&quot;,array(&#039;dbc&#039; =&gt; $db));<br>
+if (PEAR::isError($dg)) {<br>
+	echo $dg-&gt;getMessage();<br>
+}</p>
+<p>$datagrid-&gt;addColumn(new Structures_DataGrid_Column($tr-&gt;get(&quot;list_pos&quot;), &#039;POS&#039;,&#039;POS&#039;,NULL,NULL,NULL));<br>
+$datagrid-&gt;addColumn(new Structures_DataGrid_Column($tr-&gt;get(&quot;list_artist&quot;), &#039;artist&#039;,&#039;artist&#039;,NULL,NULL,NULL));<br>
+$datagrid-&gt;addColumn(new Structures_DataGrid_Column($tr-&gt;get(&quot;list_title&quot;), &#039;title1&#039;,&#039;title1&#039;,NULL,NULL,NULL));<br>
+$datagrid-&gt;addColumn(new Structures_DataGrid_Column($tr-&gt;get(&quot;list_format&quot;), &#039;articlegroupcode&#039;,&#039;articlegroupcode&#039;,NULL,NULL,NULL));<br>
+$datagrid-&gt;addColumn(new Structures_DataGrid_Column(&#039;id&#039;, &#039;articleid&#039;,&#039;articleid&#039;,NULL,NULL,NULL));</p>
+<p>$dg = $datagrid-&gt;render(DATAGRID_RENDER_SORTFORM);<br>
+if (PEAR::isError(dg)) {<br>
+	echo $dg-&gt;getMessage();<br>
+}</p>
+<p>$datagrid-&gt;render();<br>
+?&gt;</p>
+<p>Should this work without my interference with the Request params $orderBy or $direction?</p>
+</section>
+<section>
+<h3>[2006-06-22 17:14 UTC] olivierg at php dot net</h3>
+<p>Well... I typed a bit fast. Sorting worked great in the MDB2 driver, but not in DBQuery.</p>
+<p>I&#039;ve corrected the DBQuery::sort() method in CVS.</p>
+<p>Concerning the bug list at pear.php.net, I&#039;m not aware that it&#039;s using Structures_DataGrid... I would be very honoured if that&#039;s the case ;-)</p>
+<p>Thanks for your report</p>
+</section>
+<section>
+<h3>[2006-06-22 17:26 UTC] olivierg at php dot net</h3>
+<p>Thank you for your bug report. This issue has been fixed<br>
+in the latest released version of the package, which you can download at<br>
+http://pear.php.net/get/Structures_DataGrid_DataSource_DBQuery</p>
+</section>
+<section>
+<h3>[2006-06-22 17:50 UTC] olivierg at php dot net</h3>
+<p>Yeah, and tell them to use SDG ;-)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

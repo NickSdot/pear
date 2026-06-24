@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5055</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_CAPTCHA/index.html">Text_CAPTCHA</a> &#187; Bug #5055</h1>
+<p>Enhance _createCAPTCHA method to use user-defined colours</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5055</th><td>Enhance _createCAPTCHA method to use user-defined colours</td></tr>
+<tr><th>Submitted</th><td>2005-08-10 15:00 UTC</td></tr>
+<tr><th>From</th><td>steve at stevenmapes dot com</td></tr>
+<tr><th>Assigned</th><td>bigmichi1</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Text_CAPTCHA/index.html">Text_CAPTCHA</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Various</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-10 15:00 UTC] steve at stevenmapes dot com</h3>
+<p>Description:<br>
+------------<br>
+The file is Text/CAPTCHA/Driver/Image.php</p>
+<p>This is a request to enchance the method _createCAPTCHA() so that $options[&#039;color&#039;] can be defined by the user by adding them to $this-&gt;_options array.  Also to allow the user to define the colour that is used for the obfuscation.</p>
+<p>Another useful enchancement would be to set the background colour of the image that is created rather than defaulting to black.  This would allow people to design an image more in keeping with the styles of their websites.</p>
+</section>
+<section>
+<h3>[2005-08-11 15:52 UTC] steve at stevenmapes dot com</h3>
+<p>I have implemented a version of your class which handles setting colours for the font and obfuscation okay, well on Fedora core 2 with apache and windows xp with apache and the pages viewed through IE6 and Firefox 1.04-1.06</p>
+<p>I&#039;ve not tried setting the background colour, but I believe that what would need to happen is to create a new layer, with a rectangle that is filled in the colour.</p>
+<p>I will look to see if I can get it working using the current setup of your project</p>
+</section>
+<section>
+<h3>[2005-08-11 19:25 UTC] steve at stevenmapes dot com</h3>
+<p>Okay, i&#039;ve looked into it, and believe that it will indeed require changes to both your class and the dependency one.</p>
+<p>Here is my modifed Text/CAPTCHA/Driver/Image.php file.</p>
+<p>I&#039;ve put all of my modifications between block comments marked</p>
+<p>/* Start of Steven Mapes Modificaiton */ and /* End of Steven Mapes Modification */, I&#039;ve also increased some of the spaces before and after to try to make it eaiser to find.</p>
+<p>Basically the init() method now uses two extra options, Color (text colour in hex) and ob_color (obfuscation color).</p>
+<p>Most of the changes are in _createCAPTCHA() which uses these two new options to define the colours but also has two extra lines to define another colour, in this case blue, and then fill the image with that colour from reference 1,1 (should really be 0,0).</p>
+<p>The problem is that because the text has already been rendered, it fills around the letters so you have gaps with black in.  Ideally the Image/Text class that the other people are doing should be modifed to accept another parameter which will fill the image before writing the text.</p>
+<p>Anyway, hopefully its a start for you.</p>
+<p>&lt;?php<br>
+/**<br>
+ * Text_CAPTCHA_Driver_Image - Text_CAPTCHA driver graphical CAPTCHAs<br>
+ *<br>
+ * Class to create a graphical Turing test<br>
+ *<br>
+ * TODOs:<br>
+ * + refine the obfuscation algorithm :-)<br>
+ * + learn how to use Image_Text better (or remove dependency)<br>
+ *<br>
+ *<br>
+ * @license PHP License, version 3.0<br>
+ * @author Christian Wenz &lt;wenz@php.net&gt;<br>
+ */</p>
+<p>class Text_CAPTCHA_Driver_Image extends Text_CAPTCHA<br>
+{</p>
+<p>/**<br>
+     * Image object<br>
+     *<br>
+     * @access private<br>
+     * @var resource<br>
+     */<br>
+    var $_im;</p>
+<p>/**<br>
+     * Image_Text object<br>
+     *<br>
+     * @access private<br>
+     * @var resource<br>
+     */<br>
+    var $_imt;</p>
+<p>/**<br>
+     * Width of CAPTCHA<br>
+     *<br>
+     * @access private<br>
+     * @var int<br>
+     */<br>
+    var $_width;</p>
+<p>/**<br>
+     * Height of CAPTCHA<br>
+     *<br>
+     * @access private<br>
+     * @var int<br>
+     */<br>
+    var $_height;</p>
+<p>/**<br>
+     * Further options (for Image_Text)<br>
+     *<br>
+     * @access private<br>
+     * @var array<br>
+     */<br>
+    var $_options;</p>
+<p>/**<br>
+     * init function<br>
+     *<br>
+     * Initializes the new Text_CAPTCHA_Driver_Image object and creates a GD image<br>
+     *<br>
+     * @param   int     $width      Width of image<br>
+     * @param   int     $height     Height of image<br>
+     * @param   string  $phrase     The &quot;secret word&quot; of the CAPTCHA<br>
+     * @param   array   $options    further options (for Image_Text)<br>
+     * @access public<br>
+     * @return  mixed        true upon success, PEAR error otherwise<br>
+     */</p>
+<p>function init($width = 200, $height = 80, $phrase = null, $options = null)<br>
+    {<br>
+        if (is_int($width) &amp;&amp; is_int($height)) {<br>
+            $this-&gt;_width = $width;<br>
+            $this-&gt;_height = $height;<br>
+            if (empty($phrase)) {<br>
+                $this-&gt;_createPhrase();<br>
+            } else {<br>
+			    $this-&gt;_phrase = $phrase;<br>
+			}<br>
+            if (empty($options)) {<br>
+                $this-&gt;_options = array(<br>
+                    &#039;font_size&#039; =&gt; 24,<br>
+                    &#039;font_path&#039; =&gt; &#039;./&#039;,<br>
+                    &#039;font_file&#039; =&gt; &#039;COUR.TTF&#039;<br>
+                );<br>
+            } else {<br>
+                $this-&gt;_options = $options;<br>
+                if (!isset($this-&gt;_options[&#039;font_size&#039;])) {<br>
+                    $this-&gt;_options[&#039;font_size&#039;] = 24;<br>
+                }<br>
+                if (!isset($this-&gt;_options[&#039;font_path&#039;])) {<br>
+                    $this-&gt;_options[&#039;font_path&#039;] = &#039;./&#039;;<br>
+                }<br>
+                if (!isset($this-&gt;_options[&#039;font_file&#039;])) {<br>
+                    $this-&gt;_options[&#039;font_file&#039;] = &#039;COUR.TTF&#039;;<br>
+                }</p>
+<p>/* Start of Steven Mapes Modification */</p>
+<p>if (!isset($this-&gt;_options[&#039;color&#039;])) {<br>
+                    $this-&gt;_options[&#039;color&#039;] = array( &#039;#FFFFFF&#039;, &#039;#000000&#039; );<br>
+                }<br>
+                if (!isset($this-&gt;_options[&#039;ob_color&#039;])) {<br>
+                    $this-&gt;_options[&#039;ob_color&#039;] = array( 0, 0, 0 );<br>
+                }</p>
+<p>/* End of Steven Mapes Modification */</p>
+<p>}<br>
+            $retval = $this-&gt;_createCAPTCHA();<br>
+            if (PEAR::isError($retval)) {<br>
+                return PEAR::raiseError($retval-&gt;getMessage());<br>
+            } else {<br>
+                return true;<br>
+            }<br>
+        } else {<br>
+            return PEAR::raiseError(&#039;Use numeric CAPTCHA dimensions!&#039;);<br>
+        }<br>
+    }</p>
+<p>/**<br>
+     * Create random CAPTCHA phrase, Image edition (with size check)<br>
+     *<br>
+     * This method creates a random phrase, maximum 8 characters or width / 25, whatever is smaller<br>
+     *<br>
+     * @access  private<br>
+     */<br>
+    function _createPhrase()<br>
+    {<br>
+        $len = intval(min(8, $this-&gt;_width / 25));<br>
+        $this-&gt;_phrase = Text_Password::create($len);<br>
+    }</p>
+<p>/**<br>
+     * Create CAPTCHA image<br>
+     *<br>
+     * This method creates a CAPTCHA image<br>
+     *<br>
+     * @access  private<br>
+     */<br>
+    function _createCAPTCHA()<br>
+    {<br>
+        $options[&#039;canvas&#039;] = array(<br>
+            &#039;width&#039; =&gt; $this-&gt;_width,<br>
+            &#039;height&#039; =&gt; $this-&gt;_height<br>
+        );<br>
+        $options[&#039;width&#039;] = $this-&gt;_width - 20;<br>
+        $options[&#039;height&#039;] = $this-&gt;_height - 20;<br>
+        $options[&#039;cx&#039;] = ceil(($this-&gt;_width) / 2 + 10);<br>
+        $options[&#039;cy&#039;] = ceil(($this-&gt;_height) / 2 + 10);<br>
+        $options[&#039;angle&#039;] = rand(0, 30) - 15;<br>
+        $options[&#039;font_size&#039;] = $this-&gt;_options[&#039;font_size&#039;];<br>
+        $options[&#039;font_path&#039;] = $this-&gt;_options[&#039;font_path&#039;];<br>
+        $options[&#039;font_file&#039;] = $this-&gt;_options[&#039;font_file&#039;];</p>
+<p>/* Start of Steven Mapes Modification */</p>
+<p>$options[&#039;color&#039;] = $this-&gt;_options[&#039;color&#039;];</p>
+<p>/* End of Steven Mapes Modification */</p>
+<p>$options[&#039;max_lines&#039;] = 1;<br>
+        $options[&#039;mode&#039;] = &#039;auto&#039;;<br>
+        $this-&gt;_imt = new Image_Text(<br>
+            $this-&gt;_phrase,<br>
+            $options<br>
+        );<br>
+        if (PEAR::isError($this-&gt;_imt-&gt;init())) {<br>
+            return PEAR::raiseError(&#039;Error initializing Image_Text (font missing?!)&#039;);<br>
+        }<br>
+        $this-&gt;_imt-&gt;measurize();<br>
+        $this-&gt;_imt-&gt;render();<br>
+        $this-&gt;_im =&amp; $this-&gt;_imt-&gt;getImg();</p>
+<p>/* Start of Steven Mapes Modification */</p>
+<p>// Should really use the extended $this-&gt;options to define this<br>
+		$red = imagecolorallocate($this-&gt;_im, 255, 0, 0);<br>
+		imagefill ( $this-&gt;_im, 1, 1, $red);</p>
+<p>$ob_Color = array();		// Color of obfuscation<br>
+        if( $this-&gt;_options[&#039;ob_color&#039;] ) {<br>
+        	$ob_Color = $this-&gt;_options[&#039;ob_color&#039;];<br>
+        }<br>
+        else {<br>
+        	// Defaults<br>
+        	$ob_Color = array( &#039;0xFF&#039;, &#039;0xFF&#039;, &#039;0xFF&#039;);<br>
+        }</p>
+<p>$white = imagecolorallocate($this-&gt;_im, $ob_Color[0], $ob_Color[1], $ob_Color[2]);</p>
+<p>/* End of Steven Mapes Modification */</p>
+<p>//some obfuscation<br>
+        for ($i=0; $i&lt;3; $i++) {<br>
+            $x1 = rand(0, $this-&gt;_width - 1);<br>
+            $y1 = rand(0, round($this-&gt;_height / 10, 0));<br>
+            $x2 = rand(0, round($this-&gt;_width / 10, 0));<br>
+            $y2 = rand(0, $this-&gt;_height - 1);<br>
+            imageline($this-&gt;_im, $x1, $y1, $x2, $y2, $white);<br>
+            $x1 = rand(0, $this-&gt;_width - 1);<br>
+            $y1 = $this-&gt;_height - rand(1, round($this-&gt;_height / 10, 0));<br>
+            $x2 = $this-&gt;_width - rand(1, round($this-&gt;_width / 10, 0));<br>
+            $y2 = rand(0, $this-&gt;_height - 1);<br>
+            imageline($this-&gt;_im, $x1, $y1, $x2, $y2, $white);<br>
+			$cx = rand(0, $this-&gt;_width - 50) + 25;<br>
+			$cy = rand(0, $this-&gt;_height - 50) + 25;<br>
+			$w = rand(1, 24);<br>
+			imagearc($this-&gt;_im, $cx, $cy, $w, $w, 0, 360, $white);<br>
+        }<br>
+    }</p>
+<p>/**<br>
+     * Return CAPTCHA as image resource<br>
+     *<br>
+     * This method returns the CAPTCHA as GD2 image resource<br>
+     *<br>
+     * @access  public<br>
+     * @return  im        image resource<br>
+     */<br>
+    function getCAPTCHA()<br>
+    {<br>
+        return $this-&gt;_im;<br>
+    }</p>
+<p>/**<br>
+     * Return CAPTCHA as PNG<br>
+     *<br>
+     * This method returns the CAPTCHA as PNG<br>
+     *<br>
+     * @access  public<br>
+     */<br>
+    function getCAPTCHAAsPNG()<br>
+    {<br>
+        if (is_resource($this-&gt;_im)) {<br>
+            ob_start();<br>
+            imagepng($this-&gt;_im);<br>
+            $data = ob_get_contents();<br>
+            ob_end_clean();<br>
+            return $data;<br>
+        } else {<br>
+            return PEAR::raiseError(&#039;Error creating CAPTCHA image (font missing?!)&#039;);<br>
+        }<br>
+    }</p>
+<p>/**<br>
+     * Return CAPTCHA as JPEG<br>
+     *<br>
+     * This method returns the CAPTCHA as JPEG<br>
+     *<br>
+     * @access  public<br>
+     */<br>
+    function getCAPTCHAAsJPEG()<br>
+    {<br>
+        if (is_resource($this-&gt;_im)) {<br>
+            ob_start();<br>
+            imagejpeg($this-&gt;_im);<br>
+            $data = ob_get_contents();<br>
+            ob_end_clean();<br>
+            return $data;<br>
+        } else {<br>
+            return PEAR::raiseError(&#039;Error creating CAPTCHA image (font missing?!)&#039;);<br>
+        }<br>
+    }</p>
+<p>}</p>
+</section>
+<section>
+<h3>[2006-08-29 14:29 UTC] riker_09 at yahoo dot de</h3>
+<p>Had the same problem (only black as bg color). Solved it like discussed here (modified Image_Text). Maybe another suggestion for the obfusciation: Have the text distorted.</p>
+<p>Volker</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

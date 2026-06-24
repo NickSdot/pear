@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8368</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_SMTP/index.html">Net_SMTP</a> &#187; Bug #8368</h1>
+<p>AUTH PLAIN does not run</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-08-06 07:47 UTC</td></tr>
+<tr><th>From</th><td>lucabert at lucabert dot de</td></tr>
+<tr><th>Assigned</th><td>jon</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Net_SMTP/index.html">Net_SMTP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.5</td></tr>
+<tr><th>OS</th><td>Linux RedHat 9</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-06 07:47 UTC] lucabert at lucabert dot de</h3>
+<p>Description:<br>
+------------<br>
+I tryed to use MAIL Package, which use Net_SMTP, to send E-Mails.<br>
+I tryed many authentication protocols, and I see that Net_SMTP does not send valid data for AUTH PLAIN.</p>
+<p>It sends:</p>
+<p>AUTH PLAIN\r\n</p>
+<p>and then wants to send the username and password.</p>
+<p>But AUTH PLAIN needs to have &quot;\0username\0password\0&quot; (base64 encoded) in the same line of &quot;AUTH PLAIN&quot;...<br>
+Net_SMTP have to send a string like:</p>
+<p>AUTH PLAIN base64 encoded &quot;\0username\0password\0&quot;</p>
+<p>Of course it&#039;s not possibile at the moment to use this method.<br>
+I know that AUTH PLAIN is not secure, but many SMTP-Servers use it...</p>
+<p>Test script:<br>
+---------------<br>
+&lt;html&gt;<br>
+&lt;pre&gt;<br>
+&lt;?<br>
+require_once(&#039;Mail.php&#039;);<br>
+require_once(&#039;Mail/mime.php&#039;);</p>
+<p>$unames  = posix_uname();<br>
+    $hdrs = array(<br>
+                  &#039;From&#039; =&gt; &#039;Tester &lt;test@server.de&gt;&#039;,<br>
+                  &#039;To&#039; =&gt; &#039;test@server.de&#039;,<br>
+                  &#039;Subject&#039; =&gt; &#039;Ein kleines Test&#039;,<br>
+                  &#039;Message-Id&#039; =&gt; &#039;&lt;&#039;.date(&#039;YmdHis&#039;).&#039;.&#039;.posix_getpid().&#039;@&#039;.$unames[nodename].&#039;&gt;&#039;<br>
+                  );</p>
+<p>$mime = new Mail_mime(&quot;\n&quot;);</p>
+<p>$mime-&gt;setTXTBody(&quot;Mal sehen was es passiert...\nIst nur wegen der Autentifizierung...&quot;);<br>
+    $body = $mime-&gt;get();<br>
+    $hdrs = $mime-&gt;headers($hdrs);<br>
+    $mail =&amp; Mail::factory(&#039;smtp&#039;, array(&#039;host&#039; =&gt; &#039;smtp.server.de&#039;, &#039;auth&#039; =&gt; &#039;PLAIN&#039;, &#039;username&#039; =&gt; &#039;test&#039;, &#039;password&#039; =&gt; &#039;mypassword&#039;, &#039;localhost&#039; =&gt; $unames[nodename]));<br>
+echo &quot;mail: [&quot;;print_r($mail);echo &quot;]&lt;br&gt;\n&quot;;<br>
+    $ret = $mail-&gt;send(&#039;test@server.de&#039;, $hdrs, $body);<br>
+echo &quot;ret: [&quot;;print_r($ret);echo &quot;]&lt;br&gt;\n&quot;;<br>
+?&gt;<br>
+&lt;/pre&gt;<br>
+&lt;/html&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+The script has to send the E-Mail, after a valid AUTH-PLAIN.<br>
+It doesn&#039;t... :(</p>
+<p>Actual result:<br>
+--------------<br>
+It does not send any E-Mail.</p>
+<p>Error on Server (exim_mainlog):</p>
+<p>2006-08-06 09:39:15 fixed_plain authenticator failed for (ns.server.de) [XX.XX.XX.XX]: 535 Incorrect authentication data</p>
+<p>Error on Browser (print_r):</p>
+<p>mail: [mail_smtp Object<br>
+(<br>
+    [sep] =&gt;</p>
+<p>[_smtp] =&gt; <br>
+    [host] =&gt; smtp.server.de<br>
+    [port] =&gt; 25<br>
+    [auth] =&gt; PLAIN<br>
+    [username] =&gt; test<br>
+    [password] =&gt; mypassword<br>
+    [localhost] =&gt; ns.server.de<br>
+    [timeout] =&gt; <br>
+    [verp] =&gt; <br>
+    [debug] =&gt; <br>
+    [persist] =&gt; <br>
+)<br>
+]</p>
+<p>ret: [pear_error Object<br>
+(<br>
+    [error_message_prefix] =&gt; <br>
+    [mode] =&gt; 1<br>
+    [level] =&gt; 1024<br>
+    [code] =&gt; 10002<br>
+    [message] =&gt; PLAIN authentication failure [SMTP: Invalid response code received from server (code: 535, response: Incorrect authentication data)]<br>
+    [userinfo] =&gt; <br>
+    [backtrace] =&gt; Array<br>
+        (<br>
+            [0] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /usr/share/pear/PEAR.php<br>
+                    [line] =&gt; 566<br>
+                    [function] =&gt; pear_error<br>
+                    [class] =&gt; pear_error<br>
+                    [type] =&gt; -&gt;<br>
+                    [args] =&gt; Array<br>
+                        (<br>
+                            [0] =&gt; PLAIN authentication failure [SMTP: Invalid response code received from server (code: 535, response: Incorrect authentication data)]<br>
+                            [1] =&gt; 10002<br>
+                            [2] =&gt; 1<br>
+                            [3] =&gt; 1024<br>
+                            [4] =&gt; <br>
+                        )</p>
+<p>)</p>
+<p>[1] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /usr/share/pear/Mail/smtp.php<br>
+                    [line] =&gt; 242<br>
+                    [function] =&gt; raiseerror<br>
+                    [class] =&gt; pear<br>
+                    [type] =&gt; ::<br>
+                    [args] =&gt; Array<br>
+                        (<br>
+                            [0] =&gt; PLAIN authentication failure [SMTP: Invalid response code received from server (code: 535, response: Incorrect authentication data)]<br>
+                            [1] =&gt; 10002<br>
+                        )</p>
+<p>)</p>
+<p>[2] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /home/www/wmail/html/test.php<br>
+                    [line] =&gt; 22<br>
+                    [function] =&gt; send<br>
+                    [class] =&gt; mail_smtp<br>
+                    [type] =&gt; -&gt;<br>
+                    [args] =&gt; Array<br>
+                        (<br>
+                            [0] =&gt; test@server.de<br>
+                            [1] =&gt; Array<br>
+                                (<br>
+                                    [MIME-Version] =&gt; 1.0<br>
+                                    [From] =&gt; Tester <br>
+                                    [To] =&gt; test@server.de<br>
+                                    [Subject] =&gt; Ein kleines Test<br>
+                                    [Message-Id] =&gt; &lt;20060806093915.22441@ns.server.de&gt;<br>
+                                    [Content-Type] =&gt; text/plain; charset=&quot;ISO-8859-1&quot;<br>
+                                    [Content-Transfer-Encoding] =&gt; 7bit<br>
+                                )</p>
+<p>[2] =&gt; Mal sehen was es passiert...<br>
+Ist nur wegen der Autentifizierung...</p>
+<p>)</p>
+<p>)</p>
+<p>)</p>
+<p>[callback] =&gt; <br>
+)<br>
+]</p>
+<p>Ngrep of the SMTP session:</p>
+<p>#######<br>
+T XX.XX.XX.XX:25 -&gt; XX.XX.XX.XX:58435 [AP]<br>
+  220 mail.server.de ESMTP Exim 4.60 Sun, 06 Aug 2006 09:39:15 +0200..<br>
+##<br>
+T XX.XX.XX.XX:58435 -&gt; XX.XX.XX.XX:25 [AP]<br>
+  EHLO ns.server.de..<br>
+##<br>
+T XX.XX.XX.XX:25 -&gt; XX.XX.XX.XX:58435 [AP]<br>
+  250-mail.server.de Hello ns.server.de [XX.XX.XX.XX]..250-SIZE 1048576000..250-8BITMIME..250-PIPELINING..250-AUTH PLAIN LOGIN CRAM-MD5 NTLM..250-S<br>
+  TARTTLS..250 HELP..<br>
+#<br>
+T XX.XX.XX.XX:58435 -&gt; XX.XX.XX.XX:25 [AP]<br>
+  AUTH PLAIN..<br>
+#<br>
+T XX.XX.XX.XX:25 -&gt; XX.XX.XX.XX:58435 [AP]<br>
+  535 Incorrect authentication data..<br>
+#<br>
+T XX.XX.XX.XX:58435 -&gt; XX.XX.XX.XX:25 [AP]<br>
+  RSET..<br>
+#<br>
+T XX.XX.XX.XX:25 -&gt; XX.XX.XX.XX:58435 [AP]<br>
+  250 Reset OK..<br>
+##<br>
+T XX.XX.XX.XX:25 -&gt; XX.XX.XX.XX:58435 [AP]<br>
+  421 mail.server.de lost input connection..<br>
+#</p>
+</section>
+<section>
+<h3>[2006-09-11 06:24 UTC] lucabert at lucabert dot de</h3>
+<p>I can&#039;t believe that Exim does NOT implement a RFC valid SMTP-Auth...</p>
+<p>See here: http://www.exim.org/exim-html-4.62/doc/html/spec_html/ch34.html</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

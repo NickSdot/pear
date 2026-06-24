@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1444</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #1444</h1>
+<p>PEAR_ErrorStack-&gt;push() needs to validate $msg and $code as string/int</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-19 16:31 UTC</td></tr>
+<tr><th>From</th><td>jon dot bertsch at ucop dot edu</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0RC2 (Release Candidate 2)</td></tr>
+<tr><th>OS</th><td>n/a</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-19 16:31 UTC] jon dot bertsch at ucop dot edu</h3>
+<p>Description:<br>
+------------<br>
+Running PHP5 (RC2) you get an error when using <br>
+PEAR_ErrorStack. In PHP version 4.3.2 it works fine. I&#039;m <br>
+not sure whether this should go to this section or <br>
+under php5 bugs.</p>
+<p>Reproduce code:<br>
+---------------<br>
+require_once &#039;PEAR/ErrorStack.php&#039;;<br>
+require_once &#039;Log.php&#039;;</p>
+<p>$query = &quot;SELECT * FROM myDb&quot;;<br>
+$dsn = array(&#039;phptype&#039;  =&gt; &#039;mysql&#039;, &#039;hostspec&#039; =&gt; &#039;localhost&#039;, &#039;database&#039; =&gt; &#039;test&#039;, &#039;username&#039; =&gt; &#039;user&#039;, &#039;password&#039; =&gt; &#039;pass&#039;);</p>
+<p>// version 1: stack instance access<br>
+$stack = &amp;PEAR_ErrorStack::singleton(&#039;MyPackage&#039;);<br>
+	<br>
+	$stack -&gt; push (MYPACKAGE_ERROR_TEST, &#039;error&#039;, array(&#039;query&#039; =&gt; $query, &#039;dsn&#039; =&gt; $dsn), &#039;TEST error: add to stack&#039;);</p>
+<p>$error_list = $stack -&gt; getErrors();</p>
+<p>print_r($error_list);</p>
+<p>echo &quot;::  END  ::&quot;;</p>
+<p>Expected result:<br>
+----------------<br>
+In php 4.3.2:</p>
+<p>Array (  [0] =&gt; Array  (  [code] =&gt; MYPACKAGE_ERROR_TEST  <br>
+[params] =&gt; Array  (  [query] =&gt; SELECT * FROM myDb  <br>
+[dsn] =&gt; Array  (  [phptype] =&gt; mysql  [hostspec] =&gt; <br>
+localhost  [database] =&gt; test  [username] =&gt; user  <br>
+[password] =&gt; pass  )  )  [package] =&gt; MyPackage  <br>
+[level] =&gt; error  [time] =&gt; 1084983362.0052  [context] <br>
+=&gt; Array  (  [file] =&gt; /Library/WebServer/Documents/<br>
+pear_errorstack_test.php  [line] =&gt; 19  )  [message] =&gt; <br>
+TEST error: add to stack  )  ) :: END ::</p>
+<p>Actual result:<br>
+--------------<br>
+In php5 RC2:</p>
+<p>Fatal error: Wrong parameter count for exception([string <br>
+$exception [, long $code ]]) in Unknown on line 0</p>
+<p>I think it&#039;s at the call to _exceptionClass around line <br>
+450 under the push method but I&#039;m not certain</p>
+</section>
+<section>
+<h3>[2004-05-19 22:04 UTC] jon dot bertsch at ucop dot edu</h3>
+<p>Since I was working on a new server I also tested this same code on Linux (SUSE 9) against a new install of php4.3.6 and the code gave the expected print out of the stack error array. When I then changed the http.conf to use php5.0RC2 I saw the same error as described in the original report.</p>
+</section>
+<section>
+<h3>[2004-05-20 15:40 UTC] jon dot bertsch at ucop dot edu</h3>
+<p>I tried the substitution that you suggested but it didn&#039;t work I spent a little time looking at the code more closely. I found that the definition in the documentation for the push method is the following:</p>
+<p>PEAR_Error|array|Exception PEAR_ErrorStack::push (int $code [, string $level = &#039;error&#039; [, array $params = array() [, string $msg = FALSE [, array $repackage = FALSE [, array $backtrace = FALSE]]]]])</p>
+<p>where it looks like $code needs to be an int. Also under the methos @params it says int. I substituted 1 for the message &quot;MYPACKAGE_ERROR_TEST&quot; in the first argument of the call and everything worked fine.</p>
+<p>I think that the documentation needs to be changed or else something internally is not quite right (in ErrorStack or in php5). Is it possible that php5 is more strict than 4.3.x or is there a way to override/change the $code definition.</p>
+<p>I guess that a substitution of the errors[&#039;code&#039;] could be done using the setErrorMessageTemplate or after passing the array back to the getErrors call (or somewhere else). Or perhaps I&#039;m completely confused here.</p>
+<p>Any further ideas/comments?</p>
+</section>
+<section>
+<h3>[2004-05-20 20:41 UTC] jon dot bertsch at ucop dot edu</h3>
+<p>OK - I found a workaround for this along the lines I <br>
+mentioned earlier.</p>
+<p>If you are adding error messages as you go without the <br>
+setErrorMessageTemplate method, then make the first <br>
+argument zero (in php5).</p>
+<p>When calling the errors (I used the getErrors() <br>
+method) the last argument in the push call shows the <br>
+error information as expected. e.g:<br>
+$dsn = array(&#039;phptype&#039; =&gt; &#039;mysql&#039;, &#039;hostspec&#039;=&gt; <br>
+&#039;localhost&#039;, &#039;database&#039; =&gt;&#039;test&#039;,&#039;username&#039; =&gt; &#039;user&#039;, <br>
+&#039;password&#039; =&gt; &#039;pass&#039;);</p>
+<p>$stack = &amp;PEAR_ErrorStack::singleton(&#039;MyPackage&#039;);</p>
+<p>$stack -&gt; push(0, &#039;error&#039;, array(&#039;query&#039; =&gt; $query, <br>
+&#039;dsn&#039; =&gt; $dsn), &#039;Database error - unable to connect <br>
+using dsn - %dsn%&#039;);</p>
+<p>$error_list = $stack -&gt; getErrors();</p>
+<p>$my_error = $error_list[0][&#039;message&#039;]; //or use a loop <br>
+for multiple ones</p>
+<p>If you use the setErrorMessgeTemplate method then:</p>
+<p>//1. define some vars as in:<br>
+define(&#039;ERROR_ONE&#039;,1);<br>
+define(&#039;ERROR_TWO&#039;,2);</p>
+<p>//2. set up the message array<br>
+$messages = array (<br>
+ERROR_ONE=&gt;&#039;Database error - no connection (DSN = <br>
+%dsn%)&#039;,<br>
+ERROR_TWO =&gt;&#039;Error in Query - %query%&#039;);</p>
+<p>//push the error to the stack<br>
+$stack -&gt; push(ERROR_ONE, &#039;error&#039;, array(&#039;query&#039; =&gt; <br>
+$query, &#039;dsn&#039; =&gt; $dsn));</p>
+<p>You can then get it out the same way as above.</p>
+<p>I&#039;m sure there&#039;s a better way but I haven&#039;t been able to <br>
+get around all the methods yet.</p>
+<p>By the way in the PEAR.php at lines 782-784 there&#039;s the <br>
+following eval:</p>
+<p>if ($this-&gt;mode &amp; PEAR_ERROR_EXCEPTION) {<br>
+            trigger_error(&quot;PEAR_ERROR_EXCEPTION is <br>
+obsolete, use class PEAR_ErrorStack for exceptions&quot;, <br>
+E_USER_WARNING);<br>
+            eval(&#039;$e = new Exception($this-&gt;message, <br>
+$this-&gt;code);$e-&gt;PEAR_Error = $this;throw($e);&#039;);<br>
+        }</p>
+<p>Maybe that&#039;s the eval you were suggesting.</p>
+<p>I tested both the use of the zero and the defines with <br>
+setErrorMessgeTemplate method on php4.3.2 and 5.0RC2 and <br>
+there were no errors and the error message(s) were as <br>
+expected with the %token% correctly replaced. have not <br>
+tried other pieces of this class.</p>
+</section>
+<section>
+<h3>[2004-05-21 13:37 UTC] jon dot bertsch at ucop dot edu</h3>
+<p>Two things - first the documentation doesn&#039;t say that one needs to define error codes - it implies this is an option - you can define it in the call to the push method, or create the definitions and send an array with the meanings. The example I posted is essentially identical to the documentation and there were no defined options in the example under the sectionat the end of the introduction section under changing calls from PEAR::raiseError().</p>
+<p>Second - this still doesn&#039;t explain why it works correctly in php 4.3.x and not in php 5 (RC2). I just wonder what&#039;s different.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

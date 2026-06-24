@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8451</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_Wiki_Mediawiki/index.html">Text_Wiki_Mediawiki</a> &#187; Bug #8451</h1>
+<p>Inline definition list patch</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8451</th><td>Inline definition list patch</td></tr>
+<tr><th>Submitted</th><td>2006-08-15 18:21 UTC</td></tr>
+<tr><th>From</th><td>bjs5075 at rit dot edu</td></tr>
+<tr><th>Assigned</th><td>ritzmo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Text_Wiki_Mediawiki/index.html">Text_Wiki_Mediawiki</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Debian etch</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-15 18:21 UTC] bjs5075 at rit dot edu</h3>
+<p>Description:<br>
+------------<br>
+Here is a patch that looks for definition terms defined <br>
+inline and modifies the definition list. It tricks the <br>
+parser into treating it as if it were just a normal <br>
+multi-line definition.</p>
+<p>--- Parse/Mediawiki/Deflist.php (revision 766)<br>
++++ Parse/Mediawiki/Deflist.php (working copy)<br>
+@@ -108,11 +108,40 @@<br>
+             PREG_SET_ORDER<br>
+         );</p>
+<p>+        // look for same-line definitions and split them<br>
++        // foreach() cannot be used because we are <br>
+modifying the array directly<br>
++        for ($i = 0; $i &lt; count($list); $i++) {<br>
++            $val = $list[$i];<br>
++<br>
++            // only check definition term lines<br>
++            if ($val[2] != &#039;;&#039;) {<br>
++                continue;<br>
++            }<br>
++<br>
++            $p = strpos($val[3], &#039; : &#039;); // spot inline <br>
+definitions<br>
++            if ($p === false) {<br>
++                continue;<br>
++            }<br>
++<br>
++            $term = substr($val[3], 0, $p);<br>
++            $narr = substr($val[3], $p + 2);<br>
++<br>
++            $prefix = substr($val[1], 0, -1); // <br>
+everthing but the last char<br>
++<br>
++            $pair = array(<br>
++                array($prefix . &#039;;&#039; . $term, <br>
+$prefix . &#039;;&#039;, &#039;;&#039;, $term),<br>
++                array($prefix . &#039;:&#039; . $narr, <br>
+$prefix . &#039;:&#039;, &#039;:&#039;, $narr),<br>
++            );<br>
++<br>
++            array_splice($list, $i, 1, $pair);<br>
++            $i++; // skip the newly-added definition<br>
++        }<br>
++<br>
+        // loop through each list-item element.<br>
+         foreach ($list as $key =&gt; $val) {<br>
+             // $val[0] is the full matched list-item line</p>
+<p>Test script:<br>
+---------------<br>
+; something : like this<br>
+; or : like this<br>
+: needs parsed</p>
+<p>Expected result:<br>
+----------------<br>
+something<br>
+    like this<br>
+or<br>
+    like this<br>
+    needs parsed</p>
+<p>Actual result:<br>
+--------------<br>
+something : like this<br>
+or : like this<br>
+    needs parsed</p>
+</section>
+<section>
+<h3>[2006-08-18 12:13 UTC] ritzmo at php dot net</h3>
+<p>Patch implemented.</p>
+<p>I modified it slightly to strip the additional whitespaces and modified the preg_match_all called before to do so too.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

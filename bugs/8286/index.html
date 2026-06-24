@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8286</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_LDAP/index.html">Net_LDAP</a> &#187; Bug #8286</h1>
+<p>warning about passing by reference</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-07-25 15:36 UTC</td></tr>
+<tr><th>From</th><td>glen at delfi dot ee</td></tr>
+<tr><th>Assigned</th><td>beni</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_LDAP/index.html">Net_LDAP</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>PLD Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-25 15:36 UTC] glen at delfi dot ee</h3>
+<p>Description:<br>
+------------<br>
+[Tue Jul 25 17:54:47 2006] [error] PHP Notice:  Only <br>
+variable references should be returned by reference <br>
+in /usr/share/pear/Net/LDAP<br>
+.php on line 893<br>
+[Tue Jul 25 17:54:47 2006] [error] PHP Notice:  Only <br>
+variable references should be returned by reference <br>
+in /usr/share/pear/Net/LDAP<br>
+.php on line 893<br>
+[Tue Jul 25 17:54:47 2006] [error] PHP Notice:  Only <br>
+variable references should be returned by reference <br>
+in /usr/share/pear/Net/LDAP<br>
+.php on line 893</p>
+<p>proposed fix:<br>
+--- /usr/share/pear/Net/LDAP.php~    2006-03-30 <br>
+01:48:24.000000000 +0300<br>
++++ /usr/share/pear/Net/LDAP.php    2006-07-25 <br>
+17:56:47.919303818 +0300<br>
+@@ -890,7 +890,8 @@<br>
+         $entry = $result-&gt;shift_entry();<br>
+         if (false === $entry) return <br>
+$this-&gt;raiseError(&#039;Could not fetch RootDSE entry&#039;);</p>
+<p>-        return new Net_LDAP_RootDSE($entry);<br>
++        $ret = new Net_LDAP_RootDSE($entry);<br>
++        return $ret;<br>
+     }</p>
+<p>/**</p>
+</section>
+<section>
+<h3>[2006-09-04 03:32 UTC] ben at horde dot org</h3>
+<p>Simular problem with LDAP/Schema.php</p>
+<p>Notice: Only variable references should be returned by reference in /usr/lib/php/Net/LDAP/Schema.php on line 113</p>
+<p>Patch to fix it:</p>
+<p>--- Schema.php.original 2006-09-03 22:26:06.000000000 -0500<br>
++++ Schema.php  2006-09-03 22:26:59.000000000 -0500<br>
+@@ -110,7 +110,8 @@<br>
+                      &#039;syntaxes&#039;          =&gt; &amp;$this-&gt;_ldapSyntaxes );</p>
+<p>$key = strtolower($type);<br>
+-        return ((key_exists($key, $map)) ? $map[$key] : $this-&gt;raiseError(&quot;Unknown type $type&quot;));<br>
++        $ret = ((key_exists($key, $map)) ? $map[$key] : $this-&gt;raiseError(&quot;Unknown type $type&quot;));<br>
++        return $ret;<br>
+     }</p>
+<p>/**</p>
+</section>
+<section>
+<h3>[2006-09-05 09:28 UTC] b dot hallinger at skyforcesystems dot de</h3>
+<p>The Patch here produces a copy&amp;paste issue.<br>
+I made a new patch file available that combines both patches above. It should clean apply if patch is called inside Net/ to:<br>
+* LDAP.php        CVS revision 1.28<br>
+* LDAP/Schema.php CVS revision 1.9</p>
+<p>it can be downloaded from http://beni.skyforcesystems.de/patches/net_ldap/patch_bug_8286.patch</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

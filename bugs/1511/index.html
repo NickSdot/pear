@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1511</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #1511</h1>
+<p>Problem using MySQL SQL extensions with prepared statements</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-26 23:01 UTC</td></tr>
+<tr><th>From</th><td>codyc at lifeformsunlimited dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-26 23:01 UTC] codyc at lifeformsunlimited dot com</h3>
+<p>Description:<br>
+------------<br>
+PEAR DB version: 1.4.0</p>
+<p>For background on MySQL ANSI extensions see:<br>
+http://dev.mysql.com/doc/mysql/en/Extensions_to_ANSI.html</p>
+<p>Problem: MySQL has ANSI SQL extensions which can be supplied during SELECT querie, such as SQL_CALC_FOUND_ROWS and SQL_CACHE. In order to be portable, PHP scripts using these MySQL extensions  should enclose them in comment blocks &quot;/* .. */&quot; so, other RDBM&#039;s wont attempt to parse and run them. E.g.</p>
+<p>SELECT /* SQL_CALC_FOUND_ROWS */ foo,bar FROM some_table;</p>
+<p>This query will be parseable and interpreted as intended by MySQL but will NOT fail miserably on Oracle, since Oracle&#039;s query parser will skip over the comment-blocks.</p>
+<p>Ok, so far. In addition, MySQL has allowed a developer to specify the minimum version of MySQL which has that feature built-in. For example, the extension SQL_CALC_FOUND_ROWS is only available in MySQL &gt;= 4.0.0, so you can specify this in the query, so even older versions of MySQL wont fail on trying to run an unsupported extension. This is accomplished using the following query:</p>
+<p>SELECT /*! 40000 SQL_CALC_ROUND_ROWS */ foo,bar FROM some_table;</p>
+<p>Notice the &quot;!&quot; and the interger &quot;40000&quot;, this restricts this extension to versions of MySQL 4.0.0 and above.</p>
+<p>As you can see, using this syntax combined with PEAR DB&#039;s prepare/execute facility, PEAR will see that &quot;!&quot; and choke on it (because the arguments to prepare() are insufficient).</p>
+<p>Thus, the prepare() logic needs to handle the case where the binding placeholder &quot;!&quot; is inside of a comment &quot;/* ... */&quot; and not attempt to parse it.</p>
+<p>Let me know if I can be of any further assistance.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$query = &quot;SELECT /*! 40000 SQL_CALC_FOUND_ROWS */  postdate, body FROM ratings where ratingid = !&quot;;<br>
+$stmt = $dbh-&gt;prepare($query);<br>
+$result = $dbh-&gt;execute($stmt, array($ratingid) );<br>
+if(DB::isError($result)) {<br>
+  $err = &quot;Error [&quot;.$result-&gt;getCode().&quot;]:&quot;;<br>
+  $err .= $result-&gt;getMessage();<br>
+  die( $err );<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+a DB_Result object</p>
+<p>Actual result:<br>
+--------------<br>
+Error [-20]: DB Error: insufficient data supplied</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

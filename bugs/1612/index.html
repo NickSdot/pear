@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1612</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #1612</h1>
+<p>strange error on time format</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-06-11 05:33 UTC</td></tr>
+<tr><th>From</th><td>francis at mixmedia dot com</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>redhat 9.0</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-06-11 05:33 UTC] francis at mixmedia dot com</h3>
+<p>Description:<br>
+------------<br>
+PEAR Date version: Date-1.4.3</p>
+<p>when a FunctionA return a date string to FunctionB, the string in FunctionB is somehow different than FunctionA.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+	require_once &#039;Date.php&#039;;</p>
+<p>echo(&quot;Pear Date testing below:&lt;br&gt;&quot;);<br>
+echo(getPearNowUTC());<br>
+echo(&quot;&lt;BR&gt;&quot;);<br>
+echo(testPear());</p>
+<p>function testPear(){<br>
+	return getPearNowUTC();<br>
+}</p>
+<p>function getPearNowUTC(){<br>
+	//get UTC second<br>
+	//below is actually:<br>
+	//time() - date(&#039;Z&#039;)<br>
+	$now=date(&#039;Y-m-d G:i:sO&#039;);<br>
+	$objDate = new Date();<br>
+	$objDate-&gt;setDate($now);<br>
+	$objDate-&gt;convertTZbyID(&#039;UTC&#039;);<br>
+	$now=$objDate-&gt;getTime();<br>
+	//get UTC second END</p>
+<p>$now=date(&#039;Y-m-d G:i:sO&#039;, $now);<br>
+	<br>
+	return $now;<br>
+}</p>
+<p>echo(&quot;&lt;br&gt;PHP testing below:&lt;br&gt;&quot;);<br>
+echo(getnowPHP());<br>
+echo(&quot;&lt;BR&gt;&quot;);<br>
+echo(testPHP());</p>
+<p>function testPHP(){<br>
+	return getnowPHP();<br>
+}</p>
+<p>function getnowPHP(){<br>
+	$now=date(&#039;Y-m-d G:i:sO&#039;, time());<br>
+	<br>
+	return $now;<br>
+}</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Pear Date testing below:<br>
+2004-06-11 6:12:25+0000<br>
+2004-06-11 6:12:25+0000<br>
+PHP testing below:<br>
+2004-06-11 6:12:25+0000<br>
+2004-06-11 6:12:25+0000</p>
+<p>Actual result:<br>
+--------------<br>
+Pear Date testing below:<br>
+2004-06-11 6:12:25+0000<br>
+2004-06-11 0:00:00+0000<br>
+PHP testing below:<br>
+2004-06-11 6:12:25+0000<br>
+2004-06-11 6:12:25+0000</p>
+</section>
+<section>
+<h3>[2004-06-11 05:36 UTC] francis at mixmedia dot com</h3>
+<p>the function getnowPHP should be:</p>
+<p>function getnowPHP(){<br>
+	$now=date(&#039;Y-m-d G:i:sO&#039;, (time() - date(&#039;Z&#039;)));<br>
+	<br>
+	return $now;<br>
+}</p>
+<p>thanks</p>
+</section>
+<section>
+<h3>[2004-06-13 13:54 UTC] pierre at dotgeek dot org</h3>
+<p>Please provide a short script to reproduce your problem. Use only date and do not mix php date() with Date.</p>
+<p>--Pierre</p>
+</section>
+<section>
+<h3>[2004-06-24 08:39 UTC] francis at mixmedia dot com</h3>
+<p>To reproduce the problem:  In my first message there is already an example to do it.  Or you have different result?</p>
+<p>&quot;Use only date and do not mix php date() with Date.&quot;, you mean  using php date() and Pear Date package together is not recommended?</p>
+</section>
+<section>
+<h3>[2005-04-11 11:13 UTC] pierre at dotgeek dot org</h3>
+<p>As php date() supports only dates inside the unix timestamp range (and limited using certains platforms), no, you should not mix both.</p>
+<p>Still wondering in which order the getNow* are used. A small script using only pear::date should help, and the results you expect from it.</p>
+<p>--Pierre</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

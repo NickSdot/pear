@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8303</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a> &#187; Bug #8303</h1>
+<p>Support for auto sizing of columns</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8303</th><td>Support for auto sizing of columns</td></tr>
+<tr><th>Submitted</th><td>2006-07-27 06:57 UTC</td></tr>
+<tr><th>From</th><td>dsanders at baselinesolutions dot com dot au</td></tr>
+<tr><th>Status</th><td>Verified</td></tr>
+<tr><th>Package</th><td><a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>FC2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-27 06:57 UTC] dsanders at baselinesolutions dot com dot au</h3>
+<p>Description:<br>
+------------<br>
+It&#039;d be great to add support for auto sizing of the column widths... I&#039;ve attempted to create my own patch for this, but I don&#039;t fully understand how this package stores the cell information so I guess you guys could do a better job.</p>
+<p>A possible simple patch for this would be in Worksheet.php. (see test script)</p>
+<p>This patch assumes that 1 unit of width is about the same as the width of 1 character at size 10 Arial.  It&#039;s not accurate, but it gives me satisfactory sizing of the columns.</p>
+<p>Test script:<br>
+---------------<br>
+@@ -497,6 +497,12 @@ class Spreadsheet_Excel_Writer_Worksheet<br>
+     {<br>
+         $num_sheets = count($sheetnames);<br>
+ <br>
++        // set the column widths, if we need to<br>
++        if (!empty($this-&gt;col_auto_width))<br>
++        {<br>
++            $this-&gt;_setColumnAutoWidths();<br>
++        }<br>
++<br>
+         /***********************************************<br>
+         * Prepend in reverse order!!<br>
+         */<br>
+@@ -740,6 +746,44 @@ class Spreadsheet_Excel_Writer_Worksheet<br>
+         }<br>
+     }<br>
+ <br>
++    var $col_auto_width_padding = array();<br>
++    var $col_widths = array();<br>
++    var $col_auto_width = array();<br>
++    /**<br>
++    * <br>
++    * @access public<br>
++    * @param integer $firstcol first column on the range<br>
++    * @param integer $lastcol  last column on the range<br>
++    * @param bool    $flag     turn on/off the auto-width<br>
++    * @param integer $padding  amount of padding to add to the column width<br>
++    */<br>
++    function setColumnAutoWidth($firstcol, $lastcol, $flag = true, $padding = 0)<br>
++    {<br>
++        for ($col = $firstcol; $col &lt;= $lastcol; $col++)<br>
++        { <br>
++            if ($flag)<br>
++            {<br>
++                $this-&gt;col_auto_width[$col] = $flag;<br>
++            }<br>
++            else<br>
++            {<br>
++                unset($this-&gt;col_auto_width[$col]);<br>
++            }<br>
++            $this-&gt;col_auto_width_padding[$col] = $padding;<br>
++        }<br>
++    }<br>
++<br>
++    function _setColumnAutoWidths()<br>
++    {<br>
++        foreach ($this-&gt;col_auto_width as $col =&gt; $something)<br>
++        {<br>
++            if (isset($this-&gt;col_widths[$col]))<br>
++            {<br>
++                $this-&gt;setColumn($col,$col,$this-&gt;col_widths[$col] + $this-&gt;col_auto_width_padding[$col]);<br>
++            }<br>
++        }<br>
++    }<br>
++<br>
+     /**<br>
+     * Set which cell or cells are selected in a worksheet<br>
+     *<br>
+@@ -1410,6 +1454,16 @@ class Spreadsheet_Excel_Writer_Worksheet<br>
+     */<br>
+     function writeNumber($row, $col, $num, $format = 0)<br>
+     {<br>
++        // record the number of digits, if we are auto column sizing<br>
++        if (!empty($this-&gt;col_auto_width[$col]))<br>
++        {<br>
++            $length = strlen($num);<br>
++            if (empty($this-&gt;col_widths[$col]) || $length  &gt; $this-&gt;col_widths[$col])<br>
++            {<br>
++                $this-&gt;col_widths[$col] = $length;<br>
++            }<br>
++        }<br>
++ <br>
+         $record    = 0x0203;                 // Record identifier<br>
+         $length    = 0x000E;                 // Number of bytes to follow<br>
+ <br>
+@@ -1463,6 +1517,17 @@ class Spreadsheet_Excel_Writer_Worksheet<br>
+     */<br>
+     function writeString($row, $col, $str, $format = 0)<br>
+     {<br>
++        // record the string length, if using auto column sizing<br>
++        if (!empty($this-&gt;col_auto_width[$col]))<br>
++        {<br>
++            $length = strlen($str);<br>
++<br>
++            if (empty($this-&gt;col_widths[$col]) || $length  &gt; $this-&gt;col_widths[$col])<br>
++            {<br>
++                $this-&gt;col_widths[$col] = $length;<br>
++            }<br>
++        }<br>
++ <br>
+         if ($this-&gt;_BIFF_version == 0x0600) {<br>
+             return $this-&gt;writeStringBIFF8($row, $col, $str, $format);<br>
+         }<br>
+@@ -1813,6 +1878,16 @@ class Spreadsheet_Excel_Writer_Worksheet<br>
+     */<br>
+     function writeUrl($row, $col, $url, $string = &#039;&#039;, $format = 0)<br>
+     {<br>
++        // record the string length, if using auto column sizing<br>
++        if (!empty($this-&gt;col_auto_width[$col]))<br>
++        {<br>
++            $length = strlen($url);<br>
++            if (empty($this-&gt;col_widths[$col]) || $length  &gt; $this-&gt;col_widths[$col])<br>
++            {<br>
++                $this-&gt;col_widths[$col] = $length;<br>
++            }<br>
++        }<br>
++ <br>
+         // Add start row and col to arg list<br>
+         return($this-&gt;_writeUrlRange($row, $col, $row, $col, $url, $string, $format));<br>
+     }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

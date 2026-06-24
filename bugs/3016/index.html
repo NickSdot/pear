@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3016</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #3016</h1>
+<p>Bug in DB_pgsql::fetchInto when using a row number</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-12-22 17:15 UTC</td></tr>
+<tr><th>From</th><td>teixeira at mcs dot suffolk dot edu</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.2</td></tr>
+<tr><th>OS</th><td>Linux/2.6.3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-22 17:15 UTC] teixeira at mcs dot suffolk dot edu</h3>
+<p>Description:<br>
+------------<br>
+I am using PEAR DB v.1.6.8.  The code I was trying to execute was as follows:</p>
+<p>$data = $result-&gt;fetchRow(DB_FETCHMODE_ASSOC, $i);</p>
+<p>where $i is an index that will not always be a sequential number of rows.  When executing this code, the page would only half load and when looking at my Apache logs, I would get log entries like:</p>
+<p>[notice] child pid 4280 exit signal Segmentation fault (11)</p>
+<p>The way I was able to fix it in my version of pgsql.php was to patch the pgsql.php file with the following:</p>
+<p>--- DB-1.6.8/DB/pgsql.php       2004-10-04 13:53:09.000000000 -0400<br>
++++ /usr/lib/php/DB/pgsql.php   2004-12-22 12:07:13.850735276 -0500<br>
+@@ -290,6 +290,7 @@<br>
+      */<br>
+     function fetchInto($result, &amp;$arr, $fetchmode, $rownum=null)<br>
+     {<br>
++               ($rownum == null) ? $doInc = true : $doInc = false;<br>
+         $result_int = (int)$result;<br>
+         $rownum = ($rownum !== null) ? $rownum : $this-&gt;row[$result_int];<br>
+         if ($rownum &gt;= $this-&gt;num_rows[$result_int]) {<br>
+@@ -316,7 +317,9 @@<br>
+         if ($this-&gt;options[&#039;portability&#039;] &amp; DB_PORTABILITY_NULL_TO_EMPTY) {<br>
+             $this-&gt;_convertNullArrayValuesToEmpty($arr);<br>
+         }<br>
+-        $this-&gt;row[$result_int] = ++$rownum;<br>
++               if ($doInc) {<br>
++                       $this-&gt;row[$result_int] = ++$rownum;<br>
++               }<br>
+         return DB_OK;<br>
+     }</p>
+<p>After using this patch, everything seems to work as it should.</p>
+<p>Reproduce code:<br>
+---------------<br>
+The basic code to reproduce this can be found at the following URL:</p>
+<p>http://cartan.cas.suffolk.edu/test/db-broken.phps</p>
+<p>Expected result:<br>
+----------------<br>
+The code above should output staggered rows from the query (this is intended to be used in this manner to create columns of data on a webpage).  The out to this code should be several  lines of data of the form:</p>
+<p>Array ( [field1] =&gt; 1 [field2] =&gt; 2 [field3] =&gt; 3 )</p>
+<p>where field names and values will vary depending upon the table&#039;s field names and values.  Basically, the output will be the values of the arrays (using print_r) printed in an order consistant with the index values</p>
+<p>Actual result:<br>
+--------------<br>
+The output will sometimes be the same, sometimes different, but the web server (Apache) will always give the</p>
+<p>[notice] child pid 4280 exit signal Segmentation fault (11)</p>
+<p>error message in the error log.</p>
+<p>In my actual script, the error causes the seg fault causes the page to only half-display since the seg fault causes the page transmission to die randomly.  Also, the postgre logs report</p>
+<p>unexpected EOF on client connection</p>
+<p>but this is most likely caused by the seg fault since it cuts the connection to the database prematurely.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

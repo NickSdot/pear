@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5971</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_Graph/index.html">Image_Graph</a> &#187; Bug #5971</h1>
+<p>Image_Graph_Axis_Category does not undersand levels</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5971</th><td>Image_Graph_Axis_Category does not undersand levels</td></tr>
+<tr><th>Submitted</th><td>2005-11-15 16:26 UTC</td></tr>
+<tr><th>From</th><td>chebatron at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>nosey</td></tr>
+<tr><th>Status</th><td>Assigned</td></tr>
+<tr><th>Package</th><td><a href="package/Image_Graph/index.html">Image_Graph</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>Slackware 10.1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-15 16:26 UTC] chebatron at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Category Axis does not understend levels. All operations such as setLabelInterval and others are perfomed on the first (1) level.</p>
+<p>Test script:<br>
+---------------<br>
+== Test script ==</p>
+<p>&lt;?php<br>
+require_once &#039;Image/Graph.php&#039;;<br>
+$Graph =&amp; Image_Graph::factory(&#039;graph&#039;, array(800, 300));<br>
+$Plotarea =&amp; $Graph-&gt;addNew(&#039;plotarea&#039;);<br>
+$Dataset =&amp; Image_Graph::factory(&#039;dataset&#039;);</p>
+<p>// adding some data with time labels<br>
+$Dataset-&gt;addPoint(&#039;10:00&#039;, 1);<br>
+$Dataset-&gt;addPoint(&#039;10:30&#039;, 1);<br>
+$Dataset-&gt;addPoint(&#039;11:00&#039;, 1);<br>
+$Dataset-&gt;addPoint(&#039;11:30&#039;, 1);<br>
+$Dataset-&gt;addPoint(&#039;12:00&#039;, 1);<br>
+$Dataset-&gt;addPoint(&#039;12:30&#039;, 1);<br>
+$Dataset-&gt;addPoint(&#039;13:00&#039;, 1);<br>
+$Dataset-&gt;addPoint(&#039;13:30&#039;, 1);<br>
+$Dataset-&gt;addPoint(&#039;14:00&#039;, 1);</p>
+<p>$Plot =&amp; $Plotarea-&gt;addNew(&#039;line&#039;, array(&amp;$Dataset));</p>
+<p>$AxisX =&amp; $Plotarea-&gt;addNew(&#039;Image_Graph_Axis_Category&#039;, IMAGE_GRAPH_AXIS_X);<br>
+// showing labels and ticks for everyt second point (every hour)<br>
+$AxisX-&gt;setLabelInterval(2, 1);</p>
+<p>// showing ticks without labels for every point (half an hour ticks)<br>
+$AxisX-&gt;setLabelInterval(1, 2);<br>
+$AxisX-&gt;setLabelOption(&#039;showtext&#039;, false, 2);</p>
+<p>$Graph-&gt;done();<br>
+?&gt;</p>
+<p>== Fix (not fully tested but works for me) ==</p>
+<p>--- Category.php-fixed  2005-11-15 17:38:59.000000000 +0200<br>
++++ Category.php-original       2005-11-15 17:17:31.000000000 +0200<br>
+@@ -154,9 +154,9 @@<br>
+     function setLabelInterval($labelInterval = &#039;auto&#039;, $level = 1)<br>
+     {<br>
+         if ($labelInterval == &#039;auto&#039;) {<br>
+-            parent::setLabelInterval(1, $level);<br>
++            parent::setLabelInterval(1);<br>
+         } else {<br>
+-            parent::setLabelInterval(round($labelInterval), $level);<br>
++            parent::setLabelInterval(round($labelInterval));<br>
+         }<br>
+     }</p>
+<p>@@ -369,8 +369,8 @@<br>
+             reset($this-&gt;_labels);<br>
+         }<br>
+         $result = false;<br>
+-        $count = ($currentLabel === false ? $this-&gt;_labelInterval($level) - 1 : 0);<br>
+-        while ($count &lt; $this-&gt;_labelInterval($level)) {<br>
++        $count = ($currentLabel === false ? $this-&gt;_labelInterval() - 1 : 0);<br>
++        while ($count &lt; $this-&gt;_labelInterval()) {<br>
+            $result = (list($label) = each($this-&gt;_labels));<br>
+            $count++;<br>
+         }<br>
+@@ -410,11 +410,9 @@<br>
+         $this-&gt;_drawAxisLines();</p>
+<p>$this-&gt;_canvas-&gt;startGroup(get_class($this) . &#039;_ticks&#039;);<br>
+-        foreach ($this-&gt;_labelOptions as $level =&gt; $labelOption) {<br>
+-            $label = false;<br>
+-            while (($label = $this-&gt;_getNextLabel($label, $level)) !== false) {<br>
+-                    $this-&gt;_drawTick($label, $level);<br>
+-            }<br>
++        $label = false;<br>
++        while (($label = $this-&gt;_getNextLabel($label)) !== false) {<br>
++            $this-&gt;_drawTick($label);<br>
+         }<br>
+         $this-&gt;_canvas-&gt;endGroup();</p>
+<p>@@ -425,4 +423,4 @@</p>
+<p>}</p>
+<p>-?&gt;<br>
++?&gt;<br>
+\ No newline at end of file</p>
+<p>Expected result:<br>
+----------------<br>
+I expect to see labels for full hours but not for every tick.</p>
+<p>Actual result:<br>
+--------------<br>
+Instead I see labels for every tick.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

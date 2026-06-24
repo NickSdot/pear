@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8047</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail/index.html">Mail</a> &#187; Bug #8047</h1>
+<p>Cc and Bcc handling</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-06-28 06:46 UTC</td></tr>
+<tr><th>From</th><td>ahayes at wcg dot net dot au</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Mail/index.html">Mail</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>FC5</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-28 06:46 UTC] ahayes at wcg dot net dot au</h3>
+<p>Description:<br>
+------------<br>
+It seems as tho the Mail factory &#039;smtp&#039; behaves a little differently to its cousins &#039;mail&#039; and &#039;sendmail&#039;. I realise that this could be the implementation of the sendmail program as I have recieved differing results on some servers, however at the very least it would be nice to have some clarification in the documentation.</p>
+<p>The problem lies in the handling of the Cc and Bcc headers. For example, with the &#039;mail&#039; factory it will send the email out to those listed in the Cc and Bcc, &#039;smtp&#039; does not. The reason for this I believe is because you must specify all the recipients in the &#039;recipients&#039; parameter of the Mail_smtp::send() method. This is trivial, however if you are switching between mail factories a problem arises.</p>
+<p>Say for instance I do join up all my recipients (To, Cc &amp; Bcc) for calls to Mail_mail::send() as I would have to for Mail_smtp::send(), Mail_mail::send() will cause those listed in the Cc and Bcc to be in the &#039;To&#039; header when the email is delivered.</p>
+<p>So, either the &#039;recipient&#039; param is just supposed to be those for the &#039;To&#039; header, or there needs to be some modification of Mail_mail, however I would assume that this will be the harder of the two.</p>
+<p>A very simple fix (PHP5) for this would be as follows, however I am unsure if this breaks anything, or of the reason for this &quot;bug&quot; (if in fact it even is a bug and not a documentation issue).</p>
+<p>=============8&lt;===============<br>
+class Mail_smtpfix extends Mail_smtp {</p>
+<p>function send($recipients, $headers, $body)<br>
+    {</p>
+<p>if(!empty($headers[&#039;Cc&#039;])) {<br>
+			if(is_array($headers[&#039;Cc&#039;])) {<br>
+				$headers[&#039;Cc&#039;] = $this-&gt;parseRecipients($headers[&#039;Cc&#039;]);;<br>
+			}			<br>
+			$recipients = is_array($recipients) ? array_merge($recipients, array($headers[&#039;Cc&#039;])) : array($recipients, $headers[&#039;Cc&#039;]);<br>
+		}</p>
+<p>if(!empty($headers[&#039;Bcc&#039;])) {<br>
+			if(!is_array($headers[&#039;Bcc&#039;])) {<br>
+				$headers[&#039;Bcc&#039;] = $this-&gt;parseRecipients($headers[&#039;Bcc&#039;]);;<br>
+			}<br>
+			$recipients = is_array($recipients) ? array_merge($recipients, array($headers[&#039;Bcc&#039;])) : array($recipients, $headers[&#039;Bcc&#039;]);<br>
+		}</p>
+<p>return parent::send($recipients, $headers, $body);</p>
+<p>}</p>
+<p>}<br>
+=============&gt;8===============</p>
+<p>Note that if this is not a bug with Mail_smtp then it means that the mail factories do not behave in the same manner, which, in my opinion, **kind of** breaks the factory based approach.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+include(&#039;Mail.php&#039;);<br>
+include(&#039;Mail/mime.php&#039;);</p>
+<p>$params[&#039;factory&#039;] = &#039;smtp&#039;;<br>
+$params[&#039;options&#039;] = array(<br>
+    &#039;host&#039;  =&gt; &#039;smtp.host.com&#039;<br>
+);</p>
+<p>$params[&#039;crlf&#039;] = &quot;\r\n&quot;;<br>
+$params[&#039;hdrs&#039;] = array(<br>
+    &#039;To&#039;      =&gt; &#039;example@example.com&#039;,<br>
+    &#039;From&#039;    =&gt; &#039;me@example.com&#039;,<br>
+    &#039;Cc&#039;      =&gt; &#039;friends@example.com&#039;,<br>
+    &#039;Subject&#039; =&gt; &#039;Test Message&#039;<br>
+);</p>
+<p>$text = &quot;Parameter Information: \n\n&quot; . var_export($params, true);</p>
+<p>$mime = new Mail_mime($params[&#039;crlf&#039;]);</p>
+<p>$mime-&gt;setTXTBody($text);</p>
+<p>$body = $mime-&gt;get();<br>
+$hdrs = $mime-&gt;headers($params[&#039;hdrs&#039;]);</p>
+<p>$mail =&amp; Mail::factory($params[&#039;factory&#039;], $params[&#039;options&#039;]);</p>
+<p>$result = $mail-&gt;send(<br>
+	$params[&#039;hdrs&#039;][&#039;To&#039;],<br>
+	$hdrs, <br>
+	$body<br>
+);<br>
+	<br>
+var_dump($result);</p>
+<p>Expected result:<br>
+----------------<br>
+The email should arrive to both the To and the Cc recipients.</p>
+<p>Actual result:<br>
+--------------<br>
+The email only arrives to the To.</p>
+</section>
+<section>
+<h3>[2006-06-28 18:13 UTC] chagenbu at php dot net</h3>
+<p>The fact that PHP&#039;s mail: function delivers to cc: and bcc: header addresses is because it doesn&#039;t have a proper recipients parameter.</p>
+<p>With Mail, you *must* specify the envelope recipients - anyone who should get the message - in the $recipients parameter. Headers are headers - they don&#039;t mean _anything_ about who the message should be delivered to.</p>
+</section>
+<section>
+<h3>[2006-06-28 22:57 UTC] ahayes at wcg dot net dot au</h3>
+<p>So, then is it possible that Mail_mail can be modified, so that when it talks to PHP&#039;s mail it behaves properly? Or is this really something that should (but probably will not) be addressed with the mail function itself? My guess is the later.</p>
+</section>
+<section>
+<h3>[2007-02-28 20:29 UTC] tkamin at argotinc dot com</h3>
+<p>So, basically, the PEAR Mail class doesn&#039;t support Cc: or Bcc: functionality.</p>
+</section>
+<section>
+<h3>[2007-03-04 01:03 UTC] testing83 at verizon dot net</h3>
+<p>I am unable to use the Mail Factory with smtp to send a blind carbon copy (Bcc).  The problem I am having is discussed in this bug report.  If I don&#039;t place the bcc email address in the list of recipients then the email does not get sent to the bcc email address.  If I place the bcc email address in the list of recipients then the email is sent but it not blind to the other recipients.  I would really like to know how I can send an email which includes a bcc using the Mail Factory with an smtp mail server. Thank you.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

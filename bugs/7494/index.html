@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7494</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Archive_Zip/index.html">Archive_Zip</a> &#187; Bug #7494</h1>
+<p>Failure adding files to existing archives</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-04-26 18:25 UTC</td></tr>
+<tr><th>From</th><td>martin at kp3 dot de</td></tr>
+<tr><th>Status</th><td>Suspended</td></tr>
+<tr><th>Package</th><td><a href="package/Archive_Zip/index.html">Archive_Zip</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Linux RHES 3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-26 18:25 UTC] martin at kp3 dot de</h3>
+<p>Description:<br>
+------------<br>
+If you try to put some new files to an existing archive with the method &#039;add&#039;, the method fails with an error.</p>
+<p>Test script:<br>
+---------------<br>
+	$zipfile = new Archive_Zip(&#039;test.zip&#039;);<br>
+	$msc_return = $zipfile-&gt;add(<br>
+		array(&#039;_data/00000034.pdf&#039;, &#039;_data/00000038.pdf&#039;),<br>
+		array(&#039;remove_all_path&#039; =&gt; true)<br>
+	);<br>
+	<br>
+	unset($zipfile);<br>
+	<br>
+	$zipfile = new Archive_Zip(&#039;test.zip&#039;);<br>
+	$zipfile-&gt;add(<br>
+		array(&#039;_data/00000097.pdf&#039;, &#039;../_data/00000101.pdf&#039;),	<br>
+		array(&#039;remove_all_path&#039; =&gt; true)<br>
+	);</p>
+<p>echo &quot;&lt;h1&gt;File 2&lt;/h1&gt;&lt;code&gt;&quot;.$zipfile-&gt;errorInfo(true).&quot;&lt;/code&gt;&quot;;</p>
+<p>Expected result:<br>
+----------------<br>
+First the zip file will be created and in the second step the new files should be put into the existing zip archive.</p>
+<p>Actual result:<br>
+--------------<br>
+The zip file in step 1 is created and then it returns the following error:</p>
+<p>ARCHIVE_ZIP_ERR_READ_OPEN_FAIL (-2) : Unable to open temporary file &#039;archive_zip-444fa3e2c1b0c.tmp&#039; in binary write mode</p>
+</section>
+<section>
+<h3>[2006-04-26 19:41 UTC] martin at kp3 dot de</h3>
+<p>I have seen that creating the temp file is the problem. Due to the definition of constant &#039;ARCHIVE_ZIP_TEMPORARY_DIR&#039; in the zip class file it is not possible to change this configuration in use.</p>
+<p>I would prefer to write the temp file in the same directory where actual archive is located. In this folder writing should be possible. Another way to fix this problem could be using the $ENV-Tempfile. But the second version could return problems using the safe mode.</p>
+<p>As change request i would prefer a optional configure-array in the constructor of the object to set this and any other options.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

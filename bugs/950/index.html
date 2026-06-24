@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #950</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_Page/index.html">HTML_Page</a> &#187; Bug #950</h1>
+<p>[Patch] Correct iterative recustion</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-05 16:29 UTC</td></tr>
+<tr><th>From</th><td>dostick at ctco dot lv</td></tr>
+<tr><th>Assigned</th><td>thesaur</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_Page/index.html">HTML_Page</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>UNIX</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-05 16:29 UTC] dostick at ctco dot lv</h3>
+<p>Description:<br>
+------------<br>
+This patch fixes the recursion in generateBody<br>
+Now page support mixed colelction of objects and arrays in _body. If it&#039;s an array its iterated recirsively,<br>
+if it&#039;s an object, toHtml/toString is caleld and result of it is processed recursively.<br>
+So, If $element-&gt;toHtml() produces an array, it will be correctly processed.<br>
+patch against latest version from cvs:</p>
+<p>--- Page.orig   Fri Mar  5 14:51:18 2004<br>
++++ Page.php    Fri Mar  5 18:32:39 2004<br>
+@@ -346,15 +346,14 @@<br>
+      * extend HTML_Common.<br>
+      *<br>
+      * @access  protected<br>
+-     * @param   array   $array   The array to be processed<br>
++     * @param   mixed   $element   The element to be processed<br>
+      * @return  string<br>
+      */<br>
+-    function _arrayToHtml(&amp;$array) // It&#039;s a reference just to save some memory.<br>
++    function _elementToHtml(&amp;$element) // It&#039;s a reference just to save some memory.<br>
+     {<br>
+         $lnEnd = $this-&gt;_getLineEnd();<br>
+         $tab = $this-&gt;_getTab();<br>
+         $strHtml = &#039;&#039;;<br>
+-        foreach ($array as $element) {<br>
+             if (is_object($element)) {<br>
+                 if (is_subclass_of($element, &#039;html_common&#039;)) {<br>
+                     $element-&gt;setTabOffset(1);<br>
+@@ -363,21 +362,22 @@<br>
+                 }<br>
+                 if (is_object($element)) {<br>
+                     if (method_exists($element, &#039;toHtml&#039;)) {<br>
+-                        $strHtml .= $element-&gt;toHtml() . $lnEnd;<br>
++                        $strHtml .= $this-&gt;_elementToHtml($element-&gt;toHtml()) . $lnEnd;<br>
+                     } elseif (method_exists($element, &#039;toString&#039;)) {<br>
+-                        $strHtml .= $element-&gt;toString() . $lnEnd;<br>
++                        $strHtml .= $this-&gt;_elementToHtml($element-&gt;toString()) . $lnEnd;<br>
+                     }<br>
+                 } else {<br>
+                     $strHtml .= $tab . $element . $lnEnd;<br>
+                 }<br>
+             } elseif (is_array($element)) {<br>
+-                $strHtml .= $this-&gt;_arrayToHtml($element);<br>
++                               foreach ($element as $item) {<br>
++                                               $strHtml .= $this-&gt;_elementToHtml($item);<br>
++                               }<br>
+             } else {<br>
+                 $strHtml .= $tab . $element . $lnEnd;<br>
+             }<br>
+-        }<br>
+         return $strHtml;<br>
+-    } // end func _arrayToHtml<br>
++    } // end func _elementToHtml<br>
+     <br>
+     /**<br>
+      * Generates the HTML string for the &lt;body&lt; tag<br>
+@@ -404,7 +404,7 @@<br>
+ <br>
+         // Allow for mixed content in the body array, recursing into inner<br>
+         // array serching for non-array types.<br>
+-        $strHtml .= $this-&gt;_arrayToHtml($this-&gt;_body);<br>
++        $strHtml .= $this-&gt;_elementToHtml($this-&gt;_body);<br>
+ <br>
+         // Close tag<br>
+         $strHtml .= &#039;&lt;/body&gt;&#039; . $lnEnd;</p>
+</section>
+<section>
+<h3>[2004-03-25 00:13 UTC] thesaur at php dot net</h3>
+<p>Patch has been applied to CVS. It will be included in the next release.</p>
+<p>Thank you for your work.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

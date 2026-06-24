@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1874</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/XML_RPC/index.html">XML_RPC</a> &#187; Bug #1874</h1>
+<p>server breaks down when included file terminates with whitespace</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-07-14 15:52 UTC</td></tr>
+<tr><th>From</th><td>ignatius dot reilly at free dot fr</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/XML_RPC/index.html">XML_RPC</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.7</td></tr>
+<tr><th>OS</th><td>Windows 2000</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-14 15:52 UTC] ignatius dot reilly at free dot fr</h3>
+<p>Description:<br>
+------------<br>
+A XML-RPC server file includes the service function from another file</p>
+<p>When the included file terminates with whitespaces after the final &quot;?&gt;&quot;, the service client interprets the response inconsistently and breaks down the service</p>
+<p>Reproduce code:<br>
+---------------<br>
+Download test case:<br>
+http://www.auderghem-analytica.com/download/XML-RPC_bug.zip</p>
+<p>Please toy with the whitespace at the end of ws.test.php and inspect the client&#039;s response object</p>
+<p>Expected result:<br>
+----------------<br>
+--&gt;<br>
+&lt;methodResponse&gt;<br>
+&lt;params&gt;<br>
+&lt;param&gt;<br>
+&lt;value&gt;&lt;string&gt;Now it works&lt;/string&gt;&lt;/value&gt;<br>
+&lt;/param&gt;<br>
+&lt;/params&gt;<br>
+&lt;/methodResponse&gt;<br>
+---END---</p>
+<p>---EVALING---[43 chars]---<br>
+new XML_RPC_Value(&quot;Now it works&quot;, &#039;string&#039;);<br>
+---END---</p>
+<p>Actual result:<br>
+--------------<br>
+--&gt;<br>
+&lt;methodResponse&gt;<br>
+&lt;params&gt;<br>
+&lt;param&gt;<br>
+&lt;value&gt;&lt;string&gt;Now it works&lt;/string&gt;&lt;/value&gt;<br>
+&lt;/param&gt;<br>
+&lt;/params&gt;<br>
+&lt;/methodResponse&gt;<br>
+---END---</p>
+<p>Fault: Code: 2 Reason &#039;Invalid return payload: enabling debugging to examine incoming payload&#039;</p>
+<p>Clearly inconsistent!</p>
+</section>
+<section>
+<h3>[2004-11-30 22:36 UTC] techtonik at tut dot by</h3>
+<p>Server component use header() function to provide some required headers by both HTTP and XML-RPC protocols. Headers must be sent before any output to client. While including files with whitespaces after ?&gt; you make whitespaces appear before headers.</p>
+<p>http://www.php.net/manual/en/function.header.php<br>
+&quot;Remember that header() must be called before any actual output is sent, either by normal HTML tags, blank lines in a file, or from PHP. It is a very common error to read code with include(), or require(), functions, or another file access function, and have spaces or empty lines that are output before header() is called. The same problem exists when using a single PHP/HTML file.&quot;</p>
+</section>
+<section>
+<h3>[2004-12-01 07:06 UTC] ignatius dot reilly at free dot fr</h3>
+<p>this is quite clear.<br>
+what puzzles me, though, is the inconsistency of the response, which makes debugging difficult.<br>
+A fault response would be more appropriate in this case.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

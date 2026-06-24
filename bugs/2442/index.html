@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2442</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_Parser/index.html">XML_Parser</a> &#187; Bug #2442</h1>
+<p>Call to &quot;xmltag_ELEMENT_&quot; not correctly managed in function funcEndHandler</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-10-04 13:39 UTC</td></tr>
+<tr><th>From</th><td>marion dot leclerc at equant dot com</td></tr>
+<tr><th>Assigned</th><td>schst</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_Parser/index.html">XML_Parser</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Solaris 2.8</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-04 13:39 UTC] marion dot leclerc at equant dot com</h3>
+<p>Description:<br>
+------------<br>
+XML_parser package 1.2.0<br>
+In the function &quot;funcEndHandler&quot;, the call to the function &quot;xmltag_ELEMENT_&quot; does not work:</p>
+<p>The instruction (line 3): <br>
+   if (method_exists($this, $func)) {...</p>
+<p>Should be: <br>
+  if (method_exists($this-&gt;_handlerObj, $func)) {...</p>
+<p>Reproduce code:<br>
+---------------<br>
+File test.php:<br>
+==============<br>
+&lt;?php<br>
+require_once &#039;XML/Parser.php&#039;;<br>
+class TestParser<br>
+{<br>
+    function xmltag_CELLGROUP($xp, $name, $attribs){ echo &quot;START CELLGROUP&quot;; }<br>
+    function xmltag_CELLGROUP_($xp, $name, $attribs){ echo &quot;END CELLGROUP&quot;; }<br>
+}<br>
+$p = &amp;new XML_Parser();<br>
+$h = &amp;new TestParser();<br>
+$p-&gt;setHandlerObj( $h );<br>
+$result = $p-&gt;setInputFile( &#039;test.xml&#039; ) ;<br>
+$p-&gt;setMode( &#039;func&#039; ) ;<br>
+$result = $p-&gt;parse() ;<br>
+?&gt;<br>
+File test.xml:<br>
+==============<br>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;ISO-8859-1&quot; ?&gt;<br>
+&lt;workbook&gt;<br>
+  &lt;cellgroup background-color=&quot;blue&quot; border=&quot;2&quot;&gt;&lt;/cellgroup&gt;<br>
+&lt;/workbook&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+When executing the script test.php, I expect to see the 2 messages:</p>
+<p>START CELLGROUP             (parsing tag &lt;cellgroup&gt;)<br>
+END CELLGROUP               (parsing tag &lt;/cellgroup&gt;)</p>
+<p>Actual result:<br>
+--------------<br>
+Actual result is only:</p>
+<p>START CELLGROUP             (parsing tag &lt;cellgroup&gt;)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

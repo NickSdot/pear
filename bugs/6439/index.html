@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6439</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/SQL_Parser/index.html">SQL_Parser</a> &#187; Bug #6439</h1>
+<p>Improper handling of absolute column names eg: table.column</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-07 20:52 UTC</td></tr>
+<tr><th>From</th><td>shannah at sfu dot ca</td></tr>
+<tr><th>Assigned</th><td>epte</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SQL_Parser/index.html">SQL_Parser</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.1</td></tr>
+<tr><th>OS</th><td>Solaris and OS X</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-07 20:52 UTC] shannah at sfu dot ca</h3>
+<p>Description:<br>
+------------<br>
+There is a section of code in SQL_Parser::parseSelect() that <br>
+is not functioning the way it appears to be intended.  When <br>
+it tries to parse a column that contains a period (eg: <br>
+foo.a, foo.*, etc..) the code appears to be designed to <br>
+parse this, but it is not working.  I&#039;ll give a concrete <br>
+example later in this post.</p>
+<p>This has some consequences.  If we fix this problem so that <br>
+it works the way it looks like it is intended to, then it <br>
+will change the output structure of parsed SQL (which will, <br>
+in turn break code that uses SQL_Parser).</p>
+<p>Here is an example:</p>
+<p>$struct = $parser-&gt;parse(&quot;select foo.a from foo&quot;);<br>
+print_r($struct);</p>
+<p>Outputs:<br>
+Array<br>
+(<br>
+    [command] =&gt; select<br>
+    [column_tables] =&gt; Array<br>
+        (<br>
+            [0] =&gt; <br>
+        )</p>
+<p>[column_names] =&gt; Array<br>
+        (<br>
+            [0] =&gt; foo.a<br>
+        )</p>
+<p>[column_aliases] =&gt; Array<br>
+        (<br>
+            [0] =&gt; <br>
+        )</p>
+<p>[table_names] =&gt; Array<br>
+        (<br>
+            [0] =&gt; foo<br>
+        )</p>
+<p>[table_aliases] =&gt; Array<br>
+        (<br>
+            [0] =&gt; <br>
+        )</p>
+<p>[table_join_clause] =&gt; Array<br>
+        (<br>
+            [0] =&gt; <br>
+        )</p>
+<p>)</p>
+<p>After looking at the code it appears that the author <br>
+intended this to output:</p>
+<p>Array<br>
+(<br>
+    [command] =&gt; select<br>
+    [column_tables] =&gt; Array<br>
+        (<br>
+            [0] =&gt; foo<br>
+        )</p>
+<p>[column_names] =&gt; Array<br>
+        (<br>
+            [0] =&gt; a<br>
+        )</p>
+<p>[column_aliases] =&gt; Array<br>
+        (<br>
+            [0] =&gt; <br>
+        )</p>
+<p>[table_names] =&gt; Array<br>
+        (<br>
+            [0] =&gt; foo<br>
+        )</p>
+<p>[table_aliases] =&gt; Array<br>
+        (<br>
+            [0] =&gt; <br>
+        )</p>
+<p>[table_join_clause] =&gt; Array<br>
+        (<br>
+            [0] =&gt; <br>
+        )</p>
+<p>)</p>
+<p>Here is the suspect portion of code :</p>
+<p>...<br>
+if ($this-&gt;token == &#039;ident&#039; || $this-&gt;isFunc() || $this-<br>
+&gt;token == &#039;*&#039;) {<br>
+            while ($this-&gt;token != &#039;from&#039;) {<br>
+            	if ($this-&gt;token == &#039;ident&#039; || $this-&gt;token <br>
+== &#039;*&#039;) {<br>
+                    $prevTok = $this-&gt;token;<br>
+                    $prevTokText = $this-&gt;lexer-&gt;tokText;<br>
+                    $this-&gt;getTok();<br>
+                    if ($this-&gt;token == &#039;.&#039;) {<br>
+                        $columnTable = $prevTokText;<br>
+                        $this-&gt;getTok();<br>
+                        $prevTok = $this-&gt;token;<br>
+                        $prevTokText = $this-&gt;lexer-<br>
+&gt;tokText;<br>
+                    } else {<br>
+                        $columnTable = &#039;&#039;;<br>
+                    }</p>
+<p>if ($prevTok == &#039;ident&#039;) {<br>
+                        $columnName = $prevTokText;<br>
+                    } else if ($prevTok == &#039;*&#039; ){<br>
+                    	$columnName = $prevTok;<br>
+                    } else {<br>
+                        return $this-&gt;raiseError(&#039;Expected <br>
+column name&#039;);<br>
+                    }</p>
+<p>if ($this-&gt;token == &#039;as&#039;) {<br>
+                        $this-&gt;getTok();<br>
+                        if ($this-&gt;token == &#039;ident&#039; ) {<br>
+                            $columnAlias = $this-&gt;lexer-<br>
+&gt;tokText;<br>
+                        } else {<br>
+                            return $this-&gt;raiseError<br>
+(&#039;Expected column alias&#039;);<br>
+                        }<br>
+                    } elseif ($this-&gt;token == &#039;ident&#039;) {<br>
+                        $columnAlias = $this-&gt;lexer-<br>
+&gt;tokText;<br>
+                    } else {<br>
+                        $columnAlias = &#039;&#039;;<br>
+                    }</p>
+<p>$tree[&#039;column_tables&#039;][] = $columnTable;<br>
+                    $tree[&#039;column_names&#039;][] = $columnName;<br>
+                    $tree[&#039;column_aliases&#039;][] = <br>
+$columnAlias;</p>
+<p>...</p>
+<p>And more specifically we can zero in on this portion of <br>
+code:</p>
+<p>$prevTok = $this-&gt;token;<br>
+                    $prevTokText = $this-&gt;lexer-&gt;tokText;<br>
+                    $this-&gt;getTok();<br>
+                    if ($this-&gt;token == &#039;.&#039;) {<br>
+                        $columnTable = $prevTokText;<br>
+                        $this-&gt;getTok();<br>
+                        $prevTok = $this-&gt;token;<br>
+                        $prevTokText = $this-&gt;lexer-<br>
+&gt;tokText;</p>
+<p>The lexer does not seem to regard a dot (&#039;.&#039;) as a token, <br>
+and therefore the code inside the &#039;if&#039; statement:<br>
+if ($this-&gt;token == &#039;.&#039;){<br>
+never evaluates to true.</p>
+<p>This means that $columnTable will always be set to &#039;&#039; and <br>
+columnName will always be the full column name (including <br>
+the table name).</p>
+</section>
+<section>
+<h3>[2006-01-11 18:58 UTC] epte at php dot net</h3>
+<p>Yes, I was just noticing something like this before break.  Thank you for the analysis.  I&#039;ll try to get to this soon :-)</p>
+<p>Did you happen to check the content of the tokens?  Is the &#039;.&#039; being regarded as its own token?</p>
+<p>Erich</p>
+</section>
+<section>
+<h3>[2006-01-11 19:06 UTC] shannah at sfu dot ca</h3>
+<p>No, &#039;.&#039; does not seem to be regarded as its own token.  e.g.: <br>
+In the string &quot;A foo.bar string&quot; we would have tokens:<br>
+A<br>
+foo.bar<br>
+string</p>
+</section>
+<section>
+<h3>[2006-04-03 05:26 UTC] epte at php dot net</h3>
+<p>This bug has been fixed.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

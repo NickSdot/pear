@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2099</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_Upload/index.html">HTTP_Upload</a> &#187; Bug #2099</h1>
+<p>Internationalised Error Strings</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #2099</th><td>Internationalised Error Strings</td></tr>
+<tr><th>Submitted</th><td>2004-08-10 01:31 UTC</td></tr>
+<tr><th>From</th><td>matthewh at meta-bit dot com</td></tr>
+<tr><th>Assigned</th><td>cweiske</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_Upload/index.html">HTTP_Upload</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-10 01:31 UTC] matthewh at meta-bit dot com</h3>
+<p>Description:<br>
+------------<br>
+Tomas,</p>
+<p>I’ve been using your PEAR::HTTP Upload class recently for a Web/FTP based upload application.</p>
+<p>I wanted to make several suggestions to the structure of the code.</p>
+<p>My prime qualm is in the realm of internationalization [i18n] of your error strings.  Within your source code you suggest actually altering your sourcecode to add additional languages but this is a very brittle solution.</p>
+<p>We intend to support double-byte Asian languages such as Japanese and in the near future, Chinese, and as such, making wholesale changes to your sourcecode is very arduous each time a new patch of your library is released [we’re currently using v1.38 from the PEAR CVS repository].</p>
+<p>Reproduce code:<br>
+---------------<br>
+The portion of your source code is around line 94 of HTTP Upload.php:<br>
+    function HTTP_Upload_Error($lang = null, $html = false)<br>
+    {<br>
+..........<br>
+// XXXXX Add here error messages in your language<br>
+        $this-&gt;error_codes = array(<br>
+            &#039;TOO_LARGE&#039; =&gt; array(<br>
+                &#039;es&#039;    =&gt; &quot;Fichero demasiado largo. El maximo permitido es: $maxsize bytes.&quot;,<br>
+..................<br>
+                ),<br>
+            &#039;MISSING_DIR&#039; =&gt; array(<br>
+                &#039;es&#039;    =&gt; &#039;Falta directorio destino.&#039;,<br>
+................<br>
+                ),<br>
+            &#039;IS_NOT_DIR&#039; =&gt; array(</p>
+<p>Expected result:<br>
+----------------<br>
+Ideally, HTTP_Upload_Error should use an external configuration file for _all_ error messages or otherwise use another PEAR library such as the otherwise excellent Translation2 library.  This would mean, that all of our internationalized strings are centrally located within the Translation2 repository, rather than scattered between sourcefiles, flatfiles and databases.</p>
+<p>One of the tenets of Object oriented programming is that you encapsulate entities that are likely to change regularly into their own object.  Error messages most certainly fall into this category, and really should be externalised into a UTF-8/text based error message Resource file.</p>
+<p>-----<br>
+As a further aside, I&#039;d like to suggest that you don&#039;t use hardcoded strings for tokens within your source code but rather get into the habit of using define&#039;s.<br>
+eg: define( &#039;MISSING_DIR&#039;, &#039;missing_dir&#039;);</p>
+<p>People would then refer to your defined symbols rather than duplicate hardcoded strings.  It sounds like a lot of work, but you don&#039;t have many different types of error codes, and it reduces the likelihood of errors when people are using your library because PHP is checking the symbols.</p>
+<p>Actual result:<br>
+--------------<br>
+Having hardcoded strings within your library means:<br>
+1. It&#039;s unworkable for us to add error strings and retro-fit them to each release you make in CVS.<br>
+2. Other people from the PEAR/PHP community can&#039;t readily contribute to your library, offering multi-lingual string translations without repeated releases of the _whole_ library.</p>
+</section>
+<section>
+<h3>[2004-11-26 00:42 UTC] zzz at zzz dot zz</h3>
+<p>I would like to see 1.0 version with this feature, one more thing to add, allowed/denied extensions are verified when file is already being moved, BUT, I want to check for errors before this, so I check for errors with isErrors, add data to mysql database, then call setName and moveTo. this needs a fix asap.</p>
+<p>so to sum it all:<br>
+ - better errors handling with i18n<br>
+ - devide the class in parts. 1. uploading file 2. checking for errors here. 3. moveTo etc.</p>
+<p>so basically, I want if(!$file-&gt;isError()) to include extension checks.. moving it away from moveTo function.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

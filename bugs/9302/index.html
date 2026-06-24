@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9302</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #9302</h1>
+<p>OCI8 Driver and identifier length restriction</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #9302</th><td>OCI8 Driver and identifier length restriction</td></tr>
+<tr><th>Submitted</th><td>2006-11-10 21:51 UTC</td></tr>
+<tr><th>From</th><td>petr dot match at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-10 21:51 UTC] petr dot match at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+This is probably not a bug rather a limitation of RDBMS, which current MDB2 can&#039;t handle.</p>
+<p>If you work with sequences in MDB2 and you are on Oracle, there is some notable limitation (at least for Oracle version 9i).</p>
+<p>Sequence name can not be longer than 30 characters, otherwise you&#039;ll get &quot;ORA-00972: identifier is too long&quot; error.</p>
+<p>This problem applies to any $mdb2-&gt;extended-&gt;getBeforeId() calls, if specified table name is long enough (i.e. 29 chars), so when MDB2 computes sequence name by adding default prefix &#039;_seq&#039;, the resulted sequence name will have 33 chars = oracle error.</p>
+<p>This apply probably to sequence creation too (haven&#039;t tested yet).</p>
+<p>The most easy solution could be that instead of using parent method MDB2_Driver_Common-&gt;getSequenceName($sqn), there would be an RDBMS specific method in oci8 driver class. Following one (in the test script field) works for me.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+/* following - not ideal - but working solution,<br>
+ * added to MDB2_Driver_oci8 class in file Driver/oci8.php<br>
+ */</p>
+<p>/**<br>
+     * adds sequence name formatting to a sequence name<br>
+     *<br>
+     * @param   string  name of the sequence<br>
+     *<br>
+     * @return  string  formatted sequence name<br>
+     *<br>
+     * @access  public<br>
+     */<br>
+    function getSequenceName($sqn)<br>
+    {<br>
+        $emptylength = strlen(sprintf($this-&gt;options[&#039;seqname_format&#039;], &#039;&#039;));<br>
+        if ((strlen($sqn) + $emptylength) &gt; 30) { // oracle limit<br>
+            $sqn = substr($sqn, 0, (30 - $emptylength));<br>
+        }<br>
+        return parent::getSequenceName($sqn);<br>
+    }<br>
+    // }}}<br>
+?&gt;</p>
+</section>
+<section>
+<h3>[2006-11-10 23:31 UTC] petr dot match at gmail dot com</h3>
+<p>I think that this has something to do with namespaces too. If you want to distinguish between table names and sequence names, the &#039;_seq&#039; suffix is fine. However, usage of this policy can collide with some sort of limitation on Oracle.</p>
+<p>When my app is build on Postgres and I need to port it on Oracle, with using the MDB2_COMPATILITY_ALL constant, I would expect it working on Oracle instantly :) (moreover if the db schema have been created with MDB2_Driver_Manager...)</p>
+<p>In order to let developer choose any type of db and to have his applications maximally portable, I guess it should be upon middle layer (meaning MDB2) to solve this.</p>
+</section>
+<section>
+<h3>[2006-11-11 19:28 UTC] petr dot match at gmail dot com</h3>
+<p>Yes, it&#039;s clear now :) I must apologize to you, you were right. My solution will do more bad than good.</p>
+<p>So, what do you think about informing the developer at the point of sequence creation, that he/she can break some RDBMS limitation on Oracle (info just if created sequence name is longer than 30 chars)? I don&#039;t know the MDB2 Manager methods in detail, so maybe is this proposal not possible to do. The idea is, that after deploying the application onto several RDBMS including Oracle, the developer won&#039;t be faced with problems of Oracle platform...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

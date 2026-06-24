@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8319</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB_QueryTool/index.html">MDB_QueryTool</a> &#187; Bug #8319</h1>
+<p>* is stripped from $what when performing simple querys</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-07-29 14:35 UTC</td></tr>
+<tr><th>From</th><td>miker at laynemorgan dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB_QueryTool/index.html">MDB_QueryTool</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Windows XP SP2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-29 14:35 UTC] miker at laynemorgan dot com</h3>
+<p>Description:<br>
+------------<br>
+When following along with the MDB_QueryTool introduction and using the code samples, the methods &quot;get&quot; and &quot;getAll&quot; return false.</p>
+<p>ie.<br>
+$db = new MDB_QueryTool($dsn, $options, 2);<br>
+$db-&gt;reset();<br>
+$res = $db-&gt;getAll();<br>
+var_dump($res); // This will return bool(false)<br>
+echo $db-&gt;getQueryString(); // Returns something like: SELECT  FROM (table)</p>
+<p>Further inspection shows that the * is stripped during the function _buildSelect in MDB/QueryTool/Query.php line 1739, which currently reads:</p>
+<p>$selectAllFromTables = array_unique($res[1]); // make the table names unique, so we do it all just once for each table</p>
+<p>$res[1] contains an empty string.  If we change $res[1] to $res[0], the first element of the array will contain a string with an *, as intended for a simple SELECT * FROM (table) query.</p>
+<p>Test script:<br>
+---------------<br>
+Just follow the example script given in the MDB_QueryTool introdoction.</p>
+<p>Expected result:<br>
+----------------<br>
+I expect getAll() to return all rows in a table, without having to specify the fields manually with a setSelect() statement.</p>
+<p>Actual result:<br>
+--------------<br>
+The method getQueryString will return the query string with the * stripped, between SELECT and FROM, leaving a string that looks like this:<br>
+&quot;SELECT  FROM (table)&quot;</p>
+<p>Additionally, methods get() or getAll() will return false.</p>
+</section>
+<section>
+<h3>[2006-08-02 15:43 UTC] bbaumer at nymets dot com</h3>
+<p>I ran into this same problem after upgrading MDB2 from version 2.1.0 to version 2.2.0. The problem did not exist with the previous version.</p>
+</section>
+<section>
+<h3>[2006-08-02 15:46 UTC] miker at laynemorgan dot com</h3>
+<p>That&#039;s a good point, I just installed the latest version of MDB2 as well.  I never really used MDB_QueryTool enough though to have noticed that it worked fine with earlier versions of MDB2.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

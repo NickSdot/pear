@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #984</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB/index.html">MDB</a> &#187; Bug #984</h1>
+<p>Error with &#039;DECLARE select_cursor CURSOR&#039;</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-09 17:56 UTC</td></tr>
+<tr><th>From</th><td>k_julie at hotmail dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/MDB/index.html">MDB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Suse Linux 9.0</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-09 17:56 UTC] k_julie at hotmail dot com</h3>
+<p>Description:<br>
+------------<br>
+After upgrading to PostgreSQL 7.4, I recieve this error:    <br>
+   <br>
+MDB Error: unknown error  <br>
+SELECT id,string_date FROM issue [nativecode = ERROR: cursor  <br>
+&quot;select_cursor&quot; already exists ]  <br>
+   <br>
+It is happening because I am calling the function getRow twice within   <br>
+one transaction.  It makes sense that you can&#039;t re-declare a cursor until   <br>
+after the transaction ends or the cursor is closed.  I&#039;m not sure why this   <br>
+worked with PostgreSQL 7.3, but I know they changed some things   <br>
+with cursors in the 7.4 release.  This also happens when calling getOne   <br>
+twice, but not with getAll or getCol.  I assume this doesn&#039;t happen with   <br>
+getAll or getCol because those reach to the end of the result set, where   <br>
+getRow and getOne don&#039;t. <br>
+ <br>
+I tried with the latest version from CVS, but still didn&#039;t work.   <br>
+  <br>
+I was able to stop the error by adding these lines to Common.php at  <br>
+the end of function getRow (on line #4017).  I don&#039;t know if this is the  <br>
+best way, or if it is even compatible with other DB&#039;s.  <br>
+  <br>
+if(!$this-&gt;autocommit) {  <br>
+	$this-&gt;query(&#039;CLOSE select_cursor&#039;);  <br>
+}</p>
+<p>Reproduce code:<br>
+---------------<br>
+$dbh-&gt;autocommit(false);</p>
+<p>if(MDB::isError($row1 = $dbh-&gt;getRow(&#039;SELECT id,title FROM publication&#039;))) {<br>
+    print $row1-&gt;message . &#039;&lt;br&gt;&#039; . $row1-&gt;userinfo;<br>
+}<br>
+else {<br>
+    print_r($row1);<br>
+}</p>
+<p>print &#039;&lt;br&gt;&lt;br&gt;&#039;;</p>
+<p>if(MDB::isError($row2 = $dbh-&gt;getRow(&#039;SELECT id,string_date FROM issue&#039;))) {<br>
+    print $row2-&gt;message . &#039;&lt;br&gt;&#039; . $row2-&gt;userinfo;<br>
+}<br>
+else {<br>
+    print_r($row2);<br>
+}</p>
+<p>$dbh-&gt;commit();</p>
+<p>Expected result:<br>
+----------------<br>
+I would expect it to print out the array for the first row and then the <br>
+array for the second row.</p>
+<p>Actual result:<br>
+--------------<br>
+It prints out the array for the first row, and then the error message.  <br>
+ <br>
+Array ( [0] =&gt; 7 [1] =&gt; Annual Statistical Digest )  <br>
+ <br>
+MDB Error: unknown error <br>
+SELECT id,string_date FROM issue [nativecode = ERROR: cursor <br>
+&quot;select_cursor&quot; already exists ]</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

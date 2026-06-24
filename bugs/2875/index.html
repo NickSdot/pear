@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2875</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Testing &#187; <a href="package/PHPUnit/index.html">PHPUnit</a> &#187; Bug #2875</h1>
+<p>example from PHPUnit.php does not work</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-12-02 16:09 UTC</td></tr>
+<tr><th>From</th><td>christian at wenz dot org</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/PHPUnit/index.html">PHPUnit</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10RC1</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-02 16:09 UTC] christian at wenz dot org</h3>
+<p>Description:<br>
+------------<br>
+I just played around with PHPUnit and PHP 4.3.10RC1 (usually I am using PHPUnit2) and stumbled upon this:</p>
+<p>The MathTest code from PHPUnit.php (v1.13) returns the following error:</p>
+<p>Fatal error: Call to a member function on a non-object in /path/to/pear/PHPUnit/TestResult.php on line 276</p>
+<p>To fix, change TestResult.php</p>
+<p>Lines 275-276. Old:<br>
+              get_class($passedTest),<br>
+              $passedTest-&gt;getName()<br>
+New:<br>
+              get_class($passedTest[0]),<br>
+              $passedTest[0]-&gt;getName()</p>
+<p>Line 281. Old:<br>
+            $result .= $failedTest-&gt;toString();<br>
+New:<br>
+            $result .= $failedTest[0]-&gt;toString();</p>
+<p>But maybe something else triggered this?!</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+ require_once &#039;PHPUnit.php&#039;;</p>
+<p>class MathTest extends PHPUnit_TestCase {<br>
+     var $fValue1;<br>
+     var $fValue2;</p>
+<p>function MathTest($name) {<br>
+       $this-&gt;PHPUnit_TestCase($name);<br>
+     }</p>
+<p>function setUp() {<br>
+       $this-&gt;fValue1 = 2;<br>
+       $this-&gt;fValue2 = 3;<br>
+     }</p>
+<p>function testAdd() {<br>
+       $this-&gt;assertTrue($this-&gt;fValue1 + $this-&gt;fValue2 == 5);<br>
+     }<br>
+ }</p>
+<p>$suite = new PHPUnit_TestSuite();<br>
+ $suite-&gt;addTest(new MathTest(&#039;testAdd&#039;));</p>
+<p>$result = PHPUnit::run($suite);<br>
+ print $result-&gt;toHTML();<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+TestCase mathtest-&gt;testAdd() passed</p>
+<p>Actual result:<br>
+--------------<br>
+Fatal error: Call to a member function on a non-object in /path/to/pear/PHPUnit/TestResult.php on line 276</p>
+</section>
+<section>
+<h3>[2004-12-02 16:44 UTC] christian at wenz dot org</h3>
+<p>oh no ... with 4.3.9, it works as expected. So this is most certainly a bug with PHP 4.3.10RC1. Maybe anyone who knows the internals of PHPUnit1 better than I do can find out easily what the real issue is (and file a PHP bug report)?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7067</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #7067</h1>
+<p>can&#039;t bootstrap PEAR install</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #7067</th><td>can&#039;t bootstrap PEAR install</td></tr>
+<tr><th>Submitted</th><td>2006-03-09 02:06 UTC</td></tr>
+<tr><th>From</th><td>glen at delfi dot ee</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>PLD Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-03-09 02:06 UTC] glen at delfi dot ee</h3>
+<p>Description:<br>
+------------<br>
+(this is long post, as i&#039;m attempting to write much <br>
+details as possible) <br>
+ <br>
+i&#039;m attempting to install PEAR from sources so that i  <br>
+don&#039;t have any PEAR installed on system. this results  <br>
+bogus error of broken package.xml. it appears to seek  <br>
+for .registry and .channel from inexistent system  <br>
+directories (see the strace log) <br>
+ <br>
+here&#039;s the script to reproduce: <br>
+$ cat /tmp/bootstrap/bootstrap.sh <br>
+#!/bin/sh <br>
+wget http://pear.php.net/get/PEAR-1.4.8.tgz <br>
+wget http://pear.php.net/get/Console_Getopt-1.2.tgz <br>
+tar zxf Console_Getopt*.tgz <br>
+tar zxf PEAR*.tgz <br>
+cd PEAR*/ <br>
+mv ../package2.xml . <br>
+rm -rf /tmp/pear-root <br>
+php -doutput_buffering=1 \ <br>
+-dinclude_path=.:../Console_Getopt-1.2 \ <br>
+scripts/pearcmd.php -c pearrc -d doc_dir=/docs \ <br>
+-d php_dir=/usr/share/pear \ <br>
+-d bin_dir=/usr/bin \ <br>
+-d data_dir=/usr/share/pear/data \ <br>
+-d test_dir=/usr/share/pear/tests \ <br>
+install --packagingroot=/tmp/pear-root \ <br>
+--offline --nodeps package2.xml <br>
+ <br>
+and the output looks like: <br>
+glen@builder /tmp/bootstrap $ sh -x bootstrap.sh <br>
++ wget http://pear.php.net/get/PEAR-1.4.8.tgz <br>
+--03:52:52--  http://pear.php.net/get/PEAR-1.4.8.tgz <br>
+           =&gt; `PEAR-1.4.8.tgz&#039; <br>
+Resolving pear.php.net... 216.92.131.66 <br>
+Connecting to pear.php.net|216.92.131.66|:80... connected. <br>
+HTTP request sent, awaiting response... 200 OK <br>
+Length: 283,109 (276K) [application/octet-stream] <br>
+ <br>
+100%[==================================================================================&gt;] <br>
+283,109      194.20K/s <br>
+ <br>
+03:52:54 (193.92 KB/s) - `PEAR-1.4.8.tgz&#039; saved <br>
+[283109/283109] <br>
+ <br>
++ wget http://pear.php.net/get/Console_Getopt-1.2.tgz <br>
+--03:52:54--  <br>
+http://pear.php.net/get/Console_Getopt-1.2.tgz <br>
+           =&gt; `Console_Getopt-1.2.tgz&#039; <br>
+Resolving pear.php.net... 216.92.131.66 <br>
+Connecting to pear.php.net|216.92.131.66|:80... connected. <br>
+HTTP request sent, awaiting response... 200 OK <br>
+Length: 3,370 (3.3K) [application/octet-stream] <br>
+ <br>
+100%[==================================================================================&gt;] <br>
+3,370         --.--K/s <br>
+ <br>
+03:52:54 (25.66 KB/s) - `Console_Getopt-1.2.tgz&#039; saved <br>
+[3370/3370] <br>
+ <br>
++ tar zxf Console_Getopt-1.2.tgz <br>
++ tar zxf PEAR-1.4.8.tgz <br>
++ cd PEAR-1.4.8/ <br>
++ mv ../package2.xml . <br>
++ rm -rf /tmp/pear-root <br>
++ php -doutput_buffering=1 <br>
+-dinclude_path=.:../Console_Getopt-1.2 scripts/pearcmd.php <br>
+-c pearrc -d doc_dir=/docs -d php_dir=/usr/share/pear -d <br>
+bin_dir=/usr/bin -d data_dir=/usr/share/pear/data -d <br>
+test_dir=/usr/share/pear/tests install <br>
+--packagingroot=/tmp/pear-root --offline --nodeps <br>
+package2.xml <br>
+Parsing of package.xml from file &quot;package2.xml&quot; failed <br>
+Cannot download non-local package &quot;package2.xml&quot; <br>
+Package &quot;package2.xml&quot; is not valid <br>
+install failed <br>
+ <br>
+running the command with strace i see: <br>
+$ strace -eopen,stat64 php -doutp.... <br>
+ <br>
+open(&quot;/tmp/bootstrap/PEAR-1.4.8/PEAR/Task/Replace.php&quot;, <br>
+O_RDONLY) = 3 <br>
+stat64(&quot;/usr/share/pear/.registry&quot;, 0xbf92f85c) = -1 <br>
+ENOENT (No such file or directory) <br>
+open(&quot;/tmp/bootstrap/PEAR-1.4.8/PEAR/ChannelFile.php&quot;, <br>
+O_RDONLY) = 3 <br>
+open(&quot;/tmp/bootstrap/PEAR-1.4.8/PEAR/ErrorStack.php&quot;, <br>
+O_RDONLY) = 3 <br>
+open(&quot;/tmp/bootstrap/PEAR-1.4.8/PEAR/XMLParser.php&quot;, <br>
+O_RDONLY) = 3 <br>
+open(&quot;/tmp/bootstrap/PEAR-1.4.8/PEAR/Common.php&quot;, <br>
+O_RDONLY) = 3 <br>
+stat64(&quot;/usr/share/pear/.channels&quot;, 0xbf92f21c) = -1 <br>
+ENOENT (No such file or directory) <br>
+stat64(&quot;/usr/share/pear/.registry&quot;, 0xbf92f6ac) = -1 <br>
+ENOENT (No such file or directory) <br>
+Parsing of package.xml from file &quot;package2.xml&quot; failed <br>
+Cannot download non-local package &quot;package2.xml&quot; <br>
+Package &quot;package2.xml&quot; is not valid <br>
+install failed <br>
+stat64(&quot;/tmp/tmp05Do3c&quot;, {st_mode=S_IFDIR|0700, <br>
+st_size=48, ...}) = 0 <br>
+open(&quot;/tmp/tmp05Do3c&quot;, O_RDONLY|O_NONBLOCK|O_LARGEFILE|<br>
+O_DIRECTORY) = 3 <br>
+Process 3302 detached <br>
+ <br>
+now we make the dir <br>
+$ sudo mkdir -p /usr/share/pear/.registry <br>
+$ php -doutput_buffering=1 <br>
+-dinclude_path=.:../Console_Getopt-1.2 scripts/pearcmd.php <br>
+-c pearrc -d doc_dir=/docs -d php_dir=/usr/share/pear -d <br>
+bin_dir=/usr/bin -d data_dir=/usr/share/pear/data -d <br>
+test_dir=/usr/share/pear/tests install <br>
+--packagingroot=/tmp/pear-root --offline --nodeps <br>
+package2.xml <br>
+ <br>
+Warning: touch(): Unable to create <br>
+file /usr/share/pear/.lock because Permission denied in <br>
+Registry.php on line 751 <br>
+Parsing of package.xml from file &quot;package2.xml&quot; failed <br>
+Cannot download non-local package &quot;package2.xml&quot; <br>
+Package &quot;package2.xml&quot; is not valid <br>
+install failed <br>
+ <br>
+creating lock file doesn&#039;t help either. but running <br>
+channel-update as *root* will help. this is not expected <br>
+to do packaging (as it all has to be done as non-root) <br>
+ <br>
+so. this works, but requires root privs: <br>
+glen@builder bootstrap/PEAR-1.4.8 $ sudo rm <br>
+-rf /usr/share/pear/ <br>
+glen@builder bootstrap/PEAR-1.4.8 $ sudo php <br>
+-doutput_buffering=1 <br>
+-dinclude_path=.:../Console_Getopt-1.2 scripts/pearcmd.php <br>
+-c pearrc -d doc_dir=/docs -d php_dir=/usr/share/pear -d <br>
+bin_dir=/usr/bin -d data_dir=/usr/share/pear/data -d <br>
+test_dir=/usr/share/pear/tests channel-update pear.php.net <br>
+Retrieving channel.xml from remote server <br>
+Update of Channel &quot;pear.php.net&quot; succeeded <br>
+ <br>
+glen@builder bootstrap/PEAR-1.4.8 $ rm -rf /tmp/pear-root/ <br>
+glen@builder bootstrap/PEAR-1.4.8 $ php <br>
+-doutput_buffering=1 <br>
+-dinclude_path=.:../Console_Getopt-1.2 scripts/pearcmd.php <br>
+-c pearrc -d doc_dir=/docs -d php_dir=/usr/share/pear -d <br>
+bin_dir=/usr/bin -d data_dir=/usr/share/pear/data -d <br>
+test_dir=/usr/share/pear/tests install <br>
+--packagingroot=/tmp/pear-root --offline --nodeps <br>
+package2.xml <br>
+warning: pear/PEAR requires package <br>
+&quot;pear/Archive_Tar&quot; (recommended version 1.3.1) <br>
+warning: pear/PEAR requires package <br>
+&quot;pear/Console_Getopt&quot; (recommended version 1.2) <br>
+pear/PEAR can optionally use package <br>
+&quot;pear/XML_RPC&quot; (version &gt;= 1.4.0) <br>
+install ok: channel://pear.php.net/PEAR-1.4.8 <br>
+PEAR: Optional feature webinstaller available (PEAR&#039;s <br>
+web-based installer) <br>
+PEAR: Optional feature gtkinstaller available (PEAR&#039;s <br>
+PHP-GTK-based installer) <br>
+PEAR: Optional feature gtk2installer available (PEAR&#039;s <br>
+PHP-GTK2-based installer) <br>
+To install use &quot;pear install pear/PEAR#featurename&quot;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

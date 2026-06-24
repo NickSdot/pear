@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3256</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #3256</h1>
+<p>Allow custom file and class naming conventions</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3256</th><td>Allow custom file and class naming conventions</td></tr>
+<tr><th>Submitted</th><td>2005-01-20 23:46 UTC</td></tr>
+<tr><th>From</th><td>db_dataobjects-bugs-2005 at ryandesign dot com</td></tr>
+<tr><th>Status</th><td>Suspended</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-20 23:46 UTC] db_dataobjects-bugs-2005 at ryandesign dot com</h3>
+<p>Description:<br>
+------------<br>
+There is code in DB_DataObjects which computes the name to <br>
+be used for each data object class and its PHP file. In <br>
+Generator.php it looks like this:</p>
+<p>$this-&gt;classname = $class_prefix.preg_replace(&#039;/[^A-Z0-9]/<br>
+i&#039;,&#039;_&#039;,ucfirst($this-&gt;table));<br>
+$i = &#039;&#039;;<br>
+$outfilename = &quot;{$base}/&quot;.preg_replace(&#039;/[^A-Z0-9]/<br>
+i&#039;,&#039;_&#039;,ucfirst($this-&gt;table)).&quot;.php&quot;;</p>
+<p>Code like this is also duplicated in other places in <br>
+DB_DataObjects.</p>
+<p>I would like to see these preg_replace()s moved out into <br>
+new methods, like computeClassName($table) and <br>
+computeFileName($table), so that I could override these in <br>
+a child class to implement different behavior.</p>
+<p>The reason for this is that I do not subscribe to the PEAR <br>
+notion that the first character of a class name should be <br>
+uppercase, and do not want this naming convention for <br>
+files in my project.</p>
+<p>Furthermore all my table names begin with a version of my <br>
+project&#039;s name, followed by two underscores. This practice <br>
+is recommended by phpMyAdmin and has several advantages. <br>
+But I would like to dispense with these prefixes when <br>
+dealing with the data objects within my project.</p>
+<p>The numerous places within the DB_DataObjects code where <br>
+changes would need to be made currently make it <br>
+impractical for me to implement differing behavior without <br>
+having to copy large sections of the DB_DataObjects code, <br>
+which is undesirable from a maintenance standpoint as new <br>
+versions of DB_DataObjects are released. By abstracting <br>
+these tasks into separate methods you would enable me to <br>
+achieve my desired result in the most effective way.</p>
+<p>See also bugs 3013 and 2740 for similar requests. <br>
+Implementing the above suggestion may take care of those <br>
+users&#039; needs as well.</p>
+<p>I am using DB_DataObjects 1.7.2 with PHP 5.0.3, Apache <br>
+1.3.33 and Mac OS X 10.3.7.</p>
+</section>
+<section>
+<h3>[2005-05-14 03:07 UTC] jrhernandez05 at gmail dot com</h3>
+<p>I&#039;m currently facing the same issue as the original poster, in which all the tables in my database have a prefix (e.g. T5010_ARTICLES) which I do not want in my class name (I just want an &quot;Articles&quot; class).</p>
+<p>The problem with having an overridable method such as &quot;className&quot; is that it won&#039;t be used in most cases. The reason is that the DataObjects are created through the &quot;factory&quot; method, which is static. Other packages such as DB_DataObject_FormBuilder (which I also use) instantiate objects through this method.</p>
+<p>Hence, an overridable method is not the solution. What I propose is having another config option, such as &quot;xml_config_file&quot;, that when specified would instruct the DB_DataObject to get the settings from this XML file. This XML file would contain the following:</p>
+<p>- Table to class name and file name mappings<br>
+- Column name mappings (would map a column name to a property name)<br>
+- Link information (no separate db.links.ini file)</p>
+<p>I will be more than glad to provide this patch, but having just seen the DBDO PECL package (which looks very good, BTW), it would not seem reasonable to provide this functionality if DBDO, which will replace DB_DataObject, won&#039;t have something similar. I think DBDO should also have this feature, since all references to a table/column name will be in just one file, and abstracted elsewhere. If it could/will be included in DBDO, then I will start working on it...</p>
+</section>
+<section>
+<h3>[2005-05-14 21:35 UTC] jrhernandez05 at gmail dot com</h3>
+<p>Actually, I wasn&#039;t considering the generator portion, although the generator can also use this XML approach. I am primarily concerned on how the DataObject itself gets its database structure info. There could be an additional setting named &quot;xml_config_file&quot;, or something to that effect, and that file would have the database structure information (it would consolidate the information for the &quot;table()&quot;, &quot;keys()&quot;, &quot;sequenceKey()&quot;, and &quot;links()&quot; methods.</p>
+<p>Below is an example of how the XML file could look like. Before viewing it, keep in mind that where I work we have a naming convention of TXXXX_NAME for tables and CXXXX_NAME for columns.</p>
+<p>&lt;database-structure&gt;<br>
+	&lt;table name=&quot;t1001_customers&quot; id-column-names=&quot;c1001_customer_id&quot; sequence-key=&quot;c1001_customer_id,false,s1001_customer_id&quot; class-name=&quot;Customer&quot;&gt;<br>
+		&lt;column name=&quot;c1001_customer_id&quot; data-type=&quot;integer&quot; nullable=&quot;false&quot; property-name=&quot;ID&quot; /&gt;<br>
+		&lt;column name=&quot;c1001_name&quot; data-type=&quot;string&quot; nullable=&quot;false&quot; property-name=&quot;name&quot; /&gt;<br>
+		&lt;column name=&quot;c1001_phone&quot; data-type=&quot;string&quot; nullable=&quot;true&quot; property-name=&quot;phone&quot; /&gt;<br>
+		&lt;column name=&quot;c1002_state_id&quot; data-type=&quot;integer&quot; nullable=&quot;true&quot; property-name=&quot;stateID&quot; /&gt;</p>
+<p>&lt;link property-name=&quot;state&quot; column-name=&quot;c1002_state_id&quot; table-name=&quot;t1002_states&quot; table-column-name=&quot;c1002_state_id&quot; /&gt;<br>
+	&lt;/table&gt;</p>
+<p>&lt;table name=&quot;t1002_states&quot; id-column-names=&quot;c1002_state_id&quot; sequence-key=&quot;c1002_state_id,false,c1002_state_id&quot; class-name=&quot;State&quot;&gt;<br>
+		&lt;column name=&quot;c1002_state_id&quot; data-type=&quot;integer&quot; nullable=&quot;false&quot; property-name=&quot;ID&quot; /&gt;<br>
+		&lt;column name=&quot;c1002_name&quot; data-type=&quot;string&quot; nullable=&quot;false&quot; property-name=&quot;name&quot; /&gt;<br>
+		&lt;column name=&quot;c1002_abbreviation&quot; data-type=&quot;string&quot; nullable=&quot;false&quot; property-name=&quot;abbreviation&quot; /&gt;<br>
+	&lt;/table&gt;<br>
+&lt;/database-structure&gt;</p>
+<p>Some notes on the above:</p>
+<p>1) id-column-names maps is used by &quot;keys()&quot;.<br>
+2) sequence-key is used by &quot;sequenceKey()&quot;.<br>
+3) The class-name attribute contains the name of the class to use. If not specified, then the table name will be used.<br>
+4) The data-type attribute contains a primitive PHP type. It might be useful if it could also contain the name of a class (if it&#039;s not a primitive type, then it would be assumed that it&#039;s a class and the property would be initialized as $this-&gt;$p = new $dataType($columnValue)).<br>
+5) Each &quot;link&quot; tag under a table would specify the links under each table. In the example above, there would be an additional property for the Customer class named &quot;state&quot;, which would be an instance of the State class, which has three other properties: &quot;ID&quot;, &quot;name&quot;, and &quot;abbreviation&quot;.</p>
+<p>Let me know what you think and if you have any suggestions.</p>
+</section>
+<section>
+<h3>[2005-05-14 21:41 UTC] jrhernandez05 at gmail dot com</h3>
+<p>The XML code above looks cluttered due to wrapping. Hope the following is a bit clearer to read:</p>
+<p>&lt;database-structure&gt;<br>
+	&lt;table name=&quot;t1001_customers&quot;<br>
+		id-column-names=&quot;c1001_customer_id&quot;<br>
+		sequence-key=&quot;c1001_customer_id,false,s1001_customer_id&quot;<br>
+		class-name=&quot;Customer&quot;&gt;</p>
+<p>&lt;column name=&quot;c1001_customer_id&quot;<br>
+			data-type=&quot;integer&quot;<br>
+			nullable=&quot;false&quot;<br>
+			property-name=&quot;ID&quot; /&gt;<br>
+		&lt;column name=&quot;c1001_name&quot;<br>
+			data-type=&quot;string&quot;<br>
+			nullable=&quot;false&quot;<br>
+			property-name=&quot;name&quot; /&gt;<br>
+		&lt;column name=&quot;c1001_phone&quot;<br>
+			data-type=&quot;string&quot;<br>
+			nullable=&quot;true&quot;<br>
+			property-name=&quot;phone&quot; /&gt;<br>
+		&lt;column name=&quot;c1002_state_id&quot;<br>
+			data-type=&quot;integer&quot;<br>
+			nullable=&quot;true&quot;<br>
+			property-name=&quot;stateID&quot; /&gt;</p>
+<p>&lt;link property-name=&quot;state&quot;<br>
+			column-name=&quot;c1002_state_id&quot;<br>
+			table-name=&quot;t1002_states&quot;<br>
+			table-column-name=&quot;c1002_state_id&quot; /&gt;<br>
+	&lt;/table&gt;</p>
+<p>&lt;table name=&quot;t1002_states&quot;<br>
+		id-column-names=&quot;c1002_state_id&quot;<br>
+		sequence-key=&quot;c1002_state_id,false,c1002_state_id&quot;<br>
+		class-name=&quot;State&quot;&gt;</p>
+<p>&lt;column name=&quot;c1002_state_id&quot;<br>
+			data-type=&quot;integer&quot;<br>
+			nullable=&quot;false&quot;<br>
+			property-name=&quot;ID&quot; /&gt;<br>
+		&lt;column name=&quot;c1002_name&quot;<br>
+			data-type=&quot;string&quot;<br>
+			nullable=&quot;false&quot;<br>
+			property-name=&quot;name&quot; /&gt;<br>
+		&lt;column name=&quot;c1002_abbreviation&quot;<br>
+			data-type=&quot;string&quot;<br>
+			nullable=&quot;false&quot;<br>
+			property-name=&quot;abbreviation&quot; /&gt;<br>
+	&lt;/table&gt;<br>
+&lt;/database-structure&gt;</p>
+</section>
+<section>
+<h3>[2005-05-17 23:16 UTC] db_dataobjects-bugs-2005 at ryandesign dot com</h3>
+<p>I personally wouldn&#039;t want to have to create and<br>
+maintain such an XML file. My table names follow a<br>
+convention, always. I&#039;d much rather define a short PHP<br>
+function to map those table names to the corresponding<br>
+class and file names than have to maintain an<br>
+umpteen-line XML file over the lifetime of my<br>
+application.</p>
+<p>It seems to me like I should be able to do it like this:</p>
+<p>require_once &#039;DB/DataObject.php&#039;;<br>
+DB_DataObject::setClassNamer(create_function(&#039;$x&#039;,<br>
+  &#039;return strtolower(substr($x, strpos($x, &quot;__&quot;)+2));&#039;<br>
+));<br>
+DB_DataObject::setFileNamer(create_function(&#039;$x&#039;,<br>
+  &#039;return strtolower(substr($x, strpos($x, &quot;__&quot;)+2)) &#039;<br>
+    . &#039;. &quot;.class&quot;;&#039;));</p>
+<p>This would implement the naming strategy I want, which<br>
+is to say that I have a table called<br>
+&quot;myDatabase__myTable&quot; and I want the class to be<br>
+&quot;mytable&quot; and the PHP file to be &quot;mytable.class.php&quot;.</p>
+<p>Then, after that initial setup, any PHP file, any<br>
+3rd-party library like DB_DataObjects_FormBuilder, can<br>
+call the factory method or whatever, and internally,<br>
+DB_DataObject can call<br>
+DB_DataObject::getClassName($tableName) to get the class<br>
+name and DB_DataObject::getFileName($tableName) to get<br>
+the file name.</p>
+<p>Here&#039;s how these four new functions might be implemented<br>
+in DB_DataObject:</p>
+<p>class DB_DataObject {<br>
+  function setClassNamer($function) {<br>
+    global $_DB_DATAOBJECT;<br>
+    $_DB_DATAOBJECT[&#039;classNamer&#039;] = $function;<br>
+  }<br>
+  function setFileNamer($function) {<br>
+    global $_DB_DATAOBJECT;<br>
+    $_DB_DATAOBJECT[&#039;fileNamer&#039;] = $function;<br>
+  }<br>
+  function getClassName($tableName) {<br>
+    global $_DB_DATAOBJECT;<br>
+    return $_DB_DATAOBJECT[&#039;classNamer&#039;]($tableName);<br>
+  }<br>
+  function getFileName($tableName) {<br>
+    global $_DB_DATAOBJECT;<br>
+    return $_DB_DATAOBJECT[&#039;fileNamer&#039;]($tableName)<br>
+      . &#039;.php&#039;;<br>
+  }<br>
+}</p>
+<p>Column names could be handled in a similar way.</p>
+<p>I have no comment on how this could work in DBDO as I&#039;ve<br>
+never worked with PECL.</p>
+</section>
+<section>
+<h3>[2005-05-18 03:21 UTC] jrhernandez05 at gmail dot com</h3>
+<p>From my experience, the XML approach is not cumbersome to maintain (our production J2EE server uses this same approach, and we&#039;ve been using it for about 4 years now with no complaints). But I do see that with your approach, there would be less code to write. I would actually go further and have a class which implements the &quot;namer&quot; methods. The DB_DataObject class could use one standard namer class, DB_DataObject_Namer, and implement two static methods, &quot;getNamer&quot; and &quot;setNamer&quot;. Users could extend the DB_DataObject_Namer class and override whichever namer methods they need. Here&#039;s an example:</p>
+<p>DB_DATAOBJECT_NAMER<br>
+-------------------------<br>
+class DB_DataObject_Namer<br>
+{<br>
+    function getClassName($tableName)<br>
+    {<br>
+        return $tableName;<br>
+    }</p>
+<p>function getFileName($tableName)<br>
+    {<br>
+        return $tableName . &#039;.php&#039;;<br>
+    }</p>
+<p>function getPropertyName($tableName, $columnName)<br>
+    {<br>
+        return $columnName;<br>
+    }</p>
+<p>function getLinkPropertyName($table1, $column1, $table2, $column2)<br>
+    {<br>
+        return &#039;_&#039; . str_replace( &#039;.&#039;, &#039;_&#039;, $column1 );<br>
+    }<br>
+};</p>
+<p>MY_NAMER<br>
+--------<br>
+class MyNamer extends DB_DataObject_Namer<br>
+{<br>
+    function getClassName($tableName)<br>
+    {<br>
+        return substr( $tableName, strpos( $tableName, &#039;_&#039;<br>
+) + 1 );<br>
+    }</p>
+<p>function getFileName($tableName)<br>
+    {<br>
+        // in this case, the class and file names are the same<br>
+        return $this-&gt;getClassName( $tableName ) . &#039;.php&#039;;<br>
+    }</p>
+<p>/* NOTE: By not overriding the other methods, the default behavior will be used. */<br>
+};</p>
+<p>SAMPLE USAGE<br>
+------------</p>
+<p>require_once( &#039;DB/DataObject.php&#039; );<br>
+require_once( &#039;MyCompany/MyNamer.php&#039; );</p>
+<p>DB_DataObject::setNamer( new MyNamer() );</p>
+<p>// use DB_DataObject as usual...</p>
+</section>
+<section>
+<h3>[2005-10-05 08:53 UTC] pearuser at yahoo dot com</h3>
+<p>FWIW:<br>
+simple patch to have control of filename prefix (ini option class_filename_prefix.</p>
+<p>--- /usr/lib/php/DB/DataObject/Generator.php    2005-10-05 03:48:09.000000000 -0500<br>
++++ Generator.php       2005-10-05 03:46:07.000000000 -0500<br>
+@@ -495,6 +495,7 @@<br>
+             System::mkdir(array(&#039;-p&#039;,$base));<br>
+         }<br>
+         $class_prefix  = $options[&#039;class_prefix&#039;];<br>
++        $class_filename_prefix  = $options[&#039;class_filename_prefix&#039;];<br>
+         if ($extends = @$options[&#039;extends&#039;]) {<br>
+             $this-&gt;_extends = $extends;<br>
+             $this-&gt;_extendsFile = $options[&#039;extends_location&#039;];<br>
+@@ -506,9 +507,9 @@<br>
+             $i = &#039;&#039;;</p>
+<p>if (strpos($options[&#039;class_location&#039;],&#039;%s&#039;) !== false) {<br>
+-                $outfilename   = sprintf($options[&#039;class_location&#039;], preg_replace(&#039;/[^A-Z0-9]/i&#039;,&#039;_&#039;,ucfirst($this-&gt;table)));<br>
++                $outfilename   = sprintf($options[&#039;class_location&#039;], preg_replace(&#039;/[^A-Z0-9]/i&#039;,&#039;_&#039;,$class_filename_prefix.ucfirst($this-&gt;table)));<br>
+             } else {<br>
+-                $outfilename = &quot;{$base}/&quot;.preg_replace(&#039;/[^A-Z0-9]/i&#039;,&#039;_&#039;,ucfirst($this-&gt;table)).&quot;.php&quot;;<br>
++                $outfilename = &quot;{$base}/&quot;.preg_replace(&#039;/[^A-Z0-9]/i&#039;,&#039;_&#039;,$class_filename_prefix.ucfirst($this-&gt;table)).&quot;.php&quot;;<br>
+             }<br>
+             $oldcontents = &#039;&#039;;<br>
+             if (file_exists($outfilename)) {</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9772</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #9772</h1>
+<p>is_array nesting error with $method var</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-08 18:37 UTC</td></tr>
+<tr><th>From</th><td>nkiraly at collaborativefusion dot com</td></tr>
+<tr><th>Assigned</th><td>yunosh</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>5.2.0</td></tr>
+<tr><th>OS</th><td>FreeBSD 6.1-RELEASE-p10</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-08 18:37 UTC] nkiraly at collaborativefusion dot com</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m using PEAR package SOAP 0.9.4, PHP 5.2.0</p>
+<p>I keep getting apache illegal instructions when making calls to my PEAR SOAP_Server service<br>
+I think is_array does some kind of infinite loop when it dives into a nested array of<br>
+objects/arrays</p>
+<p>[nkiraly@test00 /var/www/test]$ fetch http://test00/~nkiraly/test/pear_soap_sig4.php<br>
+fetch: http://test00/test/pear_soap_sig4.php: Unknown error: 0</p>
+<p>[Fri Jan 05 01:27:41 2007] [notice] child pid 27266 exit signal Illegal instruction (4)</p>
+<p>investigation has led me to the is_array call in Base.php on line 989, in _makeEnvelope():</p>
+<p>if (is_array($method)) {</p>
+<p>I see the test is wether or not the $method var passed is an array and to serialize each one if <br>
+there is more then one. is_array seems to be bombing in a potentially infinite loop kind of way.</p>
+<p>i got fatal error at 16mb so i brought it up to 300MB and i got what looks like a stackoverflow error,<br>
+which leads me to believe it&#039;s some kind of infinite loop with that many iterations with the return object</p>
+<p>Test script:<br>
+---------------<br>
+code here:</p>
+<p>http://koadweb.com/pear_soap_sig4/pear_soap_sig4.php.txt</p>
+<p>Expected result:<br>
+----------------<br>
+the verifyMember method will be serviced and value returned, but it never gets that far</p>
+<p>Actual result:<br>
+--------------<br>
+[nkiraly@test00 ~]$ gdb -q php<br>
+(gdb) r /home/nkiraly/public_html/test/pear_soap_sig4.php<br>
+Starting program: /usr/local/bin/php /home/nkiraly/public_html/test/pear_soap_sig4.php</p>
+<p>Fatal error: Allowed memory size of 16777216 bytes exhausted at /usr/ports/lang/php5/work/php-5.2.0/Zend/zend_hash.c:494 (tried to allocate 45 bytes) in /usr/local/share/pear/SOAP/Base.php on line 430</p>
+<p>Program exited normally.</p>
+<p>that&#039;s the 16MB php memory limit</p>
+<p>[nkiraly@test00 ~]$ gdb -q php<br>
+(gdb) r /var/www/verify/1.0/verify_coredump.php<br>
+Starting program: /usr/local/bin/php /home/nkiraly/public_html/test/pear_soap_sig4.php</p>
+<p>Program received signal SIGSEGV, Segmentation fault.<br>
+0x08195fcb in execute (op_array=0x83c1e94) at zend_vm_execute.h:53<br>
+53      zend_vm_execute.h: No such file or directory.<br>
+        in zend_vm_execute.h</p>
+<p>i cut out the middle of the stack, but here is the idea of what happens:</p>
+<p>(gdb) bt<br>
+#0  0x08195fcb in execute (op_array=0x83c1e94) at zend_vm_execute.h:53<br>
+#1  0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc028b0)<br>
+    at zend_vm_execute.h:234<br>
+#2  0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc028b0) at zend_vm_execute.h:322<br>
+#3  0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#4  0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc03ed0)<br>
+    at zend_vm_execute.h:234<br>
+#5  0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc03ed0) at zend_vm_execute.h:322<br>
+#6  0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#7  0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc054f0)<br>
+    at zend_vm_execute.h:234<br>
+#8  0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc054f0) at zend_vm_execute.h:322<br>
+#9  0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#10 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc06b10)<br>
+    at zend_vm_execute.h:234<br>
+#11 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc06b10) at zend_vm_execute.h:322<br>
+#12 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#13 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc08130)<br>
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---<br>
+    at zend_vm_execute.h:234<br>
+#14 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc08130) at zend_vm_execute.h:322<br>
+#15 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#16 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc09750)<br>
+    at zend_vm_execute.h:234<br>
+#17 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc09750) at zend_vm_execute.h:322<br>
+#18 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#19 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc0ad70)<br>
+    at zend_vm_execute.h:234<br>
+#20 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc0ad70) at zend_vm_execute.h:322<br>
+#21 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#22 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc0c390)<br>
+    at zend_vm_execute.h:234<br>
+#23 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc0c390) at zend_vm_execute.h:322<br>
+#24 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#25 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc0d9b0)<br>
+    at zend_vm_execute.h:234<br>
+#26 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---<br>
+    execute_data=0xbbc0d9b0) at zend_vm_execute.h:322<br>
+#27 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#28 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc0efd0)<br>
+    at zend_vm_execute.h:234<br>
+#29 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc0efd0) at zend_vm_execute.h:322<br>
+#30 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#31 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc105f0)<br>
+    at zend_vm_execute.h:234<br>
+#32 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc105f0) at zend_vm_execute.h:322<br>
+#33 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#34 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc11c10)<br>
+    at zend_vm_execute.h:234<br>
+#35 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc11c10) at zend_vm_execute.h:322<br>
+#36 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#37 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc13230)<br>
+    at zend_vm_execute.h:234<br>
+#38 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc13230) at zend_vm_execute.h:322<br>
+#39 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---<br>
+#40 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc14850)<br>
+    at zend_vm_execute.h:234<br>
+#41 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc14850) at zend_vm_execute.h:322<br>
+#42 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#43 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc15e70)<br>
+    at zend_vm_execute.h:234<br>
+#44 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc15e70) at zend_vm_execute.h:322<br>
+#45 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#46 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc17490)<br>
+    at zend_vm_execute.h:234<br>
+#47 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc17490) at zend_vm_execute.h:322<br>
+#48 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#49 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc18ab0)<br>
+    at zend_vm_execute.h:234<br>
+#50 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc18ab0) at zend_vm_execute.h:322<br>
+#51 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#52 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc1a0d0)<br>
+    at zend_vm_execute.h:234<br>
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---<br>
+#53 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc1a0d0) at zend_vm_execute.h:322<br>
+#54 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#55 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc1b6f0)<br>
+    at zend_vm_execute.h:234<br>
+#56 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc1b6f0) at zend_vm_execute.h:322<br>
+#57 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#58 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc1cd10)<br>
+    at zend_vm_execute.h:234<br>
+#59 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc1cd10) at zend_vm_execute.h:322<br>
+#60 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#61 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc1e330)<br>
+    at zend_vm_execute.h:234<br>
+#62 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc1e330) at zend_vm_execute.h:322<br>
+#63 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#64 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc1f950)<br>
+    at zend_vm_execute.h:234<br>
+#65 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc1f950) at zend_vm_execute.h:322<br>
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---<br>
+#66 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#67 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc20f70)<br>
+    at zend_vm_execute.h:234<br>
+#68 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc20f70) at zend_vm_execute.h:322<br>
+#69 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#70 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc22590)<br>
+    at zend_vm_execute.h:234<br>
+#71 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc22590) at zend_vm_execute.h:322<br>
+#72 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#73 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc23bb0)<br>
+    at zend_vm_execute.h:234<br>
+#74 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc23bb0) at zend_vm_execute.h:322<br>
+#75 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#76 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc251d0)<br>
+    at zend_vm_execute.h:234<br>
+#77 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc251d0) at zend_vm_execute.h:322<br>
+#78 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#79 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc267f0)<br>
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---<br>
+    at zend_vm_execute.h:234<br>
+#80 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc267f0) at zend_vm_execute.h:322<br>
+#81 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#82 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc27e10)<br>
+    at zend_vm_execute.h:234<br>
+#83 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc27e10) at zend_vm_execute.h:322<br>
+#84 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#85 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc29430)<br>
+    at zend_vm_execute.h:234<br>
+#86 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc29430) at zend_vm_execute.h:322<br>
+#87 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#88 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc2aa50)<br>
+    at zend_vm_execute.h:234<br>
+#89 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc2aa50) at zend_vm_execute.h:322<br>
+#90 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#91 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc2c070)<br>
+    at zend_vm_execute.h:234<br>
+#92 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---<br>
+    execute_data=0xbbc2c070) at zend_vm_execute.h:322<br>
+#93 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#94 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc2d690)<br>
+    at zend_vm_execute.h:234<br>
+#95 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc2d690) at zend_vm_execute.h:322<br>
+#96 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#97 0x081965c5 in zend_do_fcall_common_helper_SPEC (execute_data=0xbbc2ecb0)<br>
+    at zend_vm_execute.h:234<br>
+#98 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc2ecb0) at zend_vm_execute.h:322<br>
+#99 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#100 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbbc302d0) at zend_vm_execute.h:234<br>
+#101 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc302d0) at zend_vm_execute.h:322<br>
+#102 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#103 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbbc318f0) at zend_vm_execute.h:234<br>
+#104 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbbc318f0) at zend_vm_execute.h:322<br>
+#105 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92</p>
+<p>#35457 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35458 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbda010) at zend_vm_execute.h:234<br>
+#35459 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbda010) at zend_vm_execute.h:322<br>
+#35460 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35461 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbdb630) at zend_vm_execute.h:234<br>
+#35462 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbdb630) at zend_vm_execute.h:322<br>
+#35463 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35464 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbdcc50) at zend_vm_execute.h:234<br>
+#35465 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbdcc50) at zend_vm_execute.h:322<br>
+#35466 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35467 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbde270) at zend_vm_execute.h:234<br>
+#35468 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---<br>
+    execute_data=0xbfbde270) at zend_vm_execute.h:322<br>
+#35469 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35470 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbdf890) at zend_vm_execute.h:234<br>
+#35471 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbdf890) at zend_vm_execute.h:322<br>
+#35472 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35473 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbe0eb0) at zend_vm_execute.h:234<br>
+#35474 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbe0eb0) at zend_vm_execute.h:322<br>
+#35475 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35476 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbe24d0) at zend_vm_execute.h:234<br>
+#35477 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbe24d0) at zend_vm_execute.h:322<br>
+#35478 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35479 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbe3af0) at zend_vm_execute.h:234<br>
+#35480 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbe3af0) at zend_vm_execute.h:322<br>
+#35481 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---<br>
+#35482 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbe5110) at zend_vm_execute.h:234<br>
+#35483 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbe5110) at zend_vm_execute.h:322<br>
+#35484 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35485 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbe6730) at zend_vm_execute.h:234<br>
+#35486 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbe6730) at zend_vm_execute.h:322<br>
+#35487 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35488 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbe7d50) at zend_vm_execute.h:234<br>
+#35489 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbe7d50) at zend_vm_execute.h:322<br>
+#35490 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35491 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbe9370) at zend_vm_execute.h:234<br>
+#35492 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbe9370) at zend_vm_execute.h:322<br>
+#35493 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35494 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbea990) at zend_vm_execute.h:234<br>
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---<br>
+#35495 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbea990) at zend_vm_execute.h:322<br>
+#35496 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35497 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbebfb0) at zend_vm_execute.h:234<br>
+#35498 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbebfb0) at zend_vm_execute.h:322<br>
+#35499 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35500 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbed5d0) at zend_vm_execute.h:234<br>
+#35501 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbed5d0) at zend_vm_execute.h:322<br>
+#35502 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35503 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbeebf0) at zend_vm_execute.h:234<br>
+#35504 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbeebf0) at zend_vm_execute.h:322<br>
+#35505 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35506 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbf0210) at zend_vm_execute.h:234<br>
+#35507 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbf0210) at zend_vm_execute.h:322<br>
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---<br>
+#35508 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35509 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbf1830) at zend_vm_execute.h:234<br>
+#35510 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbf1830) at zend_vm_execute.h:322<br>
+#35511 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35512 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbf2e50) at zend_vm_execute.h:234<br>
+#35513 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbf2e50) at zend_vm_execute.h:322<br>
+#35514 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35515 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbf4470) at zend_vm_execute.h:234<br>
+#35516 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbf4470) at zend_vm_execute.h:322<br>
+#35517 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35518 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbf5a90) at zend_vm_execute.h:234<br>
+#35519 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbf5a90) at zend_vm_execute.h:322<br>
+#35520 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35521 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---<br>
+    execute_data=0xbfbf70b0) at zend_vm_execute.h:234<br>
+#35522 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbf70b0) at zend_vm_execute.h:322<br>
+#35523 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35524 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbf86d0) at zend_vm_execute.h:234<br>
+#35525 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbf86d0) at zend_vm_execute.h:322<br>
+#35526 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35527 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbf9cf0) at zend_vm_execute.h:234<br>
+#35528 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbf9cf0) at zend_vm_execute.h:322<br>
+#35529 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35530 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbf9ed0) at zend_vm_execute.h:234<br>
+#35531 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbf9ed0) at zend_vm_execute.h:322<br>
+#35532 0x081960a2 in execute (op_array=0x845570c) at zend_vm_execute.h:92<br>
+#35533 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbfb4f0) at zend_vm_execute.h:234<br>
+#35534 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---<br>
+    execute_data=0xbfbfb4f0) at zend_vm_execute.h:322<br>
+#35535 0x081960a2 in execute (op_array=0x83c1e94) at zend_vm_execute.h:92<br>
+#35536 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbfb6d0) at zend_vm_execute.h:234<br>
+#35537 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbfb6d0) at zend_vm_execute.h:322<br>
+#35538 0x081960a2 in execute (op_array=0x845570c) at zend_vm_execute.h:92<br>
+#35539 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbfbd00) at zend_vm_execute.h:234<br>
+#35540 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbfbd00) at zend_vm_execute.h:322<br>
+#35541 0x081960a2 in execute (op_array=0x83da94c) at zend_vm_execute.h:92<br>
+#35542 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbfc1d0) at zend_vm_execute.h:234<br>
+#35543 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbfc1d0) at zend_vm_execute.h:322<br>
+#35544 0x081960a2 in execute (op_array=0x83b6dd0) at zend_vm_execute.h:92<br>
+#35545 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbfc720) at zend_vm_execute.h:234<br>
+#35546 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbfc720) at zend_vm_execute.h:322<br>
+#35547 0x081960a2 in execute (op_array=0x838810c) at zend_vm_execute.h:92<br>
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---<br>
+#35548 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbfd090) at zend_vm_execute.h:234<br>
+#35549 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbfd090) at zend_vm_execute.h:322<br>
+#35550 0x081960a2 in execute (op_array=0x83865a8) at zend_vm_execute.h:92<br>
+#35551 0x081965c5 in zend_do_fcall_common_helper_SPEC (<br>
+    execute_data=0xbfbfd4e0) at zend_vm_execute.h:234<br>
+#35552 0x08196eb5 in ZEND_DO_FCALL_BY_NAME_SPEC_HANDLER (<br>
+    execute_data=0xbfbfd4e0) at zend_vm_execute.h:322<br>
+#35553 0x081960a2 in execute (op_array=0x8379adc) at zend_vm_execute.h:92<br>
+#35554 0x08177fe9 in zend_execute_scripts (type=8, retval=0x0, file_count=3)<br>
+    at /var/ports/basejail/usr/ports/lang/php5/work/php-5.2.0/Zend/zend.c:1178<br>
+#35555 0x081303fb in php_execute_script (primary_file=0xbfbfec50)<br>
+    at /var/ports/basejail/usr/ports/lang/php5/work/php-5.2.0/main/main.c:1779<br>
+#35556 0x081dcb09 in main (argc=2, argv=0xbfbfece8)<br>
+    at /var/ports/basejail/usr/ports/lang/php5/work/php-5.2.0/sapi/cli/php_cli.c:1114<br>
+(gdb)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

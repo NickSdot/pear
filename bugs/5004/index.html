@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5004</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #5004</h1>
+<p>Client: attachments array is not cleared properly</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-05 09:31 UTC</td></tr>
+<tr><th>From</th><td>laihro at gmx dot de</td></tr>
+<tr><th>Assigned</th><td>yunosh</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Windows XP SP2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-05 09:31 UTC] laihro at gmx dot de</h3>
+<p>Description:<br>
+------------<br>
+In pear::soap 0.9.1 the SOAP_Base-&gt;__attachments Array is not properly cleared between two messages. The result is, that after receiving a message with attachments, parts of the attachment slip into the next message the client sends. This produces xml-errors like &quot;content not allowed in prolog&quot;.</p>
+<p>Test script:<br>
+---------------<br>
+[server]<br>
+&lt;?php<br>
+$response = &quot;------=_Part_13_18150163.1123064466959\nContent-Type: text/xml; charset=UTF-8\nContent-Transfer-Encoding: binary\nContent-Id: &lt;E499622513F9AA87E77E75F8A2F73498&gt;\n\n&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;UTF-8\&quot;?&gt;\n&lt;soapenv:Envelope xmlns:soapenv=\&quot;http://schemas.xmlsoap.org/soap/envelope/\&quot; xmlns:xsd=\&quot;http://www.w3.org/2001/XMLSchema\&quot; xmlns:xsi=\&quot;http://www.w3.org/2001/XMLSchema-instance\&quot;&gt;\n&lt;soapenv:Body&gt;\n&lt;ns1:getZippedCourseResponse soapenv:encodingStyle=\&quot;http://schemas.xmlsoap.org/soap/encoding/\&quot; xmlns:ns1=\&quot;urn:WWRInterface\&quot;&gt;\n&lt;ns1:getZippedCourseReturn xsi:type=\&quot;ns2:instance\&quot; xmlns:ns2=\&quot;WWREncoding\&quot;&gt;\n&lt;ns1:dataHandler href=\&quot;cid:C8EFC5F183DA5492B74666A49D7603B4\&quot; xmlns:ns3=\&quot;http://xml.apache.org/xml-soap\&quot;/&gt;\n&lt;/ns1:getZippedCourseReturn&gt;\n&lt;/ns1:getZippedCourseResponse&gt;\n&lt;/soapenv:Body&gt;\n&lt;/soapenv:Envelope&gt;\n------=_Part_13_18150163.1123064466959\nContent-Type: text/xml\nContent-Transfer-Encoding: binary\nContent-Id: &lt;C8EFC5F183DA5492B74666A49D7603B4&gt;\n\nTEST\n------=_Part_13_18150163.1123064466959--\n&quot;;<br>
+	header(&quot;Content-Type: multipart/related; type=\&quot;text/xml\&quot;; start=\&quot;&lt;E499622513F9AA87E77E75F8A2F73498&gt;\&quot;; 	boundary=\&quot;----=_Part_13_18150163.1123064466959\&quot;&quot;);<br>
+print $response;<br>
+?&gt;</p>
+<p>[client]<br>
+&lt;?php<br>
+require_once &#039;SOAP/Client.php&#039;;<br>
+$client = new SOAP_Client(&quot;http://localhost/test/server.php&quot;);<br>
+$result = $client-&gt;call(&quot;attachTest&quot;, $param, array(&#039;trace&#039; =&gt; 1));<br>
+$result = $client-&gt;call(&quot;attachTest&quot;, $param, array(&#039;trace&#039; =&gt; 1));<br>
+print_r( $client-&gt;wire );<br>
+?&gt;</p>
+<p>Suggestion to patch this bug:<br>
+Change in Client.php SOAP_Client-&gt;call()</p>
+<p>function &amp;call($method, &amp;$params, $namespace = false, $soapAction = false) {<br>
+        $this-&gt;headersIn = null;<br>
+to<br>
+function &amp;call($method, &amp;$params, $namespace = false, $soapAction = false){<br>
+    	$this-&gt;__attachments = array();<br>
+        $this-&gt;headersIn = null;</p>
+<p>Expected result:<br>
+----------------<br>
+Client-&gt;wire:</p>
+<p>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;<br>
+&lt;soapenv:Envelope xmlns:soapenv=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;</p>
+<p>Actual result:<br>
+--------------<br>
+Client-&gt;wire:</p>
+<p>http://schemas.xmlsoap.org/soap/envelope/&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;<br>
+&lt;SOAP-ENV:Envelope  xmlns:SOAP-ENV=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;</p>
+</section>
+<section>
+<h3>[2006-01-11 10:19 UTC] laihro at gmx dot de</h3>
+<p>As I stated before the __attachments property slips into the next message a client sends, after the client received the message with the attachment. This behaviour can be easily repoduced with the test script. The error is produced by this call sequence:</p>
+<p>client-&gt;call<br>
+server-&gt;response to client with an attachment<br>
+client-&gt;call -&gt; produces error</p>
+<p>The point is, that the error occurs when the client sends the next message. The new value for the __attachments property is not set until the client recieves a response to this message.<br>
+To fix this, you have to initialize __attachments before <br>
+$this-&gt;_soap_transport-&gt;send<br>
+is called or find out, how the property slips into the message.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

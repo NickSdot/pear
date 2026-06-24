@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4950</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_Util/index.html">XML_Util</a> &#187; Bug #4950</h1>
+<p>Incorrect CDATA serializing</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-07-30 00:09 UTC</td></tr>
+<tr><th>From</th><td>ja dot doma at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>ashnazg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_Util/index.html">XML_Util</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>Roadmaps</th><td>1.2.0a1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-07-30 00:09 UTC] ja dot doma at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+This code:</p>
+<p>require_once &quot;XML/Util.php&quot;;</p>
+<p>// creating an XML tag<br>
+$tag = XML_Util::createTag(&quot;test&quot;, array(), &quot;Content ]]&gt;&lt;/test&gt; here!&quot;,null, XML_UTIL_CDATA_SECTION);</p>
+<p>Will result in:</p>
+<p>&lt;test&gt;&lt;![CDATA[Content ]]&gt;&lt;/test&gt; here!]]&gt;&lt;/test&gt;</p>
+<p>As you can see it is wrong bechavior. I&#039;m not sure, but the only one solution is to create two CDATA sections there:</p>
+<p>&lt;test&gt;&lt;![CDATA[Content ]]&gt;]]&gt;&lt;![CDATA[&lt;/test&gt; here!]]&gt;&lt;/test&gt;</p>
+<p>Note: the ]]&gt; sequence is outside CDATA sections</p>
+<p>Normal(DOM) parser may merge sequence of CDATA and text into one DomNode.text field.</p>
+<p>Sorry for my badly english =)</p>
+<p>Test script:<br>
+---------------<br>
+require_once &quot;XML/Util.php&quot;;</p>
+<p>// creating an XML tag<br>
+$tag = XML_Util::createTag(&quot;test&quot;, array(), &quot;Content ]]&gt;&lt;/test&gt; here!&quot;,null, XML_UTIL_CDATA_SECTION);<br>
+echo $tag;</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;test&gt;&lt;![CDATA[Content ]]&gt;]]&gt;&lt;![CDATA[&lt;/test&gt; here!]]&gt;&lt;/test&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;test&gt;&lt;![CDATA[Content ]]&gt;&lt;/test&gt; here!]]&gt;&lt;/test&gt;</p>
+</section>
+<section>
+<h3>[2005-07-30 00:20 UTC] ja dot doma at gmail dot com</h3>
+<p>The solution might be(line 642):</p>
+<p>function createCDataSection($data) {<br>
+  return  sprintf(&quot;&lt;![CDATA[%s]]&gt;&quot;, preg_replace(&#039;/\]\]&gt;/&#039;, &quot;]]&gt;]]&gt;&lt;![CDATA[&quot;, strval($data)));<br>
+}</p>
+</section>
+<section>
+<h3>[2005-07-30 00:34 UTC] ja dot doma at gmail dot com</h3>
+<p>Oops! Since XML can not contain &gt; symbol it must be escaped with &gt;</p>
+<p>So the proper fix to bug is:</p>
+<p>function createCDataSection($data)<br>
+    {<br>
+        return  sprintf(&quot;&lt;![CDATA[%s]]&gt;&quot;, preg_replace(&#039;/\]\]&gt;/&#039;, &quot;]]&gt;]]&gt;&lt;![CDATA[&quot;, strval($data)));<br>
+    }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

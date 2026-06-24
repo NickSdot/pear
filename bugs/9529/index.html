@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9529</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/Services_Amazon/index.html">Services_Amazon</a> &#187; Bug #9529</h1>
+<p>Problem with Creator elements</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #9529</th><td>Problem with Creator elements</td></tr>
+<tr><th>Submitted</th><td>2006-12-02 21:02 UTC</td></tr>
+<tr><th>From</th><td>peter dot melnikov at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>ttsuruoka</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Services_Amazon/index.html">Services_Amazon</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.4</td></tr>
+<tr><th>OS</th><td>Windows 2000 SP4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-12-02 21:02 UTC] peter dot melnikov at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I have just using AWS with PHP and got a problem with Creators attribute:</p>
+<p>When there are at least two creators I get array of two elements (associative arrays):</p>
+<p>[Creator] =&gt; Array(<br>
+[0] =&gt; Array ( [Role] =&gt; Editor  [_content] =&gt; Stephen G. Kobourov)<br>
+[1] =&gt; Array( [Role] =&gt; Editor  [_content] =&gt; Michael  T. Goodrich )<br>
+ )</p>
+<p>But when an item has only one creator/editor, instead of array with the single element (array) I receive:</p>
+<p>[Creator] =&gt; Array( [Role] =&gt; Editor [_content] =&gt; Joe Marks)</p>
+<p>But I expecting:</p>
+<p>[Creator] =&gt; Array( [0] =&gt; Array([Role] =&gt; Editor [_content]=&gt;Joe Marks) )</p>
+<p>In the same time dealing with Author goes correctly:</p>
+<p>[Author] =&gt; Array([0] =&gt; Dimacs International Workshop)</p>
+<p>Test script:<br>
+---------------<br>
+Here is the item you can test on (just enter valid access_key):</p>
+<p>http://webservices.amazon.com/onca/xml?Service=AWSECommerceService&amp;Version=2006-11-14&amp;Operation=ItemLookup&amp;AWSAccessKeyId=[ACCESS_KEY]&amp;ItemId=3540420622&amp;IdType=ASIN&amp;ResponseGroup=Medium</p>
+<p>&lt;?php<br>
+require_once &#039;Services/AmazonECS4.php&#039;;</p>
+<p>$amazon = new Services_AmazonECS4([ACCESS_KEY]);<br>
+$amazon-&gt;setCache(&#039;file&#039;, array(&#039;cache_dir&#039; =&gt; &#039;cache/&#039;));<br>
+$amazon-&gt;setCacheExpire(600); // 60 seconds = 1 min<br>
+$options = array();<br>
+$options[&#039;ResponseGroup&#039;] = &#039;Medium&#039;;<br>
+$result = $amazon-&gt;ItemLookup(&#039;3540420622&#039;, $options);<br>
+print_r($result);<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+[Author] =&gt; Array<br>
+    (<br>
+        [0] =&gt; M. Kaufmann<br>
+        [1] =&gt; D. Wagner<br>
+    )</p>
+<p>[Binding] =&gt; Paperback<br>
+[Creator] =&gt; Array<br>
+    (<br>
+        [Role] =&gt; Editor<br>
+        [_content] =&gt; Michael Kaufmann<br>
+    )</p>
+<p>Actual result:<br>
+--------------<br>
+[Author] =&gt; Array<br>
+    (<br>
+        [0] =&gt; M. Kaufmann<br>
+        [1] =&gt; D. Wagner<br>
+    )</p>
+<p>[Binding] =&gt; Paperback<br>
+[Creator] =&gt; Array<br>
+    (  [0] =&gt; Array (<br>
+        [Role] =&gt; Editor<br>
+        [_content] =&gt; Michael Kaufmann<br>
+        )<br>
+    )</p>
+</section>
+<section>
+<h3>[2006-12-02 21:06 UTC] peter dot melnikov at gmail dot com</h3>
+<p>I placed actual and expected results in wrong sections. Expected result is specified in Actual result section and vice versa. Sorry.</p>
+</section>
+<section>
+<h3>[2006-12-03 06:48 UTC] ttsuruoka at php dot net</h3>
+<p>This has been fixed in CVS.<br>
+http://cvs.php.net/viewvc.cgi/pear/Services_Amazon/AmazonECS4.php?r1=1.4&amp;r2=1.5</p>
+<p>Thank you for reporting!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

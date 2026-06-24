@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8128</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/Translation2/index.html">Translation2</a> &#187; Bug #8128</h1>
+<p>getPage() does not work</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-07-06 09:08 UTC</td></tr>
+<tr><th>From</th><td>ltiefland at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Translation2/index.html">Translation2</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-06 09:08 UTC] ltiefland at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m using the DB driver for my project at http://fifa.lars-tiefland.de and wanted to make it multilingual using the Translation2 package. What I did NOT want was to fetch all the Strings seperately (it&#039;s too easy to forget to add new ones/delete old ones etc.), so I decided to use getPage() instead. But NOTHING was returned.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?<br>
+require_once(&quot;Translation2.php&quot;);<br>
+//code to generate a DB connection comes here<br>
+$params_tr[&quot;strings_default_table&quot;]=&quot;i18n_%s&quot;;<br>
+$params_tr[&quot;string_text_col&quot;]=&quot;string&quot;;<br>
+$tr=&amp; Translation2::factory(&quot;db&quot;,$db,$params_tr);<br>
+$tr-&gt;setLang(&quot;de&quot;);<br>
+$tr-&gt;setPageID(&quot;common&quot;);<br>
+$page=$tr-&gt;getPage();<br>
+var_dump($page);<br>
+?&gt;</p>
+<p>fix for Translation2/Container/db.php, function getPage():</p>
+<p>while($row=$res-&gt;fetchRow()) {<br>
+    $key=$row[&quot;id&quot;];<br>
+    $value=$row[&quot;string&quot;];<br>
+    $strings[&quot;$key&quot;]=$value;<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+An array of strings</p>
+<p>Actual result:<br>
+--------------<br>
+array(1) {[&quot;&quot;] =&gt; NULL}</p>
+</section>
+<section>
+<h3>[2006-07-06 09:37 UTC] ltiefland at gmail dot com</h3>
+<p>No, I have not tried the CVS version yet.</p>
+<p>DB Dump for the language tables can be found at: http://fifa.lars-tiefland.de/i18n.sql.bz2</p>
+<p>Tell me, if you also need the other tables.</p>
+<p>BTW: I&#039;m using MySQL 5.0, so it can be, that you get problems importing the SQL file, if you use an earlier version. If that&#039;s the case, please let me know which version you are using, so that I can choose the correct compability mode for the dump.</p>
+</section>
+<section>
+<h3>[2006-07-06 10:05 UTC] ltiefland at gmail dot com</h3>
+<p>I still get this behaviour. No returned strings with the CVS-Version either. What PHP/MySQL-combination are you using? Perhaps that&#039;s the reason, why it works for you and not for me. Could it also be a problem with the DB-Package (not MDB or MDB2)? Which version of the DB-package do you use? Or did you use MDB/MDB2?</p>
+</section>
+<section>
+<h3>[2006-07-06 10:09 UTC] ltiefland at gmail dot com</h3>
+<p>BTW: I use PHP4.4.2 with MySQL 5.0.22 and eAccelerator 0.9.5-beta2</p>
+</section>
+<section>
+<h3>[2006-07-06 10:15 UTC] ltiefland at gmail dot com</h3>
+<p>One more thing: On my computer at home I use PHP5.1.2 and get the same behaviour (will try CVS snapshot there as well).</p>
+</section>
+<section>
+<h3>[2006-07-06 10:27 UTC] ltiefland at gmail dot com</h3>
+<p>You can see the result with the original code at http://fifa.lars-tiefland.de</p>
+<p>The right portion of the headline should read like this:</p>
+<p>FIFA WC 2006 in Germany</p>
+<p>But it reads as:</p>
+<p>FIFA 2006 in</p>
+<p>Did you accidently apply my patch, before reproducing the error? Your code would have to read like this, if unchanged:</p>
+<p>while (list($key, $value) = $res-&gt;fetchRow()) {<br>
+        $strings[$key] = $value;<br>
+    }</p>
+<p>I replaced it with</p>
+<p>while($row=$res-&gt;fetchRow()) {<br>
+        $key=$row[&quot;id&quot;];<br>
+        $value=$row[&quot;string&quot;];<br>
+        $strings[&quot;$key&quot;]=$value;<br>
+    }</p>
+<p>and everything worked fine.</p>
+<p>I&#039;ve also tried to clean the temporary files of eAccellerator, but it did not help.</p>
+</section>
+<section>
+<h3>[2006-07-06 10:51 UTC] ltiefland at gmail dot com</h3>
+<p>That did the trick!</p>
+</section>
+<section>
+<h3>[2006-07-06 11:01 UTC] ltiefland at gmail dot com</h3>
+<p>I don&#039;t use MDB / MDB2, so I can&#039;t tell you (yet). I could test it this evening, when I&#039;m back home. However, I think it will be best to apply the patch to those containers as well, just to be on the safe side.</p>
+<p>Thanks for your help so far.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

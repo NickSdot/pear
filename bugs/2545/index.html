@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2545</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_Graph/index.html">Structures_Graph</a> &#187; Bug #2545</h1>
+<p>Changes in error reporting</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-10-16 11:36 UTC</td></tr>
+<tr><th>From</th><td>otiteca at free dot fr</td></tr>
+<tr><th>Assigned</th><td>sergiosgc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_Graph/index.html">Structures_Graph</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-16 11:36 UTC] otiteca at free dot fr</h3>
+<p>Description:<br>
+------------<br>
+In Structures_Graph_Node::connectTo(),<br>
+the use of PEAR::RaiseError() do not prevent for the method to execute =&gt;  a node not in graph, can be connected to another one.<br>
+then I do propose to use:  return new Pear_Error(), for the method to stop execute on error, by this way, the main script  can manage error.</p>
+<p>here&#039;s my connectTo method modified:</p>
+<p>function connectTo(&amp;$destinationNode) {<br>
+        // We only connect to nodes<br>
+        if (!is_a($destinationNode, &#039;Structures_Graph_Node&#039;)) {<br>
+            return new Pear_Error(&#039;Structures_Graph_Node::connectTo received an object that is not a Structures_Graph_Node&#039;, STRUCTURES_GRAPH_ERROR_GENERIC);}<br>
+        // Nodes must already be in graphs to be connected<br>
+        if ($this-&gt;_graph == null)<br>
+            return new PEAR_Error(&#039;Structures_Graph_Node::connectTo Tried to connect a node that is not in a graph&#039;, STRUCTURES_GRAPH_ERROR_GENERIC);<br>
+        if ($destinationNode-&gt;getGraph() == null) <br>
+            return new Pear_Error(&#039;Structures_Graph_Node::connectTo Tried to connect to a node that is not in a graph&#039;, STRUCTURES_GRAPH_ERROR_GENERIC);<br>
+        // Connect here<br>
+        $this-&gt;_connectTo($destinationNode);<br>
+        // If graph is undirected, connect back<br>
+        if (!$this-&gt;_graph-&gt;isDirected()) {<br>
+            $destinationNode-&gt;_connectTo($this);<br>
+        }<br>
+    }</p>
+<p>Reproduce code:<br>
+---------------<br>
+$toto =&amp; new NetGraph();<br>
+$mynode = new Structures_Graph_Node();<br>
+$mynode2 =&amp; new Structures_Graph_Node();<br>
+$mynode-&gt;setData(&quot;ptptptpttptptptptp&quot;);<br>
+$mynode2-&gt;setData(&quot;xxxxxxxxxxxxxxxxxxxxxx&quot;);</p>
+<p>$toto-&gt;addNode($mynode);</p>
+<p>$mynode-&gt;connectTo($mynode2); //$mynode2 not in graph</p>
+<p>print_r($toto); //you&#039;ll see that $mynode and $mynode2 are connected while $mynode2 is not in graph</p>
+<p>Expected result:<br>
+----------------<br>
+netgraph Object ( [_nodes] =&gt; Array ( [0] =&gt; structures_graph_node Object ( [_data] =&gt; ptptptpttptptptptp [_metadata] =&gt; Array ( ) [_arcs] =&gt; Array ( ) [_graph] =&gt; netgraph Object ( [_nodes] =&gt; Array *RECURSION* [_directed] =&gt; 1 ) ) ) [_directed] =&gt; 1 )</p>
+<p>Actual result:<br>
+--------------<br>
+netgraph Object ( [_nodes] =&gt; Array ( [0] =&gt; structures_graph_node Object ( [_data] =&gt; ptptptpttptptptptp [_metadata] =&gt; Array ( ) [_arcs] =&gt; Array ( [0] =&gt; structures_graph_node Object ( [_data] =&gt; xxxxxxxxxxxxxxxxxxxxxx [_metadata] =&gt; Array ( ) [_arcs] =&gt; Array ( ) [_graph] =&gt; ) ) [_graph] =&gt; netgraph Object ( [_nodes] =&gt; Array *RECURSION* [_directed] =&gt; 1 ) ) ) [_directed] =&gt; 1 )</p>
+</section>
+<section>
+<h3>[2004-10-20 13:55 UTC] sergio dot carvalho at portugalmail dot com</h3>
+<p>Assigned bug to me. Removed OS indication as it is irrelevant to the bug type.</p>
+</section>
+<section>
+<h3>[2005-12-09 12:00 UTC] sergiosgc at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>Fixed all PEAR::raiseError calls to return whenever they were raising errors.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

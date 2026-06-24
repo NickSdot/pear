@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5191</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_LDAP/index.html">Net_LDAP</a> &#187; Bug #5191</h1>
+<p>&quot;shift_entry&quot; alias does not work</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-23 22:48 UTC</td></tr>
+<tr><th>From</th><td>seansd at yahoo dot com</td></tr>
+<tr><th>Assigned</th><td>delatbabel</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_LDAP/index.html">Net_LDAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>RHE3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-23 22:48 UTC] seansd at yahoo dot com</h3>
+<p>Description:<br>
+------------<br>
+alias &quot;shift_entry&quot; does not work. only retrieves first record of recordset. &quot;shiftentry&quot; does work properly.</p>
+</section>
+<section>
+<h3>[2005-09-19 10:22 UTC] fw at weisshuhn dot de</h3>
+<p>i experienced the same problem.<br>
+this behaviour is caused through the user function call executed in shift_entry of class search:</p>
+<p>call_user_func(array($this, &#039;shiftEntry&#039;), $args)</p>
+<p>the function call must receive the object ($this) as a reference in order to be able to overwrite the variable $this-&gt;_elink. (_elink is used to call ldap_next_entry if not null)<br>
+therefor the correct way to call the function is this:</p>
+<p>call_user_func(array(&amp;$this, &#039;shiftEntry&#039;), $args)</p>
+<p>this error (no explicit referencing of $this) can be found in various other function pairs in Net_LDAP.</p>
+</section>
+<section>
+<h3>[2005-09-19 10:24 UTC] fw at weisshuhn dot de</h3>
+<p>i meant call_user_func_array instead of in my above lines of code.</p>
+</section>
+<section>
+<h3>[2005-09-19 10:31 UTC] jw at php dot net</h3>
+<p>Well this seems to be connected to bug #2860. Since call time pass reference is depreciated now, what to do?</p>
+</section>
+<section>
+<h3>[2005-10-31 13:33 UTC] b dot hallinger at ergonaz dot net</h3>
+<p>It will work with</p>
+<p>return call_user_func_array(array(&amp;$this, &#039;shiftEntry&#039;), $args);</p>
+<p>instead of</p>
+<p>return call_user_func_array(array($this, &#039;shiftEntry&#039;), $args);</p>
+<p>I don&#039;t know if this has been fixed already or if there is another, better solution to this.</p>
+</section>
+<section>
+<h3>[2006-02-24 02:40 UTC] delatbabel at php dot net</h3>
+<p>Verified that this now works in the CVS HEAD revision.</p>
+<p>Note this is in Net/LDAP/Search.php.</p>
+</section>
+<section>
+<h3>[2006-02-24 02:41 UTC] delatbabel at php dot net</h3>
+<p>Verified that this now works in the CVS HEAD revision.</p>
+</section>
+<section>
+<h3>[2006-02-24 03:42 UTC] delatbabel at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

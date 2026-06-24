@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4749</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_FTP/index.html">Net_FTP</a> &#187; Bug #4749</h1>
+<p>ls() fails when connection is closed</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-07-05 12:48 UTC</td></tr>
+<tr><th>From</th><td>javascripter at mail dot ru</td></tr>
+<tr><th>Assigned</th><td>toby</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_FTP/index.html">Net_FTP</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Windows XP SP2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-07-05 12:48 UTC] javascripter at mail dot ru</h3>
+<p>Description:<br>
+------------<br>
+A call to Net_FTP::ls() fails with Fatal Error when connection is closed by the server.<br>
+If I&#039;m right, the problem lies in _ls_both($dir) function which misses PEAR::isError($list_splitted) check.</p>
+<p>Reproduce code:<br>
+---------------<br>
+The following piece of code</p>
+<p>function _ls_both($dir)<br>
+    {<br>
+        $list_splitted = $this-&gt;_list_and_parse($dir);<br>
+        if (!is_array($list_splitted[&quot;files&quot;])) {<br>
+            $list_splitted[&quot;files&quot;] = array();<br>
+        }<br>
+      [...skipped...]<br>
+    }</p>
+<p>should look like</p>
+<p>function _ls_both($dir)<br>
+    {<br>
+        $list_splitted = $this-&gt;_list_and_parse($dir);<br>
+        if (PEAR::isError($list_splitted)) {<br>
+            return $list_splitted;<br>
+        }<br>
+        if (!is_array($list_splitted[&quot;files&quot;])) {<br>
+            $list_splitted[&quot;files&quot;] = array();<br>
+        }<br>
+      [...skipped...]<br>
+    }</p>
+<p>Actual result:<br>
+--------------<br>
+Fatal Error: Cannot use object of type PEAR_Error as array in C:\Server\php5\PEAR\Net\FTP.php on line 1924</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

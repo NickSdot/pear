@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3920</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_CSS/index.html">HTML_CSS</a> &#187; Bug #3920</h1>
+<p>Inappropriate style rule reordering</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-03-22 19:17 UTC</td></tr>
+<tr><th>From</th><td>jdickey at seven-sigma dot com</td></tr>
+<tr><th>Assigned</th><td>farell</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_CSS/index.html">HTML_CSS</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>Independent (Windows and Linux)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-22 19:17 UTC] jdickey at seven-sigma dot com</h3>
+<p>Description:<br>
+------------<br>
+When writing output from an HTML_CSS object instance by explicitly or implicitly (e.g., from HTML_Page2), the styles involving multiple selectors (what the HTML_CSS API calls &quot;group styles&quot;, e.g. &quot;* body #right&quot;) are written out before the styles with a single selector (e.g., &quot;body&quot;). This is completely independent of the order in which those styles were added to the HTML_CSS object.</p>
+<p>Why is this a problem? Because relative ordering between single and group styles (such as the IE Star Body Hack) is often used in an attempt to work around defects or limitation in certain widely-used browsers. Any reordering of those rules through a mechanism such as PEAR&#039;s HTML_CSS class destroys the CSS author&#039;s ability to achieve the intended results.</p>
+<p>I recognise that this defect in HTML_CSS is unlikely to be fixed without serious redesign and reorganisation of the existing code. Specifically, a more object-oriented approach, with &quot;single selector styles&quot; and &quot;group styles&quot; deriving from a single CSS_Style class, a container of which is used by HTML_CSS to contain all styles added to the HTML_CSS object instance, properly implemented, would have prevented this from occurring.  Additionally, having more self-contained &quot;Style&quot; objects would have made reuse (of individual styles and groups of styles) much easier.  As it is, the interface to HTML_CSS is largely procedural, making it difficult to efficiently break out reusable objects in client code.</p>
+<p>Reproduce code:<br>
+---------------<br>
+I have produced a small writeup at http://www.seven-sigma.com/pear_css_bug/ which demonstrates a simple HTML three-panel page based upon an example at http://glish.com/css/7.asp.</p>
+<p>Particularly interesting is this code fragment:</p>
+<p>$CSS1 = &amp;new HTML_CSS();<br>
+/* ... */<br>
+$CSS1-&gt;setStyle( &#039;#right&#039;, &#039;position&#039;, &#039; absolute&#039; );<br>
+$CSS1-&gt;setStyle( &#039;#right&#039;, &#039;right&#039;, &#039;0px&#039; );<br>
+$CSS1-&gt;setStyle( &#039;#right&#039;, &#039;top&#039;, &#039;100px&#039; );<br>
+$CSS1-&gt;setStyle( &#039;#right&#039;, &#039;background&#039;, &#039;#fff&#039; );<br>
+$CSS1-&gt;setStyle( &#039;#right&#039;, &#039;border&#039;, &#039;1px solid #000&#039; );<br>
+$CSS1-&gt;setStyle( &#039;#right&#039;, &#039;padding&#039;, &#039;0px 5px&#039; );<br>
+$CSS1-&gt;setStyle( &#039;#right&#039;, &#039;width&#039;, &#039;200px&#039; );<br>
+$BodyRightGroup = $CSS1-&gt;createGroup( &quot;* body #right&quot; );<br>
+$CSS1-&gt;setGroupStyle( $BodyRightGroup, &#039;width&#039;, &#039;189px&#039; );<br>
+$CSS1-&gt;setGroupStyle( $BodyRightGroup, &#039;background-color&#039;, &#039;lightgrey&#039; );<br>
+/* ... */<br>
+	/* IE 5.5 */<br>
+$CSS1-&gt;setStyle( &#039;#header&#039;, &#039;height&#039;, &#039;81px&#039; );<br>
+$CSS1-&gt;setStyle( &#039;#header&#039;, &#039;border-top&#039;, &#039;solid #000&#039; );<br>
+$CSS1-&gt;setStyle( &#039;#header&#039;, &#039;border-right&#039;, &#039;solid #000&#039; );<br>
+$CSS1-&gt;setStyle( &#039;#header&#039;, &#039;border-left&#039;, &#039;solid #000&#039; );<br>
+$CSS1-&gt;setStyle( &#039;#header&#039;, &#039;voice-family&#039;, &#039;&quot;\&quot;}\&quot;&quot;&#039; );<br>
+$CSS1-&gt;setStyle( &#039;#header&#039;, &#039;voice-family&#039;, &#039;inherit&#039; );<br>
+	/* IE 6 */<br>
+$CSS1-&gt;setStyle( &#039;#header&#039;, &#039;height&#039;, &#039;99px&#039; );<br>
+/* ... */<br>
+$Page = &amp;new HTML_Page2();<br>
+$Page-&gt;addStyleDeclaration( $CSS1, &quot;text/css&quot; );</p>
+<p>That code fragment is seriously distorted in the output from HTML_CSS, such that the &#039;height&#039; style is written only once (with value &#039;99px&#039;, the last value specified)) and the similar elision of the &#039;voice-family&#039; style.</p>
+<p>Expected result:<br>
+----------------<br>
+The expected result of writing out the contents of an HTML_CSS2 object should be, at least by default, the reproduction of each style group and rule specified, in the order specified, with &quot;duplicate&quot; style specifications preserved in the order specified by the code.</p>
+<p>/* ... */</p>
+<p>#right {<br>
+	position: absolute;<br>
+	right:0px;<br>
+	top:100px;<br>
+	background:#fff;<br>
+	border:1px solid #000;<br>
+	padding: 0px 5px;<br>
+	width: 200px;<br>
+}</p>
+<p>* body #right {<br>
+	/* ... */<br>
+	/* IE 5.5 */<br>
+	height:81px;<br>
+	border-top:1px solid #000;<br>
+	border-right:1px solid #000;<br>
+	border-left:1px solid #000;<br>
+ 	voice-family: &quot;\&quot;}\&quot;&quot;; /* kills IE5.x parsing */<br>
+	voice-family: inherit; /* fixes everybody else */<br>
+	/* IE 6 and the rest of the world */<br>
+	height: 99px; /* height for compliant browsers */<br>
+}</p>
+<p>Actual result:<br>
+--------------<br>
+In the verson of the page using an HTML_CSS object instance to write style information inline (at http://www.seven-sigma.com/pear_css_bug/test-object.php ), all group styles are listed before single styles. This is dreadfully unacceptable, as explained above.  The code fragment quoted earlier is rendered in the output as follows:</p>
+<p>/* ... */<br>
+	* body #right {<br>
+		width: 189px;<br>
+		background-color: lightgrey;<br>
+	}<br>
+	/* ... */<br>
+	#right {<br>
+		position:  absolute;<br>
+		right: 0px;<br>
+		top: 100px;<br>
+		background: #fff;<br>
+		border: 1px solid #000;<br>
+		padding: 0px 5px;<br>
+		width: 200px;<br>
+	}</p>
+</section>
+<section>
+<h3>[2005-03-24 13:30 UTC] tibolists at free dot fr</h3>
+<p>Hi,<br>
+I do not that it is a bug.<br>
+In fact the voice-family is a hack for ie.</p>
+<p>and pear HTML_CSS just manage the best way he css, it does not have to take care of browsers incompatibility, but must me compliant to the CSS standard.And it is.</p>
+<p>Hope that M$ will solve their ie bug is most important, than modifying the HTML_CSS class...</p>
+</section>
+<section>
+<h3>[2005-03-24 16:11 UTC] jdickey at seven-sigma dot com</h3>
+<p>Klaus,</p>
+<p>I think you&#039;d probably want to be able to dump raw CSS at both ends of the file, something like a &#039;setRawCssAtTop()&#039; and/or &#039;setRawCssAtBottom()&#039; pair of methods. Unless I&#039;m missing the point entirely and you&#039;re talking about just *replacing* the output from the styles array with the new &#039;raw CSS&#039;? If this is a supplement rather than a replacement, I&#039;d argue for naming the new method to indicate where in the CSS its output will be dumped.</p>
+<p>And can someone please explain to me (off list) why the group styles are treated separately from the single element styles? It seems to me that a) if this was all in one array, it would make this whole problem go away and b) that if you wanted to handle *processing* separately, you could make two passes through the combined array. And that still doesn&#039;t solve the issue of one style being specified more than once, as with the #header selector&#039;s &#039;height&#039; style in my example stylesheet ( http://tinyurl.com/4zc4y ).</p>
+</section>
+<section>
+<h3>[2005-03-24 18:05 UTC] jdickey at seven-sigma dot com</h3>
+<p>Just a quick followup to an earlier comment - people who know me know that I&#039;m no fan of Microsoft for any number of reasons, especially quality issues, but saying things like &lt;em&gt;&quot;Hope that M$ will solve their ie bug is most important, than modifying<br>
+the HTML_CSS class&quot;&lt;/em&gt; is just plain disingenuous. HTML_CSS, like PEAR, like PHP itself, is a &lt;em&gt;tool&lt;/em&gt; for building a particular class of artifact, a browser-based application. While MS may have the most obsolete, least W3C-standards-compliant browser in current use, it is the &lt;em&gt;predominant&lt;/em&gt; browser in current use. Knowingly writing or using code that is known to break the 900-pound gorilla of HTML clients is a good way to tick off your actual and potential clients who are saddled with using the ruddy thing. One of these days, they will join The Enlightened Few (currently)) who use a proper, standard-compliant, easy-to-code-for browser, but until IE usage drops by an order of magnitude or so, we&#039;re stuck with having to support it as well as the clients we&#039;d &quot;like&quot; to support.  Historically, there have been two ways to accomplish this, both of them bad. One is to write a single style sheet that, by careful ordering and knowledge of browser-specific defects and quirks, manages to give acceptable output on both compliant browsers and Internet Exploder.  That was the genesis of the current bug; taking a pure HTML/CSS demo page and rewriting it as an HTML_Page2 / HTML_CSS PHP script.  (The other, of course, is to use something like Net_Useragent_Detect and multiple style sheets - I used to use one for IE, one for Netscape 4, one for Opera, and one for everything else. Blech.)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

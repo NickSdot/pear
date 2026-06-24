@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4192</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_Archive/index.html">File_Archive</a> &#187; Bug #4192</h1>
+<p>Strange error with &gt; closing php code</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-04-20 19:20 UTC</td></tr>
+<tr><th>From</th><td>mike at blueroot dot co dot uk</td></tr>
+<tr><th>Assigned</th><td>vincentlascaux</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/File_Archive/index.html">File_Archive</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Linux 2.4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-20 19:20 UTC] mike at blueroot dot co dot uk</h3>
+<p>Description:<br>
+------------<br>
+Trying a simple demo with File_Archive to try to open a zip file.</p>
+<p>The file File/Archive/Reader/ChangeName.php has some strange &gt; tags which seem to close the php tags (even though there is no ?&gt;, just &gt;)</p>
+<p>It seems like every &gt; in the file seems to close the php code.  $this-&gt; is a good example</p>
+<p>Let me know if you cannot reproduce and ill send more config info.</p>
+<p>php was compiled with --with-pgsql --prefix=/php5 --disable-shared --with-apxs=/www/bin/apxs --with-gd --with-jpeg-dir=/usr --with-png-dir=/usr --enable-gd-native-ttf --with-iconv --with-zlib --with-openssl --without-sqlite --with-mysqli --with-imap --with-kerberos --with-gettext --with-xml --with-dom --enable-mbstring --with-imap-ssl</p>
+<p>Reproduce code:<br>
+---------------<br>
+require(&#039;File/Archive.php&#039;);</p>
+<p>$file = getcwd() . &quot;/myfile.odt&quot;;  // its a open document format, which is a zip<br>
+$zip_file = File_Archive::read($file);</p>
+<p>Expected result:<br>
+----------------<br>
+no output, it should just create the reader object</p>
+<p>Actual result:<br>
+--------------<br>
+a dump of the php code in File/Archive/Reader/ChangeName.php</p>
+<p>it starts from the &gt; after the email address</p>
+<p>* @copyright 1997-2005 The PHP Group * @license http://www.gnu.org/copyleft/lesser.html LGPL * @version CVS: $Id: ChangeName.php,v 1.10 2005/02/26 10:17:06 vincentlascaux Exp $ * @link http://pear.php.net/package/File_Archive */ require_once &quot;Relay.php&quot;; /** * Add a directory to the public name of all the files of a reader * * Example: * If archive.tar is a file archive containing files a.txt and foo/b.txt * new File_Archive_Reader_AddBaseName(&#039;bar&#039;, * new File_Archive_Reader_Tar( * new File_Archive_Reader_File(&#039;archive.tar&#039;) * ) * ) is a reader containing files bar/a.txt and bar/foo/b.txt */ class File_Archive_Reader_AddBaseName extends File_Archive_Reader_Relay { var $baseName; function File_Archive_Reader_AddBaseName($baseName=&#039;&#039;, &amp;$source) { parent::File_Archive_Reader_Relay($source); $this-&gt;baseName = $this-&gt;getStandardURL($baseName); } /** * @see File_Archive_Reader::getFilename() */ function getFilename() { $name = parent::getFilename(); return $this-&gt;baseName. (empty($this-&gt;baseName) || empty($name) ? &#039;&#039;: &#039;/&#039;). $name; } } /** * Change a directory name to another * * Example: * If archive.tar is a file archive containing files a.txt and foo/b.txt * new File_Archive_Reader_ChangeBaseName(&#039;foo&#039;, &#039;bar&#039; * new File_Archive_Reader_Tar( * new File_Archive_Reader_File(&#039;archive.tar&#039;) * ) * ) is a reader containing files a.txt and bar/b.txt */ class File_Archive_Reader_ChangeBaseName extends File_Archive_Reader_Relay { var $oldBaseName; var $newBaseName; function File_Archive_Reader_ChangeBaseName ($oldBaseName, $newBaseName, &amp;$source) { parent::File_Archive_Reader_Relay($source); $this-&gt;oldBaseName = $this-&gt;getStandardURL($oldBaseName); if (substr($this-&gt;oldBaseName, -1) == &#039;/&#039;) { $this-&gt;oldBaseName = substr($this-&gt;oldBaseName, 0, -1); } $this-&gt;newBaseName = $this-&gt;getStandardURL($newBaseName); if (substr($this-&gt;newBaseName, -1) == &#039;/&#039;) { $this-&gt;newBaseName = substr($this-&gt;newBaseName, 0, -1); } } /** * @see File_Archive_Reader::getFilename() */ function getFilename() { $name = parent::getFilename(); if (empty($this-&gt;oldBaseName) || !strncmp($name, $this-&gt;oldBaseName.&#039;/&#039;, strlen($this-&gt;oldBaseName)+1) || strcmp($name, $this-&gt;oldBaseName) == 0) { return $this-&gt;newBaseName. ( empty($this-&gt;newBaseName) || strlen($name)&lt;=strlen($this-&gt;oldBaseName)+1 ? &#039;&#039; : &#039;/&#039; ). substr($name, strlen($this-&gt;oldBaseName)+1); } else { return $name; } } } ?&gt; Fatal error: Class &#039;File_Archive_Reader_Relay&#039; not found in /php5/lib/php/File/Archive/Reader/Uncompress.php on line 38</p>
+</section>
+<section>
+<h3>[2005-04-20 22:40 UTC] mike at blueroot dot co dot uk</h3>
+<p>Hi,</p>
+<p>The basic test works, hello world is output ok.</p>
+<p>I have other PEAR packages that work OK (Calendar), I have a production site running on this box, so I am fairly sure its not that.</p>
+<p>I tried uninstalling and reinstlling File_Archive, the file looks fine when opened in vi.  I tried removing and reinserting the &gt;&#039;s but it still didnt work.</p>
+<p>It is strange that it only appears on this file, I do not get the same output (ie lack of parsing) from the File/Archive.php file.</p>
+<p>I have also tried including the hello world test from within a class file (as you do), it works as expected.</p>
+</section>
+<section>
+<h3>[2005-04-20 23:57 UTC] mike at blueroot dot co dot uk</h3>
+<p>I have looked into it a bit more, it is just a case of that file having a short opening tag.</p>
+</section>
+<section>
+<h3>[2005-04-21 00:00 UTC] mike at blueroot dot co dot uk</h3>
+<p>The following files also have short opening tags</p>
+<p>Archive/Predicate/Custom.php<br>
+Archive/Predicate/Ereg.php<br>
+Archive/Predicate/Eregi.php<br>
+Archive/Predicate/Extension.php<br>
+Archive/Predicate/False.php<br>
+Archive/Predicate/MaxDepth.php<br>
+Archive/Predicate/MIME.php<br>
+Archive/Predicate/MinSize.php<br>
+Archive/Predicate/MinTime.php<br>
+Archive/Predicate/Not.php<br>
+Archive/Predicate/Or.php<br>
+Archive/Predicate/True.php<br>
+Archive/Predicate/And.php<br>
+Archive/Reader/Filter.php<br>
+Archive/Reader/Relay.php<br>
+Archive/Reader/Select.php<br>
+Archive/Reader/Archive.php<br>
+Archive/Writer/MemoryArchive.php<br>
+Archive/Writer/Archive.php<br>
+Archive/Predicate.php</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

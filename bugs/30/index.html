@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #30</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #30</h1>
+<p>Mail_Mime: _encodeHeaders is not RFC-2047 compliant.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-09-23 09:13 UTC</td></tr>
+<tr><th>From</th><td>ed at avi dot ru</td></tr>
+<tr><th>Assigned</th><td>cipri</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>All</td></tr>
+<tr><th>Roadmaps</th><td>1.4.0, 1.4.0a1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-09-23 09:13 UTC] ed at avi dot ru</h3>
+<p>Description:<br>
+------------<br>
+Hello!<br>
+ <br>
+I tried to use PEAR module Mail_mime to compose a message with cyrillic subject and noticed that whitespaces between cyrillic words in resulting message are missing (Cyrillic letters are in 0x80-0xFF area). The investigation discovered that the Mail_mime::encodeHeaders() method is working incorrectly. Let&#039;s imagine that we have the following subject (or any other header, it doesn&#039;t matter):<br>
+ <br>
+AAA BBB BBB AAA BBB<br>
+ <br>
+where A is a latin character and B is a cyrillic character. Your regular expression will detect 3 BBB patterns and will encode them separately:<br>
+ <br>
+AAA =?charset?Q?=xx=xx=xx?= =?charset?Q?=xx=xx=xx?= AAA =?charset?Q?=xx=xx=xx?=<br>
+ <br>
+And what we see? First two BBB patterns produced two sequential RFC-2047 &#039;encoded-word&#039; patterns, which is a) incorrect, because two sequential &#039;encoded-word&#039; patterns must be separated by CRLF SPACE, not by SPACE only; b) is understood by mailers as CRLF SPACE and thus translataed as empty string. Oops...<br>
+The solution is to change the regular expression so that it could find not the single &#039;words-with-[0x80-0xFF]&#039; patterns, but space-separated sequences of such words. And it will be better to include &#039;-&#039; symbol in \w qualifier thus treating words with &#039;-&#039; as solid words. The regex is:<br>
+ <br>
+/([\w\-]*[\x80-\xFF]+[\w\-]*(\s+[\w\-]*[\x80-\xFF]+[\w\-]*)*)\s*/<br>
+ <br>
+And the replacing regex also needs improvement: as per RFC-2047 &#039;encoded-word&#039; pattern must not contain spaces and tabs to be treated as single atom; it also must not contain underscores, equal and question signs (they are special characters and must be escaped); the correct regex is:<br>
+ <br>
+/([\s_=\?\x80-\xFF])/e<br>
+ <br>
+And one more improvement: it sometimes better (as per RFC-2047) to encode headers not as quoted-printable but as base64 (if header consists mainly of 0x80-0xFF characters). The extended and corrected function is here:<br>
+    /**<br>
+    * Encodes a header as per RFC2047<br>
+    *<br>
+    * @param  string  $input The header data to encode<br>
+    * @return string         Encoded data<br>
+    * @access private<br>
+    */<br>
+    function _encodeHeaders($input)<br>
+    {<br>
+        foreach ($input as $hdr_name =&gt; $hdr_value) {<br>
+            preg_match_all(&#039;/([\w\-]*[\x80-\xFF]+[\w\-]*(\s+[\w\-]*[\x80-\xFF]+[\w\-]*)*)\s*/&#039;, $hdr_value, $matches);<br>
+            foreach ($matches[1] as $value) {<br>
+				switch ($head_encoding = $this-&gt;_build_params[&#039;head_encoding&#039;]) {<br>
+				case &#039;base64&#039;:<br>
+					$symbol = &#039;B&#039;;<br>
+					$replacement = base64_encode($value);<br>
+					break;</p>
+<p>default:<br>
+					if ($head_encoding != &#039;quoted-printable&#039;) {<br>
+						PEAR::raiseError(<br>
+							&#039;Invalid header encoding specified; using `quoted-printable` instead&#039;,<br>
+							NULL,<br>
+							PEAR_ERROR_TRIGGER,<br>
+							E_USER_WARNING<br>
+						);<br>
+					}</p>
+<p>$symbol = &#039;Q&#039;;<br>
+					$replacement = preg_replace(&#039;/([\s_=\?\x80-\xFF])/e&#039;, &#039;&quot;=&quot; . strtoupper(dechex(ord(&quot;\1&quot;)))&#039;, $value);<br>
+				}<br>
+                $hdr_value = str_replace($value, &#039;=?&#039; . $this-&gt;_build_params[&#039;head_charset&#039;] . &#039;?&#039; . $symbol . &#039;?&#039; . $replacement . &#039;?=&#039;, $hdr_value);<br>
+            }<br>
+            $input[$hdr_name] = $hdr_value;<br>
+        }<br>
+        <br>
+        return $input;<br>
+    }</p>
+<p>The function steel may need some inprovement, because headers must be divided on CRLF SPACE -separated parts no longer than 76 characters, but it&#039;s another story :) Anyway, thanks for attention. Let me know if you find these improvements useful and include them in next version of Mail_mime. Bye!<br>
+ <br>
+With best regards, Edward Surov</p>
+</section>
+<section>
+<h3>[2003-10-09 00:40 UTC] samm at os2 dot ru</h3>
+<p>10x for solution. I used your patch and it work correctly for my subjects.</p>
+</section>
+<section>
+<h3>[2003-10-30 22:33 UTC] heino at php dot net</h3>
+<p>I concur on the fact that the current code is not RFC compliant!</p>
+<p>I haven&#039;t tested the suggested code, but it should solve some of the problems; it needs some modification though...</p>
+</section>
+<section>
+<h3>[2003-11-04 09:40 UTC] ed at avi dot ru</h3>
+<p>A small bug in this patch: in switch statement script doesn&#039;t check $this-&gt;_build_params[&#039;head_encoding&#039;] for existence. It&#039;s better to implement this part with the following code:</p>
+<p>$head_encoding = array_key_exists(&#039;head_encoding&#039;, $this-&gt;_build_params) ? $this-&gt;_build_params[&#039;head_encoding&#039;] : &#039;quoted-printable&#039;</p>
+</section>
+<section>
+<h3>[2004-09-27 07:41 UTC] struchkov at ma-journal dot ru</h3>
+<p>I rewrite  _encodeHeaders to</p>
+<p>function _encodeHeaders($input)<br>
+{<br>
+    foreach ($input as $hdr_name =&gt; $hdr_value) <br>
+    {<br>
+        if (preg_match(&#039;/(\w*[\x80-\xFF]+\w*)/&#039;, hdr_value))<br>
+            $hdr_value=&#039;=?&#039;.$this-&gt;_build_params[&#039;head_charset&#039;].&#039;?B?&#039;.base64_encode($hdr_value).&#039;?=&#039;;<br>
+        $input[$hdr_name] = $hdr_value;<br>
+    }<br>
+    return $input;<br>
+}</p>
+<p>is it correct?</p>
+</section>
+<section>
+<h3>[2004-09-28 08:06 UTC] ed at avi dot ru</h3>
+<p>struchkov at ma-journal dot ru: your solution will work correctly (let&#039;s forget about max. encoded string size), but it encodes even words that are not required to be encoded, and thus a) the size of headers is greater than it could be; b) headers are harder to read with text editors. Besides, your program doesn&#039;t allow user to choose between quoted-printable and base64 encoding - these options could help to decrease encoded data size.</p>
+</section>
+<section>
+<h3>[2005-02-18 10:57 UTC] minakov at mail dot ru</h3>
+<p>function _encodeHeaders($input)<br>
+    {<br>
+        foreach ($input as $hdr_name =&gt; $hdr_value) {<br>
+        	if (preg_match(&#039;/(\w*[\x80-\xFF]+\w*)/&#039;, $hdr_value)) {<br>
+                $replacement = preg_replace(&#039;/([\x80-\xFF])/e&#039;, &#039;&quot;=&quot; . strtoupper(dechex(ord(&quot;\1&quot;)))&#039;, $hdr_value);<br>
+                $input[$hdr_name] = &#039;=?&#039; . $this-&gt;_build_params[&#039;head_charset&#039;] . &#039;?Q?&#039; . $replacement . &#039;?=&#039;;<br>
+			}<br>
+        }</p>
+<p>return $input;<br>
+    }</p>
+</section>
+<section>
+<h3>[2005-04-07 06:13 UTC] laurynas dot butkus at gmail dot com</h3>
+<p>last fix by minakov at mail dot ru works nicely for me with UTF-8. thanks!! I hope the bug will be fixed in future releases..</p>
+</section>
+<section>
+<h3>[2005-05-27 10:06 UTC] mdv at inyourpocket dot com</h3>
+<p>i think due to RFC 2047 when used Q encoding you must encode space, = and _ (see RFC 2047 section 2 and 4.2), so when you apply q encoding you must replace space, = and _</p>
+<p>function _encodeHeaders($input) {<br>
+	foreach ($input as $hdr_name =&gt; $hdr_value)<br>
+		if (preg_match(&#039;/[\x80-\xFF]?/&#039;, $hdr_value))<br>
+			$input[$hdr_name] = &#039;=?&#039;.$this-&gt;_build_params[&#039;head_charset&#039;].&#039;?Q?&#039;.preg_replace(&#039;/([\x80-\xFF]|\x20|\x3D|\x5F)/e&#039;, &#039;&quot;=&quot;.strtoupper(dechex(ord(&quot;\1&quot;)))&#039;, $hdr_value).&#039;?=&#039;;</p>
+<p>return $input;<br>
+}</p>
+</section>
+<section>
+<h3>[2005-05-27 10:16 UTC] mdv at inyourpocket dot com</h3>
+<p>of course reg exp should be /[\x80-\xFF]/ instead /[\x80-\xFF]?/</p>
+</section>
+<section>
+<h3>[2005-06-02 14:21 UTC] mdv at inyourpocket dot com</h3>
+<p>kmail (kde mail client) works perfectly, so i &quot;convert&quot; kmail c++ code to php (file kmmsgbase.cpp, function encodeRFC2047String())</p>
+<p>i don&#039;t know how kmail function codec-&gt;encode() works but i replace it with preg_replace(&#039;/([\x00-\x20\x80-\xFF])/e&#039;, &#039;&quot;=&quot;.strtoupper(dechex(ord(&quot;\1&quot;)))&#039;, $s)</p>
+<p>so any comments welcome</p>
+<p>/**<br>
+     * Encodes a header as per RFC2047<br>
+     *<br>
+     * @param  string  $input The header data to encode<br>
+     * @return string  Encoded data<br>
+     * @access private<br>
+     */<br>
+    function _encodeHeaders($input) {</p>
+<p>foreach ($input as $k =&gt; $v)<br>
+				$input[$k] = $this-&gt;encodeRFC2047String($v);<br>
+    	return $input;<br>
+    }</p>
+<p>function encodeRFC2047Quoted($s, $b) {<br>
+			if ($b)<br>
+				return base64_encode($s);<br>
+			else<br>
+				return preg_replace(&#039;/([\x00-\x20\x80-\xFF])/e&#039;, &#039;&quot;=&quot;.strtoupper(dechex(ord(&quot;\1&quot;)))&#039;, $s);<br>
+		}</p>
+<p>function encodeRFC2047String($s) {<br>
+			$strLength = strlen($s);</p>
+<p>$breakLine = $start = $stop = $p = $pos = $encLength = 0;</p>
+<p>$maxLen = 75 - 7 - strlen($this-&gt;_build_params[&#039;head_charset&#039;]);</p>
+<p>$nonAscii = 0;<br>
+			for ($i = 0; $i &lt; $strLength; $i++)<br>
+				if ($s[$i] &gt;= 128)<br>
+					$nonAscii++;</p>
+<p>$useBase64 = ($nonAscii * 6 &gt; $strLength);</p>
+<p>$result = &#039;&#039;;</p>
+<p>while ($pos &lt; $strLength) {<br>
+				$start = $pos;<br>
+				$p = $pos;</p>
+<p>while ($p &lt; $strLength) {<br>
+					if (!$breakLine &amp;&amp; ($s[$p] == &#039; &#039; || (strpos($this-&gt;dontQuote, $s[$p]) !== false)))<br>
+						$start = $p + 1;<br>
+					if (ord($s[$p]) &gt;= 128 || ord($s[$p]) &lt; 32)<br>
+						break;<br>
+					$p++;<br>
+				}</p>
+<p>if ($breakLine || $p &lt; $strLength) {<br>
+					while (strpos($this-&gt;dontQuote, $s[$start]) !== false)<br>
+						$start++;</p>
+<p>$stop = $start;<br>
+					while ($stop &lt; $strLength &amp;&amp; (strpos($this-&gt;dontQuote, $s[$stop]) === false))<br>
+						$stop++;</p>
+<p>$result .= substr($s, $pos, $start - $pos);</p>
+<p>$encLength = strlen($this-&gt;encodeRFC2047Quoted(substr($s, $start, $stop - $start), $useBase64));</p>
+<p>$breakLine = ($encLength &gt; $maxLen);</p>
+<p>if ($breakLine) {<br>
+						$dif = ($stop - $start) / 2;<br>
+						$step = $dif;<br>
+						while (abs($step) &gt; 1) {<br>
+							$encLength = strlen($this-&gt;encodeRFC2047Quoted(substr($s, $start, $dif), $useBase64));<br>
+							$step = ($encLength &gt; $maxLen) ? (-abs($step) / 2) : (abs($step) / 2);<br>
+							$dif += $step;<br>
+						}<br>
+						$stop = $start + $dif;<br>
+					}</p>
+<p>$p = $stop;</p>
+<p>//echo &#039;DEBUG: p: &#039;, $p, &#039;, start:: &#039;, $start, &#039;, strlen:: &#039;, $strLength, &#039;&lt;br&gt;&#039;;</p>
+<p>while (($p &gt; $start) &amp;&amp; !isset($s[$p]))<br>
+						$p--;</p>
+<p>if ($p &gt; $start)<br>
+						$stop = $p;</p>
+<p>if (substr($result, -3) == &quot;?= &quot;)<br>
+						$start--;<br>
+					if (substr($result, -5) == &quot;?=\n  &quot;) {<br>
+						$start--;<br>
+						$result = substr($result, 0, strlen($result) - 1);<br>
+					}</p>
+<p>$lastNewLine = strripos($result, &quot;\n &quot;);<br>
+					if (trim(substr($result, $lastNewLine)) &amp;&amp; ((strlen($result) - $lastNewLine + $encLength + 2) &gt; $maxLen))<br>
+						$result .= &quot;\n &quot;;</p>
+<p>$result .= &quot;=?&quot;;<br>
+					$result .= $this-&gt;_build_params[&#039;head_charset&#039;];<br>
+					$result .= $useBase64 ? &quot;?b?&quot; : &quot;?q?&quot;;<br>
+					$result .= $this-&gt;encodeRFC2047Quoted(substr($s, $start, $stop - $start), $useBase64);</p>
+<p>//encodeRFC2047Quoted(codec-&gt;fromUnicode(_str.mid(start, stop - start)), useBase64);<br>
+					$result .= &quot;?=&quot;;<br>
+					if ($breakLine)<br>
+						$result .= &quot;\n &quot;;</p>
+<p>$pos = $stop;<br>
+				} else {<br>
+					$result .= substr($s, $pos);<br>
+					break;<br>
+				}<br>
+			}</p>
+<p>return $result;<br>
+		}</p>
+</section>
+<section>
+<h3>[2005-06-13 12:39 UTC] krumb at valentins dot de</h3>
+<p>I have the same problem with german umlauts like äöü. The Whitespaces between 2 words including umlauts is away.</p>
+<p>include(&#039;Mail.php&#039;);<br>
+include(&#039;Mail/mime.php&#039;);</p>
+<p>$text = &#039;Text version of email&#039;;<br>
+$html = &#039;&lt;html&gt;&lt;body&gt;HTML version of email&lt;br&gt;message äöü &lt;/body&gt;&lt;/html&gt;&#039;;<br>
+$file = &#039;/home/richard/example.php&#039;;<br>
+$crlf = &quot;\n&quot;;<br>
+$hdrs = array(<br>
+              &#039;From&#039;    =&gt; &#039;user@domain.com&#039;,<br>
+              &#039;Subject&#039; =&gt; &#039;Süper gröse tolle grüße von mir&#039;<br>
+              );</p>
+<p>$mime = new Mail_mime($crlf);</p>
+<p>$mime-&gt;setTXTBody($text);<br>
+$mime-&gt;setHTMLBody($html);<br>
+$mime-&gt;addAttachment($file, &#039;text/plain&#039;);</p>
+<p>$body = $mime-&gt;get();<br>
+$hdrs = $mime-&gt;headers($hdrs);</p>
+<p>$mail =&amp; Mail::factory(&#039;mail&#039;);<br>
+$mail-&gt;send(&#039;xxx@test.de&#039;, $hdrs, $body);</p>
+</section>
+<section>
+<h3>[2005-09-02 08:15 UTC] eric at persson dot tm</h3>
+<p>Have the same problem with swedish characters like åäö in words following each other.</p>
+<p>I solved it temporarily by adding $value = $value.&#039; &#039;;  as in the following:</p>
+<p>function _encodeHeaders($input)<br>
+    {<br>
+        foreach ($input as $hdr_name =&gt; $hdr_value) {<br>
+            preg_match_all(&#039;/(\w*[\x80-\xFF]+\w*)/&#039;, $hdr_value, $matches);<br>
+            foreach ($matches[1] as $value) {<br>
+            	$value = $value.&#039; &#039;;<br>
+                $replacement = preg_replace(&#039;/([\x80-\xFF])/e&#039;,<br>
+                                            &#039;&quot;=&quot; .<br>
+                                            strtoupper(dechex(ord(&quot;\1&quot;)))&#039;,<br>
+                                            $value);<br>
+                $hdr_value = str_replace($value, &#039;=?&#039; .<br>
+                                         $this-&gt;_build_params[&#039;head_charset&#039;] .<br>
+                                         &#039;?Q?&#039; . $replacement . &#039;?=&#039;,<br>
+                                         $hdr_value);<br>
+            }<br>
+            $input[$hdr_name] = $hdr_value;<br>
+        }</p>
+<p>return $input;<br>
+    }</p>
+</section>
+<section>
+<h3>[2005-09-30 11:20 UTC] roundcube at gmail dot com</h3>
+<p>Why is this bug marked as &quot;irrelevant&quot;? To me it seems very importent to have headers encoded correctly. For example Gmail can&#039;t read the headers with two separately encoded words and will parse the message completely wrong. All headers following the encoded line wil then appear as part of the body. Also important to me are the additional chars (\s_=?) that should be encoded as well.<br>
+It&#039;s now more than two years since this was reported but nt implemented in any release. Please fix it! The solution of ed[at]avi[dot]ru (2003-09-23) will do it.</p>
+<p>With my best regards,<br>
+Thomas</p>
+</section>
+<section>
+<h3>[2005-09-30 12:16 UTC] roundcube at gmail dot com</h3>
+<p>Sorry for the mistake: of course this bug is not marked as &quot;irrelevant&quot; (watched the wrong column...) but seems to be a long term issue. Please process soon.</p>
+</section>
+<section>
+<h3>[2006-02-09 20:41 UTC] vilius dot simonaitis at gmail dot com</h3>
+<p>The funny thing is that _encodeHeaders function maches only a single UTF-8 character or these character must be in a row.</p>
+<p>It matches &quot;èiukce&quot; corectly, but<br>
+the word &quot;èiukèë&quot; splits into pieces and the encoder missbehaves.</p>
+<p>The other problem is because of spaces. For some reason, some spaces are not encoded correctly in headers.</p>
+<p>Here is correct source (notice the first preg):</p>
+<p>function _encodeHeaders($input)<br>
+    {<br>
+        foreach ($input as $hdr_name =&gt; $hdr_value) {<br>
+            //Notice, that this preg matches the whole word with any number of UTF-8 characters.<br>
+            preg_match_all(&#039;/((\w*[\x80-\xFF]+\w*)+\s*)/&#039;, $hdr_value,<br>
+$matches);<br>
+            foreach ($matches[1] as $value) {<br>
+                $replacement = preg_replace(&#039;/([\x80-\xFF])/e&#039;,<br>
+                                            &#039;&quot;=&quot; .<br>
+                                           <br>
+strtoupper(dechex(ord(&quot;\1&quot;)))&#039;,<br>
+                                            $value);<br>
+                $hdr_value = str_replace($value, &#039;=?&#039; .<br>
+                                        <br>
+$this-&gt;_build_params[&#039;head_charset&#039;] .<br>
+                                         &#039;?Q?&#039; . $replacement . &#039;?=&#039;,<br>
+                                         $hdr_value);<br>
+            }<br>
+            $input[$hdr_name] = $hdr_value;<br>
+        }</p>
+<p>return $input;<br>
+    }</p>
+</section>
+<section>
+<h3>[2006-04-02 00:02 UTC] okin7 at yahoo dot fr</h3>
+<p>Here is what I personnaly use, hope it can help</p>
+<p>=================================</p>
+<p>function _encodeHeaders($input)<br>
+{<br>
+	foreach ($input as $hdr_name =&gt; $hdr_value) {<br>
+		if (preg_match(&#039;/[\x80-\xFF]/&#039;, $hdr_value)) {<br>
+			$hdr_value = preg_replace(<br>
+				&#039;/[=_\x80-\xFF]/e&#039;,<br>
+				&#039;&quot;=&quot;.strtoupper(dechex(ord(&quot;\0&quot;)))&#039;,<br>
+				$hdr_value<br>
+			);<br>
+			$hdr_value = str_replace(&#039; &#039;, &#039;_&#039;, $hdr_value);<br>
+			$input[$hdr_name] = &#039;=?&#039;<br>
+				. $this-&gt;_build_params[&#039;head_charset&#039;]<br>
+				. &#039;?Q?&#039; . $hdr_value . &#039;?=&#039;;<br>
+		}<br>
+	}</p>
+<p>return $input;<br>
+}</p>
+<p>=================================</p>
+</section>
+<section>
+<h3>[2006-04-02 00:16 UTC] okin7 at yahoo dot fr</h3>
+<p>Even better, sorry for the double post :</p>
+<p>the second regexg : &#039;/[=_\x80-\xFF]/e&#039;<br>
+should be replaced with : &#039;/[=_\?\x00-\x1F\x80-\xFF]/e&#039;</p>
+<p>so my correct version is :</p>
+<p>=================================</p>
+<p>function _encodeHeaders($input)<br>
+{<br>
+	foreach ($input as $hdr_name =&gt; $hdr_value) {<br>
+		if (preg_match(&#039;/[\x80-\xFF]/&#039;, $hdr_value)) {<br>
+			$hdr_value = preg_replace(<br>
+				&#039;/[=_\?\x00-\x1F\x80-\xFF]/e&#039;,<br>
+				&#039;&quot;=&quot;.strtoupper(dechex(ord(&quot;\0&quot;)))&#039;,<br>
+				$hdr_value<br>
+			);<br>
+			$hdr_value = str_replace(&#039; &#039;, &#039;_&#039;, $hdr_value);<br>
+			$input[$hdr_name] = &#039;=?&#039;<br>
+				. $this-&gt;_build_params[&#039;head_charset&#039;]<br>
+				. &#039;?Q?&#039; . $hdr_value . &#039;?=&#039;;<br>
+		}<br>
+	}</p>
+<p>return $input;<br>
+}</p>
+</section>
+<section>
+<h3>[2006-04-05 14:38 UTC] okin7 at yahoo dot fr</h3>
+<p>So,</p>
+<p>I&#039;ve read RFC 2047, and my previous proposals where not so good. I&#039;ve rewritten me code, here is my new purposal. It should be more RFC compliant now. THe contribution of mdv at inyourpocket dot com might be good also, but if there is a licensing issue comming from kmail, my version has no licensing issue. I&#039;ve written it from scratch.</p>
+<p>=======================================</p>
+<p>function _encodeHeaders($input)<br>
+	{<br>
+		$ns = &quot;[^\(\)&lt;&gt;@,;:\&quot;\/\[\]\r\n]*&quot;;</p>
+<p>foreach ($input as $hdr_name =&gt; $hdr_value)<br>
+		{<br>
+			$input[$hdr_name] = preg_replace_callback(&quot;/{$ns}(?:[\\x80-\\xFF]{$ns})+/&quot;, array($this, &#039;_encodeHeaderWord&#039;), $hdr_value);<br>
+		}</p>
+<p>return $input;<br>
+	}</p>
+<p>function _encodeHeaderWord($word)<br>
+	{<br>
+		$word = preg_replace(&#039;/[=_\?\x00-\x1F\x80-\xFF]/e&#039;, &#039;&quot;=&quot;.strtoupper(dechex(ord(&quot;\0&quot;)))&#039;, $word[0]);</p>
+<p>preg_match(&#039;/^( *)(.*?)( *)$/&#039;, $word, $w);</p>
+<p>$word =&amp; $w[2];<br>
+		$word = str_replace(&#039; &#039;, &#039;_&#039;, $word);</p>
+<p>$start = &#039;=?&#039; . $this-&gt;_build_params[&#039;head_charset&#039;] . &#039;?Q?&#039;;<br>
+		$offsetLen = strlen($start) + 2;</p>
+<p>$w[1] .= $start;</p>
+<p>while ($offsetLen + strlen($word) &gt; 75)<br>
+		{<br>
+			$splitPos = 75 - $offsetLen;</p>
+<p>switch (&#039;=&#039;)<br>
+			{<br>
+				case substr($word, $splitPos - 2, 1): --$splitPos;<br>
+				case substr($word, $splitPos - 1, 1): --$splitPos;<br>
+			}</p>
+<p>$w[1] .= substr($word, 0, $splitPos) . &quot;?={$this-&gt;_eol} {$start}&quot;;<br>
+			$word = substr($word, $splitPos);<br>
+		}</p>
+<p>return $w[1] . $word . &#039;?=&#039; . $w[3];<br>
+	}</p>
+</section>
+<section>
+<h3>[2006-04-26 07:24 UTC] erik at forss dot se</h3>
+<p>Until the problem is resolved this code fixed my problems.<br>
+I just use the class fMail_Mime instead of Mail_Mime</p>
+<p>class fMail_Mime extends Mail_Mime {<br>
+    function _encodeHeaders($input)<br>
+    {<br>
+        foreach ($input as $hdr_name =&gt; $hdr_value) {<br>
+            preg_match_all(&#039;/(\w*[\x80-\xFF ]+\w*)/&#039;, $hdr_value, $matches);<br>
+            foreach ($matches[1] as $value) {<br>
+                $replacement = preg_replace(&#039;/([\x80-\xFF ])/e&#039;,<br>
+                                            &#039;&quot;=&quot; .<br>
+                                            strtoupper(dechex(ord(&quot;\1&quot;)))&#039;,<br>
+                                            $value);<br>
+                if($replacement == &quot;=20&quot;) break;<br>
+                $hdr_value = str_replace($value, &#039;=?&#039; .<br>
+                                         $this-&gt;_build_params[&#039;head_charset&#039;] .<br>
+                                         &#039;?Q?&#039; . $replacement . &#039;?=&#039;,<br>
+                                         $hdr_value);<br>
+            }<br>
+            $input[$hdr_name] = $hdr_value;<br>
+        }</p>
+<p>return $input;<br>
+    }<br>
+        }</p>
+</section>
+<section>
+<h3>[2006-05-03 07:33 UTC] laurynas dot butkus at gmail dot com</h3>
+<p>This bugtracking system does not display Baltic characters, so I made a html copy of this report (to be able to display real test data):<br>
+http://lauris.night.lt/php/mail_mime_bug_notes.html</p>
+<p>Tested with the last mime.php version from CVS (1.55 2006/04/28).</p>
+<p>Tried to send message using UTF-8 Baltic letters in From: and in Subject.</p>
+<p>Test data:<br>
+From: avardė &lt;some@email.com&gt;<br>
+Subject: U¸pildytčėįčęėsdfsčęqwzxą ęčėnaujėa Ųojalumo ¦rogramos Čanketa</p>
+<p>When using default head-encoding, Mail can&#039;t send email and spits an error:<br>
+Validation failed for: =?UTF-8?Q?avard=C4=97_?=</p>
+<p>If changing head-encoding to &#039;base64&#039;, mail is sent but the headers are messed up (on Thunderbird):<br>
+Subject: U¸pildytčėįčęėsdfsčęqwzxą ęčėnauj� =?UTF-8?B?==?=<br>
+&quot;From&quot; also does not look as it should.</p>
+<p>Tried other suggested fixes - all has problems when using my test data: either Mail spits an error or headers are messed up (even body in one case).</p>
+<p>Least messed message comes when using Nicolas Grekas suggested fix at 2006-04-05 14:38 UTC. Only subject is cut down to &quot;U¸pildytčėįčęėsdfsč��&quot; but everything else looks ok.</p>
+</section>
+<section>
+<h3>[2006-06-07 09:23 UTC] mp at webfactory dot de</h3>
+<p>RFC2047 paragraph 5 states where encoded-words may appear. In particular, it says that &quot;an &#039;encoded-word&#039; MUST NOT appear in any portion of an &#039;addr-spec&#039;.&quot;</p>
+<p>The current revision 1.56 in CVS is broken in this regard as it simply encodes the whole header value. That&#039;s ok for headers defined as &quot;*text&quot; (eg Subject:), but not for headers like To: or From:. These will end up with the address being part of the encoded-word, confusing mail readers (not decoding sender&#039;s name when displaying it etc.)</p>
+</section>
+<section>
+<h3>[2007-02-27 21:23 UTC] stephen dot bigelis at gmail dot com</h3>
+<p>I am posting this here because I couldn&#039;t find it anywhere else and It took me forever to figure out what was going wrong. (and this page popped up all the time during my endless search for a solution)</p>
+<p>Gmail does not like &quot;\r\n&quot; It will feed two lines and cause the email to appear as an attachment because the boundary marker cannot be read.  If you try to define MAIL_MIMEPART_CRLF as &quot;\n&quot; it will still get messed. Removing the CRLF in the boundary line fixes this problem but then the section headers also need to be adjusted. The best fix I can find is to edit encode() and _quotedPrintableEncode () in mimePart.php</p>
+<p>Here are my temporary fixes, anyone know of a permanent one?</p>
+<p>function encode()<br>
+    {<br>
+        $encoded =&amp; $this-&gt;_encoded;</p>
+<p>if (!empty($this-&gt;_subparts)) {<br>
+            srand((double)microtime()*1000000);<br>
+            $boundary = &#039;=_&#039; . md5(rand() . microtime());<br>
+            $this-&gt;_headers[&#039;Content-Type&#039;] .= &#039;;&#039; . &quot;\t&quot; . &#039;boundary=&quot;&#039; . $boundary . &#039;&quot;&#039;;</p>
+<p>// Add body parts to $subparts<br>
+            for ($i = 0; $i &lt; count($this-&gt;_subparts); $i++) {<br>
+                $headers = array();<br>
+                $tmp = $this-&gt;_subparts[$i]-&gt;encode();<br>
+                foreach ($tmp[&#039;headers&#039;] as $key =&gt; $value) {<br>
+                    $headers[] = $key . &#039;: &#039; . $value;<br>
+                }<br>
+                $subparts[] = implode(&quot;\n&quot;, $headers) . MAIL_MIMEPART_CRLF . MAIL_MIMEPART_CRLF . $tmp[&#039;body&#039;];<br>
+            }</p>
+<p>$encoded[&#039;body&#039;] = &#039;--&#039; . $boundary . &quot;\n&quot; .<br>
+                               implode(&#039;--&#039; . $boundary . &quot;\n&quot;, $subparts) .<br>
+                               &#039;--&#039; . $boundary.&#039;--&#039; . &quot;\n&quot;;</p>
+<p>} else {<br>
+            $encoded[&#039;body&#039;] = $this-&gt;_getEncodedData($this-&gt;_body, $this-&gt;_encoding) . MAIL_MIMEPART_CRLF;<br>
+        }</p>
+<p>// Add headers to $encoded<br>
+        $encoded[&#039;headers&#039;] =&amp; $this-&gt;_headers;</p>
+<p>return $encoded;<br>
+    }</p>
+<p>and  in _quotedPrintableEncode just change $eol= &quot;\n&quot;</p>
+<p>So far this is working, hopefully I will remember to update this when I work in a solid fix.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

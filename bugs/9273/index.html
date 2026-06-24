@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9273</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Sieve/index.html">Net_Sieve</a> &#187; Bug #9273</h1>
+<p>_recvLn() hangs during CRAM-MD5 auth sequence</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-08 14:49 UTC</td></tr>
+<tr><th>From</th><td>oliver at realtsp dot com</td></tr>
+<tr><th>Assigned</th><td>amistry</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Sieve/index.html">Net_Sieve</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>FreeBSD 5.5</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-08 14:49 UTC] oliver at realtsp dot com</h3>
+<p>Description:<br>
+------------<br>
+&quot;IMPLEMENTATION&quot; &quot;Cyrus timsieved v2.2.13&quot;<br>
+&quot;SASL&quot; &quot;LOGIN PLAIN CRAM-MD5&quot;</p>
+<p>All without TLS or SSL</p>
+<p>PLAIN auth works just fine.</p>
+<p>CRAM-MD5 hangs until it times out and then succeeds <br>
+causing a long delay during sieve login.</p>
+<p>We traced the hang to Line 947 in Sieve.php<br>
+$this-&gt;_recvLn();</p>
+<p>commenting this line out cures the problem.</p>
+<p>when we simulate the conversion using telnet, we notice <br>
+that after a <br>
+AUTHENTICATE &quot;CRAM-MD5&quot;</p>
+<p>timsieved responds with:<br>
+{56}<br>
+PDE4NDMyMjA0NDAuNTM2NzQ1MkB0YWthcHVuYS5yZWFsdHNwLmNvbT4=</p>
+<p>which is exactly 58 characters (incl newlines)</p>
+<p>but then the _recvLn() call expects to read an additional <br>
+line. We do not see what input it is looking for in the <br>
+telnet session, the comment on Line 946 seems to indicate <br>
+that it is waiting for an OK:<br>
+   // receive the pending OK</p>
+<p>however there does not appear to be an OK due at this <br>
+stage of the Auth process.</p>
+<p>Just commenting recvLn() is probably not the correct final <br>
+solution. I guess it was there for something?</p>
+<p>Maybe only look for the &quot;OK&quot; in some cases? optional <br>
+parameter to doCmd()? this patch works for me:</p>
+<p>--- /usr/local/share/pear/Net/Sieve.php Wed Nov  8 <br>
+14:45:53 2006<br>
++++ /usr/local/share/pear/Net/Sieve.php.orig    Wed Nov  8 <br>
+14:44:45 2006<br>
+@@ -504,7 +504,7 @@<br>
+      */<br>
+     function _authCRAM_MD5($uid, $pwd, $euser)<br>
+     {<br>
+-        if ( PEAR::isError( $challenge = <br>
+$this-&gt;_doCmd( &#039;AUTHENTICATE &quot;CRAM-MD5&quot;&#039;, false ) ) ) {<br>
++        if ( PEAR::isError( $challenge = <br>
+$this-&gt;_doCmd( &#039;AUTHENTICATE &quot;CRAM-MD5&quot;&#039; ) ) ) {<br>
+             $this-&gt;_error=challenge ;<br>
+             return challenge ;<br>
+         }<br>
+@@ -872,7 +872,7 @@<br>
+     * @param string $cmd The command to send<br>
+     * @return mixed Reponse string if an OK response, <br>
+PEAR_Error if a NO response<br>
+     */<br>
+-    function _doCmd($cmd = &#039;&#039;, $expect_ok = true )<br>
++    function _doCmd($cmd = &#039;&#039; )<br>
+     {<br>
+         $referralCount=0;<br>
+         while($referralCount &lt; $this-&gt;_maxReferralCount )<br>
+{<br>
+@@ -944,7 +944,7 @@<br>
+                             echo &quot;S:$line\n&quot;;<br>
+                         }<br>
+                         // receive the pending OK<br>
+-                        if ($expect_ok) $this-&gt;_recvLn();<br>
++                        $this-&gt;_recvLn();<br>
+                         return $line;<br>
+                     }<br>
+                     $response .= $line . &quot;\r\n&quot;;</p>
+<p>Test script:<br>
+---------------<br>
+Problem occurs when using latest horde/INGO (1.1.3) with the above timsieved.</p>
+<p>Expected result:<br>
+----------------<br>
+immediate login (IMP logs in immediately)</p>
+<p>Actual result:<br>
+--------------<br>
+very delayed login due to __recvLn() waiting for input <br>
+that never arrives.</p>
+</section>
+<section>
+<h3>[2006-11-08 14:54 UTC] oliver at realtsp dot com</h3>
+<p>we tested and the same happens with DIGEST-MD5, the same <br>
+patch fixes that also.</p>
+</section>
+<section>
+<h3>[2006-11-08 15:00 UTC] oliver at realtsp dot com</h3>
+<p>better patch which comforms to coding standards and <br>
+includes the additional &quot;false&quot; parameter for DIGEST-MD5 <br>
+as well.</p>
+<p>--- /usr/local/share/pear/Net/Sieve.php Wed Nov  8 <br>
+14:56:58 2006<br>
++++ /usr/local/share/pear/Net/Sieve.php.orig    Wed Nov  8 <br>
+14:44:45 2006<br>
+@@ -504,7 +504,7 @@<br>
+      */<br>
+     function _authCRAM_MD5($uid, $pwd, $euser)<br>
+     {<br>
+-        if ( PEAR::isError( $challenge = <br>
+$this-&gt;_doCmd( &#039;AUTHENTICATE &quot;CRAM-MD5&quot;&#039;, false ) ) ) {<br>
++        if ( PEAR::isError( $challenge = <br>
+$this-&gt;_doCmd( &#039;AUTHENTICATE &quot;CRAM-MD5&quot;&#039; ) ) ) {<br>
+             $this-&gt;_error=challenge ;<br>
+             return challenge ;<br>
+         }<br>
+@@ -537,7 +537,7 @@<br>
+      */<br>
+     function _authDigest_MD5($uid, $pwd, $euser)<br>
+     {<br>
+-        if ( PEAR::isError( $challenge = <br>
+$this-&gt;_doCmd(&#039;AUTHENTICATE &quot;DIGEST-MD5&quot;&#039;, false) ) ) {<br>
++        if ( PEAR::isError( $challenge = <br>
+$this-&gt;_doCmd(&#039;AUTHENTICATE &quot;DIGEST-MD5&quot;&#039;) ) ) {<br>
+             $this-&gt;_error=challenge ;<br>
+             return challenge ;<br>
+         }<br>
+@@ -872,7 +872,7 @@<br>
+     * @param string $cmd The command to send<br>
+     * @return mixed Reponse string if an OK response, <br>
+PEAR_Error if a NO response<br>
+     */<br>
+-    function _doCmd($cmd = &#039;&#039;, $expectOk = true )<br>
++    function _doCmd($cmd = &#039;&#039; )<br>
+     {<br>
+         $referralCount=0;<br>
+         while($referralCount &lt; $this-&gt;_maxReferralCount )<br>
+{<br>
+@@ -943,10 +943,8 @@<br>
+                         if($this-&gt;_debug){<br>
+                             echo &quot;S:$line\n&quot;;<br>
+                         }<br>
+-                        // receive the pending OK if <br>
+expecting one<br>
+-                        if ($expectOk) {<br>
+-                            $this-&gt;_recvLn();<br>
+-                        }<br>
++                        // receive the pending OK<br>
++                        $this-&gt;_recvLn();<br>
+                         return $line;<br>
+                     }<br>
+                     $response .= $line . &quot;\r\n&quot;;</p>
+</section>
+<section>
+<h3>[2006-12-22 00:03 UTC] amistry at php dot net</h3>
+<p>Would you email me the diff?</p>
+<p>Thanks.</p>
+</section>
+<section>
+<h3>[2006-12-22 20:42 UTC] amistry at php dot net</h3>
+<p>I&#039;ve applied a different fix to the CVS for this problem.  Please confirm it works for you.  I&#039;ve just tested it with DIGEST authentication on one of my Sieve servers and it works fine.</p>
+</section>
+<section>
+<h3>[2006-12-22 21:12 UTC] oliver at realtsp dot com</h3>
+<p>perfect...works nicely for me and is clearly better than <br>
+my patch.</p>
+<p>thanks</p>
+</section>
+<section>
+<h3>[2006-12-22 22:42 UTC] amistry at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,3784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DB_Table Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_Table/index.html">DB_Table</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/DB_Table/docs/index.html#package-database-db-table-intro">Introduction</a>
+</li>
+<li><a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">DB_Table Class Tutorial</a>
+</li>
+<li><a href="package/DB_Table/docs/index.html#package-database-db-table-intro-forms">DB_Table Forms Tutorial</a>
+</li>
+<li><a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">DB_Table_Database Class Tutorial</a>
+</li>
+<li><a href="package/DB_Table/docs/index.html#package-database-db-table-intro-generator">DB_Table_Generator Class Tutorial</a>
+</li>
+<li><a href="package/DB_Table/docs/index.html#package-database-db-table-intro-datatypes">DB_Table Data Types</a>
+</li></ul>
+</nav>
+<p>An object-oriented interface to a database</p>
+<section id="package-database-db-table-intro">
+<h2>Introduction</h2>
+<h3>Description</h3>
+
+  <p>The DB_Table package provides an object oriented interface to 
+  a database. It contains three main classes:</p><ul>
+    <li>
+      
+      <strong>DB_Table</strong> - interface to and model of a 
+      single database table. 
+      
+    </li>
+    <li>
+      
+      <strong>DB_Table_Database</strong> - interface to and 
+      model of a relational database.
+      
+    </li>
+    <li>
+      
+      <strong>DB_Table_Generator</strong> - code generation
+      for an existing database.
+      
+    </li>
+  </ul><p>The package grew around the DB_Table class, which was written 
+  by Paul M. Jones. The Database and Generator class were added in
+  releases 1.5.0RC1 and 1.5.0RC2, respectively. These manual pages
+  document release 1.5.0.</p>
+
+  <p>The properties of the core <strong>DB_Table</strong> 
+  class contain the schema for a table, defined using portable 
+  <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-datatypes">
+  data types</a>.
+  The class methods provides a convenient API for constructing 
+  and submitting INSERT, UPDATE, DELETE, and SELECT SQL commands, 
+  and for creation of a RDBMS database table from the defined schema.
+  Simple data type validation is provided for data to be inserted 
+  or updated. The class provides methods to automatically generate 
+  <strong>HTML_QuickForm</strong> input forms that match the 
+  column definitions.</p>
+
+  <p>Each instance of <strong>DB_Table_Database</strong> contains 
+  a model of relationships between tables in a database, in which each 
+  table is represented by an instance of 
+  <strong>DB_Table</strong>. 
+  The <strong>autoJoin()</strong> method can automatically 
+  construct join conditions for queries that join any number of tables. 
+  The class also provides optional PHP validation of foreign key validity, 
+  and optional PHP emulation of actions triggered on delete or update 
+  of referenced rows, such as cascading deletes.</p>
+
+  <p>The <strong>DB_Table_Generator</strong> class may be used to
+  automatically generate the PHP code necessary to use the DB_Table 
+  package as an interface to an existing database. It is used 
+  (if at all) only during set-up of the interface for a database.</p>
+
+  <p>Each of these three classes is discussed in a separate tutorial
+  in the following manual pages.</p>
+</section>
+<section id="package-database-db-table-intro-table">
+<h2>DB_Table Class Tutorial</h2>
+<h3>Description</h3>
+
+<p>This tutorial uses an extended example to introduce the use of the 
+<strong>DB_Table</strong> class as an interface to a single 
+database table. This class provides:</p><ul>
+  <li>
+    
+    Column and index definitions embedded in the object properties,
+    using portable data types.
+    
+  </li>
+  <li>
+    
+    Creation or verification of the table from the declared schema.
+    
+  </li>
+  <li>
+    
+    Simplified API for SELECT, INSERT, UPDATE, and DELETE commands.
+    
+  </li>
+  <li>
+    
+    Array syntax for SELECT commands, and stored baseline queries.
+    
+  </li>
+  <li>
+    
+    Data type validation for inserted/updated column values
+    
+  </li>
+  <li>
+    
+    Auto-increment emulation
+    
+  </li>
+  <li>
+    
+    Automated creation of <strong>HTML_QuickForm</strong> 
+    elements from the column definitions.
+    
+  </li>
+</ul>
+
+
+<p>This class tutorial contains two manual pages: This page documents all 
+of the features of <strong>DB_Table</strong> except those involving 
+<strong>HTML_Quick</strong> form generation, which are discussed 
+in the next page. The tutorial is based closely upon the original 
+external documentation for <strong>DB_Table</strong>, by Paul M.
+Jones, which is still available
+<a href="http://wiki.ciaweb.net/yawiki/index.php?area=DB_Table">
+here</a>. The original documentation includes some examples of 
+how to customize a <strong>DB_Table</strong> subclass definition
+that are not included here.</p>
+
+<p>The <strong>DB_Table</strong> and 
+<strong>DB_Table_Database</strong> classes both extend an abstract 
+base class named <strong>DB_Table_Base</strong>. Methods and 
+properties that are inherited from <strong>DB_Table_Base</strong> 
+are thus available via either a <strong>DB_Table</strong> or a
+<strong>DB_Table_Database</strong> object, with the same interface.
+These shared methods and properties will be identified as such in these
+manual pages.</p>
+
+<ul>
+  
+  <li>
+     
+       <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+       Extending <strong>DB_Table</strong></a>
+     
+     <ul>
+       <li>
+          
+          <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+          Defining columns</a>
+          
+       </li>
+       <li>
+          
+          <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+          Defining indices</a>
+          
+       </li>
+       <li>
+          
+          <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+          Declaring an auto-increment column</a>
+          
+       </li>
+     </ul>
+  </li>
+  <li>
+     
+       <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+       <strong>DB_Table</strong> Constructor</a>
+     
+  </li>
+  <li>
+     
+       <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+       Modifying Data: insert, update and delete</a>
+     
+     <ul>
+       <li>
+          
+          <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+          <strong>insert()</strong> - Inserting rows of data </a> 
+          
+       </li>
+       <li>
+          
+          <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+          Auto-increment and sequences</a>
+          
+       </li>
+       <li>
+          
+          <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+          <strong>update()</strong> - Updating rows of data</a> 
+          
+       </li>
+       <li>
+          
+          <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+          <strong>delete()</strong> - Deleting rows of data</a>
+          
+       </li>
+     </ul>
+  </li>
+  <li>
+     
+       <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+       Selecting Data</a>
+     
+     <ul>
+        <li>
+           
+           <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+           Query Arrays</a>
+           
+        </li>
+        <li>
+           
+           <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+           Storing Queries: $this-&gt;sql</a>
+           
+        </li>
+        <li>
+           
+           <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+           Submitting Queries: <strong>select*()</strong> methods</a>
+           
+        </li>
+     </ul>
+  </li>
+  <li>
+     
+        <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+        Data Type Validation</a> 
+     
+  </li>
+  <li>
+     
+        <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-table">
+        Miscellaneous Utility Methods</a> 
+     
+     <ul>
+        <li>
+           
+           
+           <strong>quote()</strong>
+           
+        </li>
+        <li>
+           
+           
+           <strong>recast()</strong>
+           
+        </li>
+        <li>
+           
+           
+           <strong>getBlankRow()</strong>
+           
+        </li>
+     </ul>
+  </li>
+</ul>
+
+
+
+<h3>Extending <strong>DB_Table</strong></h3>
+
+
+<p>You generally do not usually create instances of
+<strong>DB_Table</strong> directly. 
+Instead, for each table in a database, you define a a subclass of 
+<strong>DB_Table</strong>, and instantiate one object of that
+subclass. The table schema is embedded in the properties of that 
+object: column definitions are declared in the $col property array 
+and indices in the $idx property array. Normally, the values of these
+property arrays are defined as part of the subclass definition, which 
+thus serves as a record of the table schema.</p>
+
+<p>One advantage of any database gateway that associates a class with
+each RDBMS table is that the subclass definition provides a natural
+place to specify properties and behaviors that are specific to that 
+table.  Custom behaviors and validations may be implemented by 
+overriding the class methods, or by defining new methods.  
+<strong>DB_Table</strong> also allows commonly used or 
+baseline SELECT queries to be stored in the $sql property array.</p>
+
+<p>The package provides two ways to create both a RDBMS table and a 
+corresponding <strong>DB_Table</strong> subclass, without 
+writing redundant specifications:</p><ul>
+<li>
+
+Programmatic table creation:
+Write a <strong>DB_Table</strong> subclass definition for each 
+table, and use an instance of that subclass to create the actual 
+database table.
+
+</li>
+<li>
+
+Reflection and code generation:
+Use the <strong>DB_Table_Generator</strong> class to automatically
+generate skeleton <strong>DB_Table</strong> subclass definitions, 
+and related glue code, for an existing database.
+
+</li>
+</ul><p>In this tutorial, we demonstrate the former method, which requires us 
+to write subclass definitions manually. A discussion of the latter
+method is given in the <strong>DB_Table_Generator</strong> class 
+tutorial.</p>
+
+<h3>Defining Columns</h3>
+
+
+<p>The $col property is an associative array in which each key is a column 
+name, and each value is an associative array containing a column definition. 
+The value of the required &#039;type&#039; element of a column definition must be the 
+name of one of the <strong>DB_Table</strong>
+<a href="package/DB_Table/docs/index.html#package-database-db-table-intro-datatypes">data types</a>, 
+<em>e.g.</em>, &#039;integer&#039;, &#039;decimal&#039;, &#039;boolean&#039;, etc. 
+The &#039;char&#039; and &#039;varchar&#039; string types, and the &#039;decimal&#039; numerical type, 
+all require a &#039;size&#039; element, for which the value is an integer number of 
+characters or digits. The &#039;decimal&#039; type also requires a &#039;scope&#039; element, 
+which is the number of digits after the decimal point. A &#039;require&#039; element
+with a boolean true value is equivalent to NOT NULL in SQL, and indicates 
+that NULL values are not allowed in that column.</p>
+
+<p>As an example, let&#039;s say we&#039;re going to create a GuestBook table.
+This table will store the first and last name of visitors, their email 
+address, and the date and time they signed the guestbook. In addition, 
+we&#039;re going to want a unique ID for each row. The columns in our table 
+will be:</p><ul>
+   <li>
+      
+      id -- a sequential integer that is unique for every row (required; 
+         i.e., no nulls allowed)
+      
+   </li>
+   <li>
+      
+      fname -- a string of up to 32 characters, the first name of the visitor
+      
+   </li>
+   <li>
+      
+      lname -- a string of up to 64 characters, the last name of the visitor
+      
+   </li>
+   <li>
+      
+      email -- a string of up to 255 characters, the visitor&#039;s email address 
+      (required; i.e., no nulls allowed)
+      
+   </li>
+   <li>
+      
+      signdate -- a date for when the visitor signed the guestbook 
+      (required; i.e., no nulls allowed)
+      
+   </li>
+ </ul>
+ 
+
+<p>These column definitions must be declared in the $col property array. 
+Shown below is the required declaration of $col for a subclass of 
+<strong>DB_Table</strong>, named 
+<strong>GuestBook_Table</strong>, that is associated with a 
+database table named GuestBook:</p><p><strong>GuestBook column definitions</strong></p>
+
+<pre><code>&lt;?php
+
+class GuestBook_Table extends DB_Table
+{
+
+    var $col = array(
+             
+        // unique row ID
+        &#039;id&#039; =&gt; array(
+            &#039;type&#039;    =&gt; &#039;integer&#039;,
+            &#039;require&#039; =&gt; true
+        ),
+                                                                     
+        // first name
+        &#039;fname&#039; =&gt; array( 
+            &#039;type&#039; =&gt; &#039;varchar&#039;, 
+            &#039;size&#039; =&gt; 32
+        ),
+
+        // last name 
+        &#039;lname&#039; =&gt; array( 
+            &#039;type&#039; =&gt; &#039;varchar&#039;, 
+            &#039;size&#039; =&gt; 64
+        ),
+
+        // email address 
+        &#039;email&#039; =&gt; array( 
+            &#039;type&#039; =&gt; &#039;varchar&#039;, 
+            &#039;size&#039; =&gt; 128, 
+            &#039;require&#039; =&gt; true
+        ),
+
+        // date signed 
+        &#039;signdate&#039; =&gt; array( 
+            &#039;type&#039; =&gt; &#039;date&#039;, 
+            &#039;require&#039; =&gt; true)
+     );
+?&gt;</code></pre>
+
+
+ 
+
+<h3>Defining Indices</h3>
+
+
+<p>The $idx property array is used to declare indices. Each index can be 
+declared to be of type &#039;primary&#039;, &#039;unique&#039;, or &#039;normal&#039;. Primary and unique 
+indices both define constraints that require that each key value be unique 
+within the table.  Normal indices are introduced purely for efficiency. 
+Both single- and multi-column indices may be defined.</p>
+
+<p>In our GuestBook example, we want two single column indices: First, we will 
+define a primary index for the &quot;id&quot; identifier column. Second, for purposes 
+of the example, we&#039;ll define a normal index on the &quot;signdate&quot; column, because 
+we expect to search for visitors by date and time. The required $idx property
+declaration is given below:</p><p><strong>Index Definitions for GuestBook</strong></p>
+
+<pre><code>&lt;?php
+
+class GuestBook_Table extends DB_Table
+{
+    
+    // Column definitions - see above 
+    // var $col = array(...);
+       
+    // Index definitions             
+    var $idx = array( 
+    
+        &#039;id&#039; =&gt; array( 
+            &#039;type&#039; =&gt; &#039;primary&#039;, 
+            &#039;cols&#039; =&gt; &#039;id&#039;
+        ), 
+        
+        &#039;signdate&#039; =&gt; array( 
+            &#039;type&#039; =&gt; &#039;normal&#039;, 
+            &#039;cols&#039; =&gt; &#039;signdate&#039;
+        )
+    ); 
+} 
+?&gt;</code></pre>
+
+
+
+<p>The key of each element in the $idx array is an index name, and the
+value is generally an array containing a definition for the index. 
+An index definition array must contain a &#039;type&#039; element, for which 
+the value must be &#039;primary&#039;, &#039;unique&#039; or &#039;normal&#039;, and &#039;cols&#039; 
+element.  The value of &#039;cols&#039; element must be either the name of a 
+single column, for a single-column array, or a sequential array of 
+column names, for a multi-column index. There is also an alternative 
+shorthand syntax for single-column indices, which is discussed below.</p>
+
+<p>As an example of a multi-column index, here is the definition for a
+multi-column index named &quot;namefl&quot; on the fname and lname columns.</p><p><strong>Defining A Multi-Column Index</strong></p>
+
+<pre><code>&lt;?php
+
+class GuestBook_Table extends DB_Table
+{
+    // Column definitions
+    // var $col = array( ... )
+
+    // Index definitions
+    var $idx = array(
+
+            // above single-column indices, plus
+
+            &#039;namefl&#039; = array(
+                &#039;type&#039; =&gt; &#039;normal&#039;,
+                &#039;cols&#039; =&gt; array(&#039;fname&#039;, &#039;lname&#039;)
+            )
+        );
+}
+?&gt;</code></pre>
+
+
+
+<p>There is also a shorthand way to declare a single-column index:
+If you want single-column index for which the index name is the same 
+as the column name, use the column name as the key of $idx, and the 
+index type string (rather than an index definition array) as the 
+value.</p><p><strong>Shorthand for Single-Column Indices:</strong></p>
+
+<pre><code>&lt;?php
+
+class GuestBook_Table extends DB_Table
+{
+    
+    // Column definitions 
+    // var $col = array(...);
+       
+    // Index definitions             
+    var $idx = array( 
+   
+        // primary index called &#039;id&#039; based on the &#039;id&#039; column 
+        &#039;id&#039; =&gt; &#039;primary&#039;,
+        
+        // normal index called &#039;signdate&#039; based on the &#039;signdate&#039; column 
+        &#039;signdate&#039; =&gt; &#039;normal&#039;
+
+    ); 
+} 
+?&gt;</code></pre>
+
+
+
+ 
+<h3>Declaring an Auto-Increment Column</h3>
+
+
+<p>One integer column of each table may be declared to be an auto-increment
+column. This column is normally a primary key identifier. The only effect 
+of this declaration is to change the behavior of the 
+<strong>insert()</strong> 
+method: If the <strong>insert()</strong> method is used to insert a 
+row in which the value of an auto-increment column is not set or NULL,
+then an auto-incremented integer will be inserted automatically.</p>
+
+<p>A column is declared to be auto-increment by setting the value of the
+$auto_inc_col property to the column name. In the following example, we 
+declare the &quot;id&quot; primary key column of the GuestBook table to be 
+auto-increment:</p>
+
+<p><strong>An Auto-Incrementing Identifier</strong></p>
+
+<pre><code>&lt;?php
+
+class GuestBook_Table extends DB_Table
+{
+    
+    // Column definitions 
+    // var $col = array(...);
+       
+    // Index definitions             
+    var $idx = array(...);
+
+    // Auto-increment declaration
+    var $auto_inc_col = &#039;id&#039;;
+
+}
+
+?&gt;</code></pre>
+
+
+ 
+
+
+
+<h3><strong>DB_Table</strong> Constructor</h3>
+
+
+<p>Each <strong>DB_Table</strong> object wraps a <strong>DB</strong> 
+or <strong>MDB2</strong> database connection object. This object is 
+passed to the <strong>DB_Table</strong> constructor as its first
+parameter. A single <strong>DB/MDB2</strong> object may be shared by any 
+number of <strong>DB_Table</strong> objects.  The second parameter 
+of the constructor is the name of the associated RDBMS table.  The 
+optional third parameter is a string $create that can be used to 
+specify whether the table should be created by the constructor if it 
+does not already exist, or whether its structure should be verified if 
+it does (as discussed in more detail below).</p>
+
+<p>In the example shown below, an instance of the GuestBook subclass is 
+created, which binds to the GuestBook table. The use of a value $auto_create 
+= &#039;safe&#039; specifies that the GuestBook table should be created if a table 
+of that name does not already exist, but not otherwise.</p><p><strong>Constructing the GuestBook_Table Object</strong></p>
+
+<pre><code>&lt;?php
+
+// Include basic classes
+require_once &#039;MDB2.php&#039;;
+require_once &#039;DB/Table.php&#039;;
+require_once &#039;Guestboook_Table.php&#039;;
+
+// create a PEAR MDB2 (or DB) object
+$dsn = &quot;phptype://username:password@localhost/database&quot;;
+$conn = MDB2::connect($dsn);
+
+// set up for the GuestBook and create it
+$table  = &#039;GuestBook&#039;;
+$create = &#039;safe&#039;;
+$GuestBook =&amp; new GuestBook_Table($conn, $table, $create);
+
+// print out results
+if ($GuestBook-&gt;error) {
+     echo &quot;Failure!  Try again.&quot;;
+     print_r($GuestBook-&gt;error);
+} else {
+     echo &quot;Success!&quot;;
+     print_r($GuestBook);
+}
+
+?&gt;</code></pre>
+<p>The $conn connection object may be either a <strong>DB</strong> or 
+<strong>MDB2</strong> object, and is passed by reference.</p>
+
+<p>The allowed values of the $create argument are:</p><ul>
+   <li>
+      
+      boolean false to not attempt creation (default)
+      
+   </li>
+   <li>
+      
+      &#039;drop&#039; to drop any existing table with the same name and re-create it
+      
+   </li>
+   <li>
+      
+      &#039;safe&#039; to create the table if no such table exist, and do nothing
+      if it does.
+      
+   </li>
+   <li>
+      
+      &#039;verify&#039; to check whether the table exists, verify the schema. It
+      checks whether all the columns exist, whether the columns have 
+      the right type, and whether the indexes exist and have the right 
+      type 
+      
+   </li>
+   <li>
+      
+      &#039;alter&#039; does the same as &#039;safe&#039; if the table does not exist; if it
+      does exist, the schema is verified, and the table is altered if needed.
+      
+   </li>
+</ul>
+
+
+
+<h3>Modifying Data: Insert, Update, and Delete</h3>
+
+
+
+<p>The <strong>DB_Table</strong> <strong>insert()</strong>, 
+<strong>update()</strong>, and <strong>delete()</strong> 
+methods provide a convenient interface for inserting, updating, 
+and deleting rows of data. A row of data to be inserted or updated 
+is passed to the insert or update method as an associative array
+in which the keys are column names.</p>
+
+<h3>Inserting Rows</h3>
+
+
+<p>To insert a row into the GuestBook table, you use the 
+<strong>insert()</strong> method.  
+The only parameter is an associative array in which the keys are 
+column names, and the values are column values to be inserted.</p><p><strong>Inserting a Row</strong></p>
+
+<pre><code>&lt;?php
+
+// [snip] create the $GuestBook object
+
+// assign fields and values
+$row = array(
+    &#039;fname&#039;    =&gt; &#039;Thomas&#039;,
+    &#039;lname&#039;    =&gt; &#039;Anderson&#039;,
+    &#039;signdate&#039; =&gt; &#039;2003-10-12&#039;,
+    &#039;email&#039;    =&gt; &#039;neo@matrix.net&#039;
+);
+
+// insert into the table and print results
+$result = $GuestBook-&gt;insert($row);
+if (PEAR::isError($result)) {
+    // Error handling code
+}
+
+?&gt;</code></pre>
+
+
+
+<p>By default, the insert method will automatically validate that 
+the data you are inserting is of the expected type, and that 
+values have been provided for all required columns other than
+auto-increment columns. If either of these validations fails, 
+the method returns a PEAR Error, and does not attempt to insert 
+a row.  In the above example, no value has been provided for the 
+required &#039;id&#039; column because this is an auto-increment column, 
+as discussed below.</p>
+
+
+<h3>Auto-Increment Columns and Sequences</h3>
+
+
+<p><strong>DB_Table</strong> can use sequences created by the underlying 
+<strong>DB</strong> or <strong>MDB2</strong> layer to generate 
+auto-increment integer identifiers.
+If the value of a column that has been declared to be auto-increment is not 
+set or set to PHP NULL in the array of values that is passed to the insert 
+method, then an auto-incremented sequence value will be generated and 
+inserted for that column. In the above example, a sequence value is generated 
+and inserted for the &#039;id&#039; column.  If an integer value is set for such a 
+column, however, the provided value will instead be inserted.</p>
+
+<p>The sequence generation features of <strong>DB</strong> or 
+<strong>MDB2</strong> may also be accessed explictly via the 
+<strong>DB_Table::nextID()</strong> method. This method is simply a 
+wrapper that calls the corresponding <strong>DB</strong> or 
+<strong>MDB2</strong> method internally. The following example
+shows how to use <strong>nextID()</strong> to explicitly generate 
+and insert an auto-incremented value for an identifier.</p><p><strong>Using nextID() to access a sequence</strong></p>
+
+<pre><code>&lt;?php
+
+// [snip] create the $GuestBook object
+
+// get the next ID in a sequence associated with the table
+$id = $GuestBook-&gt;nextID();
+
+// assign fields and values
+$row = array(
+    &#039;id&#039;       =&gt; $id,
+    &#039;fname&#039;    =&gt; &#039;Thomas&#039;,
+    &#039;lname&#039;    =&gt; &#039;Anderson&#039;,
+    &#039;signdate&#039; =&gt; &#039;2003-10-12&#039;,
+    &#039;email&#039;    =&gt; &#039;neo@matrix.net&#039;
+);
+
+// insert into the table and print results
+$result = $GuestBook-&gt;insert($row);
+if (PEAR::isError($result)) {
+    // ... error handling code ...
+}
+
+?&gt;</code></pre>
+<p>Because the &#039;id&#039; column has been declared to be auto-increment,
+this code snippet is functionally equivalent to that given in the 
+preceding example.</p>
+
+
+<h3>Updating Rows</h3>
+
+
+<p>The <strong>update()</strong> method is used to update the data in 
+a row or a set of rows. The method takes two parameters. Its first 
+parameter is an associative array in which keys are names of columns 
+to be updated, and values are new data values. The second is the text 
+of the WHERE clause of the corresponding SQL UPDATE statement, excluding 
+the WHERE keyword.</p>
+
+<p>For example to change all the rows with the last name &quot;Smith&quot; to &quot;Jones&quot;:</p>
+
+<p><strong>Updating a Set of Rows</strong></p>
+
+<pre><code>&lt;?php
+
+// [snip] create the $GuestBook object
+
+$values = array(
+    &#039;lname&#039; =&gt; &#039;Jones&#039;
+    );
+
+// assign the WHERE clause
+$where = &quot;lname = &#039;Smith&#039;&quot;;
+
+// attempt the update 
+$result = $GuestBook-&gt;update($values, $where);
+if (PEAR::isError($result)) {
+    // ... error handling code ...
+}
+
+?&gt;</code></pre>
+
+<p>As for insertion, if you attempt to update with values that do not
+validate against the declared column types, then the update will
+fail, and the method will return a PEAR Error.</p>
+
+
+<h3>Deleting Rows</h3>
+
+
+<p>The <strong>delete()</strong> method is used to delete a row or
+set of rows specified by a logical condition.  Its only parameter is a 
+string containing the logical condition of the WHERE clause needed to 
+identify which rows to delete, excluding the WHERE keyword.</p>
+
+<p>For example, to delete all rows that were entered before today:</p>
+
+<p><strong>Deleting a Set of Rows</strong></p>
+
+<pre><code>&lt;?php
+
+// [snip] create the $GuestBook object
+
+// a WHERE clause
+$today = date(&#039;Y-m-d&#039;); // formatted as yyyy-mm-dd
+$where = &quot;signdate &lt; &#039;$today&#039;&quot;;
+
+// attempt the update and print the results
+$result = $GuestBook-&gt;delete($where);
+if (PEAR::isError($result)) {
+    // ... error handling code ...
+}
+
+?&gt;</code></pre>
+
+
+
+
+
+
+<h3>Selecting Data</h3>
+
+
+<p><strong>DB_Table</strong> uses an array syntax for constructing 
+SQL SELECT statements, in which each clause of an SQL SELECT statement 
+(e.g., SELECT, FROM, WHERE clauses) is stored in a different element. 
+This representation makes it relatively easy to modify a query by,
+<em>e.g.</em>, adding additional conditions to the WHERE
+clause to further limit the returned set of rows. Query arrays may be 
+stored in the $sql property array.</p>
+
+<p>Queries may be submitted to the database using either the
+<strong>select()</strong> method, which generally returns the 
+result set as an array, or the <strong>selectResult()</strong> 
+method, which returns a <strong>DB_Result</strong> or 
+<strong>MDB2_Result_Common</strong> result set object.
+These three methods are all inherited from the 
+<strong>DB_Table_Base</strong> base class, and thus are also 
+available as methods of a <strong>DB_Table_Database</strong> 
+object.</p>
+
+<h3>Query Arrays</h3>
+
+
+<p>Each SQL select statement is defined by a &quot;query array&quot;. For most of 
+the allowed elements of a query array, the key is a lower case version of
+the keyword that begins a clause in the SELECT statement (e.g., &#039;select&#039;, 
+&#039;from&#039;, &#039;where&#039;, etc.), and the value is the text of the remainder of
+that clause, excluding the keyword. 
+The allowed keys of a query array that define clauses of the SELECT 
+command are:</p>
+<ul>
+<li>
+
+&#039;select&#039; - the SELECT clause
+           (defaults to &#039;*&#039;)
+
+</li>
+<li>
+
+&#039;from&#039; - the table(s) to select from.
+         (Defaults to the name of this table, $this-&gt;table)
+
+</li>
+<li>
+
+&#039;join&#039; - any join clauses that should be added to the FROM clause.
+
+</li>
+<li>
+
+&#039;where&#039; - the WHERE clause
+
+</li>
+<li>
+
+&#039;group&#039; - the GROUP BY clause
+
+</li>
+<li>
+
+&#039;having&#039; - the HAVING clause
+
+</li>
+<li>
+
+&#039;order&#039; - the ORDER BY clause 
+
+</li>
+</ul>
+<p>The values of the &#039;select&#039;, &#039;from&#039;, &#039;where&#039;, &#039;group&#039;, &#039;having&#039;, and 
+&#039;order&#039; elements are strings that contain the text of corresponding
+clause of the desired SQL statement, excluding the keywords SELECT, 
+FROM, WHERE, GROUP BY, HAVING, or ORDER, respectively. The value of
+the &#039;join&#039; element, if present, is simply concatenated onto the end 
+of the &#039;FROM&#039; element, and should include the keywords, 
+<em>e.g.</em>, &#039;JOIN&#039;, &#039;INNER JOIN&#039;, or &#039;LEFT JOIN&#039;.</p>
+
+<p>The other allowed keys of a query array may be used to specify how the 
+results of query should be returned by the <strong>select()</strong>
+method. These are:</p><ul>
+ <li>
+  
+   &#039;get&#039; - determines how the <strong>select()</strong> method will 
+           return results.  See below for a list of allowed values. 
+           (Defaults to &#039;all&#039;).
+  
+ </li>
+ <li>
+  
+   &#039;fetchmode&#039; - determines how rows of a result set will be returned 
+          by <strong>select()</strong> if &#039;get&#039; is &#039;all&#039; or not set. 
+  
+ </li>
+ <li>
+  
+  &#039;fetchmode_object_class&#039; - The name of the class of the objects that 
+         should be used to encapsulate rows if rows are returned as 
+         objects. 
+  
+ </li>
+</ul><p>These three elements effect only the behavior of the 
+<strong>select()</strong> method, and have no effect upon the 
+behavior of the <strong>selectResult()</strong> method.  The 
+allowed values of the &#039;get&#039; element are:</p><ul>
+<li>
+
+&#039;all&#039; - return all rows of a return set as a sequential array of rows 
+(this is the default). Each row can be returned as either an associative 
+array in which keys are column names (the default) or a sequential array.
+
+</li>
+<li>
+
+&#039;assoc&#039; - returns an associative array in which the key is the first 
+column of the return set and the value is the second column. 
+
+</li>
+<li>
+
+&#039;col&#039; - return only the first column as a sequential array
+
+</li>
+<li>
+
+&#039;row&#039; - return only the first row as an associative array in which the
+keys are column names and the values are the column values.
+
+</li>
+<li>
+
+&#039;one&#039; - return only the value of the first column in the first row.
+
+</li>
+</ul><p>Each allowed value of the &#039;get&#039; element corresponds to the name of the 
+get* method of <strong>DB</strong> and <strong>MDB2</strong> that
+is actually called internally by
+<strong>DB_Table::select()</strong>: If the value of the &#039;get&#039; 
+element is &#039;all&#039;, the query is submitted by calling the 
+<strong>DB/MDB2::getAll()</strong> method, using an SQL query
+constructed from the query array, and
+<strong>DB_Table::select()</strong> simply returns the return value 
+of <strong>getAll()</strong>. Similarly, a &#039;get&#039; element value of 
+&#039;assoc&#039; causes a call to <strong>getAssoc()</strong>, 
+&#039;col&#039; calls <strong>getCol()</strong>, 
+&#039;one&#039; calls <strong>getOne()</strong>, and
+&#039;row&#039; calls <strong>getRow()</strong>.</p>
+
+<p>When the &#039;get&#039; element is set to &#039;all&#039;, explicitly or by default, each 
+row in the array returned by the <strong>DB_Table::select()</strong> 
+method returned as an associative array in which keys are column names,
+as a sequential array, or as an object in which column names map to 
+property names. The choice of data structure for each row may be
+controlled by the &#039;fetchmode&#039; element of the query or, if this is not
+is set, by the $fetchmode property of the 
+<strong>DB_Table</strong> object.  Similarly, when rows are 
+returned as objects, the name of the object class may be specified by 
+the &#039;fetchmode_object_class&#039; element of the query or, if this is not 
+set, by the $fetchmode_object_class property of the 
+<strong>DB_Table</strong> object.</p>
+
+<p>The values of the &#039;fetchmode&#039; and &#039;fetchmode_object_class&#039; elements 
+of the query or the $fetchmode and $fetchmode_object_class properties 
+of <strong>DB_Table</strong> are used to temporarily reset the 
+values of the &#039;fetchmode&#039; and &#039;fetchmode_object_class&#039; properties 
+(for <strong>DB</strong>) or 
+options (for <strong>MDB2</strong>) 
+of the underlying <strong>DB</strong> or 
+<strong>MDB2</strong> object. These values should be set 
+equal to the desired DB_FETCHMODE_* or MDB2_FETCHMODE_* constant 
+appropriate for the underlying backend. The original values of the 
+<strong>DB/MDB2</strong> object properties or options are 
+restored before the <strong>select()</strong> method returns.</p>
+
+
+
+<h3>Storing Queries: $sql property array</h3>
+
+
+<p>Commonly used queries, and &quot;baseline&quot; queries that are useful as 
+a starting point for construction of more complicated ones, may be 
+stored in the $sql public property array. The $sql property is an 
+associative array in which keys are query names, and values are 
+query arrays. Stored queries can be submitted by passing the name 
+key for the query as an argument to any of the 
+<strong>select*()</strong> methods.</p>
+
+<p>The $sql property is inherited from the 
+<strong>DB_Table_Base</strong> class. Queries may thus be 
+stored either the $sql property of a <strong>DB_Table</strong> 
+that provides an interface to a specific table, or in the $sql property 
+of a <strong>DB_Table_Database</strong> object that provides an 
+interface to the entire database. For applications that involve only 
+one table, or queries that involve only one table, it may be 
+convenient to use the $sql property of the 
+<strong>DB_Table</strong> object, as in the above example, and 
+to then use the <strong>select*()</strong> methods of that object 
+to access these queries by name. For more complicated queries and 
+applications, however, it may be more convenient to store all queries 
+in the $sql property of a <strong>DB_Table_Database</strong> 
+object, and submit them by name via the <strong>select*()</strong> 
+methods of that object.</p>
+
+<p><strong>Defining Baseline Queries in a 
+<strong>DB_Table</strong> Subclass Definition</strong></p>
+
+<p>For our GuestBook table, let&#039;s say we define three stored SELECT 
+statements, which may be used as a basis of more specific queries:</p><ul>
+<li>
+
+One that returns a list of guestbook rows ordered from most-recent to
+least-recent, showing the full name (first+last) and the date signed.
+
+</li>
+<li>
+
+One that returns a single guestbook row, showing all fields.
+
+</li>
+<li>
+
+One that returns a list of all unique email + fullname rows, ordered by last
+name and first name.
+
+</li>
+</ul><p>In the following program snippet, we declare these queries as elements 
+of the $sql property within the GuestBook_Table class definition.</p>
+
+<pre><code>&lt;?php
+
+class GuestBook_Table extends DB_Table
+{
+ 
+    // [snip] var $col = array( ... );
+    // [snip] var $idx = array( ... );
+         
+    var $sql = array( 
+    
+        // multiple rows for a list 
+        &#039;list&#039; =&gt; array( 
+            &#039;select&#039; =&gt; &quot;id, signdate, CONCAT(fname, &#039; &#039;, lname) AS fullname&quot;, 
+            &#039;order&#039;  =&gt; &#039;signdate DESC&#039;
+        ), 
+
+        // one row for an item detail
+        &#039;item&#039; =&gt; array( 
+            &#039;select&#039; =&gt; &#039;id, fname, lname, email, signdate&#039;, 
+            &#039;get&#039; =&gt; &#039;row&#039;
+        ),
+
+        // email =&gt; fullname (unique rows only) 
+        &#039;emails&#039; =&gt; array( 
+            &#039;select&#039; =&gt; &quot;DISTINCT email, CONCAT(fname, &#039; &#039;, lname) AS fullname&quot;, 
+            &#039;order&#039; =&gt; &#039;lname, fname&#039;, 
+            &#039;get&#039; =&gt; &#039;assoc&#039;
+        )           
+    );
+
+}
+
+?&gt;</code></pre>
+
+
+
+
+<h3>Submitting Queries: <strong>select*()</strong> Methods</h3>
+
+
+<p>The <strong>select()</strong> method submits a query and returns the
+result set as an array. The <strong>selectResult()</strong> method
+returns the result as a <strong>DB_Result/MDB2_Result_Common</strong> 
+object. The <strong>selectCount()</strong> method returns an integer 
+equal to the number of rows that would be returned by a query, without 
+returning the actual result set.</p>
+
+<p>The interface is the same for all three of these methods. In each, the 
+first parameter, which is required, can be either a query array or a
+key of the $sql property array, for which the corresponding value is a
+stored query array.  The remaining parameters, which are all optional, 
+may be used to modify the query before submission to the database. The 
+second parameter, $filter, is a string that contains an SQL logical 
+expression that will be ANDed with the WHERE clause of the query before 
+the SELECT command is submitted.  The third parameter, $order, if present, 
+is used to construct the &#039;ORDER BY&#039; clause, and may be used to override 
+the &#039;order&#039; element of the query. The fourth and fifth parameters, $start 
+and $count, are integers that may be used to specify the first row of the 
+result set that should be returned, and the maximum number of rows to be 
+returned.</p>
+
+<p><strong>Submitting a Stored Query</strong></p>
+
+<pre><code>&lt;?php
+
+// [snip] create a DB/MDB2 object and connect to the database
+// [snip] create the GuestBook_Table object $GuestBook
+
+// Submit the stored &#039;list&#039; query, which returns an array of rows
+$rows = $GuestBook-&gt;select(&#039;list&#039;);
+
+// Print the result set
+print_r($rows);
+
+?&gt;</code></pre>
+
+
+<p>The next example shows how to modify a stored query with the filter,
+order, start and count parameters:</p>
+
+<p><strong>Using Filter, Order, and Limit Parameters</strong></p>
+
+<pre><code>&lt;?php
+
+$filter = &quot;signdate = &#039;2003-08-14&#039;&quot;;
+$order = &#039;lname, fname&#039;;
+$start = 7;
+$count = 12;
+
+// Return results as an array of rows
+$rows = $GuestBook-&gt;select($view, $filter, $order, $start, $count);
+print_r($rows);
+
+// Return results as a DB_Result/MDB2_Result_Common object
+$result = $GuestBook-&gt;selectResult($view, $filter, $order, $start, $count);
+print_r($result);
+
+?&gt;</code></pre>
+
+
+<p>To have <strong>select()</strong> return rows as associative arrays,
+we must set either the &#039;fetchmode&#039; element of a specific query array 
+or the $fetchmode property of the <strong>DB_Table</strong> 
+object to the DB_FETCHMODE_ASSOC or MDB2_FETCHMODE_ASSOC constant 
+values, as appropriate:</p>
+
+<p><strong>Setting Fetchmode to Return Rows as Associative Arrays</strong></p>
+
+<pre><code>&lt;?php
+
+// [snip] create the $GuestBook GuestBook_Table object
+
+// set the fetch mode to &quot;associative&quot;
+$GuestBook-&gt;fetchmode = DB_FETCHMODE_ASSOC;
+
+// now all rows arrays will be returned by DB_Table::select() as associative
+// arrays with the column names as the array keys
+?&gt;</code></pre>
+
+
+<p>To have <strong>select()</strong> return rows as objects, with 
+properties that correspond to column names, we must set either 
+the &#039;fetchmode&#039; element of the query array or the $fetchmode 
+property of the <strong>DB_Table</strong> object to the 
+DB_FETCHMODE_OBJECT or MDB2_FETCHMODE_OBJECT constant. If no 
+user-defined class is specified, all rows are returned as instances 
+of stdClass, as in the following example:</p>
+
+<p><strong>Returning Rows as stdClass Objects</strong></p>
+
+<pre><code>&lt;?php
+
+// [snip] create the $GuestBook GuestBook_Table object
+
+// set the fetch mode to the &quot;object&quot; constant for DB or MDB2
+$GuestBook-&gt;fetchmode = DB_FETCHMODE_OBJECT;
+
+// now each row in the results array will be a stdClass object,
+// and the object properties will be named for the columns
+
+// now all column arrays will come with the column names as the array keys
+?&gt;</code></pre>
+
+
+<p>To specify a class to be used to encapsulate rows of a return set, set
+the value of the &#039;fetchmode_object_class&#039; element of the query array or 
+the $fetchmode_object_class property to the name of the desired class.</p>
+
+<p><strong>Returning Rows as Objects of a User-Defined Class</strong></p>
+
+<pre><code>&lt;?php
+
+// [snip] create the $GuestBook GuestBook_Table object
+
+// set the fetch mode to &quot;object&quot;
+$GuestBook-&gt;fetchmode = DB_FETCHMODE_OBJECT;
+
+// set the fetched row class to &quot;myRowClass&quot; ...
+// of course, you will need to include the &quot;myRowClass&quot; file
+// before this.
+$GuestBook-&gt;fetchmode_object_class = &#039;myRowClass&#039;;
+
+// now each row in the results array will be a myRowClass object,
+// and the object properties will be named for the columns
+
+?&gt;</code></pre>
+
+
+
+
+
+<h3>Data Type Validation</h3>
+
+
+
+<p><strong>DB_Table</strong> can automatically validate that the format 
+of data to be inserted or updated is consistent with the declared types for
+the corresponding columns.  Validation of the data type of both inserted 
+and updated data is on by default. Validation upon insertion and updating 
+can be turned on or off with the <strong>autoValidInsert()</strong> and 
+<strong>autoValidUpdate()</strong> methods, respectively. Each of these
+methods takes a single boolean parameter, and turns validation on if its 
+parameter is true and off if it is false.</p>
+
+<p>Data type validation for a row of data to be inserted or updated is 
+actually carried out by the 
+<strong>validInsert()</strong>
+or 
+<strong>validUpdate()</strong> method, respectively. Each of these 
+methods takes one parameter, which is an associative array of data
+in which keys are column names. Each returns boolean true on success 
+or a <strong>PEAR_Error</strong> object on failure. These 
+methods are called internally by the 
+<strong>insert()</strong> and <strong>update()</strong> methods,
+respectively, when auto-validation is enabled. Customized automatic
+validations may thus be implemented by overriding one or both of 
+these methods.</p>
+
+<p>Validation of the type of a single column value is carried out by 
+the <strong>isValid()</strong> method. This method takes the value 
+to be validated as its first parameter, and the name of the required 
+<strong>DB_Table</strong> data type as its second parameter. 
+This method is called internally by the two row validation methods.</p>
+
+
+
+<h3>Miscellaneous Utility Methods</h3>
+
+
+  <table><caption>Miscellaneous Methods</caption>
+   
+   
+     <thead>
+       <tr>
+         <th>Method</th>
+         <th>Description</th>
+       </tr>
+ 
+     </thead>
+ 
+     <tbody> 
+       <tr>
+         <td>
+         <strong>quote()</strong></td>
+         <td>Enquotes and escapes a value in a form appropriate for inclusion 
+         in an SQL query. A simple wrapper for the 
+         <strong>DB::smartQuote()</strong> or
+         <strong>MDB2::quote()</strong> method, which it calls internally.
+         </td>
+       </tr>
+ 
+       <tr>
+         <td>
+         <strong>recast()</strong></td>
+         <td>Takes an associative array of data (keys are column names 
+         and values are column values) and re-casts each value to the proper
+         format for its column.
+         </td>
+       </tr>
+ 
+       <tr>
+         <td>
+         <strong>getBlankRow()</strong></td>
+         <td>Returns an associative array with column name keys and a 
+         blank value for each column. Each value will be in the proper 
+         format for the associated column type.</td>
+       </tr>
+ 
+     </tbody></table>
+</section>
+<section id="package-database-db-table-intro-forms">
+<h2>DB_Table Forms Tutorial</h2>
+<h3>Description</h3>
+
+<p>This page documents the use of the <strong>DB_Table</strong> class to 
+create <strong>HTML_QuickForm</strong> form elements appropriate for 
+the columns of a table, and to create entire data entry forms.  
+<strong>DB_Table</strong> can use the column definitions to automatically 
+create default form elements for you. Although your plain column definitions 
+will do fine at first, you will want to customize the labels and options for 
+your form elements. You can do so by adding &#039;qf_*&#039; keys to your column 
+definitions</p>
+
+<p>Note: The underlying <strong>HTML_QuickForm</strong> package is a 
+very powerful library with many options.  While <strong>DB_Table</strong> 
+automates away much of the complexity for simple forms, the full power of 
+<strong>HTML_QuickForm</strong> can only be realized by combining 
+the automatic element creation from <strong>DB_Table</strong> with 
+custom-created <strong>HTML_QuickForm</strong> objects. 
+<strong>DB_Table</strong> makes it easy to get started with 
+<strong>HTML_QuickForm</strong>, but does not replace it.</p>
+
+
+<h3>Simple Form with Default Elements </h3>
+
+
+
+<p>Once you have defined your columns and instantiated an object, you can 
+generate a complete <strong>HTML_QuickForm</strong> object using 
+the <strong>getForm()</strong> method. If <strong>getForm()</strong>
+is called with no parameters, it will return a form with all of the 
+$GuestBook object columns as input fields.</p>
+
+<p><strong>A default form with all columns</strong></p>
+
+<pre><code>&lt;?php
+// [snip] create the GuestBook_Table object ($GuestBook)
+
+// create the &lt;classname&gt;HTML_QuickForm&lt;/classname&gt; object
+$form =&amp; $GuestBook-&gt;getForm(); // note the &quot;=&amp;&quot; -- very important
+
+// display the form
+$form-&gt;display();
+?&gt;</code></pre>
+
+
+<h3>Specifying Columns</h3>
+
+
+<p>To limit the fields you want to display, or to change the order, pass a
+sequential array of column names as the first parameter to getForm()</p>
+<p><strong>Specifying column names in <strong>getForm()</strong></strong></p>
+
+<pre><code>&lt;?php
+
+// [snip] create the Guesbook object ($GuestBook)
+
+// only show the first name, last name, and email in the form
+$cols = array(&#039;fname&#039;, &#039;lname&#039;, &#039;email&#039;);
+
+// create the &lt;classname&gt;HTML_QuickForm&lt;/classname&gt; object
+$form =&amp; $GuestBook-&gt;getForm($cols);
+
+// display the form
+$form-&gt;display();
+
+?&gt;</code></pre>
+
+
+
+<h3>Add Buttons</h3>
+
+
+<p>Unfortunately, the form only has the input fields; it does not yet have
+&quot;Submit&quot; or &quot;Reset&quot; buttons, which are not automatically generated.</p>
+<p><strong>
+Adding &quot;Submit&quot; and &quot;Reset&quot; buttons with <strong>getForm()</strong>
+</strong></p>
+
+<pre><code>&lt;?php
+
+// [snip] create the $GuestBook GuestBook_Table object
+
+// create the HMTL_QuickForm object
+$form =&amp; $GuestBook-&gt;getForm($cols);
+
+// add a &quot;submit&quot; button named &quot;op&quot; that says &quot;Go!&quot;
+$form-&gt;addElement(&#039;submit&#039;, &#039;op&#039;, &#039;Go!&#039;);
+
+// add a reset button
+$form-&gt;addElement(&#039;reset&#039;);
+
+// display the form
+$form-&gt;display();
+
+?&gt;</code></pre>
+
+
+
+
+
+<h3>Simple Form with Custom Elements</h3>
+
+
+<p>The basic form is nice, but it&#039;s very generic. It doesn&#039;t have descriptive
+labels for the input fields, all the fields are text boxes, and so on. This
+section shows you how to include form element properties along with your
+column definitions so that your forms are customized in a somewhat consistent
+fashion.</p>
+
+<p>In every case you will modify the $col property by adding &#039;qf_*&#039; keys and
+values.</p><ul>
+  <li>
+    
+    &#039;qf_label&#039; (string) Adds a text label to the field
+    
+  </li>
+  <li>
+    
+    &#039;qf_type&#039; (string) Sets the input type (text, hidden, select, checkbox, etc.)
+    
+  </li>
+  <li>
+    
+    &#039;qf_vals&#039; (array) Sets list of values for select, radio, and checkbox
+    elements
+    
+  </li>
+  <li>
+    
+    &#039;qf_attrs&#039; (array) Sets additional HTML attributes for the input element
+    
+  </li>
+  <li>
+    
+    &#039;qf_opts&#039; (array) Sets options for date elements (date, time, timestamp,
+    jscalendar)
+    
+  </li>
+</ul>
+
+
+<h3>Element Label</h3>
+
+
+<p>When a column appears in a form, you can make sure the same label is always
+applied to it. Let&#039;s say we have a column called &quot;other&quot; defined as a
+32-character string. We always want it to be labelled as &quot;Other Information&quot;
+in our forms; use &#039;qf_label&#039; key like this:</p>
+<p><strong>Setting &#039;qf_label&#039;</strong></p>
+
+<pre><code>&lt;?php
+
+class GuestBook_Table extends DB_Table
+{
+ 
+    var $col = array( 
+        // ...  
+        &#039;example&#039; =&gt; array( 
+            // table column definition 
+            &#039;type&#039; =&gt; &#039;varchar&#039;, 
+            &#039;size&#039; =&gt; 32, 
+             
+            // form element definition 
+            &#039;qf_label&#039; =&gt; &#039;Other Information&#039;
+        )
+    ); 
+} 
+?&gt;</code></pre>
+
+
+
+
+<h3>Element Type</h3>
+
+
+
+<p>By default, <strong>DB_Table</strong> will try to figure out what kind 
+of form field input type to use for your column. Most column types translate 
+into text fields, but there are some exceptions.</p><ul>
+  <li>
+    
+    Boolean columns become <strong>HTML_QuickForm</strong> &#039;advcheckbox&#039; 
+    fields with values of 0 for not-checked and 1 for checked. 
+    
+  </li>
+  <li>
+    
+    CLOB columns become <strong>HTML_QuickForm</strong> &#039;textarea&#039; fields
+    
+  </li>
+  <li>
+    
+    Date columns become <strong>HTML_QuickForm</strong> &#039;date&#039; select 
+    fields in &#039;Y-m-d&#039; format.
+    
+  </li>
+  <li>
+    
+    Time columns become <strong>HTML_QuickForm</strong> &#039;date&#039; select 
+    fields in &#039;H:i:s&#039; format.
+    
+  </li>
+  <li>
+    
+    Timestamp columns become <strong>HTML_QuickForm</strong> &#039;date&#039; select 
+    fields in &#039;Y-m-d H:i:s&#039; format
+    
+  </li>
+</ul>
+
+
+<p>To explicitly set the <strong>HTML_QuickForm</strong> element type for 
+a column, rather than relying on the above defaults, you add a &#039;qf_type&#039; element 
+to your column definition. You can tell <strong>DB_Table</strong> to 
+create any of several supported <strong>HTML_QuickForm</strong> element 
+types by setting the &#039;qf_type&#039; element to one of these string values:</p><ul>
+  <li>
+    
+      &#039;checkbox&#039; for a single checkbox; maps to the &#039;advcheckbox&#039; 
+      <strong>HTML_QuickForm</strong> type
+    
+  </li>
+  <li>
+    
+      &#039;hidden&#039; for a hidden element
+    
+  </li>
+  <li>
+    
+      &#039;password&#039; for a password text box
+    
+  </li>
+  <li>
+    
+      &#039;radio&#039; for a set of radio buttons
+    
+  </li>
+  <li>
+    
+      &#039;select&#039; for a select menu
+    
+  </li>
+  <li>
+    
+      &#039;text&#039; for a text box
+    
+  </li>
+  <li>
+    
+     &#039;textarea&#039; for a text area
+    
+  </li>
+  <li>
+    
+      &#039;date&#039; for a date selector; formats as &#039;Y-m-d&#039;
+    
+  </li>
+  <li>
+    
+     &#039;time&#039; for a time selector; maps to &#039;date&#039;, formats as &#039;H:i:s&#039;
+    
+  </li>
+  <li>
+    
+      &#039;timestamp&#039; for a timestamp selector; maps to &#039;date&#039;, 
+      formats as &#039;Y-m-d H:i:s&#039;
+    
+  </li>
+</ul><p>If you use any other element name, <strong>DB_Table</strong> will 
+attempt to map to the proper <strong>HTML_QuickForm</strong> element 
+(thanks to Moritz Heidkamp for the patch), but it&#039;s not guaranteed to work.</p>
+
+<p>In this example, we&#039;ll make the &#039;example&#039; column a text field:</p>
+<p><strong>Setting an element type</strong></p>
+
+<pre><code>&lt;?php
+
+class GuestBook_Table extends DB_Table
+{
+ 
+    var $col = array( 
+        // ...  
+        &#039;example&#039; =&gt; array( 
+            // table column definition 
+            &#039;type&#039; =&gt; &#039;varchar&#039;, 
+            &#039;size&#039; =&gt; 32,
+            // form element definition 
+            &#039;qf_label&#039; =&gt; &#039;Other Information&#039;,
+            &#039;qf_type&#039;  =&gt; &#039;text&#039;
+        )
+    );
+}
+?&gt;</code></pre>
+
+
+
+
+<h3>Element Values</h3>
+
+
+<p>If your column form element is &#039;checkbox&#039;, &#039;radio&#039;, or &#039;select&#039;, you can set
+the values of the available choices for the form element. You do so via an
+&#039;sq_vals&#039; element in the corresponding column definition.</p>
+
+<p><strong>Setting CheckBox Values</strong></p>
+
+<p>For a checkbox, use a sequential array of two elements: the first is the value
+if the box is not checked, and the second is the value if it is checked.</p>
+<p>In this example, the checkbox values are 0 if not checked,and 1 if checked;
+these are the values that will be stored in the column.</p>
+<pre><code>&lt;?php
+
+class GuestBook_Table extends DB_Table
+{
+ 
+    var $col = array( 
+        // ...  
+        &#039;example&#039; =&gt; array( 
+            // table column definition 
+            &#039;type&#039; =&gt; &#039;varchar&#039;, 
+            &#039;size&#039; =&gt; 32,
+            // form element definition 
+            &#039;qf_label&#039; =&gt; &#039;Other Information&#039;,
+            &#039;qf_type&#039;  =&gt; &#039;text&#039;,
+            &#039;qf_vals&#039;  =&gt; array(0, 1)
+        )
+    );
+}
+?&gt;</code></pre>
+
+
+<p><strong>Radio and Select Values</strong></p>
+
+<p>For radio buttons and select menus, use an associative array. Each array key
+is the value that will be stored in the column, and each array value is the
+text that will be displayed to the user.</p>
+<p>This example creates a select menu with three possible values (&#039;a&#039;, &#039;b&#039;, and
+&#039;c&#039;) and the corresponding labels:</p>
+<pre><code>&lt;?php
+
+class GuestBook_Table extends DB_Table
+{
+ 
+    var $col = array( 
+        // ...  
+        &#039;example&#039; =&gt; array( 
+            // table column definition 
+            &#039;type&#039; =&gt; &#039;varchar&#039;, 
+            &#039;size&#039; =&gt; 32,
+            // form element definition 
+            &#039;qf_label&#039; =&gt; &#039;Other Information&#039;,
+            &#039;qf_type&#039;  =&gt; &#039;text&#039;,
+            &#039;qf_vals&#039;  =&gt; array(
+                &#039;a&#039; =&gt; &#039;This is the letter &quot;a&quot;&#039;,
+                &#039;b&#039; =&gt; &#039;I choose &quot;b&quot;&#039;,
+                &#039;c&#039; =&gt; &#039;No, &quot;c&quot; is always the right answer&#039;
+            )
+        )
+    );
+}
+?&gt;</code></pre>
+
+
+
+
+<h3>Element HTML Attributes</h3>
+
+
+<p>If you like, you can add HTML attributes to the form element using the
+&#039;qf_attrs&#039; keys. Attributes are assigned as key-value pairs in an associative
+array; the keys is the attribute name, and the value is the attribute value.
+For example, to set the number of rows and columns for a textarea element:</p>
+<p><strong>Setting rows and column number for a textarea</strong></p>
+
+<pre><code>&lt;?php
+
+class GuestBook_Table extends DB_Table
+{
+ 
+    var $col = array( 
+
+        // ...  
+
+        &#039;example&#039; =&gt; array( 
+            // table column definition 
+            &#039;type&#039; =&gt; &#039;varchar&#039;, 
+            &#039;size&#039; =&gt; 32,
+
+            // form element definition 
+            &#039;qf_label&#039; =&gt; &#039;Other Information&#039;,
+            &#039;qf_type&#039;  =&gt; &#039;textarea&#039;,
+            &#039;qf_attrs&#039; =&gt; array(
+                &#039;rows&#039; =&gt; 24,
+                &#039;cols&#039; =&gt; 80
+            )
+        )
+    );
+}
+?&gt;</code></pre>
+
+<p>DB_Table automatically adds a &quot;maxlength&quot; attribute to text and password
+elements based on the column size, so that users cannot type in values longer
+than the column allows.</p>
+
+
+
+<h3>Element Rules</h3>
+
+
+<p><strong>HTML_QuickForm</strong> allows you to add validation rules to the 
+input form. These rules are not the same as the <strong>DB_Table</strong>
+automated validations; the <strong>HTML_QuickForm</strong> rules apply 
+only to the values as they relate to the form itself, not the values related 
+to the table proper.  This is an important distinction that will become 
+apparent as you use <strong>HTML_QuickForm</strong>.</p>
+<p>The available rules are:</p><ul>
+  <li>
+    
+    email - the form input must be an email address
+    
+  </li>
+  <li>
+    
+    lettersonly -- the form nput must consist only of letters
+    
+  </li>
+  <li>
+    
+    maxlength -- the form input cannot have more than this many characters
+    
+  </li>
+  <li>
+    
+    maxlength -- the form input cannot have fewer than this many characters
+    
+  </li>
+  <li>
+    
+    nonzero -- the form input must be greater than or less than zero
+    
+  </li>
+  <li>
+    
+    nopunctuation -- the form input may not contain punctuation
+    
+  </li>
+  <li>
+    
+    numeric -- the form input must be a number of some sort (no letters)
+    
+  </li>
+  <li>
+    
+    regex -- the form input must match a regular expression
+    
+  </li>
+  <li>
+    
+    required -- the form input is required to be filled (even with a single
+    space)
+    
+  </li>
+</ul><p>DB_Table will automatically add <strong>HTML_QuickForm</strong> rules for you in most cases.</p><ul>
+  <li>
+    
+    If the column is required (&#039;require&#039; =&gt; true), then 
+    <strong>DB_Table</strong> will add a &#039;required&#039; 
+    <strong>HTML_QuickForm</strong> rule.
+    
+  </li>
+  <li>
+    
+    If the column is numeric (&#039;smallint&#039;, &#039;integer&#039;, &#039;bigint&#039;, &#039;single&#039;, 
+    &#039;double&#039;, or &#039;timestep&#039;) then <strong>DB_Table</strong> will a 
+    &#039;numeric&#039; <strong>HTML_QuickForm</strong> rule.
+    
+  </li>
+  <li>
+    
+    If the column has a specific size (&#039;size&#039;), then 
+    <strong>DB_Table</strong> will add a &#039;maxlength&#039; rule.
+    
+  </li>
+</ul><p>If you want to use a specific <strong>HTML_QuickForm</strong> rule for a 
+column when that column appears in a form, set &#039;qf_rules&#039; key to the name of 
+the rule and set the value for that rule; in most cases, the value is an error 
+message, but in some cases the value is a sequential array. You can add as 
+many different rules as you like, but you can add only one of each type.</p>
+
+<p><strong>QuickForm Rules</strong></p>
+
+<pre><code>&lt;?php
+
+class GuestBook_Table extends DB_Table
+{
+
+    var $col = array( 
+     
+        // ...  
+         
+        &#039;example1&#039; =&gt; array( 
+            // table column definition 
+            &#039;type&#039; =&gt; &#039;integer&#039;, 
+            
+            // form element definition 
+            &#039;qf_label&#039; =&gt; &#039;Information&#039;, 
+            &#039;qf_type&#039; =&gt; &#039;text&#039;, 
+            
+            // a set of QuickForm rules 
+            &#039;qf_rules&#039; =&gt; array( 
+                &#039;required&#039; =&gt; &#039;This field is required.&#039;, 
+                &#039;numeric&#039; =&gt; &#039;Please use only numbers, no letters.&#039;
+            )
+        ), 
+         
+        &#039;example2&#039; =&gt; array( 
+        
+            // table column definition 
+            &#039;type&#039; =&gt; &#039;varchar&#039;, 
+            &#039;size&#039; =&gt; 10, 
+
+            // form element definition 
+            &#039;qf_label&#039; =&gt; &#039;Something:&#039;, 
+            &#039;qf_type&#039; =&gt; &#039;text&#039;, 
+
+            // a set of QuickForm rules 
+            &#039;qf_rules&#039; =&gt; array( 
+                &#039;minlength&#039; =&gt; array(&#039;Minimum length is 6 characters.&#039;, 6), 
+                &#039;maxlength&#039; =&gt; array(&#039;Maximum length is 10 characters.&#039;, 10), 
+                &#039;regex&#039; =&gt; array( 
+                    &#039;Must be only upper-case letters and underscores.&#039;, 
+                    &#039;/^[A-Z_]+$/&#039;
+                )   
+            ); 
+        )
+    ) 
+}
+?&gt;</code></pre>
+<p><strong>HTML_QuickForm</strong> supports rules for groups and entire 
+forms, but <strong>DB_Table</strong> does not automate these; you will 
+need to add them to the form object yourself.</p>
+
+
+
+
+<h3>Setting Default Values</h3>
+
+
+<p>Sometimes you will want to populate your input form with default values, such
+as the current values from the database. Doing so is easy.</p>
+<p>When you call <strong>getForm()</strong>, instead of passing a sequential
+array of column names, pass an associative array in which the key is the 
+column name and the value is the column value.</p>
+<p><strong>Setting Default Values for Form Fields</strong></p>
+
+<pre><code>&lt;?php
+
+// [snip] create the GuestBook_Table object ($GuestBook)
+
+// Show only the first name, last name, and email in the form
+// Provide default values for the form elements
+$cols = array(
+    &#039;fname&#039; =&gt; &#039;Thomas&#039;, 
+    &#039;lname&#039; =&gt; &#039;Anderson&#039;, 
+    &#039;email&#039; =&gt; &#039;neo@matrix.net&#039;
+);
+
+// create the HTML_QuickForm object
+$form =&amp; $GuestBook-&gt;getForm($cols);
+
+// display the form
+$form-&gt;display();
+?&gt;</code></pre>
+
+
+
+
+<h3>Element Names as Array Keys</h3>
+
+
+<p>By default, when you call <strong>getForm()</strong>, the form elements are
+named for their columns. For example, the column &#039;fname&#039; is called &#039;fname&#039; in
+the form.</p>
+<pre>
+&lt;!-- [snip] the beginning of the form --&gt;
+
+&lt;input type=&quot;text&quot; name=&quot;fname&quot; ... /&gt;
+
+&lt;!-- [snip] the end of the form --&gt;</pre>
+
+<p>However, often you will want the form elements to be keys in any array instead
+of their own separate variables. This is particularly useful when you are going 
+to use the values in a <strong>DB_Table</strong> 
+<strong>insert()</strong> or <strong>update()</strong> call.</p>
+
+<p>To do so, pass the name of an array as the second argument to 
+<strong>getForm()</strong> (after the list of columns to use in the form). 
+For example, if you want the column names to be keys in an array called
+&#039;new_row&#039;, do this:</p>
+<p><strong>Returning form values in an array</strong></p>
+
+<pre><code>&lt;?php
+
+// [snip] create the $GuestBook object of class GuestBook_Table
+
+// choose which columns to display in the form
+$cols = array(&#039;fname&#039;, &#039;lname&#039;, &#039;email&#039;);
+
+// create the HTML_QuickForm object, with elements
+// named as part of an array called &#039;new_row&#039;
+$form = $GuestBook-&gt;getForm($cols, &#039;new_row&#039;);
+
+// display the form
+$form-&gt;display()
+
+?&gt;</code></pre>
+
+
+
+
+<h3>Custom <strong>HTML_QuickForm</strong> Objects</h3>
+
+
+<p>Although the <strong>getForm()</strong> method supports all 
+<strong>HTML_QuickForm</strong> parameters (such as the name of 
+the form, the method, the action, and so on), you don&#039;t need to use 
+<strong>DB_Table</strong> to create the entire form.  
+If you like, you can create your own <strong>HTML_QuickForm</strong> 
+object, and add <strong>DB_Table</strong> columns to it one-by-one or 
+in groups.</p>
+
+<p><strong>DB_Table</strong> provides these methods to add 
+automatically-defined elements to pre-existing
+<strong>HTML_QuickForm</strong> objects:</p><ul>
+  <li>
+    
+    <strong>addFormElements()</strong> 
+    to add one or more automatically-defined form element objects to a
+    pre-existing <strong>HTML_QuickForm</strong> object, along 
+    with their associated <strong>DB_Table</strong> defined rules.
+    
+  </li>
+  <li>
+    
+    <strong>getFormGroup()</strong> 
+    to get an <strong>HTML_QuickForm</strong> group array of
+    automatically-defined element objects
+    
+  </li>
+  <li>
+    
+    <strong>getFormElement()</strong> 
+    to get a single automatically defined element object.
+    
+  </li>
+</ul><p>Here are example uses of each:</p>
+
+<p><strong>Custom HTML Element</strong></p>
+
+<pre><code>&lt;?php
+
+// [snip] Create the GuestBook_Table object $GuestBook
+
+// load the class file and create a QuickForm object
+require_once &#039;HTML/QuickForm.php&#039;;
+$form =&amp; new HTML_QuickForm();
+
+// add one or more elements from the GuestBook
+// object to the QuickForm object, along with
+// the rules for those elements
+$cols = array(&#039;email&#039;, &#039;signdate&#039;);
+$GuestBook-&gt;addFormElements($form, $cols);
+
+// add an element group of GuestBook columns
+// to the QuickForm object (does not add rules)
+$cols = array(&#039;fname&#039;, &#039;lname&#039;);
+$group =&amp; $GuestBook-&gt;getFormGroup($cols);
+$form-&gt;addGroup($group);
+
+// get back a single form element object with a
+// custom name, then add it to the form
+$col = &#039;id&#039;;
+$name = &#039;new_row[id]&#039;;
+$element =&amp; $GuestBook-&gt;getFormElement($col, $name);
+$form-&gt;addElement($element);
+
+?&gt;</code></pre>
+</section>
+<section id="package-database-db-table-intro-database">
+<h2>DB_Table_Database Class Tutorial</h2>
+<h3>Description</h3>
+
+<p><strong>DB_Table_Database</strong> is an database abstraction 
+class for a relational database. It is a layer built on top of the 
+<strong>DB_Table</strong> class: 
+Each table in a <strong>DB_Table_Database</strong> object is 
+represented by a <strong>DB_Table</strong> object. 
+The most important difference between a 
+<strong>DB_Table_Database</strong> object and 
+a collection of <strong>DB_Table</strong> objects is that the 
+properties of a parent <strong>DB_Table_Database</strong> object 
+contain a model of the entire database, including relationships between
+tables.</p><p><strong>DB_Table_Database</strong> provides:</p><ul>
+<li>
+  
+  An object-oriented representation of a relations between tables in a 
+  relational database, including linking/association tables that create
+  many-to-many relationships.
+  
+</li>
+
+<li>
+  
+  A simplified API for INSERT, UPDATE, DELETE, and SELECT commands, 
+  with an interface very similar to that of the 
+  <strong>DB_Table</strong> class.
+  
+</li>
+
+<li>
+  
+  Automated construction of join conditions for inner joins of any 
+  number of tables, based on a list of table names and/or a list of 
+  desired column names.
+  
+</li>
+
+<li>
+  
+  Optional checking of the validity of foreign key values by the PHP 
+  layer upon insertion or updating.
+  
+</li>
+
+<li>
+  
+  Optional PHP emulation of SQL ON DELETE and ON UPDATE referentially 
+  triggered actions.
+  
+</li>
+
+<li>
+  
+  PHP serialization to (and unserialization from) a string that contains 
+  the entire database schema.
+  
+</li>
+
+<li>
+  
+  Serialization to (and unserialization) from XML, using an extension 
+  of the MDB2 XML schema. (Unserialization from XML requires PHP 5).
+  
+</li>
+
+<li>
+  
+  Methods to set various properties of all the child 
+  <strong>DB_Table</strong> objects to a common value.
+  
+</li>
+
+<li>
+  
+  Various utility methods that aid the construction of SQL queries.
+  
+</li>
+
+</ul>
+
+
+<p>Like <strong>DB_Table</strong>, <strong>DB_Table_Database</strong> 
+wraps a DB or MDB2 database connection object. The class is compatible with 
+both PHP 4 and PHP 5, with the exception of one non-essential method: The 
+<a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+<strong>fromXML()</strong> 
+</a> 
+method, which creates a <strong>DB_Table_Database</strong> object 
+from an XML database schema, requires PHP 5.</p>
+
+<p>Class <strong>DB_Table_Database</strong> extends abstract base class
+<strong>DB_Table_Base</strong>. Methods or properties that are inherited
+from <strong>DB_Table_Base</strong> are noted as such, and are indicated
+in the table of contents of this page with the notation 
+&quot;(from <strong>DB_Table_Base</strong>)&quot;.</p>
+
+<p>This tutorial uses an extended example to introduce the use of the 
+<strong>DB_Table_Database</strong> class to create a model of
+an interface to a relational database.</p>
+
+<ul>
+  
+  <li>
+     <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">Example Database</a>
+  </li>
+  <li>
+     <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">Constructor</a>
+  </li>
+  <li>
+     
+     <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">Building a Model</a>
+     
+     <ul>
+       <li>
+          
+          <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+          <strong>addTable()</strong></a> - Adding tables
+          
+       </li>
+       <li>
+          <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+       <strong>addRef()</strong></a> - Adding references
+       </li>
+       <li>
+          <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+          <strong>addLink()</strong></a> - Declaring linking tables
+       </li>
+       <li>
+          
+            <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+            Deleting Tables, References, or Links
+            </a>
+          
+       </li>
+     </ul>
+  </li>
+  <li>
+     
+       <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+       Referentially Triggered Actions
+       </a>
+     
+     <ul>
+        <li>
+        
+          <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+          Declaring actions with <strong>addRef()</strong>
+          </a>
+        
+        </li>
+        <li>
+        
+        <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+          <strong>setOnDelete()</strong> and <strong>setOnUpdate()</strong>
+        </a>
+        
+        </li>
+        <li>
+          
+            <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+            <strong>setActOnDelete()</strong> and 
+            <strong>setActOnUpdate()</strong>
+            </a>
+          
+        </li>
+     </ul>
+  </li>
+  <li>
+     
+        <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+        Foreign Key Validation</a>
+     
+  </li>
+  <li>
+     
+     <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+     Data Selection</a>
+     
+     <ul>
+        <li>
+           
+           <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+             Query Arrays
+           </a>
+           
+        </li>
+        <li>
+           
+           <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+             <strong>select()</strong>, <strong>selectResult()</strong>, and
+             <strong>selectCount()</strong>
+           </a> 
+           (from <strong>DB_Table_Base</strong>)
+           
+        </li>
+        <li>
+           
+           <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+           <strong>autoJoin()</strong></a>
+           
+        </li>
+     </ul>
+  </li>
+  <li>
+     
+     <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+     SQL Utilities</a>
+     
+     <ul>
+        <li>
+           
+              <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+              <strong>quote()</strong></a>
+           
+        </li>
+        <li>
+           
+              <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+              <strong>buildFilter()</strong></a>
+              (from <strong>DB_Table_Base</strong>)
+           
+        </li>
+        <li>
+           
+              <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+              <strong>buildSQL()</strong></a>
+              (from <strong>DB_Table_Base</strong>)
+           
+        </li>
+        <li>
+           
+              <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+              <strong>validCol()</strong></a>
+           
+        </li>
+     </ul>
+  </li>
+  <li>
+     
+        <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+        Data Modification: 
+        <strong>insert()</strong>, <strong>update()</strong>, and 
+        <strong>delete()</strong></a>
+     
+  </li>
+  <li>
+     
+        <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+        PHP Serialization
+        </a>
+     
+     <ul>
+        <li>
+           
+              <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+              <strong>setTableSubclassPath()</strong>
+              </a>
+           
+        </li>
+     </ul>
+  </li>
+  <li>
+     
+        <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">XML Serialization</a>
+     
+  </li>
+  <li>
+     
+        <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+        Setting <strong>DB_Table</strong> Properties
+        </a>
+     
+  </li>
+  <li>
+     
+     <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">Get* Methods</a>
+     
+  </li>
+</ul>
+
+
+<h3>Example Database</h3>
+
+
+<p>Throughout this tutorial, our examples will refer to a 
+<strong>DB_Table_Database</strong> 
+object for an example database named TestDB, which is described below. 
+The child <strong>DB_Table</strong> objects that are associated 
+with RDBMS tables must all be instantiated first, and then added to 
+(i.e., linked with) a parent <strong>DB_Table_Database</strong> 
+object.</p>
+<p>The example database TestDB stores names, numbers, and addresses 
+for a set of people, and contains 4 tables. Peoples names, phone 
+numbers, and addresses are stored in three tables named Person, 
+Phone, and Address, respectively.  To allow for the fact that 
+several people may share a phone number, and that a person may 
+have more than one phone number, the database allows the creation 
+of a many-to-many relationship between Person and Phone. This
+relationships are established by an additional linking table, named 
+PersonPhone, which contains foreign key references to Person and 
+Phone.</p> 
+
+<p>DB_Table objects must be instantiated before they can be added to 
+a parent <strong>DB_Table_Database</strong> instance. The usual 
+way of creating a <strong>DB_Table</strong> object (as discussed 
+in the tutorial for that class) is to create one subclass of 
+<strong>DB_Table</strong> for each table, and create one instance 
+of each such subclass. In this tutorial, we use a convention in which 
+the subclass of <strong>DB_Table</strong> associated with a 
+database table named &quot;Entity&quot; is Entity_Table, and in which the single 
+object of this class is $Entity. This is also the convention used in
+code generated by the <strong>DB_Table_Generator</strong> class.</p> <p>The following code defines a subclass <strong>Person_Table</strong> 
+that represents a database table Person:</p><pre><code>&lt;?php
+require_once &#039;DB/Table.php&#039;
+
+class Person_Table extends DB_Table
+{
+    // Define columns
+    $col = array (
+        &#039;PersonID&#039; =&gt; array(&#039;type&#039; =&gt; &#039;integer&#039;, &#039;require&#039; =&gt; true),
+        &#039;FirstName&#039; =&gt; array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 32, &#039;require&#039; =&gt; true),
+        &#039;MiddleName&#039; =&gt; array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 32),
+        &#039;LastName&#039; =&gt; array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 64, &#039;require&#039; =&gt; true),
+        &#039;NameSuffix&#039; =&gt; array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 16),
+        &#039;AddressID&#039; =&gt; array(&#039;type&#039; =&gt; &#039;integer&#039;)
+    );
+
+    // Define indices. PersonID is declared to be the primary index
+    $idx = array(
+        &#039;PersonID&#039; =&gt; array(&#039;cols&#039; =&gt; &#039;PersonID&#039;,  &#039;type&#039; =&gt; &#039;primary&#039;),
+        &#039;AddressID&#039; =&gt; array(&#039;cols&#039; =&gt; &#039;AddressID&#039;, &#039;type&#039; =&gt; &#039;normal&#039;)
+    );
+
+    // Declare &#039;PersonID&#039; to be an auto-increment column
+    $auto_inc_col = &#039;PersonID&#039;;
+
+}
+?&gt;</code></pre><p>Here, &#039;PersonID&#039; is the primary index of the Person table. Column 
+AddressID is a foreign key that references the primary key of the 
+Address table (defined below).</p><p>Note the assignment of a value for the $auto_inc_col property, which 
+is a recent addition to <strong>DB_Table</strong>: The value of 
+$auto_inc_col is the name of a column that is declared to be &#039;auto increment&#039;. 
+Auto incrementing of this column is now implemented in the insert method 
+of <strong>DB_Table</strong> using DB or MDB2 sequences.</p><p>The following code uses the same method to create subclasses of 
+<strong>DB_Table</strong> associated with the remaining Phone, 
+Address, and PersonPhone tables of database TestDB:</p><pre><code>&lt;?php
+class Address_Table extends DB_Table
+{
+    $col = array(
+        &#039;AddressID&#039; =&gt; array(&#039;type&#039; =&gt; &#039;integer&#039;, &#039;require&#039; =&gt; true),
+        &#039;Building&#039; =&gt; array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt;16),
+        &#039;Street&#039; =&gt; array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 64),
+        &#039;UnitType&#039; =&gt; array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 16),
+        &#039;Unit&#039; =&gt; array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 16),
+        &#039;City&#039; =&gt; array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 64),
+        &#039;StateAbb&#039; =&gt; array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 2),
+        &#039;ZipCode&#039; =&gt; array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 16)
+    );
+    $idx = array(
+        &#039;AddressID&#039; =&gt; array(&#039;cols&#039; =&gt; &#039;AddressID&#039;, &#039;type&#039; =&gt; &#039;primary&#039;),
+    );
+    $auto_inc_col = &#039;AddressID&#039;;
+}
+?&gt;</code></pre>
+<pre><code>&lt;?php
+class Phone_Table extends DB_Table
+{
+    $col = array(
+        &#039;PhoneID&#039; =&gt; array(&#039;type&#039; =&gt; &#039;integer&#039;, &#039;require&#039; =&gt; true),
+        &#039;PhoneNumber&#039; =&gt; array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 16, &#039;require&#039; =&gt; true),
+        &#039;PhoneType&#039;   =&gt; array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 4)
+    );
+    $idx = array(
+        &#039;PhoneID&#039; =&gt; array(&#039;cols&#039; =&gt; &#039;PhoneID&#039;, &#039;type&#039; =&gt; &#039;primary&#039;)
+    );
+    $auto_inc_col = &#039;PhoneID&#039;;
+}
+?&gt;</code></pre>
+<pre><code>&lt;?php
+class PersonPhone_Table extends DB_Table
+{
+    $col = array(
+        &#039;PersonID&#039; =&gt; array(&#039;type&#039; =&gt; &#039;integer&#039;, &#039;require&#039; =&gt; true),
+        &#039;PhoneID&#039;  =&gt; array(&#039;type&#039; =&gt; &#039;integer&#039;, &#039;require&#039; =&gt; true)
+    );
+
+    $idx = array(
+        &#039;PersonID&#039; =&gt; array(&#039;cols&#039; =&gt; &#039;PersonID&#039;, &#039;type&#039; =&gt; &#039;normal&#039;),
+        &#039;PhoneID&#039; =&gt; array(&#039;cols&#039; =&gt; &#039;PhoneID&#039;, &#039;type&#039; =&gt; &#039;normal&#039;)
+    );
+}
+?&gt;</code></pre><p>In ths example, the PhoneType column of table Phone is used to distinguish 
+home, work, and cell phones, and so must have one of the 4 character values 
+&#039;HOME&#039;, &#039;WORK&#039; or &#039;CELL&#039;.</p><p>The following code instantiates one object of each <strong>DB_Table</strong> 
+subclass, which is associated with the corresponding table:</p><pre><code>&lt;?php
+$Person = new Person_Table($conn, &#039;Person&#039;, &#039;safe&#039;);
+$Address = new Address_Table($conn, &#039;Address&#039;, &#039;safe&#039;);
+$Phone = new Phone_Table($conn, &#039;Phone&#039;, &#039;safe&#039;);
+$PersonPhone = new PersonPhone_Table($conn, &#039;PersonPhone&#039;, &#039;safe&#039;);
+?&gt;</code></pre><p>Here, because we have used the value &#039;safe&#039; for the optional third 
+parameter of the <strong>DB_Table</strong> constructor in each 
+statement, each table will be created in the RDBMS only if and only 
+if a table of that name does not already exist in the database.</p>
+
+<p>It is recommended that constructor statements be placed in a separate 
+file from any of the <strong>DB_Table</strong> subclass definitions. 
+Doing so makes it easier to 
+<a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+serialize and unserialize</a> the 
+<strong>DB_Table</strong> and <strong>DB_Table_Database</strong> 
+objects, because a php file in which an instance of a 
+<strong>DB_Table</strong> subclass is unserialized must have access 
+to the subclass definition, but should not include the constructor statements. 
+Putting each <strong>DB_Table</strong> subclass definition in a separate 
+file, with a name that is the subclass name with a .php extension, also allows 
+the subclass definitions to be autoloaded when an object is serialized, as 
+discussed 
+<a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">below</a>.</p>
+
+<p>An alternative way to create a <strong>DB_Table</strong> object is to 
+create an instance of <strong>DB_Table</strong> itself, rather than 
+of a subclass of <strong>DB_Table</strong>.  In this method, one first 
+instantiates a generic <strong>DB_Table</strong> object, which initially 
+contains no information about the table schema, and then sets the values of 
+the public $col and $idx properties needed to define a table schema. As an 
+example, the following code constructs an instance of DB_Table that represents 
+the Person table:</p><pre><code>&lt;?php
+$Person = new DB_Table($conn, &#039;Person&#039;);
+
+$Person-&gt;col[&#039;PersonID&#039;] = array(&#039;type&#039; =&gt; &#039;integer&#039;, &#039;require&#039; =&gt; true);
+$Person-&gt;col[&#039;FirstName&#039;] = array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 32, &#039;require&#039; =&gt; true);
+$Person-&gt;col[&#039;MiddleName&#039;] = array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 32);
+$Person-&gt;col[&#039;LastName&#039;] = array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 64, &#039;require&#039; =&gt; true);
+$Person-&gt;col[&#039;NameSuffix&#039;] = array(&#039;type&#039; =&gt; &#039;char&#039;, &#039;size&#039; =&gt; 16);
+$Person-&gt;col[&#039;AddressID&#039;] = array(&#039;type&#039; =&gt; &#039;integer&#039;);
+
+$Person-&gt;idx[&#039;PersonID&#039;] = array(&#039;cols&#039; =&gt; &#039;PersonID&#039;, &#039;type&#039; =&gt; &#039;primary&#039;);
+$Person-&gt;idx[&#039;PersonID&#039;] = array(&#039;cols&#039; =&gt; &#039;PersonID&#039;, &#039;type&#039; =&gt; &#039;normal&#039;);
+
+$Person-&gt;auto_inc_col = &#039;PersonID&#039;;
+?&gt;</code></pre><p>This method is valid only in recent versions of the 
+<strong>DB_Table</strong> package (1.5.0RC1 and greater) that contain 
+the <strong>DB_Table_Database</strong> class. Earlier versions of 
+<strong>DB_Table</strong> required that <strong>DB_Table</strong> 
+always be extended.  The only real disadvantage of using such generic 
+<strong>DB_Table</strong> objects is that it makes it impossible to 
+override the methods of <strong>DB_Table</strong> to, for example, 
+customize the insert or update method so as to implement business rules 
+for a table. Generic <strong>DB_Table</strong> objects are used by 
+the <strong>fromXML()</strong> method, which takes an XML description of 
+a database schema as a parameter, and returns a 
+<strong>DB_Table_Database</strong> object in which each of the child 
+tables is represented by an instance of <strong>DB_Table</strong>.</p>
+
+
+<h3>Constructor</h3>
+
+
+<p>A <strong>DB_Table_Database</strong> object is instantiated as an 
+empty shell, to which tables, foreign key references, and links are then 
+added. The constructor interface is</p>
+<br><br>void DB_Table_Database(DB/MDB2 object $conn, string $name)
+<p>The parameter $conn must be either a DB or MDB2 object, which establishes
+a connection to a RDBMS.  The $name parameter is the name of the 
+database. To instantiate an object that represents a database named 
+TestDB with a DB connection to a MySQL database, we might thus use 
+(with no error checking):</p><pre><code>&lt;?php
+require_once &#039;DB/Table/Database.php&#039;
+
+$conn = DB::connect(&quot;mysqli://$user:$password@$host&quot;);
+$db = new DB_Table_Database($conn, &#039;TestDB&#039;);
+?&gt;</code></pre><p>where the values of $user, $password, and $host are the user name,
+database password, and host machine, respectively.</p>
+
+
+<h3>Building a Model</h3>
+
+
+<p>To construct a model of a relational database, after instantiating a 
+set of <strong>DB_Table</strong> objects and a 
+<strong>DB_Table_Database</strong> object, we must add the table 
+objects to the database object, add declarations of foreign key 
+references, and declare many-to-many relationships that involve linking 
+tables, in that order.</p>
+
+<h3>Adding Tables</h3>
+
+
+<p>After a <strong>DB_Table</strong> object is instantiated, it 
+can be added to the parent database with the 
+<strong>DB_Table_Database::addTable()</strong> method. The interface 
+for this method is</p>
+<br><br>true|PEAR_Error addTable(object &amp;$Table)
+<p>where $Table is a <strong>DB_Table</strong> object that is passed 
+by reference. The method returns boolean true on normal completion, and 
+a <strong>PEAR_Error</strong> object on failure.</p><p>The following code adds the four tables of our example database to 
+the $db <strong>DB_Table_Database</strong> object:</p><pre><code>&lt;?php
+$db-&gt;addTable($Person);
+$db-&gt;addTable($Address);
+$db-&gt;addTable($Phone);
+$db-&gt;addTable($PersonPhone);
+?&gt;</code></pre><p>In this and all subseqent examples, we omit the error handling code
+that should be added to production code.</p>
+
+
+<h3>Adding Foreign Key References</h3>
+
+
+<p>After tables have been added to a database, we can use the 
+<strong>addRef()</strong> method to add references between pairs 
+of tables.</p><p>Synopsis (simplified):</p>
+<br><br>true|PEAR_Error addRef(string $ftable, string|array $fkey, <br>                       string $rtable, [string|array $rkey] )
+<p>Here $ftable is the name of a referencing (or foreign key) table, $fkey 
+is the foreign key, $rtable is the name of the referenced table, and $rkey 
+is the (optional) referenced key. If the optional $rkey parameter is absent 
+or null, the referenced key is taken by default to be the primary key of 
+the referenced table.  The foreign and referenced key values are specified 
+using the same syntax as that used to define indices in 
+<strong>DB_Table</strong>: Each key 
+may be either a column name string, for a single-column key, or a sequential 
+array of column names, for a multi-column key. The method returns true on 
+normal completion, and a <strong>PEAR_Error</strong> on failure.  The 
+simplified synopsis shown here does not include two more optional parameters 
+(parameters 5 and 6) that can be used to specify &#039;on delete&#039; and &#039;on update&#039; 
+actions. The full interface is presented 
+<a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+below</a>.
+
+For example, the command:</p><pre><code>&lt;?php
+$db-&gt;addRef(&#039;Person&#039;, &#039;AddressID&#039;, &#039;Address&#039;, &#039;AddressID&#039;);
+?&gt;</code></pre><p>adds a reference from foreign key Person.AddressID of referencing table 
+Person to the primary key Address.AddressID of referenced table Address. 
+Because the referenced key &#039;AddressID&#039; is also the primary key of table
+&#039;Address&#039; this could also be written as:</p><pre><code>&lt;?php
+$db-&gt;addRef(&#039;Person&#039;, &#039;AddressID&#039;, &#039;Address&#039;);
+?&gt;</code></pre><p>When the referenced key is explicitly specified, as in the first example, 
+it should always be either a primary key or a key for which a unique index 
+is defined, as required by standard SQL.</p><p>A reference between two tables can only be added after both the referencing 
+and referenced <strong>DB_Table</strong> objects have been instantiated 
+and added to the parent <strong>DB_Table_Datbase</strong> instance.</p>
+
+
+<h3>Adding Links</h3>
+
+
+<p>A table may be declared to be a &quot;linking&quot; table that establishes a 
+many-to-may relationship between two others. The only effect of such 
+a declaration is to change the action of the autoJoin method: 
+If a table named $link is declared to be a linking table that creates 
+a many-to-many relationship between tables named $table1 and $table2, 
+then the autoJoin method may use the linking table to join $table1 
+and $table2, if necessary.</p><p>Method <strong>addLink()</strong> declares a table to be a 
+linking or association table for two others.</p><p>Synopsis:</p>
+<br><br>true|PEAR_Error addLink(string $table1, string $table2, string $link)
+<p>Here, $link is the name of a linking table that links tables named 
+$table1 and $table2. All three parameters are required, and all must 
+be valid table name strings.  It does not matter which of the two 
+linked tables, $table1 and $table2, is listed first and which second 
+in the function call. A table that links $table1 and $table2 must have 
+foreign keys that references to both of the linked tables.  A link can 
+only be added to the model after the references from the linking table 
+to both of the linked tables have been added.  The method returns true
+on normal completion and a <strong>PEAR_Error()</strong> if an error 
+is detected.</p>
+<p>For example, the command:</p><pre><code>&lt;?php
+$db-&gt;addLink(&#039;Person&#039;, &#039;Phone, &#039;PersonPhone&#039;)
+?&gt;</code></pre><p>declares PersonPhone to be a linking table that links tables Person
+and Phone.</p><p>The <strong>addLink()</strong> method will not prevent one from 
+declarating more than one linking table for the same two linked 
+tables. Doing so would make the link declaration useless, however, 
+because the <strong>autoJoin()</strong> method will fail if it 
+needs to use a linking table to join a pair of tables, but finds 
+that more than one of linking table is declared for those two 
+tables.</p><p>The command</p><pre><code>&lt;?php
+$db-&gt;addAllLinks()
+?&gt;</code></pre><p>adds all possible linking tables to the database. In this method,
+any table that has foreign keys that reference tables $table1 and
+$table2 is declared to be a link between $table1 and $table2. In
+some databases, the easiest way to declare links may be by using
+the addAllLinks method to create all possible links and then using
+the 
+<a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+<strong>deleteLink()</strong></a> method to delete those that 
+are not desired.</p>
+<p>The database model is complete when all of the tables have been
+added, all of the references have been added, and all the links 
+have been added.</p>
+
+
+<h3>Example - Putting it Together</h3>
+
+
+<p>For our example, let us create a directory in which to put all of 
+the code required as an interface to a database. We will put each 
+<strong>DB_Table</strong> subclass definition in a separate 
+file in this directory, in which each file name is simply the class
+name with a &#039;.php&#039; extension. In addition, it is convenient to create 
+a single file, which we will call &#039;Database.php&#039;, in which we create
+a DB or MDB2 connection, create one object per table, and construct
+a parent <strong>DB_Table_Database</strong> object. This file 
+structure is used by the <strong>DB_Table_Generator</strong> 
+class for code that is auto-generated for an existing database. 
+Below is a listing of the minimal &#039;Database.php&#039; file required for
+our example database:</p>
+
+<p><strong>Database.php File</strong></p>
+
+<pre><code>&lt;?php
+require_once &#039;MDB2.php&#039;;
+require_once &#039;DB/Table/Database.php&#039;;
+require_once &#039;Person_Table.php&#039;;
+require_once &#039;Address_Table.php&#039;;
+require_once &#039;Phone_Table.php&#039;;
+require_once &#039;PersonPhoneAssoc_Table.php&#039;;
+
+// NOTE: User must uncomment &amp; edit code to create $dsn
+$phptype  = &#039;mysqli&#039;;
+$username = &#039;root&#039;;
+$password = &#039;password&#039;;
+$hostname = &#039;localhost&#039;;
+$dsn = &quot;$phptype://$username:$password@$hostname&quot;;
+
+// Instantiate DB/MDB2 connection object $conn
+$conn =&amp; MDB2::connect($dsn);
+if (PEAR::isError($conn)) {
+    print &quot;Error connecting to database server\n&quot;;
+    print $conn-&gt;getMessage();
+    die;
+}
+
+// Create one instance of each DB_Table subclass
+$Person = new Person_Table($conn, &#039;Person&#039;);
+$Address = new Address_Table($conn, &#039;Address&#039;);
+$Phone = new Phone_Table($conn, &#039;Phone&#039;);
+$PersonPhoneAssoc = new PersonPhoneAssoc_Table($conn, &#039;PersonPhoneAssoc&#039;);
+
+// Instantiate a parent DB_Table_Database object $db
+$db = new DB_Table_Database($conn, &#039;42A&#039;);
+
+// Add DB_Table objects to parent DB_Table_Database object
+$db-&gt;addTable($Person);
+$db-&gt;addTable($Address);
+$db-&gt;addTable($Phone);
+$db-&gt;addTable($PersonPhoneAssoc);
+
+// Add foreign references
+$db-&gt;addRef(&#039;PersonPhoneAssoc&#039;, &#039;PersonID&#039;, &#039;Person&#039;);
+$db-&gt;addRef(&#039;PersonPhoneAssoc&#039;, &#039;PhoneID&#039;, &#039;Phone&#039;);
+$db-&gt;addRef(&#039;Person&#039;, &#039;AddressID&#039;, &#039;Address&#039;);
+
+// Add all possible linking tables 
+$db-&gt;addAllLinks();
+
+?&gt;</code></pre>
+
+
+<p>This example file is very similar to the skeleton file that would 
+be created by <strong>DB_Table_Generator</strong> for an 
+existing database with this structure. The main differences are
+that some lines in the auto-generated file would have to be 
+uncommented or edited to produce the above (<em>e.g.</em>,
+the lines that define the database DSN). In this example, the call
+to <strong>addAllLinks()</strong> method would correctly identify 
+&#039;PersonPhoneAssoc&#039; as a table that links &#039;Person&#039; and &#039;Phone&#039;. This
+example does not include any referentially triggered &#039;ON DELETE&#039; or 
+&#039;ON UPDATE&#039; actions, discussed below, which could be added to the
+end of the same file.</p>
+
+
+<h3>Deleting Tables, References, and Links</h3>
+
+
+<p>The 
+<strong>deleteTable()</strong>, 
+<strong>deleteRef()</strong>, and 
+<strong>deleteLinks()</strong>
+methods can be used to delete 
+tables, and foreign key references, and linking table declarations, 
+respectively, from the <strong>DB_Table_Database</strong> model.</p>
+
+<p><strong>deleteTable()</strong> - deletes a table from the database model</p>
+
+<p>Synopsis:</p>
+<br><br>void deleteTable(string $table)
+<p>Parameter $table is the name of the table to be deleted. Deletion 
+of a table causes deletion of the table and all other entities of 
+the model that depend on the existence of that table, including
+foreign key references to or from that table, and linking
+relationships that depend upon the existence of those foreign
+key references.</p>
+
+<p><strong>deleteRef()</strong> - deletes a reference from the database model</p>
+<p>Synopsis:</p>
+<br><br>void deleteRef(string $ftable, string $rtable)
+<p>where $ftable and $rtable are the names of the referencing and 
+referenced tables, respectively. Deletion of a foreign key reference 
+causes deletion of any links that rely on the existence of that 
+reference, i.e., links in which $ftable is the linking table and 
+$rtable is one of the linked tables.</p>
+<p><strong>deleteLink()</strong> - deletes a linking table declaration</p>
+<p>Synopsis:</p>
+<br><br>void deleteLink(string $table1, string $table2, [string $link])
+<p>Here $table1 and $table2 are names of the linked tables, and the
+optional parameter $link is the name of the linking table. If $link 
+is null or absent, all declarations of linking tables between $table1 
+and $table2 are deleted. If $link is present, only the declaration of 
+$link as a linking table between $table1 and $table2 is deleted (if 
+one exists). The <strong>deleteLinks()</strong> method may be used 
+after the <strong>addAllLinks()</strong> to prune the resulting set 
+of linking table declarations.</p>
+
+
+
+<h3>On Delete and On Update Actions</h3>
+
+
+<p><strong>DB_Table_Database</strong> optionally provides actions designed 
+to enforce referential integrity that are provided by ANSI SQL, but that are 
+not provided by some popular databases (e.g., SQLite and the default 
+MySQL engine).  <strong>DB_Table_Database</strong> offers optional PHP 
+emulation of referentially triggered ON DELETE and ON UPDATE actions, such 
+as cascading deletes (discussed here), and also optionally checks the 
+validity of foreign key values before insertion or updating 
+(discussed 
+<a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">below</a>)</p>
+<p>The ON DELETE and ON UPDATE actions associated with a reference 
+(if any) may be declared either as additional parameters to 
+<a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+<strong>addRef()</strong></a>, or by using 
+<a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+<strong>setOnDelete()</strong> and <strong>setOnUpdate()</strong></a>.</p>
+
+<h3>Declaring actions in <strong>addRef()</strong></h3>
+
+
+<p>Actions to be taken on deletion or updating of a referenced row may
+may be declared when a reference is added to the model using two 
+optional parameters of the <strong>addRef()</strong> method. The following 
+example shows the extended form of <strong>addRef()</strong> needed to add 
+a reference from PersonPhone to Person (as above), while also declaring a 
+cascade action on delete of a referenced row of Person, and a restrict 
+action on update of such a row:</p><pre><code>&lt;?php
+$db-&gt;addRef(&#039;PersonPhone&#039;, &#039;PersonID&#039;, &#039;Person&#039;, null, &#039;cascade&#039;, &#039;restrict&#039;);
+?&gt;</code></pre><p>Here, a null value of the fourth parameter is used to indicate that 
+the referenced key should be taken, by default, to be primary key of 
+referenced table Person.  The values of the fifth and sixth parameters 
+represent actions to be taken upon delete (&#039;cascade&#039;) and upon update 
+(&#039;restrict&#039;), respectively.  A null or absent value for either of 
+these parameters indicates that no referentially triggered action 
+should be taken on delete or on update.</p>
+<p>The effect of the &#039;cascade&#039; values of the fifth parameter in the above 
+example is to declare that that all referencing rows of PersonPhone should 
+be deleted upon deletion of a corresponding referenced row of Person (a 
+cascading delete). The &#039;restrict&#039; value of the sixth parameter declares 
+that updating of the primary key PersonID of Person should be prevented 
+(the &#039;restrict&#039; on update action), and an error should be thrown by the
+update method, in rows of Person that are referenced by rows of 
+PersonPhone.</p>
+
+<p>The full interface of the <strong>addRef()</strong> method is:</p>
+<br><br>true|PEAR_Error addRef(string $ftable, mixed $fkey, string $rtable, [mixed $rkey], <br>                       [string|null $on_delete], [string|null $on_update])
+<p>Here, $ftable is the referencing table, $fkey is the foreign key, $rtable 
+is referenced table, and $rkey is the referenced key.  The $fkey and $rkey 
+parameters may be column name strings or arrays of column names, or $rkey 
+may be null.  An absent or null value of $rkey indicates a reference to 
+the primary key of the referenced table.  The $on_delete and $on_update 
+parameters indicate actions to be taken on deletion or updating of a 
+referenced row.  The only allowed values of $on_delete and $on_update are 
+the string literals</p><pre>&#039;cascade&#039; | &#039;restrict&#039; | &#039;set null&#039; | &#039;set default&#039;</pre>
+<p>or PHP null, which is the default value for both parameters. Each of 
+the allowed action strings is the lower case form of a standard SQL 
+action, and turns on PHP emulation of the corresponding action. An 
+absent or null value for either action indicates that no action should 
+be taken at the PHP layer upon delete or update of a referenced row.
+(Note that a PHP null value is different from the &#039;set null&#039; action 
+string.)</p>
+<p>The following example declares all of the foreign key references needed 
+in our example database, with appropriate referentially triggered actions:</p><pre><code>&lt;?php
+$db-&gt;addRef(&#039;Person&#039;, &#039;AddressID&#039;, &#039;Address&#039;, null, &#039;set null&#039;, &#039;cascade&#039;);
+$db-&gt;addRef(&#039;PersonPhone&#039;, &#039;PersonID&#039;, &#039;Person&#039;, null, &#039;cascade&#039;, &#039;cascade&#039;);
+$db-&gt;addRef(&#039;PersonPhone&#039;, &#039;PhoneID&#039;, &#039;Phone&#039;, null, &#039;cascade&#039;, &#039;cascade&#039;);
+?&gt;</code></pre><p>As a result of these declarations, rows in the linking table PersonPhone will 
+be deleted when corresponding rows of either Person or Phone are deleted, and 
+updated if the primary keys of reference rows Person or Phone are modified. 
+The foreign key AddressID of a row in table Person will be set to null if the 
+corresponding referenced row of Address is deleted (to indicate that no 
+address is known), and updated if the primary key of that row in Address is 
+modified.</p>
+
+
+<h3>
+  <strong>setOnDelete()</strong> and <strong>setOnUpdate()</strong>
+</h3>
+
+
+<p>The referentially triggered actions associated with a foreign key 
+reference may also be changed, or turned off, with the 
+<strong>setOnDelete()</strong> and <strong>setOnUpdate()</strong> 
+methods.</p><p>Synopses:</p>
+<br><br>void setOnDelete(string $ftable, string $rtable, string|null $action)<br>void setOnUpdate(string $ftable, string $rtable, string|null $action)
+<p>Here, $ftable and $rtable are the names of referencing (foreign key) 
+and referenced table, respectively, for an existing reference. The 
+$action parameter is the value for the on_delete or on_update action 
+for that reference, i.e., either an action strings or null. A null 
+parameter is used to indicate that no action on delete or update of 
+rows of table $rtable.</p>
+<p>For example, the following code would change the &#039;on_update&#039; action 
+associated with the reference from &#039;PersonPhone&#039; to &#039;Person&#039; to 
+a &#039;restrict&#039; action:</p><pre><code>&lt;?php
+$db-&gt;setOnUpdate(&#039;PersonPhone&#039;, &#039;Person&#039;, &#039;restrict&#039;);
+?&gt;</code></pre><p>The effect this is to prohibit updates of the primary key value in 
+rows of Person that are referenced by rows of PersonPhone.</p>
+
+
+<h3>
+<strong>setActOnDelete()</strong> and <strong>setActOnUpdate()</strong>
+</h3>
+
+
+<p>PHP emulation of referentially triggered actions may be turned on or 
+off for the entire database by the 
+<strong>setActOnDelete()</strong> and 
+<strong>setActOnUpdate()</strong> methods.</p>
+<p>Synopses:</p>
+<br><br>void setActOnDelete(bool $flag)<br>void setActOnUpdate(bool $flag)
+<p>Passing a true value to either method activates PHP emulation of all 
+of the declared ON DELETE or ON UPDATE actions, respectively, while a 
+false value turns off PHP emulation of the corresponding action. By 
+default, PHP emulation of both ON DELETE and ON UPDATE actions is on.
+Calling either of these methods with a false value does not modify
+the values of the instance property (the $_ref property) that records 
+the on delete or on update actions associated with each reference: 
+It merely prevents PHP emulation of these actions by the 
+<strong>DB_Table_Database::delete()</strong> and 
+<strong>DB_Table_Database::update()</strong> methods.</p>
+
+
+
+<h3>Foreign Key Validation</h3>
+
+
+<p>By default, <strong>DB_Table_Database</strong> checks the validity 
+of foreign key values before inserting or updating data in a table with 
+foreign keys. That is, before inserting a row, or updating any foreign key 
+column values, the <strong>insert()</strong> and <strong>update()</strong>
+methods of <strong>DB_Table_Database</strong> actually submit a query 
+to confirm that the inserted or updated foreign key column values correspond 
+to values of the referenced columns of an existing row in the referenced 
+table. By default, both methods throw an error, and do not modify the data, 
+if this check fails.</p>
+<p>This checking of foreign key validity by the PHP layer may be turned on 
+or off, for insertion or updating of any table in database, with the 
+<strong>setCheckFKey()</strong> method. The interface of this method is:</p>
+<br><br>void setCheckFKey(bool $flag)
+<p>Passing a true value of $flag turns on checking of foreign keys (the
+default), while a false value turns checking off.</p>
+
+
+<h3>Data Selection</h3>
+
+
+<p><strong>DB_Table_Database</strong> provides an object-oriented 
+interface for SQL select statements that is almost identical to that of 
+<strong>DB_Table</strong>.</p>
+
+<h3>Query Arrays</h3>
+
+
+<p>As in <strong>DB_Table</strong>, queries are represented in 
+<strong>DB_Table_Database</strong> as arrays, in which array 
+elements represents clauses of a corresponding SQL select statement. 
+For example, a query for names of all people that live on Oak Street 
+in Anytown in our example database might be</p>
+<br>&lt;?php<br>$oak = array(<br>   &#039;select&#039;  =&gt; &#039;Person.FirstName, Person.LastName, Address.Building&#039;,<br>   &#039;from&#039;    =&gt; &#039;Person, Address&#039;,<br>   &#039;where&#039;   =&gt; &quot;Person.AddressID = Address.AddressID\n&quot; <br>              . &quot;  AND Address.Street = &#039;Oak Street&#039;\n&quot;<br>              . &quot;  AND Address.City = &#039;AnyTown&#039;&quot;,<br>   &#039;order&#039;   =&gt; &#039;Address.Building&#039; );<br>?&gt;
+<p>The 
+<a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+<strong>buildSQL()</strong></a> method accepts such a query array as 
+a parameter and returns the corresponding SQL command string. For example</p><pre><code>&lt;?php
+echo $db-&gt;buildSQL($oak);
+?&gt;</code></pre><p>yields the output</p><pre>SELECT Person.FirstName, Person.LastName, Address.Building
+FROM Person, Address
+WHERE Person.AddressID = Address.AddressID
+  AND Address.Street = &#039;Oak Street&#039;
+  AND Address.City = &#039;AnyTown&#039;
+ORDER BY Address.Building</pre>
+<p>The string values of most values in this array are passed to the 
+RDBMS unmodified, prefixed by the keywords &#039;SELECT&#039;, &#039;FROM&#039;, etc. 
+Column names that appear in only one table often do not need to be 
+qualified by table names, as they are in the above example.</p><p>As in <strong>DB_Table</strong>, such query arrays can be stored 
+in the public $sql property array:</p><pre><code>&lt;?php
+$db-&gt;sql[&#039;oak&#039;] = $oak
+?&gt;</code></pre><p>Representing queries as arrays, rather than strings, makes it easier 
+for baseline queries to be modified by, for example, adding additional 
+limitations to the end of the &#039;where&#039; clause string.</p>
+
+
+<h3>Select* Methods: 
+  <strong>select()</strong>, <strong>selectResult()</strong>, and
+  <strong>selectCount()</strong>
+</h3>
+
+
+<p>The <strong>select*()</strong> methods are inherited by both the 
+<strong>DB_Table_Database</strong>  and <strong>DB_Table</strong>
+classes from the <strong>DB_Table_Base</strong> class, and thus 
+share the same interface and behavior. The interface is also the same
+for all three methods. The required first parameter can be either the 
+key for a previously stored query array, as in</p><pre><code>&lt;?php
+$result = $db-&gt;select(&#039;oak&#039;)
+?&gt;</code></pre><p>or the corresponding array value as a parameter, as in</p><pre><code>&lt;?php
+$result = $db-&gt;select($oak)
+?&gt;</code></pre><p>The select method returns a result set as a numerically indexed array of 
+rows. Each row can represented as be either an associative or numerical 
+array, or an object, depending on the value of the $fetchmode property of 
+the <strong>DB_Table_Database</strong> object or (if this is null) 
+the fetchmode of the underlying DB or MDB2 object.</p> 
+
+<p>The common interface of three select* methods
+<strong>select()</strong>, 
+<strong>selectCount()</strong>, and 
+<strong>selectResult()</strong> is:</p>
+<br><br>mixed select*( array|string $sql_key, [string $filter], [string $order], <br>               [int $start], [int $count], [array $params])
+<p>As discussed above, $sql_key is either a query array, or the key of 
+a baseline query array that has been stored in the $sql property. The 
+$filter parameter is an SQL logical expression string that limits the 
+result set. This condition is added (i.e., ANDed) to the end of the 
+&#039;where&#039; element of the $sql_key query array. The $order parameter is 
+an ORDER BY clause (without the ORDER BY prefix) that can be used to 
+override any &#039;order&#039; element of the $sql_key array.  Integer parameters 
+$start is which the position within the full result set of the first 
+row that should be included in the return value, while $count is the 
+maximum number of rows desired within the return value. If present, 
+$params is an array in which the values are parameters for placeholder 
+substitution in a prepared query.</p>
+
+
+<h3><strong>autoJoin()</strong></h3>
+
+
+<p><strong>autoJoin()</strong> - accepts an array parameter containing 
+the names of desired columns and/or an array of tables names, and returns 
+a query array containing a WHERE clause with automatically 
+generated join conditions.</p>
+<p>Synopsis:</p><pre><code>&lt;?php
+array|PEAR_Error autoJoin([array $cols], [array $tables], [string $filter])
+?&gt;</code></pre><p>Here, $cols is a sequential array of the names of the desired columns, 
+$tables is a sequential array of names of tables to be joined, and
+$filter is an SQL logical statement that may be used to limit the
+results. The $filter clause is added (i.e., ANDed) to the end of the
+the &#039;where&#039; element, after the automatically generated join 
+conditions.  Both the $col and $tables parameter are optional, but 
+at least one of them must be supplied. The query returned by 
+autoJoin is an inner join of a set of tables containing all of those 
+listed in the $tables parameter, all of the tables containing the 
+columns listed in the $cols parameter, and any linking tables 
+required to join these tables.</p>
+<p>The following example generates and submits query that selects a result 
+set in which each row contains a person&#039;s name, home phone number and 
+address, based on knowledge of the names of the desired columns. In our 
+example database, this requires that all four tables be joined.</p><pre><code>&lt;?php
+$cols = array(&#039;FirstName&#039;, &#039;LastName&#039;, &#039;PhoneNumber&#039;, &#039;Building&#039;, &#039;Street&#039;, &#039;City&#039;)
+$report = $db-&gt;autoJoin($cols, &quot;Phone.PhoneType = &#039;HOME&#039;&quot;);
+$result = $db-&gt;select($report);
+?&gt;</code></pre><p>Note that the column names in the $cols parameter do not need to be 
+qualified by table names if they are unambiguous -- the autoJoin 
+method internally uses the 
+<a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+<strong>validCol()</strong></a> 
+method to validate and disambiguate all qualified and unqualified 
+column names.</p>
+<p>The SQL command corresponding to such a query array may be obtained
+using 
+<a href="package/DB_Table/docs/index.html#package-database-db-table-intro-database">
+<strong>buildSQL()</strong></a>. In this example,the command</p><pre><code>&lt;?php
+echo $db-&gt;buildSQL($report);
+?&gt;</code></pre><p>yields</p><pre>SELECT Person.FirstName, Person.LastName, Phone.PhoneNumber, Address.Building, Address.Street, Address.City
+FROM Person, Phone, Address, PersonPhone
+WHERE PersonPhone.PhoneID = Phone.PhoneID
+  AND PersonPhone.PersonID = Person.PersonID
+  AND Person.AddressID = Address.AddressID</pre>
+<p>If <strong>autoJoin()</strong> is passed only a set of column names, 
+as in the above example, it identifies the set of tables that contain 
+those columns, and joins those tables, plus any linking tables needed 
+to create many-to-many relationships.</p><p>In the following example, the $cols parameter is null, but the names 
+of the tables to be joined are specified in the $tables parameter:</p><pre><code>&lt;?php
+$tables = array(&#039;Person&#039;, &#039;Address&#039;, &#039;Phone&#039;);
+$report = $db-&gt;autoJoin(null,$tables);
+$result = $db-&gt;select($report);
+?&gt;</code></pre><p>The corresponding SQL command is</p><pre>SELECT *
+FROM Person, Phone, Address, PersonPhone
+WHERE PersonPhone.PhoneID = Phone.PhoneID
+  AND PersonPhone.PersonID = Person.PersonID
+  AND Person.AddressID = Address.AddressID</pre>
+<p>When the first argument of autoJoin is null, as in this example,
+the SELECT clause is taken to be &#039;SELECT * by default. Note that
+the FROM and WHERE clauses join a linking table PersonPhone that 
+was not explicitly specified, because this table was necessary 
+to join two of the tables containing the desired data.</p>
+
+<p>Algorithm: 
+The algorithm used by <strong>autoJoin()</strong> is designed to 
+find appropriate join conditions if these exist and are unambiguous, 
+and to return a PEAR Error if the structure of references and linking 
+tables either yields a multiply connected network of joins, or if it 
+cannot construct an appropriate set of join conditions.  The method 
+first examines the $col and $table property to identify the list of 
+tables that must be joined. It then creates a network of joined tables 
+(the joined set) by starting with one table and sequentially adding 
+tables to the joined set from the set of tables have not yet been 
+joined (the unjoined set). The process starts by taking the first 
+required table as a nucleus of the joined set, and then iterating 
+through the unjoined set in search of a table that can be joined to 
+the first.  During this and each subsequent stage of addition, the 
+method iterates through the unjoined set in search of a table that 
+can be joined to any table in the joined set (i.e., that either 
+references or is referenced by one of the tables in the joined set.)  
+If it finds an unjoined table that can be joined to exactly one table 
+in the joined set, that table is added to the joined set, and the 
+search for another table to join begins.  If the search encounters 
+a table in the unjoined set that can be joined to two or more tables 
+in the joined set, the method returns an error indicating that the 
+join conditions are ambiguous -- the method will only return a set 
+of joins that correspond to a tree graph (where tables are nodes and 
+joins are bonds) and will reject any multiply connected set of 
+joins. If it is found that none of the tables in the unjoined 
+set can be directly joined to any table in the joined set, the 
+method then cycles through the unjoined set again in search of 
+a table that can be joined to exactly one table in the joined 
+set through a linking tables.  If it finds a table that is 
+connected via linking tables to two or more tables in the 
+joined set, it will also return an error. If the search does 
+not identify any unjoined table that can be joined to a table 
+in the joined set either through a direct reference or a linking 
+table, the method returns an error indicating that the required 
+set of tables can not be joined.</p>
+
+
+
+<h3>SQL Utilities</h3>
+
+
+
+<h3><strong>quote()</strong></h3>
+
+
+<p>The quote method returns an SQL literal string representation of the 
+parameter $value.</p><p>Synposis:</p>
+<br><br>string quote(mixed $value)
+<p>The <strong>DB_Table_Database::quote()</strong> method calls either the 
+<strong>DB::quoteSmart()</strong> or <strong>MDB2::quote()</strong> 
+method internally.  The return value is always a string, with a return 
+value whose format depends upon the PHP type of $value: If $value is a 
+string, the method returns a string that is properly quoted and escaped 
+for the underlying RDBMS. If $value is an integer or float, it returns an 
+unquoted string representation of the number. If $value is boolean, it 
+returns &#039;1&#039; for true, or &#039;0&#039; for false (consistent with the representation 
+of booleans as integers used by the <strong>DB_Table</strong> abstract 
+data type). If $value is null, it returns the unquoted string NULL.</p>
+
+<h3><strong>buildFilter()</strong></h3>
+
+
+<p><strong>buildFilter()</strong> returns a SQL logical expression that 
+is true if the values of a specified set of database columns are equal to 
+a corresponding set of SQL literal values. It must be passed an array 
+parameter in which the array keys are column names and the array values 
+are the required values.</p><p>The following example uses the buildFilter method to construct a filter 
+for addresses on Pine St. in Peoria:</p><pre><code>&lt;?php
+$data = array(&#039;Street&#039; =&gt; &#039;Pine St&#039;, &#039;City&#039; =&gt; &#039;Peoria&#039;);
+$filter = $db-&gt;buildFilter($data);
+?&gt;</code></pre><p>Printing $filter then yields the SQL snippet:</p><pre>Street = &#039;Pine St&#039; AND City = &#039;Peoria&#039;</pre>
+<p>In this example, the resulting SQL string is admittedly longer than 
+the code required to create it. The function becomes more useful 
+when the column names and/or values are variables representing data
+of various types, rather than string literals, or strings that may
+require escaping. The buildFilter method uses the quote method 
+internally to construct SQL literal string representations of 
+values.</p>
+
+
+<h3><strong>buildSQL()</strong></h3>
+
+
+<p><strong>buildSQL()</strong> - takes a query array of the form used by 
+the select* methods, and returns a corresponding SQL command string. 
+It is called internally by the <strong>select*()</strong> methods. 
+Both <strong>buildSQL()</strong> and the <strong>select*()</strong> 
+methods are inherited from <strong>DB_Table_Base</strong>.</p>
+<p>Synopsis: The interface is similar to that of the <strong>select*()</strong> 
+methods:</p>
+<br><br>string|PEAR_Error buildSQL(array|string $query, [string $filter], [string $order], <br>                           [int $start], [int $count])
+<p>As in the <strong>select*()</strong> methods, $query is a query array or a key 
+for a query array stored in the $sql property, $filter is an SQL logical condition 
+that is added to the &#039;where&#039; element of the query array, $order is an ORDER BY clause 
+that overrides the &#039;order&#039; element of the query array when it is present, and $start 
+and $count are the first row in the result set that should be returned, and the 
+maximum number of rows that should be returned. Only the $query argument is required.</p>
+
+
+<h3><strong>validCol()</strong></h3>
+
+
+<p><strong>validCol()</strong> - validates and (if necessary) disambiguates 
+column names.</p>
+<p>Synopsis:</p>
+<br><br>array|PEAR_Error validCol(string $col, [array $from])
+<p>The required parameter $col is a column name. The optional $from parameter 
+is a sequential array of table names.</p>
+<p>The $col parameter may either be a column name qualified by a table name, 
+using the SQL syntax table.column, or a column name that is not qualified 
+by a table name, if the identification of the column with a table is 
+unambiguous.  The return value of validCol, upon success, is a sequential 
+array in which the second element is the unqualified column name string,
+and the first element is either a table name (if $col is qualified by a 
+table name or a unique table can be identified) or a sequential array of 
+possible column names (if $col is an unqualified column name that could 
+refer to columns in two or more different tables). If no column with the 
+specified name exists in the database, a PEAR error is returned.</p>
+<p>The optional $from parameter is used only when $col is not explicitly 
+qualified by a table name. When it is present, $from is a sequential 
+list of tables that should be searched for a column of the specified 
+name (as in the from clause of an SQL select statement). In this case, 
+validCol first searches the tables in $from, and returns a table name 
+if this yields a unique result. If a set of or more tables in $from 
+are found to contain a column with the specified name, the return value 
+is that set, or a subset thereof. If none of the table in $from contain
+a columns with the specified name, the search is instead broadened to 
+all tables in the database.  If two or more choices still remain at 
+this point (either more than one tables in from, or more than one
+tables in the rest of the database) the method tries excluding tables 
+in which the specified column is a foreign key column, if this still 
+leaves one or more tables in which the column is not a foreign key 
+column.</p>
+
+
+
+<h3>Data Modification: <strong>insert()</strong>, 
+       <strong>update()</strong>, and <strong>delete()</strong> 
+</h3>
+ 
+
+<p>The <strong>insert()</strong>, <strong>delete()</strong>, and 
+<strong>update()</strong> methods of <strong>DB_Table_Database</strong> 
+have interfaces and behaviors similiar to those of the corresponding methods 
+of DB_Table. The only differences in the interfaces are that each of these 
+<strong>DB_Table_Database</strong> method requires an additional first 
+parameter whose value is the name of the table to which the SQL insert, 
+update, or delete command should be applied.</p>
+
+<p>Synopses:</p>
+<br><br>true|PEAR_Error insert(string $table, array $data)<br>true|PEAR_Error delete(string $table, [string $where])<br>true|PEAR_Error update(string $table, array $data, [string $where])
+<p>In all three functions $table_name is the name of the table to which 
+the operation should be applied. In the insert and update methods, 
+$data is an associative array of data to be inserted or updated, in 
+which the keys are column name strings and the values are the value 
+to be inserted or updated in the database.  In the delete and update 
+methods, the optional $where parameter is a string containing an SQL 
+logical condition that is used to select the rows that should be 
+deleted or updated, respectively.  That is, the $where parameter should 
+contain the contents of the WHERE clause of the corresponding SQL 
+command, without the &#039;WHERE &#039; prefix. Each method returns true on normal 
+completion, and a PEAR Error if an error is encountered.</p>
+
+<p>These <strong>DB_Table_Database</strong> methods are simple wrappers 
+that call the corresponding methods <strong>DB_Table</strong> 
+methods internally. As one result, overriding any of these methods in a 
+subclass of <strong>DB_Table</strong> in order to customize the behavior 
+of a specific table will automatically modify the behavior of the 
+<strong>DB_Table_Database</strong> method.</p>
+
+<p>The <strong>DB_Table_Database</strong> data 
+<strong>insert()</strong> and <strong>update()</strong> methods can 
+validate foreign key values before actually modifying data in the database, 
+and can emulate referentially triggered actions such cascading deletes, if 
+foreign key validation and these referentially triggered actions are enabled.
+The corresponding methods of <strong>DB_Table</strong> will take 
+identical actions if the <strong>DB_Table</strong> has been added to 
+a parent <strong>DB_Table_Database</strong> object (i.e., if it 
+contains a reference to a parent object), and if these actions are enabled 
+in the parent <strong>DB_Table_Database</strong> object. Foreign key 
+validation is disabled by default. Referentially triggered actions are 
+enabled by default, for any such action that is declared in the database 
+model.</p>
+
+<p>The <strong>insert()</strong> and <strong>update()</strong> methods return 
+a <strong>PEAR_Error</strong> object if foreign key validation fails, or if 
+an error occurs during any database command. A <strong>PEAR_Error</strong> 
+is also returned if a &#039;restrict&#039; ON DELETE or ON UPDATE action is declared, 
+when such actions are enabled, if an attempt is made to delete or update any 
+row that is referenced by a foreign key of one or more rows of another table.</p>
+
+
+
+<h3>PHP Serialization</h3>
+
+
+<p>One way to maintain the state of <strong>DB_Table_Database</strong> 
+between web pages is to serialize the entire database as one string, and 
+save it in a session variable, a file, or a database. A serialized 
+<strong>DB_Table_Database</strong> object contains serialized 
+versions of all of its tables, and thus contains the information 
+necessary to reconstruct the database. Serialization is accomplished 
+by the PHP serialize function:</p><pre><code>&lt;?php
+$db_serial = serialize($db);
+?&gt;</code></pre><p>The following two commands are necessary to unserialize and restore 
+the state of a <strong>DB_Table_Database</strong> object:</p><pre><code>&lt;?php
+$db = unserialize($db_serial);
+$db-&gt;setDBconnection($DB_object);
+?&gt;</code></pre><p>where $DB_object is a DB or MDB2 connection object. 
+The setDBconnection method sets the same database connection for the
+parent <strong>DB_Table_Database</strong> object and all of 
+the child <strong>DB_Table</strong> objects.</p>
+<p>When a <strong>DB_Table_Database</strong> object is unserialized, 
+each child <strong>DB_Table</strong> 
+object is unserialized in turn by the 
+<strong>DB_Table_Database::__wakeup()</strong> 
+method.  If the <strong>DB_Table</strong> objects are instances 
+of subclasses of <strong>DB_Table</strong>, this requires that 
+the definitions of these subclasses exist in memory prior to 
+unserialization of the table. This can be accomplished by explicitly 
+including the file or files containing the required class definitions 
+in the file containing the unserialize command, or by taking advantage 
+of an auto-load mechanism that is built into the wake-up method.</p>
+<p>In order for autoloading of subclass definitions to work, each of the 
+subclasses must be defined in a separate file in a default directory, 
+with a filename that is given by the class name with an added &#039;.php&#039; 
+extension.  If the definition of a required subclass of 
+<strong>DB_Table</strong> named &quot;classname&quot; is found to not exist 
+in memory when needed during unserialization, the 
+<strong>__wakeup()</strong> method tries to 
+include a file named &quot;classname.php&quot; in this directory.</p><p>For autoloading to work, the base of each such filename must be the 
+class name obtained by applying the built-in get_class function to the 
+object. This yields a lower case class name PHP 4 and preserves the 
+capitalization used in the class definition in PHP 5.</p>
+<h3><strong>setTableSubclassPath()</strong></h3>
+
+
+<p><strong>setTableSubclassPath()</strong> - sets the path to the default 
+directory for <strong>DB_Table</strong> subclass definitions.</p> <p>Synopsis:</p>
+<br><br>void setTableSubclassPath(string $path)
+<p>Parameter $path is the path to the desired directory, without
+a trailing directory separator. The path must be specified in
+the form required by a &#039;require_once&quot; statement, with the 
+current PHP settings.</p>
+
+
+
+
+<h3>XML Serialization</h3>
+
+
+<p>The <strong>toXML()</strong> and <strong>fromXML()</strong> 
+methods may be used to serialize a database schema to, and unserialize 
+it from, an XML string, respectively. The <strong>fromXML()</strong> 
+method uses simpleXML to parse the XML string, and so requires PHP 5. 
+(This is the only method in the class that is not compatible with PHP 4).</p><p>The XML schema used by these methods is an extension of the current
+MDB2_Schema DTD, extended so as to allow specification of foreign 
+key references. This extension for foreign keys has been agreed upon
+for adoption in a future release of MDB2_Schema.</p><p>The <strong>toXML()</strong> method returns an XML string for the 
+entire database,
+including all of its tables and foreign key references, like so:</p><pre><code>&lt;?php
+$xml_string = $db-&gt;toXML();
+?&gt;</code></pre><p>The <strong>DB_Table_Database::fromXML()</strong> method is a static method 
+that takes an MDB2 XML database schema string as its only parameter and returns 
+a <strong>DB_Table_Database</strong> object containing all the tables 
+and references in the database. The following pair of commands is necessary 
+to create a <strong>DB_Table_Database</strong> object and connect it to 
+a RDBMS</p><pre><code>&lt;?php
+$db = DB_Table_Database::fromXML($xml_string);
+$db-&gt;setDBconnection($DB_object);
+?&gt;</code></pre><p>Here, as for unserialization, the <strong>setDBconnection()</strong> 
+method is used to establish a connection be the new object and a 
+database server, where $DB_object is a DB or MDB2 connection object.  
+The tables of the <strong>DB_Table_Database</strong> object that 
+is returned by <strong>fromXML()</strong> are all instances of 
+<strong>DB_Table</strong> itself, rather than of custom subclasses 
+of <strong>DB_Table</strong>.  <strong>fromXML()</strong> returns 
+a <strong>PEAR_Error</strong> if the XML string cannot be parsed, 
+if an error is thrown during instantiation of either the 
+<strong>DB_Table_Database</strong> object or any of the child 
+<strong>DB_Table</strong> objects, or if called with a PHP 4 
+interpreter (it requires PHP 5).</p>
+
+
+<h3>Setting <strong>DB_Table</strong> properties</h3>
+
+
+<p>Several methods of <strong>DB_Table_Database</strong> are used 
+to set a common value of a <strong>DB_Table</strong> 
+property for every child table in the database. These
+methods, which have the same names and interfaces as the 
+corresponding <strong>DB_Table</strong> methods, are:</p>
+<br><br>void autoValidInsert(bool $flag);<br>void autoValidUpdate(bool $flag);<br>void autoRecast(bool $flag);<br>void autoInc(bool $flag);
+<p>Each has a boolean argument that turns on (true) or off (false) one 
+of the features of <strong>DB_Table</strong>. All of the relevant 
+features affect data insertion and updating, and are implemented within 
+the <strong>DB_Table</strong>
+<strong>insert()</strong> and <strong>update()</strong> methods.  
+The <strong>DB_Table_Database</strong> <strong>insert()</strong> 
+and <strong>update()</strong> methods simply call the corresponding
+<strong>DB_Table</strong> methods, so changes in these properties 
+also change the behavior of the <strong>DB_Table_Database</strong> 
+methods.</p>
+<p>The autoValidInsert and autoValidUpdate methods turn on or off the 
+automatic validation that data is of the expected type prior to 
+insertion or updating of the data. The autoRecast method turns on 
+or off the attempted recasting of data to the expected data type,
+if necessary, prior to insertion or updating. autoInc turns on or 
+off the PHP implementation of auto-incrementation of the value of
+the $auto_inc_col column (if any) upon insertion. Note that, when
+the feature is on, this column is still auto-incremented only if 
+its value is left null in the data to be inserted.</p>
+
+
+<h3>Get* Methods</h3>
+
+
+<p>Most of the properties of <strong>DB_Table_Database</strong> 
+are private. A get* method is defined for each private property.  
+Please see the API documentation for a discussion of all of properties 
+and associated get* methods.</p>
+</section>
+<section id="package-database-db-table-intro-generator">
+<h2>DB_Table_Generator Class Tutorial</h2>
+<h3>Description</h3>
+<p>The <strong>DB_Table_Generator</strong> class can generate the PHP 
+code necessary to use the DB_Table package to interact with an existing 
+database. It generates skeleton <strong>DB_Table</strong> 
+subclass definitions for every table in the database, using table schemas 
+that are obtained by querying the database. It can also generate a file 
+containing the code required to connect to the database, and to create 
+a parent <strong>DB_Table_Database</strong> object.</p>
+
+
+<h3>Name Conventions and File Structure</h3>
+
+
+<p>All code generated by a <strong>DB_Table_Generator</strong> object 
+is written to a directory whose path is given by the $class_write_path 
+property of that object. By default, this is the current directory. 
+By default, the name of the class constructed for a table named 
+&#039;thing&#039; is <strong>Thing_Table</strong>. That is, the 
+class name is the table name, with the first letter upper case, with 
+an added suffix &#039;_Table&#039;. This suffix can be changed by 
+setting the $class_suffix property. The name of the file containing a 
+subclass definition is the subclass name with a PHP extension, e.g., 
+&#039;Thing_Table.php&#039;. The name of the object instantiated 
+from that subclass is the same as the table  name, with no suffix, 
+e.g., &#039;thing&#039;.</p> 
+
+
+<h3>Code Generation Instructions</h3>
+
+
+<p>To generate the code for all of the tables in a database named 
+$database, instantiate a <strong>DB</strong> or
+<strong>MDB2</strong> object named $conn that connects 
+to the database of interest, and execute the following code:</p>
+<p><strong>Code Generation for an Entire Database</strong></p>
+
+<pre><code>&lt;?php
+require_once &#039;DB/Table/Generator.php&#039;;
+
+// [snip] Instantiate DB or MDB2 object $conn
+
+// Instantiate a Generator object 
+$generator = new DB_Table_Generator($conn, $database);
+
+// Choose a directory for the generated code
+$generator-&gt;class_write_path = &#039;/var/www/html/app1/db_table&#039; ;
+
+// Generate DB_Table subclass definition files 
+$generator-&gt;generateTableClassFiles();
+
+// Generate the &#039;Database.php&#039; file
+$generator-&gt;generateDatabaseFile();
+
+?&gt;</code></pre>  
+
+
+<p>In the above example, &#039;/var/www/html/app1/db_table&#039; is the path 
+(without a trailing directory separator) to a directory in which all 
+of the code should be written.  If this directory does not exist, it 
+will be created (if possible). If the directory does already exist, 
+existing files will not be overwritten. If $class_write_path is not 
+set (i.e., if this line from the example is ommitted) all the code 
+will be written to the current  directory.</p>
+
+<p>The <strong>generateTableClassFiles()</strong> method generates 
+skeleton subclass definitions for a set of tables, with different 
+subclass definitions in different files. If it is called with no 
+argument, as above, it generates subclass definitions for all of 
+the tables in the current database.</p>
+
+<p>The <strong>generateDatabaseFile()</strong> method generates a 
+file, named &#039;Database.php&#039; by default, that contains all 
+of the additional code necessary to connect to a database and to 
+create a parent <strong>DB_Table_Database</strong> object. 
+If the <strong>generateDatabaseFile()</strong> method is called, 
+as in the above example, it must be  called after the
+<strong>generateTableClassFiles()</strong>. 
+The code in the &#039;Database.php&#039; file includes (using the
+&quot;require_once&quot; command) each of the table subclass definition files, 
+instantiates one object of each <strong>DB_Table</strong> 
+subclass (creating one object per table), instantiates a parent 
+<strong>DB_Table_Database</strong> object, adds all the tables 
+to that parent, and attempts to guess foreign key relationships 
+between tables based on the column names.  This file will generally 
+need to be edited so as to include information about the data 
+source name (DSN), and any foreign key relationships that could 
+not be guessed by the generator.</p>
+
+<p>By default, <strong>generateTableClassFiles()</strong> and 
+<strong>generateDatabaseFiles()</strong> generate code for all of 
+the tables in the current database. To generate code for a specified 
+list of tables, set the value of the public $tables property to a 
+sequential list of table names before calling either of these 
+methods. For example, code can be generated for three tables named 
+&#039;table1&#039;, &#039;table2&#039;, and &#039;table3&#039; as 
+follows:</p>
+
+<p><strong>Code Generation for a Specified Set of Tables</strong></p>
+
+<pre><code>&lt;?php
+require_once &#039;DB/Table/Generator.php&#039;
+
+// [snip] Instantiate DB or MDB2 object $conn
+
+// Instantiate a Generator object 
+$generator = new DB_Table_Generator($conn, $database);
+
+// Choose a directory for the generated code
+$generator-&gt;class_write_path = &#039;/var/www/html/app1/db_table&#039; ;
+
+// Define the set of tables
+$generator-&gt;tables = array(&#039;table1&#039;, &#039;table2&#039;, &#039;table3&#039;);
+
+// Generate DB_Table subclass definition files 
+$generator-&gt;generateTableClassFiles();
+
+// Generate the &#039;Database.php&#039; file
+$generator-&gt;generateDatabaseFile();
+
+?&gt;</code></pre>  
+
+
+<p>If the $tables property of the DB_Table_Generator object is not set to an
+array value before <strong>generateTableClassFiles()</strong> is called,
+then, by default, the <strong>generateTableClassFiles()</strong> method
+queries the database for an array of all table names (by calling the 
+<strong>getTableNames()</strong> method internally), and the $table 
+property is set equal to the resulting array of table names.</p>
+</section>
+<section id="package-database-db-table-intro-datatypes">
+<h2>DB_Table Data Types</h2>
+<h3>Description</h3>
+
+<p>These are the supported data types in DB_Table:</p><ul>
+  <li>
+    
+    <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-datatypes">
+    Integers</a> of 2-, 4-, and 8-bytes 
+    (&#039;smallint&#039;, &#039;integer&#039;, and &#039;bigint&#039;)
+    
+  </li>
+  <li>
+    
+    <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-datatypes">
+    Fixed-point decimals</a>
+    (&#039;decimal&#039;)
+    
+  </li>
+  <li>
+    
+    <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-datatypes">
+    Floating-point decimals </a> of single or double precision
+    (&#039;float&#039; and &#039;double&#039;)
+    
+  </li>
+  <li>
+    
+    <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-datatypes">
+    Booleans</a> for true/false values
+    (&#039;boolean&#039;)
+    
+  </li>
+  <li>
+    
+    <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-datatypes">
+    Character strings</a> of fixed or variable length
+    (&#039;char&#039; and &#039;varchar&#039;)
+    
+  </li>
+  <li>
+    
+    <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-datatypes">
+    Dates</a> in ISO &quot;yyyy-mm-dd&quot; format
+    (&#039;date&#039;)
+    
+  </li>
+  <li>
+    
+    <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-datatypes">
+    Times</a> in ISO &quot;hh:ii:ss&quot; format
+    (&#039;time&#039;)
+    
+  </li>
+  <li>
+    
+    <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-datatypes">
+    Timestamps</a> in ISO &quot;yyyy-mm-dd hh:ii:ss&quot; format
+    (&#039;timestamp&#039;)
+    
+  </li>
+  <li>
+    
+    <a href="package/DB_Table/docs/index.html#package-database-db-table-intro-datatypes">
+    Character large objects (CLOB)</a> for text or ascii data
+    (&#039;clob&#039;)
+    
+  </li>
+</ul>
+
+<p>DB_Table abstracts data types for you, so your data is always
+stored the same way, regardless of the database backend. In some
+cases, particularly with date, time, and timestamp, the native
+database format is ignored completely and data is stored as a
+fixed-length character string.</p>
+<p>DB_Table does no support binary large objects (BLOBs), but
+character large objects (CLOBS) are available.</p>
+
+
+<h3>Integers</h3>
+
+
+<p>There are three sizes of integer columns:</p><ul>
+  <li>
+     
+     &#039;smallint&#039; can store values from (-2^15) to +(2^15); that is, from
+     -32778 to 32767
+     
+  </li>
+  <li>
+     
+     &#039;integer&#039; can store values from (-2^31) to +(2^31); that is, from
+     -2,147,483,648 to +2,147,483,647
+     
+  </li>
+  <li>
+     
+     &#039;bigint&#039; can store values from (-2^63) to +(2^63); that is, from
+     -9,223,372,036,854,775,808 to +9,223,372,036,854,775,807
+     
+  </li>
+</ul><p>The $col definition, you need only specify the column type; no size or scope
+is needed.</p>
+<p><strong>Integer column declaration</strong></p>
+
+<pre><code>&lt;?php
+var $col = array(
+    // unique row ID
+    &#039;fieldname&#039; =&gt; array(
+        &#039;type&#039;    =&gt; &#039;integer&#039;
+    )
+);                                                                 
+?&gt;</code></pre>
+
+
+<h3>Fixed-Point Decimal Numbers</h3>
+
+
+<p>To define a fixed-point column in DB_Table, use the &#039;decimal&#039; datatype, 
+and indicate both the &#039;size&#039; (width) and &#039;scope&#039; (number of decimal places).
+For example, to define a 5-digit number that has 2 decimal places:</p>
+
+<p><strong> Decimal column declaration</strong></p>
+
+
+<pre><code>&lt;?php
+var $col = array(
+    // unique row ID
+    &#039;fieldname&#039; =&gt; array(
+        &#039;type&#039;  =&gt; &#039;decimal&#039;,
+        &#039;size&#039;  =&gt; 5,
+        &#039;scope&#039; =&gt; 2
+    ),
+);                                                                 
+?&gt;</code></pre>
+
+<p>For the above example, standard SQL requires that the column be able to
+store any value with 5 digits and 2 decimals. In this case, therefore, the
+range of values that can be stored in the column is from -999.99 to 999.99.
+DB_Table attempts to enforce this behavior regardless of the RDBMS backend
+behavior.</p>
+
+<h3>Floating-Point Numbers</h3>
+
+
+<p>To define a floating-point column in DB_Table, use the &#039;single&#039; or
+&#039;double&#039; datatype.</p><ul>
+  <li>
+    
+    &#039;single&#039; is a single-precision floating point number
+    
+  </li>
+  <li>
+    
+    &#039;double&#039; is a double-precision floating point number
+    
+  </li>
+</ul><p>You need only specify the column type; no size or scope is needed.</p>
+<p><strong> Floating-point column declaration</strong></p>
+
+
+<pre><code>&lt;?php
+var $col = array(
+    // unique row ID
+    &#039;fieldname&#039; =&gt; array(
+        &#039;type&#039;  =&gt; &#039;double&#039;
+    ),
+);                                                                 
+?&gt;</code></pre>
+
+
+
+<h3>Boolean</h3>
+
+
+<p>A boolean value is a true/false (1 or 0) value. You need only specify the
+column type; no size or scope is needed.</p>
+
+<p><strong> Boolean column declaration</strong></p>
+
+<pre><code>&lt;?php
+var $col = array(
+    // unique row ID
+    &#039;fieldname&#039; =&gt; array(
+        &#039;type&#039;  =&gt; &#039;boolean&#039;
+    )
+);                                                                 
+?&gt;</code></pre>
+
+<p>Boolean values are stored as fixed-point decimals of size 1, scope 0.</p>
+<p>If the column is not required, a NULL value stored therein may be treated
+as a third value, which allows the boolean column to be treated as a 
+ternary value instead of a binary value (i.e., NULL|0|1 instead of 0|1).</p>
+
+
+
+<h3>Strings</h3>
+
+
+<p>To define a fixed-length character string column, use the &#039;char&#039; datatype,
+and indicate the exact size of the string.</p>
+<p>To define a variable-length character string column, use the &#039;varchar&#039; 
+datatype, and indicate the maximum size of the string.</p>
+<p>For example, to define a 64-character variable-length string:</p><p><strong>Variable length string column declaration</strong></p>
+
+<pre><code>&lt;?php
+var $col = array(
+    // unique row ID
+    &#039;fieldname&#039; =&gt; array(
+        &#039;type&#039;  =&gt; &#039;varchar&#039;,
+        &#039;size&#039;  =&gt; 64
+    )
+);                                                                 
+?&gt;</code></pre>
+
+
+<p>You must specify a &#039;size&#039; element, but no scope is needed. The 
+maximum size is 255 characters.</p>
+
+
+<h3>Date</h3>
+
+
+
+<p>To define an ISO-standard date column, use the &#039;date&#039; datatype.</p>
+
+<p><strong> Date column declaration</strong></p>
+
+<pre><code>&lt;?php
+var $col = array(
+    // unique row ID
+    &#039;fieldname&#039; =&gt; array(
+        &#039;type&#039;  =&gt; &#039;date&#039;
+    )
+);                                                                 
+?&gt;</code></pre>
+
+<p>You need only specify the column type; no size or scope is needed.</p>
+<p>Values for &#039;date&#039; are always stored as 10-character strings, in the
+format &quot;yyyy-mm-dd&quot;.</p>
+
+
+<h3>Time</h3>
+
+
+
+<p>To define an ISO standard time with hour, minutes, and seconds, use the 
+&#039;time&#039; data type.</p>
+
+<p><strong> Time column declaration</strong></p>
+
+<pre><code>&lt;?php
+var $col = array(
+    // unique row ID
+    &#039;fieldname&#039; =&gt; array(
+        &#039;type&#039;  =&gt; &#039;time&#039;
+    )
+);                                                                 
+?&gt;</code></pre>
+
+<p>You need only specify the column type; no size or scope is needed.</p>
+<p>A &#039;time&#039; value is always stored as an 8-character string, in the
+format &quot;hh:ii:ss&quot;.</p>
+
+
+<h3>Timestamp</h3>
+
+
+
+<p>To define an ISO standard date-and-time column, use the &#039;timestamp&#039; data 
+type.</p>
+
+<p><strong> Timestamp column declaration</strong></p>
+
+<pre><code>&lt;?php
+var $col = array(
+    // unique row ID
+    &#039;fieldname&#039; =&gt; array(
+        &#039;type&#039;  =&gt; &#039;timestamp&#039;
+    )
+);                                                                 
+?&gt;</code></pre>
+
+<p>You need only specify the column type; no size or scope is needed.</p>
+<p>Values for &#039;timestamp&#039; are always stored as an 19-character strings, 
+in the format &quot;yyyy-mm-dd hh:ii:ss&quot; (24-hour clock).</p>
+<p>Note: If you want to store a Unix timestamp, use the &#039;integer&#039; datatype;
+Unix timestampes are 4-byte integers, which maps perfectly to the 
+DB_Table &#039;integer&#039; datatype.</p>
+
+
+<h3>Character Large Object (CLOB)</h3>
+
+
+<p><strong> CLOB Column Declaration</strong></p>
+
+<pre><code>&lt;?php
+var $col = array(
+    // unique row ID
+    &#039;fieldname&#039; =&gt; array(
+        &#039;type&#039;  =&gt; &#039;clob&#039;
+    )
+);                                                                 
+?&gt;</code></pre>
+
+<p>You need only specify the column type; no size or scope is needed.</p>
+<p>Values for &#039;clob&#039; are always stored as the large possible native text 
+type (<em>e.g.</em>, LONGTEXT) or native CLOB type.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

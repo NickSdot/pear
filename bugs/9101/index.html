@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9101</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #9101</h1>
+<p>PEAR_Exception::getCauseMessage() failure with a nested Exception</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-10-20 07:25 UTC</td></tr>
+<tr><th>From</th><td>aharvey at optimiser dot com</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5_2 CVS-2006-10-20</td></tr>
+<tr><th>OS</th><td>Linux (Ubuntu 6.06)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-10-20 07:25 UTC] aharvey at optimiser dot com</h3>
+<p>Description:<br>
+------------<br>
+PEAR_Exception::__toString() throws a fatal error when the PEAR_Exception has a nested Exception. Note that a nested PEAR_Exception works, the failure only occurs when the nested exception inherits from Exception but not PEAR_Exception.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+require_once &#039;PEAR/Exception.php&#039;;</p>
+<p>try {<br>
+    throw new PEAR_Exception(&#039;Test exception.&#039;, new Exception(&#039;Nested exception.&#039;));<br>
+} catch (PEAR_Exception $e) {<br>
+    echo $e-&gt;__toString().&quot;\n&quot;;<br>
+}<br>
+?&gt;</p>
+<p>The patch at http://www.adamharvey.name/patches/PEAR_Exception-getCauseMessage.patch seems to fix the problem, but not being an expert on PEAR&#039;s internals, I don&#039;t know if that&#039;s actually the right solution.</p>
+<p>Expected result:<br>
+----------------<br>
+PEAR_Exception: Test exception. in /tmp/exception.php on line 7<br>
+ Exception: Nested exception. in /tmp/exception.php on line 5<br>
+#0 {main}</p>
+<p>Actual result:<br>
+--------------<br>
+Fatal error: Call to a member function getMessage() on a non-object in /usr/share/pear/PEAR/Exception.php on line 246</p>
+<p>Call Stack:<br>
+    0.0004   1. {main}() /tmp/exception.php:0<br>
+    0.0028   2. PEAR_Exception-&gt;__toString() /tmp/exception.php:7<br>
+    0.0028   3. PEAR_Exception-&gt;toText() /usr/share/pear/PEAR/Exception.php:305<br>
+    0.0028   4. PEAR_Exception-&gt;getCauseMessage() /usr/share/pear/PEAR/Exception.php:365</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

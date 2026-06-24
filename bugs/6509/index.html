@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6509</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a> &#187; Bug #6509</h1>
+<p>Object of class Spreadsheet_Excel_Writer_Format could not be converted to int</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-17 20:28 UTC</td></tr>
+<tr><th>From</th><td>oswaldo dot otero at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>tuupola</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>Windows 2000</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-17 20:28 UTC] oswaldo dot otero at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Trying to create a Excel file, i notice the follow error, when I comment some lines in Writer.php Lines(144-151) function send.</p>
+<p>The thing is that the function _XF(&amp;$format) in Lines(1238-1247) in Worksheet.php are wrong because it&#039;s trying to change an Object into an int</p>
+<p>Test script:<br>
+---------------<br>
+The fucntion was like: <br>
+  function _XF(&amp;$format)<br>
+    {<br>
+    	//echo __FILE__.&#039;This is Format Index: &#039;.$format;<br>
+      if ($format != 0) {<br>
+            return($format-&gt;getXfIndex());<br>
+        }<br>
+        else {<br>
+            return(0x0F);<br>
+        }<br>
+    }</p>
+<p>But we tweak like this:</p>
+<p>function _XF(&amp;$format)<br>
+    {<br>
+    	//echo __FILE__.&#039;This is Format Index: &#039;.$format;<br>
+      if (is_object($format)) {<br>
+            return($format-&gt;getXfIndex());<br>
+        }<br>
+        else {<br>
+            return(0x0F);<br>
+        }<br>
+    }</p>
+<p>Expected result:<br>
+----------------<br>
+Create a Excel File</p>
+<p>Actual result:<br>
+--------------<br>
+Right now it&#039;s working</p>
+</section>
+<section>
+<h3>[2006-02-03 19:01 UTC] erik dot buelens at telenet dot be</h3>
+<p>I have the same error when using the function: $worksheet-&gt;writeUrl().  I&#039;m using a winXP platform. Spreadsheet_Excel_Writer-0.9.0.tgz</p>
+</section>
+<section>
+<h3>[2006-02-22 05:38 UTC] feyd at devnetwork dot net</h3>
+<p>I&#039;ve run into this bug as well. Here are the lines I&#039;ve altered to fix this issue:</p>
+<p>Writer/Worksheet.php:1233:        if (is_object($format)) {<br>
+Writer/Worksheet.php:1686:        if (!is_object($format)) {<br>
+Writer/Worksheet.php:1873:        if (!is_object($format)) {<br>
+Writer/Worksheet.php:1933:        if (!is_object($format)) {<br>
+Writer/Worksheet.php:2005:        if (!is_object($format)) {<br>
+Writer/Worksheet.php:2161:        if (is_object($format)) {</p>
+<p>As with the original poster&#039;s situation, $format was being compared against zero, except for the last case where it was simply being if&#039;d.</p>
+</section>
+<section>
+<h3>[2006-03-15 10:04 UTC] rabus at users dot sourceforge dot net</h3>
+<p>I can confirm that the your patch fixes the problem for me on php 5.1.2. It would be great if it could find its way into the PEAR package. :-)</p>
+</section>
+<section>
+<h3>[2006-03-20 23:33 UTC] cyrille37 at free dot fr</h3>
+<p>Yes, of course your correction is working.</p>
+<p>Is there someone to post the correction in the source code ?</p>
+<p>Thanks<br>
+cyrille</p>
+</section>
+<section>
+<h3>[2006-06-15 08:39 UTC] sausis at vtex dot lt</h3>
+<p>I have the same error on WindowsXP PHP 5.1.4 (works with is_object()).</p>
+<p>But no errors on PHP Version 5.1.4-pl0-gentoo!</p>
+</section>
+<section>
+<h3>[2006-09-08 14:53 UTC] henson dot garth at gmail dot com</h3>
+<p>I have also run into this issue. What&#039;s more, it errors out even with the sample code given in the API:</p>
+<p>require_once &quot;Spreadsheet/Excel/Writer.php&quot;;<br>
+$workbook = new Spreadsheet_Excel_Writer();<br>
+$format =&amp; $workbook-&gt;addFormat(array(&#039;Size&#039; =&gt; 10,<br>
+                                      &#039;Align&#039; =&gt; &#039;center&#039;,<br>
+                                      &#039;Color&#039; =&gt; &#039;white&#039;,<br>
+                                      &#039;Pattern&#039; =&gt; 1,<br>
+                                      &#039;FgColor&#039; =&gt; &#039;magenta&#039;));<br>
+$worksheet =&amp; $workbook-&gt;addWorksheet();<br>
+$worksheet-&gt;writeString(1, 0, &quot;Magenta Hello&quot;, $format);<br>
+$workbook-&gt;close();</p>
+<p>I&#039;ve tested this on PHP 4.3 as well as 5.1 with no luck. Any chance the fix above could make its way into the PEAR module would be wonderful!</p>
+</section>
+<section>
+<h3>[2006-09-21 12:20 UTC] tuupola at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+<section>
+<h3>[2007-02-15 07:02 UTC] bonda1_007 at yahoo dot com</h3>
+<p>My problem is Column Length is fiexd 255 in Package Spreadsheet_Excel_Writer . I want To Insert More Than 255 char( string) in  Column. Rest Is Working Fine.</p>
+<p>thanks <br>
+ James</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

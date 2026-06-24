@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3132</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_DNS/index.html">Net_DNS</a> &#187; Bug #3132</h1>
+<p>[Patch] - bug fixes additional porting from Perl</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-07 16:35 UTC</td></tr>
+<tr><th>From</th><td>m dot reidenbach at everytruckjob dot com</td></tr>
+<tr><th>Assigned</th><td>cox</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_DNS/index.html">Net_DNS</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-07 16:35 UTC] m dot reidenbach at everytruckjob dot com</h3>
+<p>Description:<br>
+------------<br>
+Please review the linked patch.  The patch provides several fixes and improvements which are listed below. It also fixes bug ids 678, 1871, and 2141. Note that I did not touch the send_tcp or send_udp_no_sock_lib functions and these paths may still exhibit bugs with php5.</p>
+<p>Can now query FQDNs that end in a dot (bug 678).</p>
+<p>Works with php5 by not reassigning $this and using a variable to hold the subclass instead (bug 1871).</p>
+<p>Net_DNS_RR_MX will now return a result even if the preference is 0 (bug 2141).</p>
+<p>Uses array_key_exists instead of checking to see if a non-existent key&#039;s strlen is 0.</p>
+<p>The Net_DNS_Resolver::send_udp_with_sock_lib function now sends the query to all the resolvers DNS servers and then checks to see if any answered.  It also retries until the timeout period is reached or the retrans count is reached rather than returning after the first unsuccessful attempt<br>
+ (ported from PERL).  Before these changes, only the first nameserver was sent the query which resulted in the function returning null if one of two servers were temporarily down instead of the correct response from the 2nd server if it was up.</p>
+<p>Can now pass an array to Net_DNS_Resolver to change the default resolver options like you can with Perl&#039;s Net::DNS package.</p>
+<p>Net_DNS_Resolver::nextid works with register globals off</p>
+<p>You can now set the nameservers to query using Net_DNS_Resolver::nameservers().   This was not functioning before due to testing $ns when the function parameter is $nsa.</p>
+<p>You can now set nameservers using a FQDN instead of having to use ip addresses.  The FQDNs are looked up using the system&#039;s default resolver. (This was ported from PERL&#039;s Net::DNS and was marked as needing to be ported in the function comments)</p>
+<p>Net_DNS_Resolver::cname_addr() was ported from PERL and now returns the address for A and CNAME records.  This is needed for Net_DNS_Resolver::nameservers() to function properly.</p>
+<p>A &quot;.&quot; was added to &quot;in-addr.arpa&quot; in Net_DNS_Resolver::search() to match PERL</p>
+<p>Whitespace fixes.</p>
+<p>Reproduce code:<br>
+---------------<br>
+http://www.tuscaloosadesigncompany.com/Net_DNS.diff</p>
+</section>
+<section>
+<h3>[2005-04-08 16:16 UTC] cox at idecnet dot com</h3>
+<p>I&#039;ve commited that suggestions/fixes into CVS. Feel free to verify that all works as expected.</p>
+<p>Thanks a lot!</p>
+<p>Tomas V.V.Cox</p>
+</section>
+<section>
+<h3>[2005-04-08 17:03 UTC] m dot reidenbach at everytruckjob dot com</h3>
+<p>I believe there is still one spot where a . should be added to in-addr.arpa</p>
+<p>--- Resolver.php        2005-04-08 12:00:33.000000000 -0500<br>
++++ Resolver-new.php    2005-04-08 12:03:01.000000000 -0500<br>
+@@ -616,7 +616,7 @@<br>
+          * PTR query.<br>
+          */<br>
+         if (preg_match(&#039;/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/&#039;, $name, $regs)) {<br>
+-            $name = &quot;$regs[4].$regs[3].$regs[2].$regs[1].in-addr.arpa&quot;;<br>
++            $name = &quot;{$regs[4]}.{$regs[3]}.{$regs[2]}.{$regs[1]}.in-addr.arpa.&quot;;<br>
+             $type = &#039;PTR&#039;;<br>
+         }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

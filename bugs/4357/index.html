@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4357</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser_Admin/index.html">LiveUser_Admin</a> &#187; Bug #4357</h1>
+<p>perm-&gt;getUsers() example returns all users</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-16 10:59 UTC</td></tr>
+<tr><th>From</th><td>scragz at hotmail dot com</td></tr>
+<tr><th>Assigned</th><td>dufuz</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser_Admin/index.html">LiveUser_Admin</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-16 10:59 UTC] scragz at hotmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I now have everything updated to the latest CVS versions and I think I found an actual non-bogus bug, if only with the examples. In the &quot;Test fetching auth_user_id AND perm_user_id with PERM getUsers()&quot; bit of User.php, the Auth portion is correctly only returning a single user, but the Perm portion is returning all of the users.</p>
+<p>Both of these identically named methods appear to be using wildly different filtering schemes which is another problem in itself. Just for kicks I tried using the Auth scheme for the Perm call, and it didn&#039;t change anything.</p>
+<p>All I need is to get the perm_user_id based on the auth_user_id since getPermUserId() is gone now.</p>
+<p>Reproduce code:<br>
+---------------<br>
+    echo &#039;Perm&lt;br /&gt;&#039;;<br>
+    $filter = array(array(&#039;filters&#039; =&gt; array(&#039;perm_user_id&#039; =&gt; &#039;3&#039;)));<br>
+    $filter = array(array(&#039;cond&#039; =&gt; &#039;&#039;, &#039;name&#039; =&gt; &#039;perm_user_id&#039;, &#039;op&#039; =&gt; &#039;=&#039;, &#039;value&#039; =&gt; &#039;3&#039;, &#039;type&#039; =&gt; &#039;text&#039;));<br>
+    $user = $admin-&gt;perm-&gt;getUsers($filter);<br>
+    if ($user === false) {<br>
+        echo &#039;&lt;strong&gt;Error on line: &#039;.__LINE__.&#039;&lt;/strong&gt;&lt;br /&gt;&#039;;<br>
+        print_r($admin-&gt;getErrors());<br>
+    } elseif(empty($user)) {<br>
+        echo &#039;No user was found.&lt;br /&gt;&#039;;<br>
+    } else {<br>
+        Var_Dump::display($user);<br>
+        echo &#039;&lt;br /&gt;&#039;;<br>
+    }</p>
+<p>Expected result:<br>
+----------------<br>
+string(98) query: SELECT perm_user_id, auth_user_id, auth_container_name, perm_type<br>
+           FROM liveuser_perm_users<br>
+           WHERE perm_user_id = 3</p>
+<p>array(1) {<br>
+    0  =&gt; array(4) {<br>
+        perm_user_id        =&gt; int 3<br>
+        auth_user_id        =&gt; string(1) 3<br>
+        auth_container_name =&gt; string(1) 0<br>
+        perm_type           =&gt; int 1<br>
+    }<br>
+}</p>
+<p>Actual result:<br>
+--------------<br>
+string(98) query: SELECT perm_user_id, auth_user_id, auth_container_name, perm_type<br>
+           FROM liveuser_perm_users</p>
+<p>array(19) {<br>
+    0  =&gt; array(4) {<br>
+        perm_user_id        =&gt; int 1<br>
+        auth_user_id        =&gt; string(1) 1<br>
+        auth_container_name =&gt; string(1) 0<br>
+        perm_type           =&gt; int 1<br>
+    }<br>
+    1  =&gt; array(4) {<br>
+        perm_user_id        =&gt; int 2<br>
+        auth_user_id        =&gt; string(1) 2<br>
+        auth_container_name =&gt; string(1) 0<br>
+        perm_type           =&gt; int 1<br>
+    }<br>
+    2  =&gt; array(4) {<br>
+        perm_user_id        =&gt; int 3<br>
+        auth_user_id        =&gt; string(1) 3<br>
+        auth_container_name =&gt; string(1) 0<br>
+        perm_type           =&gt; int 1<br>
+    }<br>
+    3  =&gt; array(4) {<br>
+        perm_user_id        =&gt; int 4<br>
+        auth_user_id        =&gt; string(1) 4<br>
+        auth_container_name =&gt; string(1) 0<br>
+        perm_type           =&gt; int 1<br>
+    }<br>
+    4  =&gt; array(4) {<br>
+        perm_user_id        =&gt; int 5<br>
+        auth_user_id        =&gt; string(1) 5<br>
+        auth_container_name =&gt; string(1) 0<br>
+        perm_type           =&gt; int 1<br>
+    }<br>
+    // you get the idea<br>
+}</p>
+</section>
+<section>
+<h3>[2005-05-16 19:29 UTC] scragz at hotmail dot com</h3>
+<p>Maybe I wasn&#039;t clear, but all the code and output I posted was from admin example1, and this is a bug on docs/example1/User.php.</p>
+<p>I got it working by changing this:</p>
+<p>$filter = array(array(&#039;filters&#039; =&gt; array(&#039;perm_user_id&#039; =&gt; &#039;3&#039;)));</p>
+<p>which seems has one too many array levels, to this:</p>
+<p>$filter = array(&#039;filters&#039; =&gt; array(&#039;perm_user_id&#039; =&gt; &#039;3&#039;));</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

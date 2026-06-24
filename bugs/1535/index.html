@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1535</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth/index.html">Auth</a> &#187; Bug #1535</h1>
+<p>Auth session variable name is random</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-06-01 22:54 UTC</td></tr>
+<tr><th>From</th><td>wetstreams at yahoo dot com</td></tr>
+<tr><th>Assigned</th><td>yavo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Auth/index.html">Auth</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>windows 2000</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-06-01 22:54 UTC] wetstreams at yahoo dot com</h3>
+<p>Description:<br>
+------------<br>
+PEAR::Auth v.1.2.3</p>
+<p>If you supply only a DSN string as the second argument to Auth::Auth(), the session variable used by auth is set to the first character of the DSN.</p>
+<p>In the manual, this statment is wrong:</p>
+<p>http://pear.php.net/manual/en/package.authentication.auth.intro.php:<br>
+============================<br>
+For now one cannot use <br>
+&lt;?php<br>
+$auth = new Auth(...);<br>
+?&gt;</p>
+<p>with register_globals=on, because $auth is also the name of the session variable, that is internally used by PEAR::Auth. <br>
+============================</p>
+<p>In the source code file Auth.php:<br>
+=============================<br>
+    /**<br>
+     * Auth session-array name<br>
+     *<br>
+     * @var string<br>
+     */<br>
+    var $_sessionName = &#039;_authsession&#039;;<br>
+=============================<br>
+an attempt is made to use &#039;_authsession&#039; as the name, but the code below:</p>
+<p>Reproduce code:<br>
+---------------<br>
+    function Auth($storageDriver, $options = &#039;&#039;, $loginFunction = &#039;&#039;, $showLogin = true)<br>
+    {<br>
+        if (!empty($options[&#039;sessionName&#039;])) {<br>
+            $this-&gt;_sessionName = $options[&#039;sessionName&#039;];<br>
+print(&quot;&lt;p&gt;Session name set:$this-sessionName.&lt;/p&gt;&quot;);//added for testing<br>
+            unset($options[&#039;sessionName&#039;]);<br>
+        }</p>
+<p>Actual result:<br>
+--------------<br>
+always evaluates true for (!empty($options[&#039;sessionName&#039;]) and PHP sets $_sessionName to the first letter of the DSN string.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

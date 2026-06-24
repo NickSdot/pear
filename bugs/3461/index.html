@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3461</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_DTD/index.html">XML_DTD</a> &#187; Bug #3461</h1>
+<p>doublequote in DTD</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3461</th><td>doublequote in DTD</td></tr>
+<tr><th>Submitted</th><td>2005-02-14 13:38 UTC</td></tr>
+<tr><th>From</th><td>fauvet_b at 3ie dot org</td></tr>
+<tr><th>Assigned</th><td>ifeghali</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/XML_DTD/index.html">XML_DTD</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>all</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-14 13:38 UTC] fauvet_b at 3ie dot org</h3>
+<p>Description:<br>
+------------<br>
+In the DTD to parse, if we have something like that:</p>
+<p>&lt;!ATTLIST elem attr CDATA  #FIXED &quot;sentence with spaces&quot; &gt;</p>
+<p>the generated DTD_Tree is false, cutting value according to spaces...</p>
+<p>Reproduce code:<br>
+---------------<br>
+I quickly fixed it by adding a new state in XML_DTD_Parser::parse() : <br>
+like the parenthesis and the $in/$out variables, i&#039;ve created a $doublequote variable, added it in the splitting condition and added a test to set/unset this variable. The manual splitting modified is so:</p>
+<p>for ($i = 0; $i &lt; strlen($tag); $i++) {<br>
+  if ($tag{$i} == &#039; &#039; &amp;&amp; !$in &amp;&amp; $buff &amp;&amp; !$doublequote) {<br>
+     $fields[] = $buff;<br>
+     $buff = &#039;&#039;;<br>
+     continue;<br>
+  }<br>
+  if ($tag{$i} == &#039;(&#039;) {<br>
+     $in++;<br>
+  } elseif ($tag{$i} == &#039;)&#039;) {<br>
+     $in--;<br>
+  } elseif ($tag{$i} == &#039;&quot;&#039;) {<br>
+     $doublequote = ($doublequote == 0) ? 1 : 0;<br>
+  }<br>
+  $buff .= $tag{$i};<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+When a fixed attribute value is surrounded by double quotes, manage it, so as to have a single value, not cut at the first space.</p>
+<p>printing $data array in _ATTLIST() function, I obtain:<br>
+Array<br>
+(<br>
+    [0] =&gt; attr<br>
+    [1] =&gt; CDATA<br>
+    [2] =&gt; #FIXED<br>
+    [3] =&gt; &quot;sentence<br>
+    [4] =&gt; with<br>
+    [5] =&gt; spaces&quot;<br>
+)<br>
+and it would be better if it was:<br>
+Array<br>
+(<br>
+    [0] =&gt; attr<br>
+    [1] =&gt; CDATA<br>
+    [2] =&gt; #FIXED<br>
+    [3] =&gt; &quot;sentence with spaces&quot;<br>
+)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8627</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #8627</h1>
+<p>debug mode breaks next header() calls</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-09-03 20:31 UTC</td></tr>
+<tr><th>From</th><td>stephane dot gully at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.2</td></tr>
+<tr><th>OS</th><td>Linux debian</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-09-03 20:31 UTC] stephane dot gully at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+DataObject::debug(...) methode uses flush().</p>
+<p>When debug is turned on, it makes impossible to call header(&quot;...&quot;) next to the first dataobject request (for example -&gt;get(...)).</p>
+<p>Somebody else noticed this php behavior before me, look at this comment on the phpmanual:<br>
+http://www.php.net/manual/en/function.flush.php#69056</p>
+<p>I personnaly think this is a bug or a strange behaviour in PHP itself. However, I think it whould be a great idea to unactivate these flush() calls in DataObject::debug() as long as the php bug is not fixed.</p>
+<p>It takes me 4 hours to find why my programme didn&#039;t work ... I hope my bug report will help others.</p>
+<p>Test script:<br>
+---------------<br>
+ob_start(); // should avoid outputs durring the dataobject requests</p>
+<p>require_once(&#039;PEAR.php&#039;);<br>
+$options =&amp; PEAR::getStaticProperty(&#039;DB_DataObject&#039;,&#039;options&#039;);<br>
+$options[&#039;debug&#039;] = 1;<br>
+$dobj = new MyDataObject;<br>
+$dobj-&gt;get(50);</p>
+<p>// now send a header (in my case it comes from an external library)<br>
+header(&quot;Content-Type: text/html;charset=utf-8&quot;);</p>
+<p>ob_end_flush(); // only now, I display the dataobject debug</p>
+<p>Expected result:<br>
+----------------<br>
+dataobjects_mydataobject: QUERY: SELECT * FROM mydataobject WHERE mydataobject.id = 50</p>
+<p>Actual result:<br>
+--------------<br>
+[WARNING] Cannot modify header information - headers already sent error in line xxx of file xxx</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

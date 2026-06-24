@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2549</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Bug #2549</h1>
+<p>Strange happenings with bzip2.compress filter</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>#2549</th><td>Strange happenings with bzip2.compress filter</td></tr>
+<tr><th>Submitted</th><td>2004-10-17 16:26 UTC</td></tr>
+<tr><th>From</th><td>pilif at pilif dot ch</td></tr>
+<tr><th>Status</th><td>Open</td></tr>
+<tr><th>PHP Version</th><td>5.0.2</td></tr>
+<tr><th>OS</th><td>Linux 2.6</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-17 16:26 UTC] pilif at pilif dot ch</h3>
+<p>Description:<br>
+------------<br>
+OK. First off, I really, really tried to produce a reproducible, small testcase, which I failed to do. The testcase is somewaht larger than thos 20 lines and it - unfortunately - requires an MS-SQL-Server to reproduce.</p>
+<p>OK. What I did was</p>
+<p>$fp = fopen(&#039;php://output&#039;, &#039;w&#039;);<br>
+$param = array(&#039;blocks&#039; =&gt; 1, &#039;work&#039; =&gt; 0);<br>
+stream_filter_append($fp, &#039;bzip2.compress&#039;, STREAM_FILTER_WRITE, $param);</p>
+<p>To bz-compress all output sent to this file-handle which is then sent to my Client (which understands the bzip-Format, of course).</p>
+<p>With all simple cases I did, this worked, but as soon as MS-SQL-Server comes into play, this is what happens:</p>
+<p>% php bugtest.php | bzcat -tvv<br>
+  (stdin):<br>
+    [1: huff+mtf rt+rld]<br>
+    [2: huff+mtf rt+rld]<br>
+    [3: huff+mtf rt+rld]<br>
+    [4: huff+mtf rt+rld]<br>
+    [5: huff+mtf rt+rld]<br>
+    [6: huff+mtf rt+rld]<br>
+    [7: huff+mtf rt+rld]<br>
+    [8: huff+mtf rt+rld]<br>
+    [9: huff+mtf rt+rld]<br>
+    [10: huff+mtf rt+rld]<br>
+    [11: huff+mtf rt+rld]<br>
+    [12: huff+mtf file ends unexpectedly</p>
+<p>I think, this thing must be related to memory-corruption, as moving around those fwrite-lines a bit, gets it to work here and then. Also outputting a bzip-buffer full of static data cures the problem.</p>
+<p>I&#039;m terribly sorry that I cannot be more specific. I just used two full days to get where I am now, but I will certainly not stop and continue investigating.<br>
+You can use the `bzip2recover&#039; program to attempt to recover<br>
+data from undamaged sections of corrupted files.</p>
+<p>-&gt; As you can see, the bzip-file somehow gets corrupted. A bit research turned out that it is incomplete - the last part of the buffer is never flushed to the output stream.</p>
+<p>I&#039;m connecting to the server via FreeTDS from my Linux machine. I&#039;m not really sure whether this problem really is in bzip2.compress. It may well be in the mssql-extension or even in freetds, but I&#039;m reporting this here as I have no problems whatsoever when letting it run uncompressed.</p>
+<p>As I said: With any simpler case, it just works as expected.</p>
+<p>Reproduce code:<br>
+---------------<br>
+http://www.pilif.ch/bugtest.phps</p>
+<p>(commenting out one fwrite()-Line or another will stop the bug. This is the combination where I can reproduce it every time. Ask me, if you need a Dump of the database.)</p>
+<p>Expected result:<br>
+----------------<br>
+ % php comptest.php | bzcat -tvv<br>
+  (stdin):<br>
+    [1: huff+mtf rt+rld]<br>
+    [2: huff+mtf rt+rld]<br>
+    [3: huff+mtf rt+rld]<br>
+    [4: huff+mtf rt+rld]<br>
+    [5: huff+mtf rt+rld]<br>
+    [6: huff+mtf rt+rld]<br>
+    [7: huff+mtf rt+rld]<br>
+    [8: huff+mtf rt+rld]<br>
+    [9: huff+mtf rt+rld]<br>
+    [10: huff+mtf rt+rld]<br>
+    [11: huff+mtf rt+rld]<br>
+    [12: huff+mtf rt+rld]<br>
+    [13: huff+mtf rt+rld]<br>
+    ok</p>
+<p>Actual result:<br>
+--------------<br>
+ % php bugtest.php | bzcat -tvv<br>
+  (stdin):<br>
+    [1: huff+mtf rt+rld]<br>
+    [2: huff+mtf rt+rld]<br>
+    [3: huff+mtf rt+rld]<br>
+    [4: huff+mtf rt+rld]<br>
+    [5: huff+mtf rt+rld]<br>
+    [6: huff+mtf rt+rld]<br>
+    [7: huff+mtf rt+rld]<br>
+    [8: huff+mtf rt+rld]<br>
+    [9: huff+mtf rt+rld]<br>
+    [10: huff+mtf rt+rld]<br>
+    [11: huff+mtf rt+rld]<br>
+    [12: huff+mtf file ends unexpectedly</p>
+</section>
+<section>
+<h3>[2004-10-17 16:50 UTC] pilif at pilif dot ch</h3>
+<p>Sorry. Corrected the category and the Version of PHP - the former I&#039;ve overseen on the submission-form, the latter I could not set correctely on submitting.</p>
+</section>
+<section>
+<h3>[2004-10-18 09:33 UTC] pilif at pilif dot ch</h3>
+<p>OK. Me again.</p>
+<p>I can reproduce it now also with a PostgreSQL-Packend. A bit hacking around in the script showed me something interesting:</p>
+<p>//do work<br>
+sleep(2); exit;</p>
+<p>right before the sleep - the output seems to stop in the middle of whatever the script is doing. Then the script exits and bzcat -tvv reports the error.</p>
+<p>If I do this:</p>
+<p>// do stuff<br>
+fwrite($fp, &#039;&lt;!-- &#039;);<br>
+fwrite($fp, str_repeat(&#039;+=&#039;, 5000));<br>
+fwrite($fp, &#039;--&gt;&#039;);<br>
+fclose($fp);<br>
+sleep(2); exit;</p>
+<p>to fill the buffer a little bit more, something interesting happens:</p>
+<p>the output still stops in the middle of the XML I&#039;m outputting (see test case), waits those two seconds and *then* outputs the rest (the rest of the XML followed by those fill-characters).</p>
+<p>When I add some Pear::Log-Statements to the testcase, I can prove that the XML-generation-part is definitely finished before I com to the junk-outputing-part.</p>
+<p>So. Forget my previous note. This bug *must* be within the output-filter. Somehow a buffer does not seem to get flushed here and then.</p>
+<p>Question: Is this maybe related to <br>
+http://bugs.php.net/bug.php?id=29521 ?</p>
+<p>Philip</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

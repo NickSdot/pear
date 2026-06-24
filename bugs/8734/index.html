@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8734</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/Translation2/index.html">Translation2</a> &#187; Bug #8734</h1>
+<p>Wrong use of list()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-09-19 10:07 UTC</td></tr>
+<tr><th>From</th><td>chrismontijn at yahoo dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Translation2/index.html">Translation2</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.2</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-09-19 10:07 UTC] chrismontijn at yahoo dot com</h3>
+<p>Description:<br>
+------------<br>
+When using an existing db connection, with fetchmode set to associative, to instantiate an translation2 object at least one (didn&#039;t check further) list() function is not working properly. For example in the MDB2.php container on line 217 in function getPage() there is a list() not working properly, because the indices of the result array are tablecolumnnames instead of numbers (starting from zero).</p>
+<p>Test script:<br>
+---------------<br>
+$dsn = &#039;somedsn&#039;;</p>
+<p>$db =&amp; MDB2::connect($dsn);<br>
+// !This is where it goes wrong<br>
+$db-&gt;setFetchmode(MDB2_FETCHMODE_ASSOC);</p>
+<p>// instantiate translation2 with this database connection<br>
+$tr =&amp; Translation2::factory($dbdriver, &amp;$db, $TR_options);</p>
+<p>$tr-&gt;setLang(&#039;somelang&#039;);</p>
+<p>$tr =&amp; $tr-&gt;getDecorator(&#039;CacheMemory&#039;);</p>
+<p>$tr-&gt;setPageID(&#039;someGroup&#039;);</p>
+<p>$tr-&gt;get(&#039;somestr&#039;);</p>
+<p>Expected result:<br>
+----------------<br>
+I expect to see no notices about undefined offsets.</p>
+<p>Actual result:<br>
+--------------<br>
+When display notices are on in php.ini page shows following errors:</p>
+<p>Notice: Undefined offset: 1 in c:\Inetpub\wwwroot\pear\Translation2\Container\mdb2.php on line 217</p>
+<p>Notice: Undefined offset: 0 in c:\Inetpub\wwwroot\pear\Translation2\Container\mdb2.php on line 217</p>
+</section>
+<section>
+<h3>[2006-09-19 10:26 UTC] chrismontijn at yahoo dot com</h3>
+<p>A simple solution is to change line 217 in container/mdb2.php</p>
+<p>while (list($key, $value) = $res-&gt;fetchRow()) {</p>
+<p>to</p>
+<p>while (list($key, $value) = $res-&gt;fetchRow(MDB2_FETCHMODE_ORDERED)) {</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

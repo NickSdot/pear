@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8277</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm_Renderer_Tableless/index.html">HTML_QuickForm_Renderer_Tableless</a> &#187; Bug #8277</h1>
+<p>Extra &lt;/fieldset&gt; tag</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-07-24 16:17 UTC</td></tr>
+<tr><th>From</th><td>justin dot adie at adieandco dot com</td></tr>
+<tr><th>Assigned</th><td>wiesemann</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm_Renderer_Tableless/index.html">HTML_QuickForm_Renderer_Tableless</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Win (but irrelevant)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-24 16:17 UTC] justin dot adie at adieandco dot com</h3>
+<p>Description:<br>
+------------<br>
+the renderer adds a broken end fieldset tag at the start of the form, just after the hidden div.</p>
+<p>the bug tracker indicates that this was fixed with release 0.3.1.</p>
+<p>further the change log for 0.3.1 indicating a fix to bug #8222 doesn&#039;t match up to the actual code: for example there is still an invisible div with the qf hidden inputs in it.</p>
+<p>the broken  renders fine on firefox but not on IE (7 at least) - you get an empty frame.</p>
+<p>i believe the issue is in the renderHeader method.  I have changed this line<br>
+$this-&gt;_html .= $this-&gt;_closeFieldsetTemplate;</p>
+<p>to</p>
+<p>if ($this-&gt;_fieldsetIsOpen) {<br>
+  $this-&gt;_html .= $this-&gt;_closeFieldsetTemplate;<br>
+}</p>
+<p>which seems to fix it.</p>
+<p>Test script:<br>
+---------------<br>
+require_once &quot;HTML/QuickForm.php&quot;;<br>
+require_once &#039;HTML/QuickForm/Renderer/Tableless.php&#039;;<br>
+$form = new HTML_QuickForm(&#039;form1&#039;, &#039;post&#039;, $_SERVER[&#039;PHP_SELF&#039;],&quot;&quot;,NULL,TRUE); <br>
+$renderer =&amp; new HTML_QuickForm_Renderer_Tableless();	<br>
+$form-&gt;addElement(&quot;header&quot;, &quot;&quot;, &quot;Foo&quot;);<br>
+$form-&gt;addElement(&quot;text&quot;, &quot;username&quot;, &quot;User Name:&quot;);<br>
+$form-&gt;addElement(&quot;header&quot;, &quot;&quot;, &quot;Bar&quot;);<br>
+$buttons[] = &amp;HTML_QuickForm::createElement(&quot;reset&quot;, &quot;reset&quot;, &quot;Clear&quot;);<br>
+$buttons[] = &amp;HTML_QuickForm::createElement(&quot;submit&quot;, &quot;submit&quot;, &quot;Save&quot;);<br>
+$form-&gt;addGroup($buttons, null, null, &quot; &quot;); <br>
+$form-&gt;accept($renderer);<br>
+echo $renderer-&gt;toHtml();</p>
+<p>Expected result:<br>
+----------------</p>
+<p>//<br>
+		Foo<br>
+		User Name:</p>
+<p>Bar<br>
+		 </p>
+<p>Actual result:<br>
+--------------</p>
+<p>//NOTE DELETTION OF TRAILING TAG<br>
+	<br>
+		Foo<br>
+		User Name:</p>
+<p>Bar<br>
+		 &lt;br /&gt;<br>
+	&lt;/fieldset&gt;<br>
+&lt;/form&gt;</p>
+</section>
+<section>
+<h3>[2006-07-24 17:52 UTC] justin dot adie at adieandco dot com</h3>
+<p>Hi Mark</p>
+<p>yes: i&#039;m using 3.2.6 of qf and 0.3.1 of the tableless renderer (although i have changed the line of code i referred to below).  No other mods.</p>
+<p>the bug report is a copy and paste of the source code sent to the browser.</p>
+<p>I confirm that with the latest cvs snapshot (I have just downloaded it - strangely it has not been given a version number), the &lt;/fieldset&gt; disappears.  However the invisible div is still there. Is this intended?</p>
+<p>cheers<br>
+Justin</p>
+</section>
+<section>
+<h3>[2006-07-25 13:52 UTC] justin dot adie at adieandco dot com</h3>
+<p>Hi Mark</p>
+<p>thanks for this.  all issues closed from my side.</p>
+<p>the only alternative i have to the hidden inputs in an invisible div is to put them in the main fieldset.  i guess for coding ease i&#039;d put them at the end, just before the close tag.  strange requirement of the d2d to require inputs to have a container.  isn&#039;t that what the form container is for!</p>
+<p>cheers<br>
+Justin</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

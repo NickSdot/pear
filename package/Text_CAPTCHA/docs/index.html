@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text_CAPTCHA Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_CAPTCHA/index.html">Text_CAPTCHA</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Text_CAPTCHA/docs/index.html#package-text-text-captcha-intro">Introduction</a>
+</li>
+<li><a href="package/Text_CAPTCHA/docs/index.html#package-text-text-captcha-example">Example</a>
+</li>
+<li><a href="package/Text_CAPTCHA/docs/index.html#package-text-text-captcha-information">Information about the CAPTCHA and inner workings</a>
+</li></ul>
+</nav>
+<p>Implementation of CAPTCHAs (Completely Automated Public Turing tests to tell Computers and Humans Apart).</p>
+<section id="package-text-text-captcha-intro">
+<h2>Introduction</h2>
+<p>This package provides the functionality to create 
+    CAPTCHAs (Completely Automated Public Turing
+   tests to tell Computers and Humans Apart). Features include:</p>
+
+  <ul>
+    <li>
+      
+        Creating graphical CAPTCHAs using GD2
+      
+    </li>
+    <li>
+      
+        Pluggable driver architecture using factory pattern
+      
+    </li>
+    <li>
+      
+        <a href="package/Text_CAPTCHA/docs/index.html#package-text-text-captcha-information">
+          Generic information about the CAPTCHA
+        </a>
+      
+    </li>
+  </ul>
+
+  <p>The package creates CAPTCHAs; due to the 
+    stateless nature of the HTTP protocol, the logic to secure a
+    webpage using the package must be specifically implemented. 
+    See the <a href="package/Text_CAPTCHA/docs/index.html#package-text-text-captcha-example">usage example</a>
+    for detailled information.</p>
+  <p>Currently, the graphical CAPTCHA driver depends on Image_Text which in turn 
+    requires TTF support to be compiled into PHP.</p>
+</section>
+<section id="package-text-text-captcha-example">
+<h2>Example</h2>
+<p>The following example implements the standard use of a CAPTCHA:
+    Submitted form data is only evaluated when a CAPTCHA has been
+    solved correctly.</p>
+
+  <p><strong>Creating a CAPTCHA</strong></p>
+    
+
+    <p>The following code creates a CAPTCHA, provides the relevant
+      information for the package, anhd retrieves the CAPTCHA as a 
+      PNG image.</p>
+
+    <pre><code>&lt;?php
+require_once &#039;Text/CAPTCHA.php&#039;;
+
+// Set CAPTCHA options (font must exist!)
+$imageOptions = array(
+    &#039;font_size&#039;        =&gt; 24,
+    &#039;font_path&#039;        =&gt; &#039;./&#039;,
+    &#039;font_file&#039;        =&gt; &#039;COUR.TTF&#039;,
+    &#039;text_color&#039;       =&gt; &#039;#DDFF99&#039;,
+    &#039;lines_color&#039;      =&gt; &#039;#CCEEDD&#039;,
+    &#039;background_color&#039; =&gt; &#039;#555555&#039;
+);
+
+// Set CAPTCHA options
+$options = array(
+    &#039;width&#039; =&gt; 200,
+    &#039;height&#039; =&gt; 80,
+    &#039;output&#039; =&gt; &#039;png&#039;,
+    &#039;imageOptions&#039; =&gt; $imageOptions
+);
+           
+// Generate a new Text_CAPTCHA object, Image driver
+$c = Text_CAPTCHA::factory(&#039;Image&#039;);
+$retval = $c-&gt;init($options);
+if (PEAR::isError($retval)) {
+    printf(&#039;Error initializing CAPTCHA: %s!&#039;,
+        $retval-&gt;getMessage());
+    exit;
+}
+
+// Get CAPTCHA secret passphrase
+$_SESSION[&#039;phrase&#039;] = $c-&gt;getPhrase();
+
+// Get CAPTCHA image (as PNG)
+$png = $c-&gt;getCAPTCHAAsPNG();
+if (PEAR::isError($png)) {
+    echo &#039;Error generating CAPTCHA!&#039;;
+    echo $png-&gt;getMessage();
+    exit;
+}
+file_put_contents(md5(session_id()) . &#039;.png&#039;, $png);
+?&gt;</code></pre>
+  
+
+  <p><strong>Securing a form with a CAPTCHA</strong></p>
+    
+
+    <p>The following code implements the functionality to check whether
+      a CAPTCHA was solved correctly or not. for this, the
+      CAPTCHA&#039;s phrase is stored in a session variable to
+      retain this information between requests. It is
+      important to unset the session after solving the 
+      CAPTCHA to avoid the reuse of the session ID.</p>
+
+    <pre><code>&lt;?php
+session_start();
+$ok = false;
+$msg = &#039;Please enter the text in the image in the field below!&#039;;
+if ($_SERVER[&#039;REQUEST_METHOD&#039;] == &#039;POST&#039;) {
+    if (isset($_POST[&#039;phrase&#039;]) &amp;&amp; is_string($_POST[&#039;phrase&#039;]) &amp;&amp; isset($_SESSION[&#039;phrase&#039;]) &amp;&amp;
+        strlen($_POST[&#039;phrase&#039;]) &gt; 0 &amp;&amp; strlen($_SESSION[&#039;phrase&#039;]) &gt; 0 &amp;&amp;
+        $_POST[&#039;phrase&#039;] == $_SESSION[&#039;phrase&#039;]) {
+        $msg = &#039;OK!&#039;;
+        $ok = true;
+        unset($_SESSION[&#039;phrase&#039;]);
+    } else {
+        $msg = &#039;Please try again!&#039;;
+    }
+    unlink(md5(session_id()) . &#039;.png&#039;);
+}
+print &quot;&lt;p&gt;$msg&lt;/p&gt;&quot;;
+
+if (!$ok) {
+    // create the CAPTCHA as seen above
+    // and send it to the client
+}
+?&gt;</code></pre>
+    <p>See the file <code>CAPTCHA_test.php</code>
+    in the package distribution for a full, working
+    example (GD and TTF support required).</p>
+</section>
+<section id="package-text-text-captcha-information">
+<h2>Information about the CAPTCHA and inner workings</h2>
+<p><strong>Text_CAPTCHA</strong> provides information
+    about the CAPTCHA and makes its inner workings accessible
+    using several functions defined in the base
+    class; the specific implementation of them is up to
+    the driver.</p>
+
+  <ul>
+    <li>
+      
+        <strong>init()</strong> is used to initialize the CAPTCHA and provide
+        further information, like <strong>Image_Text</strong>
+        parameters. 
+      
+    </li>
+    <li>
+      
+        <strong>_createCAPTCHA()</strong> generates the CAPTCHA, but is called
+        internally by <strong>init()</strong>.
+      
+      
+        <strong>getPhrase()</strong> returns the CAPTCHA&#039;s phrase.
+      
+    </li>
+    <li>
+      
+        <strong>_createPhrase()</strong> creates a phrase for the CAPTCHA,
+        but is used internally.
+      
+    </li>
+    <li>
+      
+        <strong>getCAPTCHA()</strong> returns the CAPTCHA, the format used
+        depends on the driver implementation. 
+      
+    </li>
+  </ul>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

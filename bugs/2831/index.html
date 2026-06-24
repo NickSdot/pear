@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2831</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_Graph/index.html">Image_Graph</a> &#187; Bug #2831</h1>
+<p>using Image_Graph_Fill in Image_Graph_Fill_Array</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-11-25 22:46 UTC</td></tr>
+<tr><th>From</th><td>oliver at burtchen dot com</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/Image_Graph/index.html">Image_Graph</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-11-25 22:46 UTC] oliver at burtchen dot com</h3>
+<p>Description:<br>
+------------<br>
+Using Image_Graph-0.3.0dev2-pre:</p>
+<p>There is a problem when using &#039;Image_Graph_Fill&#039; in an &#039;Image_Graph_Fill_Array&#039;. First of all, method &amp;add(&amp;$style, $id = &#039;&#039;) in Image_Graph_Fill_Array should return $style, but has no return-value.</p>
+<p>With this bug fixed, if you then use $style-&gt;setFillColor(), it will not be painted. If you use setBackgroundColor(), the plotarea ist painted with this color, not only the datapoint.</p>
+<p>Reproduce code:<br>
+---------------<br>
+include_once(&#039;Image/Graph.php&#039;);</p>
+<p>$graph =&amp; Image_Graph::factory(&#039;graph&#039;, array(640, 400)); <br>
+$graph-&gt;add($plotarea = Image_Graph::factory(&#039;plotarea&#039;));</p>
+<p>$dataset =&amp; Image_Graph::factory(&#039;Dataset_Sequential&#039;, array(array(&#039;1&#039; =&gt; 10, &#039;2&#039; =&gt; 20, &#039;3&#039; =&gt; 10)));<br>
+$plot =&amp; $plotarea-&gt;addNew(&#039;bar&#039;, array($dataset, &#039;bar&#039;));</p>
+<p>$fill =&amp; Image_Graph::factory(&#039;Image_Graph_Fill_Array&#039;);</p>
+<p>$fill-&gt;addColor(&#039;#ff0000&#039;, &#039;1&#039;);</p>
+<p>$fill_green =&amp; $fill-&gt;addNew(&#039;Image_Graph_Fill&#039;, null, &#039;2&#039;);</p>
+<p>// what is the right one to use ????<br>
+$fill_green-&gt;setFillColor(&#039;#00ff00&#039;);<br>
+$fill_green-&gt;setBackgroundColor(&#039;#00ff00&#039;);</p>
+<p>$fill-&gt;addNew(&#039;Image_Graph_Fill_Gradient&#039;, array(IMAGE_GRAPH_GRAD_VERTICAL, &#039;#ff0000&#039;, &#039;#ff0000&#039;), &#039;3&#039;);</p>
+<p>$plot-&gt;setFillStyle(&amp;$fill);</p>
+<p>$graph-&gt;done();</p>
+<p>Expected result:<br>
+----------------<br>
+Should paint three red bars.</p>
+</section>
+<section>
+<h3>[2004-11-25 22:55 UTC] oliver at burtchen dot com</h3>
+<p>The example should return two red bars, and a green one. ;-)</p>
+</section>
+<section>
+<h3>[2004-11-26 07:32 UTC] pear dot nosey at veggerby dot dk</h3>
+<p>You shouldn&#039;t use either: Image_Graph_Fill is an abstract class :) (http://pear.php.net/package/Image_Graph/docs/0.3.0dev1/apidoc/Image_Graph-0.3.0dev1/Image_Graph_Fill.html)</p>
+<p>However you do have a point, but it&#039;s more of a design issue! In previous versions the fill style was dependent upon coordinates and the &#039;easy&#039; way to do this was to make the fillstyles inherited from Image_Graph_Element (but you could (rightly) argue that this is an apparent discrepancy with design - a fill is not really an element you put on the canvas). But this being history, because the fill&#039;s are now actually calculated by the driver when doing the actual fill (it has coordinates there of couse), this inheritance should be removed.</p>
+<p>Solid colored fillings can only (and *should* only be done using addColor() - mainly due to performance).</p>
+<p>But thanks a lot for your findings.</p>
+<p>Also a little note in your usage of Image_Graph_Dataset_Sequential: the keys in your associated array are not used, it only uses the datavalues, i.e. 10, 20 and 10. But maybe it could be an idea to allow Image_Graph_Dataset_Trivial to get an array as parameter to the constructor with the associated data array instead of having to do -&gt;addPoint(), -&gt;addPoint()...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

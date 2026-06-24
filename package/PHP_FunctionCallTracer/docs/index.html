@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHP_FunctionCallTracer Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PHP &#187; <a href="package/PHP_FunctionCallTracer/index.html">PHP_FunctionCallTracer</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/PHP_FunctionCallTracer/docs/index.html#package-php-php-fctcalltrac-intro">Introduction</a>
+</li>
+<li><a href="package/PHP_FunctionCallTracer/docs/index.html#package-php-php-functioncalltracer-basic">Basic Use</a>
+</li></ul>
+</nav>
+<p>Creates a function calls debug trace. Functions arguments, returned parameters and watched variables are reported in the same section for each function call. The trace is available as an array, or can be displayed or written in a file. Traced variables can be processed by provided user functions for displaying purposes.</p>
+<section id="package-php-php-fctcalltrac-intro">
+<h2>Introduction</h2>
+<h3>Overview</h3>
+
+  
+  <p>Functions arguments, returned parameters
+   and watched variables are reported in the same section for each function call.
+   The trace is available as an array, or can be displayed or written in a file.
+   Traced variables can be processed by provided user functions for displaying purposes.</p>
+  <p>This package is not a replacement for full fledged PHP debuggers. It is
+   useful for (1) remote debugging, (2) to debug a complex sequence of function
+   calls, (3) to display non text variables in a user readable format.</p>
+  <ol>
+   <li>
+    
+     Remote debugging is sometimes the only option to debug a package that
+     works fine on your system, e.g. a 32-bit OS, but breaks on a different system,
+     e.g. a 64-bit OS, which you have no access to. A remote user who has the
+     latter OS could run the package, then send you the trace for analysis.
+    
+   </li>
+   <li>
+    
+     It is sometimes difficult not to loose track of functions calls in some
+     live debugging sessions even with top notch PHP editor/debuggers. The trace
+     produced by this package may come handy and is easy to use in combination
+     with the source code to track calls and variables.
+    
+   </li>
+   <li>
+    
+     Some variables native format does not always display well, typically:
+     packed data and UTF-8 strings. They can be converted as they are being traced
+     to a readable format by provided user functions. For example: converting
+     binary strings to hexadecimal, or UTF-8 string to Unicode.
+    
+   </li>
+  </ol>
+</section>
+<section id="package-php-php-functioncalltracer-basic">
+<h2>Basic Use</h2>
+<h3>Overview</h3>
+
+  
+
+  <p><strong>traceArguments()</strong> is used to trace the function arguments.
+   There is no need to pass the function arguments to <strong>traceArguments()</strong> 
+   to trace them.
+   Note that <strong>traceArguments()</strong> may not be used, if the function does not 
+   call any other function or if the function calls functions that are not being traced.</p>
+  <p><strong>traceVariables()</strong> is used to trace variables within the function.
+   The variables to trace must be passed as arguments to <strong>traceVariables()</strong>.
+   <strong>traceVariables()</strong> may be called as many times as required to watch
+   variables value change.</p>
+  <p><strong>traceReturn()</strong> is used to trace the variables returned by the function.
+   The variables to trace must be passed as arguments to <strong>traceReturn()</strong>.</p>
+  <p><strong>putTrace()</strong> is used to display the trace to the standard output or
+   to write it into a file.</p>
+ 
+
+ <h3>How to use PHP_FunctionCallTracer</h3>
+
+  
+
+  <p>In this example, <code>package.php</code> contains two classes whose methods are traced.
+   The package is used by an application <code>trace.php</code>.
+   The trace is stored into <code>trace.txt</code>.
+   To generate the trace, run: #php trace.php.</p>
+
+  <p><strong>The package <code>package.php</code></strong></p>
+   
+
+   <p>Note that testing if <strong>PHP_FunctionCallTracer</strong> is loaded: 
+    class_exists(&#039;PHP_FunctionCallTracer&#039;, false), is optional. It is useful only
+	if the tracing methods are meant to be left in the code. They will be called only if 
+	<strong>PHP_FunctionCallTracer</strong> is loaded.</p>
+
+   <pre><code>&lt;?php
+class math {
+    /**
+     * tracing the arguments and the returned parameter
+     *
+     * note that traceReturn() calls traceArguments() by default which is fine here
+     * since this method does call other methods to trace
+     */
+    public static function prod($x, $y)
+    {
+        // class_exists(&#039;PHP_FunctionCallTracer&#039;, false)
+        // and PHP_FunctionCallTracer::traceArguments();
+        $p = $x * $y;
+
+        class_exists(&#039;PHP_FunctionCallTracer&#039;, false) and
+        PHP_FunctionCallTracer::traceReturn($p);
+        return $p;
+    }
+
+    /**
+     * tracing the arguments and the returned parameter
+     *
+     * traceArguments() must be called here since this method calls other methods
+     * that may be traced, so that traced calls are displayed in the right order
+     */
+    public static function square($x)
+    {
+        class_exists(&#039;PHP_FunctionCallTracer&#039;, false) and
+        PHP_FunctionCallTracer::traceArguments();
+
+        $x2 = self::prod($x, $x);
+
+        class_exists(&#039;PHP_FunctionCallTracer&#039;, false) and
+        PHP_FunctionCallTracer::traceReturn($x2);
+        return $x2;
+    }
+}
+
+class geometry {
+    private $pi = 3.14;
+
+    /**
+     * tracing the arguments and the returned parameter
+     * another variable is traced along with the returned parameter
+     */
+    public function circle($r)
+    {
+        class_exists(&#039;PHP_FunctionCallTracer&#039;, false) and
+        PHP_FunctionCallTracer::traceArguments();
+
+        $pi2 = 2 * $this-&gt;pi;
+        $c = math::prod($r, $pi2);
+
+        class_exists(&#039;PHP_FunctionCallTracer&#039;, false) and
+        PHP_FunctionCallTracer::traceReturn($c, $pi2);
+        return $c;
+    }
+
+    /**
+     * tracing the arguments, some variables and the returned parameter
+     */
+    public function disk($r)
+    {
+        class_exists(&#039;PHP_FunctionCallTracer&#039;, false) and
+        PHP_FunctionCallTracer::traceArguments();
+
+        $r2 = math::square($r);
+        class_exists(&#039;PHP_FunctionCallTracer&#039;, false) and
+        PHP_FunctionCallTracer::traceVariables($r2, $this-&gt;pi);
+
+        $d = math::prod($r2, $this-&gt;pi);
+
+        class_exists(&#039;PHP_FunctionCallTracer&#039;, false) and
+        PHP_FunctionCallTracer::traceReturn($d);
+        return $d;
+    }
+}
+?&gt;</code></pre>
+  
+
+  <p><strong>The application <code>trace.php</code></strong></p>
+   
+
+   <pre><code>&lt;?php
+/**
+ * adds the path of the package if this is a raw install
+ * includes the package (example) to debug and the tracer package
+ */
+file_exists(&quot;../../../../PHP/&quot;) and set_include_path(&#039;../../../..&#039; . PATH_SEPARATOR . get_include_path());
+require_once &#039;package.php&#039;;
+require_once &#039;PHP/FunctionCallTracer.php&#039;;
+
+/**
+ * creates an instance of the class to debug and calls a few methods
+ * writes the trace in a file
+ */
+$geometry = new geometry;
+$c = $geometry-&gt;circle(2);
+$d = $geometry-&gt;disk(3);
+
+$file = dirname(__FILE__) . &#039;/trace.txt&#039;;
+PHP_FunctionCallTracer::putTrace($file, false);
+?&gt;</code></pre>
+  
+
+  <p><strong>The trace <code>trace.txt</code></strong></p>
+   
+
+   <pre>
+Array
+(
+    [php_uname] =&gt; Windows NT mybox 5.1 build 2600
+    [date] =&gt; Friday, 03-Aug-07 09:17:30 UTC
+    [calls] =&gt; Array
+        (
+            [0] =&gt; Array
+                (
+                    [call] =&gt; Array
+                        (
+                            [file] =&gt; trace.php
+                            [line] =&gt; 20
+                            [function] =&gt; geometry-&gt;circle
+                        )
+                    [in] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 55
+                            [args] =&gt; Array
+                                (
+                                    [0] =&gt; 2
+                                )
+                        )
+
+                    [out] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 61
+                            [args] =&gt; Array
+                                (
+                                    [0] =&gt; 12.56
+                                    [1] =&gt; 6.28
+                                )
+                        )
+
+                )
+
+            [1] =&gt; Array
+                (
+                    [call] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 58
+                            [function] =&gt; math::prod
+                        )
+
+                    [in] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 22
+                            [args] =&gt; Array
+                                (
+                                    [0] =&gt; 2
+                                    [1] =&gt; 6.28
+                                )
+                        )
+
+                    [out] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 22
+                            [args] =&gt; Array
+                                (
+                                    [0] =&gt; 12.56
+                                )
+                        )
+
+                )
+
+            [2] =&gt; Array
+                (
+                    [call] =&gt; Array
+                        (
+                            [file] =&gt; trace.php
+                            [line] =&gt; 21
+                            [function] =&gt; geometry-&gt;disk
+                        )
+
+                    [in] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 71
+                            [args] =&gt; Array
+                                (
+                                    [0] =&gt; 3
+                                )
+                        )
+
+                    [watches] =&gt; Array
+                        (
+                            [0] =&gt; Array
+                                (
+                                    [file] =&gt; package.php
+                                    [line] =&gt; 75
+                                    [args] =&gt; Array
+                                        (
+                                            [0] =&gt; 9
+                                            [1] =&gt; 3.14
+                                        )
+                                )
+
+                        )
+
+                    [out] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 80
+                            [args] =&gt; Array
+                                (
+                                    [0] =&gt; 28.26
+                                )
+                        )
+
+                )
+
+            [3] =&gt; Array
+                (
+                    [call] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 73
+                            [function] =&gt; math::square
+                        )
+
+                    [in] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 35
+                            [args] =&gt; Array
+                                (
+                                    [0] =&gt; 3
+                                )
+                        )
+
+                    [out] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 40
+                            [args] =&gt; Array
+                                (
+                                    [0] =&gt; 9
+                                )
+                        )
+
+                )
+
+            [4] =&gt; Array
+                (
+                    [call] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 37
+                            [function] =&gt; math::prod
+                        )
+
+                    [in] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 22
+                            [args] =&gt; Array
+                                (
+                                    [0] =&gt; 3
+                                    [1] =&gt; 3
+                                )
+                        )
+
+                    [out] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 22
+                            [args] =&gt; Array
+                                (
+                                    [0] =&gt; 9
+                                )
+
+                        )
+
+                )
+
+            [5] =&gt; Array
+                (
+                    [call] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 77
+                            [function] =&gt; math::prod
+                        )
+
+                    [in] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 22
+                            [args] =&gt; Array
+                                (
+                                    [0] =&gt; 9
+                                    [1] =&gt; 3.14
+                                )
+                        )
+
+                    [out] =&gt; Array
+                        (
+                            [file] =&gt; package.php
+                            [line] =&gt; 22
+                            [args] =&gt; Array
+                                (
+                                    [0] =&gt; 28.26
+                                )
+                        )
+                )
+        )
+
+    [objects] =&gt; Array
+        (
+            [0] =&gt; geometry Object
+                (
+                    [pi:private] =&gt; 3.14
+                )
+            [2] =&gt; same as #0
+        )
+
+)
+   </pre>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6375</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR_Command_Packaging/index.html">PEAR_Command_Packaging</a> &#187; Bug #6375</h1>
+<p>&quot;pear makerpm&quot; misc. improvements (rpm-depname, rpm-release options)</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #6375</th><td>&quot;pear makerpm&quot; misc. improvements (rpm-depname, rpm-release options)</td></tr>
+<tr><th>Submitted</th><td>2005-12-30 14:01 UTC</td></tr>
+<tr><th>From</th><td>bugs at timj dot co dot uk</td></tr>
+<tr><th>Assigned</th><td>timj</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR_Command_Packaging/index.html">PEAR_Command_Packaging</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-12-30 14:01 UTC] bugs at timj dot co dot uk</h3>
+<p>Description:<br>
+------------<br>
+The current &quot;pear makerpm&quot; code is good, but has some limitations. It:</p>
+<p>- internally duplicates code that works out the channel alias (from the channel name) when working out RPM package names.<br>
+- does not support having virtual Provides, used by some distributions, that differ from the actual RPM package names<br>
+- is limited in the options available for customising the RPM package name. A &quot;%s&quot; substitution in the rpm-pkgname option that is replaced with the package name allows for some customisation, but does not support (for example) RPM package naming conventions that substitute hyphens for underscores in package names. Additionally, a generic placeholder for the channel alias is not provided (e.g. &quot;%C::%s&quot; vs &quot;PEAR::%s&quot;) which is significant for non PEAR/PECL channels, for which the &quot;[channel]::[package]&quot; format is hardcoded.<br>
+- does not try to distinguish between PEAR and PECL when generating RPM names (actually, there is no way of doing this reliably as far as I can tell, though it is possible to make a guess that if that if the package name starts with a lowercase letter, it&#039;s PECL rather than PEAR)<br>
+- does not provide an option to specify the RPM release version from the command line</p>
+<p>These issues have been identified as I have been working to build PEAR package RPMs that match Fedora Project naming conventions, which look something like the following for an example package &quot;Some_Package&quot; version &quot;x.y.z&quot; which requires &quot;Other_Package&quot; version &quot;a.b.c&quot;:</p>
+<p>Name: php-pear-Some-Package<br>
+Version: x.y.z<br>
+Provides: php-pear(Some_Package) = x.y.z<br>
+Requires: php-pear(Other_Package) &gt;= a.b.c</p>
+<p>and, for PECL packages, the same with &quot;php-pear&quot; replaced with &quot;php-pecl&quot;.</p>
+<p>At present, there is no way to achieve the above without hacking the PEAR source which is in itself not simple because the &quot;[channel]::[package]&quot; naming convention is assumed and hardcoded in several places. A desirable situation would be that it is possible to generate spec files with headers like the above simply by changing options on the command line, and additionally make it possible to make any further distribution-specific patches to the source clean and simple and touching as few lines as possible.</p>
+<p>To solve this, I developed a patch:</p>
+<p>http://www.timj.co.uk/linux/sources/php-pear-1.4.5-makerpm-cleanup.patch</p>
+<p>which cleans up the code slightly and generalises the generation of RPM package and dependency names. The patch mostly involves internal refactoring and is fully backwards-compatible and transparent from a user point of view; it does not change any existing functionality or defaults (with one exception, see [1]). Briefly, it:</p>
+<p>- Abstracts out the conversion of a channel name to a channel alias via the _getChannelAlias() function (i.e. purely internal refactoring). This simplifies some sections of code considerably by removing duplicated logic and facilitates clean distribution-specific patching.</p>
+<p>- Adds a CLI &quot;rpm-depname&quot; (-d) option, which allows specification of the format that is used for RPM dependency names. This is used for the generation of both &quot;Provides&quot; and &quot;Requires&quot; headers; a &quot;Provides&quot; header is generated if the rpm-depname format differs from the rpm-pkgname format. The Requires header is generated in any case but the format of this will be based on the rpm-depname option. The rpm-depname format is, by default, the same as the rpm-pkgname format which means that no additional &quot;Provides&quot; header is generated and &quot;Requires&quot; headers will be in the same format as before, matching existing behaviour.</p>
+<p>- Adds three additional sprintf-style substitution variables for both the rpm-pkgname and rpm-depname options:<br>
+a) %S - same as the existing %s but with underscores in the package name replaced with hyphens<br>
+b) %C - the channel alias<br>
+c) %c - the channel alias, lowercased</p>
+<p>These should allow a lot more flexibility in package naming, and add support for naming like Fedora&#039;s, for which the rpm-pkgname and rpm-depname formats in the above syntax are &quot;php-%c-%S&quot; and &quot;php-%c(%s)&quot; respectively.</p>
+<p>At the same time, the default is modified from &quot;PEAR::%s&quot; to the generalised version &quot;%C::%s&quot; which has no practical effect since that&#039;s how PEAR worked by default in any case.</p>
+<p>- Abstracts out the generation of RPM names (for both the package itself and dependencies) via the _getRPMNameFromFormat() function</p>
+<p>- Adds a &quot;-r&quot;/&quot;--rpm-release&quot; option which defaults to 1 (as before) but allows the user to override the RPM release version which will be inserted into the spec file</p>
+<p>- Does a couple of trivial text tweaks:<br>
+ - remove comment about generating RPM deps, as this is now fixed :)<br>
+ - fix the &quot;pear makerpm&quot; example, which confusingly mixes up Net_Socket and Net_Geo</p>
+<p>[1]. One change that is made is that PECL packages detected as such will now have a channel alias of &quot;PECL&quot; rather than &quot;PEAR&quot;, i.e. the RPM name will be &quot;PECL::Package_Name&quot; as opposed to &quot;PEAR::Package_Name&quot;. However, this is academic since a) &quot;pear makerpm&quot; does not currently work for PECL packages (at least not for me) and b) using &quot;PECL&quot; rather than &quot;PEAR&quot; is probably a good thing anyway.</p>
+<p>Test script:<br>
+---------------<br>
+pear makerpm --rpm-pkgname &quot;php-%c-%S&quot; --rpm-depname &quot;php-%c(%s)&quot; --rpm-release 3 HTTP-1.4.0.tgz &amp;&amp; head -n 13 php-pear-HTTP-1.4.0.spec</p>
+<p>Expected result:<br>
+----------------<br>
+Summary: PEAR: Miscellaneous HTTP utilities<br>
+Name: php-pear-HTTP<br>
+Version: 1.4.0<br>
+Release: 3<br>
+License: PHP License<br>
+Group: Development/Libraries<br>
+Source: http://pear.php.net/get/HTTP-%{version}.tgz<br>
+BuildRoot: %{_tmppath}/%{name}-root<br>
+URL: http://pear.php.net/package/HTTP<br>
+Prefix: %{_prefix}<br>
+BuildArchitectures: noarch<br>
+Provides: php-pear(HTTP) = 1.4.0<br>
+Requires: php-pear(PEAR)</p>
+</section>
+<section>
+<h3>[2006-02-10 11:57 UTC] timj at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

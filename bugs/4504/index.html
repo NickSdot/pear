@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4504</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #4504</h1>
+<p>addHTMLImage does not work in cases when filename contains a path</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4504</th><td>addHTMLImage does not work in cases when filename contains a path</td></tr>
+<tr><th>Submitted</th><td>2005-06-01 22:48 UTC</td></tr>
+<tr><th>From</th><td>richard at hyperlink dot net dot nz</td></tr>
+<tr><th>Assigned</th><td>cipri</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>1.4.0, 1.4.0a1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-01 22:48 UTC] richard at hyperlink dot net dot nz</h3>
+<p>Description:<br>
+------------<br>
+When called with a single argument, specifying the filename of the image, addHTMLImage does not work correctly if the image in the HTML is specified with a path.</p>
+<p>E.g. when the HTML contains &quot;&lt;img src=images/mars.jpg&gt;&quot; and addHTMLImage(&quot;images/mars.jpg&quot;) is called, the image will not be inserted correctly.</p>
+<p>This is because the function addHTMLImage truncates the filename to basename($file), and it is this truncated $file that is then later used when replacing the filename with the attachment CID (excuse me if my terminalogy is not correct).</p>
+<p>I was going to suggest an alternate implementation, however this would probably break a lot of existing code. So more explicit documentation of what cases addHTMLImage is probably a better solution.</p>
+<p>Since addHTMLImage also truncates the $name parameter, supplying the actual file contents in $file and the name in $name would still be problematic for my need, so I added the following function to the Mail_mime class.</p>
+<p>This function will find all images in img tags and load all the files into the Mime_mail object. It takes a parameter $path which is prepended to the filenames, for when the files are not relative to the current working directory. You need to call addHTMLBody first. Note the regular expression only matches IMG tags where the SRC attribute is inside double quotes.</p>
+<p>function findAddHTMLImages($path=&#039;&#039;)<br>
+    {<br>
+        preg_match_all(&#039;|&lt;img .*src=&quot;(.+)&quot;.*&gt;|Ui&#039;, $this-&gt;_htmlbody, $image_matches, PREG_PATTERN_ORDER);<br>
+        $html_images=array_unique($image_matches[1]);<br>
+        foreach ($html_images as $filename) {<br>
+            $filedata=$this-&gt;_file2str($path.$filename);<br>
+            if (PEAR::isError($filedata)) {<br>
+                return $filedata;<br>
+            }<br>
+            $this-&gt;_html_images[] = array(<br>
+                &#039;body&#039;   =&gt; $filedata,<br>
+                &#039;name&#039;   =&gt; $filename,<br>
+                &#039;c_type&#039; =&gt; &#039;application/octet-stream&#039;,<br>
+                &#039;cid&#039;    =&gt; md5(uniqid(time())));<br>
+        }<br>
+        return true;<br>
+    }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

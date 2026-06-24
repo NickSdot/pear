@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2791</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_Graph/index.html">Image_Graph</a> &#187; Bug #2791</h1>
+<p>wrong x-axis label position when using ttf font</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-11-19 09:09 UTC</td></tr>
+<tr><th>From</th><td>pawel at money dot pl</td></tr>
+<tr><th>Assigned</th><td>nosey</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Image_Graph/index.html">Image_Graph</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>linux 2.4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-11-19 09:09 UTC] pawel at money dot pl</h3>
+<p>Description:<br>
+------------<br>
+Labels for the x-axis are beeing displayed just ON the axis, when I use ttf font. It&#039;s not better, when the angle of font is changed (it looks really bad at 270)</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+    require &#039;Image/Graph.php&#039;;      <br>
+    $graph =&amp; Image_Graph::factory(&#039;graph&#039;, array(400, 300));<br>
+    $font =&amp; $graph-&gt;addNew(&#039;ttf_font&#039;, &#039;arial.ttf&#039;);<br>
+    $font-&gt;setSize(9);<br>
+    $font-&gt;setAngle(0); <br>
+    $dataset =&amp; Image_Graph::factory(&#039;dataset&#039;);<br>
+    $dataset-&gt;addPoint(&#039;Denmark &#039;, 10);<br>
+    $dataset-&gt;addPoint(&#039;Norway &#039;, 3);<br>
+    $dataset-&gt;addPoint(&#039;Sweden &#039;, 8);<br>
+    $dataset-&gt;addPoint(&#039;Finland &#039;, 5);<br>
+    $plotarea =&amp; $graph-&gt;addNew(&#039;plotarea&#039;);<br>
+    $ax =&amp; $plotarea-&gt;getAxis(IMAGE_GRAPH_AXIS_X);<br>
+    $ax-&gt;setFont($font);	 <br>
+    $plot =&amp;$plotarea-&gt;addNew(&#039;line&#039;, &amp;$dataset);    <br>
+    $graph-&gt;done();<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Placement of labels should be equal to this represented by the default font</p>
+</section>
+<section>
+<h3>[2004-11-19 09:42 UTC] pear dot nosey at veggerby dot dk</h3>
+<p>Granted there is a problem when angling the font at 270 deg, at 0 deg. my Windows box shows if correctly. I wonder if the FreeType for your linux box (or in general) doesn&#039;t report the bounds using ImageTTFBox correctly (which I used for placing the font at the right pos)?</p>
+<p>Could you please test the following:</p>
+<p>var_dump(imagettfbbox(9, 0, &#039;arial.ttf&#039;, &#039;Denmark&#039;));<br>
+var_dump(imagettfbbox(9, 270, &#039;arial.ttf&#039;, &#039;Denmark&#039;));</p>
+<p>Thanks...</p>
+</section>
+<section>
+<h3>[2004-11-19 09:59 UTC] pawel at money dot pl</h3>
+<p>here is the result:<br>
+array(8) {<br>
+  [0]=&gt;<br>
+  int(-1)<br>
+  [1]=&gt;<br>
+  int(0)<br>
+  [2]=&gt;<br>
+  int(49)<br>
+  [3]=&gt;<br>
+  int(0)<br>
+  [4]=&gt;<br>
+  int(49)<br>
+  [5]=&gt;<br>
+  int(-11)<br>
+  [6]=&gt;<br>
+  int(-1)<br>
+  [7]=&gt;<br>
+  int(-11)<br>
+}<br>
+array(8) {<br>
+  [0]=&gt;<br>
+  int(-2)<br>
+  [1]=&gt;<br>
+  int(-1)<br>
+  [2]=&gt;<br>
+  int(-2)<br>
+  [3]=&gt;<br>
+  int(49)<br>
+  [4]=&gt;<br>
+  int(9)<br>
+  [5]=&gt;<br>
+  int(49)<br>
+  [6]=&gt;<br>
+  int(9)<br>
+  [7]=&gt;<br>
+  int(-1)<br>
+}</p>
+<p>Let me know if You want me to send an image that my script generates.</p>
+</section>
+<section>
+<h3>[2004-11-19 10:41 UTC] pear dot nosey at veggerby dot dk</h3>
+<p>Your output from ImageTTFbox resembles my results very much (+-2) so that is not the problem. I have looked at it, and have found a problem, which I&#039;ll fix ASAP (it is working in my internal-dev-version, not available on CVS though since the PHP guys haven&#039;t granted me CVS access yet :)!)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

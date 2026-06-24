@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #10229</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #10229</h1>
+<p>Improved PHP 4 handling in generator</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #10229</th><td>Improved PHP 4 handling in generator</td></tr>
+<tr><th>Submitted</th><td>2007-03-01 10:55 UTC</td></tr>
+<tr><th>From</th><td>lboshell at php dot net</td></tr>
+<tr><th>Status</th><td>Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-03-01 10:55 UTC] lboshell at php dot net</h3>
+<p>Description:<br>
+------------<br>
+Hello,</p>
+<p>The generator is a bit limited at the moment when it is used on a system with PHP 5, but the results are intended to be used on PHP 4.</p>
+<p>Bug #5146 improved things adding the generator_var_keyword option, but there&#039;s still a couple of problems with it:</p>
+<p>* There are other cases in the Generator where different syntax is created depending on the expression substr(phpversion(),0,1), instead of using the config parameter.</p>
+<p>* It&#039;s not very well documented.</p>
+<p>Below are two diffs I created to replace &#039;generator_var_keyword&#039; with &#039;generator_php4_syntax&#039;, use it consistently in the Generator, and document it in the manual and the .ini example.</p>
+<p>Thanks.</p>
+<p>====<br>
+DB_DataObject-1.8.5-force_php4.patch<br>
+====</p>
+<p>diff -NurdpB DB_DataObject-1.8.5/DataObject/Generator.php DB_DataObject-1.8.5-patched/DataObject/Generator.php<br>
+--- DB_DataObject-1.8.5/DataObject/Generator.php	2006-10-15 21:20:24.000000000 -0500<br>
++++ DB_DataObject-1.8.5-patched/DataObject/Generator.php	2007-03-01 05:32:45.000000000 -0500<br>
+@@ -18,7 +18,8 @@<br>
+  * @version    CVS: $Id: Generator.php,v 1.122 2006/10/16 02:20:16 alan_k Exp $<br>
+  * @link       http://pear.php.net/package/DB_DataObject<br>
+  */<br>
+- <br>
++<br>
++<br>
+  /*<br>
+  * Security Notes:<br>
+  *   This class uses eval to create classes on the fly.<br>
+@@ -164,6 +165,26 @@ class DB_DataObject_Generator extends DB<br>
+     var $_newConfig;<br>
+ <br>
+     /**<br>
++     * Checks if PHP 4 syntax needs to be used when generating code<br>
++     * Users of this class can customize this behaviour using the<br>
++     * &#039;generator_php4_syntax&#039; config parameter.<br>
++     *<br>
++     * @access private<br>
++     * @return true if php 4 syntax has to be used, false otherwise<br>
++     */<br>
++    function _php4_syntax()<br>
++    {<br>
++        $options = &amp;PEAR::getStaticProperty(&#039;DB_DataObject&#039;,&#039;options&#039;);<br>
++<br>
++        if ((isset($options[&#039;generator_php4_syntax&#039;]) &amp;&amp;<br>
++             $options[&#039;generator_php4_syntax&#039;]) ||<br>
++            substr(phpversion(),0,1) &lt; 5)<br>
++            return true;<br>
++<br>
++        return false;<br>
++    }<br>
++<br>
++    /**<br>
+      * Build a list of tables;<br>
+      * and store it in $this-&gt;tables and $this-&gt;_definitions[tablename];<br>
+      *<br>
+@@ -797,8 +818,7 @@ class DB_DataObject_Generator extends DB<br>
+         $options = &amp;PEAR::getStaticProperty(&#039;DB_DataObject&#039;,&#039;options&#039;);<br>
+         <br>
+         <br>
+-        $var = (substr(phpversion(),0,1) &gt; 4) ? &#039;public&#039; : &#039;var&#039;;<br>
+-        $var = !empty($options[&#039;generator_var_keyword&#039;]) ? $options[&#039;generator_var_keyword&#039;] : $var;<br>
++        $var = ($this-&gt;_php4_syntax()) ? &#039;var&#039; : &#039;public&#039;;<br>
+         <br>
+         <br>
+         $body .= &quot;    {$var} \$__table = &#039;{$this-&gt;table}&#039;;  {$p}// table name\n&quot;;<br>
+@@ -847,7 +867,7 @@ class DB_DataObject_Generator extends DB<br>
+         // and replace them with $x = clone($y);<br>
+         // due to the change in the PHP5 clone design.<br>
+         <br>
+-        if ( substr(phpversion(),0,1) &lt; 5) {<br>
++        if ($this-&gt;_php4_syntax()) {<br>
+             $body .= &quot;\n&quot;;<br>
+             $body .= &quot;    /* ZE2 compatibility trick*/\n&quot;;<br>
+             $body .= &quot;    function __clone() { return \$this;}\n&quot;;<br>
+@@ -1146,7 +1166,7 @@ class DB_DataObject_Generator extends DB<br>
+                                                              : &quot;    * @return   {$t-&gt;type}\n&quot;;<br>
+             $getters .= &quot;    * @access   public\n&quot;;<br>
+             $getters .= &quot;    */\n&quot;;<br>
+-            $getters .= (substr(phpversion(),0,1) &gt; 4) ? &#039;    public &#039;<br>
++            $getters .= (! $this-&gt;_php4_syntax()) ? &#039;    public &#039;<br>
+                                                        : &#039;    &#039;;<br>
+             $getters .= &quot;function $methodName() {\n&quot;;<br>
+             $getters .= &quot;        return \$this-&gt;{$t-&gt;name};\n&quot;;<br>
+@@ -1198,7 +1218,7 @@ class DB_DataObject_Generator extends DB<br>
+             $setters .= &quot;    * @param    mixed   input value\n&quot;;<br>
+             $setters .= &quot;    * @access   public\n&quot;;<br>
+             $setters .= &quot;    */\n&quot;;<br>
+-            $setters .= (substr(phpversion(),0,1) &gt; 4) ? &#039;    public &#039;<br>
++            $setters .= (! $this-&gt;_php4_syntax()) ? &#039;    public &#039;<br>
+                                                        : &#039;    &#039;;<br>
+             $setters .= &quot;function $methodName(\$value) {\n&quot;;<br>
+             $setters .= &quot;        \$this-&gt;{$t-&gt;name} = \$value;\n&quot;;<br>
+diff -NurdpB DB_DataObject-1.8.5/docs/example.ini DB_DataObject-1.8.5-patched/docs/example.ini<br>
+--- DB_DataObject-1.8.5/docs/example.ini	2006-07-25 22:44:51.000000000 -0500<br>
++++ DB_DataObject-1.8.5-patched/docs/example.ini	2007-03-01 05:36:40.000000000 -0500<br>
+@@ -81,11 +81,10 @@ class_prefix    = DataObjects_<br>
+                 ; (True) prevents writing of private/var&#039;s so you can overload get/set <br>
+                 ; note: this has the downside of making code less clear... (alot of magic!!)<br>
+ <br>
+-;generator_var_keyword = &#039;var&#039;<br>
+-                ; var|public  - (or private if you want to break things)<br>
+-		; The variable prefix that is used when class properties are created<br>
+-		; the default is public for PHP5, and var for PHP4<br>
+-		<br>
++;generator_php4_syntax = true<br>
++                ; (True) causes the generator to use PHP 4 syntax (&#039;var&#039; keyword<br>
++                ; instead of &#039;public&#039; for properties and so on) even if<br>
++                ; the PHP version used at runtime is PHP 5 or better<br>
+ <br>
+ ;generator_add_validate_stubs =<br>
+ 		; (True) will insert / (or add to existing files) stubs for validate methods</p>
+<p>===<br>
+intro-configuration.xml.patch<br>
+(For the manual, in peardoc/en/package/database/db-dataobject)<br>
+===</p>
+<p>--- intro-configuration.xml	2007-03-01 05:38:38.000000000 -0500<br>
++++ intro-configuration.xml.new	2007-03-01 05:44:23.000000000 -0500<br>
+@@ -550,6 +550,21 @@<br>
+           &lt;/listitem&gt;<br>
+         &lt;/varlistentry&gt;<br>
+ <br>
++        &lt;varlistentry&gt;<br>
++          &lt;term&gt;<br>
++            &lt;parameter&gt;generator_php4_syntax&lt;/parameter&gt;<br>
++            &lt;type&gt;boolean&lt;/type&gt;<br>
++          &lt;/term&gt;<br>
++          &lt;listitem&gt;<br>
++            &lt;para&gt;<br>
++              If True, the generator will use PHP 4 syntax when creating<br>
++              classes (&lt;literal&gt;var&lt;/literal&gt; instead of<br>
++              &lt;literal&gt;public&lt;/literal&gt; in property declarations and so on).<br>
++              This is useful if you use the generator on a system with PHP<br>
++              5, and you want to deploy the result on a system with PHP 4.<br>
++            &lt;/para&gt;<br>
++          &lt;/listitem&gt;<br>
++        &lt;/varlistentry&gt;<br>
+       &lt;/variablelist&gt;<br>
+ <br>
+     &lt;/refsect1&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1236</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #1236</h1>
+<p>bad regexp avoid format date</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-18 09:46 UTC</td></tr>
+<tr><th>From</th><td>chief at php dot net</td></tr>
+<tr><th>Assigned</th><td>pajoye</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>n/a</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-18 09:46 UTC] chief at php dot net</h3>
+<p>Description:<br>
+------------<br>
+I discovered that if you try to create new date with this format:<br>
+$date = new Date(&#039;2003-07-15 22:53:37+01&#039;);<br>
+the current regexp doesn&#039;t match this.</p>
+<p>The correct regexop should be:</p>
+<p>preg_match(&#039;/^(\d{4})-?(\d{2})-?(\d{2})([T\s]?(\d{2}):?(\d{2}):?(\d{2})(Z|[\+\-]\d{2}):?(\d{2})?)?$/i&#039;, $date, $regs)</p>
+<p>best regards,<br>
+Radek</p>
+<p>here is a full patch:</p>
+<p>Index: Date.php<br>
+===================================================================<br>
+RCS file: /repository/pear/Date/Date.php,v<br>
+retrieving revision 1.27<br>
+diff -r1.27 Date.php<br>
+147c147<br>
+&lt;             preg_match(&#039;/^(\d{4})-?(\d{2})-?(\d{2})([T\s]?(\d{2}):?(\d{2}):?(\d{2})(Z|[\+\-]\d{2}:?\d{2})?)?$/i&#039;, $date, $regs)<br>
+---<br>
+&gt;             preg_match(&#039;/^(\d{4})-?(\d{2})-?(\d{2})([T\s]?(\d{2}):?(\d{2}):?(\d{2})(Z|[\+\-]\d{2}):?(\d{2})?)?$/i&#039;, $date, $regs)<br>
+165a166,168<br>
+&gt;                 if(isset($regs[9])) {<br>
+&gt;                     $regs[8] += &#039;:&#039;.$regs[9];<br>
+&gt;                 }</p>
+</section>
+<section>
+<h3>[2004-05-12 10:06 UTC] aashley at optimiser dot com</h3>
+<p>umm sorry if this seems obvious to you, but how is this considered a bug? The ISO8601 standard says that timezone offset must be represented by 4 digits if it is present.</p>
+<p>IMHO the bug is actually in whatever code is trying to load a date with that format.</p>
+</section>
+<section>
+<h3>[2004-05-16 11:41 UTC] paj at pearfr dot org</h3>
+<p>Hello,</p>
+<p>Please point me to the RFC related to this format. If there is none I do not see the point to allow this format.</p>
+<p>--Pierre</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

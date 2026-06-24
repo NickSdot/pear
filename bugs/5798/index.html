@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5798</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #5798</h1>
+<p>PEAR include_path problem</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-10-27 18:49 UTC</td></tr>
+<tr><th>From</th><td>murley at townnews dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.0</td></tr>
+<tr><th>OS</th><td>ANY</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-27 18:49 UTC] murley at townnews dot com</h3>
+<p>Description:<br>
+------------<br>
+$pear_package_version = &quot;1.3.5&quot;;</p>
+<p>In the bin/pear file line 15 allows you to set an enviorment variable that pear will use as the lib/php dir.</p>
+<p># then look for the right pear include dir<br>
+if test &quot;x$PHP_PEAR_INSTALL_DIR&quot; != &quot;x&quot;; then<br>
+  INCDIR=$PHP_PEAR_INSTALL_DIR<br>
+  INCARG=&quot;-d include_path=$PHP_PEAR_INSTALL_DIR&quot;</p>
+<p>At the last line line 32 you call bin/php with the include dir and execute pearcmd.php - This works and actually will pass the exported lib dir to PHP. The problem lies in pearcmd.php on line 28:</p>
+<p>if (&#039;/usr/local/lib/php&#039; != &#039;@&#039;.&#039;include_path&#039;.&#039;@&#039;) {<br>
+    ini_set(&#039;include_path&#039;, &#039;/usr/local/lib/php&#039;);<br>
+}</p>
+<p>This if loops forces an overwrite of the included_path passed at command line to PHP in bin/pear causing include_path to have the incorrect path and thus pear fails at line 42 when tring to require PEAR.php.</p>
+<p>Test script:<br>
+---------------<br>
+export PHP_PEAR_PHP_BIN=/var/tmp/php-5.1.0RC1-build/usr/local/bin/php</p>
+<p>export PHP_PEAR_INSTALL_DIR=/var/tmp/php-5.1.0RC1-build/usr/local/lib/php</p>
+<p>/var/tmp/php-5.1.0RC1-build/usr/local/bin/pear config-show</p>
+<p>Expected result:<br>
+----------------<br>
+Configuration:<br>
+==============<br>
+PEAR executables directory     bin_dir         /var/tmp/php-5.1.0RC1-build/usr/local/bin<br>
+PEAR documentation directory   doc_dir         /usr/local/lib/php/docs<br>
+PHP extension directory        ext_dir         /usr/local/lib/php/extensions/no-debug-non-zts-20050617<br>
+PEAR directory                 php_dir         /var/tmp/php-5.1.0RC1-build/usr/local/lib/php<br>
+PEAR Installer cache directory cache_dir       /tmp/pear/cache<br>
+PEAR data directory            data_dir        /usr/local/lib/php/data<br>
+PHP CLI/CGI binary             php_bin         /var/tmp/php-5.1.0RC1-build/usr/local/bin/php<br>
+PEAR test directory            test_dir        /usr/local/lib/php/tests<br>
+Cache TimeToLive               cache_ttl       3600<br>
+Preferred Package State        preferred_state stable<br>
+Unix file mask                 umask           2<br>
+Debug Log Level                verbose         1<br>
+HTTP Proxy Server Address      http_proxy      &lt;not set&gt;<br>
+PEAR server                    master_server   pear.php.net<br>
+PEAR password (for             password        &lt;not set&gt;<br>
+maintainers)<br>
+Signature Handling Program     sig_bin         /usr/bin/gpg<br>
+Signature Key Directory        sig_keydir      /usr/local/etc/pearkeys<br>
+Signature Key Id               sig_keyid       &lt;not set&gt;<br>
+Package Signature Type         sig_type        gpg<br>
+PEAR username (for             username        &lt;not set&gt;<br>
+maintainers)</p>
+<p>Actual result:<br>
+--------------<br>
+Warning: main(PEAR.php): failed to open stream: No such file or directory in Config.php on line 21</p>
+<p>Fatal error: main(): Failed opening required &#039;PEAR.php&#039; (include_path=&#039;/usr/local/lib/php&#039;) in /var/tmp/php-5.1.0RC1-build/usr/local/lib/php/PEAR/Config.php on line 21</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

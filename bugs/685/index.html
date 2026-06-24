@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #685</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #685</h1>
+<p>some speed improvement</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #685</th><td>some speed improvement</td></tr>
+<tr><th>Submitted</th><td>2004-02-05 09:12 UTC</td></tr>
+<tr><th>From</th><td>shuther at gmx dot net</td></tr>
+<tr><th>Status</th><td>Suspended</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Windows 2000</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-02-05 09:12 UTC] shuther at gmx dot net</h3>
+<p>Description:<br>
+------------<br>
+Here is some code to improve the speed of the compare function.<br>
+A note migth be added also: &#039;For server production, please specify in the environment:&#039;<br>
+set TZ = &#039;UTC&#039;</p>
+<p>A constant can be setup if we know that we are working only with one timezone; very usefull if we do a lot of compare (in my case, I show a calendar, and a Date function is called 2000 times because of this.)</p>
+<p>Reproduce code:<br>
+---------------<br>
+52a53,57<br>
+&gt; <br>
+&gt; if (!defined(&#039;DATE_TWEAK_SAME_TZ&#039;)) {<br>
+&gt;     define(&#039;DATE_TWEAK_SAME_TZ&#039;, false);<br>
+&gt; }<br>
+&gt;<br>
+704,705c750,759<br>
+&lt;         $d1-&gt;convertTZ(new Date_TimeZone(&#039;UTC&#039;));<br>
+&lt;         $d2-&gt;convertTZ(new Date_TimeZone(&#039;UTC&#039;));<br>
+---<br>
+&gt; /* We define a constant that speed the search, case if we are always working with the same TZ */<br>
+&gt;         if (DATE_TWEAK_SAME_TZ) {<br>
+&gt;             static $dateTimezone;<br>
+&gt;             <br>
+&gt;             if (!isset($dateTimezone))<br>
+&gt;                 $dateTimezone = new Date_TimeZone(&#039;UTC&#039;);<br>
+&gt;                 <br>
+&gt;             $d1-&gt;convertTZ($dateTimezone);<br>
+&gt;             $d2-&gt;convertTZ($dateTimezone);<br>
+&gt;         }</p>
+<p>diff -w -b -r1.3 TimeZone.php<br>
+252c252,255<br>
+&lt;         $env_tz = &quot;&quot;;<br>
+---<br>
+&gt;     	static $env_tz;<br>
+&gt;  <br>
+&gt; /* Some change for speed purposes */    	<br>
+&gt;     	if (!isset($env_tz)) {<br>
+254a258,259<br>
+&gt; 	        } else {<br>
+&gt; 	        	$env_tz = &#039;&#039;;<br>
+255a261,265<br>
+&gt;     	}<br>
+&gt;     	<br>
+&gt; 		if ($this-&gt;id == $env_tz) {<br>
+&gt; 	        $ltime = localtime($date-&gt;getTime(), true);<br>
+&gt; 		} else {<br>
+258a269<br>
+&gt; 		}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

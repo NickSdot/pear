@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1925</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #1925</h1>
+<p>init() x2 returns error</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-07-20 14:14 UTC</td></tr>
+<tr><th>From</th><td>worker at mompopmedia dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0</td></tr>
+<tr><th>OS</th><td>Mandrake 10</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-20 14:14 UTC] worker at mompopmedia dot com</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>Perhaps I am going about this wrong, but when calling init() 2 times, the second time around init returns a PEAR_Error.  What I am trying to do is first re-initialize a session, but if there is no session to restore, I want to login an anonymous user.</p>
+<p>The gotcha is the second time init is called with &#039;anonymous&#039; as the username, it returns a PEAR_Error LIVEUSER_ERROR_NOT_SUPPORTED saying that it cannot locate the auth container &#039;M.php&#039;  (which should be MDB2.php).  I don&#039;t understand why on the second call (the first call does not raise an error), init() garbles the config array I defined when instantiating LiveUser as a singleton.</p>
+<p>Reproduce code:<br>
+---------------<br>
+I got something like this going on:</p>
+<p>$fw_user =&amp; LiveUser::factory($fw_user_config);<br>
+if (PEAR::isError($fw_user)) {<br>
+    trigger_error($fw_user-&gt;getMessage(), E_USER_ERROR);<br>
+}</p>
+<p>$user = $fw_user-&gt;init();<br>
+if (PEAR::isError($user)) {<br>
+    trigger_error($user-&gt;getMessage() . &#039; &#039; .$user-&gt;getUserInfo(), E_USER_WARNING);<br>
+}</p>
+<p>if ($user === false) {<br>
+    // authenticate as anonymous<br>
+    $user = $fw_user-&gt;init(&#039;anonymous&#039;);<br>
+    if (PEAR::isError($user)) {<br>
+        Var_Dump::display($user); die();<br>
+        trigger_error($user-&gt;getMessage() . &#039; &#039; .$user-&gt;getUserInfo(), E_USER_WARNING);<br>
+    }<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+logged in user</p>
+</section>
+<section>
+<h3>[2004-07-20 18:15 UTC] smith at backendmedia dot com</h3>
+<p>I dont have a fix for this, but handling anonymous auth should be possible in a cleaner way.</p>
+</section>
+<section>
+<h3>[2004-07-20 18:21 UTC] worker at mompopmedia dot com</h3>
+<p>well, I think I have located the problem (s) -- while debugging it I came across several issues:</p>
+<p>1) LiveUser_Auth_Container_MDB2::_readUserData is broken.  CVS to, although CVS is not as broken.  All quote()&#039;s are broken:</p>
+<p>235: $this-&gt;dbc-&gt;quote($handle, $this-&gt;authTableCols[&#039;handle&#039;][&#039;type&#039;])</p>
+<p>240: $this-&gt;dbc-&gt;quote($this-&gt;encryptPW($passwd), $this-&gt;authTableCols[&#039;passwd&#039;][&#039;type&#039;]);</p>
+<p>should be:</p>
+<p>235: $this-&gt;dbc-&gt;quote($handle, $this-&gt;authTableCols[&#039;required&#039;][&#039;handle&#039;][&#039;type&#039;])</p>
+<p>240: $this-&gt;dbc-&gt;quote($this-&gt;encryptPW($passwd), $this-&gt;authTableCols[&#039;required&#039;][&#039;passwd&#039;][&#039;type&#039;]);</p>
+<p>Another gotcha: if $this-&gt;authTableCols[&#039;required&#039;][&#039;passwd&#039;][&#039;type&#039;] is an empty string (which it is set as in the examples bundled with LiveUser), MDB2::quote() will return a PEAR::Error (type not defined).  This is not checked in the LiveUser_Auth_Container_MDB2::_readUserData() method, resulting in broken SQL built.</p>
+<p>When trying to init(&#039;anonymous&#039;), it returns true although I noted one problem:</p>
+<p>- Come lines 743 and 754 of LiveUser.php, $lulogin is marked true, and $this-&gt;_auth == null resulting in two &quot;Trying to get property of non-object&quot; notices.  There shoud be a check first to see if $this_auth != null.  something like this:</p>
+<p>if ($lulogin &amp;&amp; is_object($this-&gt;_auth) &amp;&amp;  ...</p>
+<p>Thanks,</p>
+<p>Michael</p>
+</section>
+<section>
+<h3>[2004-07-21 10:25 UTC] smith at backendmedia dot com</h3>
+<p>Ok I have commited your proposed changes. Will test them once I get through the other bug reports. Sanity checking for the options array should probably also be added eventually. I will add it to the todo list on the wiki.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

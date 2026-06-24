@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services_Yahoo Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/Services_Yahoo/index.html">Services_Yahoo</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Services_Yahoo/docs/index.html#package-webservices-services-yahoo-intro">Introduction</a>
+</li>
+<li><a href="package/Services_Yahoo/docs/index.html#package-webservices-services-yahoo-examples">Examples</a>
+</li>
+<li><a href="package/Services_Yahoo/docs/index.html#package-webservices-services-yahoo-design">Design</a>
+</li></ul>
+</nav>
+<p>Interface to the Yahoo! Search API. The package provides an object oriented model to communicate with Yahoo&#039;s services via their REST-based XML interface.</p>
+<section id="package-webservices-services-yahoo-intro">
+<h2>Introduction</h2>
+<h3>Overview</h3>
+
+  
+
+  <p>The package provides an object oriented model to communicate with
+   <a href="http://yahoo.com/">Yahoo</a>&#039;s <a href="http://developer.yahoo.net/">web services</a> via their
+   REST-based XML interface.</p>
+
+  <p>Currently the package only supports the Yahoo! Search Web Services,
+   which is natural because Yahoo! does not expose other services via
+   their API at the moment. Due to the modular layout
+   of the package it is easy to add support for other services at a
+   later point though. More information about the design of the package
+   is available in a <a href="package/Services_Yahoo/docs/index.html#package-webservices-services-yahoo-design">separate
+   section</a>.</p>
+ 
+
+ <h3>Setup</h3>
+
+  
+
+  <h3>Requirements</h3>
+
+   
+
+   <p><strong>Services_Yahoo</strong> requires <a href="http://www.php.net/">PHP 5</a> and a bunch of PEAR packages.  For a
+    complete list of dependencies please see the download
+    page.</p>
+  
+  
+  <h3>Installation</h3>
+
+   
+
+   <p>The <strong>Services_Yahoo</strong> package can be installed
+    using the PEAR installer command <strong>pear install
+     Services_Yahoo</strong>. If the installation fails due to missing
+    dependencies, one either needs to install them manually or can make
+    the installer fetch all dependencies automatically: <strong>pear
+     install -a Services_Yahoo</strong>.</p>
+
+   <p>Alternative installation methods for situations where one has no
+     access to the <strong>pear</strong> installer command can be
+     found in the general installation
+     chapter.</p>
+  
+
+  <h3>Uninstallation</h3>
+
+   
+
+   <p>Uninstalling the package can be done with <strong>pear uninstall
+    Services_Yahoo</strong>.</p>
+</section>
+<section id="package-webservices-services-yahoo-examples">
+<h2>Examples</h2>
+<h3>About the examples</h3>
+
+  
+
+  <p>The following sections provide you with examples of using the
+   different feature sets of <strong>Services_Yahoo</strong>.
+   Currently this includes documentation for the interfaces to
+   <a href="package/Services_Yahoo/docs/index.html#package-webservices-services-yahoo-examples">Yahoo!
+   Search</a> and <a href="package/Services_Yahoo/docs/index.html#package-webservices-services-yahoo-examples">Content
+   Analysis</a>.</p>
+
+  <p>All public methods in <strong>Services_Yahoo</strong> have in
+   common that <a href="http://php.net/manual/en/language.exceptions.php">exceptions</a>
+   will be raised when something goes wrong.  This is why <code>try {
+   ... } catch { }</code> blocks are wrapped around all examples.</p>
+
+  <blockquote>
+   <p>The examples are designed to be run from a command line shell.  If
+    you would like to test them in a web browser you should replace
+    <code>\n</code> with <code>&lt;br /&gt;</code> for
+    better readability.</p>
+  </blockquote>
+
+ 
+
+ <h3>Speaking to Yahoo! Search</h3>
+
+  
+
+  <p>The following examples will communicate with <a href="http://search.yahoo.com/">Yahoo! Search</a>.</p>
+
+  <p><strong>Web search: Listing results</strong></p>
+   
+
+   <p>This snippet issues a search query for the term <code>Steve
+    Fossett</code> to Yahoo! Search.  For each result in the returned
+    result set the title is printed.</p>
+   
+   <pre><code>&lt;?php
+require_once &quot;Services/Yahoo/Search.php&quot;;
+
+try {
+    $client = Services_Yahoo_Search::factory(&quot;web&quot;);
+    $results = $client-&gt;searchFor(&quot;Steve Fossett&quot;);
+
+    echo &quot;Number of results: &quot; . $results-&gt;getTotalResultsReturned() . &quot;\n\n&quot;;
+
+    foreach ($results as $result) {
+        echo $result[&#039;Title&#039;] . &quot;\n&quot;;
+    }
+
+} catch (Services_Yahoo_Exception $e) {
+    echo &quot;Error: &quot; . $e-&gt;getMessage() . &quot;\n&quot;;
+
+    foreach ($e-&gt;getErrors() as $error) {
+        echo &quot;* &quot; . $error . &quot;\n&quot;;
+    }
+}
+?&gt;</code></pre>
+
+   <p>By default 10 results are returned per request.  This number can be
+    modified using the method <strong>setResultNumber()</strong>:</p>
+
+   <pre><code>&lt;?php
+require_once &quot;Services/Yahoo/Search.php&quot;;
+
+try {
+    $client = Services_Yahoo_Search::factory(&quot;web&quot;);
+
+    // Get 20 results per query
+    $results = $client-&gt;withResults(20)-&gt;searchFor(&quot;Steve Fossett&quot;);
+
+    /* ... */
+?&gt;</code></pre>
+
+  
+
+  <p><strong>Web search: Result details</strong></p>
+   
+
+   <p>This code again queries Yahoo! Search for <code>Steve
+    Fossett</code>, but this time the details of the first result in
+    the result set are printed.</p>
+
+
+   <pre><code>&lt;?php
+require_once &quot;Services/Yahoo/Search.php&quot;;
+
+try {
+    $client = Services_Yahoo_Search::factory(&quot;web&quot;);
+    $results = $client-&gt;searchFor(&quot;Steve Fossett&quot;);
+
+    if ($results-&gt;getTotalResultsReturned() &gt; 0) {
+        $info = $results-&gt;current();
+
+        echo &quot;Title: &quot; . $info[&#039;Title&#039;] . &quot;\n&quot;;
+        echo &quot;Summary: &quot; . $info[&#039;Summary&#039;] . &quot;\n&quot;;
+        echo &quot;URL: &quot; . $info[&#039;Url&#039;] . &quot;\n&quot;;
+        echo &quot;clickable URL: &quot; . $info[&#039;ClickUrl&#039;] . &quot;\n&quot;;
+        echo &quot;Modification date: &quot; . $info[&#039;ModificationDate&#039;] . &quot;\n&quot;;
+        echo &quot;Mime type: &quot; . $info[&#039;MimeType&#039;] . &quot;\n&quot;;
+    }
+    
+} catch (Services_Yahoo_Exception $e) {
+    echo &quot;Error: &quot; . $e-&gt;getMessage() . &quot;\n&quot;;
+
+    foreach ($e-&gt;getErrors() as $error) {
+        echo &quot;* &quot; . $error . &quot;\n&quot;;
+    }
+}
+?&gt;</code></pre>
+  
+
+  <p><strong>Web search: Paginating results</strong></p>
+   
+
+   <p>In this example the &quot;paginating&quot; capabilities of
+    <strong>Services_Yahoo</strong> are shown.  Paginating means
+    that the search results are split up into chunks of e.g. 20, which
+    are displayed together with links to jump back and forth to other
+    result chunks.  Basically this mimicks the functionality from the
+    bottom of <a href="http://search.yahoo.com/search?ei=UTF-8&amp;fr=sfp&amp;p=steve+fossett">official
+    Yahoo Search Page</a>.</p>
+   <p>TBD</p>
+  
+
+  <blockquote>
+   <p>In order to query the Image, News, Video or Local search, one only
+    needs to replace the argument &quot;web&quot; in the call of the
+    <strong>factory()</strong> method with one of
+    &quot;image&quot;, &quot;news&quot;, &quot;video&quot;, or
+    &quot;local&quot;.</p>
+  </blockquote>
+
+
+ 
+
+ <h3>Using the Yahoo! Content Analysis services</h3>
+
+
+  
+
+  <p>The following examples will show you how to use the Content Analysis
+   Services provided by Yahoo!.</p>
+
+  <p><strong>Term Extraction Service</strong></p>
+   
+
+   <p>The Term Extraction service provides a list of significant words or
+    phrases extracted from a larger content.</p>
+
+   <pre><code>&lt;?php
+require_once &quot;Services/Yahoo/ContentAnalysis.php&quot;;
+
+try {
+    $search = Services_Yahoo_ContentAnalysis::factory(&quot;termExtraction&quot;);
+    $search-&gt;setContext(&quot;Italian sculptors and painters of the &quot;
+        . &quot;renaissance favored the Virgin Mary for inspiration.&quot;);
+    $search-&gt;setQuery(&quot;madonna&quot;);
+
+    $results = $search-&gt;submit();
+
+    foreach ($results as $result) {
+        echo $result . &quot;\n&quot;;
+    }
+
+} catch (Services_Yahoo_Exception $e) {
+    echo &quot;Error: &quot; . $e-&gt;getMessage() . &quot;\n&quot;;
+
+    foreach ($e-&gt;getErrors() as $error) {
+        echo &quot;* &quot; . $error . &quot;\n&quot;;
+    }
+}
+?&gt;</code></pre>
+
+   <p>It is possible to skip the call to <strong>setQuery()</strong>.
+    The parameter set by this method is intended to help the engine with
+    the extraction process, but it is not stricly required.</p>
+
+  
+
+  <p><strong>Spelling Suggestion Service</strong></p>
+   
+
+   <p>The Spelling Suggestion service provides a suggested spelling
+    correction for a given term.</p>
+   <p>The following code queries Yahoo for a spelling suggestion for the
+    term &quot;madnna&quot;.  The service will return exactly one
+    result, but currently there is no way to avoid looping through the
+    <code>$results</code>.</p>
+
+   <pre><code>&lt;?php
+require_once &quot;Services/Yahoo/ContentAnalysis.php&quot;;
+
+try {
+    $search = Services_Yahoo_ContentAnalysis::factory(&quot;spellingSuggestion&quot;);
+    $search-&gt;setQuery(&quot;madnna&quot;);
+
+    $results = $search-&gt;submit();
+
+    foreach ($results as $result) {
+        echo $result . &quot;\n&quot;;
+    }
+} catch (Services_Yahoo_Exception $e) {
+    echo &quot;Error: &quot; . $e-&gt;getMessage() . &quot;\n&quot;;
+
+    foreach ($e-&gt;getErrors() as $error) {
+        echo &quot;* &quot; . $error . &quot;\n&quot;;
+    }
+}
+?&gt;</code></pre>
+</section>
+<section id="package-webservices-services-yahoo-design">
+<h2>Design</h2>
+<h3>Overview</h3>
+
+  
+
+  <p><strong>Services_Yahoo</strong> is split up into chunks that
+   group similar functionality.  Currently there are chunks for the
+   interfaces to Yahoo Search and to the Content Analysis functions.</p>
+
+  <p>Each chunk basically contains two top-level element in the source
+   tree:  A <code>.php</code> file and a directory that holds
+   the implementation of the chunk.  The file is a class that contains
+   only one method which implements that <a href="http://c2.com/cgi/wiki?AbstractFactoryPattern">factory
+   pattern</a>.  This method dynamically loads the right file from
+   the related directory and returns an instance of the class that
+   implements the desired function.</p>
+
+  <p>Due to this modular layout <strong>Services_Yahoo</strong> can
+   easily be extended when Yahoo adds new functions to their
+   API.</p>
+
+ 
+
+ <h3>More information</h3>
+
+  
+
+  <p>If you would like to study the code of the package, you can do so by
+   either downloading a release from the <a href="package/Services_Yahoo/index.html">package homepage</a> or
+   by <a href="http://svn.php.net/viewvc/pear/Services_Yahoo">browsing the
+    code in SVN</a>.</p>
+
+  <p>Also the automatically generated <a href="package/Services_Yahoo/docs/index.html">API
+    documentation</a> should help you.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5663</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Validate &#187; <a href="package/Validate_ISPN/index.html">Validate_ISPN</a> &#187; Bug #5663</h1>
+<p>13 digit ISBNs?</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5663</th><td>13 digit ISBNs?</td></tr>
+<tr><th>Submitted</th><td>2005-10-12 02:04 UTC</td></tr>
+<tr><th>From</th><td>seth at pricepages dot org</td></tr>
+<tr><th>Assigned</th><td>dufuz</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Validate_ISPN/index.html">Validate_ISPN</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Mac</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-12 02:04 UTC] seth at pricepages dot org</h3>
+<p>Description:<br>
+------------<br>
+Starting at the beginning of this year, everyone is supposed <br>
+to migrate to 13 digit ISBNs. Will the Validate_ISPN class be <br>
+supporting this?</p>
+</section>
+<section>
+<h3>[2005-10-12 03:52 UTC] seth at pricepages dot org</h3>
+<p>No prob about the comment flood, I&#039;d rather more comments <br>
+than none at all.</p>
+<p>If I were to do it, I would just check the length of the <br>
+string that is passed in after preprocessing. If 13, then go <br>
+with that, if 10 go with that. You could even translate from <br>
+the 10 into the 13, but I think that invalidates the <br>
+checksum digit.</p>
+<p>Anyway, the two systems are designed to be similar. A valid <br>
+ISBN is a valid ISBN, so I would think that you would still <br>
+keep BC if you allowed both 13 and 10 digit codes.</p>
+</section>
+<section>
+<h3>[2005-10-12 04:10 UTC] seth at pricepages dot org</h3>
+<p>While I&#039;m thinking about it, is there any reason for all of <br>
+those regular expression calls? You could go from this:</p>
+<p>if (preg_match(&quot;/[^0-9 IXSBN-]/&quot;, $isbn)) {<br>
+            return false;<br>
+        }</p>
+<p>if (!ereg(&quot;^ISBN&quot;, $isbn)){<br>
+            return false;<br>
+        }</p>
+<p>$isbn = ereg_replace(&#039;-&#039;, &#039;&#039;, $isbn);<br>
+        $isbn = ereg_replace(&#039; &#039;, &#039;&#039;, $isbn);<br>
+        $isbn = eregi_replace(&#039;ISBN&#039;, &#039;&#039;, $isbn);<br>
+        if (strlen($isbn) != 10) {<br>
+            return false;<br>
+        }<br>
+        if (preg_match(&quot;/[^0-9]{9}[^0-9X]/&quot;, $isbn)){<br>
+            return false;<br>
+        }</p>
+<p>$t = 0;<br>
+        for ($i = 0; $i &lt; strlen($isbn) - 1; $i++){<br>
+            $t += $isbn[$i]*(10-$i);<br>
+        }<br>
+        $f = $isbn[9];</p>
+<p>To this:<br>
+        $isbn = str_replace(array(&#039;-&#039;, &#039; &#039;), &#039;&#039;, $isbn);<br>
+        $isbn = eregi_replace(&#039;ISBN&#039;, &#039;&#039;, $isbn);<br>
+        $len = strlen($isbn);<br>
+        if ($len != 10 &amp;&amp; $len != 13) {<br>
+            return false;<br>
+        }<br>
+        if (!preg_match(&#039;/^[0-9]{9,12}[0-9X]$/&#039;, $isbn)){<br>
+            return false;<br>
+        }</p>
+<p>$t = 0;<br>
+        for ($i = 0; $i &lt; $len - 1; $i++){<br>
+            $t += $isbn[$i]*(10-$i);<br>
+        }<br>
+        $f = $isbn[$len - 1];</p>
+<p>(Warning, I&#039;m not setup to test code at this point, so there <br>
+may be strange/stupid bugs in it)</p>
+</section>
+<section>
+<h3>[2005-11-14 03:53 UTC] seth at pricepages dot org</h3>
+<p>To be honest, I don&#039;t have much for 13 digit ISBNs. When I <br>
+was working on it, though, I found this PDF:<br>
+http://www.bisg.org/isbn-13/ISBN13_For_Dummies.pdf</p>
+<p>It has a ISBN in there. (But only one)</p>
+<p>For being in a transitional period, we seem to be lacking in <br>
+sample 13 digit ISBNs.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

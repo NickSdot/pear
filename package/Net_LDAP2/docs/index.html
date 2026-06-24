@@ -1,0 +1,2029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Net_LDAP2 Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_LDAP2/index.html">Net_LDAP2</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-introduction">Introduction</a>
+</li>
+<li><a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-errorhandling">Error handling</a>
+</li>
+<li><a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-connecting">Configuration and connecting</a>
+</li>
+<li><a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-search">Search</a>
+</li>
+<li><a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-fetching">Fetching entries</a>
+</li>
+<li><a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-attributes">Attributes</a>
+</li>
+<li><a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-entries">Managing entries</a>
+</li>
+<li><a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-filter">LDAP filters</a>
+</li>
+<li><a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-ldif">LDIF files</a>
+</li>
+<li><a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-schemacache">Schema caching</a>
+</li></ul>
+</nav>
+<p>Net_LDAP2 allows you to query and manipulate the data stored in directory servers using PHP in an object-oriented way. Detailed usage examples are available at: /your/pear/path/docs/Net_LDAP2/examples/</p>
+<section id="package-networking-net-ldap2-introduction">
+<h2>Introduction</h2>
+<h3>Welcome to Net_LDAP2!</h3>
+
+        
+        
+        <p>Net_LDAP2 is a clone of Perls Net::LDAP package. PEAR Net_LDAP2 for PHP does, besides
+            some own features, provide most of Perl Net::LDAP methods.
+            Net_LDAP2 allows you to query and manipulate the data stored in directory servers using PHP
+            in an object-oriented way.
+            A directory server is a database server providing a hierarchical database and is usually
+            queried using the LDAP protocol.</p>
+        <p>Net_LDAP2 is intendet as replacement of Net_LDAP.</p>
+    
+    <h3>Classes of the Net_LDAP2 package</h3>
+
+        
+        <p>The following table gives you a short overview which classes are available
+            in Net_LDAP2 and what they can be used for. Their relations will be explained too.</p><table><caption>Classes of Net_LDAP2</caption>
+                
+                
+                    <thead>
+                        <tr>
+                            <th>Class name</th>
+                            <th>Description</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td><strong>Net_LDAP2</strong></td>
+                            <td>
+                                This is the main class. It enables you to connect and bind to a LDAP-server
+                                and to run ldap-querys like searching and manipulating entries.
+                                Most common, you will run a search using a LDAP-Filter and will get a
+                                <strong>Net_LDAP2_Search</strong>-object.
+                                You may also fetch an entry directly, which gives you a <strong>Net_LDAP2_Entry</strong>-object.
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>Net_LDAP2_Search</strong></td>
+                            <td>
+                                Objects of this class are returned from search querys. You can use this
+                                object to retrieve informations about a search result, like
+                                how much entries you have found for the provided filter.
+                                You can retrieve the found entries as <strong>Net_LDAP2_Entry</strong>-objects
+                                in various forms: sorted, consecutively starting from the end or beginning
+                                or unsorted at once.
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>Net_LDAP2_Entry</strong></td>
+                            <td>
+                                Objects of this kind are either produced by casting fresh entries manually, by retrieving
+                                the result of a LDAP-search or by fetching an entry directly.
+                                It gives you the possibility to read and/or manipulate the attributes of an entry which describes
+                                the characteristic of the specific object.
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>Net_LDAP2_Util</strong></td>
+                            <td>
+                                The utility class contains only static methods, so you should not need to make an instance of it.
+                                It features some helpful methods, some of them are used internally by Net_LDAP2 but may
+                                be used externally from you as well.
+                                The most methods deal with escaping issues, since LDAP has some metacharacters with
+                                special meaning so that they usually need to be properly escaped.
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>Net_LDAP2_Filter</strong></td>
+                            <td>
+                                You are free to give LDAP-Filters on your own to the <strong>Net_LDAP2</strong>-&gt;search() method,
+                                however this has some drawbacks (including escaping issues).
+                                For this reason, you can use the <strong>Net_LDAP2_Filter</strong> class to easily
+                                build and combine your filters.
+                                LDAP filters are extensively explained at the chapter <a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-filter">LDAP filters</a>.
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>Net_LDAP2_Error</strong></td>
+                            <td>
+                                This is a error class. Most methods of Net_LDAP2 will return a object of this class
+                                if something went wrong. You can use this object to identify errors and to get
+                                detailed knowledge on what went wrong. See <a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-errorhandling">Errorhandling</a>
+                                for more information.
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>Net_LDAP2_LDIF</strong></td>
+                            <td>
+                                LDIF files are human readable, plain text files containing directory data and/or change commands,
+                                much like an SQL file. Unlike SQL files, it is data centric, not action centric.
+                                <strong>Net_LDAP2_LDIF</strong> enables you to convert between <strong>Net_LDAP2_Entry</strong>-objects
+                                and LDIF files. Please note, that Net_LDAP2_LDIF has a little different error handling explained later.
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>Net_LDAP2_SimpleFileSchemaCache</strong></td>
+                            <td>
+                                <strong>Net_LDAP2</strong> features a schema caching facility. This class implements a simple
+                                file based cache that allows Net_LDAP2 to store the schema data that get fetched from LDAP inside a
+                                file to accelerate schema access. Caching the schema can gain some performance, especially with
+                                slow servers or connections. You may use this cache class for example to store the schema object
+                                in a linux tmpfs which will result in caching the schema in the computers memory, enabling nearly
+                                instant access. This cache also features a cache ageing mechanism.
+                                Please see <a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-schemacache">Schema caching</a> for more information.
+                            </td>
+                        </tr>
+
+                    </tbody></table>
+</section>
+<section id="package-networking-net-ldap2-errorhandling">
+<h2>Error handling</h2>
+<h3>Error handling</h3>
+
+        
+        
+        <p>Nearly all of Net_LDAPs methods return a <strong>Net_LDAP2_Error</strong> object if something went wrong.
+            You always should check for errors after you performed an action to be sure that your
+            application doesn&#039;t do things you don&#039;t want it to do.</p>
+        
+        <p>Handling errors is an easy task, you just have to test the return value as
+            shown below. If an error occured, you can halt the script for example.
+            In other cases, you may just log the error, but what exactly happens depends on
+            your specific situation, of course.</p>
+        <p>You can use the <strong>getMessage()</strong> method of the error object to retrieve the error message explaining the problem
+            and <strong>getCode()</strong> to get the error code which is usually the LDAP-Error code (see Table below)
+            and may be used for automated reaction on errors.</p>
+        
+        <p><strong>Dealing with errors</strong></p>
+        
+        <pre><code>&lt;?php
+// Perform an arbitrary action:
+$result = $ldap-&gt;search($searchbase, $filter, $options);
+
+// Check, if an error occured and do something.
+// Here we use die() to show the message of the error.
+if (Net_LDAP2::isError($result)) {
+    die($result-&gt;getMessage());
+}
+?&gt;</code></pre>
+        
+
+        <table><caption>Error codes Net_LDAP2</caption>
+            
+            
+                <thead>
+                    <tr>
+                        <th>Error code</th>
+                        <th>Description</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+                    <tr><td>0x00</td><td>LDAP_SUCCESS</td></tr>
+
+                    <tr><td>0x01</td><td>LDAP_OPERATIONS_ERROR</td></tr>
+
+                    <tr><td>0x02</td><td>LDAP_PROTOCOL_ERROR</td></tr>
+
+                    <tr><td>0x03</td><td>LDAP_TIMELIMIT_EXCEEDED</td></tr>
+
+                    <tr><td>0x04</td><td>LDAP_SIZELIMIT_EXCEEDED</td></tr>
+
+                    <tr><td>0x05</td><td>LDAP_COMPARE_FALSE</td></tr>
+
+                    <tr><td>0x06</td><td>LDAP_COMPARE_TRUE</td></tr>
+
+                    <tr><td>0x07</td><td>LDAP_AUTH_METHOD_NOT_SUPPORTED</td></tr>
+
+                    <tr><td>0x08</td><td>LDAP_STRONG_AUTH_REQUIRED</td></tr>
+
+                    <tr><td>0x09</td><td>LDAP_PARTIAL_RESULTS</td></tr>
+
+                    <tr><td>0x0a</td><td>LDAP_REFERRAL</td></tr>
+
+                    <tr><td>0x0b</td><td>LDAP_ADMINLIMIT_EXCEEDED</td></tr>
+
+                    <tr><td>0x0c</td><td>LDAP_UNAVAILABLE_CRITICAL_EXTENSION</td></tr>
+
+                    <tr><td>0x0d</td><td>LDAP_CONFIDENTIALITY_REQUIRED</td></tr>
+
+                    <tr><td>0x0e</td><td>LDAP_SASL_BIND_INPROGRESS</td></tr>
+
+                    <tr><td>0x10</td><td>LDAP_NO_SUCH_ATTRIBUTE</td></tr>
+
+                    <tr><td>0x11</td><td>LDAP_UNDEFINED_TYPE</td></tr>
+
+                    <tr><td>0x12</td><td>LDAP_INAPPROPRIATE_MATCHING</td></tr>
+
+                    <tr><td>0x13</td><td>LDAP_CONSTRAINT_VIOLATION</td></tr>
+
+                    <tr><td>0x14</td><td>LDAP_TYPE_OR_VALUE_EXISTS</td></tr>
+
+                    <tr><td>0x15</td><td>LDAP_INVALID_SYNTAX</td></tr>
+
+                    <tr><td>0x20</td><td>LDAP_NO_SUCH_OBJECT</td></tr>
+
+                    <tr><td>0x21</td><td>LDAP_ALIAS_PROBLEM</td></tr>
+
+                    <tr><td>0x22</td><td>LDAP_INVALID_DN_SYNTAX</td></tr>
+
+                    <tr><td>0x23</td><td>LDAP_IS_LEAF</td></tr>
+
+                    <tr><td>0x24</td><td>LDAP_ALIAS_DEREF_PROBLEM</td></tr>
+
+                    <tr><td>0x30</td><td>LDAP_INAPPROPRIATE_AUTH</td></tr>
+
+                    <tr><td>0x31</td><td>LDAP_INVALID_CREDENTIALS</td></tr>
+
+                    <tr><td>0x32</td><td>LDAP_INSUFFICIENT_ACCESS</td></tr>
+
+                    <tr><td>0x33</td><td>LDAP_BUSY</td></tr>
+
+                    <tr><td>0x34</td><td>LDAP_UNAVAILABLE</td></tr>
+
+                    <tr><td>0x35</td><td>LDAP_UNWILLING_TO_PERFORM</td></tr>
+
+                    <tr><td>0x36</td><td>LDAP_LOOP_DETECT</td></tr>
+
+                    <tr><td>0x3C</td><td>LDAP_SORT_CONTROL_MISSING</td></tr>
+
+                    <tr><td>0x3D</td><td>LDAP_INDEX_RANGE_ERROR</td></tr>
+
+                    <tr><td>0x40</td><td>LDAP_NAMING_VIOLATION</td></tr>
+
+                    <tr><td>0x41</td><td>LDAP_OBJECT_CLASS_VIOLATION</td></tr>
+
+                    <tr><td>0x42</td><td>LDAP_NOT_ALLOWED_ON_NONLEAF</td></tr>
+
+                    <tr><td>0x43</td><td>LDAP_NOT_ALLOWED_ON_RDN</td></tr>
+
+                    <tr><td>0x44</td><td>LDAP_ALREADY_EXISTS</td></tr>
+
+                    <tr><td>0x45</td><td>LDAP_NO_OBJECT_CLASS_MODS</td></tr>
+
+                    <tr><td>0x46</td><td>LDAP_RESULTS_TOO_LARGE</td></tr>
+
+                    <tr><td>0x47</td><td>LDAP_AFFECTS_MULTIPLE_DSAS</td></tr>
+
+                    <tr><td>0x50</td><td>LDAP_OTHER</td></tr>
+
+                    <tr><td>0x51</td><td>LDAP_SERVER_DOWN</td></tr>
+
+                    <tr><td>0x52</td><td>LDAP_LOCAL_ERROR</td></tr>
+
+                    <tr><td>0x53</td><td>LDAP_ENCODING_ERROR</td></tr>
+
+                    <tr><td>0x54</td><td>LDAP_DECODING_ERROR</td></tr>
+
+                    <tr><td>0x55</td><td>LDAP_TIMEOUT</td></tr>
+
+                    <tr><td>0x56</td><td>LDAP_AUTH_UNKNOWN</td></tr>
+
+                    <tr><td>0x57</td><td>LDAP_FILTER_ERROR</td></tr>
+
+                    <tr><td>0x58</td><td>LDAP_USER_CANCELLED</td></tr>
+
+                    <tr><td>0x59</td><td>LDAP_PARAM_ERROR</td></tr>
+
+                    <tr><td>0x5a</td><td>LDAP_NO_MEMORY</td></tr>
+
+                    <tr><td>0x5b</td><td>LDAP_CONNECT_ERROR</td></tr>
+
+                    <tr><td>0x5c</td><td>LDAP_NOT_SUPPORTED</td></tr>
+
+                    <tr><td>0x5d</td><td>LDAP_CONTROL_NOT_FOUND</td></tr>
+
+                    <tr><td>0x5e</td><td>LDAP_NO_RESULTS_RETURNED</td></tr>
+
+                    <tr><td>0x5f</td><td>LDAP_MORE_RESULTS_TO_RETURN</td></tr>
+
+                    <tr><td>0x60</td><td>LDAP_CLIENT_LOOP</td></tr>
+
+                    <tr><td>0x61</td><td>LDAP_REFERRAL_LIMIT_EXCEEDED</td></tr>
+
+                    <tr><td>1000</td><td>Unknown Net_LDAP2 Error</td></tr>
+
+                </tbody></table>
+</section>
+<section id="package-networking-net-ldap2-connecting">
+<h2>Configuration and connecting</h2>
+<h3>Connecting to an LDAP server</h3>
+
+        
+        
+        <p>To connect to an LDAP server, you should use
+        <strong>Net_LDAP2</strong>&#039;s static <strong>connect()</strong> method.
+        It takes one parameter, an array full of configuration options,
+        and either returns
+        a <strong>Net_LDAP2</strong> object if connecting works, or a
+        <strong>Net_LDAP2_Error</strong> object in case of a failure.</p>
+        
+        <p>The following table lists all configuration options. If the default
+        value for an option fits your needs, you don&#039;t need add it to your
+        configuration array.</p><table><caption>Possible configuration options</caption>
+        
+        
+            <thead>
+            <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Default</th>
+            </tr>
+
+            </thead>
+
+            <tbody>
+            <tr>
+            <td><code>host</code></td>
+            <td>LDAP server name to connect to. You can provide several hosts in an array in which case the hosts are tried from left to right.</td>
+            <td><code>localhost</code></td>
+            </tr>
+
+        
+            <tr>
+            <td><code>port</code></td>
+            <td>Port on the server</td>
+            <td>389</td>
+            </tr>
+
+        
+            <tr>
+            <td><code>version</code></td>
+            <td>LDAP version</td>
+            <td><code>3</code></td>
+            </tr>
+
+        
+            <tr>
+            <td><code>starttls</code></td>
+            <td>TLS is started after connecting</td>
+            <td><code>false</code></td>
+            </tr>
+
+        
+            <tr>
+            <td><code>binddn</code></td>
+            <td>The distinguished name to bind as (username). If you don&#039;t supply this, an anonymous bind will be established.</td>
+            <td>(none)</td>
+            </tr>
+
+        
+            <tr>
+            <td><code>bindpw</code></td>
+            <td>Password for the <code>binddn</code>. If the credentials are wrong, the bind will fail server-side and an
+		anonymous bind will be established instead. An empty bindpw string requests an unauthenticated bind. This can cause
+		security problems in your application, if you rely on a bind to make security decisions (see
+		<a href="http://www.faqs.org/rfcs/rfc4513">RFC-4513, section 6.3.1</a>).</td>
+            <td>(none)</td>
+            </tr>
+
+        
+            <tr>
+            <td><code>basedn</code></td>
+            <td>LDAP base name (root directory)</td>
+            <td>(none)</td>
+            </tr>
+
+        
+            <tr>
+            <td><code>options</code></td>
+            <td>Array of additional ldap options as key-value pairs</td>
+            <td><code>array()</code></td>
+            </tr>
+
+        
+            <tr>
+            <td><code>filter</code></td>
+            <td>
+                Default search filter (string or preferably <strong>Net_LDAP2_Filter</strong> object).
+                See <a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-filter">LDAP filters</a>
+            </td>
+            <td><code>(objectClass=*)</code></td>
+            </tr>
+
+        
+            <tr>
+            <td><code>scope</code></td>
+            <td>Default search scope, see <a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-search">Search</a></td>
+            <td><code>sub</code></td>
+            </tr>
+
+        
+            </tbody></table>
+
+        
+        
+        <p><strong>Connecting to an LDAP server</strong></p>
+        
+        <pre><code>&lt;?php
+// Inclusion of the Net_LDAP2 package:
+require_once &#039;Net/LDAP2.php&#039;;
+
+// The configuration array:
+$config = array (
+    &#039;binddn&#039;    =&gt; &#039;cn=admin,ou=users,dc=example,dc=org&#039;,
+    &#039;bindpw&#039;    =&gt; &#039;password&#039;,
+    &#039;basedn&#039;    =&gt; &#039;dc=example,dc=org&#039;,
+    &#039;host&#039;      =&gt; &#039;ldap.example.org&#039;
+);
+
+// Connecting using the configuration:
+$ldap = Net_LDAP2::connect($config);
+
+// Testing for connection error
+if (PEAR::isError($ldap)) {
+    die(&#039;Could not connect to LDAP-server: &#039;.$ldap-&gt;getMessage());
+}
+?&gt;</code></pre>
+</section>
+<section id="package-networking-net-ldap2-search">
+<h2>Search</h2>
+<h3>A short note on DNs</h3>
+
+        
+        <p>It may be possible that restricted characters (&quot;,&quot;, &quot;+&quot;, &quot;&quot;&quot;, &quot;\&quot;, &quot;&lt;&quot;, &quot;&gt;&quot;, &quot;;&quot;, &quot;#&quot;, &quot;=&quot;, space or a hexpair) are used in attributes or values inside the DN.
+            You should have a look to the APIdoc of <strong>Net_LDAP2_Util::</strong><strong>escape_dn_value()</strong>,
+            <strong>Net_LDAP2_Util::</strong><strong>unescape_dn_value()</strong>, <strong>Net_LDAP2_Util::</strong><strong>ldap_explode_dn()</strong> and <strong>Net_LDAP2_Util::</strong><strong>canonical_dn()</strong>.
+            These functions can be used to safely handle DNs.</p>
+    
+
+    <h3>Searching some entries</h3>
+
+        
+        <p>After connecting to the server, you can use <strong>Net_LDAP2</strong>&#039;s
+        <strong>search()</strong> method to search the directory. The method takes
+        three parameters:</p><ul>
+        <li>
+            
+            <code>$base</code> is the base search DN. If kept
+            <code>null</code>, the default base DN configured when connecting
+            is used.
+            
+        </li>
+        
+        <li>
+            
+            <code>$filter</code> is the query filter that determines which
+            results are returned. It is either a string (experts use only) or better a <strong>Net_LDAP2_Filter</strong>-object.
+            <strong>Net_LDAP2_Filter</strong> automatically deals with LDAP-Filter escaping issues.
+            LDAP filters are extensively explained at the chapter <a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-filter">LDAP filters</a>.
+            
+        </li>
+        
+        <li>
+            
+            <code>$params</code> is an array of configuration options for
+            the current query.
+            <table><caption>Possible configuration parameters</caption>
+            
+            
+            <thead>
+                <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Default</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+                <tr>
+                <td><code>scope</code></td>
+                <td>
+                The scope used for searching:
+                <ul>
+                <li>
+                    
+                    <code>base</code> - Just one entry
+                    
+                </li>
+        
+                <li>
+                    
+                    <code>sub</code> - The whole tree
+                    
+                </li>
+        
+                <li>
+                    
+                    <code>one</code> - Immediately below
+                    <code>$base</code>
+                    
+                </li>
+        
+                </ul>
+                </td>
+                <td><code>sub</code></td>
+                </tr>
+
+        
+                <tr>
+                <td><code>sizelimit</code></td>
+                <td>Number of entries returned at maximum</td>
+                <td><code>0</code> (no limit)</td>
+                </tr>
+
+        
+                <tr>
+                <td><code>timelimit</code></td>
+                <td>Seconds to spent for searching</td>
+                <td><code>0</code> (no limit)</td>
+                </tr>
+
+        
+                <tr>
+                <td><code>attrsonly</code></td>
+                <td>If <code>true</code>, only attribute names are returned</td>
+                <td><code>false</code></td>
+                </tr>
+
+        
+                <tr>
+                <td><code>attributes</code></td>
+                <td>
+                Array of attribute names, which the entry should contain.
+                It is good practice to limit this to just the ones you need.
+                </td>
+                <td><code>array()</code> (all attributes)</td>
+                </tr>
+
+        
+            </tbody></table>
+
+            
+        </li>
+        
+        </ul><p>The <strong>search()</strong> method will return either a <strong>Net_LDAP2_Search</strong> object or a <strong>Net_LDAP2_Error</strong>.
+        You can use the <strong>Net_LDAP2_Search</strong>-object to trigger further actions
+        like counting how many entries where found or to retrieve the found entries.</p>
+        
+        <p><strong>Making a search query</strong></p>
+        
+        <pre><code>&lt;?php
+// Building a very basic filter
+// we want to find all Entries whose surnames start with &quot;Joe&quot;:
+$filter = Net_LDAP2_Filter::create(&#039;sn&#039;, &#039;begins&#039;,  &#039;Joe&#039;);
+
+// We define a custom searchbase here. If you pass NULL, the basedn provided
+// in the Net_LDAP2 configuration will be used. This is often not what you want.
+$searchbase = &#039;ou=addressbook,dc=example,dc=org&#039;;
+
+// Some options:
+// We search all subtrees beneath &#039;ou=addressbook,dc=example,dc=org&#039;
+// and we select the attribute &#039;sn&#039;. It is a good practice to limit the
+// requested attributes to only those you actually want to use later.
+// However, note that it is faster to select unneeded attributes than
+// refetching an entry later to just get those attributes.
+$options = array(
+    &#039;scope&#039; =&gt; &#039;sub&#039;,
+    &#039;attributes&#039; =&gt; array(&#039;sn&#039;)
+);
+
+// Perform the search!
+$search = $ldap-&gt;search($searchbase, $filter, $options);
+
+// Test for search errors:
+if (PEAR::isError($search)) {
+    die($search-&gt;getMessage() . &quot;\n&quot;);
+}
+
+// Say how many entries we have found:
+echo &quot;Found &quot; . $search-&gt;count() . &quot; entries!&quot;;
+?&gt;</code></pre>
+</section>
+<section id="package-networking-net-ldap2-fetching">
+<h2>Fetching entries</h2>
+<h3>Retrieving entries directly</h3>
+
+        
+
+        <p>You can retrieve directory entries in several ways, either directly or from a performed search request.
+        If you want to fetch an entry directly, you need to know its absolute distinguished name (DN).
+
+        To directly fetch an known entry from the directory server, you use
+        <strong>Net_LDAP2</strong>&#039;s <strong>getEntry()</strong> method.
+        It takes two parameters: The DN of the entry and the attributes you want to
+        read from the entry.
+        It returns a <strong>Net_LDAP2_Entry</strong> object if fetching worked, or a
+        <strong>Net_LDAP2_Error</strong> object in case of a failure.</p>
+
+        <p>You may also check if the entry exists in the server before you fetch it. This can be achieved by
+        <strong>Net_LDAP2</strong>&#039;s <strong>dnExists()</strong> which takes the DN to test and returns either true or false.</p>
+
+        <p><strong>Fetching an entry directly</strong></p>
+        
+        <pre><code>&lt;?php
+// Defining the DN we want to fetch;
+// we want to select the given- and the surname
+$dn = &#039;cn=admin,o=example,dc=org&#039;;
+$entry = $ldap-&gt;getEntry($dn, array(&#039;gn&#039;, &#039;sn&#039;));
+
+// Error checking is important!
+if (Net_LDAP2::isError($entry)) {
+    die(&#039;Could not fetch entry: &#039;.$entry-&gt;getMessage());
+}
+?&gt;</code></pre>
+        
+
+    
+
+
+    <h3>Retrieving entries from a searchresult</h3>
+
+        
+
+        <p>The second way to retrieve entries is from a searchresult. As described in chapter &quot;<a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-search">Search</a>&quot;,
+        you access the entries of a search result through the <strong>Net_LDAP2_Search</strong>-object resulting from
+        <strong>Net_LDAP2</strong>&#039;s <strong>search()</strong> method.
+        Each of the following methods return a <strong>Net_LDAP2_Error</strong>-object if something goes wrong, so
+        remember to test for errors!
+        You have several ways to read the entries:</p><table><caption>Possible ways to fetch entries</caption>
+        
+        
+            <thead>
+            <tr>
+            <th>Method of <strong>Net_LDAP2_Search</strong></th>
+            <th>Description</th>
+            </tr>
+
+            </thead>
+
+
+            <tbody>
+            <tr>
+            <td><strong>entries()</strong></td>
+            <td>This returns the entries at once unsorted.</td>
+            </tr>
+
+
+            <tr>
+            <td><strong>as_struct()</strong></td>
+            <td>This returns all entries as multidimensional array instead of <strong>Net_LDAP2_Entry</strong>-objects.
+                   The array keys of the first dimension are the DNs and the value is an array containing all attributes.
+                   The array keys of the second level are the attributes names; the value of the second level is an array containing all the
+                   attributes values. Note, that even if there are no or just one value, an array is present.</td>
+            </tr>
+
+
+            <tr>
+            <td><strong>sorted()</strong></td>
+            <td>Use this if you want to get the entries at once but sorted. You can sort by several attributes which can contain multiple values.
+                   You can of course sort ascending (default) or descending - just pass the PHP constant <code>SORT_ASC</code> or <code>SORT_DESC</code> as second parameter.</td>
+            </tr>
+
+
+            <tr>
+            <td><strong>sorted_as_struct()</strong></td>
+            <td>Like <strong>as_struct()</strong>, this returns the entries as multidimensional array, but in this case sorted. For parameters, see <strong>sorted()</strong></td>
+            </tr>
+
+
+            <tr>
+            <td><strong>shiftEntry()</strong></td>
+            <td>This returns one entry from the beginning of the search result.
+                   Since this returns <code>FALSE</code> if all entries are fetched, <strong>shiftEntry()</strong> is perfectly
+                   appropriate to get used inside a while-loop.
+                   Take care not to mix <strong>shiftEntry()</strong> and <strong>popEntry()</strong>!</td>
+            </tr>
+
+
+            <tr>
+            <td><strong>popEntry()</strong></td>
+            <td>Exactly the same as shiftEntry, but returns the entry from the end of the searchresult. Again, be sure to not mix
+                   <strong>shiftEntry()</strong> and <strong>popEntry()</strong>!</td>
+            </tr>
+
+            </tbody></table>
+<p>To directly fetch an known entry from the directory server, you use
+        <strong>Net_LDAP2</strong>&#039;s <strong>getEntry()</strong> method.
+        It takes two parameters: The DN of the entry and the attributes you want to
+        read from the entry.
+        It returns a <strong>Net_LDAP2_Entry</strong> object if fetching worked, or a
+        <strong>Net_LDAP2_Error</strong> object in case of a failure.</p>
+
+        <p>You may also check if the entry exists in the server before you fetch it. This can be achieved by
+        <strong>Net_LDAP2</strong>&#039;s <strong>dnExists()</strong> which takes the DN to test and returns either true or false.</p>
+
+        <p><strong>Fetching all entries from searchresult</strong></p>
+        
+        <pre><code>&lt;?php
+// return all entries:
+$entry = $search-&gt;entries();
+?&gt;</code></pre>
+        
+
+        <p><strong>Fetching all entries from searchresult: sorted</strong></p>
+        
+        <pre><code>&lt;?php
+// return sorted by first &#039;sn&#039; then &#039;gn&#039;, but descending:
+$entry = $search-&gt;sorted(array(&#039;sn&#039;, &#039;gn&#039;), SORT_DESC);
+?&gt;</code></pre>
+        
+
+        <p><strong>Fetching entries one by one inside a while loop</strong></p>
+        
+        <pre><code>&lt;?php
+// return entries one by one:
+while ( $entry = $search-&gt;shiftEntry() ) {
+    // do something, like printing the DN of the entry;
+    // in a real case, dont forget to test for errors!
+    echo &quot;ENTRY: &quot; . $entry-&gt;dn();
+}
+?&gt;</code></pre>
+        
+
+    
+
+    <h3>Retrieving entries via iteration (foreach)</h3>
+
+        
+
+        <p>Since Net_LDAP2 you are able to use PHPs Standard Library (SPL) to iterate over
+        search results. This is done easily by just using the <strong>Net_LDAP2_Search</strong>
+        search result object inside an foreach loop similar to an array.
+        You may optionally retrieve the DN of each entry by the same mechanism you use to
+        retrieve the key of an associative array.</p>
+
+        <p><strong>Fetching entries via foreach()</strong></p>
+        
+        <pre><code>&lt;?php
+foreach ($search as $dn =&gt; $entry) {
+    // do something:
+    $sn = $entry-&gt;getValue(&#039;sn&#039;, &#039;single&#039;);
+    echo &quot;Fetched DN: $dn; Surname: $sn&quot;;
+}
+?&gt;</code></pre>
+</section>
+<section id="package-networking-net-ldap2-attributes">
+<h2>Attributes</h2>
+<h3>Reading attributes</h3>
+
+        <p>Reading attribute values depends on the selection of those attributes at search time. You can only access attributes that where selected!
+           You can read attribute values using either <strong>Net_LDAP2_Entry</strong>&#039;s <strong>getValues()</strong> or <strong>getValue()</strong> method.
+           <strong>getValue()</strong> will return an array where the keys are the attributes names.
+           If you use <strong>getValues()</strong> you may pass an option:</p><ul>
+              <li>
+                
+                  <code>&#039;single&#039;</code>: only the first value is returned as string
+                
+              </li>
+              <li>
+                
+                  <code>&#039;all&#039;</code>: all values including the value count are returned in an array
+                
+              </li>
+              <li>
+                
+                  <code>&#039;default&#039;</code>: in all other cases an attribute value with a single value is
+                                             returned as string, if it has multiple values it is returned
+                                             as an array (without value count)
+                
+              </li>
+           </ul><p>Also note that if you try to fetch an attribute, that is not set at the entry, an empty string will be returned.</p>
+        <p><strong>Reading attributes</strong></p>
+
+        <pre><code>&lt;?php
+// read Surename, singlevalued
+$surename = $entry-&gt;getValue(&#039;sn&#039;, &#039;single&#039;);
+
+// read mail adress which may be multivalued
+$mail = $entry-&gt;getValue(&#039;mail&#039;, &#039;all&#039;);
+?&gt;</code></pre>
+        
+
+
+   <p>If you want to read the distinguished name of an Entry (DN), you must use a different method: <strong>dn()</strong></p><p><strong>Reading an entries DN</strong></p>
+
+        <pre><code>&lt;?php
+$dn = $entry-&gt;dn();
+?&gt;</code></pre>
+        
+    
+
+    
+
+    <h3>Regular expressions on attributes</h3>
+
+        <p>PEAR::Net_LDAP2 has the unique feature to apply a regular expression match directly against attributes, so
+          you do not need to manually fetch all values and run the regex against them.
+          Instead, you can use <strong>Net_LDAP2_Entry</strong>&#039;s <strong>preg_match()</strong> function.
+          The behavior of this function is the same as PHPs preg_match(), but the $matches array is slightly different.
+          It features one dimension more, since it may match for several attribute values if the attribute is multivalued.
+          If you pass $matches, be sure to do it via REFERENCE, because otherwise $matches remains empty.
+          <strong>preg_match()</strong> returns true or false, depending on match.</p>
+        <p><strong>Performing preg_match on attribute values</strong></p>
+
+        <pre><code>&lt;?php
+// Look, if the user has an emailadress for &#039;example&#039;, if so,
+// we want to display the tld:
+// (be sure to pass $matches as reference!)
+$matches = array();
+if ( $entry-&gt;preg_match(&#039;mail&#039;, &#039;/example\.(.+)/&#039;, &amp;$matches) ) {
+    // print every TLD found for &#039;example&#039;:
+    foreach ($matches as $match) {
+        echo $match[1];
+    }
+}
+?&gt;</code></pre>
+        
+
+    
+
+    <h3>General information regarding attribute changing</h3>
+
+        <p>It is important to know how attribute changing works. Modifications to an entry
+            through the <strong>Net_LDAP2_Entry</strong>-object are local only.
+            After you have made all changes and want to transfer them to the directory server, you must
+            call <strong>update()</strong> of the <strong>Net_LDAP2_Entry</strong> object.
+            This will return either <code>TRUE</code> or an <strong>Net_LDAP2_Error</strong>.
+            Another good information is, that you must select attributes at search time
+            if you want to add/change/delete attribute values. Otherwise Net_LDAP2 will most likely fail
+            silently giving you the wrong assumtion that everything was okay - Net_LDAP2 needs knowledge
+            of the attributes it should work with!</p>
+        <p>Modification of attributes is also possible through <strong>Net_LDAP2</strong>&#039;s <strong>modify()</strong> method.
+              This method will call the methods described here on the <strong>Net_LDAP2_Entry</strong> object given, and
+              directly calls an <strong>update()</strong> after that, thus performing the changes directly on the server.
+              The parameter is an complex array describing the changes to be performed. It is considered for more advanced users,
+              because it is more compact, so please refer to the latest API documentation for more information.</p>
+    
+
+    <h3>Adding attributes</h3>
+
+        <p>Adding attrbiute values to an entry is an easy task. You just need to call <strong>add()</strong>!
+          The parameter is an array whose keys are the attribute names and values the attributes values.
+          If only one attribute value should be added, the second level may be a string.
+          If the attribute doesn&#039;t exist so far, it will be added, if it exists, the attributes values will be added.</p>
+        <p><strong>Adding attributes</strong></p>
+
+        <pre><code>&lt;?php
+// Adding several attributes:
+$result = $entry-&gt;add(
+    array(
+        &#039;sn&#039;   =&gt; &#039;Doe&#039;,
+        &#039;gn&#039;   =&gt; array(&#039;John&#039;),
+        &#039;mail&#039; =&gt; array(&#039;john@doe.org&#039;, &#039;j.doe@example.org&#039;)
+    )
+);
+?&gt;</code></pre>
+        
+
+    
+
+    <h3>Changing attributes</h3>
+
+        <p>Changing values is with the <strong>replace()</strong> method as easy as adding values. However, you have to be a little more careful.
+           The expected parameter is an array describing the new absolute state of the named
+           attributes. This means, if you specify a <code>NULL</code> value for an attribute,
+           this attribute will get deleted!
+           You may specify single values as string too.
+           The keys of the array are expected to be the attributes names.</p>
+        <p><strong>Changing attributes</strong></p>
+
+        <pre><code>&lt;?php
+// Changing several attributes:
+// &#039;sn&#039; is changed to &quot;Smith&quot;, &#039;gn&#039; gets deleted and mail will
+// be changed to te two new adresses
+$result = $entry-&gt;replace(
+    array(
+        &#039;sn&#039;   =&gt; &#039;Smith&#039;,
+        &#039;gn&#039;   =&gt; null,
+        &#039;mail&#039; =&gt; array(&#039;smith@example.org&#039;, &#039;smith@example.de&#039;)
+    )
+);
+?&gt;</code></pre>
+        
+
+    
+
+    <h3>Deleting attributes</h3>
+
+        <p>Using the <strong>delete()</strong> method you are able to delete specific attributes values as well
+          as delete a whole attribute.
+          You need to specify the attribute names as array keys, the array values are the values you want to delete.
+          If you want to delete whole attributes, specify them as single level array.
+          Special care must be taken not to delete the whole entry which will be the case if the parameter array is 
+          omitted or set to <code>NULL</code>!
+          Also, don&#039;t mix syntax modes. If you want to delete whole attributes you can&#039;t delete specific values from another attribute
+          in the same function call.</p>
+        <p><strong>Deleting attributes</strong></p>
+
+        <pre><code>&lt;?php
+// Delete the whole entry:
+$result = $entry-&gt;delete();
+
+// Delete the whole telephone number attribute:
+$result = $entry-&gt;delete(&#039;telephoneNumber&#039;);
+
+// Delete one specific mail attributes value:
+$result = $entry-&gt;delete( array(&#039;mail&#039; =&gt; &#039;j.doe@example.org&#039;) );
+
+// Delete mail and telephone attributes as a whole:
+$result = $entry-&gt;delete( array(&#039;mail&#039;, &#039;telephoneNumber&#039;) );
+
+// Delete two specific mail adresses:
+$result = $entry-&gt;delete( array(&#039;mail&#039; =&gt; array(&#039;smith@example.org&#039;, &#039;smith@example.de&#039;)) );
+?&gt;</code></pre>
+        
+    
+
+    
+        <h3>Changing Objectclasses</h3>
+        <p>Object classes describe the attribute set of an entry with this objectclass set.
+            The entry stores the objectclass in a special attribute named &quot;objectClass&quot;,
+            and of course you may alter that attribute like any other attribute.</p>
+        <p>However, special care must be taken if changing this attribute since
+            most directory servers impose rules on the other attributes the object class define.
+            For example, it is usually not possible to delete an objectclass if some of the attributes
+            the class describes are still in use by the entry.
+            This should be not much of a problem with optional attributes, but
+            sometimes objectclasses have mandatory attributes set. Also structural objectclasses
+            can only be added when creating new entrys. Because of the internal
+            architecture of Net_LDAP2 it is currently not possible to resolve those cases.</p>
+        <p>To add or remove objectclasses with mandatory attributes or new structural object classes,
+            you need to delete the old entry from the directory server and add the new one with the
+            new objectclass and attributes as fresh entry.</p>
+        
+        <p><strong>Changing complex objectclasses</strong></p>
+        <pre><code>&lt;?php
+// Let&#039;s assume that the objectclass myClass enforce the attribute &quot;fooattr&quot;
+// Take care that you have all attributes requested, otherwise the new
+// entry will not have all attributes set!
+$entry-&gt;add(array(
+    &#039;objectClass&#039;   =&gt; &#039;myClass&#039;,
+    &#039;fooatrr&#039;       =&gt; &#039;foo&#039;,
+    &#039;someotherattr&#039; =&gt; array(&#039;bar&#039;, &#039;baz&#039;)
+    ));
+
+// Calling $entry-&gt;update() now will not succeed under some circumstances!
+// We construct a fresh entry object which is in fact a copy of the already
+// existing entry with all changes already applied (the local copy).
+// It is important, that at fetching time of $entry all attributes where selected!
+// Only the selected attributes will get copied.
+$changed_entry = Net_LDAP2_Entry::createFresh($entry-&gt;dn(), $entry-&gt;getValues());
+
+// Now delete the old entry and add the new one:
+$ldap-&gt;delete($entry);
+$ldap-&gt;add($changed_entry);
+?&gt;</code></pre>
+        
+    
+
+    
+        <h3>Schema checks</h3>
+        <p>When operating on an LDAP connection, you might want to retrieve informations
+            regarding the directory servers schema. Often this is the case to verify that
+            your program only querys attributes that are valid for an entry or to ensure
+            that you only try to write such attributes to the server.</p>
+        <p>To get that inforamtion, you can use the <strong>Net_LDAP2_Schema</strong> which is
+            retrieved via the <strong>Net_LDAP2</strong> object. It allows you to perform
+            various querys, not only on attributes and object classes, but also on DIT
+            content rules, for example. For often needed functionality, shorthand
+            methods are implemented since version 2.0.10 like <strong>attributeExists()</strong>, 
+            <strong>objectClassExists()</strong>, <strong>getAssignedOCLs()</strong>
+            and <strong>checkAttribute()</strong>.</p>
+        
+        <p><strong>Performing basic schema checks</strong></p>
+        <pre><code>&lt;?php
+// Fetch the schema object for the connected directory server.
+$schema = $ldap-&gt;schema();
+
+// this may have failed since not every server allows us
+// to fetch the schema without permission. Also technical
+// problems may prevent us from this.
+if ( Net_LDAP2::isError($schema) ) {
+    die(&#039;SCHEMA ERROR: &#039;.$schema-&gt;getMessage().&quot;\n&quot;);
+}
+
+// lets see, if an attribute is defined in the schema:
+if ( $schema-&gt;attributeExists(&#039;myCoolAttribute&#039;) ) {
+    echo &quot;Attribute &#039;myCoolAttribute&#039; is defined in the schema!&quot;;
+}
+
+// lets see, if an object class is defined in the schema:
+if ( $schema-&gt;attributeExists(&#039;myCoolOCL&#039;) ) {
+    echo &quot;Object class &#039;myCoolOCL&#039; is defined in the schema!&quot;;
+}
+
+// Check, if the attribute is defined in objectClasses.
+// This is especially useful if you want to know if
+// attributes are valid for a given set of object classes.
+if ( $schema-&gt;checkAttribute(&#039;myCoolAttribute&#039;, array(&#039;person&#039;, &#039;myCoolOCL&#039;)) ) {
+    echo &quot;Attribute &#039;myCoolAttribute&#039; is defined for the given OCLs!&quot;;
+}
+?&gt;</code></pre>
+</section>
+<section id="package-networking-net-ldap2-entries">
+<h2>Managing entries</h2>
+<h3>Adding (fresh or old) entries to the directory</h3>
+
+        
+
+        <p>Adding new entries is performed in two ways. First, you need to establish a fresh <strong>Net_LDAP2_Entry</strong> object.
+           After that, you can add that entry like you would add already-existent entries using
+           <strong>Net_LDAP2</strong>&#039;s <strong>add()</strong> method.</p>
+
+        <p><strong>Adding a fresh entry</strong></p>
+        
+        <pre><code>&lt;?php
+// Build a new fresh entry:
+$dn         = &#039;cn=new-admin,o=example,dc=org&#039;;
+$attributes = array(
+    &#039;cn&#039;              =&gt; &#039;new-admin&#039;,
+    &#039;mail&#039;            =&gt; array(&#039;new-admin@exaple.org&#039;, &#039;n.admin@example.de&#039;),
+    &#039;telephoneNumber&#039; =&gt; &#039;1234567890&#039;
+);
+$entry = Net_LDAP2_Entry::createFresh($dn, $attributes);
+
+// Add the entry to the directory:
+$ldap-&gt;add($entry);
+?&gt;</code></pre>
+        
+    
+
+
+    <h3>Renaming or moving entries</h3>
+
+        
+
+        <p>Renaming and/or moving an entry is an operation on the DN of an entry. Moving an entry means, to rename a DN in such a way, that
+        the entry becomes a new base-DN. You can rename or move an entry, if you call the <strong>dn()</strong> method of the entry you
+        want to relocate. Alternatively, you may call <strong>Net_LDAP2</strong>&#039;s <strong>move()</strong> method that also ca handle
+        only DNs. Remember that you must call the entires <strong>update()</strong> method to carry out the move/rename.
+        <strong>Net_LDAP2</strong>&#039;s <strong>move()</strong> will move the entry immediately. If you use an entryobject togehter with
+        <strong>Net_LDAP2</strong>&#039;s <strong>move()</strong>, you are able to perform cross directory moves.</p>
+        <p><strong>Moving an entry using Net_LDAP2_Entry</strong></p>
+        
+        <pre><code>&lt;?php
+// Defining the DN we want to fetch;
+$dn    = &#039;cn=admin,o=example,dc=org&#039;;
+$newdn = &#039;cn=admin,o=new-example,dc=org&#039;;
+$entry = $ldap-&gt;getEntry($dn);
+
+$entry-&gt;dn($newdn);
+?&gt;</code></pre>
+        
+        <p><strong>Moving an entry using Net_LDAP2 and Net_LDAP2_Entry</strong></p>
+        
+        <pre><code>&lt;?php
+// Defining the DN we want to fetch;
+$dn    = &#039;cn=admin,o=example,dc=org&#039;;
+$newdn = &#039;cn=admin,o=new-example,dc=org&#039;;
+$entry = $ldap-&gt;getEntry($dn);
+
+$ldap-&gt;move($entry, $newdn);
+?&gt;</code></pre>
+        
+        <p><strong>Renaming an entry using Net_LDAP2 and DNs</strong></p>
+        
+        <pre><code>&lt;?php
+// Defining the DN we want to fetch;
+$dn    = &#039;cn=admin,o=example,dc=org&#039;;
+$newdn = &#039;cn=admin2,o=new-example,dc=org&#039;;
+
+$ldap-&gt;move($dn, $newdn);
+?&gt;</code></pre>
+        
+<p><strong>Performing a cross directory move</strong></p>
+        
+        <pre><code>&lt;?php
+// $ldap_src is the source ldap and $ldap_tgt the target
+$dn    = &#039;cn=admin,o=example,dc=org&#039;;
+$newdn = &#039;cn=admin,o=new-example,dc=org&#039;;
+$entry = $ldap_src-&gt;getEntry($dn);
+
+$ldap_src-&gt;move($entry, $newdn, $ldap_tgt);
+?&gt;</code></pre>
+        
+
+    
+
+    <h3>Deleting entries</h3>
+
+        
+
+        <p>Deleting entries is performed using <strong>Net_LDAP2</strong>&#039;s <strong>delete()</strong> method.
+          Just pass the <strong>Net_LDAP2_Entry</strong> object or the DN of the entry you want to delete.
+          In the case that the DN contains subentrys, you need to pass <code>TRUE</code> as second parameter
+          which will make <strong>delete()</strong> delete recursive.</p>
+        <p>A second way exist: You may simply call <strong>delete()</strong> from the <strong>Net_LDAP2_Entry</strong> you want to delete.
+          Don&#039;t forget that you must call <strong>update()</strong> to carry out the delete in this case.</p>
+
+        <p><strong>Deleting an entry</strong></p>
+        
+        <pre><code>&lt;?php
+$dn  = &#039;cn=new-admin,o=example,dc=org&#039;;
+$ldap-&gt;delete($dn);
+?&gt;</code></pre>
+        
+        <p><strong>Deleting an entry using a Net_LDAP2_Entry object</strong></p>
+        
+        <pre><code>&lt;?php
+$entry-&gt;delete();
+$entry-&gt;update();
+?&gt;</code></pre>
+</section>
+<section id="package-networking-net-ldap2-filter">
+<h2>LDAP filters</h2>
+<h3>What are LDAP filters?</h3>
+
+        <p>LDAP filters usually serve as parameter to a <a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-search">LDAP Search request</a>.</p>
+        <p>LDAP filters are defined in <a href="http://www.ietf.org/rfc/rfc2254.txt">RFC 2254</a>
+            and can be compared to the WHERE clause in SQL select statements - they filter
+            the data returned from some search request - in this case the entries returned from
+            the directory server. With Net_LDAP2, you may use plain strings as filters, or preferably,
+            the <strong>Net_LDAP2_Filter</strong> class which mostly releases you of the burden to escape yourself and
+            to remember all the various special characters needed for constructing and combining filters.</p>
+    
+
+    <h3>Some LDIF filter basics</h3>
+
+        
+        <p>Although you should preferably use the <strong>Net_LDAP2_Filter</strong> class to
+            construct your LDAP filters, some theory may be interesting and helpful in understanding
+            how to construct LDAP filters and what they are capable of.</p>
+        <p>Basic LDAP filters are composed of an &quot;[attribute][operator][value]&quot; pair enclosed by round brackets.
+            There are several comparison operators available: &quot;=&quot; (equal), &quot;&gt;&quot; (greater), &quot;&lt;&quot; (less),
+            &quot;&gt;=&quot; (greater or equal), &quot;&lt;=&quot; (less or equal) and &quot;=~&quot; (phonetical similar). The exact match behavior
+            is defined by the attribute syntax of the attribute to which the filter should apply.</p>
+        <p><strong>Some basic string filters</strong></p>
+        
+        <pre><code>&lt;?php
+// Filter entries whose first name is &#039;Benedikt&#039;:
+$filter = &#039;(givenName=Benedikt)&#039;;
+
+// Filter entries which have an employeenumber higher or equal than 1424:
+$filter = &#039;(employeeNumber&gt;=1424)&#039;;
+
+// Filter entries whose first name sounds similar to &quot;Stephane&quot;
+// This should also find &quot;Stephen&quot; and &quot;Stefan&quot; (depending on implementation)
+$filter = &#039;(givenName~=Stephane)&#039;;
+?&gt;</code></pre>
+    
+
+        <p>The value part of the basic filter construct could also include a special character: &quot;*&quot;.
+                The star acts as placeholder for none, one or several characters at that position.
+                &quot;V*lue&quot; would therefore match against &quot;Value&quot;, &quot;Vlue&quot;, &quot;VaaAaAalue&quot; and so on.
+                There are some special named combinations using the star, but they work exactly the same way:</p><table><caption>Special named placeholder combinations</caption>
+                    
+                    
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Filter</th>
+                                <th>Description</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+                            <tr><td>present</td><td>(attr=*)</td><td>Also refered to as &quot;any&quot;. Finds any entry containing any (unless empty) value for the named attribute.</td></tr>
+
+                            <tr><td>begins</td><td>(attr=value*)</td><td>value starts with some fixed string</td></tr>
+
+                            <tr><td>ends</td><td>(attr=*value)</td><td>value ends with some fixed string</td></tr>
+
+                            <tr><td>contains</td><td>(attr=*value*)</td><td>value contains some fixed string</td></tr>
+
+                        </tbody></table>
+
+        
+
+        <h3>Combining string filters</h3>
+
+            
+            <p>Basic filters can be combined using the three logical operators &quot;&amp;&quot; (and),
+                &quot;|&quot; (or) and &quot;!&quot; (not). Note, that the smallest filter component,
+                the basic filter enclosed in round brackets, remains isolated: instead of just adding another
+                &quot;[attribute][operator][value]&quot; pair into the brackets, a new bracket level is introduced that
+                contains all filter components that should be combined. Note also, that the logical operator
+                does stand in front of all filter components, not between them as common in programming languages.</p>
+            <p><strong>Combining string filters</strong></p>
+            
+            <pre><code>&lt;?php
+// Search all &#039;Benedikt&#039;s with phone number 1234567890
+    $filter = &#039;(&amp;(givenName=Benedikt)(telephoneNumber=1234567890))&#039;;
+    
+    // Search the same, but exclude person &quot;Benedikt Foobar&quot;
+    // Note that the &quot;not&quot; is a logical operator and thus needs its own
+    // surrounding bracket. This explains nicely, that each bracket level
+    // is evaluated independently from surrounding brackets.
+    $filter = &#039;(&amp;(givenName=Benedikt)(telephoneNumber=1234567890)(!(sureName=Foobar)))&#039;;
+?&gt;</code></pre>
+            
+        
+    
+
+    <h3>The Net_LDAP2_Filter class</h3>
+
+        
+        <p>As you will read below, there are some special characters inside the LDAP filter definition and thus must
+            be escaped. These are mainly the special characters used directly by the filter syntax like braces and
+            the logical operators. Despite those, there are some other cases which need special threatment.
+            Nearly all of this cases are hidden through the <strong>Net_LDAP2_Filter</strong> class so you
+            should only consider using string filters if you need to or you know what you are doing.
+            If you need a filter string, you may also use <strong>Net_LDAP2_Filter</strong>s <strong>asString()</strong>
+            function after building the filter.</p>
+        <p>The filter class has two different usage models: one for constructing basic filters and
+            another to combine them logically. This has to do with the syntax of LDAP filters you may read below.</p>
+        
+        <h3>Creating filters</h3>
+
+            
+            <p>For creating basic filter components, you need to use the <strong>create()</strong> factory method.
+                There, you combine three items: an attribute to filter for, a matching rule for comparison and a value
+                that is beeing compared with the servers entries.
+                The given value is automatically escaped, so you need take care if you want to use the star placeholder.
+                In this case, you need to pass <code>FALSE</code> as fourth parameter to <strong>create()</strong>
+                which causes <code>value</code> to be threaten as-is. This of course also means, that you need to
+                escape the parts of the value that may contain restricted characters yourself using
+                <strong>Net_LDAP2_Util::</strong><strong>escape_filter_value()</strong>. To learn what characters
+                are restricted, refer to <a href="http://www.ietf.org/rfc/rfc2254.txt">RFC 2254</a> or the documentation of
+                <strong>Net_LDAP2_Util::</strong><strong>escape_filter_value()</strong>; otherwise its safe to always escape.</p>
+            <p>The matching rules partly follow the basic filter matching rules described above, but are enhanced to
+                make your life easier:</p><table><caption>create()s matching rules</caption>
+                    
+                    
+                        <thead>
+                            <tr>
+                                <th>Rule</th>
+                                <th>Description</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+                            <tr><td>equals</td><td>One of <code>attribute</code>s values is exactly <code>value</code>. Please note that case sensitiviness depends on the matching rule defined in the attributes schema syntax.</td></tr>
+
+                            <tr><td>begins</td><td>One of <code>attribute</code>s values must begin with <code>value</code></td></tr>
+
+                            <tr><td>ends</td><td>One of <code>attribute</code>s values must end with <code>value</code></td></tr>
+
+                            <tr><td>contains</td><td>One of <code>attribute</code>s values must contain <code>value</code></td></tr>
+
+                            <tr><td>present | any</td><td>The <code>attribute</code> can contain any value but must be existent</td></tr>
+
+                            <tr><td>greater</td><td>The <code>attribute</code>s value is greater than <code>value</code></td></tr>
+
+                            <tr><td>less</td><td>The <code>attribute</code>s value is less than <code>value</code></td></tr>
+
+                            <tr><td>greaterOrEqual</td><td>The <code>attribute</code>s value is greater or equal than <code>value</code></td></tr>
+
+                            <tr><td>lessOrEqual</td><td>The <code>attribute</code>s value is less or equal than <code>value</code></td></tr>
+
+                            <tr><td>approx</td><td>One of <code>attribute</code>s values sounds similar to <code>value</code>. The matching behavior depends on the server implementation.</td></tr>
+
+                        </tbody></table>
+<p>Since Net_LDAP2 2.0.12 you can also negate the match rules by using the <code>not</code> keyword
+                to easily negate the basic filter expression. Prior to that, you had to use <strong>combine()</strong>
+                manually.</p>
+            <p><strong>Creating LDAP filters</strong></p>
+        
+        <pre><code>&lt;?php
+// Filter entries whose first name is &#039;Benedikt&#039;:
+$filter = Net_LDAP2_Filter::create(&#039;givenName&#039;, &#039;equals&#039;, &#039;Benedikt&#039;);
+
+// Filter entries whose first name is NOT &#039;Benedikt&#039;:
+// (this was first introduced in 2.0.12)
+$filter = Net_LDAP2_Filter::create(&#039;givenName&#039;, &#039;not equals&#039;, &#039;Benedikt&#039;);
+$filter = Net_LDAP2_Filter::create(&#039;givenName&#039;, &#039;! =&#039;, &#039;Benedikt&#039;); // works too :)
+
+// Filter entries whose first name starts with &#039;Steph&#039;:
+$filter = Net_LDAP2_Filter::create(&#039;givenName&#039;, &#039;begins&#039;, &#039;Steph&#039;);
+
+// Filter entries containing &#039;Lone*&#039;; matching the star character.
+// The automatic escaping of $value will conveniently escape the star for us.
+$filter = Net_LDAP2_Filter::create(&#039;givenName&#039;, &#039;contains&#039;, &#039;Lone*&#039;);
+
+// Filter entries containing &#039;Foo[something]Bar&#039;; not matching the star character.
+// For this to work, we need to disable automatic escaping of $value by passing
+// false as fourth parameter. This however implies, that we take care of
+// proper escaping, which is showed in the example.
+$escaped_values = Net_LDAP2_Util::escape_filter_value(array(&#039;Foo&#039;, &#039;Bar&#039;));
+$foo =&amp; $escaped_values[0];
+$bar =&amp; $escaped_values[1];
+$filter = Net_LDAP2_Filter::create(&#039;givenName&#039;, &#039;contains&#039;, &quot;$foo*$bar&quot;, false);
+
+// Filter entries whose first name sounds similar to &quot;Stephane&quot;
+// This should also find &quot;Stephen&quot; and &quot;Stefan&quot; (depending on implementation)
+$filter = &#039;(givenName=~Stephane)&#039;;
+?&gt;</code></pre>
+    
+        
+
+        <h3>Combining filters</h3>
+
+            
+            <p>Although the filters can be used stand alone, they can be combined to match sophisticated
+                search requiremets. This is done by using the <strong>combine()</strong> to combine
+                several present <strong>Net_LDAP2_Filter</strong> objects using a logical operator.
+                The execption is the <code>not</code> operator since it only allows one filter
+                object to be negated.</p><table><caption>combine()s operators</caption>
+                    
+                    
+                        <thead>
+                            <tr>
+                                <th>Rule</th>
+                                <th>Description</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+                            <tr><td>and</td><td>All filter components must evaluate to <code>true</code> for the combined filter to be <code>true</code></td></tr>
+
+                            <tr><td>or</td><td>At least one filter component must evaluate to <code>true</code> for the combined filter to be <code>true</code></td></tr>
+
+                            <tr><td>not</td><td>The result of the filter component is inversed (<code>true</code> becomes <code>false</code> and vice versa).
+                                    Note that this operator only accepts one filter object.</td></tr>
+
+                        </tbody></table>
+
+
+                <p><strong>Combining LDAP filters</strong></p>
+                
+                    <pre><code>&lt;?php
+// Create some test filters
+$filter_benedikt = Net_LDAP2_Filter::create(&#039;givenName&#039;, &#039;equals&#039;, &#039;Benedikt&#039;);
+$filter_steph    = Net_LDAP2_Filter::create(&#039;givenName&#039;, &#039;begins&#039;, &#039;Steph&#039;);
+$filter_foobar   = Net_LDAP2_Filter::create(&#039;sureName&#039;, &#039;equals&#039;, &#039;Foobar&#039;);
+$filter_height   = Net_LDAP2_Filter::create(&#039;personHeight&#039;, &#039;greater&#039;, &#039;175&#039;);
+
+// Negate &#039;foobar&#039; filter.
+// This filters every entry whose sure name is not &#039;Foobar&#039;
+$filter_not_foobar = Net_LDAP2_Filter::combine(&#039;not&#039;, $filter_foobar);
+
+// Build a &#039;and&#039; combination to be able to search for people whose
+// first names start with &#039;Steph&#039; and who are are taller than 175
+// except those whose surname is &#039;Foobar&#039;
+$filter_stephs_tall = Net_LDAP2_Filter::combine(&#039;and&#039;,
+    array($filter_steph, $filter_height, $filter_not_foobar));
+
+// In any case, add every person whose first name is
+// &#039;Benedikt&#039; to the search result.
+$filter_add_benedikt = Net_LDAP2_Filter::combine(&#039;or&#039;, array($filter_benedikt, $filter_stephs_tall));
+?&gt;</code></pre>
+                
+            
+        
+	
+	<h3>Client side filtering</h3>
+
+
+            <p>Since version 2.1.0 the filter class can filter entries client side. Just pass an entry
+                or an array of entries to the filter objects <strong>matches()</strong> method. With this you can
+                check that an given entry matches some LDAP filter as well as select matching entries out of
+                an array containing many of them. The method always returns the number of matched entries. If you want
+                to retrieve the filtered entries you have to provide some result array to which the matching entries are
+                appended.</p><table><caption>Supported features</caption>
+
+                    
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Description</th>
+                                <th>Since</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+                            <tr><td>Matching Operators: <code>equals</code>, <code>begins</code>, <code>ends</code>, <code>contains</code>, <code>present|any</code></td><td>Matching of the basic &quot;=&quot; filter argument with wildcards in value. As of 2.1.0, the match performed is not case sensitive (this will change once schema attribute syntax is honored).</td><td>2.1.0</td></tr>
+
+                            <tr><td>Matching Operators: <code>greater</code>, <code>greaterOrEqual</code>, <code>less</code>, <code>lessOrEqual</code>, <code>approx</code></td><td>Comparisons and approximate literal matching</td><td>unsupported</td></tr>
+
+			    <tr><td>Matching rules of attribute syntax</td><td>Using of the matching rule of the schema attribute syntax (eg. date/time comparisons, case sensitiveness, etc)</td><td>unsupported</td></tr>
+
+                            <tr><td>Logical Operators: <code>AND</code>, <code>OR</code>, <code>NOT</code></td><td>Combining filters for more advanced expressions.</td><td>2.1.0</td></tr>
+
+
+                        </tbody></table>
+
+
+                <p><strong>Client side filter matching</strong></p>
+
+                    <pre><code>&lt;?php
+// Create a simple test filter (may be arbitary complex and combined)
+$filter = Net_LDAP_Filter::create(&#039;givenName&#039;, &#039;equals&#039;, &#039;Benedikt&#039;);
+
+// see if the filter matches a given Entry
+// (note that you should check for Net_LDAP2_Error)
+$matches_count = $filter-&gt;matches($singleEntry);
+// $matches_count contains the number of matched entries, here 0 or 1.
+
+// see, if the filter matches some entries of a given array of entries
+$matches_count = $filter-&gt;matches($arrayOfEntries);
+// $matches_count contains again the number of matched entries, here 0 or n.
+
+// what entries do match exactly?
+$filteredEntries = array(); // provide a results array (doesn&#039;t have to be empty)
+$matches_count = $filter-&gt;matches($arrayOfEntries, $filteredEntries);
+// $filteredEntries array contains now all matched entries, eg a filtered result.
+?&gt;</code></pre>
+                
+            
+        
+	
+        <h3>Advanced features</h3>
+
+            
+            <p>You may need some advanced functionality if you have to deal with string representation of filters.</p><table><caption>Advanced methods</caption>
+                    
+                    
+                        <thead>
+                            <tr>
+                                <th>Method</th>
+                                <th>Description</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+                            <tr><td><strong>parse()</strong></td><td>Takes an filter string and parses it into a <strong>Net_LDAP2_Filter</strong> object. It also verifies, that the filter syntax is correct.</td></tr>
+
+                            <tr><td><strong>printMe()</strong></td><td>In PERLs interface, this method is called &quot;print&quot; but due to language constraints, we cannot use that name. Prints the string representation of this filter object to standard output or to an optional filehandle passed as parameter.</td></tr>
+
+                            <tr><td><strong>asString()</strong></td><td>Returns the string representation of the filter object.</td></tr>
+
+                        </tbody></table>
+</section>
+<section id="package-networking-net-ldap2-ldif">
+<h2>LDIF files</h2>
+<h3>Avaible since</h3>
+
+        
+        <p>LDIF support was added to Net_LDAP2 in release 1.1.0a1.</p>
+    
+
+    <h3>What are LDIF files?</h3>
+
+        
+
+        <p>LDIF files are in detail described at <a href="http://www.ietf.org/rfc/rfc2849.txt">RFC 2849</a>.
+            Shortly, they contain data records in an plain text, human readable format, much like
+            a SQL file does. An LDIF file specifies a set of directory entries, or a set of changes to
+            be applied to directory entries, but not both at the same time: the formats cannot be mixed
+            inside the same file.
+
+            LDIF-content files are very usable for manual transporting data or for full backups.
+            LDIF-change files are an easy way to perform adjustments to a database like automated
+            data synchonisation.
+
+            LDIF files can contain comments (first character on line is a hash &quot;#&quot;) which are very useful
+            in case humans need to interpret or read the data.</p>
+        <p><strong>Example LDIF content file</strong></p>
+        
+        <pre>
+#
+# This is a content LDIF file.
+# It contains one single entry featuring several
+# attributes and one comment (this one).
+# attr1, attr4 and cn are single valued, the others are
+# multivalued. objectclass is a special case, LDAP servers
+# will interpret this operational attribute to define the
+# classes the object will belong to and thus, which attributes
+# it may contain. the OCL-attribute is usually multivalued.
+#
+version: 1
+dn: cn=test1,ou=example,dc=cno
+objectclass: someobjectclass
+attr1: 12345
+attr2: 1234
+attr2: baz
+attr3: foo
+attr3: bar
+attr4: brrrzztt
+cn: test1</pre>
+
+        
+
+
+
+        <p>LDIF files could describe not only the data an entry contains, but also various
+            changes to the entry itself. If such an LDIF file would then be given to a
+            LDAP server, he would interpret those changes instead just importing the data. It
+            is comparable to a diff file on unix and familiar to the SQL dump.</p>
+    <p><strong>Example LDIF change file</strong></p>
+        
+        <pre>
+# Delete attr1, replace values of attr2 and add new attribute attr42
+# The attribute &quot;changetype&quot; is special: it says, what to do with
+# this entries dataset. It could also be &quot;delete&quot; or &quot;add&quot; to delete
+# a whole entry or to add a completely fresh one. &quot;modrdn&quot; will
+# move the entry to a new location once the LDIF file is imported.
+dn: cn=test2,ou=example,dc=cno
+changetype: modify
+delete: attr1
+-
+replace: attr2
+attr2: 123456_newtest
+-
+add: attr42
+attr42: the answer</pre>
+
+        
+    
+
+    <h3>Error handling when using Net_LDAP2_LDIF</h3>
+
+        
+
+        <p>Before we can start using Net_LDAP2_LDIF we must say some short words about how
+            error handling works. Net_LDAP2_LDIF was designed to have mostly the same API as
+            the original PERL Net::LDAP::LDIF has. Because of this, the methods of Net_LDAP2_LDIF
+            do not return a Net_LDAP2_Error object. You must use the <strong>error()</strong> method
+            that will return a Net_LDAP2_Error object in case of failure or true in case everything was ok.
+            In LDIF reading mode, you can additionally use <strong>error_lines()</strong> to get knowledge
+            about where in the input file the error occured.</p>
+    
+
+    <h3>Construction and options</h3>
+
+        
+
+        <p>Regardless if you want to read or write a LDIF file, you always have to use the constructor
+            of Net_LDAP2_LDIF to initialize your access to the LDIF file.
+            You need to pass at least one parameter to <strong>Net_LDAP2_LDIF()</strong>:
+            the path of the file that should be read or written. You may pass the open mode as second parameter.
+            The possible file open modes are &quot;r&quot; (read), &quot;w&quot; (write, clears the file first) and &quot;a&quot; (append to the end).
+            In case you omit the open mode, read mode is assumed.
+            The third optional parameter is an associative array containing one or several of the following
+            options:</p><table><caption>Possible configuration options</caption>
+                
+                
+                    <thead>
+                    <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Default</th>
+                    </tr>
+
+                    </thead>
+
+                    <tbody>
+                    <tr>
+                    <td><code>encode</code></td>
+                    <td>Some DN values in LDIF cannot be written verbatim and have to be encoded in some way.
+                        Possible values are: &quot;none&quot;, &quot;canonical&quot; and &quot;base64&quot; (RFC default)</td>
+                    <td><code>base64</code></td>
+                    </tr>
+
+                    <tr>
+                    <td><code>onerror</code></td>
+                    <td>What should be done on errors? &quot;undef&quot; will let error handling in your hands, in this
+                        case you use <strong>error()</strong> and <strong>error_lines()</strong> to process errors manually.
+                        &quot;die&quot; aborts the script printing the error - this is sometimes useful for CLI scripts.
+                        &quot;warn&quot; just prints out the error but continues like &quot;undef&quot; would.</td>
+                    <td><code>undef</code></td>
+                    </tr>
+
+                    <tr>
+                    <td><code>change</code></td>
+                    <td>Turning this to &quot;1&quot; (true) will tell Net_LDAP2_LDIF to write change sets instead of content files.</td>
+                    <td><code>false</code></td>
+                    </tr>
+
+                    <tr>
+                    <td><code>lowercase</code></td>
+                    <td>Set this to true to convert attribute names to lowercase when writing.</td>
+                    <td><code>0</code></td>
+                    </tr>
+
+                    <tr>
+                    <td><code>sort</code></td>
+                    <td>If true, sort attribute names when writing entries according to the rule:
+                        objectclass first then all other attributes alphabetically sorted by attribute name</td>
+                    <td><code>0</code></td>
+                    </tr>
+
+                    <tr>
+                    <td><code>version</code></td>
+                    <td>Set the LDIF version to write to the resulting LDIF file.
+                        According to RFC 2849 currently the only legal value for this option is 1.</td>
+                    <td><code>1</code></td>
+                    </tr>
+
+                    <tr>
+                    <td><code>wrap</code></td>
+                    <td> Number of columns where output line wrapping shall occur.
+                        Setting it to 40 or lower inhibits wrapping. Useful for better human readability of
+                        the resulting file.</td>
+                    <td><code>78</code></td>
+                    </tr>
+
+                    <tr>
+                    <td><code>raw</code></td>
+                    <td>Using this option, you are able to tell Net_LDAP2_LDIF which attributes to treat
+                        as binary data. If you pass in entries having a valid LDAP connection
+                        (eg from some Net_LDAP2-&gt;search() operation) this additionally will be detected by
+                        automatic checks against the schema.</td>
+                    <td>empty</td>
+                    </tr>
+
+                    </tbody></table>
+<p>For advanced users: instead of passing a file path, you also may pass an already initialized file handle.
+            In this case, the mode parameter will be ignored. You may use this, if you want to mix LDIF content and
+            LDIF change mode by using two Net_LDAP2_LDIF instances to write to the same filehandle, but it could
+            be very useful in other cases too. To initialize the second instance of Net_LDAP2_LDIF, you can use
+            <strong>handle()</strong> to get the filehandle from the first instance.</p>
+    
+
+    <h3>Reading a LDIF file into Net_LDAP2_Entry-objects</h3>
+
+        
+
+        <p>One of the two modes how Net_LDAP2_LDIF can be used is to read a LDIF file and parse its
+        contents into an array of Net_LDAP2_Entry objects. This is done using the
+        <strong>read_entry()</strong>-method which will return the next entry. If you want to fetch all
+        entries, you use the <strong>eof()</strong> to detect the end of the input file:</p>
+        <p><strong>Parsing a LDIF file into Net_LDAP2_Entry objects</strong></p>
+        
+        <pre><code>&lt;?php
+// open some LDIF file for reading
+$ldif = new Net_LDAP2_LDIF(&#039;somefile.ldif&#039;, &#039;r&#039;);
+if ($ldif-&gt;error()) {
+    $error_o = $ldif-&gt;error(); // get Net_LDAP2_Error object on error
+            die(&#039;ERROR: &#039;.$error_o-&gt;getMessage());
+}
+
+// parse the entries of the LDIF file into objects
+ do {
+    $entry = $ldif-&gt;read_entry();
+    if ($ldif-&gt;error()) {
+        // in case of error, print error.
+        // here we use the shorthand parameter, so error()
+        // returns a string instead of a Net_LDAP2_Object
+        die(&#039;ERROR AT INPUT LINE &#039;.$ldif-&gt;error_lines().&#039;: &#039;.$ldif-&gt;error(true));
+    } else {
+        // No error: do something with the entry
+        // Here we just print the entries DN
+        echo &#039;sucessfully parsed &#039;.$entry-&gt;dn();
+    }
+} while (!$ldif-&gt;eof());
+
+// We should call done() once we are finished
+$ldif-&gt;done();
+?&gt;</code></pre>
+        
+
+        <p>Since version 2.1.0 <strong>Net_LDAP2_Filter</strong> can do client side filtering on entry objects.
+          This may be especially useful when combined with LDIF reading support as it allows the developer
+          to execute select querys on the LDIF content. That enables for example the development of
+          reports on those files without the need for an LDAP server.
+          Please refer to the documentation of <a href="package/Net_LDAP2/docs/index.html#package-networking-net-ldap2-filter">LDAP filters</a>.</p>
+    
+
+    <h3>Writing Net_LDAP2_Entry objects to a LDIF content file</h3>
+
+        
+
+        <p>Writing an LDIF file is very easy too. Just pass the entries you want to have written
+          to the <strong>write_entry()</strong>-method. Beware, that if you have opened the file in &quot;w&quot; write mode
+          this will clear any previous data of that file. Use &quot;a&quot; (append) if you just want add data.</p>
+        <p><strong>Writing entries</strong></p>
+        
+        <pre><code>&lt;?php
+// Assume we have some valid Net_LDAP2_Entry objects inside $entries
+        // $entries = array( ... );
+
+        // open some file for writing
+        $ldif = new Net_LDAP2_LDIF(&#039;somewritefile.ldif&#039;, &#039;w&#039;);
+        if ($ldif-&gt;error()) die(&#039;ERROR: &#039;.$error_o-&gt;getMessage());
+
+        // write the data and check for error
+        // you could pass one single Net_LDAP2_Entry object or
+        // several objects inside an array
+        $ldif-&gt;write_entry($entries);
+        if ($ldif-&gt;error()) die(&#039;WRITE ERROR: &#039;.$error_o-&gt;getMessage());
+?&gt;</code></pre>
+        
+    
+
+        <h3>Writing Net_LDAP2_Entry objects to a LDIF change file</h3>
+
+        
+
+        <p>The process of writing changes is exactly the same like writing entry contents.
+          However there are two differences: Firstly you need to pass the &quot;changes&quot; option
+          and secondly, the entries you want to write need changes. Entries not containing
+          changes will silently be ignored since there is nothing to write.</p>
+        <p><strong>Writing entry changes</strong></p>
+        
+        <pre><code>&lt;?php
+// cast some test data and three entries
+        $testattrs = array(
+                &#039;attr1&#039; =&gt; &#039;1234&#039;,
+                &#039;attr2&#039; =&gt; &#039;foo&#039;,
+                &#039;attr3&#039; =&gt; array(&#039;bar&#039;, &#039;baz&#039;)
+            );
+        $entries = array(
+                Net_LDAP2_Entry::createFresh(&#039;cn=foo,dc=example,dc=cno&#039;,
+                    array_merge(array(&#039;cn&#039; =&gt; &#039;foo&#039;), $testattrs)),
+                Net_LDAP2_Entry::createFresh(&#039;cn=bar,dc=example,dc=cno&#039;,
+                    array_merge(array(&#039;cn&#039; =&gt; &#039;bar&#039;), $testattrs)),
+                Net_LDAP2_Entry::createFresh(&#039;cn=baz,dc=example,dc=cno&#039;,
+                    array_merge(array(&#039;cn&#039; =&gt; &#039;baz&#039;), $testattrs))
+            );
+
+        // make some changes to the first and the last entry
+        $entries[0]-&gt;add(array(&#039;someattr&#039; =&gt; &#039;added&#039;));
+        $entries[0]-&gt;replace(array(&#039;attr1&#039; =&gt; &#039;replaced&#039;));
+        $entries[2]-&gt;delete(array(&#039;attr2&#039;));
+        $entries[2]-&gt;delete(array(&#039;attr3&#039; =&gt; &#039;bar&#039;));
+
+        // open some file for writing, but in change mode
+        $ldif = new Net_LDAP2_LDIF(&#039;somewritefile.ldif&#039;, &#039;w&#039;, array(&#039;change&#039; =&gt; true));
+        if ($ldif-&gt;error()) die(&#039;ERROR: &#039;.$error_o-&gt;getMessage());
+
+        // write the data and check for error
+        // you could pass one single Net_LDAP2_Entry object or
+        // several objects inside an array
+        $ldif-&gt;write_entry($entries);
+        if ($ldif-&gt;error()) die(&#039;WRITE ERROR: &#039;.$error_o-&gt;getMessage());
+
+        // Now, only two entries are contained in the LDIF file,
+        // cn=foo,dc=example,dc=cno and cn=baz,dc=example,dc=cno.
+        // cn=bar,dc=example,dc=cno had no changes and was skipped.
+?&gt;</code></pre>
+        
+        <p><strong>Resulting LDIF change file</strong></p>
+        
+        <pre>
+version: 1
+dn: cn=foo,dc=example,dc=cno
+changetype: modify
+add: someattr
+someattr: added
+-
+replace: attr1
+attr1: replaced
+-
+
+dn: cn=baz,dc=example,dc=cno
+changetype: modify
+delete: attr2
+-
+delete: attr3
+attr3: bar
+-</pre>
+
+        
+        
+
+        <h3>Fetching LDIF data</h3>
+
+        
+
+        <p>Sometimes you are interested in the lines inside the LDIF file. For those cases you can use the
+          <strong>current_lines()</strong> and <strong>next_lines()</strong> methods.
+          They work in the current context, which may be confusing:
+          <strong>current_lines()</strong> will always return the lines that have built up the current
+          <strong>Net_LDAP2_Entry</strong> object when called <strong>current_entry()</strong> after <strong>read_entry()</strong>
+          has been called.
+          <strong>next_lines()</strong> will always return the lines, that will build up the next entry from the
+          current point of view, meaning &quot;relative to the entry that was just been read&quot;. However, you can override this by
+          activating the &quot;force&quot; parameter of <strong>next_lines()</strong> which allows you to loop over all entries.
+          <strong>current_entry()</strong> behaves exactly like <strong>current_lines()</strong>.</p>
+        <p>If you think, that the lines you have read would be better in form of an <strong>Net_LDAP2_Entry</strong> object,
+            use the <strong>parseLines()</strong> method to parse those lines into an entry. This is a
+            good way if you need just a few specific entries of a large LDIF file.</p>
+
+        <p><strong>Reading LDIF lines</strong></p>
+        
+        <pre><code>&lt;?php
+// open some LDIF file for reading
+// (error checking code is ommitted in this example for
+//  better readability - in production, test for errors!)
+$ldif = new Net_LDAP2_LDIF(&#039;somefile.ldif&#039;, &#039;r&#039;);
+
+// since nothing has been read until now, this will
+// return an empty array
+$empty_array = $ldif-&gt;current_lines();
+
+// so let&#039;s read the first entries data
+$first_entry_lines = $ldif-&gt;next_lines();
+
+// if we call it again, we will not read ahead to the
+// second entry - we again read the first one!
+$first_entry_lines_again = $ldif-&gt;next_lines();
+
+// If we call current_lines() now, we haven&#039;t read ahead
+// like we learned from the last statement.
+$empty_array_again = $ldif-&gt;current_lines();
+
+// If we want to shift, we must use
+// the read_entry() method, which will read ahead.
+$first_entry = $ldif-&gt;read_entry();
+
+// Now, current_lines() returns the lines of the
+// first entry and next_lines() the lines of the second:
+$first_entry_lines  = $ldif-&gt;current_lines();
+$second_entry_lines = $ldif-&gt;next_lines();
+
+// There is another way to shift the lines which is faster if
+// you are just interested in the LDIFs content - you
+// need to pass the &quot;force&quot; parameter to next_lines():
+$third_entry_lines  = $ldif-&gt;next_lines(true);
+$fourth_entry_lines = $ldif-&gt;next_lines(true);
+$fifth_entry_lines  = $ldif-&gt;next_lines(true);
+
+// If you want to convert the lines to an Net_LDAP2_Entry,
+// you may do so anytime by using parseLines()
+$fourth_entry = $ldif-&gt;parseLines($fourth_entry_lines);
+
+// Since we shifted manually only the lines,
+// current_lines() will return the lines that built up the
+// last (e.g. the first entry) Net_LDAP2_Entry object:
+$first_entry_lines  = $ldif-&gt;current_lines();
+
+// If we decide to read the next entry, we can do that:
+$sixth_entry = $ldif-&gt;read_entry();
+
+// current_lines() is shifted now:
+$sixth_entry_lines = $ldif-&gt;current_lines();
+?&gt;</code></pre>
+</section>
+<section id="package-networking-net-ldap2-schemacache">
+<h2>Schema caching</h2>
+<h3>Net_LDAP2s schema caching facility</h3>
+
+    <p><strong>Net_LDAP2</strong> features an easy schema caching facility.
+            Caching the schema can gain some performance, especially with slow servers or connections.
+            The facility works with an plugin object that must be passed to <strong>Net_LDAP2</strong>s
+            <strong>registerSchemaCache()</strong> method. The cache object can be registered (or unregistered)
+            at any time, but of course it is the best time right after initializing <strong>Net_LDAP2</strong>.</p><p><strong>Enabling/disabling Net_LDAP2s schema caching facility</strong></p>
+                <pre><code>&lt;?php
+// registering a valid schema cache object is enough to enable the caching facility:
+$ldap-&gt;registerSchemaCache($myCacheObject);
+
+// unregistering is easy too: just supply null as schema cache object:
+$ldap-&gt;registerSchemaCache(null);
+?&gt;</code></pre>
+            
+        
+        <p>The object that gets passed to <strong>registerSchemaCache()</strong> must implement the
+            <strong>Net_LDAP2_SchemaCache</strong> interface which demands two methods.
+            Initialisation of the cache object is dependent on the class itself but should
+            be handled inside the cache class constructor, however this may vary. Please refer to the cache
+            class documentation for those details.</p><table><caption><strong>Net_LDAP2_SchemaCache</strong> interface methods</caption>
+                
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Parameter</th>
+                            <th>Return value</th>
+                            <th>Description</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td><strong>loadSchema()</strong></td>
+                            <td>none</td>
+                            <td>
+                                <strong>Net_LDAP2_Schema</strong>,
+                                <strong>Net_LDAP2_Error</strong> or <code>false</code></td>
+                            <td>
+                                Returns the cached schema object.
+                                Net_LDAP2 will consider anything returned invalid, except a valid Net_LDAP2_Schema object.
+                                In case you return a Net_LDAP2_Error, this error will be routed to the return of the
+                                $ldap-&gt;schema() call. If you return something else, Net_LDAP2 will fetch a fresh
+                                Schema object from the LDAP server and tries to cache it via <strong>store()</strong>.
+                                You may also want to implement a cache aging mechanism here too.
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td><strong>storeSchema()</strong></td>
+                            <td><strong>Net_LDAP2_Schema</strong> object</td>
+                            <td><code>true</code> or (in special cases) <strong>Net_LDAP2_Error</strong></td>
+                            <td>
+                                Stores a schema object in the cache.
+                                This method will be called, if Net_LDAP2 has fetched a fresh schema object from LDAP
+                                and wants to init or refresh the cache. In case of errors you may return a
+                                <strong>Net_LDAP2_Error</strong> which will be routet to the client.
+                                Note that doing this prevents, that the schema object fetched from LDAP
+                                will be given back to the client, so only return errors if storing of the cache is
+                                something crucial (e.g. for doing something else with it). Normaly you dont want to
+                                give back errors in which case Net_LDAP2 needs to fetch the schema once per script run and
+                                use the error functionality of <strong>loadSchema()</strong>.
+                            </td>
+                        </tr>
+
+                    </tbody></table>
+
+        
+    
+
+    <h3>Packaged schema cache classes</h3>
+
+        <p>As of Net_LDAP2 2.0.0, there is one default schema caching class: <strong>Net_LDAP2_SimpleFileSchemaCache</strong>
+            to make your life a little easier. Caching to files should also be the most commonly used case.</p>
+        <p>This cache class is built to be flexible yet simple to use and may serve as example to write own caching classes.
+            This cache stores the schema object in a flat file. The path is freely configurable. It also servers a cache aging
+            mechanism that can be used to invalidate the cached schema after some time so it will be refreshed regularly.</p>
+        <p>To use this cache, you firstly need to initialize and configure a fresh cache object. Then the cache must
+            be registered with the <strong>Net_LDAP2</strong> instance. After that, Net_LDAP2 will use the cache.</p><p><strong>Initializing the SimpleFileSchemaCache</strong></p>
+        <pre><code>&lt;?php
+$myCacheConfig = array(
+        &#039;path&#039;    =&gt; &#039;/tmp/Net_LDAP_Schema.cache&#039;, // may reside on an linux tmpfs for improved performance
+        &#039;max_age&#039; =&gt; 1200                          // in seconds, use 0 for endlessly
+);
+$myCacheObject = new Net_LDAP2_SimpleFileSchemaCache($myCacheConfig);
+$ldap-&gt;registerSchemaCache($myCacheObject);
+?&gt;</code></pre>
+            
+        
+        <table><caption><strong>Net_LDAP2_SimpleFileSchemaCache</strong> config options</caption>
+                
+                    <thead>
+                        <tr>
+                            <th>Option</th>
+                            <th>Mandatory?</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td><code>path</code></td>
+                            <td>No</td>
+                            <td><code>/tmp/Net_LDAP_Schema.cache</code></td>
+                            <td>
+                                The full path to the cache file. To improve the caches performance under linux,
+                                you can place the cache file in a tmpfs mounted directory. This will put the file
+                                in the computers memory instead on disk, enabling nearly instant access.
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td><code>max_age</code></td>
+                            <td>No</td>
+                            <td><code>1200</code></td>
+                            <td>
+                                Maximum cache age in seconds. The age of the cache is determined by the files
+                                last change time. If <code>max_age</code> is reached, Net_LDAP2 will fetch
+                                a fresh Net_LDAP2_Schema object which is then stored in the cache file again.
+                                Setting this to &quot;0&quot; will make the cache endlessly valid.
+                            </td>
+                        </tr>
+
+                     </tbody></table>
+
+        
+    
+
+    <h3>Writing own schema cache classes</h3>
+
+        <p>However this is basicly an easy task, this is beyond the scope of this manual. If you want to write your
+            own custom schema cache, please refer to the detailed example at
+            <code>/your/pear/path/docs/Net_LDAP2/examples/schema_cache.php</code> as well as the source/APIdoc of
+            the interface <strong>Net_LDAP2_SchemaCache</strong>.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

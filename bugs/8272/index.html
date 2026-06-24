@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8272</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid_DataSource_CSV/index.html">Structures_DataGrid_DataSource_CSV</a> &#187; Bug #8272</h1>
+<p>Set fields not as array_keys of the first row, but as keys of the longest row</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8272</th><td>Set fields not as array_keys of the first row, but as keys of the longest row</td></tr>
+<tr><th>Submitted</th><td>2006-07-24 10:27 UTC</td></tr>
+<tr><th>From</th><td>gramlich at eosc dot de</td></tr>
+<tr><th>Assigned</th><td>wiesemann</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid_DataSource_CSV/index.html">Structures_DataGrid_DataSource_CSV</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-24 10:27 UTC] gramlich at eosc dot de</h3>
+<p>Description:<br>
+------------<br>
+This applies to CSV with and without header, if &#039;fields&#039; <br>
+option is not set. <br>
+ <br>
+If the first data-line of the csv does not contain all <br>
+columns, then only these few columns are used for the <br>
+inherited fetch() method. <br>
+ <br>
+It would be nice to allow a variable number of columns <br>
+from row to row (aligned left), and use all columns that <br>
+ever appear, possibly null. <br>
+(To get it through to the renderer, you will still have to <br>
+set the option &#039;generate_columns&#039; =&gt; true.) <br>
+ <br>
+Patch: <br>
+ <br>
+--- CSV.phpBAK  2006-07-24 10:20:44.000000000 +0200 <br>
++++ CSV.php     2006-07-24 11:36:14.036036368 +0200 <br>
+@@ -93,11 +93,22 @@ <br>
+             $keys = null; <br>
+         } <br>
+ <br>
++        // Store every field (column name) that is <br>
+actually used. <br>
++        // Otherwise, we get in trouble with fetch() from <br>
++        // Structures_DataGrid_DataSource_Array, where <br>
+the fields option <br>
++        // is simply set to array_keys($this-&gt;_ar[0]), <br>
+but this might have not <br>
++        // all the fields, if the first line has less <br>
+fields. <br>
++        $fields = $keys; <br>
++        // This applies to csv without header. <br>
++        $maxkeys = 0; <br>
++ <br>
+         foreach ($rowList as $row) { <br>
+             $row = rtrim($row); // to remove DOSish \r <br>
+             if (!empty($row)) { <br>
+                 if (empty($keys)) { <br>
+-                    $this-&gt;_ar[] = <br>
+explode($this-&gt;_options[&#039;delimiter&#039;], $row); <br>
++                    $rowArray = <br>
+explode($this-&gt;_options[&#039;delimiter&#039;], $row); <br>
++                    $this-&gt;_ar[] = $rowArray; <br>
++                    $maxkeys = max($maxkeys, <br>
+count($rowArray)); <br>
+                 } else { <br>
+                     $rowAssoc = array(); <br>
+                     $rowArray = <br>
+explode($this-&gt;_options[&#039;delimiter&#039;], $row); <br>
+@@ -105,6 +116,11 @@ <br>
+                         if (!empty($keys[$index])) { <br>
+                             $rowAssoc[$keys[$index]] = <br>
+$val; <br>
+                         } else { <br>
++                            // There are more fields, <br>
+than we have column names from the header <br>
++                            // Use the numeric index. <br>
++                            if (!in_array($index, <br>
+$fields, true)) { <br>
++                                $fields[] = $index; <br>
++                            } <br>
+                             $rowAssoc[$index] = $val; <br>
+                         } <br>
+                     } <br>
+@@ -113,6 +129,15 @@ <br>
+             } <br>
+         } <br>
+ <br>
++        // Set field names, if they were not set as <br>
+option <br>
++        if (!$this-&gt;_options[&#039;fields&#039;]) { <br>
++            if (empty($keys)) { <br>
++                $this-&gt;_options[&#039;fields&#039;] = range(0, <br>
+$maxkeys-1); <br>
++            } else { <br>
++                $this-&gt;_options[&#039;fields&#039;] = $fields; <br>
++            } <br>
++        } <br>
++ <br>
+         return true; <br>
+     } <br>
+ }</p>
+</section>
+<section>
+<h3>[2006-07-24 18:45 UTC] gramlich at eosc dot de</h3>
+<p>Hi Marc,</p>
+<p>sorry. The diff is here:<br>
+http://phpfi.com/134992</p>
+<p>The new version is here:<br>
+http://phpfi.com/134994</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

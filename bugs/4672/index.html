@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4672</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #4672</h1>
+<p>Commit always returning true</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-06-24 07:36 UTC</td></tr>
+<tr><th>From</th><td>rofranco at c17 dot net</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-24 07:36 UTC] rofranco at c17 dot net</h3>
+<p>Description:<br>
+------------<br>
+We are using the &quot;DEFERRABLE&quot; and &quot;INITIALY DEFERRED&quot; options in our PostgreSQL database, and found that sometimes there can be an error during COMMIT.</p>
+<p>Therefore, we&#039;ve made 2 small changes to DataObject.php to be able to handle the return value of the commit function.</p>
+<p>I&#039;m copying the patch file in case you consider it worth including in DataObject.php</p>
+<p>Reproduce code:<br>
+---------------<br>
+--- DataObject.php      2005-06-24 09:20:03.139954064 +0200<br>
++++ DataObject.php2     2005-06-24 09:25:12.923859752 +0200<br>
+@@ -2209,11 +2209,11 @@<br>
+             return true;<br>
+         }<br>
+         if (strtoupper($string) == &#039;COMMIT&#039;) {<br>
+-            $DB-&gt;commit();<br>
++            $res = $DB-&gt;commit();<br>
+             if ($_DB_driver == &#039;DB&#039;) {<br>
+                 $DB-&gt;autoCommit(true);<br>
+             }<br>
+-            return true;<br>
++            return $res;<br>
+         }</p>
+<p>if (strtoupper($string) == &#039;ROLLBACK&#039;) {</p>
+<p>Expected result:<br>
+----------------<br>
+Returning this value, we are able to determine if the transaction was successfull or not, and act accordingly.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

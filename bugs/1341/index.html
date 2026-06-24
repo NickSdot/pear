@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1341</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #1341</h1>
+<p>Call to a member function on a non-object</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-04 21:18 UTC</td></tr>
+<tr><th>From</th><td>michael at mompopmedia dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.5</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-04 21:18 UTC] michael at mompopmedia dot com</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>I&#039;m using HTML_QuickForm 3.2.2 and am trying to create a group of radio input items:</p>
+<p>$gender[] = &amp;HTML_QuickForm::createElement(&#039;radio&#039;, &#039;gender&#039;, &#039;&#039;, &#039;male&#039;);<br>
+$gender[] = &amp;HTML_QuickForm::createElement(&#039;radio&#039;, &#039;gender&#039;, &#039;&#039;, &#039;female&#039;);<br>
+$form-&gt;addGroup($gender, &#039;gender&#039;, &#039;Gender:&#039;, &#039; &#039;);</p>
+<p>They display fine, but on submit I get the following fatal error:</p>
+<p>Fatal error: Call to a member function on a non-object in /vhome/ecohosti/public_html/survey/mole/lib/HTML/QuickForm/group.php on line 386</p>
+<p>It appears that the array of elements that is looped through at this point in the code is being poulated with the following bogus array item (all following items are proper element objects)</p>
+<p>[0]=&gt;  string(2) &quot;on&quot;</p>
+<p>To deal with the problem, i added the following at line 385:</p>
+<p>if (is_object($this-&gt;_elements[$key])) {</p>
+<p>and a closing brace at line 395</p>
+<p>Thanks.</p>
+<p>Reproduce code:<br>
+---------------<br>
+                foreach (array_keys($this-&gt;_elements) as $key) {<br>
+                    if (is_object($this-&gt;_elements[$key])) {<br>
+                        if ($this-&gt;_appendName) {<br>
+                            $elementName = $this-&gt;_elements[$key]-&gt;getName();<br>
+                            if (is_null($elementName)) {<br>
+                                $this-&gt;_elements[$key]-&gt;setName($this-&gt;getName());<br>
+                            } elseif (&#039;&#039; == $elementName) {<br>
+                                $this-&gt;_elements[$key]-&gt;setName($this-&gt;getName() . &#039;[&#039; . $key . &#039;]&#039;);<br>
+                            } else {<br>
+                                $this-&gt;_elements[$key]-&gt;setName($this-&gt;getName() . &#039;[&#039; . $elementName . &#039;]&#039;);<br>
+                            }<br>
+                        }<br>
+                        $this-&gt;_elements[$key]-&gt;onQuickFormEvent(&#039;updateValue&#039;, $arg, $caller);<br>
+                        if ($this-&gt;_appendName) {<br>
+                            $this-&gt;_elements[$key]-&gt;setName($elementName);<br>
+                        }<br>
+                    }<br>
+                }</p>
+</section>
+<section>
+<h3>[2004-05-04 21:20 UTC] michael at mompopmedia dot com</h3>
+<p>actually, I take my fix back.  similar logic would need to be applied else where too.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

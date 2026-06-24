@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9564</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a> &#187; Bug #9564</h1>
+<p>Worksheet::setColumn() can only be called once per range</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-12-06 20:02 UTC</td></tr>
+<tr><th>From</th><td>dan at spiderweblabs dot com</td></tr>
+<tr><th>Assigned</th><td>cschmitz</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>Windows Server 2003</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-12-06 20:02 UTC] dan at spiderweblabs dot com</h3>
+<p>Description:<br>
+------------<br>
+I plan on fixing this and submitting back to CVS, but I thought I&#039;d let everyone know ahead of time.</p>
+<p>Worksheet::setColumn() adds a new array onto the Worksheet::_colinfo array.</p>
+<p>I think the desired behavior would be to override previous overlapping entries, splitting ranges where necessary.</p>
+<p>Test script:<br>
+---------------<br>
+$workbook = new Spreadsheet_Excel_Writer();<br>
+$worksheet =&amp; $workbook-&gt;addWorksheet();</p>
+<p>$worksheet-&gt;setColumn(0,0,10);<br>
+$worksheet-&gt;setColumn(0,0,100);</p>
+<p>$workbook-&gt;send(&quot;text.xls&quot;);<br>
+$workbook-&gt;close();</p>
+<p>Expected result:<br>
+----------------<br>
+I expect column A to be 100 units wide;</p>
+<p>Actual result:<br>
+--------------<br>
+Column A is 10 units wide;</p>
+</section>
+<section>
+<h3>[2006-12-06 21:56 UTC] dan at spiderweblabs dot com</h3>
+<p>Here is my modified Worksheet::setColumn() method:</p>
+<p>/**<br>
+    * Set the width of a single column or a range of columns.<br>
+    *<br>
+    * @access public<br>
+    * @param integer $firstcol first column on the range<br>
+    * @param integer $lastcol  last column on the range<br>
+    * @param integer $width    width to set<br>
+    * @param mixed   $format   The optional XF format to apply to the columns<br>
+    * @param integer $hidden   The optional hidden atribute<br>
+    * @param integer $level    The optional outline level<br>
+    */<br>
+    function setColumn($firstcol, $lastcol, $width, $format = null, $hidden = 0, $level = 0)<br>
+    {<br>
+		// added by Dan Lynn &lt;dan@spiderweblabs.com) on 2006-12-06<br>
+		// look for any ranges this might overlap and remove, size or split where necessary<br>
+		foreach ($this-&gt;_colinfo as $key =&gt; $colinfo) {<br>
+			$existing_start	= $colinfo[0];<br>
+			$existing_end	= $colinfo[1];<br>
+			<br>
+			// if the new range starts within another range<br>
+			if ($firstcol &gt; $existing_start &amp;&amp; $firstcol &lt; $existing_end) {<br>
+				// trim the existing range to the beginning of the new range<br>
+				$this-&gt;_colinfo[$key][1] = $firstcol - 1;<br>
+				<br>
+				<br>
+				// if the new range lies WITHIN the existing range<br>
+				if ($lastcol &lt; $existing_end) {<br>
+					// split the existing range by adding a range after our new range<br>
+					$this-&gt;_colinfo[] = array($lastcol+1, $existing_end, $colinfo[2], &amp;$colinfo[3], $colinfo[4], $colinfo[5]);<br>
+				}<br>
+			}<br>
+			<br>
+			// if the new range ends inside an existing range<br>
+			elseif ($lastcol &gt; $existing_start &amp;&amp; $lastcol &lt; $existing_end) {<br>
+				// trim the existing range to the end of the new range<br>
+				$this-&gt;_colinfo[$key][0] = $lastcol + 1;<br>
+				<br>
+			}<br>
+			<br>
+			// if the new range completely overlaps the existing range<br>
+			elseif ($firstcol &lt;= $existing_start &amp;&amp; $lastcol &gt;= $existing_end) {<br>
+				unset($this-&gt;_colinfo[$key]);<br>
+			}<br>
+		}</p>
+<p>// added by Dan Lynn &lt;dan@spiderweblabs.com) on 2006-12-06<br>
+		// regenerate keys<br>
+		$this-&gt;_colinfo = array_values($this-&gt;_colinfo);</p>
+<p>$this-&gt;_colinfo[] = array($firstcol, $lastcol, $width, &amp;$format, $hidden, $level);</p>
+<p>// Set width to zero if column is hidden<br>
+        $width = ($hidden) ? 0 : $width;</p>
+<p>for ($col = $firstcol; $col &lt;= $lastcol; $col++) {<br>
+            $this-&gt;col_sizes[$col] = $width;<br>
+        }<br>
+    }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9735</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_mssql/index.html">MDB2_Driver_mssql</a> &#187; Bug #9735</h1>
+<p>Two instances fail to keep different databases selected</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-04 20:32 UTC</td></tr>
+<tr><th>From</th><td>pete at digitalhill dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_mssql/index.html">MDB2_Driver_mssql</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-04 20:32 UTC] pete at digitalhill dot com</h3>
+<p>Description:<br>
+------------<br>
+Two separate instances of a MDB2 object end up using the same connection resource when created.  This results in the database name check in MDB2_Driver_mssql::_do_query() failing to notice that the currently selected database is no longer selected when one alternates queries from the two objects.  This naturally results in tables not being found and the like.</p>
+<p>Test script:<br>
+---------------<br>
+//approximation of the problem<br>
+require_once(&#039;PEAR.php&#039;);<br>
+require_once(&#039;MDB2.php&#039;);</p>
+<p>$dsn_one[&#039;username&#039;] = &quot;foo&quot;;<br>
+$dsn_one[&#039;password&#039;] = &quot;bar&quot;;<br>
+$dsn_one[&#039;hostspec&#039;] = &quot;remote_machine&quot;;<br>
+$dsn_one[&#039;phptype&#039;] = &#039;mssql&#039;;</p>
+<p>$db_one =&amp; MDB2::factory($dsn_one); //connect<br>
+$db_one-&gt;setDatabase(&#039;database_one&#039;); //select one database for this connection<br>
+$db_one-&gt;setFetchMode(MDB2_FETCHMODE_ASSOC); //we like hashes, ordered arrays require thinking</p>
+<p>$dsn_two[&#039;username&#039;] = &quot;foo&quot;;<br>
+$dsn_two[&#039;password&#039;] = &quot;bar&quot;;<br>
+$dsn_two[&#039;hostspec&#039;] = &quot;remote_machine&quot;;<br>
+$dsn_two[&#039;phptype&#039;] = &#039;mssql&#039;;</p>
+<p>$db_two =&amp; MDB2::factory($dsn_two); //connect<br>
+$db_two-&gt;setDatabase(&#039;database_two&#039;); //select two database for this connection<br>
+$db_two-&gt;setFetchMode(MDB2_FETCHMODE_ASSOC); //we like hashes, ordered arrays require thinking</p>
+<p>$res1 = $db_one-&gt;query(&quot;SELECT * FROM table_in_database_one WHERE id = 1&quot;); //works</p>
+<p>$res2 = $db_two-&gt;query(&quot;SELECT * FROM table_in_database_two WHERE other_id = 2&quot;); //works, as db_two still has &#039;&#039; for variable connection_database_name and so it performs the mssql_select_db</p>
+<p>$res1 = $db_one-&gt;query(&quot;SELECT * FROM table_in_database_one WHERE id = 3&quot;); //fails</p>
+<p>//my fix was to replace line 289:<br>
+$this-&gt;connected_database_name = &#039;&#039;;</p>
+<p>//with two lines:<br>
+if(!isset($GLOBALS[&#039;__MDB2_mssql_connection_database_name&#039;])) { $GLOBALS[&#039;__MDB2_mssql_connection_database_name&#039;] = &#039;&#039;; }</p>
+<p>$this-&gt;connected_database_name =&amp; $GLOBALS[&#039;__MDB2_mssql_connection_database_name&#039;];</p>
+<p>//using a global might not be the best solution, a static variable or method might be better, but this solved my immediate issue.</p>
+<p>Expected result:<br>
+----------------<br>
+I would expect that the connections would track the selected database successfully, or just use different connections (although there is a limit).</p>
+<p>Admittedly the situation isn&#039;t ideal data organization, but sometimes things just end up that way, so we have to deal with it.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

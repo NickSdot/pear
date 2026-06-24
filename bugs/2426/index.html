@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2426</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a> &#187; Bug #2426</h1>
+<p>Worksheet::SetMerge</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-10-01 04:45 UTC</td></tr>
+<tr><th>From</th><td>derrickbtan dot lists at gmail dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.1</td></tr>
+<tr><th>OS</th><td>Windows 2000</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-01 04:45 UTC] derrickbtan dot lists at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I am not able to set the format for merged cells using worksheet&#039;s (not formats) setmerge function.  I was trying to specify a border for a set of merged cells on multiple lines.  I also could not see a way to vertically align the data.</p>
+<p>Reproduce code:<br>
+---------------<br>
+// $this = custom excel writer class<br>
+$formatArray = array( &#039;size&#039; =&gt; 10, &#039;top&#039; =&gt; 1, &#039;left&#039; =&gt; 1, &#039;right&#039; =&gt; 1,&#039;align&#039; =&gt; &#039;center&#039; );</p>
+<p>$this-&gt;format[&#039;box_trl&#039;] = $this-&gt;xls-&gt;addFormat( $formatArray ); <br>
+// getCol simply returns the integer<br>
+$ws-&gt;write( $row, $this-&gt;getCol(&quot;N&quot;), &quot;Notes&quot;, $this-&gt;format[&#039;box_trl&#039;] );<br>
+// Merge the 2x2 columns<br>
+$ws-&gt;setMerge( $row++, $col++, $row--, $col );</p>
+<p>Expected result:<br>
+----------------<br>
+A 2x2 merged cell with top, left and right borders.</p>
+<p>Actual result:<br>
+--------------<br>
+The top and left borders appear on the first formatted cell, the rest are unformated.</p>
+</section>
+<section>
+<h3>[2004-10-13 15:23 UTC] smudge187 at hotmail dot com</h3>
+<p>This is an enormous problem when trying to create advanced excel spreadsheets used in business reporting. Is there even a  workaround for this problem?</p>
+</section>
+<section>
+<h3>[2005-06-09 14:21 UTC] bxny78 at yahoo dot com</h3>
+<p>Here&#039;s a work around, however all entries in the border will be centered</p>
+<p>$cart =&amp; $xls-&gt;addWorksheet(&#039;workSheet&#039;);<br>
+$borderC =&amp; $xls-&gt;addFormat();<br>
+$borderC-&gt;setFontFamily(&#039;Arial&#039;);<br>
+$borderC-&gt;setSize(&#039;10&#039;);<br>
+$borderC-&gt;setAlign(&#039;left&#039;);<br>
+$borderC-&gt;setColor(&#039;black&#039;);<br>
+$borderC-&gt;setTextWrap();<br>
+$borderC-&gt;setBorder (1);<br>
+$borderC-&gt;setAlign(&#039;merge&#039;); # Required for cell merge</p>
+<p>setupMergeCells(1, 1, 4, 4, $borderC, $cart);<br>
+$cart-&gt;write(1,1,&quot;some testing&quot;,$borderC);</p>
+<p>function setupMergeCells($sRow, $sCol, $eRow, $eCol, $fStyle, $cart)<br>
+{<br>
+        $cart-&gt;mergeCells ($sRow, $sCol, $eRow, $eCol);<br>
+        for($i = $sRow; $i &lt;=$eRow; $i++)<br>
+        {<br>
+                for($j = $sCol; $j &lt;= $eCol; $j++)<br>
+                {<br>
+                        $cart-&gt;write($i,$j,&#039;&#039;,$fStyle);<br>
+                }<br>
+        }<br>
+}</p>
+</section>
+<section>
+<h3>[2005-11-12 23:45 UTC] xnoguer at php dot net</h3>
+<p>this works for me:</p>
+<p>require_once &#039;Spreadsheet/Excel/Writer.php&#039;;</p>
+<p>$workbook = new Spreadsheet_Excel_Writer(&#039;bla.xls&#039;);<br>
+$worksheet =&amp; $workbook-&gt;addWorksheet(&#039;data&#039;);<br>
+$workbook-&gt;setVersion(8);</p>
+<p>$format = $workbook-&gt;addFormat(array(&#039;top&#039; =&gt; 1, &#039;left&#039; =&gt; 1, &#039;right&#039; =&gt; 1,&#039;align&#039; =&gt; &#039;center&#039;));<br>
+$worksheet-&gt;write(1, 1, &quot;hola&quot;, $format);<br>
+$worksheet-&gt;writeBlank(1, 2, $format);<br>
+$worksheet-&gt;writeBlank(2, 1, $format);<br>
+$worksheet-&gt;writeBlank(2, 2, $format);<br>
+$worksheet-&gt;mergeCells(1, 1, 2, 2);</p>
+<p>$workbook-&gt;close();</p>
+</section>
+<section>
+<h3>[2005-11-12 23:45 UTC] xnoguer at php dot net</h3>
+<p>this works for me:</p>
+<p>require_once &#039;Spreadsheet/Excel/Writer.php&#039;;</p>
+<p>$workbook = new Spreadsheet_Excel_Writer(&#039;bla.xls&#039;);<br>
+$worksheet =&amp; $workbook-&gt;addWorksheet(&#039;data&#039;);<br>
+$workbook-&gt;setVersion(8);</p>
+<p>$format = $workbook-&gt;addFormat(array(&#039;top&#039; =&gt; 1, &#039;left&#039; =&gt; 1, &#039;right&#039; =&gt; 1,&#039;align&#039; =&gt; &#039;center&#039;));<br>
+$worksheet-&gt;write(1, 1, &quot;hola&quot;, $format);<br>
+$worksheet-&gt;writeBlank(1, 2, $format);<br>
+$worksheet-&gt;writeBlank(2, 1, $format);<br>
+$worksheet-&gt;writeBlank(2, 2, $format);<br>
+$worksheet-&gt;mergeCells(1, 1, 2, 2);</p>
+<p>$workbook-&gt;close();</p>
+</section>
+<section>
+<h3>[2005-11-12 23:45 UTC] xnoguer at php dot net</h3>
+<p>this works for me:</p>
+<p>require_once &#039;Spreadsheet/Excel/Writer.php&#039;;</p>
+<p>$workbook = new Spreadsheet_Excel_Writer(&#039;bla.xls&#039;);<br>
+$worksheet =&amp; $workbook-&gt;addWorksheet(&#039;data&#039;);<br>
+$workbook-&gt;setVersion(8);</p>
+<p>$format = $workbook-&gt;addFormat(array(&#039;top&#039; =&gt; 1, &#039;left&#039; =&gt; 1, &#039;right&#039; =&gt; 1,&#039;align&#039; =&gt; &#039;center&#039;));<br>
+$worksheet-&gt;write(1, 1, &quot;hola&quot;, $format);<br>
+$worksheet-&gt;writeBlank(1, 2, $format);<br>
+$worksheet-&gt;writeBlank(2, 1, $format);<br>
+$worksheet-&gt;writeBlank(2, 2, $format);<br>
+$worksheet-&gt;mergeCells(1, 1, 2, 2);</p>
+<p>$workbook-&gt;close();</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

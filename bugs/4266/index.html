@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4266</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #4266</h1>
+<p>Allow joins with multiple keys</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4266</th><td>Allow joins with multiple keys</td></tr>
+<tr><th>Submitted</th><td>2005-05-03 06:57 UTC</td></tr>
+<tr><th>From</th><td>stefan dot doeppert at synapsy dot com</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>Suse Linux 9.3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-03 06:57 UTC] stefan dot doeppert at synapsy dot com</h3>
+<p>Description:<br>
+------------<br>
+I&#039;d like the option of allowing multiple keys to be used with  the joinAdd-method.</p>
+<p>Example:<br>
+links.ini:</p>
+<p>[table_a]<br>
+field2 = table_c:field2</p>
+<p>[table_b]<br>
+field1   = table_a:field1<br>
+field2   = table_a:field2</p>
+<p>This means, that the $ofield and $tfield have to be arrays. I&#039;ve changed the joinAdd-method and it works fine (admitting I&#039;ve only tested it with ini-files, not with arrays that display the links)</p>
+<p>Perhaps you might find it useful and integrate it in a futher release. (I&#039;m using DB_DataObject 1.7.13)</p>
+<p>Reproduce code:<br>
+---------------<br>
+I&#039;ll send the joinAdd-method with an e-mail, maybe somebody can upload it somewhere.</p>
+</section>
+<section>
+<h3>[2006-04-25 15:55 UTC] mfriedman at symcor dot com</h3>
+<p>Hi,</p>
+<p>We use Data Object extensively and have run into the same issue. Just wondering if any progress was made on this? Did Stephan ever send the patch to Alan?</p>
+<p>Right now we&#039;re using a bit of a work-around hack. It would be great to get Stephan&#039;s patch integrated.</p>
+<p>Many thanks,<br>
+Matt.</p>
+</section>
+<section>
+<h3>[2006-05-06 10:23 UTC] roehr at zilleon dot com</h3>
+<p>I have created a patched version of the joinAdd() method to support joins on multiple columns:<br>
+http://www.zilleon.de/PEAR/DB_DataObject/DB_DataObject_joinAdd.php.txt</p>
+<p>The changed code can be identified by comments (/* ADDED */ and so on).</p>
+<p>The &quot;table1, table2&quot; syntax is not recognized yet (works in the old way), but for INNER/LEFT/RIGHT and the array syntax it should work.</p>
+<p>Best regards, Torsten Roehr</p>
+</section>
+<section>
+<h3>[2006-08-31 13:25 UTC] bjsimons at ufl dot edu</h3>
+<p>I have created a patch that works for composite keys. If a single primary key is specified in the links.ini file, then the original code is executed. An array is formed and handled appropriately when a composite key is specified in the links.ini file.</p>
+<p>Example links.ini:</p>
+<p>[table1]<br>
+;works as normal<br>
+key1 = table2.key1</p>
+<p>[table3]<br>
+;works with patch<br>
+key1,key2 = table4.key1,key2</p>
+<p>This patch works for me. Please try it and let me know if there are any problems. You can patch your existing DataObject.php by placing the segment between the begin and end patch statement in a separate file (DataObject.php.patch), place it in the same directory as DataObject.php, and then issue patch -p0 &lt; DataObject.php.patch to patch the file.</p>
+<p>The patch file is distorted in this post because of line wraps. Make sure that you restore the longer lines back to one line. For example, /* link contains {this column} = {linked table}:{linked column} */ should be one line.</p>
+<p>Barry</p>
+<p>--------------------BEGIN PATCH----------------------------------<br>
+--- DataObject.orginal.php	2006-08-31 08:16:17.000000000 -0400<br>
++++ DataObject.php	2006-08-31 08:16:40.000000000 -0400<br>
+@@ -3079,6 +3079,18 @@<br>
+             foreach ($links as $k =&gt; $v) {<br>
+                 /* link contains {this column} = {linked table}:{linked column} */<br>
+                 $ar = explode(&#039;:&#039;, $v);<br>
++                <br>
++                $links_key_array = strpos($k,&#039;,&#039;);<br>
++                if ($links_key_array !== false) {<br>
++                	$k = explode(&#039;,&#039;, $k);<br>
++                }<br>
++                <br>
++                $ar_array = strpos($ar[1],&#039;,&#039;);<br>
++                if ($ar_array !== false) {<br>
++                	$ar[1] = explode(&#039;,&#039;, $ar[1]);<br>
++                }<br>
++                <br>
++    <br>
+                 if ($ar[0] == $obj-&gt;__table) {<br>
+                     if ($joinCol !== false) {<br>
+                         if ($k == $joinCol) {<br>
+@@ -3187,8 +3199,21 @@<br>
+             case &#039;INNER&#039;:<br>
+             case &#039;LEFT&#039;: <br>
+             case &#039;RIGHT&#039;: // others??? .. cross, left outer, right outer, natural..?<br>
+-                $this-&gt;_join .= &quot;\n {$joinType} JOIN {$objTable}  {$fullJoinAs}&quot;.<br>
+-                                &quot; ON {$joinAs}.{$ofield}={$table}.{$tfield} {$appendJoin} &quot;;<br>
++                $this-&gt;_join .= &quot;\n {$joinType} JOIN {$objTable} {$fullJoinAs}&quot;;<br>
++                if (is_array($ofield)) {<br>
++                	$key_count = count($ofield);<br>
++                    for($i = 0; $i &lt; $key_count; $i++) {<br>
++                    	if ($i == 0) {<br>
++                    		$this-&gt;_join .= &quot; ON {$joinAs}.{$ofield[$i]}={$table}.{$tfield[$i]} {$appendJoin} &quot;;<br>
++                    	}<br>
++                    	else {<br>
++                    		$this-&gt;_join .= &quot; AND {$joinAs}.{$ofield[$i]}={$table}.{$tfield[$i]} {$appendJoin} &quot;;<br>
++                    	}<br>
++                     }<br>
++                } else {<br>
++	                $this-&gt;_join .= &quot; ON {$joinAs}.{$ofield}={$table}.{$tfield} {$appendJoin} &quot;;<br>
++                }<br>
++                                <br>
+                 break;<br>
+             case &#039;&#039;: // this is just a standard multitable select..<br>
+                 $this-&gt;_join .= &quot;\n , {$objTable} {$fullJoinAs} {$appendJoin}&quot;;</p>
+<p>----------------------END PATCH-------------------------------</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

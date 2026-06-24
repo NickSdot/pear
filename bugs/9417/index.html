@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9417</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #9417</h1>
+<p>Date::Date_Span infinite loop PHP 5.1.6</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-22 18:26 UTC</td></tr>
+<tr><th>From</th><td>brian at icweb dot com</td></tr>
+<tr><th>Assigned</th><td>firman</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>OpenSuse 10.0</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-22 18:26 UTC] brian at icweb dot com</h3>
+<p>Description:<br>
+------------<br>
+Here is a link to a page that displays phpinfo() so that you have all the server info as far as kernel version, apache, php, zend optimizer and all the configure options when I installed php. http://zeus.truck.net/indextest.php<br>
+BTw: I started with php 5.1.2 upgraded to 5.1.6 and problem still persisted then upgraded PEAR to 1.4.7 and problem continued.  I modified the code to follow it because this is a production server so I have to kill the httpd process before it eats all the memory and crashes the server (HD crashed on dev machine :( otherwise would be using it)</p>
+<p>Anyway, short test script that uses Date::addSeconds to add 10 seconds. It does that but then keeps calling Date_Span(0,) over and over again until I kill the httpd process or it kills my server.</p>
+<p>Note: if I place an exit(); statement after $this-&gt;set($time, $format); in Span::Date_Span it will not loop - but of course stops script execution<br>
+Count does not increase so I believe that it is creating copies of the class in a loop for one reason or another - guess due to changes in PHP5 Objects</p>
+<p>Anyway hope you can help in some fashion.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+ ini_set(&#039;include_path&#039;, &#039;/home/www/Date-1.4.7/&#039;);<br>
+require_once &#039;Date.php&#039;;<br>
+		$oStart = new Date();<br>
+		echo &#039;  oStart obj set&#039;.&quot;&lt;br&gt;&quot;;<br>
+        echo &#039;  next calling oStart-&gt;addSeconds with val of 10&#039;.&quot;&lt;br&gt;&quot;;<br>
+        $oStart-&gt;addSeconds(10);<br>
+		echo &#039; After the addSeconds process&#039;<br>
+?&gt;</p>
+<p>Placed modified package at: http://zeus.truck.net/Date-1.4.7_mod.zip</p>
+<p>so you can see where I placed the echo statements to follow the process.</p>
+<p>Expected result:<br>
+----------------<br>
+with my half-brained debug echo&#039;s it should be -</p>
+<p>oStart obj set<br>
+next calling oStart-&gt;addSeconds with val of 10<br>
+addSeconds(10) called<br>
+Calling $this-&gt;addSpan(new Date_Span($sec));<br>
+Date_Span(10, ) function called<br>
+Count: 1 <br>
+After the addSeconds process</p>
+<p>Actual result:<br>
+--------------<br>
+oStart obj set<br>
+next calling oStart-&gt;addSeconds with val of 10<br>
+addSeconds(10) called<br>
+Calling $this-&gt;addSpan(new Date_Span($sec));<br>
+Date_Span(10, ) function called<br>
+Count: 1<br>
+back at Date_Span function -<br>
+Date_Span(0, ) function called<br>
+Count: 1<br>
+back at Date_Span function -<br>
+Date_Span(0, ) function called<br>
+Count: 1<br>
+back at Date_Span function -<br>
+Date_Span(0, ) function called<br>
+Count: 1<br>
+back at Date_Span function -<br>
+Date_Span(0, ) function called<br>
+Count: 1<br>
+back at Date_Span function -<br>
+Date_Span(0, ) function called<br>
+Count: 1<br>
+back at Date_Span function -<br>
+Date_Span(0, ) function called<br>
+Count: 1<br>
+back at Date_Span function -<br>
+Date_Span(0, ) function called<br>
+Count: 1</p>
+<p>and keeps going until killed or kills server (runs out of memory)</p>
+</section>
+<section>
+<h3>[2006-11-22 23:08 UTC] brian at icweb dot com</h3>
+<p>ok, I will try to rebuild my development machine and see if I can duplicate this issue on it.</p>
+<p>If I can then I will try to do a backtrace as well.</p>
+<p>Holiday weekend, but will let you know as soon as I find something out.</p>
+<p>Thanks for looking into it.</p>
+<p>Brian</p>
+</section>
+<section>
+<h3>[2006-11-27 17:43 UTC] brian at icweb dot com</h3>
+<p>Ok in php.ini I changed:<br>
+zend.ze1_compatibility_mode = On<br>
+to:<br>
+zend.ze1_compatibility_mode = Off</p>
+<p>and my test script no longer appears to loop.</p>
+</section>
+<section>
+<h3>[2006-11-27 18:55 UTC] brian at icweb dot com</h3>
+<p>Problem appears to resolve when 4.0 compatibility is turned off in php.ini</p>
+<p>Thanks for looking into it.</p>
+<p>Brian</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

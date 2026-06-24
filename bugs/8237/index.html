@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8237</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid_Renderer_Smarty/index.html">Structures_DataGrid_Renderer_Smarty</a> &#187; Bug #8237</h1>
+<p>Can&#039;t use multiple grids on the same page</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8237</th><td>Can&#039;t use multiple grids on the same page</td></tr>
+<tr><th>Submitted</th><td>2006-07-18 12:44 UTC</td></tr>
+<tr><th>From</th><td>alexkunin at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>olivierg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid_Renderer_Smarty/index.html">Structures_DataGrid_Renderer_Smarty</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-18 12:44 UTC] alexkunin at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+There is no possibility to render several grids within same Smarty template - their variables will overlap. Of course, we can create another instance of Smarty, render grid inside it, and then pass ready HTML code to main template, but this does not look right (actually, this looks like a workaround).</p>
+<p>Test script:<br>
+---------------<br>
+Here is a patch that solves the problem:</p>
+<p>--- old\Smarty.php	Tue Jul 18 15:11:37 2006<br>
++++ Smarty.php	Tue Jul 18 15:15:51 2006<br>
+@@ -180,17 +180,17 @@<br>
+             $id = __CLASS__ . &#039;::&#039; . __FUNCTION__;<br>
+             return PEAR::raiseError(&quot;$id: no Smarty container loaded&quot;);<br>
+         }<br>
+-        $this-&gt;_smarty-&gt;assign(&#039;currentPage&#039;, $this-&gt;_page);<br>
+-        $this-&gt;_smarty-&gt;assign(&#039;recordLimit&#039;, $this-&gt;_pageLimit);<br>
+-        $this-&gt;_smarty-&gt;assign(&#039;columnsNum&#039;, $this-&gt;_columnsNum);<br>
+-        $this-&gt;_smarty-&gt;assign(&#039;recordsNum&#039;, $this-&gt;_recordsNum);<br>
+-        $this-&gt;_smarty-&gt;assign(&#039;totalRecordsNum&#039;, $this-&gt;_totalRecordsNum);<br>
+-        $this-&gt;_smarty-&gt;assign(&#039;pagesNum&#039;, $this-&gt;_pagesNum);<br>
+-        $this-&gt;_smarty-&gt;assign(&#039;firstRecord&#039;, $this-&gt;_firstRecord);<br>
+-        $this-&gt;_smarty-&gt;assign(&#039;lastRecord&#039;, $this-&gt;_lastRecord);<br>
+-        $this-&gt;_smarty-&gt;assign(&#039;currentSort&#039;, $this-&gt;_currentSort);<br>
++        $this-&gt;_smarty-&gt;assign($this-&gt;_requestPrefix . &#039;currentPage&#039;, $this-&gt;_page);<br>
++        $this-&gt;_smarty-&gt;assign($this-&gt;_requestPrefix . &#039;recordLimit&#039;, $this-&gt;_pageLimit);<br>
++        $this-&gt;_smarty-&gt;assign($this-&gt;_requestPrefix . &#039;columnsNum&#039;, $this-&gt;_columnsNum);<br>
++        $this-&gt;_smarty-&gt;assign($this-&gt;_requestPrefix . &#039;recordsNum&#039;, $this-&gt;_recordsNum);<br>
++        $this-&gt;_smarty-&gt;assign($this-&gt;_requestPrefix . &#039;totalRecordsNum&#039;, $this-&gt;_totalRecordsNum);<br>
++        $this-&gt;_smarty-&gt;assign($this-&gt;_requestPrefix . &#039;pagesNum&#039;, $this-&gt;_pagesNum);<br>
++        $this-&gt;_smarty-&gt;assign($this-&gt;_requestPrefix . &#039;firstRecord&#039;, $this-&gt;_firstRecord);<br>
++        $this-&gt;_smarty-&gt;assign($this-&gt;_requestPrefix . &#039;lastRecord&#039;, $this-&gt;_lastRecord);<br>
++        $this-&gt;_smarty-&gt;assign($this-&gt;_requestPrefix . &#039;currentSort&#039;, $this-&gt;_currentSort);<br>
+ <br>
+-        $this-&gt;_smarty-&gt;register_function(&#039;getPaging&#039;,<br>
++        $this-&gt;_smarty-&gt;register_function($this-&gt;_requestPrefix . &#039;getPaging&#039;,<br>
+                                           array(&amp;$this, &#039;_smartyGetPaging&#039;));<br>
+     }<br>
+ <br>
+@@ -236,7 +236,7 @@<br>
+             $prepared[$index][&#039;label&#039;] = $spec[&#039;label&#039;];<br>
+         }<br>
+ <br>
+-        $this-&gt;_smarty-&gt;assign(&#039;columnSet&#039;, $prepared);<br>
++        $this-&gt;_smarty-&gt;assign($this-&gt;_requestPrefix . &#039;columnSet&#039;, $prepared);<br>
+     }<br>
+     <br>
+     /**<br>
+@@ -247,7 +247,7 @@<br>
+      */<br>
+     function buildBody()<br>
+     {<br>
+-        $this-&gt;_smarty-&gt;assign(&#039;recordSet&#039;, $this-&gt;_records);<br>
++        $this-&gt;_smarty-&gt;assign($this-&gt;_requestPrefix . &#039;recordSet&#039;, $this-&gt;_records);<br>
+     }<br>
+ <br>
+     /**</p>
+<p>Bad news:</p>
+<p>1. It breaks compatibiliy (however mostly theoretically since probably nobody was able to use nultiple grids before).<br>
+2. It works not so nice when grids are being generated dynamically, and Smarty code within template tries to enumerate and render several grids. And this is a real headache for me.</p>
+<p>Better way. We could pass array instead of prefixed variables:</p>
+<p>$this-&gt;_smarty-&gt;assign(<br>
+    $this-&gt;_requestPrefix,<br>
+    array(<br>
+        &#039;currentPage&#039; =&gt; ...,<br>
+        &#039;recordLimit&#039; =&gt; ...,<br>
+        ...<br>
+    )<br>
+);</p>
+<p>Grid instantination (assuming requestPrefix is &#039;myGrid&#039;):</p>
+<p>{include file=_typical_grid_template.html data=$myGrid}</p>
+<p>Now any variable can be accessed like this: $data.currentPage etc.</p>
+</section>
+<section>
+<h3>[2006-07-29 13:13 UTC] olivierg at php dot net</h3>
+<p>Your patch and your idea to prefix Smarty variables is interesting. But please try to put links to patches instead of pasting them in here. See: http://www.phpfi.com</p>
+<p>&gt; 2. It works not so nice when grids are being generated<br>
+&gt; dynamically, and Smarty code within template tries to<br>
+&gt; enumerate and render several grids.</p>
+<p>What&#039;s this? What&#039;s failing?</p>
+<p>&gt; Better way. We could pass array instead of prefixed<br>
+&gt; variables.</p>
+<p>Yes, but that won&#039;t work with the getSmarty() function. We&#039;ll still need to prefix it.</p>
+</section>
+<section>
+<h3>[2006-07-29 13:17 UTC] olivierg at php dot net</h3>
+<p>I meant: &quot;it won&#039;t work with the getPaging()&quot; function</p>
+</section>
+<section>
+<h3>[2006-07-31 16:48 UTC] alexkunin at gmail dot com</h3>
+<p>&gt; Your patch and your idea to prefix Smarty variables is<br>
+&gt; interesting. But please try to put links to patches<br>
+&gt; instead of pasting them in here. See:<br>
+&gt; http://www.phpfi.com</p>
+<p>OK, thank you for the info. I was just following the<br>
+instructions. And patch was looking a bit more compact<br>
+until wrapping was applied.</p>
+<p>&gt; &gt; 2. It works not so nice when grids are being generated<br>
+&gt; &gt; dynamically, and Smarty code within template tries to<br>
+&gt; &gt; enumerate and render several grids. <br>
+&gt; <br>
+&gt; What&#039;s this? What&#039;s failing?</p>
+<p>getPaging() function, as you&#039;ve said. Also, let&#039;s look<br>
+at the following scenario (actually implemented in my<br>
+current project).</p>
+<p>There are page with few grids on them:<br>
+    * we have some page which shows two grids (e.g. it<br>
+      contains user account&#039;s info and shows list of<br>
+      sessions, list of groups - two grids)<br>
+    * and we have another page with one grid (e.g. it<br>
+      contains user group&#039;s info and shows list of users<br>
+      that belong to this group)<br>
+    * and we have other pages, with three or four grids</p>
+<p>I could create separate template for every page, but<br>
+isn&#039;t that doubling of code? So, I&#039;m creating one<br>
+generic template which expects list of grids that will<br>
+be displayed one by one.</p>
+<p>If I will pass grids as usual, then all variables will<br>
+overwritten by the last grid.</p>
+<p>I can instantiate separate Smarty template for each<br>
+grid, render it, and then pass array of strings (each<br>
+string = complete HTML code for particular grid).<br>
+I don&#039;t like this solution. I just want to do all my<br>
+tasks within one Smarty instance.</p>
+<p>Also I can pass prefixed variables and list of grid<br>
+prefixes. But how can I get particular variable value<br>
+within the Smarty template? By constructing its name and<br>
+{eval}&#039;ing it. (Or maybe I just can&#039;t see easier way.)<br>
+Looks like a workaround.</p>
+<p>Finally, I can pass something like this:</p>
+<p>$smarty-&gt;assign(<br>
+        &#039;grids&#039;,<br>
+        array(<br>
+            $firstGrid-&gt;getVariables(),<br>
+            $secondGrid-&gt;getVariables(),<br>
+            $thirdGrid-&gt;getVariables()<br>
+        )<br>
+    );</p>
+<p>And then {section var=i loop=grids} etc. - code is<br>
+trivial (except that getPaging function).</p>
+<p>BTW, it looks like in this case I don&#039;t need anything<br>
+Smarty specific - just a generic renderer which does not<br>
+render anything, but only prepares all needed data as<br>
+one compact hash-based structure. Maybe, something like<br>
+Structures_DataGrid_Renderer_Array?</p>
+<p>&gt; &gt; Better way. We could pass array instead of prefixed<br>
+&gt; &gt; variables.<br>
+&gt; <br>
+&gt; Yes, but that won&#039;t work with the getSmarty()<br>
+&gt; function. We&#039;ll still need to prefix it.</p>
+<p>Yes, exactly. And we again have to {eval}&#039;uate composed<br>
+function name.</p>
+<p>What about having one global associative array of<br>
+&#039;grid_name&#039; =&gt; &amp;$ref pairs? Then we can pass exact grid<br>
+name to static version of _smartyGetPaging.</p>
+<p>Sorry for the long post. Wasn&#039;t possible for me to express all this in a shorter manner.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3878</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/Pager/index.html">Pager</a> &#187; Bug #3878</h1>
+<p>POST method support</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3878</th><td>POST method support</td></tr>
+<tr><th>Submitted</th><td>2005-03-19 02:59 UTC</td></tr>
+<tr><th>From</th><td>otto at atrus dot org</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Pager/index.html">Pager</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>N/A</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-19 02:59 UTC] otto at atrus dot org</h3>
+<p>Description:<br>
+------------<br>
+This patch introduces POST method support via onclick JavaScript. The generated JavaScript generates a form element, adds hidden inputs with keys and values, and submits it. It uses only local variables, so it shouldn&#039;t affect other code on the page. The only browser prerequisite is basic DOM compliance (specifically, document.createElement, document.getElementsByTagName, and node_foo.appendChild). It has been tested in IE6 and Firefox 1.0.1 so far.</p>
+<p>It also includes some of my previously suggested changes, more for sanity than anything else. Specifically, this includes:<br>
+* #3450 - Use $_GET instead of reparsing<br>
+* #3449 - Exclude query vars entirely<br>
+* #3451 - Use http_build_query</p>
+<p>It now has a dependency on PHP_Compat for PHP versions &lt; 5<br>
+New options include:<br>
+* httpMethod (string): Specifies the HTTP method to use. Valid values are GET or POST<br>
+* importQuery (bool):  if true (and it is by default), varibles and values are imported from the submitted data (query string) and used in the generated links</p>
+<p>Both default to BC values (GET and true, respectively).</p>
+<p>I have attempted to maintain the same style as the rest of the code and add documentation for everything I&#039;ve added.</p>
+<p>This patch has only been lightly tested and should be considered beta-quality at the moment. I hope it proves useful.</p>
+<p>Reproduce code:<br>
+---------------<br>
+require_once &#039;Pager/Pager.php&#039;;</p>
+<p>echo &#039;&lt;pre&gt;&#039;;<br>
+$params = array(<br>
+    &#039;mode&#039;       =&gt; &#039;Jumping&#039;,<br>
+    &#039;httpMethod&#039; =&gt; &#039;POST&#039;,<br>
+    &#039;perPage&#039;    =&gt; 3,<br>
+    &#039;delta&#039;      =&gt; 2,<br>
+    &#039;itemData&#039;   =&gt; array(&#039;a&#039;,&#039;b&#039;,&#039;c&#039;,&#039;d&#039;,&#039;e&#039;,&#039;f&#039;,&#039;g&#039;,&#039;h&#039;,&#039;i&#039;,&#039;j&#039;,&#039;k&#039;,&#039;...&#039;, &#039;z&#039;)<br>
+);<br>
+$pager = &amp; Pager::factory($params);<br>
+$data  = $pager-&gt;getPageData();<br>
+$links = $pager-&gt;getLinks();<br>
+//$links is an ordered+associative array with &#039;back&#039;/&#039;pages&#039;/&#039;next&#039;/&#039;first&#039;/&#039;last&#039;/&#039;all&#039; links.<br>
+//NB: $links[&#039;all&#039;] is the same as $pager-&gt;links;</p>
+<p>//echo links to other pages:<br>
+echo $links[&#039;all&#039;];</p>
+<p>//Pager can also generate &lt;link rel=&quot;first|prev|next|last&quot;&gt; tags<br>
+echo $pager-&gt;linkTags;</p>
+<p>//Show data for current page:<br>
+echo &#039;PAGED DATA: &#039; ; print_r($data);</p>
+<p>//Results from methods:<br>
+echo &#039;getCurrentPageID()...: &#039;; var_dump($pager-&gt;getCurrentPageID());<br>
+echo &#039;getNextPageID()......: &#039;; var_dump($pager-&gt;getNextPageID());<br>
+echo &#039;getPreviousPageID()..: &#039;; var_dump($pager-&gt;getPreviousPageID());<br>
+echo &#039;numItems()...........: &#039;; var_dump($pager-&gt;numItems());<br>
+echo &#039;numPages()...........: &#039;; var_dump($pager-&gt;numPages());<br>
+echo &#039;isFirstPage()........: &#039;; var_dump($pager-&gt;isFirstPage());<br>
+echo &#039;isLastPage().........: &#039;; var_dump($pager-&gt;isLastPage());<br>
+echo &#039;isLastPageComplete().: &#039;; var_dump($pager-&gt;isLastPageComplete());<br>
+echo &#039;$pager-&gt;range........: &#039;; var_dump($pager-&gt;range);</p>
+<p>echo &quot;\$_POST = \n&quot;;<br>
+print_r( $_POST );<br>
+echo &quot;\n\$_GET = \n&quot;;<br>
+print_r( $_GET );<br>
+echo &#039;&lt;/pre&gt;&#039;;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2697</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #2697</h1>
+<p>Date does not return UTC</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-11-05 02:34 UTC</td></tr>
+<tr><th>From</th><td>paul at serby dot net</td></tr>
+<tr><th>Assigned</th><td>pajoye</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>Debian Linux 2.6.8</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-11-05 02:34 UTC] paul at serby dot net</h3>
+<p>Description:<br>
+------------<br>
+On a system where the System Clock is set to UTC and the <br>
+locale it set to Great Britain during the DST of BST the <br>
+Date object returns BST(GMT+1) but says it UTC.  <br>
+ <br>
+The same happens with all locale&#039;s with DST <br>
+ <br>
+This bug is fixed if you add all the DSTs to the TimeZone <br>
+Data array (_DATE_TIMEZONE_DATA).  <br>
+ <br>
+ie <br>
+ <br>
+    &#039;BST&#039; =&gt; array( <br>
+        &#039;offset&#039; =&gt; 3600000, <br>
+        &#039;longname&#039; =&gt; &quot;British Summer Time&quot;, <br>
+        &#039;shortname&#039; =&gt; &#039;BST&#039;, <br>
+        &#039;hasdst&#039; =&gt; false ),</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;pre&gt;<br>
+&lt;?php</p>
+<p>// Safe Mode must be disabled</p>
+<p>// System time as UTC<br>
+ echo &quot;System UTC:\n&quot; . `/bin/date -u +&#039;%d %b %Y %R:%S %Z&#039;` . &quot;\n&quot;;</p>
+<p>echo $_DATE_TIMEZONE_DEFAULT;<br>
+ // System time as default locale (GB)<br>
+ echo &quot;System Default Locale:\n&quot; . `/bin/date +&#039;%d %b %Y %R:%S %Z&#039;` . &quot;\n&quot;;</p>
+<p>// PHP - Current time UTC<br>
+	echo &quot;PHP UTC:\n&quot; . gmdate(&quot;d M Y H:i:s T&quot;,time()) . &quot;\n\n&quot;;</p>
+<p>// PHP - Current time default locale<br>
+	echo &quot;PHP Default Locale\n&quot; . date(&quot;d M Y H:i:s T&quot;,time()) . &quot;\n\n&quot;;</p>
+<p>require_once(&quot;Date.php&quot;);</p>
+<p>$date = new Date();<br>
+ // Date Class - Default TimeZone BST<br>
+ echo &quot;Date Class BST:\n&quot; . $date-&gt;format(&quot;%d %b %Y %R:%S %Z&quot;) . &quot;\n\n&quot;;</p>
+<p>// Current TimeZone Should be BST (GMT+1)<br>
+ echo &quot;Timezone: &quot; . $date-&gt;tz-&gt;longname . &quot;\n\n&quot;;</p>
+<p>$date-&gt;convertTZbyID(&quot;UTC&quot;);<br>
+ echo &quot;Date Class UTC:\n&quot; . $date-&gt;format(&quot;%d %b %Y %R:%S %Z&quot;) . &quot;\n\n&quot;;</p>
+<p>?&gt;<br>
+&lt;/pre&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+System UTC: <br>
+05 Oct 2004 00:35:17 UTC <br>
+ <br>
+System Default Locale: <br>
+05 Oct 2004 01:35:17 BST <br>
+ <br>
+PHP UTC: <br>
+05 Oct 2004 00:35:17 GMT <br>
+ <br>
+PHP Default Locale <br>
+05 Oct 2004 01:35:17 BST <br>
+ <br>
+Date Class BST: <br>
+05 Oct 2004 01:35:17 BST <br>
+ <br>
+Timezone: British Summer Time <br>
+ <br>
+Date Class UTC: <br>
+05 Oct 2004 00:35:17 UTC</p>
+<p>Actual result:<br>
+--------------<br>
+System UTC: <br>
+05 Oct 2004 00:35:17 UTC <br>
+ <br>
+System Default Locale: <br>
+05 Oct 2004 01:35:17 BST <br>
+ <br>
+PHP UTC: <br>
+05 Oct 2004 00:35:17 GMT <br>
+ <br>
+PHP Default Locale <br>
+05 Oct 2004 01:35:17 BST <br>
+ <br>
+Date Class BST: <br>
+05 Oct 2004 01:35:17 UTC <br>
+ <br>
+Timezone: Coordinated Universal Time <br>
+ <br>
+Date Class UTC: <br>
+05 Oct 2004 01:35:17 UTC</p>
+</section>
+<section>
+<h3>[2006-01-29 07:58 UTC] play at noiseusse dot org</h3>
+<p>I was having a similar probem. date objects were returning local times when set to utc. I tracked it down to Date_TimeZone::inDaylightTime().</p>
+<p>It was<br>
+putenv(&quot;TZ=&quot;.$env_tz);</p>
+<p>I changed to:<br>
+if ($env_tz != &quot;&quot;) {<br>
+  putenv(&quot;TZ=&quot;.$env_tz);<br>
+}</p>
+<p>Not exactly sure what the larger implications are or if it&#039;s system dependent but it seemed to work for me.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

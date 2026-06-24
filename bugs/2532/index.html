@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2532</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #2532</h1>
+<p>bad parameters sent from MDB2_Driver_oci8::connect() to MDB@_Driver_oci8::_doCo</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-10-14 18:09 UTC</td></tr>
+<tr><th>From</th><td>michael dot caplan at lechateau dot ca</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-14 18:09 UTC] michael dot caplan at lechateau dot ca</h3>
+<p>Description:<br>
+------------<br>
+when building a new connection to an oracle db,  MDB2_Driver_oci8::connect() sends the wrong parameters to  MDB@_Driver_oci8::_doConnect().</p>
+<p>MDB2_Driver_oci8::connect($database_name, $this-&gt;dsn[&#039;password&#039;], $this-&gt;options[&#039;persistent&#039;])</p>
+<p>but:</p>
+<p>MDB2_Driver_oci8::_doConnect($username, $password, $persistent = false)</p>
+<p>Notice that connect() does not send the username from the DSN, but the database name.  it then trys to do an ociplogon () with the incorrect parameters.</p>
+</section>
+<section>
+<h3>[2004-10-14 18:15 UTC] smith at backendmedia dot com</h3>
+<p>This is actually the indended behaviour. The problem is that oracle lacks the concept of a &quot;database&quot; in the way mysql and other RDBMS deal with it. This is why MDB[2] emulates this behaviour with users. I admit this is not a beautiful solution by any means but its the best I could come up with (actually I stole this idea from Metabase).</p>
+<p>Maybe I should optionally make it possible to use the standard username.</p>
+</section>
+<section>
+<h3>[2004-10-14 18:35 UTC] michael dot caplan at lechateau dot ca</h3>
+<p>I have to admit that the Oracle way of doing things is pretty foreign to me (my background is mysql).</p>
+<p>That aside, I don&#039;t fully understand what you are getting at.  Besides Oracle lacking the concept of a database in the same way MySQL does (which I understand), ociplogon() requires a username password and a &quot;db string&quot; (what dsn parses as host or pulls from the environmental vars) in that order.  Connect() passes  database_name, password, and persistance flag, but _doConnect() takes username, password, and persistance flag.  This results in incorrect parameters being sent to ociplogon().</p>
+<p>(As an aside, i&#039;ve been using MDB2 on another server running oracle with no problem.  when checking out why that was working and not the connection to a new oracle db, I noticed that my username and database name where the same, so the problem doesn&#039;t apply).</p>
+<p>Thanks!</p>
+</section>
+<section>
+<h3>[2004-10-14 18:39 UTC] smith at backendmedia dot com</h3>
+<p>Let me explain a bit more:<br>
+There are methods in MDB2 to create a new database. For oracle MDB2 creates a new user with that database name and prepends the database_name_prefix option. This is the best way I could find to group tables by a name in oracle. Therefore if you dont want this behaviour you actually have to set the database name to the username you want to connect with.</p>
+</section>
+<section>
+<h3>[2004-10-14 19:33 UTC] michael dot caplan at lechateau dot ca</h3>
+<p>hey Lukas,</p>
+<p>I understand what you are saying, but the Oracle guys I&#039;m working with are scratching there heads.  According to them, oracle does have a concept of a database, although different -- but similar -- from mysql.  Truthfully, I haven&#039;t a clue.</p>
+<p>Anyway, this aside, from what I understand you are using a convention that says all database and user names should be interchangable.  Sounds like a reasonalbe convention, but convention aside, building an oracle connection means passing it the wrong parameter.  If we adhear to the convention, all works a-okay.  I&#039;m wondeing then if it is a good idea to enforce such conventions in MDB[2].  It certainly makes MDB[2] less portable.</p>
+<p>thanks for your time.</p>
+<p>Michael</p>
+</section>
+<section>
+<h3>[2004-10-14 19:39 UTC] smith at backendmedia dot com</h3>
+<p>I am the last one to claim that I am an oracle expert. If there is a more logical approach to group tables and having them accessable via a name then let me know.</p>
+<p>The idea is however that things like the dsn will likely be defined outside of the application in a configuration file, while grouping of tables into a &quot;database&quot; will more likely be embedded into your application. It may be that inside your application you change the database you are working with. This is why MDB2 emulates the database concept for oracle. Therefore I dont feel that this makes MDB2 less portable. It does make things a bit confusing. One possible solution would be to use the &quot;username&quot; if no &quot;database&quot; is set. How does that sound for you?</p>
+</section>
+<section>
+<h3>[2004-10-14 19:58 UTC] michael dot caplan at lechateau dot ca</h3>
+<p>Your suggestion makes good sence to me.  It certainly would help make Oracle/MDB2 use a little easier for non savy Oracle guys like me :)</p>
+<p>Thanks,</p>
+<p>Michael</p>
+</section>
+<section>
+<h3>[2004-10-18 10:45 UTC] smith at backendmedia dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+<p>I have added a new &quot;emulate_database&quot; option to the oracle driver that defaults to true.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

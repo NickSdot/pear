@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4639</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #4639</h1>
+<p>Uses RPC/encoded encoding where it should use RPC/literal</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-06-20 16:06 UTC</td></tr>
+<tr><th>From</th><td>rhl at izzlazz dot dk</td></tr>
+<tr><th>Assigned</th><td>yunosh</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-20 16:06 UTC] rhl at izzlazz dot dk</h3>
+<p>Description:<br>
+------------<br>
+This bug report is for SOAP version 0.9.1.</p>
+<p>The code used to determine whether section 5 encoding should be enabled is wrong. Section 5 encoding should be enabled when encoded use is in effect, and disabled for literal use - the actual check is inverted.</p>
+<p>Reproduce code:<br>
+---------------<br>
+I have not included a test case, but here is a patch that fixes the problem:</p>
+<p>--- SOAP/Client.php.orig        2005-06-20 17:43:00.861828000 +0200<br>
++++ SOAP/Client.php     2005-06-20 18:00:20.056212194 +0200<br>
+@@ -546,7 +546,7 @@</p>
+<p>// Serialize the message.<br>
+         $this-&gt;_section5 = (isset($this-&gt;__options[&#039;use&#039;]) &amp;&amp;<br>
+-                            $this-&gt;__options[&#039;use&#039;] == &#039;literal&#039;);<br>
++                            $this-&gt;__options[&#039;use&#039;] == &#039;encoded&#039;);</p>
+<p>if (!isset($this-&gt;__options[&#039;style&#039;]) ||<br>
+             $this-&gt;__options[&#039;style&#039;] == &#039;rpc&#039;) {</p>
+<p>With this patch applied, I can use a (proprietary) Java-based web service, which otherwise fails with an &quot;Invalid date/time&quot; exception on a dateTime parameter.</p>
+</section>
+<section>
+<h3>[2005-07-12 23:33 UTC] kstout at amplifier dot com</h3>
+<p>This bug prevents the use of any ASP.NET web service that takes an argument.</p>
+<p>Here&#039;s a test case:</p>
+<p>&lt;?php<br>
+	require_once &#039;SOAP/Client.php&#039;;</p>
+<p>$wsdl = new SOAP_WSDL(&#039;http://www.jasongaylord.com/webservices/zipcodes.asmx?WSDL&#039;);</p>
+<p>$client = $wsdl-&gt;getProxy();</p>
+<p>print_r( $client-&gt;ZipCodeToDetails(&#039;78704&#039;));<br>
+?&gt;</p>
+<p>it works when the fix described by rhl is in place and returns:</p>
+<p>Server was unable to process request. --&gt; Procedure &#039;GetDetailsForZipCode&#039; expects parameter &#039;@ZipCode&#039;, which was not supplied.</p>
+<p>when it is not.</p>
+</section>
+<section>
+<h3>[2005-07-15 15:09 UTC] marcel dot berteler at bdsolutions dot co dot za</h3>
+<p>I have the same problem, but did not have internet while bug-fixing.</p>
+<p>I had to talk to a .NET server and that was not working.</p>
+<p>The bug-fix I used could probably introduc an other bug and the above mentioned fix is much nicer, but it worked for my specific case. (I still have to try the bug fix above)</p>
+<p>in Client.php, the following line make _section5 TRUE if &#039;literal&#039; is used:</p>
+<p>// Serialize the message.<br>
+$this-&gt;_section5 = (isset($this-&gt;__options[&#039;use&#039;]) &amp;&amp; $this-&gt;__options[&#039;use&#039;] == &#039;literal&#039;);</p>
+<p>In Base.php, the code checks if _section5 is FALSE, where the abbove code makes it TRUE. This clearly does not work.</p>
+<p>/* If &#039;use&#039; == &#039;literal&#039;, we do not put in the encodingStyle.  This is<br>
+* denoted by $this-&gt;_section5 being false.  &#039;use&#039; can be defined at a<br>
+* more granular level than we are dealing with here, so this does not<br>
+* work for all services. */</p>
+<p>I changed the client.php code to != and that worked. Is _section5 used in other parts of the code as well, or is this a proper fix?</p>
+<p>-- $this-&gt;__options[&#039;use&#039;] == &#039;literal&#039;);<br>
+++ $this-&gt;__options[&#039;use&#039;] != &#039;literal&#039;);</p>
+</section>
+<section>
+<h3>[2005-07-18 18:26 UTC] jwm at horde dot net</h3>
+<p>I&#039;ll second this bug report; 0.8 set $this-&gt;_section5 = true when $this-&gt;__options[&#039;use&#039;] was &#039;encoded&#039;, which is correct. 0.9 inverted this test, and now $this-&gt;_section5 is always the opposite of what it should be, as the initial reporter indicates. His patch works fine for me, and got PEAR::SOAP working with an ASP.NET(?) wrapped document/literal server.</p>
+</section>
+<section>
+<h3>[2005-12-14 19:55 UTC] jud at amplifier dot com</h3>
+<p>Yet another full day of two developers&#039; lives have been consumed because you folks have decided that this *BUG* is not major enough to warrant a new release of this package!</p>
+<p>PLEASE expedite the push of this release so other developers needing to integrate PHP with .NET via SOAP are spared this same miserable headache!</p>
+<p>This crap makes open-source look real bad to the Microsloths out there.</p>
+<p>Thanks.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

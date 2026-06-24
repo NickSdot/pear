@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4452</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #4452</h1>
+<p>Return of query function</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-27 13:50 UTC</td></tr>
+<tr><th>From</th><td>markus dot espenlaub at espas dot ch</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>Windows 2000</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-27 13:50 UTC] markus dot espenlaub at espas dot ch</h3>
+<p>Description:<br>
+------------<br>
+I use DB 1.7.6 and MSDE (Microsoft SQL Server) 2000 SP3.</p>
+<p>When I *successfully* create a table using query() then the function returns always a DB_Error object with error code 0. I don&#039;t know if other DBMS behave different or give another result code on success.</p>
+<p>According to the documentation the correct result should be DB_OK. I also think that the maintainer team don&#039;t expect the developers to read error codes manually to determine success or failure.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+require_once &#039;DB.php&#039;;</p>
+<p>$db =&amp; DB::connect(&#039;pgsql://usr:pw@localhost/dbnam&#039;);<br>
+if (PEAR::isError($db)) {<br>
+    die($db-&gt;getMessage());<br>
+}</p>
+<p>$res =&amp; $db-&gt;query(&#039;create table example (<br>
+ID_Example int identity constraint st_pk primary key,<br>
+ID_Location int,<br>
+Date datetime constraint st_c1 not null);&#039;);</p>
+<p>// Always check that result is not an error<br>
+if (PEAR::isError($res)) {<br>
+    // Dies always in release 1.7.6 when using MSDE 2000<br>
+    die($res-&gt;getMessage());<br>
+}<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+$db-&gt;query() returns DB_OK on success</p>
+<p>Actual result:<br>
+--------------<br>
+$db-&gt;query() returns a DB_Error object</p>
+<p>$res::getCode() returns 0</p>
+</section>
+<section>
+<h3>[2005-05-27 15:03 UTC] markus dot espenlaub at espas dot ch</h3>
+<p>Seems to be a bug in Microsoft SQL Server 2000 (returns bogus error code on successful data definition commands).</p>
+</section>
+<section>
+<h3>[2005-11-17 22:40 UTC] markus dot espenlaub at espas dot ch</h3>
+<p>Workaround: My code now considers error 0 (unknown error) as no error. I did find no better solution and had no other msde installations for testing.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

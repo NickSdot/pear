@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8668</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #8668</h1>
+<p>Inconsistent return values for boolean types</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-09-08 21:45 UTC</td></tr>
+<tr><th>From</th><td>jose at infoviaweb dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-09-08 21:45 UTC] jose at infoviaweb dot com</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m using both MDB2_Driver_mysql and MDB2_Driver_pgsql.</p>
+<p>When I query for a boolean field, the MDB2_Driver_pgsql returns &#039;t&#039; or &#039;f&#039;, but the MDB2_Driver_mysql returns 1 or 0. I haven&#039;t tested other drivers, but I suspect they show this same inconsistency. They should return either true, false or null, or &#039;t&#039;, &#039;f&#039;, or &#039;null&#039;; anything, as long as all drivers are consistent.</p>
+<p>Versions used:</p>
+<p>PHP 5.1.5 (from FreeBSD ports)<br>
+MySQL 5.1.11 (beta) (from FreeBSD ports)<br>
+PostgreSQL 8.1.4 (from FreeBSD ports)<br>
+MDB2 2.2.2 (from channel PEAR.PHP.NET)<br>
+MDB2_Driver_mysql 1.2.2 (from channel PEAR.PHP.NET)<br>
+MDB2_Driver_pgsql 1.2.2 (from channel PEAR.PHP.NE)</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+        require_once &quot;MDB2.php&quot;;</p>
+<p>$dsn = &quot;mysql://someuser:somepassword@somehost/somedb&quot;;<br>
+        //$dsn = &quot;pgsql://someuser:somepassword@somehost/somedb&quot;;<br>
+        /* the table tbl below is defined as:<br>
+                CREATE TABLE tbl (<br>
+                        value1 bool,<br>
+                        value2 bool<br>
+                );<br>
+                INSERT INTO tbl (value1, value2) VALUES(true, false); */<br>
+        $db =&amp; MDB2::connect($dsn);<br>
+        $sql = &quot;SELECT * FROM tbl&quot;;<br>
+        $rs = $db-&gt;query($sql);<br>
+        // error check ommited<br>
+        while($row = $rs-&gt;fetchRow()) {<br>
+                echo &quot;value1: &quot; . $row[0]; // pgsql shows &#039;t&#039;, mysql shows &#039;1&#039;<br>
+                echo &quot;\nvalue2: &quot; . $row[1]; // pgsql shows &#039;f&#039;, mysql shows &#039;0&#039;<br>
+        }<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+value 1: true<br>
+value 2: false</p>
+<p>or</p>
+<p>value 1: t<br>
+value 2: f</p>
+<p>consistently across all databases</p>
+<p>Actual result:<br>
+--------------<br>
+mysql returns</p>
+<p>value 1: 1<br>
+value 2: 0</p>
+<p>pgsql returns</p>
+<p>value 1: t<br>
+value 2: f</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

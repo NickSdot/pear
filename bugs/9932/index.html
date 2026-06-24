@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9932</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR_Command_Packaging/index.html">PEAR_Command_Packaging</a> &#187; Bug #9932</h1>
+<p>cannot build specs from external channels</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-24 09:25 UTC</td></tr>
+<tr><th>From</th><td>judas dot iscariote at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR_Command_Packaging/index.html">PEAR_Command_Packaging</a></td></tr>
+<tr><th>PHP Version</th><td>5_2 CVS-2007-01-24</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>0.2.0</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-24 09:25 UTC] judas dot iscariote at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Seems this tool cannot be used to build spec files from non pear.php.net packages</p>
+<p>Test script:<br>
+---------------<br>
+pear channel-discover pear.symfony-project.com<br>
+pear download symfony/symfony-beta<br>
+pear make-rpm-spec symfony-1.0.0beta4.tgz</p>
+<p>( you can choose other PEAR servers, as ez.no ones, result is the same)</p>
+<p>Expected result:<br>
+----------------<br>
+spec file built with a post install check to add the channel into the rpm user installation in case it is not yet there.</p>
+<p>Actual result:<br>
+--------------<br>
+Adding package pear.symfony-project.com/symfony to registry failed</p>
+</section>
+<section>
+<h3>[2007-01-24 09:54 UTC] timj at php dot net</h3>
+<p>I agree that this doesn&#039;t work. With PEAR 1.4.9, I seem to get:</p>
+<p>$ pear -c pearrc make-rpm-spec symfony-1.0.0beta4.tgz<br>
+commit failed</p>
+<p>Actually most (though probably not all) of the code is there in make-rpm-spec to handle channels, though I&#039;ve never actually had the cause to use/test it.</p>
+<p>However both the error you got and the one I got are coming from PEAR core, not PEAR_Command_Packaging, which is interesting. This doesn&#039;t mean that it&#039;s not a bug in PEAR_Command_Packaging (though it might not be) but it&#039;s something more than superficial I think.</p>
+</section>
+<section>
+<h3>[2007-01-24 15:14 UTC] timj at php dot net</h3>
+<p>I erred in my previous comment; that was actually a test with 1.5.0. Reproduced from a clean PEAR install in a temp directory:</p>
+<p>$ pear -c pearrc list<br>
+Installed packages, channel pear.php.net:<br>
+=========================================<br>
+Package                Version State<br>
+Archive_Tar            1.3.2   stable<br>
+Console_Getopt         1.2.1   stable<br>
+PEAR                   1.5.0   stable<br>
+PEAR_Command_Packaging 0.1.2   alpha</p>
+<p>$ pear -c pearrc make-rpm-spec symfony-1.0.0beta4.tgz <br>
+commit failed</p>
+<p>I haven&#039;t done a proper backtrace yet but I&#039;m guessing the call to PEAR core is coming via the $installer-&gt;install() call on line 200 of Packaging.php.</p>
+</section>
+<section>
+<h3>[2007-01-24 15:32 UTC] timj at php dot net</h3>
+<p>Yes it does.</p>
+<p>$ pear -c pearrc list-channels<br>
+Registered Channels:<br>
+====================<br>
+Channel                  Summary<br>
+pear.php.net             PHP Extension and Application Repository<br>
+pear.symfony-project.com symfony project PEAR channel<br>
+pecl.php.net             PHP Extension Community Library<br>
+__uri                    Pseudo-channel for static packages</p>
+<p>I agree that whatever the cause of this, the error reporting is not all that helpful :)</p>
+</section>
+<section>
+<h3>[2007-01-24 16:03 UTC] timj at php dot net</h3>
+<p>OK, the call is definitely coming via line 200 of PCP.  I&#039;m not sure what PCP should be doing here though re: error handling; it doesn&#039;t get another chance to handle the error as it never gets another look-in past the $installer-&gt;install() in line 200;  an error (&quot;commit failed&quot;) gets thrown in line 1293 of PEAR/Installer.php and that&#039;s the end of it.</p>
+</section>
+<section>
+<h3>[2007-02-21 23:07 UTC] timj at php dot net</h3>
+<p>What was the related bug you discovered?</p>
+</section>
+<section>
+<h3>[2007-02-22 04:50 UTC] judas dot iscariote at gmail dot com</h3>
+<p>I also found other problem related to this.</p>
+<p>now you can create the spec file, but</p>
+<p>1. rpm wont build, since the external channel is not registered.<br>
+2. if I download channel.xml and pear channel-add channel.xml it works but only as root, and in real-life rpm buildhosts you cannot build stuff as root.the error seems to existe in Pear&#039;s Registry.php where &quot;.lock&quot; files are always created in &#039;phpdir&#039;.</p>
+</section>
+<section>
+<h3>[2007-03-04 11:21 UTC] timj at php dot net</h3>
+<p>The further problems in actually building an RPM for a package from an external channel are discussed in bug #10254.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

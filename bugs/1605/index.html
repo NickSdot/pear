@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1605</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #1605</h1>
+<p>Bug in addUser in LiveUser_Admin_Auth_Container_MDB2</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-06-10 13:16 UTC</td></tr>
+<tr><th>From</th><td>simon dot hamilton at ntlworld dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>n/a</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-06-10 13:16 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Description:<br>
+------------<br>
+In  LiveUser_Admin_Auth_Container_MDB2 Line:150</p>
+<p>$options[&#039;optimize&#039;] = &#039;portability&#039;;<br>
+if ($function == &#039;singleton&#039;) {<br>
+    $this-&gt;dbc =&amp; MDB2::singleton($connectOptions[&#039;dsn&#039;], $options);<br>
+} else {<br>
+    $this-&gt;dbc =&amp; MDB2::connect($connectOptions[&#039;dsn&#039;], $options);<br>
+}<br>
+if (!MDB2::isError($this-&gt;dbc)) {<br>
+    $this-&gt;init_ok = true;<br>
+}</p>
+<p>The &quot;optomize&quot; option doesnt exist, but looking at the MDB code, I&#039;m not really sure what to replace it with for a patch.  Lukas?</p>
+</section>
+<section>
+<h3>[2004-06-10 15:23 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>This is really weird.  Although I can find no reference to this:<br>
+$options[&#039;optimize&#039;] = &#039;portability&#039;;</p>
+<p>When I remove it, or change it to a valid setting (PORTABILITY_ALL) the app breaks...how can this be?</p>
+<p>I&#039;ve also noticed a few inconsistencies in this class relating to the recent changes in the authContainer array structure (some user_id instead of auth_user_id) and an old MDB2 $this-&gt;dbc-&gt;getValue which needs changed to -&gt;quote().</p>
+<p>Any suggestions on the above $options thingy would be useful.</p>
+</section>
+<section>
+<h3>[2004-06-10 15:28 UTC] smith at backendmedia dot com</h3>
+<p>It should be something like this:<br>
+$options[&#039;portability&#039;] = MDB2_PORTABILITY_ALL;</p>
+</section>
+<section>
+<h3>[2004-06-10 15:32 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>I tried this Lukas but it still doesnt work.  I even tried it with the constant value (63) but that doesn&#039;t work either.</p>
+</section>
+<section>
+<h3>[2004-06-10 15:36 UTC] smith at backendmedia dot com</h3>
+<p>Hmm could you do an print_r($this-&gt;dbc) .. and let me know what you get?</p>
+</section>
+<section>
+<h3>[2004-06-10 15:39 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>To further extend on this when I use the proper syntax ($options[&#039;portability&#039;] = MDB2_PORTABILITY_ALL;)</p>
+<p>I get the following errors:</p>
+<p>Notice: Undefined index: first_name in /var/www/libs/pear/LiveUser/Admin/Auth/Container/MDB2.php on line 441</p>
+<p>Notice: Undefined index: last_name in /var/www/libs/pear/LiveUser/Admin/Auth/Container/MDB2.php on line 441</p>
+<p>Notice: Undefined index: email in /var/www/libs/pear/LiveUser/Admin/Auth/Container/MDB2.php on line 441</p>
+<p>Even when I fix the MDB2 -&gt;quote().</p>
+</section>
+<section>
+<h3>[2004-06-10 15:52 UTC] smith at backendmedia dot com</h3>
+<p>The order of the parameters also changed in MDB2.</p>
+<p>MDB: getValue($type, $value)<br>
+MDB2: quote($value, $type = null)</p>
+</section>
+<section>
+<h3>[2004-06-10 16:22 UTC] smith at backendmedia dot com</h3>
+<p>did my commit fix your issues?</p>
+</section>
+<section>
+<h3>[2004-06-10 16:34 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>also in getUsers() in this file in the $query the user_id key needs changed to auth_user_id.</p>
+</section>
+<section>
+<h3>[2004-06-10 16:36 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>I ran your commit and I still get the same problem (I think the changes I had made where the same as yours anyway.  I&#039;ll keep looking too.</p>
+</section>
+<section>
+<h3>[2004-06-10 16:41 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Fixed the error:</p>
+<p>Change Line 441 from:</p>
+<p>$cTypes[]  = $this-&gt;dbc-&gt;quote($customFields[$alias], $field_data[&#039;type&#039;]);</p>
+<p>to $cTypes[]  = $this-&gt;dbc-&gt;quote($alias, $field_data[&#039;type&#039;]);</p>
+<p>Now to make sure what I was trying to do will work now :-)</p>
+</section>
+<section>
+<h3>[2004-06-10 18:45 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>OK, my last solution was not quite right, as the type should not be quoted at all I discovered.</p>
+<p>So line 441 should be:</p>
+<p>$cTypes[]  = $field_data[&#039;type&#039;];</p>
+<p>I suspect this may be the case in other methods, as the custom fields were introduced, but I haven&#039;t had a look at any others yet....maybe tomorrow.</p>
+<p>There is also a syntax problem on Line 440:</p>
+<p>$cFields[] = $field_data[&#039;name&#039;] . &#039;AS &#039; . $alias;</p>
+<p>should be:</p>
+<p>$cFields[] = $field_data[&#039;name&#039;] . &#039; AS &#039; . $alias;<br>
+                                    ^</p>
+</section>
+<section>
+<h3>[2004-06-13 10:43 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>This seems fine now, thanks!</p>
+</section>
+<section>
+<h3>[2004-06-13 10:52 UTC] smith at backendmedia dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

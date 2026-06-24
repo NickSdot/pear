@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #744</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #744</h1>
+<p>push/popErrorHandling() abuse $this</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-02-12 20:19 UTC</td></tr>
+<tr><th>From</th><td>ieure at php dot net</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-02-12 20:19 UTC] ieure at php dot net</h3>
+<p>Description:<br>
+------------<br>
+push/popErrorHandling() access $this when called staticly, which is a <br>
+no-no according to the PHP documentation. <br>
+ <br>
+This causes the functions to fail when called staticly from a <br>
+non-PEAR-derived class, as they assume that $this is derived from <br>
+PEAR and try to call $this-&gt;setErrorHandling(), which is usually not <br>
+defined.</p>
+<p>Reproduce code:<br>
+---------------<br>
+require &#039;PEAR.php&#039;;</p>
+<p>class Foo {<br>
+    function Bar()<br>
+    {<br>
+        PEAR::pushErrorHandling(PEAR_ERROR_RETURN);<br>
+        $err = PEAR::raiseError(&quot;This will fail.&quot;);<br>
+        PEAR::popErrorHandling();<br>
+        return $err;<br>
+    }<br>
+}</p>
+<p>PEAR::setErrorHandling(PEAR_ERROR_DIE);</p>
+<p>// This works<br>
+PEAR::pushErrorHandling(PEAR_ERROR_RETURN);<br>
+PEAR::popErrorHandling();</p>
+<p>// This fails<br>
+$foo = new Foo;<br>
+$foo-&gt;bar();</p>
+<p>Expected result:<br>
+----------------<br>
+the push/popErrorHandling() calls in Foo::Bar() should operate <br>
+correctly.</p>
+<p>Actual result:<br>
+--------------<br>
+An error is thrown: <br>
+ <br>
+Fatal error: Call to undefined function:  seterrorhandling() in /usr/<br>
+share/php/PEAR.php on line 579</p>
+</section>
+<section>
+<h3>[2004-02-12 20:20 UTC] ieure at php dot net</h3>
+<p>--- PEAR.php.orig       Thu Feb 12 12:20:29 2004 <br>
++++ PEAR.php    Wed Jan  7 12:31:00 2004 <br>
+@@ -566,7 +566,7 @@ <br>
+     function pushErrorHandling($mode, $options = null) <br>
+     { <br>
+         $stack = &amp;$GLOBALS[&#039;_PEAR_error_handler_stack&#039;]; <br>
+-        if (isset($this)) { <br>
++        if (isset($this) &amp;&amp; is_a($this, &#039;PEAR&#039;)) { <br>
+             $def_mode    = &amp;$this-&gt;_default_error_mode; <br>
+             $def_options = &amp;$this-&gt;_default_error_options; <br>
+         } else { <br>
+@@ -575,7 +575,7 @@ <br>
+         } <br>
+         $stack[] = array($def_mode, $def_options); <br>
+ <br>
+-        if (isset($this)) { <br>
++        if (isset($this) &amp;&amp; is_a($this, &#039;PEAR&#039;)) { <br>
+             $this-&gt;setErrorHandling($mode, $options); <br>
+         } else { <br>
+             PEAR::setErrorHandling($mode, $options); <br>
+@@ -600,7 +600,7 @@ <br>
+         array_pop($stack); <br>
+         list($mode, $options) = $stack[sizeof($stack) - <br>
+1]; <br>
+         array_pop($stack); <br>
+-        if (isset($this)) { <br>
++        if (isset($this) &amp;&amp; is_a($this, &#039;PEAR&#039;)) { <br>
+             $this-&gt;setErrorHandling($mode, $options); <br>
+         } else { <br>
+             PEAR::setErrorHandling($mode, $options);</p>
+</section>
+<section>
+<h3>[2004-02-26 08:33 UTC] mkalkbrenner at arcor dot de</h3>
+<p>I already reported this bug last year for PEAR 1.2:<br>
+http://bugs.php.net/bug.php?id=25714</p>
+<p>But the reproduce code I added works with PEAR 1.3 due to the  replacement of<br>
+if (isset($this))<br>
+by<br>
+if (isset($this) &amp;&amp; is_a($this, &#039;PEAR&#039;))</p>
+<p>But this check isn&#039;t safe. What you need here is a check if the function setErrorHandling, pushErrorHandling or popErrorHandling is called staticly!</p>
+<p>Here&#039;s the modified reproduce code to show the bug.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+require_once(&quot;PEAR.php&quot;);</p>
+<p>class Instigator extends PEAR<br>
+{<br>
+   function doSomething() {<br>
+      PEAR::setErrorHandling(PEAR_ERROR_DIE); // won&#039;t work<br>
+      Killer::doSomething();<br>
+   }<br>
+}</p>
+<p>class Killer<br>
+{<br>
+   function doSomething() {<br>
+      $victim = &amp; new Victim();<br>
+      $victim-&gt;doSomething();<br>
+      print &quot;He&#039;s still alive!&quot;;<br>
+   }<br>
+}</p>
+<p>class Victim extends PEAR<br>
+{<br>
+   function doSomething() {<br>
+      return $this-&gt;raiseError(&quot;I&#039;m dead!&quot;, 0);<br>
+   }<br>
+}</p>
+<p>PEAR::setErrorHandling(PEAR_ERROR_RETURN);<br>
+$instigator = new Instigator();<br>
+print &quot;&lt;br&gt;first try: &quot;;<br>
+$instigator-&gt;doSomething();<br>
+PEAR::setErrorHandling(PEAR_ERROR_DIE); // works<br>
+print &quot;&lt;br&gt;second try: &quot;;<br>
+$instigator-&gt;doSomething();<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+first try: I&#039;m dead!</p>
+<p>Actual result:<br>
+--------------<br>
+first try: He&#039;s still alive!<br>
+second try: I&#039;m dead!</p>
+</section>
+<section>
+<h3>[2004-02-26 09:26 UTC] mkalkbrenner at arcor dot de</h3>
+<p>Here&#039;s a patch that solves the problem for PHP &gt;= 4.3.<br>
+But from my point of view it&#039;s somehow dirty. Other suggestions are welcome. Markus</p>
+<p>--- PEAR.php    24 Feb 2004 14:55:02 -0000      1.1.12.1<br>
++++ PEAR.php    26 Feb 2004 09:29:01 -0000<br>
+@@ -297,7 +297,8 @@</p>
+<p>function setErrorHandling($mode = null, $options = null)<br>
+     {<br>
+-        if (isset($this) &amp;&amp; is_a($this, &#039;PEAR&#039;)) {<br>
++        $call = reset(debug_backtrace());<br>
++        if (isset($this) &amp;&amp; is_a($this, &#039;PEAR&#039;) &amp;&amp; $call[&#039;type&#039;] == &quot;-&gt;&quot;) {<br>
+             $setmode     = &amp;$this-&gt;_default_error_mode;<br>
+             $setoptions  = &amp;$this-&gt;_default_error_options;<br>
+         } else {<br>
+@@ -574,7 +575,8 @@<br>
+     function pushErrorHandling($mode, $options = null)<br>
+     {<br>
+         $stack = &amp;$GLOBALS[&#039;_PEAR_error_handler_stack&#039;];<br>
+-        if (isset($this) &amp;&amp; is_a($this, &#039;PEAR&#039;)) {<br>
++        $call = reset(debug_backtrace());<br>
++        if (isset($this) &amp;&amp; is_a($this, &#039;PEAR&#039;) &amp;&amp; $call[&#039;type&#039;] == &quot;-&gt;&quot;) {<br>
+             $def_mode    = &amp;$this-&gt;_default_error_mode;<br>
+             $def_options = &amp;$this-&gt;_default_error_options;<br>
+         } else {<br>
+@@ -583,7 +585,7 @@<br>
+         }<br>
+         $stack[] = array($def_mode, $def_options);</p>
+<p>-        if (isset($this) &amp;&amp; is_a($this, &#039;PEAR&#039;)) {<br>
++        if (isset($this) &amp;&amp; is_a($this, &#039;PEAR&#039;) &amp;&amp; $call[&#039;type&#039;] == &quot;-&gt;&quot;) {<br>
+             $this-&gt;setErrorHandling($mode, $options);<br>
+         } else {<br>
+             PEAR::setErrorHandling($mode, $options);</p>
+</section>
+<section>
+<h3>[2004-02-26 13:20 UTC] mkalkbrenner at arcor dot de</h3>
+<p>I just noticed that raiseError() has the same problem, p.e<br>
+if (isset($this) &amp;&amp; isset($this-&gt;_default_error_mode))</p>
+<p>$this is allways defined if you call any method of PEAR.php staticly within a class that extends PEAR. In this case $this-&gt;_default_error_mode is also set. This results in absolutly unpredictable behaviour.</p>
+<p>Markus</p>
+</section>
+<section>
+<h3>[2004-02-26 15:24 UTC] mkalkbrenner at arcor dot de</h3>
+<p>I already did something like this in a big project. I extended PEAR and provided methods called setGlobalErrorHandling(), pushGlobalErrorHandling() and popGlobalErrorHandling() as a replacement for static calls of the original methods.</p>
+<p>What do you think about using the debug_backtrace() hack if php version &gt;= 4.3</p>
+<p>The best solution would be a php extension that offers a command to get the information if the current method has been called staticly like debug_backtrace() already does but without it&#039;s overhead.</p>
+<p>Markus</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

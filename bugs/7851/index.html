@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7851</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_Barcode/index.html">Image_Barcode</a> &#187; Bug #7851</h1>
+<p>Needs flag to supress headers or an option to redirect output to a variable.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #7851</th><td>Needs flag to supress headers or an option to redirect output to a variable.</td></tr>
+<tr><th>Submitted</th><td>2006-06-09 19:44 UTC</td></tr>
+<tr><th>From</th><td>tdrake at tymail dot com</td></tr>
+<tr><th>Assigned</th><td>cweiske</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Image_Barcode/index.html">Image_Barcode</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.5</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-09 19:44 UTC] tdrake at tymail dot com</h3>
+<p>Description:<br>
+------------<br>
+This extension would be a lot more useful if the headers could be suppressed or the output could be redirected to a variable.</p>
+<p>For example, I was attempting to embed the barcode images that were generated into a PDF document.  To do this, the images must be written to files so that they can be imported with pdf_open_image_file function.  Generating the image can be accomplished easily enough with the ob_get_contents command and dumping the buffer to a file. Unfortunately, when the script runs, the barcode app sends a header that the document is a graphic, when in fact the document is a PDF.  The browser then proceeds to throw an error because it thinks you are viewing a corrupt image file.</p>
+<p>Test script:<br>
+---------------<br>
+Example of script that doesn&#039;t work because headers are being sent:<br>
+require_once(&quot;Image/Barcode.php&quot;);</p>
+<p>function generate_barcode($sku) {<br>
+        $filename = &quot;/tmp/$sku.png&quot;;<br>
+        if (!file_exists($filename)) {<br>
+                ob_start();<br>
+                Image_Barcode::draw($sku, &quot;upca&quot;, &quot;png&quot;);<br>
+                $image = ob_get_contents();<br>
+                ob_end_clean();<br>
+                $file = fopen($filename, &#039;w&#039;);<br>
+                fwrite($file, $image);<br>
+                fclose($file);<br>
+        }<br>
+}</p>
+<p>function run(&amp;$db,&amp;$sysvars,&amp;$output) {<br>
+        $listings = array();<br>
+        $query = &quot;some query to get the items goes here&quot;;<br>
+        $db-&gt;query($query);<br>
+        while($db-&gt;next_record()) {<br>
+                 extract($db-&gt;record);<br>
+                 $data[] = array(&#039;cat&#039;=&gt;$category, &#039;sku&#039;=&gt;makesku($item_no), &#039;item_no&#039;=&gt;$item_no, &#039;item_des&#039;=&gt;$item_des);<br>
+                 generate_barcode(makesku($item_no));<br>
+        }<br>
+        $output[&#039;data&#039;]=$data;<br>
+}</p>
+<p>function pdf(&amp;$db,&amp;$sysvars,&amp;$output) {<br>
+        include(&quot;generate_pdf_that_contains_barcodes.php&quot;);<br>
+        run($db,$sysvars,$output);</p>
+<p>generate_document($output[&#039;data&#039;]);<br>
+        exit;<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+Barcode files are generated and saved to disk, pdf document loads those images and is displayed to the user.</p>
+<p>Actual result:<br>
+--------------<br>
+Browser throws an error because it thinks that the PDF document is an image because Image_Barcode has already sent the wrong headers.</p>
+<p>To fix it, I just commented out all of the header code in upca.php to make it work, but it would be nice if there was an official option to suppress the headers so that when I do an upgrade I don&#039;t have to dig through old code that is suddenly broken.  Output to a variable would be even more desirable so that I don&#039;t have to mess with the output buffer.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

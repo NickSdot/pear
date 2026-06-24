@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6056</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PHP &#187; <a href="package/PHP_CompatInfo/index.html">PHP_CompatInfo</a> &#187; Bug #6056</h1>
+<p>Add support for reporting max PHP version</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #6056</th><td>Add support for reporting max PHP version</td></tr>
+<tr><th>Submitted</th><td>2005-11-24 11:35 UTC</td></tr>
+<tr><th>From</th><td>giunta dot gaetano at sea-aeroportimilano dot it</td></tr>
+<tr><th>Assigned</th><td>farell</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PHP_CompatInfo/index.html">PHP_CompatInfo</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.1</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-24 11:35 UTC] giunta dot gaetano at sea-aeroportimilano dot it</h3>
+<p>Description:<br>
+------------<br>
+Hi there.<br>
+I added support for a &#039;max supported php version&#039; to the script. It is added as new key (&#039;max_version&#039;) to the fileinfo array.<br>
+The patched version of the script is below, copy&#039;n&#039;pasted.<br>
+To actually have the script emit anyting, the func_array and const_array must be augmented, adding an &#039;end&#039; key indicating the maximum php version that supports a feature. If the key is absent from the data arrays, the script assumes max version is infinite, i.e. no warning will be emitted when running with current data arrays.</p>
+<p>The only function that has been removed, off the top of my head is php_check_syntax (PHP 5 &lt;= 5.0.4), but there might be others...</p>
+<p>NB: future updates I might post: adding a &#039;supported os + webserver&#039; calculating routine, based on the used extensions; analysis of parameter count for functions, so that functions that got parameters added in later releases can be detected; analysis of usage of &#039;include/require&#039;, &#039;eval&#039; and similar constructs, so that user can be informed in those cases about the analysis not being accurate.</p>
+<p>Test script:<br>
+---------------<br>
+Diff to CompatInfo.php,v 1.15</p>
+<p>59,64d58<br>
+&lt;      /**<br>
+&lt;      * @var string Last version of PHP to use<br>
+&lt;      */<br>
+&lt; <br>
+&lt;     var $earliest_version = &#039;&#039;;<br>
+&lt; <br>
+152,153d145<br>
+&lt;         $earliest_version = $this-&gt;earliest_version;<br>
+&lt; <br>
+188,191d179<br>
+&lt;                 if ($file[&#039;max_version&#039;] != &#039;&#039;) {<br>
+&lt;                     if ($earliest_version = &#039;&#039; || 1 === version_compare($earliest_version, $file[&#039;max_version&#039;]))<br>
+&lt;                         $earliest_version = $file[&#039;max_version&#039;];<br>
+&lt;                 }<br>
+211d198<br>
+&lt;             $files[&#039;max_version&#039;] = $earliest_version;<br>
+261d247<br>
+&lt;         $earliest_version = $this-&gt;earliest_version;<br>
+295,298d280<br>
+&lt;                 if ($file[&#039;max_version&#039;] != &#039;&#039;) {<br>
+&lt;                     if ($earliest_version = &#039;&#039; || 1 === version_compare($earliest_version, $file[&#039;max_version&#039;]))<br>
+&lt;                         $earliest_version = $file[&#039;max_version&#039;];<br>
+&lt;                 }<br>
+315d296<br>
+&lt;         $files_parsed[&#039;max_version&#039;] = $earliest_version;<br>
+338d318<br>
+&lt;         $earliest_version = $this-&gt;earliest_version;<br>
+411,415d390<br>
+&lt;                 if (array_key_exists(&#039;end&#039;, $GLOBALS[&#039;funcs&#039;][$name])) {<br>
+&lt;                     if ($earliest_version == &#039;&#039; || 1 === version_compare($earliest_version,$GLOBALS[&#039;funcs&#039;][$name][&#039;end&#039;])) {<br>
+&lt;                         $earliest_version = $GLOBALS[&#039;funcs&#039;][$name][&#039;init&#039;];<br>
+&lt;                     }<br>
+&lt;                 }<br>
+438,442d412<br>
+&lt;             if (array_key_exists(&#039;end&#039;, $GLOBALS[&#039;const&#039;][$constant])) {<br>
+&lt;                if ($earliest_version == &#039;&#039; || 1 === version_compare($earliest_version,$GLOBALS[&#039;const&#039;][$constant][&#039;end&#039;])) {<br>
+&lt;                     $earliest_version = $GLOBALS[&#039;funcs&#039;][$name][&#039;init&#039;];<br>
+&lt;                 }<br>
+&lt;             }<br>
+453d422<br>
+&lt;         $functions_version[&#039;max_version&#039;] = $earliest_version;<br>
+519d487<br>
+&lt;</p>
+</section>
+<section>
+<h3>[2006-06-19 07:47 UTC] giunta dot gaetano at sea-aeroportimilano dot it</h3>
+<p>There is a lot of stuff that changed between php 4 and php 5...<br>
+As an example, in PHP 5 the charset param used for creation of an xml parser has been deprecated. The same applies for the &#039;var&#039; keyword...</p>
+</section>
+<section>
+<h3>[2006-06-28 14:59 UTC] giunta dot gaetano at sea-aeroportimilano dot it</h3>
+<p>I did not really check the source code, but the end results look fine to me (at least when parsing the test file you provided).<br>
+What do you exactly mean by &quot;ambiguity that is possible&quot; ?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

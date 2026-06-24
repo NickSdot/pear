@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6108</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a> &#187; Bug #6108</h1>
+<p>error on writeString</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-29 16:13 UTC</td></tr>
+<tr><th>From</th><td>walen at mimuw dot edu dot pl</td></tr>
+<tr><th>Assigned</th><td>progi1984</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-29 16:13 UTC] walen at mimuw dot edu dot pl</h3>
+<p>Description:<br>
+------------<br>
+I&#039;ve got a code that requires outputting many strings<br>
+in the custom input encoding.<br>
+Unfortunatelly the module returns broken XLS files.</p>
+<p>For the test script some strings are broken<br>
+(random characters).</p>
+<p>I think that there is an error in the <br>
+function _storeSharedStringsTable().</p>
+<p>Test script:<br>
+---------------<br>
+$xls = new Spreadsheet_Excel_Writer();<br>
+$xls-&gt;setVersion(8);<br>
+$xls-&gt;setCountry(48);</p>
+<p>$xls_s = $xls-&gt;addWorksheet(&quot;test&quot;);<br>
+$xls_s-&gt;setInputEncoding(&#039;ISO-8859-2&#039;);</p>
+<p>for($i=0;$i&lt;500;$i++) {<br>
+    $str=&quot;aceąćę&quot;.$i;<br>
+    $xls_s-&gt;writeString($i,0,$str);<br>
+}</p>
+<p>$xls-&gt;send(&#039;test.xls&#039;);<br>
+$xls-&gt;close();</p>
+<p>Expected result:<br>
+----------------<br>
+500 lines: <br>
+&quot;aceąćę&quot;.$i; (0&lt;=i&lt;500)</p>
+<p>Actual result:<br>
+--------------<br>
+400 lines: <br>
+&quot;aceąćę&quot;.$i; (0&lt;=i&lt;=400)</p>
+<p>then garbage</p>
+</section>
+<section>
+<h3>[2005-12-05 23:40 UTC] fpascutti at tdcom dot fr</h3>
+<p>Doing a bit of debugging (with my absencde of knowledge of the Excel file format), I narrowed the bug down to _storeSharedStringsTable() as pointed before.<br>
+It seems that you get an error after the first time you &quot;cross the CONTINUE boundary&quot;.<br>
+That is, the bug occurs after the first string that does not pass this test:<br>
+// We can write the string if it doesn&#039;t cross a CONTINUE boundary<br>
+if ($block_length &lt; $continue_limit) {<br>
+/* snip */<br>
+}</p>
+<p>Hope it will help...</p>
+</section>
+<section>
+<h3>[2006-02-12 15:54 UTC] daniel dot burckhardt at sur-gmbh dot ch</h3>
+<p>I ported the ommitted aligment marked by <br>
+  TODO: Unicode data should only be split on char (2 byte) <br>
+from<br>
+http://search.cpan.org/src/JMCNAMARA/Spreadsheet-WriteExcel-2.16/lib/Spreadsheet/WriteExcel/Workbook.pm<br>
+to _calculateSharedStringsSizes and _storeSharedStringsTable and that seems to do the trick.</p>
+</section>
+<section>
+<h3>[2006-02-12 16:15 UTC] daniel dot burckhardt at sur-gmbh dot ch</h3>
+<p>Sorry, that was premature. Still croaking on longer outputs :-(</p>
+</section>
+<section>
+<h3>[2006-03-24 14:40 UTC] danielpeake at hotmail dot com</h3>
+<p>I&#039;ve also enountered this bug and this is what I&#039;ve found:</p>
+<p>- The bug happens when you use setInputEncoding to set the input encoding (obviously in a BIFF8 file). As far as I can tell this is because it only stores strings as UTF-16LE if you set the input encoding.</p>
+<p>- This being the case, it doesn&#039;t matter what characters (unicode/ascii) you input, it&#039;s simply the fact that they are being converted to, and stored as, UTF-16LE.</p>
+<p>- Also, when I tested it, there seemed to be magic numbers of characters that let you store as many lines as you liked (I think 20, 25, possibly 50-something..)</p>
+<p>- I also tracked down the TODO parts in calculateSharedStringsSizes and _storeSharedStringsTable and ported the missing bits from the PERL script. As Mr Burckhardt states, these made no difference whatsoever.</p>
+<p>To conclude, Spreadsheet_Excel_Writer can&#039;t currently store lots of unicode strings in an Excel sheet :(</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

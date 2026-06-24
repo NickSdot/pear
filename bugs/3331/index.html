@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3331</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Socket/index.html">Net_Socket</a> &#187; Bug #3331</h1>
+<p>PHP warning instead of PEAR_Error if (p)fsockopen() fails</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-30 19:35 UTC</td></tr>
+<tr><th>From</th><td>mfonda at dotgeek dot org</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Socket/index.html">Net_Socket</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-30 19:35 UTC] mfonda at dotgeek dot org</h3>
+<p>Description:<br>
+------------<br>
+In the connect() method of Net_Socket, it is supposed to raise a <br>
+PEAR_Error if (p)fsockopen() fails, but there is no error <br>
+suppressing on (p)fsockopen(), so if it fails, there is a PHP error <br>
+instead.</p>
+<p>Reproduce code:<br>
+---------------<br>
+require_once &#039;Net/Socket.php&#039;;<br>
+$sock =&amp; new Net_Socket();<br>
+if (PEAR::isError($sock-&gt;connect(&#039;www.nonexistanthost.fake&#039;, 21))) {<br>
+ echo &#039;this is how it should work&#039;;<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+this is how it should work</p>
+<p>Actual result:<br>
+--------------<br>
+PHP Warning:  fsockopen(): php_network_getaddresses: <br>
+getaddrinfo failed: Name or service not known <br>
+in /usr/share/pear/Net/Socket.php on line 108 <br>
+ <br>
+Warning: fsockopen(): php_network_getaddresses: getaddrinfo <br>
+failed: Name or service not known <br>
+in /usr/share/pear/Net/Socket.php on line 108 <br>
+PHP Warning:  fsockopen(): unable to connect to <br>
+www.nonexistanthost.fake:21 (Unknown error) <br>
+in /usr/share/pear/Net/Socket.php on line 108 <br>
+ <br>
+Warning: fsockopen(): unable to connect to <br>
+www.nonexistanthost.fake:21 (Unknown error) <br>
+in /usr/share/pear/Net/Socket.php on line 108 <br>
+ <br>
+ <br>
+ <br>
+ <br>
+It would be very easy to fix this bug. All you have to do is simple <br>
+add an &#039;@&#039; infront of (p)fsockopen() to suppress the error, and <br>
+then the PEAR_Error will be raised if it fails. The code to raise <br>
+the PEAR_Error is already in place, it will just never get executed <br>
+if there is infact an error because PHP will die. <br>
+ <br>
+To fix, just change lines 106 / 108 to: <br>
+106: $fp = @$openfunc($this-&gt;addr, $this-&gt;port, $errno, $errstr, <br>
+$this-&gt;timeout); <br>
+ <br>
+108: $fp = $openfunc($this-&gt;addr, $this-&gt;port, $errno, $errstr);</p>
+</section>
+<section>
+<h3>[2005-01-30 19:39 UTC] mfonda at dotgeek dot org</h3>
+<p>Excuse me, it is just a PHP warning, not a fatal error, but a <br>
+PEAR_Error is still the expected result, not a PHP warning</p>
+</section>
+<section>
+<h3>[2005-01-31 07:17 UTC] mfonda at dotgeek dot org</h3>
+<p>My apologies, you are right. I thought I had upgraded to the latest version but apparently I hadn&#039;t. Anyways, I thought I had said &quot;irrelevant&quot; for PHP version, but you&#039;re right, makes no sense to say for pacakage version.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

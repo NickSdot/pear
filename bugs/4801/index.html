@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4801</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #4801</h1>
+<p>query ,wtih one recordset</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-07-12 08:37 UTC</td></tr>
+<tr><th>From</th><td>gregory dot scotti at abyss-land dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Linux web103.720.ha.ovh.net 2.4.</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-07-12 08:37 UTC] gregory dot scotti at abyss-land dot com</h3>
+<p>Description:<br>
+------------<br>
+Bonjour , je vais essaie de m&#039;exprimer en anglais</p>
+<p>I have a probleme whith the methode</p>
+<p>getAssoc($sql), query($sql) , if the query look like<br>
+select count(*) from membre where mail = &#039;mail@domain.tdt&#039;</p>
+<p>Reproduce code:<br>
+---------------<br>
+$dsn = new dns();<br>
+$db =&amp; DB::connect($dsn-&gt;getDns(), $options);</p>
+<p>$db-&gt;setFetchMode(DB_FETCHMODE_ASSOC);<br>
+	$sql = &#039;SELECT idMembre as id, idMembre, nom  from  membre LIMIT 0 , 1;&#039; ;<br>
+	$rs = $db-&gt;getAssoc($sql) ;<br>
+	debug ( $db-&gt;last_query , &#039;$db-&gt;last_query &#039;  );<br>
+	debug ($rs, &#039;$rs&#039; ) ;</p>
+<p>$sql = &quot;SELECT count( * ) as count<br>
+FROM membre where mail = &#039;%&#039; &quot; ;<br>
+	$rs = $db-&gt;getAll($sql) ;<br>
+	debug ( $db-&gt;last_query , &#039;$db-&gt;last_query &#039;  );<br>
+	debug ($rs, &#039;$rs&#039; ) ;<br>
+	<br>
+	<br>
+	$sql = &quot;SELECT count( * ) as count<br>
+FROM membre where mail = &#039;%&#039; &quot; ;<br>
+	$rs = $db-&gt;getAssoc($sql) ;<br>
+	debug ( $db-&gt;last_query , &#039;$db-&gt;last_query &#039;  );<br>
+	debug ($rs, &#039;$rs&#039; ) ;</p>
+<p>$sql = &quot;SELECT count( * ) as count<br>
+FROM membre where mail = &#039;%&#039; &quot; ;<br>
+	$rs = $db-&gt;query($sql) ;<br>
+	debug ( $db-&gt;last_query , &#039;$db-&gt;last_query &#039;  );<br>
+	debug ($rs, &#039;THIRD QUERY $db-&gt;query($sql)&#039; ) ;</p>
+<p>Expected result:<br>
+----------------<br>
+I expected to not have SQL error :-) I just used another methode to get the result. <br>
+When i read the documentation i don&#039;t find an explication of this behavior.</p>
+<p>Actual result:<br>
+--------------<br>
+$db-&gt;last_query <br>
+SELECT idMembre as id, idMembre, nom  from  membre LIMIT 0 , 1;</p>
+<p>FIRST QUERY $db-&gt;getAssoc($sql)<br>
+Array<br>
+(<br>
+    [3] =&gt; Array<br>
+        (<br>
+            [idMembre] =&gt; 3<br>
+            [nom] =&gt; nom<br>
+        )</p>
+<p>)</p>
+<p>$db-&gt;last_query <br>
+SELECT count( * ) as count<br>
+FROM membre where mail = &#039;%&#039;</p>
+<p>SECOND QUERY $db-&gt;getAll($sql)<br>
+Array<br>
+(<br>
+    [0] =&gt; Array<br>
+        (<br>
+            [count] =&gt; 0<br>
+        )</p>
+<p>)</p>
+<p>$db-&gt;last_query <br>
+SELECT count( * ) as count<br>
+FROM membre where mail = &#039;%&#039;</p>
+<p>THIRD QUERY $db-&gt;getAssoc($sql)<br>
+DB_Error Object<br>
+((<br>
+    [error_message_prefix] =&gt; <br>
+    [mode] =&gt; 1<br>
+    [level] =&gt; 1024<br>
+    [code] =&gt; -10<br>
+    [message] =&gt; DB Error: truncated<br>
+    [userinfo] =&gt; SELECT count( * ) as count<br>
+FROM membre where mail = &#039;%&#039;  [DB Error: truncated]<br>
+    [backtrace] =&gt; Array<br>
+        (<br>
+            [0] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /home/arobazcr/www/pear2/DB.php<br>
+                    [line] =&gt; 888<br>
+                    [function] =&gt; PEAR_Error<br>
+                    [class] =&gt; DB_Error<br>
+                    [type] =&gt; -&gt;<br>
+                    [args] =&gt; Array<br>
+                        (<br>
+                            [0] =&gt; DB Error: truncated<br>
+                            [1] =&gt; -10<br>
+                            [2] =&gt; 1<br>
+                            [3] =&gt; 1024<br>
+                            [4] =&gt; SELECT count( * ) as count<br>
+FROM membre where mail = &#039;%&#039;  [DB Error: truncated]<br>
+                        )</p>
+<p>)</p>
+<p>[1] =&gt; Array<br>
+...<br>
+...</p>
+</section>
+<section>
+<h3>[2005-07-14 13:15 UTC] gregory dot scotti at abyss-land dot com</h3>
+<p>Now it&#039;s not a slq syntaxe i tried all my query y a query analyser like phpmyadmin. It&#039;s a lake in the documentation ou a DB error.</p>
+<p>The second query and third query are the same, but le getAssoc() throw an error, in the third case.</p>
+<p>Cordialement Gregory</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

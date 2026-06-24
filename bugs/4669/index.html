@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4669</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File System &#187; <a href="package/File_Find/index.html">File_Find</a> &#187; Bug #4669</h1>
+<p>Repeated calls to search or maptree return multiple copies of results</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-06-23 18:24 UTC</td></tr>
+<tr><th>From</th><td>epgremill3 at yahoo dot com</td></tr>
+<tr><th>Assigned</th><td>tuupola</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/File_Find/index.html">File_Find</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>Windows XP Pro</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-23 18:24 UTC] epgremill3 at yahoo dot com</h3>
+<p>Description:<br>
+------------<br>
+Repeated calls to File_Find::search with the same parameters yields multiple copies of the matching files in the results.  I&#039;m using File_Find 0.2.0.</p>
+<p>I believe this is happening because maptree does not clear the $directories and $files member variables of the File_Find class.  I can correct for this problem by creating a new instance of File_Find before each call to maptree or search.</p>
+<p>I alternatively corrected for the problem by modifying the maptree and _build functions to use function-scope variables instead of the class member variables.  This gave the added benefit of allowing static calls to maptree and search.  If you would like to see my code, I would happily email it to you.</p>
+<p>Reproduce code:<br>
+---------------<br>
+require_once(&quot;File/Find.php&quot;);<br>
+$pattern = &quot;/User.*\.php/&quot;;<br>
+$dirpath = $_SERVER[&quot;DOCUMENT_ROOT&quot;] . &quot;/com/exceptionals&quot;;<br>
+$dirpath = str_replace(&quot;/&quot;, &quot;\\&quot;, $dirpath);<br>
+$pattern_type = &quot;perl&quot;;<br>
+$f = new File_Find();<br>
+$res = $f-&gt;search($pattern, $dirpath, $pattern_type);<br>
+$res = $f-&gt;search($pattern, $dirpath, $pattern_type);<br>
+echo(&quot;&lt;p&gt;\n&quot;);<br>
+print_r($res);<br>
+echo(&quot;&lt;/p&gt;\n&quot;);</p>
+<p>Expected result:<br>
+----------------<br>
+Array ( [0] =&gt; C:\Documents and Settings\Ernie Gremillion\My Documents\Exceptionals\Website\com\exceptionals\data_access\UserData.class.php [1] =&gt; C:\Documents and Settings\Ernie Gremillion\My Documents\Exceptionals\Website\com\exceptionals\application\User.class.php )</p>
+<p>Actual result:<br>
+--------------<br>
+Array ( [0] =&gt; C:\Documents and Settings\Ernie Gremillion\My Documents\Exceptionals\Website\com\exceptionals\data_access\UserData.class.php [1] =&gt; C:\Documents and Settings\Ernie Gremillion\My Documents\Exceptionals\Website\com\exceptionals\application\User.class.php [2] =&gt; C:\Documents and Settings\Ernie Gremillion\My Documents\Exceptionals\Website\com\exceptionals\data_access\UserData.class.php [3] =&gt; C:\Documents and Settings\Ernie Gremillion\My Documents\Exceptionals\Website\com\exceptionals\application\User.class.php )</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

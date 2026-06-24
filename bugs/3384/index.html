@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3384</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a> &#187; Bug #3384</h1>
+<p>adding worksheet name in addWorksheet() causes failure on many-sheet doc</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-05 07:42 UTC</td></tr>
+<tr><th>From</th><td>chris at SpawnorDie dot Com</td></tr>
+<tr><th>Assigned</th><td>xnoguer</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>Redhat Linux 8.0</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-05 07:42 UTC] chris at SpawnorDie dot Com</h3>
+<p>Description:<br>
+------------<br>
+When outputting a spreadsheet with many worksheets, supplying a worksheet name to the addWorksheet() method on any worksheet other than the first causes the error:</p>
+<p>Fatal error: Call to undefined function: write() in &lt;path to PHP script&gt; on line &lt;line number of write() call&gt;</p>
+<p>This is a large (&gt;200KB) spreadsheet with 25 worksheets.</p>
+<p>I am using the latest PEAR, Excel_Spreadsheet_Writer and required/dependent classes.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Using this code works as expected:<br>
+$workbook = new Spreadsheet_Excel_Writer( &quot;my_file.xls&quot; );<br>
+$worksheet =&amp; $workbook-&gt;addWorksheet( &quot;My first worksheet&quot; );<br>
+for( $i = 0; $i &lt; 300; $i++ )<br>
+{<br>
+  $worksheet-&gt;write( $row, $column, &quot;My stuff &quot; . $i );<br>
+}<br>
+$worksheet =&amp; $workbook-&gt;addWorksheet();<br>
+for( $i = 0; $i &lt; 300; $i++ )<br>
+{<br>
+  $worksheet-&gt;write( $row, $column, &quot;My other stuff &quot; . $i );<br>
+}<br>
+$workbook-&gt;close();</p>
+<p>This produces the error:<br>
+$workbook = new Spreadsheet_Excel_Writer( &quot;my_file.xls&quot; );<br>
+$worksheet =&amp; $workbook-&gt;addWorksheet( &quot;My first worksheet&quot; );<br>
+for( $i = 0; $i &lt; 300; $i++ )<br>
+{<br>
+  $worksheet-&gt;write( $row, $column, &quot;My stuff &quot; . $i );<br>
+}<br>
+$worksheet =&amp; $workbook-&gt;addWorksheet( &quot;My second worksheet&quot; );<br>
+for( $i = 0; $i &lt; 300; $i++ )<br>
+{<br>
+  $worksheet-&gt;write( $row, $column, &quot;My other stuff &quot; . $i );<br>
+}<br>
+$workbook-&gt;close();</p>
+<p>Expected result:<br>
+----------------<br>
+Expect a spreadsheet to output.</p>
+<p>Actual result:<br>
+--------------<br>
+Output to browser or stdout:<br>
+Fatal error: Call to undefined function: write() in &lt;path to PHP script&gt; on line &lt;line number of write() call&gt;</p>
+</section>
+<section>
+<h3>[2005-07-06 22:25 UTC] crimson at n00bstories dot com</h3>
+<p>I was experiencing this same error and it turned out to fail with this same error when it tried to create a worksheet with &gt; 31 characters in the name.</p>
+<p>(We were also not handling the error sent by the module correctly)</p>
+</section>
+<section>
+<h3>[2005-07-29 18:00 UTC] chris at SpawnorDie dot Com</h3>
+<p>The problem with the spreadsheet writer is that the throwError attempts on lines 325 and 333 are failing.  The &quot;real&quot; bug is that throwError() is failing and the returned error indicates that the worksheet object is being destroyed silently, thus the &quot;call to undefined function: write()&quot; error.</p>
+<p>Regardless, throwing an error and exiting is not a graceful way of handling the problems this is trying to handle.  The problems can be fixed programatically.</p>
+<p>Change line 325 to this:<br>
+$name = substr( $name, 0, 30 );</p>
+<p>change line 333 to this:<br>
+$name = substr( $name, 0, 27 ) . ($index+1);</p>
+<p>As long as either throwError is failing or calls to it are avoided as outlined above, this is still an active bug in the code.</p>
+</section>
+<section>
+<h3>[2005-07-29 18:05 UTC] chris at SpawnorDie dot Com</h3>
+<p>I should mention that the bug is in Workbook.php</p>
+</section>
+<section>
+<h3>[2005-11-06 04:04 UTC] xnoguer at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>fixed the docs, so that it mentions the method may return an  Error object. Should be updated on the pear site soon.</p>
+</section>
+<section>
+<h3>[2005-11-07 16:02 UTC] chris at SpawnorDie dot Com</h3>
+<p>Why update the documentation to mention that it may return an Error object rather than change the 2 lines of code as given below to avoid errors altogether?  If you want the option to be able to throw an error, at the *very* least, you should give users the choice to throw an error or try to automatically fix the problem (perhaps with an added input parameter that defaults to the automatic fix option).</p>
+<p>This should be handled more intelligently, and the vast majority of people who are using this code are going to prefer that the problem be fixed automatically rather than being forced to handle it themselves.</p>
+<p>I would understand the hesitance if this were a big, kludgy change, but it is literally only changing 2 lines of code.</p>
+<p>Think logically about what you&#039;re asking programmers to do - either:<br>
+a) Force extra checking of everything that could be used for a worksheet name and look for duplicates or too many characters - presumably program a fix for all such cases, or:<br>
+b) Every time the addWorksheet method is called, check the return value to make sure it isn&#039;t an Error object, and if so, handle it (which is probably going to mean figuring out a new name for the worksheet anyway).</p>
+<p>This could all be avoided by altering 2 lines of code in the base class.  Is there some compelling reason why you would not want to implement the easy solution rather than simply updating the documentation, which does not really fix anything?</p>
+</section>
+<section>
+<h3>[2005-11-12 23:55 UTC] xnoguer at php dot net</h3>
+<p>&gt; Why update the documentation to mention that it may return <br>
+&gt; an Error object rather than change the 2 lines of code as <br>
+&gt; given below to avoiderrors altogether?</p>
+<p>Because it would change current behaviour.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

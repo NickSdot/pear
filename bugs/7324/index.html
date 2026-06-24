@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7324</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_TreeMenu/index.html">HTML_TreeMenu</a> &#187; Bug #7324</h1>
+<p>Problem using together with XMLRPC</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-04-06 13:04 UTC</td></tr>
+<tr><th>From</th><td>atisss at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>kguest</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_TreeMenu/index.html">HTML_TreeMenu</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>1.2.2</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-06 13:04 UTC] atisss at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I was trying to use it together with vcXMLRPC, however i got completely wrong results in tree captions. A little investigation showed that problem is somewhat connected with use of Array in &#039;TreeMenu.js&#039;. vcXMLRPC adds</p>
+<p>Array.prototype.toXMLRPC = function(){...}</p>
+<p>however contents of it is printed out in text of tree node.</p>
+<p>For vcXMLRPC see:<br>
+www.vcdn.org/Public/XMLRPC/</p>
+<p>A quick workaround:</p>
+<p>within TreeMenu.prototype.drawMenu search for</p>
+<p>/**<br>
+* Add event handlers<br>
+*/<br>
+var eventHandlers = &quot;&quot;;<br>
+for (j in nodes[i].events) {<br>
+    eventHandlers += this.stringFormat(&#039;{0}=&quot;{1}&quot; &#039;, j, nodes[i].events[j]);<br>
+}</p>
+<p>Before eventHandlers += ... add a line<br>
+if (j != &quot;toXMLRPC&quot;)</p>
+<p>However, this fixes problem only with vcXMLRPC, however problem might repeat for other packages. Different use of Array() should be considered.</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;a href=&quot;test.php&quot; target=&quot;_self&quot;&gt;&lt;span&gt;Second level&lt;/span&gt;&lt;/a&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;a href=&quot;test.php&quot; target=&quot;_self&quot;&gt;&lt;span toxmlrpc=&quot;function () {<br>
+    var retstr = &quot;&gt;&lt;array&gt;&lt;data&gt;&quot;;<br>
+    for (var i = 0; i &lt; this.length; i++) {<br>
+        retstr += &quot;&lt;value&gt;&quot; + XMLRPC.getXML(this[i]) + &quot;&lt;/value&gt;&quot;;<br>
+    }<br>
+    return retstr + &quot;&lt;/data&gt;&lt;/array&gt;&quot;;<br>
+}&quot; &gt;Second level&lt;/span&gt;</p>
+</section>
+<section>
+<h3>[2006-04-07 10:24 UTC] atisss at gmail dot com</h3>
+<p>A more general fix works. The same line could be replaced with</p>
+<p>if (typeof(nodes[i].events[j]) == &#039;function&#039;) continue;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

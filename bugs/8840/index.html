@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8840</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_Tools/index.html">Image_Tools</a> &#187; Bug #8840</h1>
+<p>Undefined local variable resultImage</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-10-03 14:00 UTC</td></tr>
+<tr><th>From</th><td>rumata at php dot net</td></tr>
+<tr><th>Assigned</th><td>firman</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Image_Tools/index.html">Image_Tools</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-10-03 14:00 UTC] rumata at php dot net</h3>
+<p>Description:<br>
+------------<br>
+Illegal usage of the local variable $resultImage in &#039;Image_Tools::display&#039; and &#039;Image_Tools::save&#039; methods<br>
+at Image/Tools.php</p>
+<p>When using Image::Tools package with any mistakes (for example: passing filename of non-existent image)</p>
+<p>Actual lines are<br>
+657: return PEAR::raiseError(&#039;Error rendering: &#039; . $resultImage-&gt;getMessage());<br>
+705: return PEAR::raiseError(&#039;Error rendering: &#039; . $resultImage-&gt;getMessage());</p>
+<p>IMHO, they must be <br>
+657: return PEAR::raiseError(&#039;Error rendering: &#039; . $res-&gt;getMessage());<br>
+705: return PEAR::raiseError(&#039;Error rendering: &#039; . $res-&gt;getMessage());</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php</p>
+<p>// Modified example from the package<br>
+require_once &#039;Image/Tools.php&#039;;<br>
+$options = array(&#039;image&#039; =&gt; &#039;non-existent-path/pear.png&#039;);</p>
+<p>$tool =&amp; Image_Tools::factory(&#039;swap&#039;, $options);<br>
+if (PEAR::isError($tool)) { die($tool-&gt;toString()); }</p>
+<p>$err = $tool-&gt;display();<br>
+if (PEAR::isError($err)) { die($err-&gt;toString()); }</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+[pear_error: message=&quot;Error rendering: Failed to create image from string data&quot; code=0 mode=return level=notice prefix=&quot;&quot; info=&quot;&quot;]</p>
+<p>Actual result:<br>
+--------------<br>
+Warning: imagecreatefromstring() [function.imagecreatefromstring]: Data is not in a recognized format. in z:\home\localhost\www\Image\Tools.php on line 542</p>
+<p>Notice: Undefined variable: resultImage in z:\home\localhost\www\Image\Tools.php on line 657</p>
+<p>Fatal error: Call to a member function getMessage() on a z:\home\localhost\www\Image\Tools.php on line 657</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

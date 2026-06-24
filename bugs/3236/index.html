@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3236</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_DNS/index.html">Net_DNS</a> &#187; Bug #3236</h1>
+<p>PATCH [fixes bug 3175]</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-19 03:32 UTC</td></tr>
+<tr><th>From</th><td>mark at everytruckjob dot com</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_DNS/index.html">Net_DNS</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-19 03:32 UTC] mark at everytruckjob dot com</h3>
+<p>Description:<br>
+------------<br>
+Please find attached a patch that fixes bug 3175 (incorrect AAAA record data returned).  The patch also includes two white space fixes.  Without the patch, records that include &quot;*0:0:&quot; have it replaced with &quot;::&quot;, so all the following records return incorrect data.</p>
+<p>kite-www.ripe.net <br>
+2001:610:240:0:a843::8 (correct)<br>
+2001:610:24::a843::8   (result)</p>
+<p>munnari.OZ.AU<br>
+2001:388:c02:4000::1:21 (correct)<br>
+2001:388:c02:400::1:21  (result)</p>
+<p>ns3.verio.net<br>
+2001:728:0:7000::200 (correct)<br>
+2001:728:0:700::200  (result)</p>
+<p>Reproduce code:<br>
+---------------<br>
+--- pear/Net_DNS/DNS/RR/AAAA.php	2003-05-06 13:04:28.000000000 -0500<br>
++++ newpear/Net_DNS/DNS/RR/AAAA.php	2005-01-18 21:06:32.000000000 -0600<br>
+@@ -50,7 +50,7 @@<br>
+         $this-&gt;rdata = $rro-&gt;rdata;<br>
+ <br>
+         if ($offset) {<br>
+-			$this-&gt;address = Net_DNS_RR_AAAA::ipv6_decompress(substr($this-&gt;rdata, 0, $this-&gt;rdlength));<br>
++            $this-&gt;address = Net_DNS_RR_AAAA::ipv6_decompress(substr($this-&gt;rdata, 0, $this-&gt;rdlength));<br>
+         } else {<br>
+             if (strlen($data)) {<br>
+                 if (count($adata = explode(&#039;:&#039;, $data, 8)) &gt;= 3) {<br>
+@@ -75,7 +75,7 @@<br>
+     /* Net_DNS_RR_AAAA::rr_rdata($packet, $offset) {{{ */<br>
+     function rr_rdata($packet, $offset)<br>
+     {<br>
+-		return Net_DNS_RR_AAAA::ipv6_compress($this-&gt;address);<br>
++        return Net_DNS_RR_AAAA::ipv6_compress($this-&gt;address);<br>
+     }<br>
+ <br>
+     /* }}} */<br>
+@@ -112,18 +112,19 @@<br>
+             /* Must be 8 shorts long */<br>
+             return &#039;::&#039;;<br>
+         }<br>
+-        $a = unpack(&#039;n8b&#039;, $pack);<br>
+-        foreach($a as $idx =&gt; $value)<br>
+-            $a[$idx] = dechex($value);<br>
+-        $addr = implode(&#039;:&#039;, $a);<br>
+-        /* Shorthand the first :0:0:0: set into a :: */<br>
++        $a = unpack(&#039;n8&#039;, $pack);<br>
++        $addr = vsprintf(&quot;%x:%x:%x:%x:%x:%x:%x:%x&quot;, $a);<br>
++        /* Shorthand the first :0:0: set into a :: */<br>
+         /* TODO: Make this is a single replacement pattern */<br>
+-        if (substr($addr, -4, 4) == &#039;:0:0&#039;) {<br>
++        if (substr($addr, -4) == &#039;:0:0&#039;) {<br>
+             return preg_replace(&#039;/((:0){2,})$/&#039;, &#039;::&#039;, $addr);<br>
++        } elseif (substr($addr, 0, 4) == &#039;0:0:&#039;) {<br>
++            return &#039;0:0:&#039;. substr($addr, 4);<br>
+         } else {<br>
+-            return preg_replace(&#039;/(:?(0:){2,})/&#039;, &#039;::&#039;, $addr);<br>
++            return preg_replace(&#039;/(:(0:){2,})/&#039;, &#039;::&#039;, $addr);<br>
+         }<br>
+     }<br>
++<br>
+     /* }}} */<br>
+ }<br>
+ /* }}} */</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

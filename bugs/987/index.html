@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #987</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/XML_RPC/index.html">XML_RPC</a> &#187; Bug #987</h1>
+<p>XML Character entities are duplicated in decode</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-10 03:36 UTC</td></tr>
+<tr><th>From</th><td>marthom at nortelnetworks dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_RPC/index.html">XML_RPC</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0b4 (beta4)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-10 03:36 UTC] marthom at nortelnetworks dot com</h3>
+<p>Description:<br>
+------------<br>
+When decoding a message that contains a character entity (an ampersand for instance), the final value contains both the full expansion and the decoded value.</p>
+<p>What happens is that the default handler (XML_RPC_dh) receives the expanded entity &#039;&amp;&#039; and the character handler (XML_RPC_cd) receives the character &#039;&amp;&#039;.  Both append the string to the accumulator.</p>
+<p>I think that I have solved this problem by removing the default handler from the equation entirely.  I can&#039;t see how this handler would be needed - XML RPC is sufficiently simple that it doesn&#039;t need to understand &lt;!DOCTYPE or any other special tags.</p>
+<p>Change the call to xml_set_default_handler:<br>
+- xml_set_default_handler($parser, &quot;XML_RPC_dh&quot;);<br>
++ xml_set_default_handler($parser, false);</p>
+<p>Reproduce code:<br>
+---------------<br>
+#server - add the usual stuff as well<br>
+function echo($params) {<br>
+    $ret = new XML_RPC_Value($params-&gt;getParam(0), &#039;string&#039;);<br>
+    return new XML_RPC_Response($ret);<br>
+}</p>
+<p># client<br>
+$params = array(new XML_RPC_Value(&quot;&lt;&amp;&gt;&quot;, &quot;string&quot;));<br>
+$msg = new XML_RPC_Message(&quot;echo&quot;, $params);<br>
+$client = new XML_RPC_Client(&quot;/RPC2&quot;, &quot;localhost&quot;, 8080);<br>
+$response = $client-&gt;send($msg);<br>
+print($response-&gt;value());</p>
+<p>Expected result:<br>
+----------------<br>
+The value that comes out should be the same as the value that went in: &quot;&lt;&amp;&gt;&quot;.</p>
+<p>Actual result:<br>
+--------------<br>
+The returned string should just contain the request parameter.  Instead the value returned is &quot;&lt;&lt;&amp;&amp;&gt;&gt;&quot;.</p>
+</section>
+<section>
+<h3>[2004-03-15 21:58 UTC] marthom at nortelnetworks dot com</h3>
+<p>Hi,</p>
+<p>I am still seeing the same problem with the latest files from CVS.  It doesn&#039;t look like the code specific to the problem has changed between versions 1.11 and 1.21 of RPC.php.</p>
+<p>If I use a PHP server, the problem is compounded, since both ends exhibit the same problem.  For example, for a simple &#039;echo&#039; command, if I send the string &#039;hello&amp;&#039;, I get a response of &#039;hello&amp;&amp;&amp;&amp;&#039;.</p>
+<p>It is possible that the version of xmllib/libxml2 affects this, I have version 2.6.4 installed.</p>
+<p>Regards,<br>
+Martin</p>
+</section>
+<section>
+<h3>[2004-10-08 17:46 UTC] amir dot laher at complinet dot com</h3>
+<p>Hi,</p>
+<p>I&#039;m using the following regex cludge in the method &#039;parseResponse&#039; (XML_RPC_Message object) ... RPC.inc line 738, after &#039;xml_parser_free($parser);&#039;:</p>
+<p>$data= $XML_RPC_xh[$parser][&#039;st&#039;];<br>
+        $data= ereg_replace(&quot;&lt;&lt;&quot;,&quot;&lt;&quot;,$data);<br>
+        $data= ereg_replace(&quot;&gt;&gt;&quot;,&quot;&gt;&quot;,$data);<br>
+        $data= ereg_replace(&quot;&amp;&amp;&quot;,&quot;&amp;&quot;,$data);<br>
+        $data= ereg_replace(&#039;&quot;&#039;,&#039;&#039;,$data);<br>
+        $XML_RPC_xh[$parser][&#039;st&#039;]= $data;</p>
+<p>It seems to work for now...</p>
+<p>Cheers</p>
+<p>Amir</p>
+</section>
+<section>
+<h3>[2004-10-08 17:49 UTC] amir dot laher at complinet dot com</h3>
+<p>ps. The extra characters seem to appear during &#039;xml_parse&#039; in the &#039;xml_set_character_data_handler function&#039;, &#039;XML_RPC_cd&#039;</p>
+<p>It&#039;s definitely a bit complicated!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

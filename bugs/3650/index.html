@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3650</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject_FormBuilder/index.html">DB_DataObject_FormBuilder</a> &#187; Bug #3650</h1>
+<p>processForm autodetect not sequence keys</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3650</th><td>processForm autodetect not sequence keys</td></tr>
+<tr><th>Submitted</th><td>2005-02-28 20:43 UTC</td></tr>
+<tr><th>From</th><td>abarrei at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>justinpatrin</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject_FormBuilder/index.html">DB_DataObject_FormBuilder</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-28 20:43 UTC] abarrei at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+When you use not auto_increment keys, it says on the documentation that you could override that function to perform an additional check to see if an insert or and update should be perform.</p>
+<p>I was thinking why this shouldn&#039;t be inside the class and so I would like to ask you that. as a query type:  DB_DATAOBJECT_FORMBUILDER_QUERY_AUTODETECT should be able to detect and handle this situation.</p>
+<p>I did the following in<br>
+ * @version  $Id: FormBuilder.php,v 1.119 2005/01/28 01:23:45 justinpatrin Exp $</p>
+<p>Line: 2165<br>
+                case DB_DATAOBJECT_FORMBUILDER_QUERY_FORCEUPDATE:<br>
+                    if ( $this-&gt;_do-&gt;update() === 0 )<br>
+                    {<br>
+                        $id = $this-&gt;_do-&gt;insert();<br>
+                        $this-&gt;debug(&#039;ID (&#039;.$pk.&#039;) of the new object: &#039;.$id.&#039;&lt;br/&gt;&#039;);<br>
+                        break;<br>
+                    }<br>
+                    $this-&gt;debug(&#039;Object updated.&lt;br/&gt;&#039;);<br>
+                    break;</p>
+<p>Is there any reason about why this was not included inside the class?</p>
+<p>Greetings,<br>
+Ariel.=</p>
+</section>
+<section>
+<h3>[2005-02-28 22:32 UTC] abarrei at gmail dot com</h3>
+<p>I have already overrided the sequenceKey method to indicate there is no sequence key. What I meant is actually documented on the formbuilder processForm function. It is the situation when you don&#039;t have a sequence (or automatic generated key) so when formbuilder checks what to do, if update or insert, as the primary key is not empty (because you&#039;ve filled it in your form, it tries to update a never inserted record.</p>
+<p>According to DB_Dataobject class, the update() function returns FALSE on error, or a number of modified records on success. That&#039;s why I am using the === operator, so if the update() return 0, meaning success but no row modified, then it should be inserted.</p>
+<p>Is it any clearer?</p>
+</section>
+<section>
+<h3>[2005-02-28 23:45 UTC] abarrei at gmail dot com</h3>
+<p>Yeah, I always use autoincremented ids. However, in the project I am working for, there are relationships that should be imported (CSV) using other db relationships that are not ids and I thought it was quicker and cleaner to do it this way, so I don&#039;t need to do all the conversions between their keys and my keys.</p>
+<p>About having your primary key in the form, in this case the primary key is, as an example, your driver license, there is no problem detecting the key, the $do-&gt;keys() works ok, and I have the &lt;var $fb_hidePrimaryKey = false;&gt; on my DO and so I can fill the primary key in the form. I am not sure this isn&#039;t a normal way to do it, just a different way without using autoincs ids.</p>
+<p>I thought this sceneario wasn&#039;t that strange, but may be I am wrong :)</p>
+<p>Look at this part of the documentation of the processForm:</p>
+<p>* &lt;i&gt;&lt;b&gt;Careful:&lt;/b&gt; If you&#039;re using natural keys or cross-referencing tables where you don&#039;t have<br>
+* one dedicated primary key, this will always assume that you want to do an update! As there<br>
+* won&#039;t be a matching entry in the table, no action will be performed at all - the reason<br>
+* for this behaviour can be very hard to detect. Thus, if you have such a situation in one<br>
+* of your tables, simply override this method so that instead of the key check it will try<br>
+* to do a SELECT on the table using the current settings. If a match is found, do an update.<br>
+* If not, do an insert.&lt;/i&gt;</p>
+<p>This is very simillar of what I talking about, but I was suggesting tu include that situation on the class instead of overriding it.</p>
+<p>Sorry, I didn&#039;t mean to bother you with any philosphical discussion :)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9863</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #9863</h1>
+<p>Patch to fix &quot;Unable to bind to missing placeholder: 0&quot; error with autoExecute</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-18 08:37 UTC</td></tr>
+<tr><th>From</th><td>dranger at export-japan dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.4</td></tr>
+<tr><th>OS</th><td>All</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-18 08:37 UTC] dranger at export-japan dot com</h3>
+<p>Description:<br>
+------------<br>
+autoExecute fails when trying to bind values.</p>
+<p>Test script:<br>
+---------------<br>
+$db-&gt;extended-&gt;autoExecute(&quot;table&quot;, array(&quot;field1&quot;=&gt;$value, &quot;field2&quot;=&gt;$value2), MDB2_AUTOQUERY_UPDATE, &quot;id=$id&quot;);</p>
+<p>Patch:<br>
+--- MDB2.php    2007-01-18 17:16:52.000000000 +0900<br>
++++ MDB2.php    2007-01-18 17:17:36.000000000 +0900<br>
+@@ -3914,7 +3914,7 @@<br>
+         if (!is_numeric($parameter)) {<br>
+             $parameter = preg_replace(&#039;/^:(.*)$/&#039;, &#039;\\1&#039;, $parameter);<br>
+         }<br>
+-        if (!in_array($parameter, $this-&gt;positions)) {<br>
++        if (!array_key_exists($parameter, $this-&gt;positions)) {<br>
+             return $this-&gt;db-&gt;raiseError(MDB2_ERROR_NOT_FOUND, null, null,<br>
+                 &#039;Unable to bind to missing placeholder: &#039;.$parameter, __FUNCTION__);<br>
+         }</p>
+<p>Expected result:<br>
+----------------<br>
+It to work</p>
+<p>Actual result:<br>
+--------------<br>
+&quot;Unable to bind to missing placeholder: 0&quot;</p>
+</section>
+<section>
+<h3>[2007-01-19 00:07 UTC] dranger at export-japan dot com</h3>
+<p>This PHP script fails:</p>
+<p>&lt;?php<br>
+require_once(&#039;MDB2.php&#039;);</p>
+<p>$dsn = array(&quot;phptype&quot; =&gt; DB_TYPE,<br>
+		 &quot;hostspec&quot; =&gt; DB_HOST,<br>
+		 &quot;username&quot; =&gt; DB_USER,<br>
+		 &quot;password&quot; =&gt; DB_PWD,<br>
+		 &quot;database&quot; =&gt; DB_NAME);</p>
+<p>$options = array(&quot;debug&quot; =&gt; DEBUG_LEVEL,<br>
+		&quot;portability&quot; =&gt; MDB2_PORTABILITY_NONE);</p>
+<p>$db =&amp; MDB2::connect($dsn, $options);<br>
+$db-&gt;setFetchMode(MDB2_FETCHMODE_ASSOC);<br>
+$db-&gt;loadModule(&#039;Extended&#039;);</p>
+<p>$table = $_GET[&quot;table&quot;];<br>
+$id = $_GET[&quot;id&quot;];</p>
+<p>$fields = array();</p>
+<p>if(isset($_GET[&quot;field&quot;]))</p>
+<p>{	$field = $_GET[&quot;field&quot;];<br>
+	$value = $_POST[&quot;value&quot;];<br>
+	$fields[$field] = $value;<br>
+}</p>
+<p>$result  = $db-&gt;extended-&gt;autoExecute($table, $fields, MDB2_AUTOQUERY_UPDATE, &quot;id = $id&quot;);<br>
+?&gt;</p>
+<p>Regardless of the reproducibility, I&#039;m pretty sure that the function on line 3914 should be array_key_exists() instead on in_array() anyway; it&#039;s even like that in _execute.</p>
+</section>
+<section>
+<h3>[2007-01-19 01:51 UTC] dranger at export-japan dot com</h3>
+<p>Sorry, forgot the SQL data. $table was &quot;tour&quot;, and the $fields array was array(&quot;name&quot; =&gt; &quot;OK&quot;). $id was 10. The &quot;tour&quot; table was basically (name(text), id(int)). DB_TYPE was mysql.</p>
+</section>
+<section>
+<h3>[2007-01-22 04:44 UTC] dranger at export-japan dot com</h3>
+<p>This is in fact bogus (apologies), and was caused by mixing different versions of the MySQL driver and the core MDB2 files, just in case this happens to anyone else.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

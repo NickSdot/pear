@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9309</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_Wiki_Mediawiki/index.html">Text_Wiki_Mediawiki</a> &#187; Bug #9309</h1>
+<p>Patch for pear/Text_Wiki/Text/Wiki/Parse/Mediawiki/Url.php</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #9309</th><td>Patch for pear/Text_Wiki/Text/Wiki/Parse/Mediawiki/Url.php</td></tr>
+<tr><th>Submitted</th><td>2006-11-11 20:48 UTC</td></tr>
+<tr><th>From</th><td>outtatime at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>ritzmo</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Text_Wiki_Mediawiki/index.html">Text_Wiki_Mediawiki</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>OpenSuse 10.1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-11 20:48 UTC] outtatime at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+The diff.txt for this patch can be found at the following URL: http://jetlib.com/code/pear/2006_11-mediawiki/</p>
+<p>File in question (to be modified):<br>
+pear/Text_Wiki/Text/Wiki/Parse/Mediawiki/Url.php</p>
+<p>Verbose Explanation:<br>
+====================<br>
+  This simple change consists of appending a single entry to the schemes<br>
+array which makes it possible for Mediawiki to parse links which use the<br>
+following syntax:<br>
+  [//pear.php.net Pear::Homepage]</p>
+<p>The W3C document which discusses the resolution of partial URLs can be found<br>
+at http://www.w3.org/Addressing/URL/4_3_Partial.html.  The portion of this<br>
+document which is relevant for the purposes of this patch is the following<br>
+statement:<br>
+``If the scheme parts are different, the whole absolute URI must be given.<br>
+Otherwise, the scheme is omitted, ..``</p>
+<p>The URL definition (from the official W3 specifications) seems to support<br>
+legitimacy of the aforementioned document as it states that it does not<br>
+define the resolution of fragmented or partial URLs. This document can be<br>
+found at http://www.w3.org/Addressing/URL/url-spec.txt.  The specific quote<br>
+is:<br>
+``Fragment identifiers and partial URLs are not involved in the basic<br>
+   URL definition.``</p>
+<p>Examples:<br>
+=========<br>
+  If we were presently at https://example.com/index.php, and this page<br>
+renders a Mediawiki link which has the wiki form of<br>
+&quot;[//images.example.com/hello.jpg]&quot;, the specification would dictate that the<br>
+URI resolve to https://images.example.com/hello.jpg.</p>
+<p>As a supplementary example, if we were presently at<br>
+http://example.com/index.php, and this page renders a Mediawiki link which<br>
+has the wiki form of &quot;[//images2.example.com/hello2.jpg]&quot;, the specification<br>
+would dictate that the URI resolve to http://images2.example.com/hello2.jpg.</p>
+<p>Testing Methodology:<br>
+====================<br>
+  I am basically proposing that we add the ability to omit the scheme from a<br>
+url to be able to inherit from the proper document.  I have verified that<br>
+this works as described in the examples above through testing on my own<br>
+apache webserver.  My tests concluded that if one is to use a url in an<br>
+xhtml document which has the form of:<br>
+&quot;//fully.qualified.ip.org.dns.entry/resource/specific_one&quot;, the url scheme<br>
+gets inherited from whatever scheme the document was accessed with (I tested<br>
+that this works for both Internet Explorer 6 and Firefox 1.5).  Testing was<br>
+performed by executing queries equivalent to the examples and then checking<br>
+the logs to verify the appropriate scheme had been used each time.</p>
+<p>Optional Reading:<br>
+=================<br>
+  And for those of you who may be interested in this kind of thing, I found<br>
+http://www.w3.org/DesignIssues/Axioms.html to be an interesting read<br>
+regarding URI schemes (even though the document appears to be a decade old<br>
+by now and is not official).</p>
+<p>Final Thoughts:<br>
+===============<br>
+This is my first patch, so please forgive the general excessiveness and/or<br>
+any wrongdoing on my part.  I have put forth my best effort to follow the<br>
+protocol outlined at http://pear.php.net/manual/en/contributing.patches.php.<br>
+I welcome constructive feedback regarding how I can improve any future<br>
+patches.</p>
+<p>Thanks,<br>
+Jay</p>
+<p>Test script:<br>
+---------------<br>
+Both the .php and .phps files which demonstrate what is possible with the proposed changed can be seen at the following URL: http://jetlib.com/code/pear/2006_11-mediawiki/</p>
+<p>Expected result:<br>
+----------------<br>
+Well, this is a feature request...without the patch applied the url will obviously not be parsed ;)</p>
+<p>Actual result:<br>
+--------------<br>
+The expected output (after the patch) is: http://jetlib.com/code/pear/2006_11-mediawiki/expected_output.txt</p>
+</section>
+<section>
+<h3>[2006-11-11 21:19 UTC] ritzmo at php dot net</h3>
+<p>First, sorry for not responding to your E-Mail.<br>
+Had some busy days ;-)</p>
+<p>The patch would be ok as it is, but I&#039;m not quite sure if I want to apply it to the CVS, as the package actually tries to be compliant with the Mediawiki-Syntax and this does not include your proposed change.</p>
+</section>
+<section>
+<h3>[2006-11-18 23:06 UTC] outtatime at gmail dot com</h3>
+<p>Moritz Venn wrote:<br>
+ &gt; The patch would be ok as it is, but I&#039;m not quite sure if I <br>
+ &gt; want to apply it to the CVS, as the package actually tries <br>
+ &gt; to be compliant with the Mediawiki-Syntax and this does not <br>
+ &gt; include your proposed change.</p>
+<p>Do you know where I can find the specifications for or a clear<br>
+description of the Mediawiki-syntax?  I googled and was unable to find<br>
+anything beyond the mediawiki foundations help pages for new users.</p>
+<p>Thank you,<br>
+Jay Taylor</p>
+</section>
+<section>
+<h3>[2006-11-21 10:53 UTC] ritzmo at php dot net</h3>
+<p>As the Package description says, we use these help pages (found at http://meta.wikimedia.org/wiki/Help:Editing#The_wiki_markup for clarification) for reference.<br>
+It is the best documentation besides the mediawiki paser-code (well, actually I think the documentation is way easier to read ;-)).</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

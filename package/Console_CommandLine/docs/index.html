@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Console_CommandLine Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Console &#187; <a href="package/Console_CommandLine/index.html">Console_CommandLine</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Console_CommandLine/docs/index.html#package-console-console-commandline-intro">Introduction</a>
+</li>
+<li><a href="package/Console_CommandLine/docs/index.html#package-console-console-commandline-creating-the-parser">Creating the parser</a>
+</li>
+<li><a href="package/Console_CommandLine/docs/index.html#package-console-console-commandline-options">Managing command line options</a>
+</li>
+<li><a href="package/Console_CommandLine/docs/index.html#package-console-console-commandline-arguments">Managing command line arguments</a>
+</li>
+<li><a href="package/Console_CommandLine/docs/index.html#package-console-console-commandline-sub-commands">Managing command line sub-commands</a>
+</li>
+<li><a href="package/Console_CommandLine/docs/index.html#package-console-console-commandline-extending">Extending Console_CommandLine</a>
+</li>
+<li><a href="package/Console_CommandLine/docs/index.html#package-console-console-commandline-web">Using Console_CommandLine in web environments</a>
+</li>
+<li><a href="package/Console_CommandLine/docs/index.html#package-console-console-commandline-examples">Examples</a>
+</li></ul>
+</nav>
+<p>Console_CommandLine is a full featured package for managing command line options and arguments highly inspired from the python optparse module, it allows the developer to easily build complex command line interfaces.</p>
+<section id="package-console-console-commandline-intro">
+<h2>Introduction</h2>
+<h3>Introduction</h3>
+
+  
+  <p><a href="package/Console_CommandLine/docs/index.html">Console_CommandLine</a>
+    is a convenient, flexible, and powerful library for parsing command-line
+    options and arguments.</p>
+  <p>It uses adeclarative style of command-line parsing: you create an instance
+    of Console_CommandLine, populate it with options, arguments and even 
+    sub-commands and parse the command line.
+    <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine</a>
+    allows users to specify options in the conventional GNU/POSIX syntax, and
+    additionally generates usage and help messages for you.</p>
+  <p>DISCLAIMER: since Console_CommandLine was highly inspired from the 
+    <a href="http://docs.python.org/library/module-optparse.html">python 
+    optparse module</a> and thus is very similar to it, some parts of this document
+    were shamelessly copied from optparse manual.</p>
+  <p><strong>A simple example:</strong></p>
+      
+      <pre><code>&lt;?php
+require_once &#039;Console/CommandLine.php&#039;;
+
+$parser = new Console_CommandLine();
+$parser-&gt;description = &#039;A fantastic command line program that does nothing.&#039;;
+$parser-&gt;version = &#039;1.5.0&#039;;
+$parser-&gt;addOption(&#039;filename&#039;, array(
+    &#039;short_name&#039;  =&gt; &#039;-f&#039;,
+    &#039;long_name&#039;   =&gt; &#039;--file&#039;,
+    &#039;description&#039; =&gt; &#039;write report to FILE&#039;,
+    &#039;help_name&#039;   =&gt; &#039;FILE&#039;,
+    &#039;action&#039;      =&gt; &#039;StoreString&#039;
+));
+$parser-&gt;addOption(&#039;quiet&#039;, array(
+    &#039;short_name&#039;  =&gt; &#039;-q&#039;,
+    &#039;long_name&#039;   =&gt; &#039;--quiet&#039;,
+    &#039;description&#039; =&gt; &quot;don&#039;t print status messages to stdout&quot;,
+    &#039;action&#039;      =&gt; &#039;StoreTrue&#039;
+));
+try {
+    $result = $parser-&gt;parse();
+    // do something with the result object
+    print_r($result-&gt;options);
+    print_r($result-&gt;args);
+} catch (Exception $exc) {
+    $parser-&gt;displayError($exc-&gt;getMessage());
+}
+?&gt;</code></pre>
+    
+  
+  <p>With the above lines of code, users of the script can now use the program
+    like this:</p>
+      <pre>
+$ &lt;yourscript&gt; --file=outfile -q</pre>
+
+    
+  
+  <p>As it parses the command line, Console_CommandLine sets attributes of the
+    result object returned by 
+    <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine::parse()</a>
+    method based on user-supplied command-line values. 
+    When
+    <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine::parse()</a>
+    returns from parsing this command line,
+    <code>$result-&gt;options[&#039;filename&#039;]</code> will be 
+    &quot;outfile&quot; and <code>$result-&gt;options[&#039;quiet&#039;]</code>
+    will be <strong>TRUE</strong>.</p>
+  <p>Console_CommandLine supports both long and short options, allows short
+    options to be merged together, and allows options to be associated with
+    their arguments in a variety of ways.</p>
+  <p>The following lines are all equivalent for the above example:</p>
+      <pre>
+$ &lt;yourscript&gt; -f outfile --quiet
+$ &lt;yourscript&gt; --quiet --file outfile
+$ &lt;yourscript&gt; -q -foutfile
+$ &lt;yourscript&gt; -qfoutfile</pre>
+
+    
+  
+  <p>Additionally, to get help, users can do this:</p>
+      <pre>
+$ &lt;yourscript&gt; -h
+$ &lt;yourscript&gt; --help</pre>
+
+    
+  
+  <p>These commands will print:</p>
+      <pre>
+A fantastic command line program that does nothing.
+
+Usage:
+  tmp.php [options]
+
+Options:
+  -f FILE, --file=FILE  write report to FILE
+  -q, --quiet           don&#039;t print status messages to stdout
+  -h, --help            show this help message and exit
+  --version             show the program version and exit</pre>
+
+    
+  
+  <p>Console_CommandLine also manage the program version automatically:</p>
+      <pre>
+$ &lt;yourscript&gt; --version</pre>
+
+    
+  
+  <p>The above command will print:</p>
+      <pre>
+$ &lt;yourscript&gt; version 1.5.0.</pre>
+
+    <p>where the value of yourscript is determined at runtime (normally from
+    <code>$argv[0]</code>, except if you specified explicitely a 
+    name for your parser).</p>
+</section>
+<section id="package-console-console-commandline-creating-the-parser">
+<h2>Creating the parser</h2>
+<h3><strong>Console_CommandLine</strong> constructor</h3>
+
+
+  <p><a href="package/Console_CommandLine/docs/index.html">Console_CommandLine::__construct()</a>
+    takes an optional array of parameters explained in the table below.
+    Note that if you are using an XML definition file, you
+    can pass these parameters in it (see XML example for
+    details).</p>
+  <table><caption>Available parameters</caption>
+
+      
+         <thead>
+           <tr>
+             <th>name</th>
+             <th>type</th>
+             <th>required</th>
+             <th>description</th>
+           </tr>
+
+         </thead>
+
+        <tbody>
+          <tr>
+            <td>name</td>
+            <td>string</td>
+            <td>no, default to <code>$argv[0]</code> if not given</td>
+            <td>the name of your program</td>
+          </tr>
+
+          <tr>
+            <td>description</td>
+            <td>string</td>
+            <td>no, but recommended for the help message</td>
+            <td>the description of your program: this should explain what
+                your program is supposed to do</td>
+          </tr>
+
+          <tr>
+            <td>version</td>
+            <td>mixed (string or numeric)</td>
+            <td>no, note that if not given, the --version option will
+                not be available</td>
+            <td>the program version number</td>
+          </tr>
+
+          <tr>
+            <td>add_help_option</td>
+            <td>boolean</td>
+            <td>no, default to <strong>TRUE</strong></td>
+            <td>if set to <strong>FALSE</strong> the parser will not generate
+                automatically the &quot;help&quot; option</td>
+          </tr>
+
+          <tr>
+            <td>add_version_option</td>
+            <td>boolean</td>
+            <td>no, default to <strong>TRUE</strong></td>
+            <td>if set to <strong>FALSE</strong> the parser will not generate
+                automatically the &quot;version&quot; option</td>
+          </tr>
+
+          <tr>
+            <td>force_posix</td>
+            <td>boolean</td>
+            <td>no, default to <strong>FALSE</strong></td>
+            <td>if set to <strong>TRUE</strong>, the parser will force
+                POSIX compliance (please see the gettext
+                manual for more information)</td>
+          </tr>
+
+        </tbody></table>
+
+   
+ 
+ <h3>Using PHP code</h3>
+
+
+  <p>The examples below demonstrate how to instanciate
+    <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine</a>
+    and build a parser using PHP code.</p>
+  <p><strong>The simplest way</strong></p>
+
+      <pre><code>&lt;?php
+require_once &#039;Console/CommandLine.php&#039;;
+$parser = new Console_CommandLine(array(
+    &#039;description&#039; =&gt; &#039;A useful description for your program.&#039;,
+    &#039;version&#039;     =&gt; &#039;0.0.1&#039;, // the version of your program
+));
+?&gt;</code></pre>
+    
+  
+  <p><strong>Alternative method</strong></p>
+
+      <pre><code>&lt;?php
+require_once &#039;Console/CommandLine.php&#039;;
+$parser = new Console_CommandLine();
+$parser-&gt;description = &#039;A useful description for your program.&#039;;
+$parser-&gt;version = &#039;0.0.1&#039;; // the version of your program
+?&gt;</code></pre>
+    
+  
+ 
+ <h3>Using an XML definition file</h3>
+
+
+  <p>The examples below demonstrate how to instanciate
+    <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine</a>
+    and build a parser using an XML definition file, this
+    can be very useful if you have a big program or if you need to reuse your
+    user interface settings for a web frontend for example.</p><p><strong>The XML file</strong></p>
+
+      
+        <pre>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; standalone=&quot;yes&quot;?&gt;
+&lt;command&gt;
+    &lt;description&gt;A useful description for your program.&lt;/description&gt;
+    &lt;version&gt;0.0.1&lt;/version&gt;
+&lt;/command&gt;</pre>
+
+      
+    
+  
+  <p><strong>The PHP file</strong></p>
+
+      <pre><code>&lt;?php
+require_once &#039;Console/CommandLine.php&#039;;
+$parser = Console_CommandLine::fromXmlFile(&#039;example.xml&#039;);
+?&gt;</code></pre>
+    
+  
+
+  <blockquote>
+   <p>Using an XML string you would have called
+    <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine::fromXmlString()</a>
+    instead of
+    <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine::fromXmlFile()</a>
+    of course.</p>
+  </blockquote>
+</section>
+<section id="package-console-console-commandline-options">
+<h2>Managing command line options</h2>
+<h3>Some background</h3>
+
+
+   <p>Options are used to provide extra information to tune or customize the
+     execution of a program. In case it wasn&#039;t clear, options are usually
+     optional. A program should be able to run just fine with no options
+     whatsoever. Pick a random program from the Unix or GNU toolsets. Can it
+     run without any options at all and still make sense? The main exceptions
+     are find, tar, and dd--all of which are mutant oddballs that have been
+     rightly criticized for their non-standard syntax and confusing
+     interfaces.</p>
+   <p>Lots of people want their programs to have &quot;required options&quot;. Think
+     about it. If it&#039;s required, then it&#039;s not optional! If there is a piece
+     of information that your program absolutely requires in order to run
+     successfully, that&#039;s what arguments are for.</p>
+   <p>As an example of good command-line interface design, consider the humble
+     cp utility, for copying files. It doesn&#039;t make much sense to try to copy
+     files without supplying a destination and at least one source. Hence, cp
+     fails if you run it with no arguments. However, it has a flexible, useful
+     syntax that does not require any options at all:</p>
+       <pre>
+$ cp SOURCE DEST
+$ cp SOURCE ... DEST-DIR</pre>
+
+     
+   
+   <p>You can get pretty far with just that. Most cp implementations provide a
+     bunch of options to tweak exactly how the files are copied: you can
+     preserve mode and modification time, avoid following symlinks, ask before
+     clobbering existing files, etc. But none of this distracts from the core
+     mission of cp, which is to copy either one file to another, or several
+     files to another directory.</p>
+ 
+ <h3>Adding options with <strong>Console_CommandLine</strong></h3>
+
+
+   <p>To add options to your parser, just create the parser as explained in the
+     previous section and use the
+     <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine::addOption()</a>
+     method.</p>
+   <p>The
+       <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine::addOption()</a>
+       method takes two arguments:</p><ul>
+       <li>
+         the option name: a string that will be used to access the
+          option in the result object. For example if you name your option
+          foo, you will access to the result object like this:
+          <code>$result-&gt;options[&#039;foo&#039;]</code>;
+       </li>
+       <li>
+         the options parameters: an array of various informations,
+          as explained below.
+       </li>
+     </ul>
+     <table><caption>Available option parameters</caption>
+
+       
+         <thead>
+           <tr>
+             <th>name</th>
+             <th>type</th>
+             <th>required</th>
+             <th>description</th>
+             <th>example</th>
+           </tr>
+
+         </thead>
+
+         <tbody>
+           <tr>
+             <td>short_name</td>
+             <td>string</td>
+             <td>yes, if no long_name given</td>
+             <td>the option short name</td>
+             <td>-o</td>
+           </tr>
+
+           <tr>
+             <td>long_name</td>
+             <td>string</td>
+             <td>yes, if no short_name given</td>
+             <td>the option long name</td>
+             <td>--orientation</td>
+           </tr>
+
+           <tr>
+             <td>description</td>
+             <td>string</td>
+             <td>no, but recommended for the help message</td>
+             <td>a description for the option</td>
+             <td>orientation of the page: ltr (default) or rtl</td>
+           </tr>
+
+           <tr>
+             <td>action</td>
+             <td>string</td>
+             <td>no, default to &quot;StoreString&quot;</td>
+             <td>the option action (see next section for details)</td>
+             <td>StoreString</td>
+           </tr>
+
+           <tr>
+             <td>default</td>
+             <td>mixed</td>
+             <td>no</td>
+             <td>the option default value</td>
+             <td>ltr</td>
+           </tr>
+
+           <tr>
+             <td>choices</td>
+             <td>array</td>
+             <td>no, only relevant for options that expect argument(s)</td>
+             <td>list of possible values for the option</td>
+             <td>array(&#039;ltr&#039;, &#039;rtl&#039;)</td>
+           </tr>
+
+           <tr>
+             <td>list</td>
+             <td>array</td>
+             <td>no, only relevant for options that use the &quot;List&quot; action</td>
+             <td>list of values to display</td>
+             <td>array(&#039;blue&#039;, &#039;green&#039;, &#039;yellow&#039;)</td>
+           </tr>
+
+           <tr>
+             <td>add_list_option</td>
+             <td>boolean</td>
+             <td>no, default to <strong>FALSE</strong></td>
+             <td>this property is only relevant when the choices property
+                 is set, if set to <strong>TRUE</strong> the parser will generate an
+                 additional option to list the choices (eg. --list-foo).</td>
+             <td><strong>TRUE</strong></td>
+           </tr>
+
+           <tr>
+             <td>help_name</td>
+             <td>string</td>
+             <td>no, if not given it will default to the option name</td>
+             <td>the name to display in the option help line</td>
+             <td>page_orientation (the help ligne will be:
+               --orientation=page_orientation)</td>
+           </tr>
+
+         </tbody></table>
+
+   
+   <p><strong>Adding commandline options</strong></p>
+
+       <pre><code>&lt;?php
+require_once &#039;Console/CommandLine.php&#039;;
+$parser = new Console_CommandLine(array(
+   &#039;description&#039; =&gt; &#039;A useful description for your program.&#039;,
+   &#039;version&#039;     =&gt; &#039;0.0.1&#039;, // the version of your program
+));
+
+// Adding a simple option that takes no argument and that tell our program to
+// turn on verbose output:
+$parser-&gt;addOption(
+   &#039;verbose&#039;,
+   array(
+      &#039;short_name&#039;  =&gt; &#039;-v&#039;,
+      &#039;long_name&#039;   =&gt; &#039;--verbose&#039;,
+      &#039;description&#039; =&gt; &#039;turn on verbose output&#039;,
+      &#039;action&#039;      =&gt; &#039;StoreTrue&#039;
+  )
+);
+
+// Adding an option that will store a string
+$parser-&gt;addOption(
+   &#039;orientation&#039;,
+   array(
+       &#039;short_name&#039;  =&gt; &#039;-o&#039;,
+       &#039;long_name&#039;   =&gt; &#039;--orientation&#039;,
+       &#039;description&#039; =&gt; &#039;orientation of the page, &quot;ltr&quot; (default) or &quot;rtl&quot;&#039;,
+       &#039;action&#039;      =&gt; &#039;StoreString&#039;,
+       &#039;default&#039;     =&gt; &#039;ltr&#039;,
+       &#039;help_name&#039;   =&gt; &#039;page_orientation&#039;
+  )
+);
+
+try {
+   $result = $parser-&gt;parse();
+   print_r($result-&gt;options);
+} catch (Exception $exc) {
+   $parser-&gt;displayError($exc-&gt;getMessage());
+}
+?&gt;</code></pre>
+     
+   
+   <p>Now if the user type:</p>
+   
+       <pre>
+$ &lt;yourprogram&gt; -vo rtl</pre>
+
+     
+   
+   <p>or (equivalent):</p>
+   
+       <pre>
+$ &lt;yourprogram&gt; --verbose --orientation=rtl</pre>
+
+     
+   
+   <p>The output of the above script will be:</p>
+   
+       <pre>
+Array
+(
+   [verbose] =&gt; 1
+   [orientation] =&gt; rtl
+   [help] =&gt;
+   [version] =&gt;
+)</pre>
+
+     
+   
+ 
+ <h3>Options actions</h3>
+
+
+   <p>Actions tell the parser how to handle option values, among other things
+     they tell the parser if the option expects a value or not and how to
+     store this value in the result object.</p>
+   <h3>StoreTrue</h3>
+
+
+     <p>This action tells the parser to store the value true in the
+       result object if the option is present in the command line, for
+       example:</p>
+     <pre>$ &lt;yourprogram&gt; -v</pre>
+
+     
+     <p>will store <strong>TRUE</strong> in <code>$result-&gt;options[&#039;verbose&#039;]</code>,
+       assuming the option was defined like this:</p>
+     <pre><code>&lt;?php
+$parser-&gt;addOption(&#039;verbose&#039;, array(&#039;short_name&#039;=&gt;&#039;-v&#039;, &#039;action&#039;=&gt;&#039;StoreTrue&#039;));
+$result = $parser-&gt;parse();
+?&gt;</code></pre>
+     
+   
+   <h3>StoreFalse</h3>
+
+
+     <p>This action tells the parser to store the value false in the
+       result object if the option is present in the command line, for
+       example:</p>
+     <pre>$ &lt;yourprogram&gt; -q</pre>
+
+     
+     <p>will store <strong>FALSE</strong> in <code>$result-&gt;options[&#039;verbose&#039;]</code>,
+       assuming the option was defined like this:</p>
+     <pre><code>&lt;?php
+$parser-&gt;addOption(&#039;verbose&#039;, array(&#039;short_name&#039;=&gt;&#039;-q&#039;, &#039;action&#039;=&gt;&#039;StoreFalse&#039;));
+$result = $parser-&gt;parse();
+?&gt;</code></pre>
+     
+   
+   <h3>StoreString</h3>
+
+
+     <p>This action tells the parser that the option expects a value and to
+       store this value as a string in the result object, for example:</p>
+     <pre>$ &lt;yourprogram&gt; -o out.txt</pre>
+
+     
+     <p>will store the string &quot;out.txt&quot; in
+       <code>$result-&gt;options[&#039;outfile&#039;]</code>,
+       assuming the option was defined like this:</p>
+     <pre><code>&lt;?php
+$parser-&gt;addOption(&#039;outfile&#039;, array(&#039;short_name&#039;=&gt;&#039;-o&#039;, &#039;action&#039;=&gt;&#039;StoreString&#039;));
+$result = $parser-&gt;parse();
+?&gt;</code></pre>
+     
+   
+   <h3>StoreInt</h3>
+
+
+     <p>This action tells the parser that the option expects a value and
+       to store this value as an integer in the result object, for example:</p>
+     <pre>$ &lt;yourprogram&gt; --width=500</pre>
+
+     
+     <p>will store the integer 500 in <code>$result-&gt;options[&#039;width&#039;]</code>,
+       assuming the option was defined like this:</p>
+     <pre><code>&lt;?php
+$parser-&gt;addOption(&#039;width&#039;, array(&#039;long_name&#039;=&gt;&#039;--width&#039;, &#039;action&#039;=&gt;&#039;StoreInt&#039;));
+$result = $parser-&gt;parse();
+?&gt;</code></pre>
+     
+   
+   <h3>StoreFloat</h3>
+
+
+     <p>This action tells the parser that the option expects a value and
+       to store this value as a float in the result object, for example:</p>
+     <pre>$ &lt;yourprogram&gt; -l=0.3</pre>
+
+     
+     <p>will store the float 0.3 in <code>$result-&gt;options[&#039;level&#039;]</code>,
+       assuming the option was defined like this:</p>
+     <pre><code>&lt;?php
+$parser-&gt;addOption(&#039;level&#039;, array(&#039;short_name&#039;=&gt;&#039;-l&#039;, &#039;action&#039;=&gt;&#039;StoreFloat&#039;));
+$result = $parser-&gt;parse();
+?&gt;</code></pre>
+     
+   
+   <h3>Counter</h3>
+
+
+     <p>This action tells the parser to increment the value in the result
+       object each time it encounters the option in the command line, for
+       example:</p>
+     <pre>$ &lt;yourprogram&gt; -vvvv</pre>
+
+     
+     <p>or the equivalent:</p>
+     <pre>$ &lt;yourprogram&gt; -v -v -v --verbose</pre>
+
+     
+     <p>will store the integer 4 in
+       <code>$result-&gt;options[&#039;verbose_level&#039;]</code>,
+       assuming the option was defined like this:</p>
+     <pre><code>&lt;?php
+$parser-&gt;addOption(&#039;verbose_level&#039;, array(
+   &#039;short_name&#039; =&gt; &#039;-v&#039;,
+   &#039;long_name&#039;  =&gt; &#039;--verbose&#039;,
+   &#039;action&#039;     =&gt; &#039;Counter&#039;
+));
+$result = $parser-&gt;parse();
+?&gt;</code></pre>
+     
+   
+   <h3>Help</h3>
+
+
+     <p>This action tells the parser to display the help message if it
+       encounters the option in the command line, most of the time you won&#039;t
+       need this since it is handled by
+       <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine</a>
+       internally.</p>
+   
+   <h3>Version</h3>
+
+
+     <p>This action tells the parser to display the program version if it
+       encounters the option in the command line, as for Help action, chances
+       are that you won&#039;t need this since it is handled by
+       <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine</a>
+       internally.</p>
+   
+   <h3>Password</h3>
+
+
+     <p>This action allows the user to either type the password on the
+       commandline or to be prompted for it (will not echo on unix systems),
+       some examples:</p>
+     <pre><code>&lt;?php
+$parser-&gt;addOption(&#039;password&#039;, array(&#039;short_name&#039;=&gt;&#039;-p&#039;, &#039;action&#039;=&gt;&#039;Password&#039;));
+$result = $parser-&gt;parse();
+?&gt;</code></pre>
+     
+     <pre>$ &lt;yourprogram&gt; -ps3cret</pre>
+
+     
+     <p>will store the string &quot;s3ecret&quot; in
+         <code>$result-&gt;options[&#039;password&#039;]</code></p>
+     <p>whereas:</p>
+     <pre>$ &lt;yourprogram&gt; -p</pre>
+
+     
+     <p>will &quot;prompt&quot; the user for entering his/her password
+         without echoing it, and will store &quot;s3ecret&quot; in
+         <code>$result-&gt;options[&#039;password&#039;]</code></p>
+   
+   <h3>Callback</h3>
+
+
+     <p>This action allows to specify a PHP callback
+         to handle user input. The callback must be a php callable and must
+         accept five arguments:</p>
+     <ul>
+       <li>
+         the value of the option;
+       </li>
+       <li>
+         the
+           <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine_Option_Callback</a>
+           instance
+       </li>
+       <li>
+         the
+           <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine_Result</a>
+           instance
+       </li>
+       <li>
+         the
+           <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine</a>
+           instance (the parser)
+       </li>
+       <li>
+         an array of additional parameters that you specify when
+             building your option.
+       </li>
+     </ul>
+     <p>Your callback function must return the modified (or not modified)
+         value (the first argument).</p>
+     <p>All these arguments should give you enough flexibility to build
+         complex callback actions.</p>
+     <p>If the callback is to a class method, then the method must be declared as a public.</p>
+     <p>Here is a simple example:</p>
+     <pre><code>&lt;?php
+/**
+* A simple encryption callback.
+*
+*/
+function encryptCallback($value, $option, $result, $parser, $params=array())
+{
+   if (!isset($params[&#039;salt&#039;])) {
+       $params[&#039;salt&#039;] = &#039;&#039;;
+   }
+   return sha1($params[&#039;salt&#039;] . $value);
+}
+
+require_once &#039;Console/CommandLine.php&#039;;
+
+$parser = new Console_CommandLine();
+$parser-&gt;addOption(&#039;encrypt&#039;, array(
+   &#039;short_name&#039;    =&gt; &#039;-e&#039;,
+   &#039;long_name&#039;     =&gt; &#039;--encrypt&#039;,
+   &#039;action&#039;        =&gt; &#039;Callback&#039;,
+   &#039;description&#039;   =&gt; &#039;encrypt the given value using sha1 + salt&#039;,
+   &#039;callback&#039;      =&gt; &#039;encryptCallback&#039;,
+   &#039;action_params&#039; =&gt; array(&#039;salt&#039; =&gt; &#039;x2897ZHKx7200j1__2&#039;)
+));
+
+try {
+   $result = $parser-&gt;parse();
+   echo $result-&gt;options[&#039;encrypt&#039;] . &quot;\n&quot;;
+} catch (Exception $exc) {
+   $parser-&gt;displayError($exc-&gt;getMessage());
+}
+?&gt;</code></pre>
+     
+     <p>Now if the user type:</p>
+     
+         <pre>
+$ &lt;yourprogram&gt; -e foobar</pre>
+
+       
+     
+     <p>The output of the above script will be:</p>
+     <pre>7f12da3b1c126d7a47745b09dc0040c92cee1700</pre>
+
+     
+   
+   <h3>List</h3>
+
+
+     <p>a special action that simply output an array as a list.</p>
+     <pre><code>&lt;?php
+$parser-&gt;addOption(&#039;list_colors&#039;, array(
+   &#039;short_name&#039; =&gt; &#039;-l&#039;,
+   &#039;long_name&#039;  =&gt; &#039;--list-colors&#039;,
+   &#039;action&#039;     =&gt; &#039;List&#039;,
+   &#039;action_params&#039; =&gt; array(
+       &#039;list&#039;      =&gt; array(&#039;blue&#039;, &#039;green&#039;, &#039;yellow&#039;),
+       &#039;delimiter&#039; =&gt; &#039;,&#039; //optional
+   )
+));
+$result = $parser-&gt;parse();
+?&gt;</code></pre>
+     
+     <pre>$ &lt;yourprogram&gt; --list-colors</pre>
+
+     
+     <p>will display the list of colors separated by commas.</p>
+</section>
+<section id="package-console-console-commandline-arguments">
+<h2>Managing command line arguments</h2>
+<h3>Some background</h3>
+
+
+   <p>Arguments are for those pieces of information that your program
+     absolutely, positively requires to run.</p>
+   <p>A good user interface should have as few absolute requirements as
+     possible. If your program requires 17 distinct pieces of information in
+     order to run successfully, it doesn&#039;t much matter how you get that
+     information from the user, most people will give up and walk away before
+     they successfully run the program. This applies whether the user
+     interface is a command-line, a configuration file, or a GUI: if you make
+     that many demands on your users, most of them will simply give up.</p>
+   <p>In short, try to minimize the amount of information that users are
+     absolutely required to supply and use sensible defaults whenever
+     possible. Of course, you also want to make your programs reasonably
+     flexible. That&#039;s what options are for.</p>
+ 
+ <h3>Adding arguments with <strong>Console_CommandLine</strong></h3>
+
+
+   <p>To add arguments to your parser, just create the parser as explained in
+     the previous section and use the
+     <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine::addArgument()</a>
+     method.</p>
+   <p>The
+     <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine::addArgument()</a>
+     method takes two arguments:</p><ul>
+       <li>
+         the argument name: a string that will be used to access the
+           argument in the result object. For example if you name your
+           argument foo, you will access to the result object like this:
+           <code>$result-&gt;args[&#039;foo&#039;]</code>;
+       </li>
+       <li>
+         the arguments parameters: an array of various informations
+          as explained below.
+       </li>
+     </ul>
+   
+   <table><caption>Available arguments parameters</caption>
+
+       
+         <thead>
+           <tr>
+             <th>name</th>
+             <th>type</th>
+             <th>required</th>
+             <th>description</th>
+             <th>example</th>
+           </tr>
+
+         </thead>
+
+         <tbody>
+           <tr>
+             <td>description</td>
+             <td>string</td>
+             <td>no, but recommended for the help message</td>
+             <td>a description for the argument</td>
+             <td>entry list of input files separated by spaces</td>
+           </tr>
+
+           <tr>
+             <td>multiple</td>
+             <td>boolean</td>
+             <td>no, default to <strong>FALSE</strong></td>
+             <td>tells the parser that the argument expects multiples values</td>
+             <td><strong>TRUE</strong></td>
+           </tr>
+
+           <tr>
+             <td>optional</td>
+             <td>boolean</td>
+             <td>no, default to <strong>FALSE</strong></td>
+             <td>tells the parser that the argument is optional</td>
+             <td><strong>TRUE</strong></td>
+           </tr>
+
+           <tr>
+             <td>help_name</td>
+             <td>string</td>
+             <td>no, if not given it will default to the argument name</td>
+             <td>the name to display in the argument help line</td>
+             <td>files</td>
+           </tr>
+
+         </tbody></table>
+
+   
+   <p><strong>Adding commandline arguments</strong></p>
+
+       <pre><code>&lt;?php
+require_once &#039;Console/CommandLine.php&#039;;
+$parser = new Console_CommandLine();
+
+// add an array argument
+$parser-&gt;addArgument(&#039;input_files&#039;, array(&#039;multiple&#039;=&gt;true));
+
+// add a simple argument
+$parser-&gt;addArgument(&#039;output_file&#039;);
+
+try {
+   $result = $parser-&gt;parse();
+   print_r($result-&gt;args);
+} catch (Exception $exc) {
+   $parser-&gt;displayError($exc-&gt;getMessage());
+}
+?&gt;</code></pre>
+     
+   
+   <p>If the user type:</p>
+   
+       <pre>
+$ &lt;yourprogram&gt; file1 file2 file3</pre>
+
+     
+   
+   <p>The output of the above script will be:</p>
+   
+       <pre>
+Array
+(
+   [input_files] =&gt; Array
+       (
+           [0] =&gt; file1
+           [1] =&gt; file2
+       )
+
+   [output_file] =&gt; file3
+)</pre>
+</section>
+<section id="package-console-console-commandline-sub-commands">
+<h2>Managing command line sub-commands</h2>
+<h3>What are sub-commands ?</h3>
+
+
+   <p>Some programs are very complex, you can&#039;t do anything about that but
+     you need to provide the best user interface possible in order to have
+     happy users. In some cases, sub-commands can be very useful, take the
+     PEAR installer for example, it is much more clearer to separate the
+     installer functionalities than to mix all functionalities in the same
+     interface, that&#039;s why you have an interface like:</p>
+   
+     <pre>
+$ pear install &lt;options&gt; &lt;pkgname&gt;
+$ pear upgrade &lt;options&gt; &lt;pkgname&gt;
+and so on...</pre>
+
+   
+ 
+ <h3>Adding sub-commands with <strong>Console_CommandLine</strong></h3>
+
+
+   <p>Adding sub-commands is quite simple, basically you use the 
+     <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine::addCommand()</a>
+     method that returns a 
+     <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine_Command</a>
+     instance and then you build your command instance like you would do for
+     the main parser (add options, arguments etc...).
+     One thing to remember is that sub-commands are exactly the same as main
+     parsers: they have the same properties and methods.</p>
+   <p>Let&#039;s take a simple example to demonstrate the use of sub-commands, in
+     the following code we will build a simple command line program that will
+     have two sub-commands: &quot;foo&quot; and &quot;bar&quot;:</p><pre><code>&lt;?php
+// Include the Console_CommandLine package.
+require_once &#039;Console/CommandLine.php&#039;;
+
+// create the parser
+$parser = new Console_CommandLine(array(
+   &#039;description&#039; =&gt; &#039;A great program that can foo and bar !&#039;,
+   &#039;version&#039;     =&gt; &#039;1.0.0&#039;
+));
+
+// add a global option to make the program verbose
+$parser-&gt;addOption(&#039;verbose&#039;, array(
+   &#039;short_name&#039;  =&gt; &#039;-v&#039;,
+   &#039;long_name&#039;   =&gt; &#039;--verbose&#039;,
+   &#039;action&#039;      =&gt; &#039;StoreTrue&#039;,
+   &#039;description&#039; =&gt; &#039;turn on verbose output&#039;
+));
+
+// add the foo subcommand
+$foo_cmd = $parser-&gt;addCommand(&#039;foo&#039;, array(
+   &#039;description&#039; =&gt; &#039;output the given string with a foo prefix&#039;
+));
+$foo_cmd-&gt;addOption(&#039;reverse&#039;, array(
+   &#039;short_name&#039;  =&gt; &#039;-r&#039;,
+   &#039;long_name&#039;   =&gt; &#039;--reverse&#039;,
+   &#039;action&#039;      =&gt; &#039;StoreTrue&#039;,
+   &#039;description&#039; =&gt; &#039;reverse the given string before echoing it&#039;
+));
+$foo_cmd-&gt;addArgument(&#039;text&#039;, array(
+   &#039;description&#039; =&gt; &#039;the text to output&#039;
+));
+
+// add the bar subcommand
+$bar_cmd = $parser-&gt;addCommand(&#039;bar&#039;, array(
+   &#039;description&#039; =&gt; &#039;output the given string with a bar prefix&#039;
+));
+$bar_cmd-&gt;addOption(&#039;reverse&#039;, array(
+   &#039;short_name&#039;  =&gt; &#039;-r&#039;,
+   &#039;long_name&#039;   =&gt; &#039;--reverse&#039;,
+   &#039;action&#039;      =&gt; &#039;StoreTrue&#039;,
+   &#039;description&#039; =&gt; &#039;reverse the given string before echoing it&#039;
+));
+$bar_cmd-&gt;addArgument(&#039;text&#039;, array(
+   &#039;description&#039; =&gt; &#039;the text to output&#039;
+));
+
+?&gt;</code></pre><p>Of course, we could also build our parser with sub-commands using an xml
+     file, the xml file would be:</p>
+       <pre>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; standalone=&quot;yes&quot;?&gt;
+&lt;command&gt;
+   &lt;description&gt;A great program that can foo and bar !&lt;/description&gt;
+   &lt;version&gt;1.0.0&lt;/version&gt;
+   &lt;option name=&quot;verbose&quot;&gt;
+       &lt;short_name&gt;-v&lt;/short_name&gt;
+       &lt;long_name&gt;--verbose&lt;/long_name&gt;
+       &lt;description&gt;turn on verbose output&lt;/description&gt;
+       &lt;action&gt;StoreTrue&lt;/action&gt;
+   &lt;/option&gt;
+   &lt;command&gt;
+       &lt;name&gt;foo&lt;/name&gt;
+       &lt;description&gt;output the given string with a foo prefix&lt;/description&gt;
+       &lt;option name=&quot;reverse&quot;&gt;
+           &lt;short_name&gt;-r&lt;/short_name&gt;
+           &lt;long_name&gt;--reverse&lt;/long_name&gt;
+           &lt;description&gt;reverse the string before echoing it&lt;/description&gt;
+           &lt;action&gt;StoreTrue&lt;/action&gt;
+       &lt;/option&gt;
+       &lt;argument name=&quot;text&quot;&gt;
+           &lt;description&gt;the text to output&lt;/description&gt;
+       &lt;/argument&gt;
+   &lt;/command&gt;
+   &lt;command&gt;
+       &lt;name&gt;bar&lt;/name&gt;
+       &lt;description&gt;output the given string with a bar prefix&lt;/description&gt;
+       &lt;option name=&quot;reverse&quot;&gt;
+           &lt;short_name&gt;-r&lt;/short_name&gt;
+           &lt;long_name&gt;--reverse&lt;/long_name&gt;
+           &lt;description&gt;reverse the string before echoing it&lt;/description&gt;
+           &lt;action&gt;StoreTrue&lt;/action&gt;
+       &lt;/option&gt;
+       &lt;argument name=&quot;text&quot;&gt;
+           &lt;description&gt;the text to output&lt;/description&gt;
+       &lt;/argument&gt;
+   &lt;/command&gt;
+&lt;/command&gt;</pre>
+
+     
+
+   
+   <p>Also note that sub-commands support aliases, for example it is possible 
+      to have an &quot;update&quot; command and specify &quot;up&quot; as an alias (shortcut) of 
+      the command:</p><pre><code>&lt;?php
+
+$parser-&gt;addCommand(&#039;update&#039;, array(
+    &#039;description&#039; =&gt; &#039;Update the given package&#039;,
+    &#039;aliases&#039;     =&gt; array(&#039;up&#039;), // we can have more than 1 alias
+));
+
+?&gt;</code></pre>
+   
+   <p>So far, so good, now let&#039;s see how to use this parser.
+     When a user type a sub-command in the command line, the result object will
+     have two properties set: the 
+     <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine_Result::$command_name</a>
+     that will contain the name (as a string) of the sub-command typed by
+     the user, and the 
+     <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine_Result::$command</a>
+     that will contain a 
+     <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine_Result</a>
+     instance, specific to the provided sub-command.
+     For example with the above parser, we would do:</p><pre><code>&lt;?php
+
+try {
+   $result = $parser-&gt;parse();
+   // find which command was entered
+   switch ($result-&gt;command_name) {
+   case &#039;foo&#039;:
+       // the user typed the foo command
+       // options and arguments for this command are stored in the
+       // $result-&gt;command instance:
+       print_r($result-&gt;command);
+       exit(0);
+   case &#039;bar&#039;:
+       // the user typed the bar command
+       // options and arguments for this command are stored in the
+       // $result-&gt;command instance:
+       print_r($result-&gt;command);
+       exit(0);
+   default:
+       // no command entered
+       exit(0);
+   }
+} catch (Exception $exc) {
+   $parser-&gt;displayError($exc-&gt;getMessage());
+}
+
+?&gt;</code></pre>
+</section>
+<section id="package-console-console-commandline-extending">
+<h2>Extending Console_CommandLine</h2>
+<h3>Adding custom actions</h3>
+
+  <p><a href="package/Console_CommandLine/docs/index.html">Console_CommandLine</a>
+  allows you to register custom actions when you need it.
+  Basically, you just create a action class that inherits from
+  <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine_Action</a>
+  and you call the 
+  <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine::registerAction()</a>
+  method to register it.</p>
+  <p>Let&#039;s take a simple example, suppose we want to create a &quot;range&quot; action that 
+  would allow the user to type:</p>
+       <pre>
+$ &lt;yourprogram&gt; -r 1,5</pre>
+
+     <p>And in our 
+  <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine_Result</a>
+  instance we would have:</p>
+       <pre>
+// $result-&gt;options[&#039;range&#039;]: array(&#039;min&#039; =&gt; 1, &#039;max&#039; =&gt; 5)</pre>
+
+     <p>Here&#039;s how we would do:</p><pre><code>&lt;?php
+
+require_once &#039;Console/CommandLine.php&#039;;
+require_once &#039;Console/CommandLine/Action.php&#039;;
+
+class ActionRange extends Console_CommandLine_Action
+{
+    public function execute($value=false, $params=array())
+    {
+        $range = explode(&#039;,&#039;, str_replace(&#039; &#039;, &#039;&#039;, $value));
+        if (count($range) != 2) {
+            throw new Exception(sprintf(
+                &#039;Option &quot;%s&quot; must be 2 integers separated by a comma&#039;,
+                $this-&gt;option-&gt;name
+             ));
+        }
+        $this-&gt;setResult(array(&#039;min&#039; =&gt; $range[0], &#039;max&#039; =&gt; $range[1]));
+    }
+}
+
+// then we can register our action
+Console_CommandLine::registerAction(&#039;Range&#039;, &#039;ActionRange&#039;);
+
+// and now our action is available !
+$parser = new Console_CommandLine();
+$parser-&gt;addOption(&#039;range&#039;, array(
+    &#039;short_name&#039;  =&gt; &#039;-r&#039;,
+    &#039;long_name&#039;   =&gt; &#039;--range&#039;,
+    &#039;action&#039;      =&gt; &#039;Range&#039;, // note our custom action
+    &#039;description&#039; =&gt; &#039;A range of two integers separated by a comma&#039;
+));
+// etc...
+
+?&gt;</code></pre>
+  
+ 
+
+ <h3>Using a custom renderer</h3>
+
+  <p>TODO: write this section</p>
+</section>
+<section id="package-console-console-commandline-web">
+<h2>Using Console_CommandLine in web environments</h2>
+<h3>Introduction</h3>
+
+  
+  <p>So there is a nice shell script that does everything it ever should do,
+   and other people - without shell access - have to use it now.
+   Or the script needs to be called
+   regularly from outside the server it is running on. What now?</p>
+  <p>If your server runs a HTTP server with PHP, the problem is already solved
+   because <strong>Console_Commandline</strong> supports reading HTTP
+   <code>$_GET</code> and <code>$_POST</code> variables
+   out of the box.</p>
+ 
+ 
+ 
+  
+   <h3>A simple example</h3>
+
+  
+  <p>The scripts task in this example is to print out the current time. The
+   user may customize the output by specifying the format string.</p>
+  <p>Between shell and web access is only one difference: On the web, the text
+   shall be printed out in large letters by wrapping it in a
+   <code>h1</code> tag.</p>
+  <p><strong>Console_CommandLine</strong> by itself cares about reading
+   HTTP GET and POST variables when it is run through PHP&#039;s CGI or web
+   server (e.g. Apache with <code>mod_php</code>). Let&#039;s try it:</p>
+
+  <pre><code>&lt;?php
+require_once &#039;Console/CommandLine.php&#039;;
+$parser = new Console_CommandLine();
+$parser-&gt;description = &#039;Print out the current time&#039;;
+$parser-&gt;version     = &#039;1.23&#039;;
+$parser-&gt;addOption(
+    &#039;format&#039;,
+    array(
+        &#039;short_name&#039;  =&gt; &#039;-f&#039;,
+        &#039;long_name&#039;   =&gt; &#039;--format&#039;,
+        &#039;action&#039;      =&gt; &#039;StoreString&#039;,
+        &#039;default&#039;     =&gt; &#039;Y-m-d H:i:s&#039;,
+        &#039;description&#039; =&gt; &#039;date()-compatible format string&#039;,
+    )
+);
+
+$result = $parser-&gt;parse();
+echo date($result-&gt;options[&#039;format&#039;]) . &quot;\n&quot;;
+?&gt;</code></pre>
+  
+  
+   
+    <p><strong>Shell output</strong></p>
+   
+   <pre>$ php web.php <br>2009-06-13 10:10:15<br>$ php web.php --help<br>Print out the current time<br><br>Usage:<br>  web.php [options]<br><br>Options:<br>  -f format, --format=format  date()-compatible format string<br>  -h, --help                  show this help message and exit<br>  -v, --version               show the program version and exit<br><br>$ php web.php --format=d.m.Y<br>13.06.2009</pre>
+
+  
+  
+  
+   
+    <p><strong>Web output without parameters</strong></p>
+   
+   <pre>2009-06-13 10:10:15</pre>
+
+  
+  
+  
+   
+    <p><strong>Web output for web.php?--help</strong></p>
+   
+   <pre>Print out the current time Usage: --help [options]<br>Options: -f format, --format=format date()-compatible format string -h,<br>--help show this help message and exit -v, --version show the program<br>version and exit</pre>
+
+  
+  
+  
+   
+    <p><strong>Web output for web.php?format=d.m.Y</strong></p>
+   
+   <pre>13.06.2009</pre>
+
+  
+  
+  <p>The functionality is there, but it does not look nice.</p>
+  
+  <blockquote>
+   <p>When using <code>GET</code> and <code>POST</code>
+    parameters, <strong>Console_CommandLine</strong> accepts
+    three types of parameter names:</p>
+   <ul>
+    <li>
+     <code>short_name</code> as configured for the option
+    </li>
+    <li>
+     <code>long_name</code> as configured
+    </li>
+    <li>
+     <em>option name</em> as passed as first parameter
+      to <a href="package/Console_CommandLine/docs/index.html">Console_CommandLine::addOption()</a>.
+     
+    </li>
+   </ul>
+   <p>So in our example, one can call</p>
+   <ul>
+    <li>
+     <code>web.php?-f=d.m.Y</code>
+    </li>
+    <li>
+     <code>web.php?--format=d.m.Y</code>
+    </li>
+    <li>
+     <code>web.php?format=d.m.Y</code>
+    </li>
+   </ul>
+   
+   <p>For arguments, the <em>argument name</em> has to be
+    used as GET or POST key.</p>
+  </blockquote>
+
+ 
+
+
+ 
+  
+   <h3>A prettier example</h3>
+
+  
+  
+  <p>Building upon our previous example, we care about pretty output here:</p>
+  <ul>
+   <li>
+    Time wrapped in <code>h1</code> tags.
+   </li>
+   <li>
+    Monospaced help text
+   </li>
+   <li>
+    Monospaced error text
+   </li>
+  </ul>
+  
+  <p>While we did not catch any errors - as there are nearly none to produce
+   in that example - the code contains it now for completeness.</p>
+  
+  <p>First and foremost, we check if we are in an HTTP environment by checking
+   the SAPI (Server API) name. If we are not in CLI, we echo out
+   <code>&lt;h1&gt;</code> and <code>&lt;/h1&gt;</code>.</p>
+  <p>To get the help text printed with monospaced text, a custom
+   <a href="package/Console_CommandLine/docs/index.html">renderer</a>
+   is defined. For the sake of easiness, the
+   <a href="package/Console_CommandLine/docs/index.html">default console
+   renderer</a> is extendet since it does nearly everything we
+   need here.</p>
+
+  <pre><code>&lt;?php
+require_once &#039;Console/CommandLine.php&#039;;
+$parser = new Console_CommandLine();
+$parser-&gt;description = &#039;Print out the current time&#039;;
+$parser-&gt;version     = &#039;1.23&#039;;
+$parser-&gt;addOption(
+    &#039;format&#039;,
+    array(
+        &#039;short_name&#039;  =&gt; &#039;-f&#039;,
+        &#039;long_name&#039;   =&gt; &#039;--format&#039;,
+        &#039;action&#039;      =&gt; &#039;StoreString&#039;,
+        &#039;default&#039;     =&gt; &#039;Y-m-d H:i:s&#039;,
+        &#039;description&#039; =&gt; &#039;date()-compatible format string&#039;,
+    )
+);
+
+class HtmlRenderer extends Console_CommandLine_Renderer_Default
+{
+    public function usage()
+    {
+        return &#039;&lt;pre&gt;&#039; . parent::usage() . &#039;&lt;/pre&gt;&#039;;
+    }
+    
+    public function error($error)
+    {
+        return &#039;&lt;pre&gt;&#039; . parent::error($error) . &#039;&lt;/pre&gt;&#039;;
+    }
+}
+
+$parser-&gt;accept(new HtmlRenderer());
+
+$http = (php_sapi_name() != &#039;cli&#039;);
+try {
+   $result = $parser-&gt;parse();
+   if ($http) {
+       echo &#039;&lt;h1&gt;&#039;;
+   }
+   echo date($result-&gt;options[&#039;format&#039;]) . &quot;\n&quot;;
+   if ($http) {
+       echo &#039;&lt;/h1&gt;&#039;;
+   }
+} catch (Exception $exc) {
+   $parser-&gt;displayError($exc-&gt;getMessage());
+}
+?&gt;</code></pre>
+</section>
+<section id="package-console-console-commandline-examples">
+<h2>Examples</h2>
+<h3>Basic example</h3>
+
+    
+    <p><strong>Basic example</strong></p>
+      
+      <pre><code>&lt;?php
+// Include the Console_CommandLine package.
+require_once &#039;Console/CommandLine.php&#039;;
+
+// create the parser
+$parser = new Console_CommandLine(array(
+    &#039;description&#039; =&gt; &#039;zip given files using the php zip module.&#039;,
+    &#039;version&#039;     =&gt; &#039;1.0.0&#039;
+));
+
+// add an option to make the program verbose
+$parser-&gt;addOption(
+    &#039;verbose&#039;,
+    array(
+        &#039;short_name&#039;  =&gt; &#039;-v&#039;,
+        &#039;long_name&#039;   =&gt; &#039;--verbose&#039;,
+        &#039;action&#039;      =&gt; &#039;StoreTrue&#039;,
+        &#039;description&#039; =&gt; &#039;turn on verbose output&#039;
+    )
+);
+
+// add an option to delete original files after zipping
+$parser-&gt;addOption(
+    &#039;delete&#039;,
+    array(
+        &#039;short_name&#039;  =&gt; &#039;-d&#039;,
+        &#039;long_name&#039;   =&gt; &#039;--delete&#039;,
+        &#039;action&#039;      =&gt; &#039;StoreTrue&#039;,
+        &#039;description&#039; =&gt; &#039;delete original files after zip operation&#039;
+    )
+);
+
+// add the files argument, the user can specify one or several files
+$parser-&gt;addArgument(
+    &#039;files&#039;,
+    array(
+        &#039;multiple&#039; =&gt; true,
+        &#039;description&#039; =&gt; &#039;list of files to zip separated by spaces&#039;
+    )
+);
+
+// add the zip file name argument
+$parser-&gt;addArgument(&#039;zipfile&#039;, array(&#039;description&#039; =&gt; &#039;zip file name&#039;));
+
+// run the parser
+try {
+    $result = $parser-&gt;parse();
+    // write your program here...
+    print_r($result-&gt;options);
+    print_r($result-&gt;args);
+} catch (Exception $exc) {
+    $parser-&gt;displayError($exc-&gt;getMessage());
+}
+?&gt;</code></pre>
+      
+    
+  
+  <h3>
+        Basic example using an XML definition file
+    </h3>
+
+    
+    <p><strong>Basic example (XML file)</strong></p>
+          
+        
+          <pre>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; standalone=&quot;yes&quot;?&gt;
+&lt;command&gt;
+    &lt;description&gt;zip given files using the php zip module.&lt;/description&gt;
+    &lt;version&gt;1.0.0&lt;/version&gt;
+    &lt;option name=&quot;verbose&quot;&gt;
+        &lt;short_name&gt;-v&lt;/short_name&gt;
+        &lt;long_name&gt;--verbose&lt;/long_name&gt;
+        &lt;description&gt;turn on verbose output&lt;/description&gt;
+        &lt;action&gt;StoreTrue&lt;/action&gt;
+    &lt;/option&gt;
+    &lt;option name=&quot;delete&quot;&gt;
+        &lt;short_name&gt;-d&lt;/short_name&gt;
+        &lt;long_name&gt;--delete&lt;/long_name&gt;
+        &lt;description&gt;delete original files after zip operation&lt;/description&gt;
+        &lt;action&gt;StoreTrue&lt;/action&gt;
+    &lt;/option&gt;
+    &lt;argument name=&quot;files&quot;&gt;
+        &lt;description&gt;a list of files to zip together&lt;/description&gt;
+        &lt;multiple&gt;true&lt;/multiple&gt;
+    &lt;/argument&gt;
+    &lt;argument name=&quot;zipfile&quot;&gt;
+        &lt;description&gt;path to the zip file to generate&lt;/description&gt;
+    &lt;/argument&gt;
+&lt;/command&gt;</pre>
+
+        
+      
+    
+    <p><strong>Basic example (PHP file)</strong></p>
+        
+        <pre><code>&lt;?php
+// Include the Console_CommandLine package.
+require_once &#039;Console/CommandLine.php&#039;;
+
+// create the parser from xml file
+$xmlfile = dirname(__FILE__) . DIRECTORY_SEPARATOR . &#039;ex2.xml&#039;;
+$parser = Console_CommandLine::fromXmlFile($xmlfile);
+
+
+// run the parser
+try {
+    $result = $parser-&gt;parse();
+    // todo: your program here ;)
+    print_r($result-&gt;options);
+    print_r($result-&gt;args);
+} catch (Exception $exc) {
+    $parser-&gt;displayError($exc-&gt;getMessage());
+}
+?&gt;</code></pre>
+      
+    
+  
+  
+  <h3>Sub-commands example</h3>
+
+    
+    <p><strong>Sub-commands example</strong></p>
+      
+      <pre><code>&lt;?php
+// Include the Console_CommandLine package.
+require_once &#039;Console/CommandLine.php&#039;;
+
+// create the parser
+$parser = new Console_CommandLine(array(
+    &#039;description&#039; =&gt; &#039;A great program that can foo and bar !&#039;,
+    &#039;version&#039;     =&gt; &#039;1.0.0&#039;
+));
+
+// add a global option to make the program verbose
+$parser-&gt;addOption(&#039;verbose&#039;, array(
+    &#039;short_name&#039;  =&gt; &#039;-v&#039;,
+    &#039;long_name&#039;   =&gt; &#039;--verbose&#039;,
+    &#039;action&#039;      =&gt; &#039;StoreTrue&#039;,
+    &#039;description&#039; =&gt; &#039;turn on verbose output&#039;
+));
+
+// add the foo subcommand
+$foo_cmd = $parser-&gt;addCommand(&#039;foo&#039;, array(
+    &#039;description&#039; =&gt; &#039;output the given string with a foo prefix&#039;
+));
+$foo_cmd-&gt;addOption(&#039;reverse&#039;, array(
+    &#039;short_name&#039;  =&gt; &#039;-r&#039;,
+    &#039;long_name&#039;   =&gt; &#039;--reverse&#039;,
+    &#039;action&#039;      =&gt; &#039;StoreTrue&#039;,
+    &#039;description&#039; =&gt; &#039;reverse the given string before echoing it&#039;
+));
+$foo_cmd-&gt;addArgument(&#039;text&#039;, array(
+    &#039;description&#039; =&gt; &#039;the text to output&#039;
+));
+
+// add the bar subcommand
+$bar_cmd = $parser-&gt;addCommand(&#039;bar&#039;, array(
+    &#039;description&#039; =&gt; &#039;output the given string with a bar prefix&#039;
+));
+$bar_cmd-&gt;addOption(&#039;reverse&#039;, array(
+    &#039;short_name&#039;  =&gt; &#039;-r&#039;,
+    &#039;long_name&#039;   =&gt; &#039;--reverse&#039;,
+    &#039;action&#039;      =&gt; &#039;StoreTrue&#039;,
+    &#039;description&#039; =&gt; &#039;reverse the given string before echoing it&#039;
+));
+$bar_cmd-&gt;addArgument(&#039;text&#039;, array(
+    &#039;description&#039; =&gt; &#039;the text to output&#039;
+));
+
+// run the parser
+try {
+    $result = $parser-&gt;parse();
+    if ($result-&gt;command_name) {
+        $st = $result-&gt;command-&gt;options[&#039;reverse&#039;] 
+            ? strrev($result-&gt;command-&gt;args[&#039;text&#039;])
+            : $result-&gt;command-&gt;args[&#039;text&#039;];
+        if ($result-&gt;command_name == &#039;foo&#039;) { 
+            echo &quot;Foo says: $st\n&quot;;
+        } else if ($result-&gt;command_name == &#039;bar&#039;) {
+            echo &quot;Bar says: $st\n&quot;;
+        }
+    }
+} catch (Exception $exc) {
+    $parser-&gt;displayError($exc-&gt;getMessage());
+}
+
+?&gt;</code></pre>
+      
+    
+  
+  <h3>
+        Sub-commands example using an XML definition file
+    </h3>
+
+    
+    <p><strong>Sub-commands example (XML file)</strong></p>
+          
+        
+          <pre>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; standalone=&quot;yes&quot;?&gt;
+&lt;command&gt;
+    &lt;description&gt;A great program that can foo and bar !&lt;/description&gt;
+    &lt;version&gt;1.0.0&lt;/version&gt;
+    &lt;option name=&quot;verbose&quot;&gt;
+        &lt;short_name&gt;-v&lt;/short_name&gt;
+        &lt;long_name&gt;--verbose&lt;/long_name&gt;
+        &lt;description&gt;turn on verbose output&lt;/description&gt;
+        &lt;action&gt;StoreTrue&lt;/action&gt;
+    &lt;/option&gt;
+    &lt;command&gt;
+        &lt;name&gt;foo&lt;/name&gt;
+        &lt;description&gt;output the given string with a foo prefix&lt;/description&gt;
+        &lt;option name=&quot;reverse&quot;&gt;
+            &lt;short_name&gt;-r&lt;/short_name&gt;
+            &lt;long_name&gt;--reverse&lt;/long_name&gt;
+            &lt;description&gt;reverse the string before echoing it&lt;/description&gt;
+            &lt;action&gt;StoreTrue&lt;/action&gt;
+        &lt;/option&gt;
+        &lt;argument name=&quot;text&quot;&gt;
+            &lt;description&gt;the text to output&lt;/description&gt;
+        &lt;/argument&gt;
+    &lt;/command&gt;
+    &lt;command&gt;
+        &lt;name&gt;bar&lt;/name&gt;
+        &lt;description&gt;output the given string with a bar prefix&lt;/description&gt;
+        &lt;option name=&quot;reverse&quot;&gt;
+            &lt;short_name&gt;-r&lt;/short_name&gt;
+            &lt;long_name&gt;--reverse&lt;/long_name&gt;
+            &lt;description&gt;reverse the string before echoing it&lt;/description&gt;
+            &lt;action&gt;StoreTrue&lt;/action&gt;
+        &lt;/option&gt;
+        &lt;argument name=&quot;text&quot;&gt;
+            &lt;description&gt;the text to output&lt;/description&gt;
+        &lt;/argument&gt;
+    &lt;/command&gt;
+&lt;/command&gt;</pre>
+
+        
+      
+    
+    <p><strong>Sub-commands example (PHP file)</strong></p>
+        
+        <pre><code>&lt;?php
+// Include the Console_CommandLine package.
+require_once &#039;Console/CommandLine.php&#039;;
+
+// create the parser
+$xmlfile = dirname(__FILE__) . DIRECTORY_SEPARATOR . &#039;ex4.xml&#039;;
+$parser  = Console_CommandLine::fromXmlFile($xmlfile);
+
+// run the parser
+try {
+    $result = $parser-&gt;parse();
+    if ($result-&gt;command_name) {
+        $st = $result-&gt;command-&gt;options[&#039;reverse&#039;] 
+            ? strrev($result-&gt;command-&gt;args[&#039;text&#039;])
+            : $result-&gt;command-&gt;args[&#039;text&#039;];
+        if ($result-&gt;command_name == &#039;foo&#039;) { 
+            echo &quot;Foo says: $st\n&quot;;
+        } else if ($result-&gt;command_name == &#039;bar&#039;) {
+            echo &quot;Bar says: $st\n&quot;;
+        }
+    }
+} catch (Exception $exc) {
+    $parser-&gt;displayError($exc-&gt;getMessage());
+}
+
+?&gt;</code></pre>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

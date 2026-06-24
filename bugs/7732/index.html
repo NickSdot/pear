@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7732</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Caching &#187; <a href="package/Cache_Lite/index.html">Cache_Lite</a> &#187; Bug #7732</h1>
+<p>Warning on cache reading/writing</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-05-26 12:13 UTC</td></tr>
+<tr><th>From</th><td>webmaster at rdv69 dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Cache_Lite/index.html">Cache_Lite</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.2</td></tr>
+<tr><th>OS</th><td>LINUX / WINDOWS XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-05-26 12:13 UTC] webmaster at rdv69 dot com</h3>
+<p>Description:<br>
+------------<br>
+hi,</p>
+<p>i have many warnings each time my script try to read cache :</p>
+<p>26/05/2006 14:01:19 [warning] /usr/local/lib/php/Cache/Lite.php [754] : fopen(/tmp/cache_8/cache_86/cache_862/cache_c21f969b5f03d33d43e04f8f136e7682_7d92d087cf05a804f12aec5703b2800b): failed to open stream: No such file or directory</p>
+<p>I don&#039;t understand because the cache file exists, i have checked !</p>
+<p>Another one :</p>
+<p>26/05/2006 14:01:19 [warning] /usr/local/lib/php/Cache/Lite.php [771] : mkdir(/tmp/cache_8/cache_86/): File exists</p>
+<p>IMPORTANT : this seems to appear the first time the script is called (=cache not yet created)<br>
+The second time (when cache created), warnings don&#039;t appear.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?<br>
+require_once &quot;Cache/Lite.php&quot;;<br>
+require_once &quot;Cache/Lite/Output.php&quot;;<br>
+require_once &quot;Log.php&quot;;</p>
+<p>function errorHandler($code, $message, $file, $line)<br>
+{<br>
+	global $logger;</p>
+<p>/* Map the PHP error to a Log priority. */<br>
+	switch ($code)<br>
+	{<br>
+		case E_WARNING:<br>
+		case E_USER_WARNING:<br>
+		  $priority = PEAR_LOG_WARNING;<br>
+		  break;<br>
+		case E_NOTICE:<br>
+		case E_USER_NOTICE:<br>
+		  $priority = PEAR_LOG_NOTICE;<br>
+		  break;<br>
+		case E_ERROR:<br>
+		case E_USER_ERROR:<br>
+		  $priority = PEAR_LOG_ERR;<br>
+		  break;<br>
+		default:<br>
+		  $priotity = PEAR_LOG_INFO;<br>
+	}</p>
+<p>$logger-&gt;log($file.&quot; [&quot;.$line.&quot;] : &quot;.$message, $priority);<br>
+}</p>
+<p>error_reporting(E_ALL);<br>
+ini_set(&quot;display_errors&quot;, &quot;on&quot;);</p>
+<p>$conf = array(	&quot;error_prepend&quot; =&gt; &#039;&lt;font color=&quot;#ff0000&quot;&gt;&lt;tt&gt;&#039;,<br>
+              		&quot;error_append&quot;  =&gt; &#039;&lt;/tt&gt;&lt;/font&gt;&#039;);</p>
+<p>$logger=&amp;Log::singleton(&quot;display&quot;, &quot;&quot;, &quot;&quot;, $conf, PEAR_LOG_DEBUG);</p>
+<p>set_error_handler(&quot;errorHandler&quot;);</p>
+<p>$options=array(<br>
+		&quot;cacheDir&quot;						=&gt; &quot;/tmp/&quot;,<br>
+		&quot;caching&quot;						=&gt; true,<br>
+		&quot;lifeTime&quot;						=&gt; 3600, /* secondes */<br>
+		&quot;fileLocking&quot;					=&gt; true,<br>
+		&quot;writeControl&quot;					=&gt; true,<br>
+		&quot;readControl&quot;					=&gt; false,<br>
+		&quot;readControlType&quot;				=&gt; &quot;crc32&quot;,<br>
+		&quot;pearErrorMode&quot;				=&gt; CACHE_LITE_ERROR_DIE,<br>
+		&quot;fileNameProtection&quot;			=&gt; true,<br>
+		&quot;automaticSerialization&quot;	=&gt; true,<br>
+		&quot;memoryCaching&quot;				=&gt; false,<br>
+		&quot;onlyMemoryCaching&quot;			=&gt; false,<br>
+		&quot;memoryCachingLimit&quot;			=&gt; 1000,<br>
+		&quot;automaticCleaningFactor&quot;	=&gt; 50,<br>
+		&quot;hashedDirectoryLevel&quot;		=&gt; 3<br>
+);</p>
+<p>$cache=new Cache_Lite($options);<br>
+$cache_page=new Cache_Lite_Output($options);</p>
+<p>$id_page=md5(&quot;mypage&quot;);</p>
+<p>if (!($cache_page-&gt;start($id_page)))<br>
+{<br>
+	$cache_page-&gt;end();<br>
+}</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+nothing , no warnings</p>
+<p>Actual result:<br>
+--------------<br>
+Warning: /usr/local/lib/php/Cache/Lite.php [754] : fopen(/tmp/cache_7/cache_77/cache_775/cache_c21f969b5f03d33d43e04f8f136e7682_9bd47224986bedddcd3a2eef4e970884): failed to open stream: No such file or directory<br>
+Warning: /usr/local/lib/php/Cache/Lite.php [771] : mkdir(/tmp/cache_7/): File exists</p>
+</section>
+<section>
+<h3>[2006-05-28 12:03 UTC] fab at php dot net</h3>
+<p>Please do not submit the same bug more than once. An existing<br>
+bug report already describes this very problem. Even if you feel<br>
+that your issue is somewhat different, the resolution is likely<br>
+to be the same. Because of this, we hope you add your comments<br>
+to the existing bug instead.</p>
+<p>Thank you for your interest in PEAR.</p>
+<p>see bug #7598</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

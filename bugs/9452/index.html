@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9452</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Schema/index.html">MDB2_Schema</a> &#187; Bug #9452</h1>
+<p>Table charset, collation, engine options</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #9452</th><td>Table charset, collation, engine options</td></tr>
+<tr><th>Submitted</th><td>2006-11-25 07:47 UTC</td></tr>
+<tr><th>From</th><td>pearbugs2006 at reddreamer dot com</td></tr>
+<tr><th>Status</th><td>Open</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Schema/index.html">MDB2_Schema</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Ubuntu 6.0</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-25 07:47 UTC] pearbugs2006 at reddreamer dot com</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m using MDB2_Schema with MySQL but as I&#039;m creating an internationalized app I need to make sure I&#039;ve got utf8 tables.  Right now MDB2_Schema just uses the defaults.  I simply rewrote Schema.php to always set utf8 when it creates a table, but it seems like this is an important feature to add.  In my case I wouldn&#039;t need to set each table individually, I&#039;m using the same settings through the entire database.</p>
+</section>
+<section>
+<h3>[2006-11-25 10:56 UTC] pearbugs2006 at reddreamer dot com</h3>
+<p>So it turns out to be a bit more complicated... my changes to Schema.php allowed me to create tables in UTF-8, but because in Parser.php the encoding is fixed to ISO-8859-1,  when I added initialization values it was shredding my Chinese characters before they ever made it to the database. So I had to make my own version of that too.</p>
+<p>I&#039;m in PHP5 and I removed the charset parameter from the parent::XML_Parser() call in the constructor.  Strangely, although that got it working with Chinese characters, Spanish values are being messed up.  When there&#039;s an ene (ñ, U+00F1) in the contents of an XML tag, all of the characters to the left of the *first* ene in the field are being trimmed.</p>
+<p>And of course, I&#039;m having to set the charset to &quot;utf8&quot; in the MySQL dsn.</p>
+</section>
+<section>
+<h3>[2006-11-25 12:21 UTC] pearbugs2006 at reddreamer dot com</h3>
+<p>Okay, to revise that again, it *is* actually modifying the Chinese strings too... what&#039;s happening is that in every value that has any unicode characters with codes above the Latin ones, it&#039;s trimming off everything to the left of the first unicode character.</p>
+</section>
+<section>
+<h3>[2006-12-15 15:28 UTC] pearbugs2006 at reddreamer dot com</h3>
+<p>The patch I made forces all tables to be UTF-8... I don&#039;t think you want that, do you?</p>
+</section>
+<section>
+<h3>[2007-06-10 23:31 UTC] pearbugs2006 at reddreamer dot com</h3>
+<p>I&#039;m sorry, because of the amount of time it was going to take to fix the problems I experienced in PHP I switched to another language for my product.  I don&#039;t have a running copy of the code anymore and I haven&#039;t been able to track down where I&#039;d made the change.  But to my recollection, I found the point in the code where it actually created the tables and added a single line that passed the parameter to MySQL specifying that the table should be UTF-8.  This change affected all of the tables except the seq tables.  I don&#039;t remember whether it was in the Schema files or up in the MDB2 files... it might have actually been in the MySQL driver for MDB2.  In any case, I&#039;m sure that it broke a whole bunch of stuff that I wasn&#039;t using.</p>
+</section>
+<section>
+<h3>[2007-06-10 23:44 UTC] pearbugs2006 at reddreamer dot com</h3>
+<p>Okay, I think I tracked down the code with one last try but add-patch.php in the bugs application here didn&#039;t like the name of the folder my file was in and wouldn&#039;t let me upload it... the change was in the function &quot;createTable&quot;, in this code block at line 657 in v 1.103 2006/10/21 15:00:24 :</p>
+<p>if ($create) {<br>
+		$opts =                           array(<br>
+                              &#039;charset&#039; =&gt; &#039;utf8&#039;,<br>
+                              &#039;collate&#039; =&gt; &#039;utf8_unicode_ci&#039;,<br>
+                              &#039;type&#039;    =&gt; &#039;MyISAM&#039;,<br>
+                          );<br>
+            $result = $this-&gt;db-&gt;manager-&gt;createTable($table_name, $table[&#039;fields&#039;],$opts);<br>
+            if (PEAR::isError($result)) {<br>
+                return $result;<br>
+            }<br>
+        }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

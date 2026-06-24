@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8377</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #8377</h1>
+<p>Bugfix: weird &quot;No deserializer&quot; error when passing large arrays to SOAP_Value</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-08-07 19:41 UTC</td></tr>
+<tr><th>From</th><td>jsp at rheoweb dot com</td></tr>
+<tr><th>Assigned</th><td>yunosh</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>all</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-07 19:41 UTC] jsp at rheoweb dot com</h3>
+<p>Description:<br>
+------------<br>
+When passing an array of more than 11 SOAP_Value elements to SOAP_Value, an error is generated: &quot;No deserializer for {http://schemas.xmlsoap.org/soap/envelope/}OutboundVariable&quot;</p>
+<p>The problem is due to the _isHash() function in SOAP/Base.php (beginning at line 806). For ANY array of more than 11 elements, the function WRONGLY returns FALSE (signifying an error) without providing any explanatory error message!</p>
+<p>This bugfix will more than likely also fix bug #4746.</p>
+<p>Test script:<br>
+---------------<br>
+The simplest patch that corrects the problem is this:</p>
+<p>822c822<br>
+&lt;             if ($it++ &gt; 10) {<br>
+---<br>
+&gt;             else if ($it++ &gt; 10) {</p>
+<p>A better patch that is more efficient and generates an error message can be found here (valid for 30 days):</p>
+<p>http://rheoweb.com/Base.php.diff</p>
+<p>Please let me know if (when?) you decide to incorporate either patch.</p>
+<p>Expected result:<br>
+----------------<br>
+I expect a valid SOAP_Value object, which is what I would get if I pass an array of less than 11 elements.</p>
+<p>Failing that, I expect some kind of error message that tells me what&#039;s happening.</p>
+<p>I expect programmers of every creed and code to avoid silently embedding arbitrary constants in their code without at least generating a warning on request to folks who get burned by it:-)</p>
+<p>Actual result:<br>
+--------------<br>
+No deserializer for {http://schemas.xmlsoap.org/soap/envelope/}OutboundVariable</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

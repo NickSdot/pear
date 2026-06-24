@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Net_WebFinger Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_WebFinger/index.html">Net_WebFinger</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Net_WebFinger/docs/index.html#package-networking-net-webfinger-usage">How to use the package</a>
+</li>
+<li><a href="package/Net_WebFinger/docs/index.html#package-networking-net-webfinger-links">Link access</a>
+</li>
+<li><a href="package/Net_WebFinger/docs/index.html#package-networking-net-webfinger-security">Security</a>
+</li>
+<li><a href="package/Net_WebFinger/docs/index.html#package-networking-net-webfinger-errorhandling">Error handling</a>
+</li>
+<li><a href="package/Net_WebFinger/docs/index.html#package-networking-net-webfinger-caching">Caching</a>
+</li>
+<li><a href="package/Net_WebFinger/docs/index.html#package-networking-net-webfinger-http-adapter">Custom HTTP adapters</a>
+</li>
+<li><a href="package/Net_WebFinger/docs/index.html#package-networking-net-webfinger-references">References</a>
+</li></ul>
+</nav>
+<p>WebFinger client library for PHP. Discover meta data about users by just their email address. Discoverable data may be the user&#039;s OpenID, profile page URL, link to portable contacts, hcard, foaf and other user pages. Distributed social networks use WebFinger to distribute public encryption keys, OStatus and Salmon URLs. Net_WebFinger supports draft-ietf-appsawg-webfinger-13 and can fall back to RFC 6415 (host-meta + lrdd).</p>
+<section id="package-networking-net-webfinger-usage">
+<h2>How to use the package</h2>
+<p>At first, include the PHP file, create a
+  <a href="package/Net_WebFinger/docs/index.html">Net_WebFinger</a>
+  object and run
+  <a href="package/Net_WebFinger/docs/index.html">finger()</a>
+  on it, passing the identifier
+  (often the e-mail address, always <code>user@host</code>).
+  <code>finger()</code> returns a
+  <a href="package/Net_WebFinger/docs/index.html">Net_WebFinger_Reaction object</a>
+  which you can use to get links from.</p>
+
+ <pre><code>&lt;?php
+require_once &#039;Net_WebFinger.php&#039;;
+$wf = new Net_WebFinger();
+$reaction = $wf-&gt;finger(&#039;user@example.org&#039;);
+?&gt;</code></pre>
+
+ <p>Now you have access to the
+  <a href="package/Net_WebFinger/docs/index.html#package-networking-net-webfinger-links">links</a>,
+  <a href="package/Net_WebFinger/docs/index.html#package-networking-net-webfinger-errorhandling">errors</a>
+  and
+  <a href="package/Net_WebFinger/docs/index.html#package-networking-net-webfinger-security">security information</a>.</p>
+</section>
+<section id="package-networking-net-webfinger-links">
+<h2>Link access</h2>
+<p>The 
+  <a href="package/Net_WebFinger/docs/index.html">Net_WebFinger_Reaction object</a>
+  you get from 
+  <a href="package/Net_WebFinger/docs/index.html">Net_WebFinger::finger()</a>
+  lets you access the the user&#039;s links in three ways:</p>
+ <ul>
+  <li>
+   
+    By one of the <em>short name</em> properties.
+   
+  </li>
+  
+  <li>
+   
+    The <code>get()</code> method.
+   
+  </li>
+
+  <li>
+   
+    Iterate with <code>foreach()</code> over the reaction object.
+   
+  </li>
+ </ul>
+
+
+ 
+  
+   <h3>Short name properties</h3>
+  
+
+  <p>Often used
+   <a href="http://code.google.com/p/webfinger/wiki/CommonLinkRelations">link relations</a>
+   have a dedicated &quot;short name&quot; in <strong>Net_WebFinger</strong>
+   to make accessing the link easy:</p>
+   
+  <table><caption>Supported short names</caption>
+   
+    <thead>
+     <tr>
+      <th>Short name</th>
+      <th>Link relation URL</th>
+     </tr>
+
+    </thead>
+
+    <tbody>
+     <tr>
+      <td><code>contacts</code></td>
+      <td><code>http://portablecontacts.net/spec/1.0</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td><code>hcard</code></td>
+      <td><code>http://microformats.org/profile/hcard</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td><code>openid</code></td>
+      <td><code>http://specs.openid.net/auth/2.0/provider</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td><code>profile</code></td>
+      <td><code>http://webfinger.net/rel/profile-page</code>
+      </td>
+     </tr>
+
+     <tr>
+      <td><code>xfn</code></td>
+      <td><code>http://gmpg.org/xfn/11</code>
+      </td>
+     </tr>
+
+    </tbody></table>
+
+
+  <p>You can use each short name as property on the reaction object like this:</p>
+  <pre><code>&lt;?php
+require_once &#039;Net/WebFinger.php&#039;;
+$wf  = new Net_WebFinger();
+$react = $wf-&gt;finger(&#039;user@example.org&#039;);
+if ($react-&gt;openid !== null) {
+    echo &#039;OpenID provider found: &#039; . $react-&gt;openid . &quot;\n&quot;;
+}
+?&gt;</code></pre>
+ 
+
+
+ 
+  
+   <h3>Net_WebFinger_Reaction::get()</h3>
+  
+
+  <p><a href="package/Net_WebFinger/docs/index.html">Net_WebFinger_Reaction::get()</a>
+   can always be used to access any link, especially those that have no
+   short name. Just pass the URL of the link relation.</p>
+  <p>It returns <code>NULL</code> in case the link is not available,
+   and the string if its there.</p>
+  <pre><code>&lt;?php
+require_once &#039;Net/WebFinger.php&#039;;
+$wf = new Net_WebFinger();
+$react = $wf-&gt;finger(&#039;user@example.org&#039;);
+$openIdProvider = $react-&gt;get(&#039;http://specs.openid.net/auth/2.0/provider&#039;);
+if ($openIdProvider !== null) {
+    echo &#039;OpenID provider found: &#039; . $openIdProvider . &quot;\n&quot;;
+}
+?&gt;</code></pre>
+ 
+
+
+ 
+  
+   <h3>foreach()</h3>
+  
+
+  <p>You may use <code>foreach()</code> on the
+   <a href="package/Net_WebFinger/docs/index.html">Net_WebFinger_Reaction</a>
+   object to get all links.</p>
+  <p>This will give you a 
+   <a href="package/XML_XRD/docs/index.html">XML_XRD_Element_Link</a> object
+   for each single link.</p>
+  <pre><code>&lt;?php
+require_once &#039;Net/WebFinger.php&#039;;
+$wf = new Net_WebFinger();
+$react = $wf-&gt;finger(&#039;user@example.org&#039;);
+foreach ($react as $link) {
+    echo &#039;Link: &#039; . $link-&gt;rel . &#039; to &#039; . $link-&gt;href . &quot;\n&quot;;
+}
+?&gt;</code></pre>
+</section>
+<section id="package-networking-net-webfinger-security">
+<h2>Security</h2>
+<p>The underlying XRD files will be retrieved via SSL when possible, with fallback
+  to normal HTTP. In the latter case, the XRD files need to have valid signatures
+  in order to be seen as secure.</p>
+ <p>The XRD subject is also verified. When it does not match the host name of the
+  email address, then the information are seen as insecure.</p>
+ <p>You should not trust the information if they are not secure.</p>
+
+ <pre><code>&lt;?php
+require_once &#039;Net/WebFinger.php&#039;;
+$wf  = new Net_WebFinger();
+$react = $wf-&gt;finger(&#039;user@example.org&#039;);
+if (!$react-&gt;secure) {
+    die(&quot;Those data may not be trusted\n&quot;);
+}
+?&gt;</code></pre>
+
+ <blockquote>
+  <p>You often still want to use the data, since not all hosts have
+   SSL enabled.</p>
+ </blockquote>
+</section>
+<section id="package-networking-net-webfinger-errorhandling">
+<h2>Error handling</h2>
+<p><strong>Net_WebFinger</strong> does not throw any exceptions.
+  If an error occurs during WebFinger discovery, it is stored
+  as
+  <a href="package/Net_WebFinger/docs/index.html">Net_WebFinger_Error</a>
+  object in the reaction&#039;s
+  <a href="package/Net_WebFinger/docs/index.html">$error</a>
+  property.
+  If you really need it, you can access it there.</p>
+ <p>When accessing links that are not defined, you will get a
+  <code>NULL</code> value instead of a string.</p>
+</section>
+<section id="package-networking-net-webfinger-caching">
+<h2>Caching</h2>
+<p>With caching, all retrieved XRD/JRD files will be stored
+  locally, which leads to faster lookup times when the same identifier
+  (email address) is loaded again.</p>
+ <p>You should use caching when your application often does WebFinger requests.
+  For older RFC 6415-based webfinger implementations, it reduces the number of
+  HTTP requests to the same server from 2 to 1 for each lookup.</p>
+
+ <pre><code>&lt;?php
+require_once &#039;Net/WebFinger.php&#039;;
+require_once &#039;Cache.php&#039;;
+$wf = new Net_WebFinger();
+$wf-&gt;setCache(
+    new Cache(&#039;file&#039;, array(&#039;cache_dir&#039; =&gt; sys_get_temp_dir() . &#039;/myapp&#039;))
+);
+$react = $wf-&gt;finger(&#039;user@example.org&#039;);
+$openIdProvider = $react-&gt;get(&#039;http://specs.openid.net/auth/2.0/provider&#039;);
+?&gt;</code></pre>
+</section>
+<section id="package-networking-net-webfinger-http-adapter">
+<h2>Custom HTTP adapters</h2>
+<p>By default, the HTTP(S) XRD files are loaded by
+  XML_XRD
+  internally using
+  <a href="http://www.php.net/manual-lookup.php?pattern=file_get_contents">file_get_contents</a>.</p>
+ <p>If you want to set custom HTTP request headers or modify redirection handling,
+  you may use an own
+  <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-adapters">HTTP adapter</a>
+  that will be used to fetch the files:</p>
+
+ <pre><code>&lt;?php
+require_once &#039;HTTP/Request2.php&#039;;
+require_once &#039;Net/WebFinger.php&#039;;
+
+$req = new HTTP_Request2();
+$req-&gt;setConfig(&#039;follow_redirects&#039;, true);//needed for full compatibility
+$req-&gt;setHeader(&#039;User-Agent&#039;, &#039;MyApp 1.42&#039;);
+
+$wf = new Net_WebFinger();
+$wf-&gt;setHttpClient($req);
+$react = $wf-&gt;finger(&#039;foo@example.org&#039;);
+?&gt;</code></pre>
+</section>
+<section id="package-networking-net-webfinger-references">
+<h2>References</h2>
+<ul>
+  <li>
+   
+    Current specification:
+    <a href="http://tools.ietf.org/html/draft-ietf-appsawg-webfinger-13">draft-ietf-appsawg-webfinger-13</a>
+   
+  </li>
+  <li>
+   
+    <a href="http://code.google.com/p/webfinger/wiki/WebFingerProtocol">Early WebFinger specification</a>
+   
+  </li>
+  <li>
+   
+    <a href="http://code.google.com/p/webfinger/wiki/CommonLinkRelations">Common link relations</a>
+   
+  </li>
+  <li>
+   
+    XML_XRD package to load
+    and create the XRD files; may be used to serve WebFinger on your own server.
+   
+  </li>
+  <li>
+   
+    <a href="http://groups.google.com/group/webfinger">WebFinger mailing list</a>
+   
+  </li>
+ </ul>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

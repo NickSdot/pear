@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9595</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_PDF/index.html">File_PDF</a> &#187; Bug #9595</h1>
+<p>Font file typos</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-12-11 01:14 UTC</td></tr>
+<tr><th>From</th><td>atex at php dot net</td></tr>
+<tr><th>Assigned</th><td>yunosh</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/File_PDF/index.html">File_PDF</a></td></tr>
+<tr><th>PHP Version</th><td>5.2.0 RC4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-12-11 01:14 UTC] atex at php dot net</h3>
+<p>Description:<br>
+------------<br>
+When trying to use the getStringWidth() method on a string with a &#039;,&#039; (comma) in it, I sometimes get the following error:</p>
+<p>Notice: Undefined index: , in /usr/lib/php/File/PDF.php on line 1127</p>
+<p>It seems that the &#039;,&#039; character&#039;s width cannot be determined.</p>
+<p>Test script:<br>
+---------------<br>
+I have tried to use the following test script:</p>
+<p>error_reporting(E_ALL);<br>
+require_once &#039;File/PDF.php&#039;;</p>
+<p>$options = array(&#039;orientation&#039; =&gt; &#039;P&#039;,<br>
+                 &#039;unit&#039; =&gt; &#039;pt&#039;,                                <br>
+                 &#039;format&#039; =&gt; &#039;Letter&#039;);<br>
+$pdf =&amp; File_PDF::factory($options);<br>
+$pdf-&gt;addPage();<br>
+$pdf-&gt;aliasNbPages();</p>
+<p>$text = &#039;hello, goodbye, hello again&#039;;<br>
+$size = $pdf-&gt;getStringWidth($text);<br>
+$pdf-&gt;setFont(&#039;Times&#039;, NULL, 12);                                 <br>
+$pdf-&gt;cell($size, 0, $text, &#039;R&#039;, 0, &#039;L&#039;, 0);</p>
+<p>$pdf_len = strlen($pdf-&gt;getOutput());<br>
+header(&#039;Cache-Control: no-cache&#039;);                                  <br>
+header(&#039;Pragma: no-cache&#039;);<br>
+header(&quot;Content-Length: &quot; . pdf_len);<br>
+$pdf-&gt;output(&#039;file_pdf_test.pdf&#039;, true);</p>
+<p>However, I cannot force the error to appear.  The problem, however, appears to come from the fact that the &#039;,&#039; entry in the arrays in the php files in the fonts/ directory for many of the fonts are as follows:</p>
+<p>&#039;,<br>
+    &#039; =&gt; 250,</p>
+<p>The line-break and indentation seem to cause the problem as when I rewrite the line as:</p>
+<p>&#039;,&#039; =&gt; 250,</p>
+<p>I no longer have any issues.</p>
+<p>I have created a patch at the following URL:</p>
+<p>http://molior.mcs.suffolk.edu/patches/File_PDF-comma.patch.bz2</p>
+<p>Expected result:<br>
+----------------<br>
+Correct generation of a PDF file.</p>
+<p>Actual result:<br>
+--------------<br>
+Notice: Undefined index: , in /usr/lib/php/File/PDF.php on line 1127</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

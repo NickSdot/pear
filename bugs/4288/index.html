@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4288</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #4288</h1>
+<p>With PostgreSQL databases -&gt;insert() gets its sequence from the wrong table.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-05 17:00 UTC</td></tr>
+<tr><th>From</th><td>ej dot grace at imperial dot ac dot uk</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-05 17:00 UTC] ej dot grace at imperial dot ac dot uk</h3>
+<p>Description:<br>
+------------<br>
+The joinAdd method does not work as advertised for postgresql connections.  In the generated SQL it inserts an unwanted &lt;databasename&gt;. prefix to the tables.  If anything is to be prefixed automatically it should use &lt;schema&gt; (although an option to ignore schemas would also be good).</p>
+<p>Reproduce code:<br>
+---------------<br>
+Generate tables and objects in the usual manner:</p>
+<p>CREATE TABLE person (<br>
+        id BIGINT DEFAULT nextval(&#039;person_seq&#039;) NOT NULL,<br>
+        namelast   VARCHAR(255)  NOT NULL,<br>
+        namefirst  VARCHAR(255)  NOT NULL,<br>
+        PRIMARY KEY (id)<br>
+);<br>
+DROP SEQUENCE person_seq;<br>
+CREATE SEQUENCE person_seq;</p>
+<p>--- author table as well as a link to the author table for (current) information.<br>
+CREATE TABLE paper_submission_author (<br>
+	id BIGINT DEFAULT nextval(&#039;paper_submission_author_seq&#039;) NOT NULL,<br>
+	paper_submissionid BIGINT NOT NULL,<br>
+	author_id BIGINT REFERENCES person NOT NULL,	<br>
+	PRIMARY KEY (id)<br>
+);<br>
+DROP SEQUENCE paper_submission_author_seq;<br>
+CREATE SEQUENCE paper_submission_author_seq;</p>
+<p>--- A table containing a list of submitted papers<br>
+CREATE TABLE paper_submission (<br>
+	id BIGINT DEFAULT nextval(&#039;paper_submission_seq&#039;) NOT NULL,<br>
+	title VARCHAR(512) NOT NULL,<br>
+	author_corresponding_id BIGINT REFERENCES person (id),<br>
+	PRIMARY KEY (id)<br>
+);<br>
+DROP SEQUENCE paper_submission_seq;<br>
+CREATE SEQUENCE paper_submission_seq;</p>
+<p>Set databasename.links.ini up correctly.</p>
+<p>Then set up a script as follows to do a join (N.B. this may have other problems than the one under investigation)</p>
+<p>$paper_submission =&amp; DB_DataObject::factory(&#039;paper_submission&#039;);<br>
+$paper_submission-&gt;debugLevel(1);<br>
+$paper_submission_author =&amp; DB_DataObject::factory(&#039;paper_submission_author&#039;);</p>
+<p>$paper_submission_author-&gt;joinAdd($paper_submission);<br>
+$paper_submission_author-&gt;find();<br>
+while ($paper_submission_author-&gt;fetch()) {<br>
+  dump($paper_submission_author-&gt;toArray());<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+The generated SQL statment working correctly</p>
+<p>SELECT * FROM paper_submission_author INNER JOIN paper_submission ON paper_submission.id=paper_submission_author.paper_submissionid<br>
+dataobjects_paper_submission_author</p>
+<p>Actual result:<br>
+--------------<br>
+dataobjects_paper_submission: databaseStructure: Loaded ini file: /var/www/php/OJ/DataObjects/ojdb.ini<br>
+dataobjects_paper_submission: databaseStructure: Loaded links.ini file: /var/www/php/OJ/DataObjects/ojdb.links.ini<br>
+dataobjects_paper_submission_author: __find:<br>
+dataobjects_paper_submission_author: QUERY: SELECT * FROM paper_submission_author INNER JOIN ojdb.paper_submission ON paper_submission.id=paper_submission_author.paper_submissionid<br>
+dataobjects_paper_submission_author: Query Error: [db_error: message=&quot;DB Error: no such table&quot; code=-18 mode=return level=notice prefix=&quot;&quot; info=&quot;SELECT * FROM paper_submission_author INNER JOIN ojdb.paper_submission ON paper_submission.id=paper_submission_author.paper_submissionid [nativecode=ERROR: relation &quot;ojdb.paper_submission&quot; does not exist]&quot;]<br>
+dataobjects_paper_submission_author: ERROR: db_error Object ( [error_message_prefix] =&gt; [mode] =&gt; 1 [level] =&gt; 1024 [code] =&gt; -18 [message] =&gt; DB Error: no such table [userinfo] =&gt; SELECT * FROM paper_submission_author INNER JOIN ojdb.paper_submission ON paper_submission.id=paper_submission_author.paper_submissionid [nativecode=ERROR: relation &quot;ojdb.paper_submission&quot; does not exist] [backtrace] =&gt; Array ( [0] =&gt; Array ( [file] =&gt; /usr/share/pear/DB.php [line] =&gt; 888 [function] =&gt; pear_error [class] =&gt; db_error [type] =&gt; -&gt; [args] =&gt; Array ( [0] =&gt; DB Error: no such table [1] =&gt; -18 [2] =&gt; 1 [3] =&gt; 1024 [4] =&gt; SELECT * FROM paper_submission_author INNER JOIN ojdb.paper_submission ON</p>
+<p>The following segment indicates that the name of the database &quot;ojdb&quot; is being prefixed to table names in the JOIN.</p>
+<p>[nativecode=ERROR: relation &quot;ojdb.paper_submission&quot; does not exist] [backtrace] =&gt; Array ( [0] =&gt; Array ( [file] =&gt;</p>
+<p>etc....</p>
+<p>Judging by the  DataObject-&gt;joinAdd() method, line 2828</p>
+<p>// not sure  how portable adding database prefixes is..<br>
+        $objTable = $quoteIdentifiers ? <br>
+                $DB-&gt;quoteIdentifier($obj-&gt;_database . &#039;.&#039; . $obj-&gt;__table) : <br>
+                $obj-&gt;_database . &#039;.&#039; . $obj-&gt;__table ;<br>
+                <br>
+        // add database prefix if they are different databases<br>
+        if (($obj-&gt;_database != $this-&gt;_database) &amp;&amp; strlen($obj-&gt;_database )) {<br>
+            $objTable = ($quoteIdentifiers ? $DB-&gt;quoteIdentifier($obj-&gt;_database) : $obj-&gt;_database) . &#039;.&#039; . $objTable;<br>
+        }</p>
+<p>I would bet that is the route of the problem.  I suspect that adding database prefixes is not what is wanted.</p>
+</section>
+<section>
+<h3>[2005-05-09 14:05 UTC] ej dot grace at imperial dot ac dot uk</h3>
+<p>It appears this bug has been fixed in CVS v 1.353.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

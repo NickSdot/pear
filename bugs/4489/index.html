@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4489</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #4489</h1>
+<p>CGI error on Windows 2003 / IIS6 for DST handling code</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-31 18:39 UTC</td></tr>
+<tr><th>From</th><td>jpm at mysql dot com</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Windows 2003</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-31 18:39 UTC] jpm at mysql dot com</h3>
+<p>Description:<br>
+------------<br>
+See description of problem here: http://lists.mysql.com/eventum-users/1578</p>
+<p>====</p>
+<p>I just moved my Eventum 1.5.3 test installation from :<br>
+- W2K Sp4 / PWS<br>
+- MySQL 4.1.11<br>
+- PHP 4.3.10<br>
+- mailserver Lotus Notes 5.0.12 / IMAP</p>
+<p>to production environment :<br>
+- Windows 2003 SP1 / IIS 6.0<br>
+- MySQL 4.1.12<br>
+- PHP 4.3.11<br>
+- mailserver Lotus Notes 5.0.12 / IMAP</p>
+<p>and had the same cgi error when viewing entry details. I found a windows related<br>
+problem in the include PEAR file timezone.php. Below a fixed version from the<br>
+function causing the error:</p>
+<p>/**<br>
+     * Is the given date/time in DST for this time zone<br>
+     *<br>
+     * Attempts to determine if a given Date object represents a date/time<br>
+     * that is in DST for this time zone.  WARNINGS: this basically attempts to<br>
+     * &quot;trick&quot; the system into telling us if we&#039;re in DST for a given time zone.<br>
+     * This uses putenv() which may not work in safe mode, and relies on unix time<br>
+     * which is only valid for dates from 1970 to ~2038.  This relies on the<br>
+     * underlying OS calls, so it may not work on Windows or on a system where<br>
+     * zoneinfo is not installed or configured properly.<br>
+     *<br>
+     * @access public<br>
+     * @param object Date $date the date/time to test<br>
+     * @return boolean true if this date is in DST for this time zone<br>
+     */<br>
+     <br>
+     function inDaylightTime($date)<br>
+ {<br>
+    // This additional line immediately returns from the function.<br>
+    return date(&quot;I&quot;);<br>
+    // End MS Windows work around code.<br>
+     <br>
+    // Beginning of the original PEAR code.<br>
+    $env_tz = &quot;&quot;;<br>
+    if(getenv(&quot;TZ&quot;)) {<br>
+        $env_tz = getenv(&quot;TZ&quot;);<br>
+    }<br>
+    putenv(&quot;TZ=&quot;.$this-&gt;id);<br>
+    $ltime = localtime($date-&gt;getTime(), true);<br>
+    putenv(&quot;TZ=&quot;.$env_tz);<br>
+    return $ltime[&#039;tm_isdst&#039;];<br>
+}</p>
+<p>More about the problem :<br>
+http://phpwebsite-comm.sourceforge.net/wiki/index.php?title=MS_Windows_Installations#MS_Windows_2003_and_IIS6</p>
+<p>====</p>
+<p>So my question is the following: if date(&#039;I&#039;) is available to check if the given date is on DST or not, why do you need the code above?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6480</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #6480</h1>
+<p>pear install --installroot option fails for pecl packages</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-12 16:24 UTC</td></tr>
+<tr><th>From</th><td>bugs at timj dot co dot uk</td></tr>
+<tr><th>Assigned</th><td>timj</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-12 16:24 UTC] bugs at timj dot co dot uk</h3>
+<p>Description:<br>
+------------<br>
+Not sure whether this is a documentation problem, but the &quot;--installroot&quot; option to &quot;pear install&quot; implies to me that I can do a normal installation of a package, but get the files ending up in an installroot. (This is useful for RPM packaging purposes). However, for pecl packages at least, the installer still tries to write to the &quot;real&quot; installation directory.</p>
+<p>Test script:<br>
+---------------<br>
+mkdir /tmp/blah<br>
+pecl install -R /tmp/blah zip-1.0.tgz</p>
+<p>Expected result:<br>
+----------------<br>
+Successfully installs:<br>
+/tmp/blah/usr/lib/php/modules/zip.so</p>
+<p>Actual result:<br>
+--------------<br>
+[compilation runs OK]<br>
+...<br>
+Build complete.<br>
+(It is safe to ignore warnings about tempnam and tmpnam).</p>
+<p>running: make INSTALL_ROOT=&quot;/var/tmp/pear-build-username/install-zip-1.0&quot; install<br>
+Installing shared extensions:     /var/tmp/pear-build-username/install-zip-1.0/usr/lib/php/modules/<br>
+running: find &quot;/var/tmp/pear-build-username/install-zip-1.0&quot; -ls<br>
+18271482    4 drwxr-xr-x   3 username users        4096 Jan 12 16:12 /var/tmp/pear-build-username/install-zip-1.0<br>
+18271505    4 drwxr-xr-x   3 username users        4096 Jan 12 16:12 /var/tmp/pear-build-username/install-zip-1.0/usr<br>
+18271506    4 drwxr-xr-x   3 username users        4096 Jan 12 16:12 /var/tmp/pear-build-username/install-zip-1.0/usr/lib<br>
+18271507    4 drwxr-xr-x   3 username users        4096 Jan 12 16:12 /var/tmp/pear-build-username/install-zip-1.0/usr/lib/php<br>
+18271508    4 drwxr-xr-x   2 username users        4096 Jan 12 16:12 /var/tmp/pear-build-username/install-zip-1.0/usr/lib/php/modules<br>
+18271504   36 -rwxr-xr-x   1 username users       34136 Jan 12 16:12 /var/tmp/pear-build-username/install-zip-1.0/usr/lib/php/modules/zip.so</p>
+<p>Build process completed successfully<br>
+Installing &#039;/var/tmp/pear-build-username/install-zip-1.0//usr/lib/php/modules/zip.so&#039;<br>
+ERROR: failed to write /usr/lib/php/modules/zip.so</p>
+</section>
+<section>
+<h3>[2006-01-13 13:51 UTC] bugs at timj dot co dot uk</h3>
+<p>Nope, exactly the same problem with --packagingroot. Tested on PEAR 1.4.6.</p>
+</section>
+<section>
+<h3>[2006-01-15 01:25 UTC] timj at php dot net</h3>
+<p>OK guys, I&#039;ve had a poke around. Definitely a bug - looks like a hangover from some old code, because the installer is looking for &quot;$this-&gt;_installroot&quot;, which is explicitly set to an empty string after option parsing, since the options stuff is meant to deal with install roots.  As the --packagingroot option seems to be the right one to check here, I would say this is probably the right fix (against 1.4.6):</p>
+<p>--- Installer.php.orig  2006-01-14 22:25:36.000000000 +0000<br>
++++ Installer.php       2006-01-15 00:58:22.000000000 +0000<br>
+@@ -1329,7 +1329,11 @@<br>
+             }<br>
+             $dest = $ext[&#039;dest&#039;];<br>
+             $this-&gt;log(1, &quot;Installing &#039;$ext[file]&#039;&quot;);<br>
+-            $copyto = $this-&gt;_prependPath($dest, $this-&gt;installroot);<br>
++            $packagingroot = &#039;&#039;;<br>
++            if (isset($this-&gt;_options[&#039;packagingroot&#039;])) {<br>
++                $packagingroot = $this-&gt;_options[&#039;packagingroot&#039;];<br>
++            }<br>
++            $copyto = $this-&gt;_prependPath($dest, $packagingroot);<br>
+             $copydir = dirname($copyto);<br>
+             if (!@is_dir($copydir)) {<br>
+                 if (!$this-&gt;mkDirHier($copydir)) {</p>
+<p>This certainly makes things work as expected, using -P /tmp/blah:<br>
+...<br>
+Build process completed successfully<br>
+Installing &#039;/var/tmp/pear-build-username/install-zip-1.0//usr/lib/php/modules/zip.so&#039;install ok: channel://pear.php.net/zip-1.0</p>
+<p>and everything gets installed in /tmp/blah. However, this is then followed by an apparently unrelated error:</p>
+<p>PHP Fatal error:  Call to a member function setConfig() on a non-object in /usr/share/pear/PEAR/Command/Install.php on line 546</p>
+<p>This is &quot;$pkg-&gt;setConfig()&quot; call in doInstall() from Install.php.<br>
+I haven&#039;t investigated the reasons for this in a lot of detail but at a quick look, I suspect it&#039;s something to do with the fact that --packagingroot implies that the package is not &quot;really&quot; installed into the packagedb, and thus $pkg ends up evaluated to NULL. If I&#039;m right, the following is the fix in Install.php. It superficially works for me and makes everything run OK but I&#039;d appreciate some review by someone who knows this stuff inside out better than I do, in case I&#039;m barking up completely the wrong tree:</p>
+<p>--- Install.php.orig    2006-01-14 22:25:36.000000000 +0000<br>
++++ Install.php 2006-01-15 01:22:18.000000000 +0000<br>
+@@ -543,16 +543,19 @@<br>
+                     $reg = &amp;$this-&gt;config-&gt;getRegistry();<br>
+                 }<br>
+                 $pkg = &amp;$reg-&gt;getPackage($param-&gt;getPackage(), $param-&gt;getChannel());<br>
+-                $pkg-&gt;setConfig($this-&gt;config);<br>
+-                if ($list = $pkg-&gt;listPostinstallScripts()) {<br>
+-                    $pn = $reg-&gt;parsedPackageNameToString(array(&#039;channel&#039; =&gt;<br>
+-                        $param-&gt;getChannel(), &#039;package&#039; =&gt; $param-&gt;getPackage()), true);<br>
+-                    $extrainfo[] = $pn . &#039; has post-install scripts:&#039;;<br>
+-                    foreach ($list as $file) {<br>
+-                        $extrainfo[] = $file;<br>
+-                    }<br>
+-                    $extrainfo[] = &#039;Use &quot;pear run-scripts &#039; . $pn . &#039;&quot; to run&#039;;<br>
+-                    $extrainfo[] = &#039;DO NOT RUN SCRIPTS FROM UNTRUSTED SOURCES&#039;;<br>
++                // $pkg may be NULL if install is a &#039;fake&#039; install via --packagingroot<br>
++                if (is_object($pkg)) {<br>
++                    $pkg-&gt;setConfig($this-&gt;config);<br>
++                    if ($list = $pkg-&gt;listPostinstallScripts()) {<br>
++                        $pn = $reg-&gt;parsedPackageNameToString(array(&#039;channel&#039; =&gt;<br>
++                           $param-&gt;getChannel(), &#039;package&#039; =&gt; $param-&gt;getPackage()), true);<br>
++                        $extrainfo[] = $pn . &#039; has post-install scripts:&#039;;<br>
++                        foreach ($list as $file) {<br>
++                            $extrainfo[] = $file;<br>
++                        }<br>
++                        $extrainfo[] = &#039;Use &quot;pear run-scripts &#039; . $pn . &#039;&quot; to run&#039;;<br>
++                        $extrainfo[] = &#039;DO NOT RUN SCRIPTS FROM UNTRUSTED SOURCES&#039;;<br>
++                     }<br>
+                 }<br>
+             } else {<br>
+                 return $this-&gt;raiseError(&quot;$command failed&quot;);</p>
+</section>
+<section>
+<h3>[2006-01-16 12:26 UTC] timj at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>Fixed the --packagingroot option.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

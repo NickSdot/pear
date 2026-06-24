@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5751</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_AJAX/index.html">HTML_AJAX</a> &#187; Bug #5751</h1>
+<p>Cant seem to get my flexy templates to output</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-10-22 02:30 UTC</td></tr>
+<tr><th>From</th><td>spam at electroteque dot org</td></tr>
+<tr><th>Assigned</th><td>jeichorn</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_AJAX/index.html">HTML_AJAX</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.0</td></tr>
+<tr><th>OS</th><td>n/a</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-22 02:30 UTC] spam at electroteque dot org</h3>
+<p>Description:<br>
+------------<br>
+For some strange reason, i cant seem to get my flexy <br>
+templates to output anything. I think there is an issue <br>
+with E_STRICT turned on for PHP5 which i turn off in the <br>
+base class of my class.</p>
+<p>Here is the error i got</p>
+<p>{&quot;errNo&quot;:2048,&quot;errStr&quot;:&quot;var: Deprecated. Please use the <br>
+public\/private\/protected modifiers&quot;,&quot;errFile&quot;:&quot;\/<br>
+Volumes\/DATA\/www\/musictrade\/classes\/PEAR\/HTML\/<br>
+Template\/Flexy\/Compiler.php&quot;,&quot;errLine&quot;:44}</p>
+<p>Any i could only get it, if i tried to echo just above <br>
+that, any php parse error i tried to force, wouldnt <br>
+display, or execute the class for some reason.</p>
+<p>class Musictrade_Admin_Releases_TrackList extends <br>
+Musictrade_Admin {</p>
+<p>function Musictrade_Admin_Releases_TrackList()<br>
+	{<br>
+		parent::Musictrade_Admin();<br>
+	}<br>
+	<br>
+	<br>
+	function display()<br>
+	{<br>
+		echo &quot;yes&quot;;<br>
+		$this-&gt;tpl-&gt;compile(&#039;tracks_list.html&#039;);<br>
+		echo $this-&gt;tpl-&gt;bufferedOutputObject($this);<br>
+		exit;<br>
+	}<br>
+}</p>
+<p>whats the go ?</p>
+</section>
+<section>
+<h3>[2005-10-22 02:55 UTC] spam at electroteque dot org</h3>
+<p>just to make sure the actually class was workin</p>
+<p>&lt;?php<br>
+require_once &#039;Musictrade/Admin/Releases/TrackList.php&#039;;<br>
+$test = new Musictrade_Admin_Releases_TrackList();<br>
+echo $test-&gt;display();<br>
+?&gt;</p>
+<p>Its all fine, there is some wierd headers being <br>
+outputted in Ajax i think ??</p>
+</section>
+<section>
+<h3>[2005-10-22 05:34 UTC] spam at electroteque dot org</h3>
+<p>You seem to be overriding the error_reporting somewhere <br>
+down the line, i had to explicitly turn it off to make <br>
+everything work ok. I turned E_STRICT off in my custom <br>
+error handler so its somewhere else.</p>
+<p>class Musictrade_Admin_Releases_TrackList extends <br>
+Musictrade_Admin {</p>
+<p>function Musictrade_Admin_Releases_TrackList()<br>
+	{<br>
+		parent::Musictrade_Admin();<br>
+		error_reporting(0);<br>
+	}<br>
+	<br>
+	<br>
+	function display()<br>
+	{<br>
+		$this-&gt;tpl-&gt;compile(&#039;tracks_list.html&#039;);<br>
+		return $this-&gt;tpl-&gt;bufferedOutputObject($this);<br>
+	<br>
+	}</p>
+<p>}</p>
+</section>
+<section>
+<h3>[2005-10-24 17:12 UTC] jeichorn at php dot net</h3>
+<p>It could be related to the error handler we use to pass errors to js, it doesn&#039;t look at the value of error_reporting() right now.</p>
+</section>
+<section>
+<h3>[2005-10-25 05:37 UTC] spam at electroteque dot org</h3>
+<p>I dont know what else to say its clearly your error <br>
+handler is not ignoring E_STRICT for php4 packages in <br>
+php5. Therefore i am forced to turn error reporting off. <br>
+Its dieing but not displaying any error back to the <br>
+layer in the examples.</p>
+</section>
+<section>
+<h3>[2005-10-25 14:45 UTC] jeichorn at php dot net</h3>
+<p>Please check against the new release and close if the issue is fixed.</p>
+</section>
+<section>
+<h3>[2005-10-25 15:01 UTC] jeichorn at php dot net</h3>
+<p>0.2.3 checks the value of error_reporting in its custom error handler.  If you have have error_reporting set to say E_ALL then you shouldn&#039;t run into problems with E_STRICT errors.</p>
+<p>If this continues to be a problem we may auto ignore E_STRICT errors as well as looking at error_reporting, but I just want to verify that the change works for you without having to turn error reporting off.</p>
+</section>
+<section>
+<h3>[2005-10-25 23:26 UTC] spam at electroteque dot org</h3>
+<p>I suppose you mean grab from cvs ? Ill do it today and <br>
+let u know. Here is how i setup my custom error handler <br>
+at the moment, please let me know if its clashing, as <br>
+ive never had issues before.</p>
+<p>error_reporting(E_ERROR | E_WARNING | E_PARSE &amp; <br>
+~E_NOTICE &amp; ~E_STRICT);<br>
+        set_error_handler(array(&amp;$errors, <br>
+&#039;phpErrorHandler&#039;));</p>
+<p>Even with ignoring E_STRICT i still have to ignore it , <br>
+in my custom error handler</p>
+<p>function phpErrorHandler($code, $message, $file, $line, <br>
+$ctx)<br>
+	{<br>
+		global $settings;<br>
+		if ($code !== E_STRICT &amp;&amp; $code !==E_NOTICE) {<br>
+			$this-&gt;_loadConfig();<br>
+			switch ($code) {<br>
+				case E_WARNING:<br>
+				case E_USER_WARNING:<br>
+				<br>
+					$priority = PEAR_LOG_WARNING;<br>
+				break;<br>
+		        case E_ERROR:<br>
+		        case E_USER_ERROR:<br>
+		        		$priority = PEAR_LOG_ERR;<br>
+		        	break;<br>
+		        	default:<br>
+		        		$priority = PEAR_LOG_INFO;<br>
+		        	}<br>
+			if ($settings[&#039;project&#039;][&#039;debug&#039;]) {<br>
+				<br>
+				$conf = array(&#039;error_prepend&#039; =&gt; &#039;&lt;font <br>
+color=&quot;#ff0000&quot;&gt;&lt;tt&gt;&#039;,<br>
+	              &#039;error_append&#039;  =&gt; &#039;&lt;/tt&gt;&lt;/font&gt;&#039;);<br>
+				$logger = &amp;Log::singleton(&#039;display&#039;, &#039;&#039;, <br>
+&#039;&#039;, $conf, PEAR_LOG_DEBUG);<br>
+				<br>
+				$backtrace = @debug_backtrace();<br>
+				for ($i=0;$i &lt; 8;$i++) {<br>
+			    		if (!<br>
+empty($backtrace[$i][&#039;file&#039;])) {<br>
+			        		$message .= &#039; (&#039; . <br>
+$backtrace[$i][&#039;file&#039;];<br>
+			        		if (!<br>
+empty($backtrace[1][&#039;line&#039;])) {<br>
+			           		 $message .= &#039; at line &#039; . <br>
+$backtrace[$i][&#039;line&#039;];<br>
+			        		}<br>
+			        		<br>
+			        		$message .= &#039;)&#039;.&quot;\n&quot;;<br>
+			    		}<br>
+				}<br>
+					$logger-&gt;log($message, $priority);<br>
+				<br>
+				//$logger-&gt;log($message . &#039; in &#039; . $file <br>
+. &#039; at line &#039; . $line, $priority);<br>
+				exit;<br>
+			} else {<br>
+				if ($settings[&#039;Logs&#039;][&#039;log_errors&#039;]) {<br>
+					if <br>
+($settings[&#039;Logs&#039;][&#039;email_errors&#039;]) {<br>
+						$conf = array(<br>
+										&#039;subject&#039; =&gt; <br>
+&#039;PHP Compile Errors with the system &#039; <br>
+.$settings[&#039;project&#039;][&#039;project_name&#039;],<br>
+										&#039;from&#039; =&gt; <br>
+$settings[&#039;Logs&#039;][&#039;error_log_title&#039;],<br>
+										&#039;preamble&#039; =&gt; <br>
+$settings[&#039;Logs&#039;][&#039;log_preamble&#039;]<br>
+											);<br>
+						$logger = &amp;Log::<br>
+singleton(&#039;mail&#039;, $settings[&#039;Logs&#039;][&#039;error_log_email&#039;], <br>
+&#039;ident&#039;, $conf);<br>
+						$logger-&gt;log($message . &#039; in &#039; . <br>
+$file . &#039; at line &#039; . $line, $priority);<br>
+		        		}<br>
+				}<br>
+				<br>
+				$tpl = new <br>
+HTML_Template_Flexy($settings[&#039;HTML_Template_Flexy&#039;]);<br>
+				$tpl-&gt;compile(&#039;errors.html&#039;);<br>
+				echo $tpl-&gt;outputObject($this);<br>
+			}<br>
+			<br>
+			$conf = array(&#039;mode&#039; =&gt; 0600, &#039;timeFormat&#039; <br>
+=&gt; &#039;%X %x&#039;);<br>
+			$file_logger = &amp;Log::singleton(&#039;file&#039;, <br>
+&#039;logs/php_errors.log&#039;, &#039;ident&#039;, $conf);<br>
+			$file_logger-&gt;log($err[&#039;message&#039;]);<br>
+			exit;<br>
+		}<br>
+		<br>
+	}</p>
+</section>
+<section>
+<h3>[2005-10-25 23:29 UTC] jeichorn at php dot net</h3>
+<p>Your custom error handler will get overridden but the error_reporting you set shouldn&#039;t.</p>
+<p>This is in release 0.2.3 (released yesterday)</p>
+<p>If there is away to detect a current custom handler i guess we should and not set our own in that case.</p>
+</section>
+<section>
+<h3>[2005-11-17 04:51 UTC] jeichorn at php dot net</h3>
+<p>This is fixed in 0.2.5</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

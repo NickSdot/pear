@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4465</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #4465</h1>
+<p>deselecting all multiple-select options returns default value</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-29 11:20 UTC</td></tr>
+<tr><th>From</th><td>pear at felixdd dot de</td></tr>
+<tr><th>Assigned</th><td>avb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-29 11:20 UTC] pear at felixdd dot de</h3>
+<p>Description:<br>
+------------<br>
+If one deselect all options in a multiple select element which has options checked via setDefaults the exported values still contains setDefaults values.</p>
+<p>Run the following example and deselect all options.<br>
+After submitting you&#039;ll see, that not only the default value is in the exported values, also the display() shows the default value again. (These are two different problems.)</p>
+<p>This issue only occours if the form contains at least a second _named_ element. Change the name of the button to null, $form-&gt;validate() returns false.</p>
+<p>Reproduce code:<br>
+---------------<br>
+require_once &#039;HTML/QuickForm.php&#039;;<br>
+$form = new HTML_QuickForm(&#039;example&#039;);</p>
+<p>$options = array(&#039;val1&#039; =&gt; &#039;option 1&#039;, &#039;val2&#039; =&gt; &#039;option 2&#039;);<br>
+$select =&amp; $form-&gt;addElement(&#039;select&#039;, &#039;select&#039;, &#039;select&#039;, $options);<br>
+$select-&gt;setMultiple(true);</p>
+<p>$form-&gt;addElement(&#039;submit&#039;, &#039;button&#039;, &#039;submit&#039;);<br>
+//$form-&gt;addElement(&#039;submit&#039;, null, &#039;submit&#039;);</p>
+<p>$form-&gt;setDefaults(array(&#039;select&#039; =&gt; &#039;val1&#039;));</p>
+<p>if ($form-&gt;validate()) {<br>
+  echo &#039;&lt;pre&gt;&#039;;<br>
+  print_r($form-&gt;exportValues());<br>
+}</p>
+<p>$form-&gt;display();</p>
+<p>Expected result:<br>
+----------------<br>
+Array<br>
+(<br>
+    [select] =&gt; Array<br>
+        (<br>
+        )</p>
+<p>[button] =&gt; submit<br>
+)</p>
+<p>or maybe null/!isset() as value for select</p>
+<p>solution suggestion for empty array:<br>
+select.php v1.26<br>
+Line 552: $value = $this-&gt;getValue();  -&gt; $value = array();<br>
+Line 557: $cleanValue = null;  -&gt; $cleanValue = array();</p>
+<p>Actual result:<br>
+--------------<br>
+Array<br>
+(<br>
+    [select] =&gt; Array<br>
+        (<br>
+            [0] =&gt; val1<br>
+        )</p>
+<p>[button] =&gt; submit<br>
+)</p>
+</section>
+<section>
+<h3>[2005-06-30 14:26 UTC] misc at sopic dot com</h3>
+<p>--- HTML_QuickForm-3.2.4pl1/QuickForm/select.php<br>
+	2004-10-18 17:12:23.000000000 +0200<br>
++++ HTML_QuickForm-3.2.4pl1/QuickForm/select-patched.php<br>
+	2005-06-30 15:15:08.000000000 +0200<br>
+@@ -548,7 +548,8 @@<br>
+     {<br>
+         $value = $this-&gt;_findValue($submitValues);<br>
+         if (is_null($value)) {<br>
+-            $value = $this-&gt;getValue();<br>
++            // fix for http://pear.php.net/bugs/bug.php?<br>
+id=4465<br>
++            return $this-&gt;_prepareValue(array(), $assoc);<br>
+         } elseif(!is_array($value)) {<br>
+             $value = array($value);<br>
+         }</p>
+</section>
+<section>
+<h3>[2005-07-04 23:08 UTC] markvds at elegia dot nl</h3>
+<p>With the patch from [misc at sopic dot com], the problem with the exported values is solved. But still, if the form is shown after it is processed, the default options are selected again.</p>
+</section>
+<section>
+<h3>[2005-07-12 23:18 UTC] people05 at sopic dot com</h3>
+<p>Yeah, I missed that one with the default options after a <br>
+reload. After digging around for some hours, here&#039;s my <br>
+solution. Warning: It&#039;s more a crude hack than a fix.</p>
+<p>It was a little bit tricky to fix this, because <br>
+HTML_QuickForm_Select doesn&#039;t know anything about the <br>
+submitted values and passing a reference to the <br>
+HTML_QuickForm object within the constructor is difficult <br>
+without creating a BC break. So I decided to add a reference <br>
+to the HTML_QuickFrom object from the outside. Not a <br>
+beautiful solution, but it works for me. You can get the <br>
+whole patch from</p>
+<p>http://www.sopic.com/test/QuickForm.patch</p>
+<p>Some more warnings:</p>
+<p>- It&#039;s possible, that my style of variable and function <br>
+naming doesn&#039;t fit your needs<br>
+- I don&#039;t know if it&#039;s working in any case<br>
+- I don&#039;t know if there&#039;s a better solution<br>
+- I don&#039;t know if there are any side effects<br>
+- I don&#039;t know if I&#039;m creating lots of copies of <br>
+HTML_QuickForm &#039;cos I&#039;m running PHP 5.</p>
+<p>So please check the whole thing. But if it&#039;s good, it needs <br>
+to be extended. The same problem affects <br>
+HTML_QuickForm_Checkbox and maybe some others.</p>
+</section>
+<section>
+<h3>[2005-09-11 13:37 UTC] felic1 at gmx dot de</h3>
+<p>Maybe &quot;broken&quot;, but still (V.3.5.2) the only solution that solves the described misbehaviour, at least if you have more than one single multiselect element on your page (and what page doesn&#039;t have...).</p>
+</section>
+<section>
+<h3>[2006-02-21 23:10 UTC] nigel at catalyst dot net dot nz</h3>
+<p>The fix in CVS (and in quickform 3.2.5) doesn&#039;t take into account that the form might be frozen. If it is frozen we _do_ want to display the default values.</p>
+<p>My suggestion: change this:</p>
+<p>if (null === $value &amp;&amp; !$caller-&gt;isSubmitted()) {</p>
+<p>To this:</p>
+<p>if ($this-&gt;isFrozen() || null === $value &amp;&amp; !$caller-&gt;isSubmitted()) {</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

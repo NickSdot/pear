@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1122</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #1122</h1>
+<p>Feature Request: Destroy and recreate session on login</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-03 17:47 UTC</td></tr>
+<tr><th>From</th><td>simon dot hamilton at ntlworld dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>n/a</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-03 17:47 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Description:<br>
+------------<br>
+Would it be possible to add the ability to destroy and recreate a session upon logon.  Perhaps by specifying the option as part of the conf array:</p>
+<p>&#039;login&#039; =&gt; array(<br>
+            &#039;method&#039;   =&gt; &#039;post&#039;,<br>
+            &#039;username&#039; =&gt; &#039;handle&#039;,<br>
+            &#039;destroy&#039;  =&gt; true,       // &lt;&lt;---<br>
+            &#039;password&#039; =&gt; &#039;passwd&#039;,<br>
+            &#039;force&#039;    =&gt; false,<br>
+            &#039;function&#039; =&gt; &#039;&#039;,<br>
+            &#039;remember&#039; =&gt; &#039;rememberMe&#039;<br>
+        ),</p>
+<p>Is this kind of thing handled in login already?  I haven&#039;t seen it!</p>
+<p>--<br>
+Simon H</p>
+<p>Expected result:<br>
+----------------<br>
+The session should not be carried between the &quot;not logged in&quot; and &quot;logged in&quot; states.</p>
+<p>If a session is hijacked during a not logged in state, once the user logs in, the hijacker would have elevated privelages within the app.</p>
+</section>
+<section>
+<h3>[2004-04-04 11:26 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>It doesn&#039;t appear to be triggering a logout during login as when I login I have the same session ID as I had before I logged in, and I do have destroy=true set for logout.</p>
+</section>
+<section>
+<h3>[2004-04-04 18:11 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>I&#039;ve had a look at this and I can see that it destroys the session, but processLogout() is only called in init() and logout() is only called in processLogout() when you provide a post or get or whatever [logout] == 1 say.</p>
+<p>The problem is that I&#039;m trying to destroy the session during the LOGIN process which means that the logout request var is not set.  Now, I did try adding the logout var to the login form as a hidden field, but hey, it just logs the user straight out, or maybe just doesnt log them in.</p>
+<p>So I still have the problem of the session ID carrying through from a not logged in state to a logged in state, i.e. through the login process.</p>
+<p>Am I just being stupid?</p>
+</section>
+<section>
+<h3>[2004-04-05 01:24 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>I did some debugging, and it would appear that in processLogout that $this-&gt;logout() wasn&#039;t getting called during a login (thus not resetting the session).  Once I hacked processLogout for it to work it did what logout() should do...logged me out and redirected me to the redirect page.  Therefore login was broken.</p>
+<p>So, so far I&#039;d have to say that the current method or even how it is itended to work, isn&#039;t working, at least for me.</p>
+<p>What I&#039;ve also discovered on my travels is that even though the session is destroyed in logout() the ID stays the same.  What is required here is the use of:</p>
+<p>session_regenerate_id();</p>
+<p>...right after session_start() in logout().</p>
+<p>Or even something like:</p>
+<p>session_start();<br>
+session_unset();<br>
+session_regenerate_id();</p>
+<p>I think it makes sense to add this in also at the point of successful login, noting that the session vars are carried to the new ID and rendering highjacking based on sessionids useless!</p>
+<p>session_regenerate_id() has a dependancy of PHP 4 &gt;= 4.3.2 and also new features for cookies as of 4.3.3... see:<br>
+http://www.php.net/manual/en/function.session-regenerate-id.php...There are manual ways of acheiving the same thing obviously.</p>
+<p>Am I onto something, or still talking bobos?</p>
+</section>
+<section>
+<h3>[2004-04-05 02:04 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Here&#039;s a patch that adds the flexibility to the conf array by adding &#039;destroy&#039; and &#039;regenid&#039; to &#039;login&#039; and &#039;regenid&#039; to &#039;logout&#039;.</p>
+<p>Works a treat for me :-).</p>
+<p>--- LiveUser.php	Mon Apr 05 03:07:55 2004<br>
++++ LiveUser.php.new	Mon Apr 05 03:10:49 2004<br>
+@@ -277,14 +277,17 @@<br>
+      *      &#039;password&#039; =&gt; &#039;Form input containing password&#039;,<br>
+      *      &#039;remember&#039; =&gt; &#039;(optional) Form checkbox containing &lt;Remember Me&gt; info&#039;,<br>
+      *      &#039;function&#039; =&gt; &#039;(optional) Function to be called when accessing a page without logging in first&#039;,<br>
+-     *      &#039;force&#039;    =&gt; &#039;Should the user be forced to login&#039;<br>
++     *      &#039;force&#039;    =&gt; &#039;Should the user be forced to login&#039;,<br>
++     *      &#039;destroy&#039;  =&gt; &#039;Whether to destroy the session on login&#039;,<br>
++     *      &#039;regenid&#039;  =&gt; &#039;Whether to regenerate the session id&#039;<br>
+      *  ),<br>
+      *  &#039;logout&#039; =&gt; array(<br>
+      *      &#039;method&#039;   =&gt; &#039;get or post&#039;,<br>
+      *      &#039;trigger&#039;  =&gt; &#039;GET or POST var that triggers the logout process&#039;,<br>
+      *      &#039;redirect&#039; =&gt; &#039;Page path to be redirected to after logout&#039;,<br>
+      *      &#039;function&#039; =&gt; &#039;(optional) Function to be called when accessing a page without logging in first&#039;,<br>
+-     *      &#039;destroy&#039;  =&gt; &#039;Whether to destroy the session on logout&#039;<br>
++     *      &#039;destroy&#039;  =&gt; &#039;Whether to destroy the session on logout&#039;,<br>
++     *      &#039;regenid&#039;  =&gt; &#039;Whether to regenerate the session id&#039;<br>
+      *  ),<br>
+      * // The cookie options are optional. If they are specified, the Remember Me<br>
+      * // feature is activated.<br>
+@@ -860,7 +863,14 @@<br>
+                         return $res;<br>
+                     }<br>
+                 }<br>
+-<br>
++                if ($this-&gt;_options[&#039;login&#039;][&#039;destroy&#039;] == true) {<br>
++                    session_destroy();<br>
++                    session_start();<br>
++                    session_unset();<br>
++                    if ($this-&gt;_options[&#039;login&#039;][&#039;regenid&#039;] == true) {<br>
++                        session_regenerate_id();<br>
++                    }<br>
++                }<br>
+                 $this-&gt;freeze();<br>
+             } else {<br>
+                 if (!$auth-&gt;isActive) {<br>
+@@ -870,6 +880,7 @@<br>
+             }<br>
+             $counter++;<br>
+         }<br>
++        <br>
+         return true;<br>
+     }<br>
+ <br>
+@@ -1127,11 +1138,14 @@<br>
+                     $this-&gt;_options[&#039;session_save_handler&#039;][&#039;gc&#039;]<br>
+                 );<br>
+             }<br>
+-<br>
+             // Set the name of the current session<br>
+             session_name($this-&gt;_options[&#039;session&#039;][&#039;name&#039;]);<br>
+             // If there&#039;s no session yet, start it now<br>
+-            @session_start();<br>
++            session_start();<br>
++            session_unset();<br>
++            if ($this-&gt;_options[&#039;logout&#039;][&#039;regenid&#039;] == true) {<br>
++                session_regenerate_id();<br>
++            }<br>
+         }<br>
+ <br>
+         // Finally, set the LoginManager&#039;s internal auth object back to</p>
+</section>
+<section>
+<h3>[2004-04-05 20:10 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Yeah, agreed, but regardless, if logout is called during the login via processLogout() in init() then logout does what it says on the tin...logs out and redirects based on the redirect set in conf.</p>
+<p>So my method of handling it in the login process seems to work in that respect.</p>
+</section>
+<section>
+<h3>[2004-04-05 20:11 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Last bit got lost....</p>
+<p>Do you want me to resubmit or email you the patch with the @ in front of session_start again (DOHH!!)?</p>
+<p>Do you think the patch will be added?</p>
+</section>
+<section>
+<h3>[2004-04-06 17:29 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>I am not passing login details through factory, I am using $_POST.</p>
+<p>This is where it should be getting called:</p>
+<p>if (isset($httpvar[$this-&gt;_options[&#039;login&#039;][&#039;username&#039;]]) &amp;&amp;<br>
+                    $httpvar[$this-&gt;_options[&#039;login&#039;][&#039;username&#039;]] &amp;&amp;<br>
+                    isset($httpvar[$this-&gt;_options[&#039;login&#039;][&#039;password&#039;]]) &amp;&amp;<br>
+                    $httpvar[$this-&gt;_options[&#039;login&#039;][&#039;password&#039;]]<br>
+                ) {<br>
+                    $logout = true;<br>
+                }</p>
+<p>but it doesn&#039;t appear to be...I&#039;ll test some more.</p>
+<p>BUT, you&#039;re missing a key point...I still have the problem, that if logout() is called then it just logs me out and redirects me to the logout redirect page before getting a chance to tryLogin.  So regardless of why this isnt working, running logout() during the login phase isn&#039;t a solution anyway.  So even if I get processLogout working how will using logout during login work?</p>
+</section>
+<section>
+<h3>[2004-04-09 21:18 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Sorry for the delay, been realy busy.</p>
+<p>I&#039;ve tried everything to find out what the problem is here and it all falls down to strange behaviour.</p>
+<p>The following lines for some reason don&#039;t always kick in when they should:</p>
+<p>if<br>
+(isset($httpvar[$this-&gt;_options[&#039;login&#039;][&#039;username&#039;]]) &amp;&amp;<br>
+                    $httpvar[$this-&gt;_options[&#039;login&#039;][&#039;username&#039;]] &amp;&amp;<br>
+                   <br>
+isset($httpvar[$this-&gt;_options[&#039;login&#039;][&#039;password&#039;]]) &amp;&amp;<br>
+                    $httpvar[$this-&gt;_options[&#039;login&#039;][&#039;password&#039;]]<br>
+                ) {<br>
+                    $logout = true;<br>
+                }</p>
+<p>So logout doesnt always get set.  Now, when I but prints and die()&#039;s into the code it shows that $logout isnt always getting set, or the above if statement isnt always validating right.</p>
+<p>I just can&#039;t figure it out.  Maybe its my environment, or something, but what I do know, is that my patch below makes it work explicitly.</p>
+<p>Sorry I can&#039;t be more help, but I&#039;m sure at least some of the suggestions here if not the whole patch is worth a look.</p>
+<p>Has anyone else seen this behaviour?</p>
+</section>
+<section>
+<h3>[2004-04-22 13:57 UTC] smith at backendmedia dot com</h3>
+<p>Ok I have added the regenid feature. I decided to use the existing destroy option as regenid is done inside the destroy if in my implementation.</p>
+<p>so instead of<br>
+&#039;destroy&#039; =&gt; true // default<br>
+yu would do<br>
+&#039;destroy&#039; =&gt; &#039;regenid&#039;</p>
+<p>As for why the logout is not performed might it be related to the fact that sometimes you are using post and sometimes get? anyways maybe using the new &#039;method&#039; =&gt; &#039;request&#039; setting will solve that problem?</p>
+</section>
+<section>
+<h3>[2004-05-01 18:11 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>This extension to destroy on logout is welcomed, but I&#039;m just as (if not more) concerned about regenid on logon.</p>
+<p>Would it be possible to implement this?</p>
+</section>
+<section>
+<h3>[2004-05-01 21:28 UTC] smith at backendmedia dot com</h3>
+<p>well .. a logon should initiate a logout .. if it doesnt then we have a bug .. unfortunately I cannot reproduce the bug.</p>
+<p>however I dont think we adre doing ourselves a favor if we add code to LiveUser that covers up this bug</p>
+<p>so I guess you would have to figure out why no logout is initiated on login ..</p>
+</section>
+<section>
+<h3>[2004-05-02 11:30 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Hi Lukas</p>
+<p>Right, I&#039;ve had another look at this is my understanding of how it works:</p>
+<p>During login...<br>
+In init, processLogout() is called ($logout=false).</p>
+<p>The first check, in processLogout(), checks if the user wants to logout by looking for the logout method and the logout trigger in $_REQUEST and friends.</p>
+<p>Since I haven&#039;t set the trigger $logout = false;</p>
+<p>The second check, in processLogout(), checks if the user is logged in by checking the session for the &quot;auth_name&quot;, so again, if I&#039;m not logged in these are not set - $logout=false;</p>
+<p>So, since $logout=false, logout() won&#039;t get called during login, thus my session won&#039;t get regenid&#039;d.</p>
+<p>I&#039;ve set both login and logout to &quot;request&quot; just in case.</p>
+<p>Can anyone confirm that logout() is getting called during login?  The easy way to do it is set [&#039;destroy&#039;] = &#039;regenid&#039;; and look for the sessionid changing during login.</p>
+<p>I still have an issue though, even if this did work...in logout() we can redirect using header(), now if I have this set, I will get redirected on every login.</p>
+<p>If we&#039;re gonna stick with calling logout during login then there must be a work around or suggested method to redirect ONLY on a proper logout. Perhaps just calling the redirect if the logout trigger is set, something like:</p>
+<p>if (!empty($this-&gt;_options[&#039;logout&#039;][&#039;redirect&#039;])<br>
+     &amp;&amp; (isset($httpvar[$this-&gt;_options[&#039;logout&#039;][&#039;trigger&#039;]])<br>
+         &amp;&amp; $httpvar[$this-&gt;_options[&#039;logout&#039;][&#039;trigger&#039;]])<br>
+) {<br>
+    header(&#039;Location: &#039; . $this-&gt;_options[&#039;logout&#039;][&#039;redirect&#039;]);<br>
+    exit();<br>
+}</p>
+<p>I&#039;m open to suggestions or will work offline with anyone to get this fixed.</p>
+<p>Thanks for your patience!</p>
+<p>--<br>
+Simon H</p>
+</section>
+<section>
+<h3>[2004-05-13 10:34 UTC] smith at backendmedia dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+<section>
+<h3>[2004-05-16 13:16 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>I&#039;ve updated to the latest cvs and tested this.</p>
+<p>I&#039;ve had a look at the code and the logout seems to be working ok, but I still don&#039;t see $this-&gt;logout() getting called during a login.</p>
+<p>During login...</p>
+<p>In init() processLogout gets called which doesnt call logout() because we are not already logged in, nor triggering a logout.</p>
+<p>Also further in init we check again to see if the user is logged in already before trying to logout.</p>
+<p>So, everywhere logout() is called its requiring that we&#039;re already logged in or trying to logout, but what we want, is to logout (without setting $direct) on login, even if we&#039;re not already logged in - regenerating the session id.  Thus avioding the session being hijacked in an unprivelaged state and the gaining escalated rights as the user logs in and keeps the same sessionid.</p>
+<p>I still think it would be nice to have this as an option in the conf array [&#039;login&#039;] destroy options as in [&#039;logout&#039;].</p>
+<p>Thanks for the changes so far tho :-).</p>
+<p>Simon H</p>
+</section>
+<section>
+<h3>[2004-05-16 16:33 UTC] smith at backendmedia dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+<section>
+<h3>[2004-05-16 16:42 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Lukas</p>
+<p>Why did you remove the regenid from logout when putting it into login?</p>
+<p>I would have thought that its just as useful to regenid on logout, or least causes no harm leaving the feature in.</p>
+<p>--<br>
+Simon H</p>
+</section>
+<section>
+<h3>[2004-05-16 18:14 UTC] smith at backendmedia dot com</h3>
+<p>I removed it because I dont really see a point in it being there. It just makes things more complicated and can result in multiple regen&#039;s.</p>
+<p>Essentially on logout your session id is no longer a security risk and on the next logon you will get the new id again. So I dont really see a potential security risk here anymore</p>
+</section>
+<section>
+<h3>[2004-06-12 21:24 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Sorry, I just havent had a chance to look at the changes commited yet.  Will check it out later this evening or tomorrow.</p>
+</section>
+<section>
+<h3>[2004-06-13 10:38 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Yeah, this is cool.  Thanks for the persistance!</p>
+</section>
+<section>
+<h3>[2004-06-13 10:53 UTC] smith at backendmedia dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3152</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #3152</h1>
+<p>joinAdd requires join column to be in links.ini file</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-10 15:33 UTC</td></tr>
+<tr><th>From</th><td>mcraig at leadehealth dot com</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-10 15:33 UTC] mcraig at leadehealth dot com</h3>
+<p>Description:<br>
+------------<br>
+joinAdd can accept an argument called $joinCol, but if this column is not listed in the &lt;DB&gt;.links.ini file joinAdd will return an error.</p>
+<p>[code that works.  Diffed against 1.7.2]<br>
+2741a2742,2746<br>
+&gt;<br>
+&gt;     if ($ofield === false &amp;&amp; $joinCol) {<br>
+&gt;           $ofield = $joinCol;<br>
+&gt;           $tfield = $joinCol;<br>
+&gt;     }</p>
+<p>After more thought, it seems that joinAdd() should be checking that both DOs do indeed have a column named {$joinCol}.  Here is my stab at this, but I don&#039;t know the code well enough to do it right.</p>
+<p>if ($ofield === false &amp;&amp; $joinCol) {<br>
+      if (isset($obj-&gt;$joinCol) &amp;&amp; isset($this-&gt;$joinCol)) {<br>
+         $ofield = $joinCol;<br>
+         $tfield = $joinCol;<br>
+      }<br>
+}</p>
+</section>
+<section>
+<h3>[2005-01-26 16:10 UTC] mcraig at leadehealth dot com</h3>
+<p>After further review, it looks like joinAdd provides very similar functionality (and works) when passed an array with settings as arg[0].</p>
+<p>The hitch is that this method provides its own object, whereas the user may want to create the object and do some whereAdd-ing, orderBy-ing, etc. before joining it to another object.</p>
+<p>Maybe this is intended, so that the user is only whereAdd-ing after the join has been done??</p>
+<p>Anyway,  my code would be inserted before line 2793 if it makes sense for the user to be able to create the objects ahead of time.</p>
+</section>
+<section>
+<h3>[2006-12-04 14:23 UTC] mcraig at leadehealth dot com</h3>
+<p>diff versus current cvs copy of DataObject.php:</p>
+<p>--- DataObject.php      2006-12-04 09:11:39.000000000 -0500<br>
++++ DataObject.mine.php 2006-12-04 09:15:13.000000000 -0500<br>
+@@ -3139,6 +3139,12 @@<br>
+             }<br>
+         }</p>
+<p>+        // finally if these two table have column names that match do a join by default on them<br>
++        if($ofield === false &amp;&amp; $joinCol) {<br>
++            $ofield = $joinCol;<br>
++            $tfield = $joinCol;<br>
++        }<br>
++<br>
+         /* did I find a conneciton between them? */</p>
+<p>if ($ofield === false) {</p>
+<p>Note:  this will still return an SQL error if the programmer supplies a field name that is not present in both tables.  Error checking possible as in the original comment might be nice so as to not break someone&#039;s code out there?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

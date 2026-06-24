@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8388</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/SQL_Parser/index.html">SQL_Parser</a> &#187; Bug #8388</h1>
+<p>PATCH NEEDED - Between statements not recognized</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-08-08 13:43 UTC</td></tr>
+<tr><th>From</th><td>denis at denismayer dot com</td></tr>
+<tr><th>Status</th><td>Open</td></tr>
+<tr><th>Package</th><td><a href="package/SQL_Parser/index.html">SQL_Parser</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Windows</td></tr>
+<tr><th>Roadmaps</th><td>0.5.1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-08 13:43 UTC] denis at denismayer dot com</h3>
+<p>Description:<br>
+------------<br>
+The following sql statement is not recognized by the SQL Parser:</p>
+<p>SELECT AVG(CUSTOMER.AGE)<br>
+FROM CUSTOMER<br>
+WHERE CUSTOMER.AGE BETWEEN 21 AND 35<br>
+GROUP BY CUSTOMER.AGE</p>
+<p>The parser says that GROUP token is not an operator.</p>
+<p>I believe the parser is not recognizing the BETWEEN statement properly.</p>
+</section>
+<section>
+<h3>[2006-08-25 07:36 UTC] home at saint dot vel dot pl</h3>
+<p>I encountered the same problem and I think the problem is that between operator does not have special treatment in the SQL_Parser::parseSearchClause() function, i.e. and is interpreted as the begining of the next constraint in the where clause while it should be a part of the current expression.</p>
+<p>I think the solution is easy. When you add a short block of code in the previously mentioned function it is working fine.</p>
+<p>In switch(clause[&#039;op&#039;]) statement add new case block like that:</p>
+<p>case &#039;between&#039;:                    <br>
+                    if ($this-&gt;isReserved()) {<br>
+                        return $this-&gt;raiseError(&#039;Expected a value&#039;);<br>
+                    }<br>
+                    $clause[&#039;arg_2&#039;][&#039;value&#039;] = $this-&gt;lexer-&gt;tokText;<br>
+                    $clause[&#039;arg_2&#039;][&#039;type&#039;] = $this-&gt;token;<br>
+                    //if next token is not and then raise error<br>
+                    $this-&gt;getTok();<br>
+                    if ($this-&gt;token != &#039;and&#039;) {<br>
+                        return $this-&gt;raiseError(&#039;Expected &quot;and&quot;&#039;);<br>
+                    }<br>
+                    //get next token<br>
+                    $this-&gt;getTok();                    <br>
+                    if ($this-&gt;isReserved()) {<br>
+                        return $this-&gt;raiseError(&#039;Expected a value&#039;);<br>
+                    }<br>
+                    $clause[&#039;arg_3&#039;][&#039;value&#039;] = $this-&gt;lexer-&gt;tokText;<br>
+                    $clause[&#039;arg_3&#039;][&#039;type&#039;] = $this-&gt;token;<br>
+                    break;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

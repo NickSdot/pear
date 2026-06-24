@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6820</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Testing &#187; <a href="package/PHPUnit2/index.html">PHPUnit2</a> &#187; Bug #6820</h1>
+<p>generateMethodDefinition()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-02-17 18:27 UTC</td></tr>
+<tr><th>From</th><td>maximilian dot gass at arcor dot de</td></tr>
+<tr><th>Assigned</th><td>sebastian</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PHPUnit2/index.html">PHPUnit2</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-17 18:27 UTC] maximilian dot gass at arcor dot de</h3>
+<p>Description:<br>
+------------<br>
+When generating a mock object I get the error message  <br>
+below. It can easily fixed by replacing <br>
+ <br>
+$code .= $this-&gt;generateMethodDefinition($class, $method); <br>
+ <br>
+with <br>
+ <br>
+$code .= $this-&gt;generateMethodDefinition($method); <br>
+ <br>
+in <br>
+PHPUnit2_Extensions_MockObject_Mock::generateClassDefinition</p>
+<p>Expected result:<br>
+----------------</p>
+<p>Actual result:<br>
+--------------<br>
+Fatal error: Argument 1 passed to  <br>
+PHPUnit2_Extensions_MockObject_Mock::generateMethodDefinition()  <br>
+must be an instance of ReflectionMethod, called  <br>
+in /usr/share/php/PHPUnit2/Extensions/MockObject/Mock.php  <br>
+on line 173 and defined  <br>
+in /usr/share/php/PHPUnit2/Extensions/MockObject/Mock.php  <br>
+on line 199  <br>
+  <br>
+    0.1533  14.  <br>
+PHPUnit2_Framework_Assert::getMock() /home/koolkaot/Phrecm/trunk/Kernel/Tests/ObservableTest.php:17  <br>
+    0.1534  15.  <br>
+PHPUnit2_Extensions_MockObject_Mock::generate() /usr/share/php/PHPUnit2/Framework/Assert.php:968  <br>
+    0.1535  16.  <br>
+PHPUnit2_Extensions_MockObject_Mock-&gt;generateClass() /usr/share/php/PHPUnit2/Extensions/MockObject/Mock.php:120  <br>
+    0.1539  17.  <br>
+PHPUnit2_Extensions_MockObject_Mock-&gt;generateClassDefinition() /usr/share/php/PHPUnit2/Extensions/MockObject/Mock.php:139  <br>
+    0.1541  18.  <br>
+PHPUnit2_Extensions_MockObject_Mock-&gt;generateMethodDefinition() /usr/share/php/PHPUnit2/Extensions/MockObject/Mock.php:173</p>
+</section>
+<section>
+<h3>[2006-02-17 18:59 UTC] sebastian at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+<section>
+<h3>[2006-02-17 20:05 UTC] maximilian dot gass at arcor dot de</h3>
+<p>Whoops, I&#039;ve got it wrong! :-/ Sorry    <br>
+   <br>
+generateMethodDefintion() seems to need the ReflectionClass   <br>
+object. Therefore to fix this problem, you&#039;ll have to add <br>
+$class to the argument list of generateMethodDefinition() <br>
+instead of removing if from the calling statement.  <br>
+ <br>
+Sorry.</p>
+</section>
+<section>
+<h3>[2006-02-17 20:20 UTC] maximilian dot gass at arcor dot de</h3>
+<p>I&#039;ve just found how to create diffs with CVS so here&#039;s the  <br>
+complete fix:  <br>
+ <br>
+--- PHPUnit2/Extensions/MockObject/Mock.php     17 Feb 2006 <br>
+18:59:12 -0000      1.15 <br>
++++ PHPUnit2/Extensions/MockObject/Mock.php     17 Feb 2006 <br>
+20:18:48 -0000 <br>
+@@ -170,7 +170,7 @@ <br>
+                 continue; <br>
+             } <br>
+ <br>
+-            $code .= <br>
+$this-&gt;generateMethodDefinition($method); <br>
++            $code .= <br>
+$this-&gt;generateMethodDefinition($class, $method); <br>
+         } <br>
+ <br>
+         $code .= &quot;}\n&quot;; <br>
+@@ -196,7 +196,7 @@ <br>
+         return in_array($method-&gt;getName(), <br>
+$this-&gt;methods); <br>
+     } <br>
+ <br>
+-    protected function <br>
+generateMethodDefinition(ReflectionMethod $method) <br>
++    protected function <br>
+generateMethodDefinition(ReflectionClass $class, <br>
+ReflectionMethod $method) <br>
+     { <br>
+         $code = &quot;\n    &quot;; <br>
+ <br>
+@@ -234,7 +234,7 @@ <br>
+ <br>
+           $method-&gt;getName(), <br>
+           $this-&gt;generateMethodParameters($method), <br>
+-          var_export($method-&gt;getClass()-&gt;getName(), <br>
+TRUE), <br>
++          var_export($class-&gt;getName(), TRUE), <br>
+           var_export($method-&gt;getName(), TRUE) <br>
+         );</p>
+</section>
+<section>
+<h3>[2006-02-17 21:18 UTC] sebastian at php dot net</h3>
+<p>Thank you for taking the time to write to us, but this is not<br>
+a bug.</p>
+<p>The generateMethodDefinition() method has been refactored to only need the $method parameter as $class can be gained through $method-&gt;getClass().</p>
+</section>
+<section>
+<h3>[2006-02-17 21:29 UTC] maximilian dot gass at arcor dot de</h3>
+<p>I&#039;ve just had a look at the PHP Manual and the method is <br>
+named &#039;getDeclaringClass&#039;. <br>
+ <br>
+I just posted the patch because the CVS version didn&#039;t <br>
+work.</p>
+</section>
+<section>
+<h3>[2006-02-18 06:31 UTC] sebastian at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2215</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #2215</h1>
+<p>Date format should be choosable to solve database dependency issues</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-08-25 16:47 UTC</td></tr>
+<tr><th>From</th><td>mscifo at php dot net</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>ANY</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-25 16:47 UTC] mscifo at php dot net</h3>
+<p>Description:<br>
+------------<br>
+I can only find one instance where date() is used....in _updateUserData() in Auth/Container/DB.php.</p>
+<p>The date format is hardcoded as &#039;Y-m-d H:i:s&#039;.  I think it would be a good idea to create a new option called &#039;dateFormat&#039; in the options array that allows the user to specify the date format for the database being used.  Also, by putting it in the authContainers array, this ensures that multiple auth containers with different database servers can be used without worrying about the date format breaking.</p>
+<p>&lt;snip&gt;<br>
+&#039;authContainers&#039; =&gt; array(<br>
+    &#039;name&#039; =&gt; array(<br>
+        &#039;type&#039; =&gt; &#039;DB&#039;,<br>
+        &#039;dateFormat&#039; =&gt; &#039;Y-m-d H:i:s&#039;,<br>
+&lt;snip&gt;</p>
+<p>Then replace instances of hardcoded date formats with the set value.</p>
+</section>
+<section>
+<h3>[2004-08-28 15:52 UTC] smith at backendmedia dot com</h3>
+<p>Thank you for taking the time to write to us, but this is not<br>
+a bug.</p>
+<p>if you want portability we recommend using the MDB or MDB2 container. We have decided to not work around the limitations of DB in LiveUser to improve portability. I am sorry for the inconvinience.</p>
+</section>
+<section>
+<h3>[2004-08-30 18:49 UTC] mscifo at php dot net</h3>
+<p>Lukas, even though this might not be a &#039;bug&#039;, it is still a problem for some databases.  This problem can not be solved by switching to a MDB or MDB2 container.</p>
+<p>When calling _updateUserData() in Auth/Container/MDB[2].php, the query uses MDB[2]_Date::unix2Mdbstamp($this-&gt;currentLogin).  All unix2Mdbstamp() does is take the currentLogin (which is in epoch format) and converts it into this format &#039;Y-m-d H:i:s&#039;</p>
+<p>No matter which container you use, they all hardcode the date format to be used in the query, which is what is causing the problem since not all databases support that format by default.</p>
+</section>
+<section>
+<h3>[2004-08-30 19:14 UTC] smith at backendmedia dot com</h3>
+<p>Your observation is only partially correct. The MDB datatype conversion works as follows: you pass a date string with the &#039;Y-m-d H:i:s&#039; format to either getValue(&#039;timestamp&#039;, $date) or quote($date, &#039;timestamp&#039;) which then converts the date into a native format. When you then fetch that date again you pass &#039;timestamp&#039; again for the given column and the date is converted back to the &#039;Y-m-d H:i:s&#039; format from the nativ format. So unless we forgot the pass the correct datatype somewhere it should work on MDB[2] just fine.</p>
+</section>
+<section>
+<h3>[2004-08-30 21:02 UTC] mscifo at php dot net</h3>
+<p>You&#039;re right Lukas.  I wasn&#039;t tracing back all the way.  It works as expected.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

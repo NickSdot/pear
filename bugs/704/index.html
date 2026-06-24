@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #704</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_URL/index.html">Net_URL</a> &#187; Bug #704</h1>
+<p>Hardcoded &amp; instead of ini_get(&#039;arg_separator.xxx&#039;)</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-02-07 14:51 UTC</td></tr>
+<tr><th>From</th><td>miancule at yahoo dot com</td></tr>
+<tr><th>Assigned</th><td>richard</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_URL/index.html">Net_URL</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-02-07 14:51 UTC] miancule at yahoo dot com</h3>
+<p>Description:<br>
+------------<br>
+A small thing, but essential for XHTML compliancy (&amp; instead of &amp; in URLs), etc</p>
+<p>Instead of using harcoded &amp; as argument separator, the code should use ini_get(&#039;arg_separator.input&#039;) and ini_get(&#039;arg_separator.output&#039;).</p>
+<p>Changes to URL.php:</p>
+<p>Line 272:<br>
+$querystring = implode(&#039;&amp;&#039;, $querystring);<br>
+becomes:<br>
+$querystring = implode(ini_get(&#039;arg_separator.output&#039;), $querystring);</p>
+<p>Line 289:<br>
+$parts  = preg_split(&#039;/&amp;/&#039;, $querystring, -1, PREG_SPLIT_NO_EMPTY);<br>
+becomes:<br>
+$parts  = preg_split(&#039;/&#039;.preg_quote(ini_get(&#039;arg_separator.input&#039;),&#039;/&#039;).&#039;/&#039;, $querystring, -1, PREG_SPLIT_NO_EMPTY);</p>
+<p>Regards,<br>
+mihai</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+ini_set(&#039;arg_separator.output&#039;, &#039;&amp;&#039;);</p>
+<p>require_once &#039;Net/URL.php&#039;;</p>
+<p>$url = &amp;new NetURL(&#039;http://foo.bar/index.php&#039;);<br>
+$url-&gt;addQueryString(&#039;apples&#039;, 5);<br>
+$url-&gt;addQueryString(&#039;oranges&#039;, 15);</p>
+<p>echo $url-&gt;getURL();<br>
+die;<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+The output of the $url-&gt;getURL() call should be:<br>
+http://foo.bar/index.php?apples=5&amp;oranges=15</p>
+<p>Actual result:<br>
+--------------<br>
+The output of the $url-&gt;getURL() call is:<br>
+http://foo.bar/index.php?apples=5&amp;oranges=15</p>
+</section>
+<section>
+<h3>[2004-05-08 17:32 UTC] richard at phpguru dot org</h3>
+<p>Thank you for your bug report. This issue has been fixed<br>
+in the latest released version of the package, which you can download at <br>
+http://pear.php.net/packages.php</p>
+</section>
+<section>
+<h3>[2004-09-02 21:27 UTC] joern_h at gmx dot net</h3>
+<p>I think the value of arg_separator.output should not be used since its a setting that applies to the server the script is running on. If you connect to a different server it may need a different separator. Perhaps the separator should be settable by a method and default to &#039;&amp;&#039;.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

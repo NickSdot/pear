@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6424</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_AJAX/index.html">HTML_AJAX</a> &#187; Bug #6424</h1>
+<p>Some requests seem to disappear in IE</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-06 04:31 UTC</td></tr>
+<tr><th>From</th><td>josh at endries dot org</td></tr>
+<tr><th>Assigned</th><td>jeichorn</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_AJAX/index.html">HTML_AJAX</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-06 04:31 UTC] josh at endries dot org</h3>
+<p>Description:<br>
+------------<br>
+HTML_AJAX 0.3.3</p>
+<p>I have a sign-up page that, when a user enters a desired login name, it AJAXes to check if it&#039;s taken already and returns the result, which determines what is shown in the div (available or not). Even with a simple onChange, sometimes (no noticable pattern) requests get queued for some reason. They make it to the server after 10sec (a zero byte request) but IE generates a Timed Out error and gets stuck in the &quot;Loading...&quot; state. AFAICT it never got to the server so the server isn&#039;t timing out. I can process other requests in the meantime while the queued one sits in lala land. These intermediate requests will reset the state and process immediately, it&#039;s just that one which gets delayed and seemingly lost (and never retried). Waiting in between attempts to give IE a rest doesn&#039;t seem to help. It just seems unreliable and sporadic.</p>
+<p>The backend function queries a DB, but the request-in-question doesn&#039;t even get that far, and sends no data when it eventually does, so I don&#039;t think that&#039;s it. Sync or Async doesn&#039;t seem to matter, either...maybe it&#039;s an IE bug, though I didn&#039;t find much online about it.</p>
+<p>Test script:<br>
+---------------<br>
+Way too many lines to paste here, though it&#039;s very simple stuff. Backend DB query, returns true/false, callback checks that and updates a div. I can provide the code, it&#039;s on an internal server so it isn&#039;t publically available.</p>
+</section>
+<section>
+<h3>[2006-01-06 04:44 UTC] jeichorn at php dot net</h3>
+<p>I think what is happing is that your making too many requests at once.</p>
+<p>I&#039;m not sure how many open requests are required, but at some point IE just gets odd.</p>
+<p>Could be something else as well, I&#039;ll need to look at the code to see what is actually happening.  You can email it too me at josh@bluga.net</p>
+</section>
+<section>
+<h3>[2006-01-20 23:09 UTC] jeichorn at php dot net</h3>
+<p>I actually ran into this same problem today on firefox and was able to debug it.  We weren&#039;t clearing timeouts correctly so the timeout is actually from an already completed connection.</p>
+<p>I would have made sense to see this bug 20 seconds after any request (default timeout) but since we check for an inprogress request before doing a cancel it took a race condition for this to actually be hit.</p>
+</section>
+<section>
+<h3>[2006-01-20 23:10 UTC] jeichorn at php dot net</h3>
+<p>Fixed in svn, we should have a release out in the next couple week but you can grab the updated HttpClient.js file to fix it now.<br>
+http://svn.bluga.net/HTML_AJAX/trunk/js/HttpClient.js</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

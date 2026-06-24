@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1915</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB/index.html">MDB</a> &#187; Bug #1915</h1>
+<p>Undefined Offset when doing fetchRow</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-07-20 04:55 UTC</td></tr>
+<tr><th>From</th><td>brain at jbrain dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/MDB/index.html">MDB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.7</td></tr>
+<tr><th>OS</th><td>Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-20 04:55 UTC] brain at jbrain dot com</h3>
+<p>Description:<br>
+------------<br>
+I am using PHP 4.3.8 on WinXP and Apache</p>
+<p>When using PEAR_MDB 1.30 MySQL DB, I can read in 1 row of data as per the tutorial.  However, when I go to read in the second line of data, I get &quot;Undefined Offset&quot; in fetchInto method, called from fetchRow...  I tracked the issue down to:</p>
+<p>Common.php, line 3737:</p>
+<p>if (!$this-&gt;options[&#039;autofree&#039;] || $row != NULL) {<br>
+            $this-&gt;freeResult($result);<br>
+        }</p>
+<p>I have autofree off, and the row is not null, so the result is freed.  Unless I am mistaken, it would seem this code should be:</p>
+<p>// if autofree on and returned row = NULL, free RS.<br>
+        if ($this-&gt;options[&#039;autofree&#039;] &amp;&amp; $row == NULL) {<br>
+            $this-&gt;freeResult($result);<br>
+        }</p>
+<p>Reproduce code:<br>
+---------------<br>
+Any query that returns more than 1 row of data shows the issue:</p>
+<p>$mdb=&amp;MDB::connect((array(&quot;phptype&quot;=&gt;&quot;mysql&quot;,&quot;username&quot;=&gt;&quot;ODBC&quot;,&quot;password&quot;=&gt;&quot;password&quot;)));<br>
+  $mdb-&gt;setDatabase(&quot;eweb&quot;);<br>
+  $query=&quot;...&quot;;</p>
+<p>$result=$mdb-&gt;query($query);<br>
+  <br>
+  if(MDB::isError($result)) { die($result-&gt;getMessage()); }<br>
+  <br>
+  while($data=$mdb-&gt;fetchRow($result)) {<br>
+     echo $data; //replace with actual code.<br>
+  }</p>
+<p>Expected result:<br>
+----------------<br>
+Rows of data</p>
+<p>Actual result:<br>
+--------------<br>
+Only one row</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

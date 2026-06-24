@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File_Archive Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_Archive/index.html">File_Archive</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/File_Archive/docs/index.html#package-fileformats-file-archive-examples">Examples</a>
+</li>
+<li><a href="package/File_Archive/docs/index.html#package-fileformats-file-archive-examples-gallery">Dynamic generation of archive files for a gallery</a>
+</li>
+<li><a href="package/File_Archive/docs/index.html#package-fileformats-file-archive-readers">Readers</a>
+</li>
+<li><a href="package/File_Archive/docs/index.html#package-fileformats-file-archive-writers">Writers</a>
+</li>
+<li><a href="package/File_Archive/docs/index.html#package-fileformats-file-archive-predicates">Predicates</a>
+</li>
+<li><a href="package/File_Archive/docs/index.html#package-fileformats-file-archive-archmod">Archive modification</a>
+</li>
+<li><a href="package/File_Archive/docs/index.html#package-fileformats-file-archive-cache">Cache</a>
+</li></ul>
+</nav>
+<p>This package will let you manipulate easily tar, gz, bz2, tgz, tbz, zip, ar and deb files.</p>
+<section id="package-fileformats-file-archive-examples">
+<h2>Examples</h2>
+<h3>Extract a tar archive to a sub directory</h3>
+
+   
+   <p>Here we simply take a tar archive called 
+    <code>archive.tar</code>
+    and extract its contents to the folder</p>
+   <pre><code>&lt;?php
+require_once &quot;File/Archive.php&quot;;
+
+File_Archive::extract(&#039;archive.tar/&#039;, &#039;output&#039;);
+?&gt;</code></pre>
+  
+
+
+  <h3>Send a zip archive containing the content of a tar file to the standard output</h3>
+
+   
+   <pre><code>&lt;?php
+require_once &quot;File/Archive.php&quot;;
+
+File_Archive::extract(
+    //The content of archive.tar appears in the root folder (default argument)
+    &#039;archive.tar/&#039;,
+
+    //And is written to ...
+    File_Archive::toArchive(       // ... a zip archive
+        &#039;archive.zip&#039;,             // called archive.zip
+        File_Archive::toOutput()   // that will be sent to the standard output
+    )
+);
+?&gt;</code></pre>
+  
+
+
+  <h3>Extracting a file from an archive</h3>
+
+   
+   <p>Use <strong>extract()</strong> to get files out of an archive.
+    
+    When specifying the file to extract, 
+    make sure to use the archive name as first folder.</p>
+   <pre><code>&lt;?php
+require_once &quot;File/Archive.php&quot;;
+
+File_Archive::extract(
+    &#039;archive.tar/inner.tgz/file.txt&#039;,
+    File_Archive::toOutput()
+);
+?&gt;</code></pre>
+</section>
+<section id="package-fileformats-file-archive-examples-gallery">
+<h2>Dynamic generation of archive files for a gallery</h2>
+<p>One possible use case of <strong>File_Archive</strong> is to
+    dynamically generate archives that contain pictures or videos from a gallery.</p>
+   <p>The choice of the file format is important if you want an efficient
+    generation. Let&#039;s see what are the possibilities:</p>
+   <ol><li>Tar</li><li>Tgz, Tbz</li><li>Zip</li></ol>
+    <dl>
+     <dt><strong>Tar</strong></dt>
+     <dd>
+      <p><em>Pros</em>:
+       Generation very efficient, constant memory usage, no need to cache</p>
+     </dd>
+     <dd>
+      <p><em>Cons</em>:
+       No compression (but anyway images or video can hardly be
+       compressed), not as widely used as Zip</p>
+     </dd>
+    </dl>
+
+    <dl>
+     <dt><strong>Tgz, Tbz</strong></dt>
+     <dd>
+      <p><em>Pros</em>:
+       Very high compression ratio, constant memory usage</p>
+     </dd>
+     <dd>
+      <p><em>Cons</em>:
+       Can&#039;t be cached, needs a lot of CPU at each generation</p>
+     </dd>
+    </dl>
+
+    <dl>
+     <dt><strong>Zip</strong></dt>
+     <dd>
+      <p><em>Pros</em>:
+       Intermediate result can be cached, compressed, you can choose
+       the compression level, widely used</p>
+     </dd>
+     <dd>
+      <p><em>Cons</em>:
+       Compression ratio lower than for Tgz/Tbz</p>
+     </dd>
+    </dl>
+   
+
+   <p>We will focus on Tar and Zip generation, Tgz and Tbz are too
+    CPU expensive for an &quot;on the fly&quot; archive generation.</p>
+  
+
+
+  <h3>Tar generation</h3>
+
+   
+   <pre><code>&lt;?php
+require_once &quot;File/Archive.php&quot;;
+
+// $files is an array of path to the files that must be added to the archive
+File_Archive::extract(
+    $files,
+    File_Archive::toArchive(
+        &#039;myGallery.tar&#039;,
+        File_Archive::toOutput()
+    )
+);
+?&gt;</code></pre>
+  
+
+
+  <h3>Zip generation</h3>
+
+   
+   <p>The main advantages of the Zip generation is that it is not very expensive
+    (due to the ability to cache the result), and widely used.
+    I think 2 viable options are to generate uncompressed Zip archives
+    (since you don&#039;t reduce a lot the size of picture and video files by
+    compressing them)
+    or to generate compressed Zip archive using a cache system.</p>
+
+   <p><strong>On the fly creation of an uncompressed ZIP archive</strong></p>
+    
+    <pre><code>&lt;?php
+require_once &quot;File/Archive.php&quot;;
+
+File_Archive::setOption(&#039;zipCompressionLevel&#039;, 0);
+
+// $files is an array of path to the files that must be added to the archive
+File_Archive::extract(
+    $files,
+    File_Archive::toArchive(
+        &#039;myGallery.zip&#039;,
+        File_Archive::toOutput()
+    )
+);
+?&gt;</code></pre>
+   
+
+   <p><strong>On the fly creation of a compressed ZIP archive with a cache</strong></p>
+    
+    <pre><code>&lt;?php
+require_once &quot;File/Archive.php&quot;;
+require_once &quot;Cache/Lite.php&quot;;
+
+// See the documentation of cache lite for the meaning of the $options array
+// fileNameProtection must be left to the default true value
+// automaticSerialization is not required and should be left to false
+$options = array(&#039;cacheDir&#039; =&gt; &#039;tmp&#039;);
+
+File_Archive::setOption(&#039;cache&#039;, new Cache_Lite($options));
+File_Archive::setOption(&#039;zipCompressionLevel&#039;, 9);
+
+// $files is an array of path to the files that must be added to the archive
+File_Archive::extract(
+    $files,
+    File_Archive::toArchive(
+        &#039;myGallery.zip&#039;,
+        File_Archive::toOutput()
+    )
+);
+?&gt;</code></pre>
+   
+
+  
+
+
+  <h3>Putting it all together</h3>
+
+   
+
+   <p>Since generating a zip or a tar archive is pretty much the same code,
+    you can write a simple code that lets the user choose what format he wants.
+    The following code is taken from a code I really use in my gallery.</p>
+
+   <p><strong>Custom archive</strong></p>
+    
+    <pre><code>&lt;?php
+$allowedFormats = array(&#039;tar&#039;, &#039;zip&#039;);
+
+if (!in_array($_GET[&#039;type&#039;], $allowedFormats)) {
+    die(&#039;Type &#039; . htmlspecialchars($_GET[&#039;type&#039;]) . &#039; is either unknown or not allowed&#039;);
+}
+
+require_once &quot;File/Archive.php&quot;;
+
+File_Archive::setOption(&#039;zipCompressionLevel&#039;, 0);
+
+/**
+ * I skipped the generation of the $files array since it really
+ * depends on you gallery and what files the user requires
+ */
+
+File_Archive::extract(
+    $files,
+    File_Archive::toArchive(
+        &#039;myGallery.&#039; . $_GET[&#039;type&#039;],
+        File_Archive::toOutput()
+    )
+);
+?&gt;</code></pre>
+</section>
+<section id="package-fileformats-file-archive-readers">
+<h2>Readers</h2>
+<h3>Introduction</h3>
+
+  
+  <p>A reader is an object that represents a list of files and directories.
+   
+   Those files can be generated dynamically or exist physically.
+   
+   For example, there is a reader class for a directory,
+   or for each archive format handled by 
+   <strong>File_Archive</strong>,
+   and they all have the same interface.</p>
+  <p>To create a reader, 
+   you will have to use the
+   <strong>File_Archive</strong> factory.
+   
+   The important function is the <strong>read()</strong> function:</p>
+  
+   <p><code>
+    
+     <strong>read</strong>
+     ( 
+    
+     string
+     $url
+    
+     , 
+     string
+     $symbolic = null
+    
+     , 
+     integer
+     $uncompression = 0
+    
+     , 
+     integer
+     $directoryDepth = -0
+    
+   )</code></p>
+  
+  <p>In this function the URL will represent what you want to read.</p>
+
+  <p><strong>Generation of sources</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &quot;File/Archive.php&quot;;
+
+/*
+To read a directory, just give the directory name
+By default, the directory and all the subdirectories
+will be parsed (see $directoryDepth to change this)
+*/
+$source = File_Archive::read(&quot;Path/to/dir&quot;);
+
+/*
+To read from one single file,
+simply provide the name of the file
+*/
+$source = File_Archive::read(&quot;Path/to/dir/file.txt&quot;);
+
+/*
+An archive will be considered as a directory if a slash follows
+This example reads the directory and all the subdirectories of inner/dir
+contained in archive Path/to/dir/archive.tar
+This reads all the .txt files in the inner directory of the archive.tar
+*/
+$source = File_Archive::read(&quot;Path/to/dir/archive.tar/inner/*.txt&quot;);
+
+/*
+If you want to uncompress the archive (read all its content)
+Note: if you ommit the trailing /, the archive will be treated as a single file
+*/
+$source = File_Archive::read(&quot;Path/to/dir/archive.tar/&quot;);
+?&gt;</code></pre>
+  
+
+  <p>The <code>symbolic</code> attribute says how the files read will be
+   displayed for future use.
+   If <code>$URL</code> is a directory, 
+   <code>$URL</code> 
+   will be replaced by 
+   <code>$symbolic</code> 
+   (or 
+   <code>&#039;&#039;</code> 
+   if
+   <code>$symbolic</code>
+   is 
+   <code>null</code>).
+   
+   So, 
+   in our first example, 
+   the files will be displayed as if the current directory was 
+   <code>&#039;Path/to/dir&#039;</code>:
+   
+   Since by default <code>$symbolic</code> is empty,
+   <code>Path/to/dir</code> 
+   will be simply removed from the file.
+   
+   You may want to put <code>Path/to/dir</code> as
+   <code>$symbolic</code> to keep the full path
+   <code>Path/to/dir</code>.</p>
+
+  <p>If <code>$URL</code> is a file, 
+   then only the filename will be kept,
+   and 
+   <code>$symbolic</code> 
+   will be added to it.
+   
+   So, 
+   in our second example, 
+   the source contains a file with symbolic name
+   <code>file.txt</code>.
+
+   If a symbolic name <code>foo</code> had been specified,
+   the source would contain <code>foo/file.txt</code>.</p>
+
+  <p>The <code>$uncompression</code> parameter indicate how many files will
+   be uncompressed while parsing the tree to files.
+
+   By default the files are not uncompressed.
+
+   So, if you do
+   <strong>File_Archive::read(&#039;archive.tar/inner/dir&#039;, &#039;inner/dir&#039;)</strong>,
+   and if <code>archive.tar</code> contains a file called
+   <code>archive.tar/inner/dir/file.tgz</code>, this second archive
+   will appear as a file and not as a directory.
+    
+   It won&#039;t be uncompressed because <code>$uncompression</code> 
+   is <code>0</code>.
+   
+   If <code>$uncompression</code> is set to <code>1</code>,
+   <code>file.tgz</code> would appear as a directory,
+   but the files inside this archive would not be uncompressed.
+   
+   If <code>$uncompression</code> is set to <code>-1</code>,
+    all the files would be uncompressed, regardless of the depth.</p>
+
+  <blockquote>
+   <p>The compressed files that may appear in <code>$URL</code> are
+    not taken into account by <code>$uncompression</code> variable.</p>
+  </blockquote>
+
+
+  <p>The <code>$directoryDepth</code> parameter 
+   gives a limit to the number of directory 
+   read by the reader.</p>
+ 
+
+
+
+ <h3>Multi readers</h3>
+
+  
+
+  <p>Using a multi reader, 
+   you can make several sources appear as one.
+   
+   You can create a multi reader using the
+   <strong>File_Archive::readMulti()</strong> function.</p>
+
+  <p><strong>Multi reader</strong></p>
+   
+   <pre><code>&lt;?php
+//This reader contains the content of directory and archive.tar
+$source = File_Archive::readMulti(
+    array(
+        File_Archive::read(&#039;directory&#039;),
+        File_Archive::read(&#039;archive.tar/&#039;)
+    )
+);
+?&gt;</code></pre>
+  
+ 
+
+
+
+ <h3>Reading the content of a data reader</h3>
+
+  
+  <p>Any reader provides the following interface:</p>
+  <ul>
+   <li>
+    <strong>function next()</strong>
+    
+     Go to the next file in the source. 
+     
+     Returns <code>false</code>
+     when the end of the archive is reached.
+    
+   </li>
+
+   <li>
+    <strong>function getFilename()</strong>
+    
+     Returns the filename
+     of the currently selected entry 
+     in the archive.
+    
+   </li>
+
+   <li>
+    <strong>function getStat()</strong>
+    
+     Returns the stat as the <strong>stat()</strong> function does.
+     
+     This function may not return a complete array, 
+     it may even return
+     <code>array()</code>.
+    
+   </li>
+
+   <li>
+    <strong>function getDataFilename()</strong>
+    
+     For optimisation purposes: 
+     if the source is a physical file,
+     this function returns the name of the file; 
+     otherwise it returns 
+     <code>null</code>.
+    
+   </li>
+
+   <li>
+    <strong>function getData($length = -1)</strong>
+    
+     Reads some data from the source.
+     
+     This function will return a string which size is determined by the
+     smallest of
+     <ul>
+      <li>
+       
+        <code>$length</code> if <code>$length</code>
+        <code>&gt;= 0</code>
+       
+      </li>
+      <li>
+       
+        the end of the file.
+       
+      </li>
+     </ul>
+     If the end of the file is reached, 
+     the function will return
+     <code>null</code>.
+    
+   </li>
+
+   <li>
+    <strong>function skip($length)</strong>
+    
+     Equivalent to <strong>getData($length)</strong>, 
+     but does not return any data.
+     
+     Depending on the data reader, 
+     this function can be far more efficient
+     than <strong>getData()</strong>.
+    
+   </li>
+
+   <li>
+    <strong>function close()</strong>
+    
+     Should be called after having used the data reader
+     (closes the file handles...).
+     
+     This function moves the object in the same state 
+     as it was before the first call to 
+     <strong>next()</strong>.
+     
+     After this call, 
+     you can iterate again on the data reader.
+    
+   </li>
+  </ul>
+
+  <p><strong>Listing the content of a data reader</strong></p>
+   
+   <pre><code>&lt;?php
+$source-&gt;close(); //Move back to the begining of the source
+
+while($source-&gt;next()) {
+    echo $source-&gt;getFilename() . &quot;&lt;br/&gt;\n&quot;;
+}
+?&gt;</code></pre>
+  
+ 
+
+
+
+ <h3>Functions that use readers</h3>
+
+  
+
+  <p>All <strong>File_Archive</strong> 
+   functions that take a reader as an
+   argument also accept strings and arrays.
+   
+   The strings will be automatically interpreted as a reader using
+   <strong>File_Archive::read</strong> function.
+   
+   The arrays will be interpreted as a multi reader.</p>
+  <p>Since the readers are passed by reference, 
+   you will have to pass a variable
+   and not the raw string or array.</p>
+  <p>It is thus possible to rewrite the previous example like that:</p>
+
+  <p><strong>Multi reader</strong></p>
+   
+   <pre><code>&lt;?php
+//This reader contains the content of directory and archive.tar
+File_Archive::extract(
+    array(
+        &#039;directory&#039;,
+        &#039;archive.tar/&#039;
+    ),
+    File_Archive::toArchive(&#039;test.zip&#039;)
+);
+?&gt;</code></pre>
+</section>
+<section id="package-fileformats-file-archive-writers">
+<h2>Writers</h2>
+<h3>Introduction</h3>
+
+  
+  <p>A writer is an object that deals with data.
+   Some writers transform data (this is the case of the archive writers),
+    some save them to disk (for files writers), or to memory
+    (for the memory writer)...
+   They all implement the same interface.</p>
+  <p>You can transfer data from a reader to a writer using the
+   <strong>File_Archive::extract</strong> function.</p>
+  <p>All the writers can be created thanks to the
+   <strong>File_Archive</strong> factory, and more particularly the
+   <strong>File_Archive::to*</strong> functions.</p>
+ 
+
+
+ <h3>Write archives</h3>
+
+  
+  <p>To create a writer that will generate an archive, use the
+   <strong>toArchive()</strong> function:</p>
+  
+   <p><code>
+    
+     <strong>toArchive</strong>
+     ( 
+    
+     string
+     $filename
+    
+     , 
+     &amp;$innerWriter
+    
+     , 
+     $type = null
+    
+     , 
+     $stat = array()
+    
+     , 
+     $autoClose = true
+    
+   )</code></p>
+  
+
+  <ul>
+   <li>
+    
+     <code>$filename</code> is the name of the generated archive
+    
+   </li>
+
+   <li>
+    
+     <code>$innerWriter</code> is another writer in which the archive file will be written
+    
+   </li>
+
+   <li>
+    
+     <code>$type</code> is one of <code>Tar</code>,
+     <code>Gzip</code> or <code>Zip</code> and indicates the format
+     of compression.
+     If not specified, the type is determined thanks to the extension of
+     the filename.
+    
+   </li>
+
+   <li>
+    
+     <code>$stat</code> is an optional array to indicate stats about the
+     archive (see the PHP stat function for the possible indexes).
+    
+   </li>
+
+   <li>
+    
+     <code>$autoClose</code> indicates whether the inner writer will be
+     closed once the data are sent.
+     It may be useful not to close the writer if you want to append some more
+     data after writing.
+     In general, you won&#039;t need to keep the writer open, so you should just
+     keep the default value.
+    
+   </li>
+  </ul>
+
+  <p><strong>Generation of archive writers</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &quot;File/Archive.php&quot;;
+
+/* Writer to a tar file */
+File_Archive::toArchive(&quot;archive.tar&quot;, $innerWriter);
+
+/* Writer to a tar.gz file */
+File_Archive::toArchive(&quot;archive.tgz&quot;, $innerWriter);
+
+/* Writer to a zip file */
+File_Archive::toArchive(&quot;archive.zip&quot;, $innerWriter);
+?&gt;</code></pre>
+  
+ 
+
+
+ <h3>Write to files</h3>
+
+  
+  <p>A writer can write the files to physical files.
+   To create such a writer, call <strong>File_Archive::toFiles();</strong>.
+   If a directory does not exist, it will be automatically created.</p>
+
+  <p><strong>Use files writer</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &quot;File/Archive.php&quot;;
+
+/* Copy a whole directory to another location */
+File_Archive::extract(
+    File_Archive::read(&#039;Path/to/dir&#039;, &#039;new/directory&#039;);
+    File_Archive::toFiles()
+);
+
+/* Convert an archive to another format: tgz to zip */
+File_Archive::extract(
+    File_Archive::read(&#039;archive.tgz/&#039;),
+
+    File_Archive::toArchive(
+        &#039;archive.zip&#039;,
+        File_Archive::toFiles()
+    )
+);
+?&gt;</code></pre>
+  
+ 
+
+
+ <h3>Send emails</h3>
+
+  
+  <p>You can send emails as attachment using a mail writer available thanks to
+   <strong>File_Archive::toMail</strong> function.</p>
+
+  
+   <p><code>
+    
+     <strong>toMail</strong>
+     ( 
+    
+     array
+     $to
+    
+     , 
+     array
+     $headers
+    
+     , 
+     string
+     $message
+    
+     , 
+     &amp;$mail = null
+    
+   )</code></p>
+  
+
+  <p>This function relies on the PEAR <strong>Mail</strong> and
+   <strong>Mail_Mime</strong> libraries, and the parameters are the
+   same as the one of these classes:</p>
+
+  <ul>
+
+   <li>
+    
+     <code>$to</code> an array or a string with comma separated recipients
+    
+   </li>
+
+   <li>
+    
+     <code>$headers</code> will be sent to
+     <strong>Mail_Mime</strong> and to <code>$mail</code>:
+     an associative array of headers.
+     The header name is used as key and the header value as value.
+    
+   </li>
+
+   <li>
+    
+     <code>$message</code> is the text version of the body of the mail.
+     You can provide an HTML version thanks to the
+     <strong>setHTMLBody()</strong> and <strong>addHTMLImage()</strong>
+     of the writer.
+     The signatures of these functions are the same as the ones of
+     <strong>Mail_Mime</strong>.
+    
+   </li>
+
+   <li>
+    
+     <code>$mail</code> the way to send mail.
+     This is an object created with the <strong>Mail::factory()</strong>
+     function.
+     If <code>null</code>, <strong>Mail::factory(&#039;mail&#039;)</strong>
+     will be used (and the email will be sent using the PHP mail function).
+    
+   </li>
+  </ul>
+
+  
+   
+   <pre><code>&lt;?php
+require_once &quot;File/Archive.php&quot;;
+
+/* Send the files in the current directory (no recursion) as attachment */
+File_Archive::extract(
+    File_Archive::read(&#039;Path/to/dir&#039;, &#039;&#039;, 0, 0),
+    File_Archive::toMail(
+        $to, // recipients
+        array(
+            &#039;Subject&#039; =&gt; &#039;Path/to/dir directory&#039;,
+            &#039;From&#039;    =&gt; &#039;address@of.expeditor&#039;
+        ),
+        &#039;Find all the files attached&#039; // body
+    )
+);
+?&gt;</code></pre>
+  
+ 
+
+
+ <h3>Send files to the user</h3>
+
+  
+  <p>To send files to the remote user (i.e. write data to the standard output),
+   you need a special writer.
+   You can build one calling function <strong>File_Archive::toOutput()</strong>.</p>
+  <p>This writer will automatically send a header forcing the download of the file.</p>
+  <p>If you don&#039;t want that, call <strong>File_Archive::toOutput(false)</strong>.</p>
+ 
+
+
+ <h3>Multi writers</h3>
+
+  
+  <p>Using a multi writer, you can write the data to two or more different
+   locations in parallel.</p>
+  <p>A typical use is to send the file to the user at the same time as you write
+   it to a file.</p>
+  <p>It can also be used to generate archives in different formats.</p>
+  <p>You can create a multi writer using
+   <strong>File_Archive::toMulti($dest1, $dest2)</strong>.</p>
+
+  <p><strong>Multi writer</strong></p>
+   
+   <pre><code>&lt;?php
+//Send a directory to the user and to a file
+
+File_Archive::extract(
+    File_Archive::read(&#039;directory&#039;),
+    File_Archive::toArchive(
+        &#039;multi.zip&#039;,
+        File_Archive::toMulti(
+            File_Archive::toOutput(),
+            File_Archive::toFiles()
+        )
+    )
+);
+?&gt;</code></pre>
+  
+ 
+
+
+ <h3>Writing to a writer</h3>
+
+  
+  <p>It is also possible to write data directly to a writer, without using
+   a reader. To do so, you can use the following interface implemented by any
+   writer:</p>
+
+  <ul>
+   <li>
+    <strong>function newFile($URL, $stat)</strong>
+    
+     Create a new file in the writer.
+    
+    
+     <code>$URL</code> is the name of the file,
+     <code>$stat</code> is an array of statistics about the data
+     (see the PHP <strong>stat()</strong> function for more information).
+    
+    
+     The stat array may not contain all the information.
+     The only index that must be present is index 7 (size of the data).
+    
+   </li>
+
+   <li>
+    <strong>function writeData($data)</strong>
+    
+     Append the specified data to the writer.
+     A call to <strong>newFile()</strong> must have been done previously.
+    
+   </li>
+
+   <li>
+    <strong>function close()</strong>
+    
+      Close the writer, eventually flush the data, write the footer...
+      This function must be called before the end of the file, otherwise
+      some data may not be treated by the writer.
+    
+   </li>
+
+  </ul>
+
+  <p><strong>Dynamic creation of a zip file</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &quot;File/Archive.php&quot;;
+
+$dest = File_Archive::toArchive(&quot;foo.zip&quot;, File_Archive::toFiles());
+$dest-&gt;newFile(&quot;even.txt&quot;);
+for($i=0; $i&lt;100; $i++)
+    $dest-&gt;writeData((2*$i).&quot;\n&quot;);
+$dest-&gt;newFile(&quot;odd.txt&quot;);
+for($i=0; $i&lt;100; $i++)
+    $dest-&gt;writeData((2*$i+1).&quot;\n&quot;);
+$dest-&gt;close();
+
+?&gt;</code></pre>
+  
+
+  <blockquote>
+   <p>If you do not specify the stat array in the <strong>newFile()</strong>
+    function, the majority of the archives will have to buffer the data
+    until the end of the file is reached
+    (this is because the size of the file is usually needed to be able to
+    write the header).</p>
+   <p>This may be a memory problem if you want to generate really large files.</p>
+  </blockquote>
+
+ 
+
+
+ <h3>Functions that use writers</h3>
+
+  
+  <p>All <strong>File_Archive</strong> functions that take a writer as an
+    argument also accept strings and arrays.
+   The strings will be automatically interpreted as a writer using
+    <strong>File_Archive::appender()</strong> function.
+   The arrays will be interpreted as a multi writer.</p>
+  <p>Since the writers are passed by reference, you will have to pass a
+    variable and not the raw string or array.</p>
+  <p>It is thus possible to rewrite the previous example like that:</p>
+
+  <p><strong>Multi writer</strong></p>
+   
+   <pre><code>&lt;?php
+//Send a directory to the user and to a file
+
+File_Archive::extract(
+    $src = &#039;directory&#039;,
+    File_Archive::toArchive(
+        &#039;multi.zip&#039;,
+        array(
+            File_Archive::toOutput(),
+            File_Archive::toFiles()
+        )
+    )
+);
+?&gt;</code></pre>
+</section>
+<section id="package-fileformats-file-archive-predicates">
+<h2>Predicates</h2>
+<h3>Introduction</h3>
+
+  
+  <p><strong>File_Archive</strong> introduces the concept of filters
+   to be able to select the files from a source.
+   A filter is a particular reader that you can create with the
+   <strong>File_Archive::filter()</strong> function.
+   This function requires you to give a predicate. You can build this predicate
+   using the <strong>File_Archive::pred*</strong> functions.</p>
+
+  <p>The standard logic predicates are:</p>
+  <ul>
+   <li>
+    
+     <strong>predTrue()</strong>: always evaluates to true
+    
+   </li>
+
+   <li>
+    
+     <strong>predFalse()</strong>: always evaluates to false
+    
+   </li>
+
+   <li>
+    
+     <strong>predAnd($p1, $p2, ...)</strong>: evaluates to
+     <code>$p1 &amp;&amp; $p2 &amp;&amp; ...</code>
+    
+   </li>
+
+   <li>
+    
+     <strong>predOr($p1, $p2, ...)</strong>: evaluates to
+     <code>$p1 || $p2 || ...</code>
+    
+   </li>
+
+   <li>
+    
+     <strong>predNot($p)</strong>: evaluates to <code>!$p</code>
+    
+   </li>
+  </ul>
+
+  <p>Some other predicats will help you filtering the files:</p>
+  <ul>
+   <li>
+    
+     <strong>predMinSize($size)</strong>: 
+     keep only the files 
+     which size is
+      <code>&gt;= $size</code> (in bytes).
+    
+   </li>
+
+   <li>
+    
+     <strong>predMinTime($time)</strong>: 
+     keep only the files that 
+     have been modified after $time (unix timestamp).
+    
+   </li>
+
+   <li>
+    
+     <strong>predMaxDepth($depth)</strong>: 
+     keep only the files that 
+     have a public name with less than <code>$depth</code> directories.
+    
+   </li>
+
+   <li>
+    
+     <strong>predExtension($list)</strong>: keep only the files with a given
+     extension.
+     <code>$list</code> is an array or a comma separated string of
+     allowed extensions.
+    
+   </li>
+
+   <li>
+    
+     <strong>predEreg($ereg)</strong>: keep only the files that have a public
+     name that matches the given regular expression.
+    
+   </li>
+
+   <li>
+    
+     <strong>predEregi($ereg)</strong>: same as <strong>predEreg()</strong>,
+     but the test is case insensitive.
+    
+   </li>
+
+   <li>
+    
+     <strong>predMIME($mimes)</strong>: Select files with a certain MIME type.
+     You can pass an array of types or a string, and use wildcards.
+    
+   </li>
+  </ul>
+
+  <p><strong>Filter examples</strong></p>
+   
+   <pre><code>&lt;?php
+//Extract all the files that contain an &#039;a&#039; in their path
+// or filename from a tar archive
+File_Archive::extract(
+    File_Archive::filter(
+        File_Archive::predEreg(&#039;a&#039;),
+        File_Archive::read(
+            &#039;archive.tar/&#039;,
+            &#039;folder&#039;
+        )
+    ),
+    File_Archive::toFiles()
+);
+
+//Compress a directory to a zip file, including only the files
+//smaller than 1MB that have changed since last hour
+File_Archive::extract(
+    File_Archive::filter(
+        File_Archive::predAnd(
+            File_Archive::predNot(
+                File_Archive::predMinSize(1024 * 1024)
+            ),
+            File_Archive::predMinTime(time()-3600)
+        ),
+        File_Archive::read(&#039;directory&#039;)
+    ),
+    File_Archive::toArchive(
+        &#039;directory.zip&#039;,
+        File_Archive::toFiles()
+    )
+);
+?&gt;</code></pre>
+</section>
+<section id="package-fileformats-file-archive-archmod">
+<h2>Archive modification</h2>
+<h3>Introduction</h3>
+
+  
+  <p><strong>File_Archive</strong> version 1.3 introduces some new
+   functions to edit existing archives.
+   These functions will allow you to remove or append files to
+   an existing archive.</p>
+  <p>Since for <strong>File_Archive</strong>, the file system is just
+   another reader / writer, those modifications can be done on &quot;real&quot;
+   archives (real files), or on nested archives
+   (an archive inside another archive).</p>
+ 
+
+
+ <h3>Remove files from an existing archive</h3>
+
+  
+  <p>To remove files from an archive, you&#039;ll use one of the following functions
+   from <strong>File_Archive</strong> class:</p>
+  <ul>
+   <li>
+    
+     <p><code>
+      
+       <strong>remove</strong>
+       ( 
+      &amp;$pred
+       , $URL
+     )</code></p>
+    
+    
+     Removes all the files that follow a given predicate from file
+     <code>$URL</code>.
+     Note that the URL is the same as in the
+     <strong>File_Archive::read()</strong> function.
+     You can use nested archives.
+    
+   </li>
+
+   <li>
+    
+     <p><code>
+      
+       <strong>removeFromSource</strong>
+       ( 
+      &amp;$pred
+       , &amp;$source
+       , $URL = null
+     )</code></p>
+    
+    
+     Same as remove, but use <code>$source</code> instead of the default
+      file system reader.
+     If no URL is specified, <code>$source</code> must be an archive,
+     and the files will be removed from here.
+    
+   </li>
+
+   <li>
+    
+     <p><code>
+      
+       <strong>removeDuplicates</strong>
+       ( 
+      $URL
+     )</code></p>
+    
+    
+     This function will remove all the doublons from the archive at
+     <code>$URL</code>; only the most recent file will be kept.
+    
+    
+     If the modification date is not specified for a file, it will be considered
+      infinitely old.
+    
+    
+     If two files have the same modification date, the one that has highest
+     position in the archive (usually the one that was added to the archive
+     at last) will be kept.
+    
+   </li>
+
+   <li>
+    
+     <p><code>
+      
+       <strong>removeDuplicatesFromSource</strong>
+       ( 
+      &amp;$source
+       , $URL = null
+     )</code></p>
+    
+    
+     Same as <strong>removeDuplicate()</strong>, but use
+     <code>$source</code> instead of the default file system reader.
+     If no URL is specified, the duplicates will be removed from
+     <code>$source</code> itself.
+    
+   </li>
+  </ul>
+
+  <p>Note that those functions will not recursively uncompress archives.</p>
+
+  <p><strong>Remove Jpg, gif and Bmp from a zip archive</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &quot;File/Archive.php&quot;;
+
+File_Archive::remove(
+    File_Archive::predExtension(
+        array(&#039;jpg&#039;, &#039;jpeg&#039;, &#039;bmp&#039;, &#039;gif&#039;)
+    ),
+    &#039;archive.zip&#039;
+);
+?&gt;</code></pre>
+  
+
+  <p><strong>Remove image files from a nested archive</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &#039;File/Archive.php&#039;;
+
+File_Archive::remove(
+    File_Archive::predMIME(
+        array(&#039;image/*&#039;)
+    ),
+    &#039;archive.zip/data.tgz&#039;
+);
+?&gt;</code></pre>
+  
+ 
+
+
+
+ <h3>Appending files to an archive</h3>
+
+  
+  <p>To append files to an archive, you&#039;ll use one of the following functions
+   from <strong>File_Archive</strong> class:</p>
+
+  <ul>
+   <li>
+    
+     <p><code>
+      
+       <strong>appender</strong>
+       ( 
+      $URL
+       , $unique = null
+       , $type = null
+       , $stat = array()
+     )</code></p>
+    
+    
+     Allows to append to the archive specified by the URL.
+    
+    
+     If unique is set to <code>true</code>, the eventual duplicates
+     created by the insertion of new files will be automatically removed.
+     If set to <code>null</code>, the default value
+     (that you can change using
+     <strong>File_Archive::setOption(&#039;appendRemoveDuplicates&#039;, true/false))</strong>
+     is used (<code>false</code> by default).
+    
+    
+     If the archive does not exist, it will be created using the type
+     specified in parameter
+     (or looking at the extension in the URL if the type is not specified),
+     and the stat array.
+    
+   </li>
+
+   <li>
+    
+     <p><code>
+      
+       <strong>appenderFromSource</strong>
+       ( 
+      &amp;$source
+       , $URL = null
+       , $unique = null
+       , $type = null
+       , $stat = array()
+     )</code></p>
+    
+    
+     Same as appender, but using <code>$source</code> instead of the
+     default file system reader.
+    
+   </li>
+  </ul>
+
+  <p>Both of these functions return a writer that you can use as in the previous
+   examples, using the extract function</p>
+
+  <p><strong>Add a folder to an archive</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &quot;File/Archive.php&quot;;
+
+File_Archive::extract(
+    File_Archive::read(&#039;folder&#039;),
+    File_Archive::appender(&#039;archive.zip&#039;)
+);
+?&gt;</code></pre>
+  
+
+  <p>Note that if you use a string instead of a writer in a function, the string
+   will be converted using
+   <strong>File_Archive::appender()</strong>.
+   Thus the previous example could be rewritten to:</p>
+
+  <p><strong>Add a folder to an archive</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &quot;File/Archive.php&quot;;
+
+File_Archive::extract(
+    $src = &#039;folder&#039;,
+    $dest= &#039;archive.zip&#039;
+);
+?&gt;</code></pre>
+</section>
+<section id="package-fileformats-file-archive-cache">
+<h2>Cache</h2>
+<h3>Introduction</h3>
+
+  
+  <p><strong>File_Archive</strong> 1.4 introduce the possibility to use a
+   cache to store intermediate result of a zip compression.
+   It uses the <strong>Cache_Lite</strong> PEAR package to do so.</p>
+  <p>A zip file is made of compressed files, one after the others.
+   So if you generate an archive that contains files A, B and C and then
+   another archive that contains A and C, you will compress twice the files
+   A and C. The use of the cache will allow to save the compressed version of
+   files A, B and C on the first compression, to use them again in the
+   second compression.</p>
+ 
+
+
+ <h3>Usage examples</h3>
+
+  
+  <p>The cache can be (and should be) used if you dynamically create some zip
+   archive that contains frequently the same files.
+   For example, you may want to allow the user to select some images, videos or
+   other files from your gallery and allow them to download a compressed zip
+   archive that contains these files.</p>
+  <p>If you do so without cache, your server will answer very slowly if a lot of
+   users ask the files. With the cache, the files will be compressed only once.</p>
+  <p>On my machine (a thinkpad T42P with default factory equipment), generating a
+   200MB zip archive takes around 30s of CPU without the cache, 32s of CPU with
+   an empty cache and 2s of CPU if all the files to compress are already in
+   cache.</p>
+ 
+
+
+ <h3>How to use the cache</h3>
+
+  
+  <p>The cache is a Cache_Lite object.
+   So you must have installed the package.
+   Then all you have to do is use the
+   <strong>File_Archive::setOption()</strong> function with the
+   <code>cache</code> parameter.</p>
+
+  <p><strong>Set up the cache</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &quot;File/Archive.php&quot;;
+require_once &quot;Cache/Lite.php&quot;;
+
+//Create the cache object
+$cache = new Cache_Lite(
+    array(
+        //See the doc of Cache_Lite for its constructor parameters
+    )
+);
+
+//Ask File_Archive to use the cache object we just created
+File_Archive::setOption(&#039;cache&#039;, $cache);
+
+//And then create your archives as usual
+//Generate a file called archive.zip in the working folder
+File_Archive::extract(
+    &#039;folderToCompress&#039;,
+    &#039;archive.zip&#039;
+);
+
+//Send an archive to the user
+File_Archive::extract(
+    &#039;folderToCompress&#039;,
+    File_Archive::toArchive(
+        &#039;archive.zip&#039;,
+        File_Archive::toOutput()
+    )
+);
+?&gt;</code></pre>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

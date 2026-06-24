@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6664</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_Wiki_Mediawiki/index.html">Text_Wiki_Mediawiki</a> &#187; Bug #6664</h1>
+<p>Segmentation Fault</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-02-02 11:02 UTC</td></tr>
+<tr><th>From</th><td>i-am at wykis dot com</td></tr>
+<tr><th>Assigned</th><td>toggg</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Text_Wiki_Mediawiki/index.html">Text_Wiki_Mediawiki</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.2</td></tr>
+<tr><th>OS</th><td>Debian Sarge</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-02 11:02 UTC] i-am at wykis dot com</h3>
+<p>Description:<br>
+------------<br>
+I get Segmentation Fault error when parsing some text using Text_MediaWiki.</p>
+<p>Also, i modified Text/Wiki/MediaWiki.php by modifying <br>
+        &#039;Prefilter&#039;,<br>
+        &#039;Delimiter&#039;,<br>
+//        &#039;Plugin&#039;,</p>
+<p>Into</p>
+<p>&#039;Prefilter&#039;,<br>
+        &#039;Delimiter&#039;,<br>
+        &#039;Code&#039;, // &lt;&lt; Here!<br>
+//        &#039;Plugin&#039;,</p>
+<p>Test script:<br>
+---------------<br>
+BBCode.txt: http://hashphp.org/pastebin.php?pid=6137</p>
+<p>&lt;?php<br>
+require_once(&quot;Pear.php&quot;);<br>
+require_once(&quot;Text/Wiki/Mediawiki.php&quot;);</p>
+<p>$text=file_get_contents(&quot;BBCode.txt&quot;);</p>
+<p>$pp=new Text_Wiki_Mediawiki();<br>
+$tt=$pp-&gt;transform($text,&quot;xhtml&quot;);<br>
+return $tt;<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Parsed BBCode.txt using MediaWiki</p>
+<p>Actual result:<br>
+--------------<br>
+I backtraced it to using &quot;php4 script.php&quot; and it simply returns &quot;Segmentation fault&quot;.<br>
+The sample script is different from my actual script but returns the same error.</p>
+<p>I get the same error with few other scripts that have &lt;code tag as well as { , [ and other characters that might cause it to crash.</p>
+<p>I am using shared hosting ( with ssh access at least ) where i could find some errors.</p>
+<p>Here&#039;s what i got with gdb tracing, nothing much though :<br>
+&quot;<br>
+Starting program: /usr/local/bin/php4 engine.php<br>
+(no debugging symbols found)...(no debugging symbols found)...<br>
+(no debugging symbols found)...(no debugging symbols found)...<br>
+(no debugging symbols found)...(no debugging symbols found)...<br>
+(no debugging symbols found)...(no debugging symbols found)...<br>
+(no debugging symbols found)...(no debugging symbols found)...<br>
+(no debugging symbols found)...(no debugging symbols found)...<br>
+(no debugging symbols found)...(no debugging symbols found)...<br>
+(no debugging symbols found)...(no debugging symbols found)...<br>
+(no debugging symbols found)...(no debugging symbols found)...<br>
+(no debugging symbols found)...(no debugging symbols found)...<br>
+(no debugging symbols found)...(no debugging symbols found)...<br>
+(no debugging symbols found)...(no debugging symbols found)...<br>
+(no debugging symbols found)...(no debugging symbols found)...<br>
+(no debugging symbols found)...(no debugging symbols found)...<br>
+(no debugging symbols found)...(no debugging symbols found)...[New Thread 1024 (LWP 31649)]</p>
+<p>Program received signal SIGSEGV, Segmentation fault.<br>
+[Switching to Thread 1024 (LWP 31649)]<br>
+0x0809e3f5 in pcre_dfa_exec ()<br>
+&quot;</p>
+</section>
+<section>
+<h3>[2006-02-02 12:22 UTC] i-am at wykis dot com</h3>
+<p>This code also gives the same error when using Text_MediaWiki:<br>
+{|<br>
+| title || link || description || category || guid || pubDate <br>
+|-<br>
+| ID theft &#039;costs UK £1.7bn a year&#039; || http://news.bbc.co.uk/go/rss/-/1/hi/uk_politics/4672622.stm || Identity fraud is costing the UK an estimated £1.7bn every year, Home Office Minister Andy Burnham says. || Politics || http://news.bbc.co.uk/1/hi/uk_politics/4672622.stm || Thu, 02 Feb 2006 10:33:49 GMT <br>
+|-<br>
+| Microsoft opens up censored blogs || http://news.bbc.co.uk/go/rss/-/1/hi/technology/4671284.stm || Microsoft is changing the way it reacts to calls from governments to censor personal journals or blogs. || Technology || http://news.bbc.co.uk/1/hi/technology/4671284.stm || Thu, 02 Feb 2006 10:43:30 GMT <br>
+|-<br>
+| Children &#039;can access mobile porn&#039; || http://news.bbc.co.uk/go/rss/-/1/hi/uk/4671334.stm || Children can gain access to internet porn via their mobile phones, a consumer<br>
+group warns. || UK || http://news.bbc.co.uk/1/hi/uk/4671334.stm || Thu, 02 Feb 2006 00:45:40 GMT <br>
+|-<br>
+| Action on mass-marketed scams || http://news.bbc.co.uk/go/rss/-/1/hi/business/4669670.stm || The Office of Fair Trading warns about scams costing £1bn a year. || Business || http://news.bbc.co.uk/1/hi/business/4669670.stm || Wed, 01 Feb 2006 15:48:02 GMT <br>
+|-<br>
+| ID theft &#039;contained&#039; says study || http://news.bbc.co.uk/go/rss/-/1/hi/technology/4670316.stm || Identity theft is a &quot;contained&quot; problem that cannot be blamed on the net, finds research || Technology || http://news.bbc.co.uk/1/hi/technology/4670316.stm || Wed, 01 Feb 2006 13:53:43 GMT <br>
+|-<br>
+| New bid to tackle spyware || http://news.bbc.co.uk/go/rss/-/1/hi/technology/4669304.stm || Five big security firms band together in a bid to tackle growing problem of spyware. || Technology || http://news.bbc.co.uk/1/hi/technology/4669304.stm || Wed, 01 Feb 2006 11:34:54 GMT <br>
+|-<br>
+| Google shares fall on Wall Street || http://news.bbc.co.uk/go/rss/-/1/hi/business/4670632.stm || Internet firm Google sees shares drop 7% after profits miss Wall Street targets. || Business || http://news.bbc.co.uk/1/hi/business/4670632.stm || Wed, 01 Feb 2006 22:18:17 GMT <br>
+|-<br>
+| Lords defeat terror internet plan || http://news.bbc.co.uk/go/rss/-/1/hi/uk_politics/4671566.stm || Plans for new anti-terrorism controls on websites lead to a government defeat in the House of the Lords. || Politics || http://news.bbc.co.uk/1/hi/uk_politics/4671566.stm || Wed, 01 Feb 2006 17:48:14 GMT <br>
+|-<br>
+| Deal places limits on .com fees || http://news.bbc.co.uk/go/rss/-/1/hi/technology/4664906.stm || The net oversight body proposes to limit what the domain name giant, Verisign, can charge for .com domains. || Technology || http://news.bbc.co.uk/1/hi/technology/4664906.stm || Tue, 31 Jan 2006 09:37:17 GMT <br>
+|-<br>
+| Warner Bros to sell movies on net || http://news.bbc.co.uk/go/rss/-/1/hi/entertainment/4665438.stm || Films such as Batman Begins will be made available legally over the internet via peer-to-peer networks. || Entertainment || http://news.bbc.co.uk/1/hi/entertainment/4665438.stm || Tue, 31 Jan 2006 11:55:51 GMT <br>
+|-<br>
+| Actor Baker to be voice of text || http://news.bbc.co.uk/go/rss/-/1/hi/entertainment/4665254.stm || Former Doctor Who Tom Baker is lending his voice to a service which transfers text messages to landlines. || Entertainment || http://news.bbc.co.uk/1/hi/entertainment/4665254.stm || Tue, 31 Jan 2006 11:41:22 GMT <br>
+|-<br>
+| UK court to unmask &#039;file-sharers&#039; || http://news.bbc.co.uk/go/rss/-/1/hi/technology/4663388.stm || Ten UK internet providers are ordered to provide details of 150 customers accused of illegally sharing software. || Technology || http://news.bbc.co.uk/1/hi/technology/4663388.stm || Mon, 30 Jan 2006 17:17:45 GMT <br>
+|-<br>
+| Dell to hire 50% more in India || http://news.bbc.co.uk/go/rss/-/1/hi/world/south_asia/4663484.stm || US computer giant Dell will increase its workforce in India by 50% in the next two years, says Dell&#039;s president and CEO. || South Asia || http://news.bbc.co.uk/1/hi/world/south_asia/4663484.stm || Mon, 30 Jan 2006 17:52:40 GMT <br>
+|-<br>
+| Internet firms &#039;bowed to Beijing&#039; || http://news.bbc.co.uk/go/rss/-/1/hi/world/americas/4672518.stm || US congressmen condemn IT firms including Microsoft and Google for helping China censor the internet. || Americas || http://news.bbc.co.uk/1/hi/world/americas/4672518.stm || Thu, 02 Feb 2006 01:24:49 GMT <br>
+|-<br>
+| Washington steps in on Blackberry || http://news.bbc.co.uk/go/rss/-/1/hi/business/4672844.stm || The US government says its need for the Blackberry e-mail service means a threatened shutdown should not go ahead. || Business || http://news.bbc.co.uk/1/hi/business/4672844.stm || Thu, 02 Feb 2006 08:26:41 GMT <br>
+|-<br>
+| Mobiles &#039;don&#039;t raise cancer risk&#039; || http://news.bbc.co.uk/go/rss/-/1/hi/health/4628914.stm || There is no link between mobile phone use and brain tumours, researchers say after a large-scale study. || Health || http://news.bbc.co.uk/1/hi/health/4628914.stm || Fri, 20 Jan 2006 08:30:06 GMT <br>
+|-<br>
+| File-sharing &#039;not cut by courts&#039; || http://news.bbc.co.uk/go/rss/-/1/hi/entertainment/4627368.stm || Court action against music file-sharers has not reduced illegal song-swapping, an industry report says. || Entertainment || http://news.bbc.co.uk/1/hi/entertainment/4627368.stm || Fri, 20 Jan 2006 14:31:53 GMT <br>
+|-<br>
+| Dead or Alive 4 tops UK charts || http://news.bbc.co.uk/go/rss/-/1/hi/technology/2207229.stm || Catch up with the latest news from the world of video gaming. || Technology || http://news.bbc.co.uk/1/hi/technology/2207229.stm || Tue, 31 Jan 2006 14:36:50 GMT <br>
+|-<br>
+| Handhelds mix plankton and play || http://news.bbc.co.uk/go/rss/-/1/hi/technology/4596450.stm || Reviewer Neil McGreevey rounds up some of the latest, and oddest, games on handhelds. || Technology || http://news.bbc.co.uk/1/hi/technology/4596450.stm || Fri, 13 Jan 2006 13:27:30 GMT <br>
+|-<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

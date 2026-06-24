@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2761</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Server/index.html">Net_Server</a> &#187; Bug #2761</h1>
+<p>readEndCharacter problem</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-11-15 22:52 UTC</td></tr>
+<tr><th>From</th><td>cox at idecnet dot com</td></tr>
+<tr><th>Assigned</th><td>cweiske</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Server/index.html">Net_Server</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>any</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-11-15 22:52 UTC] cox at idecnet dot com</h3>
+<p>Description:<br>
+------------<br>
+The RFC2616 specifies the following:</p>
+<p>Request       = Request-Line              ; Section 5.1<br>
+                        *(( general-header        ; Section 4.5<br>
+                         | request-header         ; Section 5.3<br>
+                         | entity-header ) CRLF)  ; Section 7.1<br>
+                        CRLF<br>
+                        [ message-body ]          ; Section 4.3</p>
+<p>So when there is message-body (eg: POST data) there is no need of final CRLF. Btw many simple clients doesn&#039;t add that extra CRLF hanging the connection.</p>
+<p>I&#039;d change in Server.php::__construct():</p>
+<p>from: $this-&gt;_driver-&gt;readEndCharacter = &quot;\r\n\r\n&quot;;<br>
+  to: $this-&gt;_driver-&gt;readEndCharacter = null;</p>
+<p>Tomas V.V.Cox</p>
+</section>
+<section>
+<h3>[2004-11-16 09:41 UTC] cox at idecnet dot com</h3>
+<p>There is no need to touch Net_Server, the change is only at HTTP/Server.php. I&#039;m not very sure on relaying in Content-Length.</p>
+</section>
+<section>
+<h3>[2004-11-16 13:54 UTC] cox at idecnet dot com</h3>
+<p>Oh sorry, I missunderstand your answer. What about instead of passing the whole request to onReceiveData(), create another method like onReceiveStreamData() letting the subclass the work of readFromSocket().</p>
+<p>This would solve the problem of storing big posted files in memory (and will extend the functionality of the class btw). The same would be nice for sending data (streaming video, transferring big files, etc).</p>
+<p>Tomas V.V.Cox</p>
+</section>
+<section>
+<h3>[2005-02-05 12:30 UTC] javi at neurofun dot com</h3>
+<p>Hi:</p>
+<p>Two things about readFromSocket and readEndCharacter:</p>
+<p>A)<br>
+I think your last change to readFromSocket (removing the break trim condition) was an error.<br>
+I&#039;m using my onwn readEndCharacter in sequential driver for detecting end of transmision but I want the protocol to be as safe as possible in case of malformed client request data.</p>
+<p>After some tests I have found that is very dificult to implement this when the protocol expects the client and the server to alternate in write and reads without timeouts.</p>
+<p>If the client sends a malformed request, ends socket_write and then waits for reading from socket, the server will wait forever in the next iteration of socket_read.<br>
+The only way to unblock the server is to end the client (or close the socket) manualy or after a timeout.</p>
+<p>When the client closes the socket the server exits form socket_read and:<br>
+- if you keep the &quot;if(trim($buf)) break&quot; then will exit from readFromSocket an all will be ok.<br>
+- But if there&#039;s no check the server will be keept in an infinite loop (while true) making imposible another conection.</p>
+<p>B)<br>
+I think your test for detecting the end character:<br>
+$endString    =    substr($buf, - strlen($this-&gt;readEndCharacter));<br>
+if ($endString == $this-&gt;readEndCharacter) {<br>
+       break;                 <br>
+}</p>
+<p>would be more secure if you do substr from $data and not from $buf since the encharacter could have come in two separate iterations. Yes I know this is not very likely to happen but CAN happen with large endcharacter (like the one we use)</p>
+<p>Many thanks for the grat package. You have saved me a lot of time ;-)</p>
+<p>Javier Lafuente</p>
+</section>
+<section>
+<h3>[2005-11-30 21:02 UTC] erudd at netfor dot com</h3>
+<p>This is in fact a bug in Net_Server and the fix is REAL simple.</p>
+<p>I&#039;ve been fighting with it for a while and found the issue.. The issue is if the &quot;4 character&quot; EndCharacter for HTTP is split across two buff reads. (ie 1 byte in the previous 128 byte read and the last 3 in the next).  the SOLUTION is to do the substr on $data instead of $buf.<br>
+--- Driver.php.orig     2005-11-30 15:57:44.000000000 -0500 <br>
++++ Driver.php  2005-11-30 15:59:39.000000000 -0500 <br>
+@@ -200,8 +200,8 @@ <br>
+             $data .= $buf; <br>
+  <br>
+             if ($this-&gt;readEndCharacter != null) { <br>
+-                $endString    =    substr($buf, - strlen($this-&gt;readEndCharacter)); <br>
+-                if ($endString == $this-&gt;readEndCharacter) { <br>
++                $endString    =    substr($data, - strlen($this-&gt;readEndCharacter)); <br>
++                if ($endString == $this-&gt;readEndCharacter || strlen($buf)==0) { <br>
+                     break; <br>
+                 } <br>
+             } else {</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6733</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject_FormBuilder/index.html">DB_DataObject_FormBuilder</a> &#187; Bug #6733</h1>
+<p>Optimise queries for linked tables</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #6733</th><td>Optimise queries for linked tables</td></tr>
+<tr><th>Submitted</th><td>2006-02-09 13:50 UTC</td></tr>
+<tr><th>From</th><td>anselm at netuxo dot co dot uk</td></tr>
+<tr><th>Assigned</th><td>justinpatrin</td></tr>
+<tr><th>Status</th><td>Assigned</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject_FormBuilder/index.html">DB_DataObject_FormBuilder</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>All</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-09 13:50 UTC] anselm at netuxo dot co dot uk</h3>
+<p>Description:<br>
+------------<br>
+When a table is used as a linked field in FormBuilder, the values of interest are those describied in the linkDisplayFields for that table, and the primary key.</p>
+<p>However, FormBuilder queries all of the object&#039;s fields when creating the form. At times this can add a certain overhead to the execution time !</p>
+</section>
+<section>
+<h3>[2006-02-09 13:57 UTC] anselm at netuxo dot co dot uk</h3>
+<p>I have written the following patch. It doesn&#039;t take all cases into consideration (in particular, if linked fields are themsleves linked fields) ; but helps in the general case :</p>
+<p>Index: FormBuilder.php<br>
+===================================================================<br>
+@@ -1742,8 +1742,53 @@<br>
+     function prettyName($name) {<br>
+         return ucwords(strtolower(preg_replace(&#039;/[^a-z0-9]/Si&#039;, &#039; &#039;, preg_replace(&#039;/([a-z0-9])([A-Z])/S&#039;, &#039;\1 \2&#039;, $name))));<br>
+     }<br>
+-<br>
++<br>
+     /**<br>
++     * DB_DataObject_FormBuilder::limitDataObjectSelect()<br>
++     *<br>
++     * Prepares a DataObject such that only the specified fields are<br>
++     * queried when that DataObject&#039;s find() method is called.<br>
++     *<br>
++     * May be called statically.<br>
++     *<br>
++     * Will use display field configurations from these locations, in this order:<br>
++     * 1) $displayFields parameter<br>
++     * 2) the fb_linkDisplayFields member variable of the dataobject<br>
++     * 3) the linkDisplayFields member variable of this class (if not called statically)<br>
++     * 4) all fields returned by the DO&#039;s table() function<br>
++     *<br>
++     * @param DB_DataObject the dataobject to prepare<br>
++     * @param mixed   field to use to display, may be an array with field names or a single field.<br>
++     *    Will only be used for this DO, not linked DOs. If you wish to set the display fields<br>
++     *    all DOs the same, set the option in the FormBuilder class instance.<br>
++     * @param boolean Set to true (default) to automatically add the primary key(s) of the table<br>
++     * @access public<br>
++     */<br>
++    function limitDataObjectSelect(&amp;$do, $displayFields, $addKey=true) {<br>
++        // Work out the display fields to use<br>
++        if ($displayFields === false) {<br>
++            if (isset($do-&gt;fb_linkDisplayFields)) {<br>
++                $displayFields = $do-&gt;fb_linkDisplayFields;<br>
++            } elseif (isset($this) &amp;&amp; isset($this-&gt;linkDisplayFields) &amp;&amp; $this-&gt;linkDisplayFields) {<br>
++                $displayFields = $this-&gt;linkDisplayFields;<br>
++            }<br>
++            if (!$displayFields) {<br>
++                $displayFields = array_keys($do-&gt;table());<br>
++            }<br>
++        }<br>
++<br>
++        // Add the primary key<br>
++        if ($addKey) {<br>
++          $displayFields = array_merge($displayFields, $do-&gt;keys());<br>
++        }<br>
++        $displayFields = array_unique($displayFields);<br>
++<br>
++        // And make sure only these fields are selected<br>
++        $do-&gt;selectAdd();<br>
++        $do-&gt;selectAdd(implode(&#039;,&#039;, $displayFields));<br>
++    }<br>
++<br>
++    /**<br>
+      * DB_DataObject_FormBuilder::getDataObjectString()<br>
+      *<br>
+      * Returns a string which identitfies this dataobject.<br>
+@@ -1920,6 +1965,7 @@<br>
+                     $list[&#039;&#039;] = $this-&gt;selectAddEmptyLabel;<br>
+                 }<br>
+                 // FINALLY, let&#039;s see if there are any results<br>
++                $this-&gt;limitDataObjectSelect($opts, array_merge(array($valueField), $displayFields));<br>
+                 if ($opts-&gt;find() &gt; 0) {<br>
+                     while ($opts-&gt;fetch()) {<br>
+                         $list[$opts-&gt;$valueField] = $this-&gt;getDataObjectString($opts, $displayFields);</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

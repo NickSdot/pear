@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1187</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_NestedSet/index.html">DB_NestedSet</a> &#187; Bug #1187</h1>
+<p>oracle reserved words</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-12 15:06 UTC</td></tr>
+<tr><th>From</th><td>priit at e-positive dot ee</td></tr>
+<tr><th>Assigned</th><td>datenpunk</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB_NestedSet/index.html">DB_NestedSet</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>win</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-12 15:06 UTC] priit at e-positive dot ee</h3>
+<p>Description:<br>
+------------<br>
+  var $params = array(&#039;STRID&#039; =&gt; &#039;id&#039;,<br>
+        &#039;ROOTID&#039; =&gt; &#039;rootid&#039;,<br>
+        &#039;l&#039; =&gt; &#039;l&#039;,<br>
+        &#039;r&#039; =&gt; &#039;r&#039;,<br>
+        &#039;STREH&#039; =&gt; &#039;norder&#039;,<br>
+        &#039;LEVEL&#039; =&gt; &#039;level&#039;,<br>
+        &#039;parent&#039;=&gt;&#039;parent&#039;, // Optional but very useful<br>
+        &#039;STRNA&#039; =&gt; &#039;name&#039;<br>
+        );</p>
+<p>level is reserved word in Oracle and cannot be used. I can derivate own class and override, BUT, &#039;level&#039; is hardcoded into<br>
+all get... functions  to be used as sort order parameter.</p>
+</section>
+<section>
+<h3>[2004-04-12 16:03 UTC] dk at webcluster dot at</h3>
+<p>Which version of DB_NestedSet are you using?<br>
+Do you use DB or MDB and which version do you use?</p>
+<p>Level is &#039;hardcoded&#039; as it is allready the alias for the userland column name.<br>
+This means that it wouldn&#039;t be a big deal to rename level to something different if I am sure that this isn&#039;t allready fixed/fixable by the quoteIdentifier() trick provided by DB.</p>
+<p>Thanks for your report!</p>
+<p>regards</p>
+<p>-- <br>
+Daniel Khan</p>
+</section>
+<section>
+<h3>[2004-04-12 17:54 UTC] priit at e-positive dot ee</h3>
+<p>I&#039;m using the latest one and DB, but that doesn&#039;t matter.</p>
+<p>Of course, it&#039;s not big deal to rename, but then I have to do it again and again after any new release.</p>
+<p>May I suggest a change?</p>
+<p>Well, as the aliases are used in three different places<br>
+1) var $param;<br>
+2) var $_requiredParams<br>
+3) building queries<br>
+would&#039;nt it be reasonable to define them as constants<br>
+in the following way</p>
+<p>define(&#039;NESE_ALIAS_LEVEL&#039;, &#039;slevel&#039;);</p>
+<p>for all $_requiredParams members and then use those<br>
+constants in the code. This way they can be overriden<br>
+in a sane way? Although I don&#039;t expect any other reserved<br>
+words in params, but this kind of change won&#039;t break any existing mysql code.</p>
+</section>
+<section>
+<h3>[2004-04-12 18:20 UTC] dk at webcluster dot at</h3>
+<p>&gt; I&#039;m using the latest one and DB, but that doesn&#039;t matter.<br>
+It _does_ matter as the last 2 releases include some fixes for reserved words. The queries _should_ be properly quoted so that reserved words shouldn&#039;t be a problem.<br>
+I am quite sure that you have the latest package but _please_ use &#039;pear info db_nestedset&#039; to verify that you are using 1.3.4. Also use &#039;pear info DB&#039; and tell me the version. No offense but I allready spent some nights hunting allready fixed bugs reported by people with the latest version.</p>
+<p>&gt; Of course, it&#039;s not big deal to rename, but then I have to<br>
+&gt; do it again and again after any new release.<br>
+I ment that I could do this in a new release if I find out that there is no other way to solve your problem - but I&#039;m sure there is another way.</p>
+<p>&gt; define(&#039;NESE_ALIAS_LEVEL&#039;, &#039;slevel&#039;);<br>
+No this is exactly what the params mapping does.</p>
+<p>&#039;LEVEL&#039; =&gt; &#039;level&#039;,<br>
+Somehow means define(&#039;NESE_ALIAS_LEVEL&#039;, &#039;level&#039;);<br>
+So adding a new level of abstraction wouldn&#039;t solve the real problem.</p>
+<p>Please switch the package into debug mode and paste in the query which causes the problem.<br>
+Then we will hopefully see what&#039;s wrong with the quoting and I will swiftly fix the problem.</p>
+<p>greetings</p>
+<p>--  <br>
+Daniel Khan</p>
+</section>
+<section>
+<h3>[2004-04-12 18:48 UTC] priit at e-positive dot ee</h3>
+<p>okee, dokee, now I have DB 1.6.2 and Nese 1.3.4, or whatever the latest are.</p>
+<p>1)<br>
+    var $params = array(<br>
+    &#039;STRID&#039; =&gt; &#039;id&#039;,<br>
+    &#039;ROOTID&#039;=&gt; &#039;rootid&#039;,<br>
+    &#039;l&#039;     =&gt; &#039;l&#039;,<br>
+    &#039;r&#039;     =&gt; &#039;r&#039;,<br>
+    &#039;STREH&#039; =&gt; &#039;norder&#039;,<br>
+    &#039;STRLEVEL&#039; =&gt; &#039;level&#039;,<br>
+    &#039;parent&#039;=&gt;&#039;parent&#039;,<br>
+ 	&#039;REL&#039; =&gt; &#039;related&#039;,<br>
+    &#039;STRNA&#039; =&gt; &#039;name&#039;<br>
+    );</p>
+<p>var $_requiredParams = array(&#039;id&#039;, &#039;rootid&#039;, &#039;l&#039;, &#039;r&#039;, &#039;norder&#039;, &#039;level&#039;);</p>
+<p>1084770907.2598::Debug:: DB_NestedSet()<br>
+1084770907.4925::Debug:: getAllNodes()<br>
+1084770907.5002::Debug:: _testFatalAbort($errobj, $file, $line)</p>
+<p>Fatal error: SELECT tb_nodes.STRID id, tb_nodes.ROOTID rootid, tb_nodes.l l, tb_nodes.r r, tb_nodes.STREH norder, tb_nodes.STRLEVEL level, tb_nodes.parent parent, tb_nodes.REL related, NVL(tb_nodes.en_name, tb_nodes.df_name) name FROM tb_nodes ORDER BY tb_nodes.STRLEVEL, tb_nodes.STREH ASC [nativecode=ORA-00923: FROM keyword not found where expected] (-2) in file c:\seedwork\engine\kernel\NestedSet.php at line 1906 in</p>
+<p>loaded to SQL+ i have better error message<br>
+SQL&gt; SELECT tb_nodes.STRID id, tb_nodes.ROOTID rootid, tb_nodes.l l, tb_nodes.r r, <br>
+  2  tb_nodes.STREH norder, tb_nodes.STRLEVEL level, tb_nodes.parent parent, <br>
+  3  tb_nodes.REL related, NVL(tb_nodes.en_name, tb_nodes.df_name) name <br>
+  4  FROM tb_nodes ORDER BY tb_nodes.STRLEVEL, tb_nodes.STREH ASC;<br>
+tb_nodes.STREH norder, tb_nodes.STRLEVEL level, tb_nodes.parent parent,<br>
+                                         *<br>
+ERROR at line 2:<br>
+ORA-00923: FROM keyword not found where expected</p>
+<p>2) let&#039;s change &#039;level&#039; to &#039;slevel&#039;</p>
+<p>var $params = array(<br>
+    &#039;STRID&#039; =&gt; &#039;id&#039;,<br>
+    &#039;ROOTID&#039;=&gt; &#039;rootid&#039;,<br>
+    &#039;l&#039;     =&gt; &#039;l&#039;,<br>
+    &#039;r&#039;     =&gt; &#039;r&#039;,<br>
+    &#039;STREH&#039; =&gt; &#039;norder&#039;,<br>
+    &#039;STRLEVEL&#039; =&gt; &#039;slevel&#039;,<br>
+    &#039;parent&#039;=&gt;&#039;parent&#039;,<br>
+ 	&#039;REL&#039; =&gt; &#039;related&#039;,<br>
+    &#039;STRNA&#039; =&gt; &#039;name&#039;<br>
+    );</p>
+<p>var $_requiredParams = array(&#039;id&#039;, &#039;rootid&#039;, &#039;l&#039;, &#039;r&#039;, &#039;norder&#039;, &#039;slevel&#039;);</p>
+<p>1084771059.877::Debug:: DB_NestedSet()<br>
+1084771060.3168::Debug:: getAllNodes()<br>
+1084771060.44::Debug:: _testFatalAbort($errobj, $file, $line)</p>
+<p>Fatal error: SELECT tb_nodes.STRID id, tb_nodes.ROOTID rootid, tb_nodes.l l, tb_nodes.r r, tb_nodes.STREH norder, tb_nodes.STRLEVEL slevel, tb_nodes.parent parent, tb_nodes.REL related, NVL(tb_nodes.en_name, tb_nodes.df_name) name FROM tb_nodes ORDER BY tb_nodes., tb_nodes.STREH ASC [nativecode=ORA-01747: invalid user.table.column, table.column, or column specification] (-1) in file c:\seedwork\engine\kernel\NestedSet.php at line 1906 in</p>
+<p>as you notice the error is at ORDER BY tb_nodes.,</p>
+</section>
+<section>
+<h3>[2004-04-12 19:42 UTC] dk at webcluster dot at</h3>
+<p>Ok - this is quite odd.<br>
+Let&#039;s look at the query:</p>
+<p>Fatal error: SELECT tb_nodes.STRID id, tb_nodes.ROOTID rootid,<br>
+tb_nodes.l l, tb_nodes.r r, tb_nodes.STREH norder, tb_nodes.STRLEVEL<br>
+level, tb_nodes.parent parent, tb_nodes.REL related,<br>
+NVL(tb_nodes.en_name, tb_nodes.df_name) name FROM tb_nodes</p>
+<p>I don&#039;t know if oracle simply shortens the syntax but it has to read &#039;tb_nodes.STRID AS id&#039; - in this query the &#039;AS&#039; is missing.<br>
+The second thing: <br>
+The column selection is built using:<br>
+$this-&gt;_getSelectFields($aliasFields)<br>
+And _getSelectFields() does:</p>
+<p>$tmp_field .= &#039; AS &#039; . $this-&gt;_quoteIdentifier($val);</p>
+<p>So just to be sure please do an<br>
+&#039;echo $sql&#039; somewhere arround line 383.<br>
+It&#039;s in getAllNodes() between</p>
+<p>$this-&gt;secondarySort);<br>
+and<br>
+} elseif ($this-&gt;_sortMode == NESE_SORT_PREORDER) {</p>
+<p>Please send me the output. Please confirm that you haven&#039;t changed any methods within the class. I have to ask that dumb questions as I allready had such cases ;)</p>
+<p>Your 2nd example with &#039;STRLEVEL&#039; =&gt; &#039;slevel&#039;, won&#039;t work because the method looks up for the column name aliases by &#039;level&#039; and can&#039;t find it so the resulting sql is invalid.</p>
+<p>Thanks for your support!</p>
+<p>-- <br>
+Daniel Khan</p>
+</section>
+<section>
+<h3>[2004-04-13 06:43 UTC] priit at e-positive dot ee</h3>
+<p>In major engines AS is mandatory and i cut it off as i do have my own _getSelectFields to be used with my multilanguage tree:</p>
+<p>function _getSelectFields($aliasFields) {<br>
+        $queryFields = array();<br>
+        $i = 1;<br>
+	$this-&gt;lparam = count($this-&gt;params);<br>
+        foreach ($this-&gt;params as $key =&gt; $val) {<br>
+        	$i++;<br>
+        	if ( $i &lt;= $this-&gt;lparam ) {<br>
+	            $tmp_field = $this-&gt;node_table . &#039;.&#039; . $key;<br>
+	            if ($aliasFields) {<br>
+	                $tmp_field .= &#039; AS &#039; . $val;<br>
+#	                $tmp_field .= &#039; &#039; . $val;<br>
+	            }<br>
+	            $queryFields[] = $tmp_field;<br>
+        	} else {<br>
+	            $def_field = $this-&gt;node_table . &#039;.df_name&#039;;<br>
+	            $lang_field = $this-&gt;node_table . &#039;.&#039; . opt_site_language . &#039;_name&#039;;<br>
+#	            $tmp_field = &#039;COALESCE(&#039;.$lang_field.&#039;, &#039;.$def_field.&#039;)&#039;;<br>
+	            $tmp_field = &#039;NVL(&#039;.$lang_field.&#039;, &#039;.$def_field.&#039;)&#039;;<br>
+	            if ($aliasFields) {<br>
+	                $tmp_field .= &#039; AS &#039; . $val;<br>
+#	                $tmp_field .= &#039; &#039; . $val;<br>
+	            }<br>
+	            $queryFields[] = $tmp_field;<br>
+	            break;<br>
+        	}<br>
+        }</p>
+<p>$fields = implode(&#039;, &#039;, $queryFields);<br>
+        return $fields;<br>
+    }</p>
+<p>When I put AS back I got the same result:</p>
+<p>1084774898.876::Debug:: DB_NestedSet()<br>
+1084774898.975::Debug:: getAllNodes()</p>
+<p>SELECT tb_nodes.STRID AS id, tb_nodes.ROOTID AS rootid, tb_nodes.l AS l, tb_nodes.r AS r, tb_nodes.STREH AS norder, tb_nodes.STRLEVEL AS level, tb_nodes.parent AS parent, tb_nodes.REL AS related, NVL(tb_nodes.en_name, tb_nodes.df_name) AS name  FROM tb_nodes    ORDER BY tb_nodes.STRLEVEL, tb_nodes.STREH ASC</p>
+<p>1084774899.0066::Debug:: _testFatalAbort($errobj, $file, $line)</p>
+<p>Fatal error: SELECT tb_nodes.STRID AS id, tb_nodes.ROOTID AS rootid, tb_nodes.l AS l, tb_nodes.r AS r, tb_nodes.STREH AS norder, tb_nodes.STRLEVEL AS level, tb_nodes.parent AS parent, tb_nodes.REL AS related, NVL(tb_nodes.en_name, tb_nodes.df_name) AS name FROM tb_nodes ORDER BY tb_nodes.STRLEVEL, tb_nodes.STREH ASC [nativecode=ORA-00923: FROM keyword not found where expected] (-2) in file c:\seedwork\engine\kernel\NestedSet.php at line 1906 in c:\seedwork\engine\kernel\PEAR.php on line 593</p>
+</section>
+<section>
+<h3>[2004-04-13 20:33 UTC] dk at webcluster dot at</h3>
+<p>Well - the information about the replaced _getSelectFields() was pretty important :)</p>
+<p>Look at the original:<br>
+$tmp_field .= &#039; AS &#039; . $this-&gt;_quoteIdentifier($val);</p>
+<p>_quoteIdentifier() will quote your query and you won&#039;t have anymore errors with reserved words.</p>
+<p>That&#039;s what I ment when saying:</p>
+<p>&gt; It _does_ matter as the last 2 releases include some<br>
+&gt; fixes for reserved words.</p>
+<p>Please try to fix your method and tell me if it worked for you.</p>
+<p>-- <br>
+Daniel Khan</p>
+</section>
+<section>
+<h3>[2004-04-15 07:27 UTC] dk at webcluster dot at</h3>
+<p>No feedback was given yet. <br>
+Most likely this is bogus as the current version deals with the problem and the bug reported is caused by a method change done by the user himself.</p>
+</section>
+<section>
+<h3>[2004-04-15 09:53 UTC] priit at e-positive dot ee</h3>
+<p>case closed, my mistake.</p>
+<p>I just wasn&#039;t aware I can use this quoting thing in sql :-), never even heard of. Well, i rarely use AS in select anyway, only when using functions....</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

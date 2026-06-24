@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9979</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_IMAP/index.html">Net_IMAP</a> &#187; Bug #9979</h1>
+<p>cmdGetACL() fails to parse mailbox with no ACLs</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-30 17:17 UTC</td></tr>
+<tr><th>From</th><td>s dot e dot grier at qmul dot ac dot uk</td></tr>
+<tr><th>Assigned</th><td>hudeldudel</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_IMAP/index.html">Net_IMAP</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>FC5</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-30 17:17 UTC] s dot e dot grier at qmul dot ac dot uk</h3>
+<p>Description:<br>
+------------<br>
+On my Cyrus mail server I have a mailbox with no ACLs. i.e:</p>
+<p>. getacl arts<br>
+* ACL arts<br>
+. OK Completed</p>
+<p>When calling $imap-&gt;getACL() on this mailbox, the ACLs are not parsed correctly, nor is the response code. An error like the following appears in the browser:</p>
+<p>2826,/usr/share/pear/Net/IMAPProtocol.php,PROTOCOL ERROR!:must be a &#039; &#039; but is a &#039;<br>
+&#039; !!!!</p>
+<p>and $imap-&gt;getACL() returns a PEAR_Error object.</p>
+<p>This is because IMAPProtocol::_retrParsedResponse() expects an &quot;ACL&quot; response to always have a ACL list, which is not necessarily the case.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+include &#039;Net/IMAP.php&#039;;</p>
+<p>$imap = new Net_IMAP(&quot;host&quot;, &quot;port&quot;);<br>
+$imap-&gt;login(&quot;user&quot;, &quot;passwd&quot;, true, false);<br>
+$ret = $imap-&gt;getACL(&quot;mailbox with no ACLs&quot;);<br>
+var_dump($ret);</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+array(4) {<br>
+  [0]=&gt;<br>
+  array(2) {<br>
+    [&quot;USER&quot;]=&gt;<br>
+    string(6) &quot;tmpusr0&quot;<br>
+    [&quot;RIGHTS&quot;]=&gt;<br>
+    string(6) &quot;lrswid&quot;<br>
+  }<br>
+  [1]=&gt;<br>
+  array(2) {<br>
+    [&quot;USER&quot;]=&gt;<br>
+    string(7) &quot;tmpusr1&quot;<br>
+    [&quot;RIGHTS&quot;]=&gt;<br>
+    string(3) &quot;lrs&quot;<br>
+  }<br>
+  [2]=&gt;<br>
+  array(2) {<br>
+    [&quot;USER&quot;]=&gt;<br>
+    string(6) &quot;tmpusr2&quot;<br>
+    [&quot;RIGHTS&quot;]=&gt;<br>
+    string(1) &quot;p&quot;<br>
+  }<br>
+  [3]=&gt;<br>
+  array(2) {<br>
+    [&quot;USER&quot;]=&gt;<br>
+    string(6) &quot;tmpusr3&quot;<br>
+    [&quot;RIGHTS&quot;]=&gt;<br>
+    string(6) &quot;lrswid&quot;<br>
+  }<br>
+}</p>
+<p>Actual result:<br>
+--------------<br>
+2825,/usr/share/pear/Net/IMAPProtocol.php,PROTOCOL ERROR!:must be a &#039; &#039; but is a &#039;<br>
+&#039; !!!!<br>
+object(PEAR_Error)#6 (8) {<br>
+  [&quot;error_message_prefix&quot;]=&gt;<br>
+  string(0) &quot;&quot;<br>
+  [&quot;mode&quot;]=&gt;<br>
+  int(1)<br>
+  [&quot;level&quot;]=&gt;<br>
+  int(1024)<br>
+  [&quot;code&quot;]=&gt;<br>
+  NULL<br>
+  [&quot;message&quot;]=&gt;<br>
+  string(2) &quot;, &quot;<br>
+  [&quot;userinfo&quot;]=&gt;<br>
+  NULL<br>
+  [&quot;backtrace&quot;]=&gt;<br>
+  array(3) {<br>
+    [0]=&gt;<br>
+    array(7) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(28) &quot;/usr/share/pear/Net/IMAP.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(2112)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(10) &quot;PEAR_Error&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(10) &quot;PEAR_Error&quot;<br>
+      [&quot;object&quot;]=&gt;<br>
+      object(PEAR_Error)#6 (8) {<br>
+        [&quot;error_message_prefix&quot;]=&gt;<br>
+        string(0) &quot;&quot;<br>
+        [&quot;mode&quot;]=&gt;<br>
+        int(1)<br>
+        [&quot;level&quot;]=&gt;<br>
+        int(1024)<br>
+        [&quot;code&quot;]=&gt;<br>
+        NULL<br>
+        [&quot;message&quot;]=&gt;<br>
+        string(2) &quot;, &quot;<br>
+        [&quot;userinfo&quot;]=&gt;<br>
+        NULL<br>
+        [&quot;backtrace&quot;]=&gt;<br>
+        array(3) {<br>
+          [0]=&gt;<br>
+          array(7) {<br>
+            [&quot;file&quot;]=&gt;<br>
+            string(28) &quot;/usr/share/pear/Net/IMAP.php&quot;<br>
+            [&quot;line&quot;]=&gt;<br>
+            int(2112)<br>
+            [&quot;function&quot;]=&gt;<br>
+            string(10) &quot;PEAR_Error&quot;<br>
+            [&quot;class&quot;]=&gt;<br>
+            string(10) &quot;PEAR_Error&quot;<br>
+            [&quot;object&quot;]=&gt;<br>
+            *RECURSION*<br>
+            [&quot;type&quot;]=&gt;<br>
+            string(2) &quot;-&gt;&quot;<br>
+            [&quot;args&quot;]=&gt;<br>
+            array(1) {<br>
+              [0]=&gt;<br>
+              string(2) &quot;, &quot;<br>
+            }<br>
+          }<br>
+          [1]=&gt;<br>
+          array(7) {<br>
+            [&quot;file&quot;]=&gt;<br>
+            string(34) &quot;/var/www/html/acltool/lib/IMAP.php&quot;<br>
+            [&quot;line&quot;]=&gt;<br>
+            int(28)<br>
+            [&quot;function&quot;]=&gt;<br>
+            string(6) &quot;getACL&quot;<br>
+            [&quot;class&quot;]=&gt;<br>
+            string(8) &quot;Net_IMAP&quot;<br>
+            [&quot;object&quot;]=&gt;<br>
+            object(Net_IMAP)#3 (14) {<br>
+              [&quot;supportedAuthMethods&quot;]=&gt;<br>
+              array(3) {<br>
+                [0]=&gt;<br>
+                string(10) &quot;DIGEST-MD5&quot;<br>
+                [1]=&gt;<br>
+                string(8) &quot;CRAM-MD5&quot;<br>
+                [2]=&gt;<br>
+                string(5) &quot;LOGIN&quot;<br>
+              }<br>
+              [&quot;supportedSASLAuthMethods&quot;]=&gt;<br>
+              array(2) {<br>
+                [0]=&gt;<br>
+                string(10) &quot;DIGEST-MD5&quot;<br>
+                [1]=&gt;<br>
+                string(8) &quot;CRAM-MD5&quot;<br>
+              }<br>
+              [&quot;_serverAuthMethods&quot;]=&gt;<br>
+              array(2) {<br>
+                [0]=&gt;<br>
+                string(5) &quot;PLAIN&quot;<br>
+                [1]=&gt;<br>
+                string(5) &quot;PLAIN&quot;<br>
+              }<br>
+              [&quot;currentMailbox&quot;]=&gt;<br>
+              string(5) &quot;INBOX&quot;<br>
+              [&quot;_socket&quot;]=&gt;<br>
+              object(Net_Socket)#4 (13) {<br>
+                [&quot;fp&quot;]=&gt;<br>
+                resource(25) of type (stream)<br>
+                [&quot;blocking&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;persistent&quot;]=&gt;<br>
+                bool(false)<br>
+                [&quot;addr&quot;]=&gt;<br>
+                string(12) &quot;XXX.XXX.XXX.XXX&quot;<br>
+                [&quot;port&quot;]=&gt;<br>
+                int(143)<br>
+                [&quot;timeout&quot;]=&gt;<br>
+                bool(false)<br>
+                [&quot;lineLength&quot;]=&gt;<br>
+                int(2048)<br>
+                [&quot;_debug&quot;]=&gt;<br>
+                bool(false)<br>
+                [&quot;_default_error_mode&quot;]=&gt;<br>
+                NULL<br>
+                [&quot;_default_error_options&quot;]=&gt;<br>
+                NULL<br>
+                [&quot;_default_error_handler&quot;]=&gt;<br>
+                string(0) &quot;&quot;<br>
+                [&quot;_error_class&quot;]=&gt;<br>
+                string(10) &quot;PEAR_Error&quot;<br>
+                [&quot;_expected_errors&quot;]=&gt;<br>
+                array(0) {<br>
+                }<br>
+              }<br>
+              [&quot;_debug&quot;]=&gt;<br>
+              bool(false)<br>
+              [&quot;dbgDialog&quot;]=&gt;<br>
+              string(0) &quot;&quot;<br>
+              [&quot;_cmd_counter&quot;]=&gt;<br>
+              int(8)<br>
+              [&quot;_lastCmdID&quot;]=&gt;<br>
+              string(5) &quot;A0007&quot;<br>
+              [&quot;_unParsedReturn&quot;]=&gt;<br>
+              bool(false)<br>
+              [&quot;_connected&quot;]=&gt;<br>
+              bool(true)<br>
+              [&quot;_serverSupportedCapabilities&quot;]=&gt;<br>
+              array(21) {<br>
+                [0]=&gt;<br>
+                string(5) &quot;IMAP4&quot;<br>
+                [1]=&gt;<br>
+                string(9) &quot;IMAP4rev1&quot;<br>
+                [2]=&gt;<br>
+                string(3) &quot;ACL&quot;<br>
+                [3]=&gt;<br>
+                string(5) &quot;QUOTA&quot;<br>
+                [4]=&gt;<br>
+                string(8) &quot;LITERAL+&quot;<br>
+                [5]=&gt;<br>
+                string(17) &quot;MAILBOX-REFERRALS&quot;<br>
+                [6]=&gt;<br>
+                string(9) &quot;NAMESPACE&quot;<br>
+                [7]=&gt;<br>
+                string(7) &quot;UIDPLUS&quot;<br>
+                [8]=&gt;<br>
+                string(2) &quot;ID&quot;<br>
+                [9]=&gt;<br>
+                string(16) &quot;NO_ATOMIC_RENAME&quot;<br>
+                [10]=&gt;<br>
+                string(8) &quot;UNSELECT&quot;<br>
+                [11]=&gt;<br>
+                string(8) &quot;CHILDREN&quot;<br>
+                [12]=&gt;<br>
+                string(11) &quot;MULTIAPPEND&quot;<br>
+                [13]=&gt;<br>
+                string(6) &quot;BINARY&quot;<br>
+                [14]=&gt;<br>
+                string(4) &quot;SORT&quot;<br>
+                [15]=&gt;<br>
+                string(21) &quot;THREAD=ORDEREDSUBJECT&quot;<br>
+                [16]=&gt;<br>
+                string(17) &quot;THREAD=REFERENCES&quot;<br>
+                [17]=&gt;<br>
+                string(12) &quot;ANNOTATEMORE&quot;<br>
+                [18]=&gt;<br>
+                string(4) &quot;IDLE&quot;<br>
+                [19]=&gt;<br>
+                string(10) &quot;AUTH=PLAIN&quot;<br>
+                [20]=&gt;<br>
+                string(7) &quot;SASL-IR&quot;<br>
+              }<br>
+              [&quot;_useUTF_7&quot;]=&gt;<br>
+              bool(true)<br>
+              [&quot;lastline&quot;]=&gt;<br>
+              string(20) &quot;A0007 OK Completed<br>
+&quot;<br>
+            }<br>
+            [&quot;type&quot;]=&gt;<br>
+            string(2) &quot;-&gt;&quot;<br>
+            [&quot;args&quot;]=&gt;<br>
+            array(1) {<br>
+              [0]=&gt;<br>
+              string(4) &quot;mbox&quot;<br>
+            }<br>
+          }<br>
+          [2]=&gt;<br>
+          array(6) {<br>
+            [&quot;file&quot;]=&gt;<br>
+            string(30) &quot;/tmp/acls.php&quot;<br>
+            [&quot;line&quot;]=&gt;<br>
+            int(85)<br>
+            [&quot;function&quot;]=&gt;<br>
+            string(7) &quot;getACLs&quot;<br>
+            [&quot;class&quot;]=&gt;<br>
+            string(4) &quot;IMAP&quot;<br>
+            [&quot;type&quot;]=&gt;<br>
+            string(2) &quot;::&quot;<br>
+            [&quot;args&quot;]=&gt;<br>
+            array(1) {<br>
+              [0]=&gt;<br>
+              &amp;string(4) &quot;mbox&quot;<br>
+            }<br>
+          }<br>
+        }<br>
+        [&quot;callback&quot;]=&gt;<br>
+        NULL<br>
+      }<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(1) {<br>
+        [0]=&gt;<br>
+        string(2) &quot;, &quot;<br>
+      }<br>
+    }<br>
+    [1]=&gt;<br>
+    array(7) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(34) &quot;/tmp/IMAP.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(28)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(6) &quot;getACL&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(8) &quot;Net_IMAP&quot;<br>
+      [&quot;object&quot;]=&gt;<br>
+      object(Net_IMAP)#3 (14) {<br>
+        [&quot;supportedAuthMethods&quot;]=&gt;<br>
+        array(3) {<br>
+          [0]=&gt;<br>
+          string(10) &quot;DIGEST-MD5&quot;<br>
+          [1]=&gt;<br>
+          string(8) &quot;CRAM-MD5&quot;<br>
+          [2]=&gt;<br>
+          string(5) &quot;LOGIN&quot;<br>
+        }<br>
+        [&quot;supportedSASLAuthMethods&quot;]=&gt;<br>
+        array(2) {<br>
+          [0]=&gt;<br>
+          string(10) &quot;DIGEST-MD5&quot;<br>
+          [1]=&gt;<br>
+          string(8) &quot;CRAM-MD5&quot;<br>
+        }<br>
+        [&quot;_serverAuthMethods&quot;]=&gt;<br>
+        array(2) {<br>
+          [0]=&gt;<br>
+          string(5) &quot;PLAIN&quot;<br>
+          [1]=&gt;<br>
+          string(5) &quot;PLAIN&quot;<br>
+        }<br>
+        [&quot;currentMailbox&quot;]=&gt;<br>
+        string(5) &quot;INBOX&quot;<br>
+        [&quot;_socket&quot;]=&gt;<br>
+        object(Net_Socket)#4 (13) {<br>
+          [&quot;fp&quot;]=&gt;<br>
+          resource(25) of type (stream)<br>
+          [&quot;blocking&quot;]=&gt;<br>
+          bool(true)<br>
+          [&quot;persistent&quot;]=&gt;<br>
+          bool(false)<br>
+          [&quot;addr&quot;]=&gt;<br>
+          string(12) &quot;XXX.XXX.XXX.XXX&quot;<br>
+          [&quot;port&quot;]=&gt;<br>
+          int(143)<br>
+          [&quot;timeout&quot;]=&gt;<br>
+          bool(false)<br>
+          [&quot;lineLength&quot;]=&gt;<br>
+          int(2048)<br>
+          [&quot;_debug&quot;]=&gt;<br>
+          bool(false)<br>
+          [&quot;_default_error_mode&quot;]=&gt;<br>
+          NULL<br>
+          [&quot;_default_error_options&quot;]=&gt;<br>
+          NULL<br>
+          [&quot;_default_error_handler&quot;]=&gt;<br>
+          string(0) &quot;&quot;<br>
+          [&quot;_error_class&quot;]=&gt;<br>
+          string(10) &quot;PEAR_Error&quot;<br>
+          [&quot;_expected_errors&quot;]=&gt;<br>
+          array(0) {<br>
+          }<br>
+        }<br>
+        [&quot;_debug&quot;]=&gt;<br>
+        bool(false)<br>
+        [&quot;dbgDialog&quot;]=&gt;<br>
+        string(0) &quot;&quot;<br>
+        [&quot;_cmd_counter&quot;]=&gt;<br>
+        int(8)<br>
+        [&quot;_lastCmdID&quot;]=&gt;<br>
+        string(5) &quot;A0007&quot;<br>
+        [&quot;_unParsedReturn&quot;]=&gt;<br>
+        bool(false)<br>
+        [&quot;_connected&quot;]=&gt;<br>
+        bool(true)<br>
+        [&quot;_serverSupportedCapabilities&quot;]=&gt;<br>
+        array(21) {<br>
+          [0]=&gt;<br>
+          string(5) &quot;IMAP4&quot;<br>
+          [1]=&gt;<br>
+          string(9) &quot;IMAP4rev1&quot;<br>
+          [2]=&gt;<br>
+          string(3) &quot;ACL&quot;<br>
+          [3]=&gt;<br>
+          string(5) &quot;QUOTA&quot;<br>
+          [4]=&gt;<br>
+          string(8) &quot;LITERAL+&quot;<br>
+          [5]=&gt;<br>
+          string(17) &quot;MAILBOX-REFERRALS&quot;<br>
+          [6]=&gt;<br>
+          string(9) &quot;NAMESPACE&quot;<br>
+          [7]=&gt;<br>
+          string(7) &quot;UIDPLUS&quot;<br>
+          [8]=&gt;<br>
+          string(2) &quot;ID&quot;<br>
+          [9]=&gt;<br>
+          string(16) &quot;NO_ATOMIC_RENAME&quot;<br>
+          [10]=&gt;<br>
+          string(8) &quot;UNSELECT&quot;<br>
+          [11]=&gt;<br>
+          string(8) &quot;CHILDREN&quot;<br>
+          [12]=&gt;<br>
+          string(11) &quot;MULTIAPPEND&quot;<br>
+          [13]=&gt;<br>
+          string(6) &quot;BINARY&quot;<br>
+          [14]=&gt;<br>
+          string(4) &quot;SORT&quot;<br>
+          [15]=&gt;<br>
+          string(21) &quot;THREAD=ORDEREDSUBJECT&quot;<br>
+          [16]=&gt;<br>
+          string(17) &quot;THREAD=REFERENCES&quot;<br>
+          [17]=&gt;<br>
+          string(12) &quot;ANNOTATEMORE&quot;<br>
+          [18]=&gt;<br>
+          string(4) &quot;IDLE&quot;<br>
+          [19]=&gt;<br>
+          string(10) &quot;AUTH=PLAIN&quot;<br>
+          [20]=&gt;<br>
+          string(7) &quot;SASL-IR&quot;<br>
+        }<br>
+        [&quot;_useUTF_7&quot;]=&gt;<br>
+        bool(true)<br>
+        [&quot;lastline&quot;]=&gt;<br>
+        string(20) &quot;A0007 OK Completed<br>
+&quot;<br>
+      }<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(1) {<br>
+        [0]=&gt;<br>
+        string(4) &quot;mbox&quot;<br>
+      }<br>
+    }<br>
+    [2]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(30) &quot;/tmp/acls.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(85)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(7) &quot;getACLs&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(4) &quot;IMAP&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;::&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(1) {<br>
+        [0]=&gt;<br>
+        &amp;string(4) &quot;mbox&quot;<br>
+      }<br>
+    }<br>
+  }<br>
+  [&quot;callback&quot;]=&gt;<br>
+  NULL<br>
+}</p>
+</section>
+<section>
+<h3>[2007-01-30 17:23 UTC] s dot e dot grier at qmul dot ac dot uk</h3>
+<p>Patch to fix this issue is:</p>
+<p>--- IMAPProtocol.php.old        2007-01-30 14:48:36.000000000 +0000<br>
++++ IMAPProtocol.php    2007-01-30 15:10:34.000000000 +0000<br>
+@@ -2918,6 +2918,10 @@<br>
+         case &quot;ACL&quot; :<br>
+                 $this-&gt;_parseSpace( $str , __LINE__ , __FILE__ );<br>
+                 $this-&gt;_getNextToken( $str , $mailbox );<br>
++                if (substr($str, 0, 2) == &quot;\r\n&quot;) {<br>
++                    // No ACLs set on this mailbox.<br>
++                    return array(&quot;MAILBOX&quot;=&gt;$this-&gt;utf_7_decode($mailbox), &quot;USERS&quot;=&gt;array());<br>
++                }<br>
+                 $this-&gt;_parseSpace( $str , __LINE__ , __FILE__ );<br>
+                 $acl_arr = explode( &#039; &#039; , rtrim( substr( $this-&gt;_getToEOL( $str , false ) , 0 ) ) );</p>
+</section>
+<section>
+<h3>[2007-01-31 03:55 UTC] hudeldudel at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+<section>
+<h3>[2007-02-01 16:13 UTC] s dot e dot grier at qmul dot ac dot uk</h3>
+<p>I can confirm the fix works for me.</p>
+<p>Thanks.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

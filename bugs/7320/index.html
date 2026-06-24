@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7320</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_Wiki/index.html">Text_Wiki</a> &#187; Bug #7320</h1>
+<p>Wikilinks messed when using international characters</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-04-05 17:39 UTC</td></tr>
+<tr><th>From</th><td>martin dot ottenwaelter at ensimag dot fr</td></tr>
+<tr><th>Assigned</th><td>justinpatrin</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Text_Wiki/index.html">Text_Wiki</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.1</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-05 17:39 UTC] martin dot ottenwaelter at ensimag dot fr</h3>
+<p>Description:<br>
+------------<br>
+** Problem :</p>
+<p>The regular expression used to match wikilinks has bugs when <br>
+dealing with international characters (é, è, ü, etc...).</p>
+<p>For example, the french word &quot;Création&quot; is mis-interpreted <br>
+as a wikilink : Text_Wiki will produce the following HTML <br>
+sequence wherever the word &quot;Création&quot; appears.</p>
+<p>&lt;a href=&quot;?wikiword=Cr%C3&quot;&gt;Cr?&lt;/a&gt;©ation</p>
+<p>On the other hand, the word &quot;Creation&quot; is not interpreted as <br>
+a wikilink.</p>
+<p>** Solution :</p>
+<p>Use regular expressions UTF-8 capabilities :<br>
+1. instead of using the \xc0-\xfe range for international <br>
+characters, use the \pL, \p{Lu} and \p{Ll} for &quot;any letter&quot;, <br>
+&quot;any uppercase letter&quot; and &quot;any lower case letter&quot;<br>
+2. add a &quot;u&quot; at the end of the regex to enable UTF-8 mode : <br>
+&quot;/my_regex/u&quot;.</p>
+<p>I have successfully patched &quot;Wikilink.php&quot; using this method <br>
+and it works just fine.</p>
+<p>Sources :</p>
+<p>http://www.php.net/manual/en/<br>
+reference.pcre.pattern.modifiers.php<br>
+http://www.php.net/manual/en/<br>
+reference.pcre.pattern.syntax.php</p>
+</section>
+<section>
+<h3>[2006-04-05 18:36 UTC] martin dot ottenwaelter at ensimag dot fr</h3>
+<p>Here goes an example :<br>
+The following php code :</p>
+<p>&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Strict//EN&quot; <br>
+&quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd&quot;&gt;<br>
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;en&quot; <br>
+lang=&quot;en&quot;&gt;<br>
+&lt;head&gt;<br>
+	&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; <br>
+charset=utf-8&quot;/&gt;<br>
+&lt;/head&gt;</p>
+<p>&lt;body&gt;</p>
+<p>&lt;?php<br>
+		require_once &#039;PEAR.php&#039;;<br>
+		require_once &#039;Text/Wiki.php&#039;;</p>
+<p>$wiki = &amp; Text_Wiki::singleton(&#039;Default&#039;);<br>
+	<br>
+		// UTF8<br>
+		$wiki-&gt;setFormatConf(&#039;Xhtml&#039;,	&#039;charset&#039;,<br>
+	&#039;UTF-8&#039;);<br>
+	<br>
+		// Extended character set (é à ù, etc...)<br>
+		$wiki-&gt;setParseConf(&#039;wikilink&#039;, &#039;ext_chars&#039;, <br>
+&#039;false&#039;);<br>
+	<br>
+		$result = $wiki-&gt;transform(&quot;Création&quot;, &#039;Xhtml&#039;);<br>
+		print($result);</p>
+<p>?&gt;</p>
+<p>&lt;/body&gt;<br>
+&lt;/html&gt;</p>
+<p>outputs the follwing HTML</p>
+<p>&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Strict//EN&quot; <br>
+&quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd&quot;&gt;</p>
+<p>&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;en&quot; <br>
+lang=&quot;en&quot;&gt;<br>
+&lt;head&gt;<br>
+	&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; <br>
+charset=utf-8&quot;/&gt;<br>
+&lt;/head&gt;</p>
+<p>&lt;body&gt;</p>
+<p>&lt;p&gt;Cr?&lt;a href=&quot;http://example.com/new.php?page=Cr%C3&quot;&gt;?&lt;/<br>
+a&gt;©ation&lt;/p&gt;</p>
+<p>&lt;/body&gt;<br>
+&lt;/html&gt;</p>
+<p>instead of</p>
+<p>...<br>
+&lt;p&gt;Création&lt;/p&gt;<br>
+...</p>
+<p>, with PHP 4.4.1 and the file encoding being UTF8.<br>
+Haven&#039;t had time to test it on 5.1.3, but my patch makes it <br>
+work on 4.4.1 !<br>
+Martin.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7823</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_LDAP/index.html">Net_LDAP</a> &#187; Bug #7823</h1>
+<p>reBind with bad password throws fatal error</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-06-06 15:28 UTC</td></tr>
+<tr><th>From</th><td>mortonda at dgrmm dot net</td></tr>
+<tr><th>Assigned</th><td>beni</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_LDAP/index.html">Net_LDAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.2</td></tr>
+<tr><th>OS</th><td>Ubuntu dapper</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-06 15:28 UTC] mortonda at dgrmm dot net</h3>
+<p>Description:<br>
+------------<br>
+When I try to rebind (with bad password), it crashes my script with:</p>
+<p>Warning: PEAR_ERROR_EXCEPTION is obsolete, use class PEAR_Exception for exceptions in /usr/share/php/PEAR.php on line 905</p>
+<p>Fatal error: Cannot instantiate non-existent class: exception in /usr/share/php/PEAR.php(906) : eval()&#039;d code on line 1</p>
+</section>
+<section>
+<h3>[2006-06-06 15:54 UTC] mortonda at dgrmm dot net</h3>
+<p>Looks like it is a mismatch between parameters.  PEAR calls Net_LDAP_Error like:</p>
+<p>$a = &amp;new $ec($message, $code, $mode, $options, $userinfo);</p>
+<p>and so the mode and code gets mixed up.</p>
+</section>
+<section>
+<h3>[2006-06-06 16:04 UTC] mortonda at dgrmm dot net</h3>
+<p>Changing the Net_LDAP_Error constructor to this works for me: (Not sure how it affects any other code)</p>
+<p>function Net_LDAP_Error($code = NET_LDAP_ERROR, $mode = PEAR_ERROR_RETURN,<br>
+                            $level = E_USER_NOTICE, $debuginfo = null)<br>
+    {<br>
+        if (is_int($code)) {<br>
+            $this-&gt;PEAR_Error(&#039;Net_LDAP_Error: &#039; . Net_LDAP::errorMessage($code), $code, $mode, $level, $debuginfo);<br>
+        } else { // parameters are shifted...<br>
+            $this-&gt;PEAR_Error(&quot;Net_LDAP_Error: $code&quot;, NET_LDAP_ERROR, $code, $mode, $level);<br>
+        }<br>
+    }</p>
+</section>
+<section>
+<h3>[2006-06-06 16:23 UTC] mortonda at dgrmm dot net</h3>
+<p>BTW, this really looks like a bad design in the PEAR Error API.   4 or 5 parameters?</p>
+</section>
+<section>
+<h3>[2006-07-14 09:49 UTC] b dot hallinger at skyforcesystems dot de</h3>
+<p>reBind() is oboslete in CVS-Version and replaced by bind().</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

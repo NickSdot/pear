@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6226</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_mysqli/index.html">MDB2_Driver_mysqli</a> &#187; Bug #6226</h1>
+<p>Loading mysql driver fails</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-12-12 11:39 UTC</td></tr>
+<tr><th>From</th><td>petra dot arentzen at pegu dot de</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_mysqli/index.html">MDB2_Driver_mysqli</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux debian 2.6.14</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-12-12 11:39 UTC] petra dot arentzen at pegu dot de</h3>
+<p>Description:<br>
+------------<br>
+MDB2                      2.0.0beta6 beta  <br>
+MDB2_Driver_mysql         0.1.1      beta  <br>
+  <br>
+  <br>
+Loading of mysql.php fails if &quot;MDB2.php&quot; is included by <br>
+include-path, because there is a test if include-file  <br>
+&quot;MDB2/Driver/mysql.php&quot; exists. Because the script&#039;s <br>
+current directory isn&#039;t PEAR&#039;s main directory (which is in <br>
+include-path) this must fail and MDB2::factory() will <br>
+return an error. <br>
+ <br>
+Maybe this problem applies to other drivers too.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?<br>
+// from liveuser example5<br>
+require_once &#039;MDB2.php&#039;;</p>
+<p>$dsn = &#039;mysql://testuser:testpassword@localhost/testdatabase&#039;;</p>
+<p>$options = array(<br>
+    &#039;portability&#039; =&gt; (MDB2_PORTABILITY_ALL ^ MDB2_PORTABILITY_EMPTY_TO_NULL),<br>
+want to use DB as the backend<br>
+);</p>
+<p>$dsn = MDB2::parseDSN($dsn);<br>
+$database = $dsn[&#039;database&#039;];<br>
+unset($dsn[&#039;database&#039;]);</p>
+<p>$manager =&amp; MDB2_Schema::factory($dsn, $options);</p>
+<p>?&gt;</p>
+<p>Commenting out line 317 - 321 in &quot;MDB2.php&quot; solves the problem.</p>
+<p>Expected result:<br>
+----------------<br>
+$manager should be a valid MDB2 Object</p>
+<p>Actual result:<br>
+--------------<br>
+$manager is an Error Object</p>
+</section>
+<section>
+<h3>[2005-12-12 12:16 UTC] petra dot arentzen at pegu dot de</h3>
+<p>Of course I had installed the mysql driver. The problem <br>
+ist not that the include does not work - it&#039;s the test if <br>
+the file exists before including it. The include would <br>
+work but the code will not be executed because the <br>
+previous test failes. <br>
+ <br>
+/usr/share/php/MDB2.php: <br>
+    function &amp;factory($dsn, $options = false) <br>
+    { <br>
+        $dsninfo = MDB2::parseDSN($dsn); <br>
+        if (!array_key_exists(&#039;phptype&#039;, $dsninfo)) { <br>
+            $err =&amp; MDB2::raiseError(MDB2_ERROR_NOT_FOUND, <br>
+                null, null, &#039;no RDBMS driver specified&#039;); <br>
+            return $err; <br>
+        } <br>
+        $class_name = &#039;MDB2_Driver_&#039;.$dsninfo[&#039;phptype&#039;]; <br>
+ <br>
+        if (!class_exists($class_name)) { <br>
+            $file_name = str_replace(&#039;_&#039;, <br>
+DIRECTORY_SEPARATOR, $class_name).&#039;.php&#039;; <br>
+#            if (!MDB2::fileExists($file_name)) { <br>
+#                $err =&amp; <br>
+MDB2::raiseError(MDB2_ERROR_NOT_FOUND, null, null, <br>
+#                    &#039;unable to find: &#039;.$file_name); <br>
+#                return $err; <br>
+#            } <br>
+            if (!include_once($file_name)) { <br>
+                $err =&amp; <br>
+MDB2::raiseError(MDB2_ERROR_NOT_FOUND, null, null, <br>
+                    &#039;unable to load driver class: &#039;.<br>
+$file_name); <br>
+                return $err; <br>
+            } <br>
+        } <br>
+ <br>
+        $db =&amp; new $class_name(); <br>
+        $db-&gt;setDSN($dsninfo); <br>
+        $err = MDB2::setOptions($db, $options); <br>
+        if (PEAR::isError($err)) { <br>
+            return $err; <br>
+        } <br>
+ <br>
+        return $db; <br>
+    } <br>
+ <br>
+The lines with the leading &#039;#&#039; which I have filled in on <br>
+my local file are causing the trouble.</p>
+</section>
+<section>
+<h3>[2005-12-12 13:43 UTC] petra dot arentzen at pegu dot de</h3>
+<p>And I don&#039;t understand why you don&#039;t understand.      <br>
+It&#039;s not the first time I am using PEAR. I worked e.g with      <br>
+DB, DB_DataObject for more than three years. I&#039;m sure that      <br>
+my Include-Path ist set correctly. No other pear      <br>
+application had ever had trouble with it.       <br>
+It seems that the (imho) useless test for the existence of <br>
+the file before including it causes the trouble.    <br>
+So if I comment out this test the code works.     <br>
+In this case the code with      <br>
+the    <br>
+&lt;code&gt;    <br>
+if (!include_once($file_name)) {  <br>
+&lt;/code&gt; <br>
+works fine because my include-path is set correcly.   <br>
+   <br>
+Now I&#039;ve told all I can tell about this bug/ trouble/   <br>
+problem and if you are telling me further that it is my   <br>
+fail then I can&#039;t change it.   <br>
+  <br>
+I&#039;ve tried my very best ;-)</p>
+</section>
+<section>
+<h3>[2005-12-12 16:20 UTC] petra dot arentzen at pegu dot de</h3>
+<p>Your hint about safe_mode leads me some steps further.    <br>
+I&#039;ve debugged my script again and again. The problem seems    <br>
+to be the PHP-function is_readable(). Here&#039;s what I  <br>
+figured out:    <br>
+    <br>
+safe_mode off/ user: petra - works fine    <br>
+safe_mode  on/ user: petra - fails    <br>
+safe_mode  on/ user: root  - workes fine    <br>
+    <br>
+This seems to be very similar to the following bug   <br>
+http://bugs.php.net/bug.php?id=31618    <br>
+This bug was reported for php 5 cvs version.   <br>
+   <br>
+Perhaps it&#039;s an old bug which had survived since   <br>
+4.3.10 or even earlier.   <br>
+   <br>
+So it seems not to be a problem of MDB2. But perhaps it  <br>
+makes sense to remove calling fileExists().</p>
+</section>
+<section>
+<h3>[2005-12-12 17:36 UTC] petra dot arentzen at pegu dot de</h3>
+<p>Ok, thank you. I think I can live with that.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

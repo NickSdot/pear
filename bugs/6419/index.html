@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6419</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #6419</h1>
+<p>All timestamps with a length of 8, will generate a wrong date.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-05 13:23 UTC</td></tr>
+<tr><th>From</th><td>info at rhalff dot com</td></tr>
+<tr><th>Assigned</th><td>pajoye</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0</td></tr>
+<tr><th>OS</th><td>Debian</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-05 13:23 UTC] info at rhalff dot com</h3>
+<p>Description:<br>
+------------<br>
+All timestamps with a length of 8, will generate a wrong ates when a timestamp is passed to the constructor.</p>
+<p>There is a format parameter for the setDate() function to fix this, but this isn&#039;t used in the Date constructor:</p>
+<p>function Date($date = null)<br>
+    {<br>
+        $this-&gt;tz = Date_TimeZone::getDefault();<br>
+        if (is_null($date)) {<br>
+            $this-&gt;setDate(date(&quot;Y-m-d H:i:s&quot;));<br>
+        } elseif (is_a($date, &#039;Date&#039;)) {<br>
+            $this-&gt;copy($date);<br>
+        } else {<br>
+            $this-&gt;setDate($date); &lt;&lt; NO FORMAT PARAMETER<br>
+        }<br>
+    }</p>
+<p>The code causing the bug is the regular expression in setDate():<br>
+  preg_match(&#039;/^(\d{4})-?(\d{2})-?(\d{2})([T\s]?(\d{2}):?(\d{2}):?(\d{2})(\.\d+)?(Z|[\+\-]\d{2}:?\d{2})?)?$/i&#039;, $date, $regs) &amp;&amp; $format != DATE_FORMAT_UNIXTIME</p>
+<p>I could fix the bug by adding &amp;&amp; !is_numeric($date) here, but I&#039;m not sure whether that will break other uses of the Date class. Probably the regexp should be fixed all together.</p>
+<p>Test script:<br>
+---------------<br>
+require &#039;Date.php&#039;;</p>
+<p>for($i=0; $i&lt;50; $i++) {<br>
+        $timestamp = str_pad(rand(1, 99999999), 8, &#039;0&#039;);<br>
+        $date = new Date($timestamp);<br>
+        printf(&quot;%s | %s %s %s\n&quot;,<br>
+                strftime(&#039;%Y %m %d&#039;, $timestamp), // correct time<br>
+                $date-&gt;getYear(),<br>
+                $date-&gt;getMonth(),<br>
+                $date-&gt;getDay()<br>
+               );<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+1971 03 20 | 1971 03 20<br>
+1971 05 17 | 1971 05 17<br>
+1971 11 25 | 1971 11 25<br>
+etc..</p>
+<p>Actual result:<br>
+--------------<br>
+1971 03 20 | 3831 73 5<br>
+1971 05 17 | 4329 18 59<br>
+1971 11 25 | 5990 31 20<br>
+etc..</p>
+</section>
+<section>
+<h3>[2006-01-05 13:24 UTC] info at rhalff dot com</h3>
+<p>s/a wrong ates/wrong dates/</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9241</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth/index.html">Auth</a> &#187; Bug #9241</h1>
+<p>call_user_func_array: $this instaed of &amp;$this</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-06 11:14 UTC</td></tr>
+<tr><th>From</th><td>joliver at gmx dot at</td></tr>
+<tr><th>Assigned</th><td>aashley</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Auth/index.html">Auth</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Debian stable</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-06 11:14 UTC] joliver at gmx dot at</h3>
+<p>Description:<br>
+------------<br>
+Auth.class, row 494:</p>
+<p>in call_user_func_array, the array of parameters contain <br>
+$this as reference to the auth object.</p>
+<p>however this only works with php5, because in php4 a copy <br>
+of the object is passed instead of the pointer.</p>
+<p>the correct solution would be <br>
+call_user_func_array($this-&gt;loginCallback, <br>
+array($this-&gt;username, &amp;$this));</p>
+<p>the code contains lots of similar lines, i would suggest <br>
+to replace $this with &amp;$this everywhere.</p>
+<p>Test script:<br>
+---------------<br>
+Auth.class, row 494:</p>
+<p>call_user_func_array(&#039;additionalChecks&#039;, array($this-&gt;username, &amp;$this));</p>
+<p>function additionalChecks($username, &amp;$auth)<br>
+{<br>
+  if ($username == &#039;test&#039;) {<br>
+    $auth-&gt;logout();<br>
+  }<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+In Auth.php $this-&gt;username should be empty, because of <br>
+logout(); So later it should call loginFunction again.</p>
+<p>This only works in php5 or if &amp;$this is passed to the <br>
+array function in call_user_func_array</p>
+</section>
+<section>
+<h3>[2006-11-10 01:12 UTC] aashley at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

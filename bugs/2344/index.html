@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2344</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #2344</h1>
+<p>Extensive use of after() and before() methods crashes PHP/Apache</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-09-15 20:15 UTC</td></tr>
+<tr><th>From</th><td>bmihelac at mihelac dot org</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>WIN XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-09-15 20:15 UTC] bmihelac at mihelac dot org</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>I noticed that use of after() and before() methods of the Date class can lead to crashes on PHP (4.3.3, 4.3.8)/Apache (1.3.21 and 1.3.31) /Win XP (SP1). On Linux it seems to work fine, but I didn&#039;t have the time yet to test if the performance are o.k.  with using the methods I mentioned.</p>
+<p>This was first noticed on complex script so it was hard to isolate the problem as it didn&#039;t occur every time I loaded the script. It seems to me that it could be some infinite loop.</p>
+<p>Reproduce code:<br>
+---------------<br>
+10 Loops of checking if some date is between 2 other dates crashes PHP. It works with less loops too but it is not so regular.</p>
+<p>&lt;?php<br>
+require_once(&#039;Date.php&#039;);</p>
+<p>$date = new Date();<br>
+for ($i = 0; $i &lt; 10; $i++) {<br>
+  $start_date = new Date(&#039;2003-12-05&#039;);<br>
+  $end_date = new Date(&#039;2004-08-31&#039;);<br>
+  $open = ($date-&gt;after($start_date) || $date-&gt;equals($start_date)) <br>
+        &amp;&amp; ($date-&gt;before($end_date) || $date-&gt;equals($start_date));<br>
+  <br>
+  echo &quot;Result: $open&lt;br /&gt;&quot;;<br>
+}<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Expected to see result but PHP crashes.</p>
+</section>
+<section>
+<h3>[2004-11-03 03:23 UTC] russ at last dot fm</h3>
+<p>It&#039;s 3am. I&#039;ve just spent 3 hours trying to debug our PHP before finding out that the bug was actually in PEAR...</p>
+<p>At least change the status of this package away from &quot;stable&quot;. This is a serious bug. And I am not a happy bunny.</p>
+</section>
+<section>
+<h3>[2004-11-03 03:25 UTC] russ at last dot fm</h3>
+<p>Oh by the way, the problem is due to repeatedly calling Date_TimeZone::inDaylightTime(). The getenv/putenv approach to time zone conversion obviously has problems.</p>
+</section>
+<section>
+<h3>[2004-11-03 03:32 UTC] rj at audioscrobbler dot com</h3>
+<p>This happens even if it&#039;s called once per page load, provided  that page gets enough traffic. Guess it fights over get/putting the env variables.</p>
+</section>
+<section>
+<h3>[2004-11-03 03:33 UTC] rj at audioscrobbler dot com</h3>
+<p>This isn&#039;t just a win32 problem. Happens on Debian Linux here..</p>
+</section>
+<section>
+<h3>[2004-11-03 09:46 UTC] pierre at dotgeek dot org</h3>
+<p>On 11/3/2004, &quot;rj at audioscrobbler dot com&quot; &lt;pear-dev@lists.php.net&gt; wrote:</p>
+<p>&gt;page gets enough traffic. Guess it fights over get/putting the env<br>
+&gt;variables.</p>
+<p>We cannot fix php bugs in date.</p>
+<p>&gt;Oh by the way, the problem is due to repeatedly calling<br>
+&gt;Date_TimeZone::inDaylightTime(). The getenv/putenv approach to time<br>
+&gt;zone conversion obviously has problems.</p>
+<p>Actually no other way to manage the TZ &quot;safely&quot;, in a result point of view.</p>
+<p>&gt;finding out that the bug was actually in PEAR...</p>
+<p>A php crash is _not_ a PEAR::date (or any other php script) bug.</p>
+<p>&gt;At least change the status of this package away from &quot;stable&quot;.<br>
+&gt; This is a serious bug. And I am not a happy bunny.</p>
+<p>As said before, sorry, but not up to date. Date is _stable_.</p>
+<p>Note that I cannot reproduce the php crashes using apache2 and php4.3.8 on linux. I do not have a apache1 to try it, can you give a try with apache2 on windows?</p>
+<p>I set it on feedback even it is bogus (not a date issue). Until I can localize the real problem (env or other things) and then move to php bugs.</p>
+<p>I can try to reproduce it next week with apache1</p>
+<p>--Pierre</p>
+</section>
+<section>
+<h3>[2004-11-05 10:45 UTC] rj at audioscrobbler dot com</h3>
+<p>Here&#039;s the PHP and Apache versions we were having this problem on:</p>
+<p>www:~# /usr/local/apache/bin/httpd -v<br>
+Server version: Apache/1.3.32 (Unix)</p>
+<p>www:~# php -v<br>
+PHP 4.3.9 (cli) (built: Nov  3 2004 01:27:52)<br>
+Copyright (c) 1997-2004 The PHP Group<br>
+Zend Engine v1.3.0, Copyright (c) 1998-2004 Zend Technologies<br>
+    with Turck MMCache v2.4.6, Copyright (c) 2002-2003 TurckSoft, St. Petersburg, by Dmitry Stogov<br>
+    with Advanced PHP Debugger (APD) v0.9.1, , by George Schlossnagle</p>
+<p>The server is diskless, and netboots from a debian image on another debian box.</p>
+</section>
+<section>
+<h3>[2004-11-05 12:49 UTC] pierre at dotgeek dot org</h3>
+<p>Give it a try without Turck MMCache and without APD.</p>
+<p>If it still crashes post a comment here. I will try to make a short script to reproduce this problem.</p>
+<p>If not try with apd and MMcache (not together), if one (or both) raises a segv, post a bug into the respective helpdesk system (pecl.php.net for apd). and close this bug.</p>
+<p>Regards,</p>
+<p>--Pierre</p>
+</section>
+<section>
+<h3>[2005-03-30 14:59 UTC] rhidian at rhidian dot com</h3>
+<p>I&#039;ve also had this problem - It was intermittent and crashing my php (4.3 on IIS6/Win2003 ISAPI) with a mix of HTTP 500 error and PHP Access Violation.</p>
+<p>The solution was replacing this function (new version shown here) in TimeZone.php</p>
+<p>function inDaylightTime($date) <br>
+{ <br>
+return date(&quot;I&quot;); // line added <br>
+$env_tz = &quot;&quot;; <br>
+if(getenv(&quot;TZ&quot;)) <br>
+$env_tz = getenv(&quot;TZ&quot;); <br>
+putenv(&quot;TZ=&quot;.$this-&gt;id); <br>
+$ltime = localtime($date-&gt;getTime(), true); <br>
+putenv(&quot;TZ=&quot;.$env_tz); <br>
+return $ltime[&#039;tm_isdst&#039;]; <br>
+}</p>
+<p>Credit to Yves, who posted this solution here:<br>
+http://www.phpwsforums.com/archive/index.php/t-526.html</p>
+</section>
+<section>
+<h3>[2005-04-06 03:33 UTC] rob at wildlime dot com</h3>
+<p>I&#039;ve been banging my head against this one for a while too (see http://bugs.php.net/bug.php?id=32422)</p>
+<p>Might I suggest that, even though this is a php (or even a msvcrt) bug, the Date::inDayLightTime documentation is changed to say something along the lines of &quot;WARNING: this has been known cause intermittent access violation crashes&quot; rather than &quot;may not work&quot;. At least that would save a few headaches.</p>
+</section>
+<section>
+<h3>[2006-06-24 21:46 UTC] ryan dot hutchison at gymsolutions dot com</h3>
+<p>I was having issues with php crashing apache on freebsd.  After debugging it, I saw that it was related to the putenv function which is used in the inDaylightTime function.  The problem occurs when it attempts to set the environment variable, in this case TZ, back to a NULL value.  The solutions I came up with was to set the environment variable, TZ, to the $id used when creating the Date_TimeZone class.</p>
+<p>function Date_TimeZone($id)<br>
+    {<br>
+        global $_DATE_TIMEZONE_DATA;<br>
+        if(Date_TimeZone::isValidID($id)) {<br>
+            putenv(&quot;TZ=&quot;.$id); # Bug Fix<br>
+            $this-&gt;id = $id;<br>
+            $this-&gt;longname = $_DATE_TIMEZONE_DATA[$id][&#039;longname&#039;];  <br>
+            $this-&gt;shortname = $_DATE_TIMEZONE_DATA[$id][&#039;shortname&#039;];<br>
+            $this-&gt;offset = $_DATE_TIMEZONE_DATA[$id][&#039;offset&#039;];<br>
+            if($_DATE_TIMEZONE_DATA[$id][&#039;hasdst&#039;]) {<br>
+                $this-&gt;hasdst = true;<br>
+                $this-&gt;dstlongname = $_DATE_TIMEZONE_DATA[$id][&#039;dstlongname&#039;];  <br>
+                $this-&gt;dstshortname = $_DATE_TIMEZONE_DATA[$id][&#039;dstshortname&#039;];<br>
+            } else {<br>
+                $this-&gt;hasdst = false;<br>
+                $this-&gt;dstlongname = $this-&gt;longname;  <br>
+                $this-&gt;dstshortname = $this-&gt;shortname;<br>
+            }      <br>
+        } else {<br>
+            $this-&gt;id = &#039;UTC&#039;;<br>
+            $this-&gt;longname = $_DATE_TIMEZONE_DATA[$this-&gt;id][&#039;longname&#039;];  <br>
+            $this-&gt;shortname = $_DATE_TIMEZONE_DATA[$this-&gt;id][&#039;shortname&#039;];<br>
+            $this-&gt;hasdst = $_DATE_TIMEZONE_DATA[$this-&gt;id][&#039;hasdst&#039;];<br>
+            $this-&gt;offset = $_DATE_TIMEZONE_DATA[$this-&gt;id][&#039;offset&#039;];<br>
+        }<br>
+    }</p>
+<p>I&#039;m not sure if this will produce a solution for everybody else, but it works for me.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

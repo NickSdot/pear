@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3523</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #3523</h1>
+<p>Allow custom headers ahead of header row</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3523</th><td>Allow custom headers ahead of header row</td></tr>
+<tr><th>Submitted</th><td>2005-02-19 00:28 UTC</td></tr>
+<tr><th>From</th><td>jessup at mrpath dot com</td></tr>
+<tr><th>Assigned</th><td>olivierg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>N/A</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-19 00:28 UTC] jessup at mrpath dot com</h3>
+<p>Description:<br>
+------------<br>
+Here are the changes I made to fix this.</p>
+<p>The changes and line numbers are relative to Structures_DataGrid/DataGrid/Renderer/HTMLTable.php version 1.40:</p>
+<p>Insert between lines 308 and 309:<br>
+        if (!is_array($this-&gt;_dg-&gt;columnSet) or count($this-&gt;_dg-&gt;columnSet) &lt; 1) {<br>
+        	return;<br>
+        }<br>
+        $row = $this-&gt;_table-&gt;addRow();</p>
+<p>Lines 378-379 Old:<br>
+            $this-&gt;_table-&gt;setHeaderContents(0, $cnt, $str);<br>
+            $this-&gt;_table-&gt;setCellAttributes(0, $cnt, $column-&gt;attribs);</p>
+<p>Lines 378-379 New:<br>
+            $this-&gt;_table-&gt;setHeaderContents($row, $cnt, $str);<br>
+            $this-&gt;_table-&gt;setCellAttributes($row, $cnt, $column-&gt;attribs);</p>
+<p>Lines 417-421 Old:<br>
+            // Begin loop<br>
+            $rowCnt = 0;<br>
+            for ($i = $begin; $i &lt; $end; $i++) {<br>
+                if (isset($this-&gt;_dg-&gt;recordSet[$i])) {<br>
+                    $rowCnt++;<br>
+                    $cnt = 0;</p>
+<p>Lines 417-421 New:<br>
+            // Begin loop<br>
+            for ($i = $begin; $i &lt; $end; $i++) {<br>
+                if (isset($this-&gt;_dg-&gt;recordSet[$i])) {<br>
+                    $rowCnt = $this-&gt;_table-&gt;addRow();<br>
+                    $cnt = 0;</p>
+<p>Expected result:<br>
+----------------<br>
+I want to be able to manually call $dg-&gt;renderer-&gt;_table-&gt;addRow() without having the row overwritten by $dg-&gt;render();</p>
+</section>
+<section>
+<h3>[2005-03-08 20:48 UTC] jason at greenhell dot com</h3>
+<p>I second this feature request.</p>
+<p>In my project, we are needed to implement &quot;Table Filters&quot;.  This means having a small select drop-down at the top of each column, allowing the user to filter the table data by a selected filter.</p>
+<p>We chose to use DataStructures_DataGrid because it is very handy and well designed.  However, the ability to customize the table grid *after* the datasource has been bound is an important one.</p>
+<p>Please consider this ability in your design for the PHP5 version.  All in all, great work on this library!</p>
+</section>
+<section>
+<h3>[2005-05-22 00:46 UTC] jessup at mrpath dot com</h3>
+<p>That could work for Jason&#039;s situation, but it does nothing for mine.  I&#039;m using headers that consume more than one row.  If you want to see an example of what I&#039;m aiming for, look at http://www.squaredealonline.com/b.asp?v=3<br>
+It&#039;s not in php, but it will be when I&#039;m done.</p>
+<p>I&#039;m actually surprised that you had any resistance to the original changes.  It breaks nothing, it has no appreciable speed decrease, and it makes the object less likely to break if new features are added (such as setHeader or setFooter functions which would require changes along these lines anyways).</p>
+</section>
+<section>
+<h3>[2006-03-02 01:24 UTC] olivierg at php dot net</h3>
+<p>Thank you for this report. We have been working a lot on the renderer layer (see Bug #5859) and this bug is now fixed in CVS.</p>
+<p>A new method called fill() allows for great flexibility.</p>
+<p>Here is a simplified example to achieve what you need :</p>
+<p>$table = new HTML_Table();<br>
+$header =&amp; $table-&gt;getHeader();<br>
+$header-&gt;setHeaderContents(0,0,&quot;Some data&quot;);<br>
+$header-&gt;setHeaderContents(0,1,&quot;More data&quot;);<br>
+[...]</p>
+<p>$datagrid-&gt;fill($table);</p>
+<p>This will append the datagrid headers and body to your custom headers, without overwriting them.</p>
+<p>Best regards</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

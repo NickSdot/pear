@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1114</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_NestedSet/index.html">DB_NestedSet</a> &#187; Bug #1114</h1>
+<p>bug fix 561 flawed; single-quoting fields errors in pgsql</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-01 23:27 UTC</td></tr>
+<tr><th>From</th><td>crain at fuse dot net</td></tr>
+<tr><th>Assigned</th><td>datenpunk</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_NestedSet/index.html">DB_NestedSet</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>winXP, Debian</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-01 23:27 UTC] crain at fuse dot net</h3>
+<p>Description:<br>
+------------<br>
+Bug fix 561, specifically the fix to DB_NestedSet-&gt;_getSelectFields(), adding a call to _quote() around aliased field names, causes problems, at least in Postgres. _quote() adds single quotes (&#039;) which work for mysql (although it should be back ticks (`)). But it generates an error in pgsql queries.</p>
+<p>See http://marc.theaimsgroup.com/?t=108085269100002&amp;r=1&amp;w=2<br>
+for pgsql results.</p>
+<p>I think you need to use quoteIdentifier() instead of _quote().</p>
+</section>
+<section>
+<h3>[2004-04-01 23:36 UTC] crain at fuse dot net</h3>
+<p>Actually, there&#039;s another problem with fix 561. Instead of _quote(), _values2InsertQuery() was edited to place back ticks around insert field values, which also breaks pgsql. I think both cases should use quoteIdentifier().</p>
+</section>
+<section>
+<h3>[2004-04-01 23:58 UTC] datenpunk at php dot net</h3>
+<p>Hello Andy,</p>
+<p>this is really dumb. I spent some hours on the quoting issue and found out that different RDBM&#039;s have totally complementary implementations for the quoting things.<br>
+E.g. mySQL only accepts backticks for field names used inside an insert/update query.<br>
+But I thought I had figured it out - I was wrong :\</p>
+<p>Unfortunately MDB doesn&#039;t support quoteIdentifier yet.<br>
+Which means that MDB will not work with reserved words used for column names till it supports this type of quoting.</p>
+<p>Could you please fetch NestedSet.php and Nested/set/DB.php,MDB.php to see if the problem is fixed for you now?</p>
+<p>I&#039;ll add pgsql to my testsuite setup now - promise!</p>
+<p>-- <br>
+Daniel Khan</p>
+</section>
+<section>
+<h3>[2004-04-02 00:22 UTC] datenpunk at php dot net</h3>
+<p>O.K. here&#039;s a snapshot<br>
+http://devel.webcluster.at/~daniel/DB_NestedSet/DB_NestedSet-1.3.4.tgz<br>
+As soon as I know that it works for you now I&#039;ll do a new release.</p>
+</section>
+<section>
+<h3>[2004-04-02 00:56 UTC] crain at fuse dot net</h3>
+<p>Hi Daniel,<br>
+Eyeballed the changes and they appear OK. And testing on MySQL I found no problems. I forwarded this on to other Seagull developers for testing on pgsql (I don&#039;t have it either) and will let you know what they say.<br>
+Andy</p>
+</section>
+<section>
+<h3>[2004-04-02 00:59 UTC] datenpunk at php dot net</h3>
+<p>Thanks a lot.<br>
+Yes mySQL should work for sure as I am using it in my testsuites.</p>
+</section>
+<section>
+<h3>[2004-04-03 23:05 UTC] crain at fuse dot net</h3>
+<p>Hi Daniel,<br>
+Looks like your fixes at http://devel.webcluster.at/~daniel/DB_NestedSet/DB_NestedSet-1.3.4.tgz did the trick.</p>
+<p>See http://marc.theaimsgroup.com/?l=seagull-general&amp;m=108103309217240&amp;w=2.<br>
+Andy</p>
+</section>
+<section>
+<h3>[2004-04-04 19:29 UTC] datenpunk at php dot net</h3>
+<p>Thank you for your bug report. This issue has already been fixed<br>
+in the latest released version of the package, which you can download at <br>
+http://pear.php.net/packages.php</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

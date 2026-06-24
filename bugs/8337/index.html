@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8337</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #8337</h1>
+<p>connect(), factory() and singleton() return errors inconsistently</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-08-01 12:55 UTC</td></tr>
+<tr><th>From</th><td>erin dot millard at i-nex dot com dot au</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-01 12:55 UTC] erin dot millard at i-nex dot com dot au</h3>
+<p>Description:<br>
+------------<br>
+When creating an MDB2 instance using singleton() or factory() I found that so long as you provide a valid phptype in your DSN, PEAR::isError() and MDB2::isError() will not return true for the instance even if the rest of your DSN is wrong or invalid.</p>
+<p>This seems to hold true when using any phptype and also when using an accociative array instead of a DSN string to connect.</p>
+<p>connect() seems to work fine however. After a quick browse of MDB2.php, I fixed the problem on my system by moving the following section of code from connect() to factory():</p>
+<p>$err = $db-&gt;connect();<br>
+        if (PEAR::isError($err)) {<br>
+            $dsn = $db-&gt;getDSN(&#039;string&#039;, &#039;xxx&#039;);<br>
+            $db-&gt;disconnect();<br>
+            $err-&gt;addUserInfo($dsn);<br>
+            return $err;<br>
+        }*/</p>
+<p>I believe this may have been the intention anyway, as connect() and singleton() both internally use factory() to create the instance.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php</p>
+<p>require_once &#039;MDB2.php&#039;;</p>
+<p>$mdb2_connect =&amp; MDB2::connect(&#039;mysql://&#039;);<br>
+if (MDB2::isError($mdb2_connect)){<br>
+    echo &quot;connect() threw an error\n&quot;;<br>
+}</p>
+<p>$mdb2_factory =&amp; MDB2::factory(&#039;mysql://&#039;);<br>
+if (MDB2::isError($mdb2_factory)){<br>
+    echo &quot;factory() threw an error\n&quot;;<br>
+}</p>
+<p>$mdb2_singleton =&amp; MDB2::singleton(&#039;mysql://&#039;);<br>
+if (MDB2::isError($mdb2_singleton)){<br>
+    echo &quot;singleton() threw an error\n&quot;;<br>
+}</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+connect() threw an error<br>
+factory() threw an error<br>
+singleton() threw an error</p>
+<p>Actual result:<br>
+--------------<br>
+connect() threw an error</p>
+</section>
+<section>
+<h3>[2006-08-01 13:30 UTC] erin dot millard at i-nex dot com dot au</h3>
+<p>I can see how this behaviour would be useful in some cases, and if my understanding is flawed I apologise; but the Connect Introduction - which I had read before posting the bug, does not specifically say that you must connect() after using singleton() or factory().</p>
+<p>If this is the case, then why does the following still not throw an error:<br>
+	$mdb2_singleton =&amp; MDB2::singleton(&#039;mysql://&#039;);<br>
+	$mdb2_singleton-&gt;connect(&#039;mysql://&#039;);</p>
+<p>And surely the next example is not correct either, as it would create a unique instance every time and negate the reason for using singleton() in the first place:<br>
+	$mdb2_singleton =&amp; MDB2::singleton(&#039;mysql://&#039;);<br>
+	$mdb2_singleton =&amp; MDB2::connect(&#039;mysql://&#039;);</p>
+<p>Thanks for the prompt reply and once again I am sorry if this is not the proper channel for discussions of this nature.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

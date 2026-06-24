@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4972</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_GraphViz/index.html">Image_GraphViz</a> &#187; Bug #4972</h1>
+<p>Undefined variable if $fp not a valid resource</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-02 16:15 UTC</td></tr>
+<tr><th>From</th><td>jpleveille at unimasoft dot com</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Image_GraphViz/index.html">Image_GraphViz</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Windows XP Pro SP2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-02 16:15 UTC] jpleveille at unimasoft dot com</h3>
+<p>Description:<br>
+------------<br>
+I got the following error in Image\GraphViz.php line 192:<br>
+fopen(C:\DOCUME~1\apache\LOCALS~1\Temp\gra953.tmp.svg) [function.fopen]: failed to open stream: No such file or directory</p>
+<p>Then, it says, for line 200:<br>
+Undefined variable: data</p>
+<p>I checked the file and found that $data is set only if $fp is a valid file pointer, but here this is not the case. return $data then raises an error because it doesn&#039;t exist.</p>
+<p>Test script:<br>
+---------------<br>
+I used the sample exactly has it can be found in documentation here: http://pear.php.net/package/Image_GraphViz/docs/latest/Image_GraphViz/Image_GraphViz.html</p>
+<p>Expected result:<br>
+----------------<br>
+Even if the temp file wasn&#039;t created, I expected not to see an error like this (undefined variable).</p>
+<p>Actual result:<br>
+--------------<br>
+The file couldn&#039;t be created, but this is due to the fact that GraphViz wasn&#039;t (yet) installed on my machine. PEAR_Error should be raised to warn programmer that the extension (which isn&#039;t an extension but an executable) is required in order to use package.</p>
+</section>
+<section>
+<h3>[2005-08-03 22:45 UTC] matts at discovery dot org</h3>
+<p>This bug is also present on Win2003/Apache2/PHP4.4. I&#039;m <br>
+encountering it vie phpOpenTracker. My error message looks <br>
+like this:</p>
+<p>Warning: fopen(C:\WINDOWS\TEMP\gra4C.tmp.png): failed to <br>
+open stream: No such file or directory in c:\php\PEAR\Image<br>
+\GraphViz.php on line 192</p>
+<p>Notice: Undefined variable: data in c:\php\PEAR\Image<br>
+\GraphViz.php on line 200</p>
+<p>As is the case with jpleveille, I recieve no error of any <br>
+kind informing me that the file was not created in the first <br>
+place.</p>
+<p>I&#039;ve verified the permissions on that directory and all <br>
+appears well.</p>
+<p>Any Ideas?</p>
+<p>- Matt</p>
+</section>
+<section>
+<h3>[2005-08-04 01:22 UTC] matts at discovery dot org</h3>
+<p>Ok I think I solved this problem. I had two problems <br>
+actually, the first must sound painfully obvious but it <br>
+wasn&#039;t to me.</p>
+<p>I needed to download and install GraphViz - http://<br>
+www.graphviz.org/ I assumed the GraphViz libraries were <br>
+installed as part of the PEAR package.</p>
+<p>Second and probably of more use to the readers is that in <br>
+order for Apache (2 at least) to talk to the “dot” program <br>
+it must have permission to interact with the desktop. <br>
+(Thanks to tr4nc3 at msn dot com on php.net for that tip...) <br>
+To allow this do the following:</p>
+<p>Start&gt;Run&gt;services.msc<br>
+Right click on Apache2, select Properties<br>
+Click on the LOG ON tab<br>
+Check the box “Allow this service to interact with desktop”<br>
+Click OK<br>
+Restart Apache</p>
+<p>Its worth mentioning that this seems like a security <br>
+disaster. By default Apache runs as SYSTEM on windows and so <br>
+will every process it creates... This gives PHP carte <br>
+blanche to do whatever it feels like to your poor windoze <br>
+box :-(. However... you will get to see your pretty graphviz <br>
+charts :-).</p>
+<p>Hope this helps. Perhaps this should be added to a FAQ <br>
+somewhere...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

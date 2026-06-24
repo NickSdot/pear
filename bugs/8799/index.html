@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8799</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_Query2XML/index.html">XML_Query2XML</a> &#187; Bug #8799</h1>
+<p>DB/common.php required</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-09-27 14:31 UTC</td></tr>
+<tr><th>From</th><td>christophe dot laratte at openflyers dot org</td></tr>
+<tr><th>Assigned</th><td>lukasfeiler</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_Query2XML/index.html">XML_Query2XML</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0</td></tr>
+<tr><th>OS</th><td>Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-09-27 14:31 UTC] christophe dot laratte at openflyers dot org</h3>
+<p>Description:<br>
+------------<br>
+Hi (and thanks for your work),</p>
+<p>It&#039;s impossible to use PEAR::XML_Query2XML without PEAR::DB.</p>
+<p>Because line 132 of Query2XML.php there is this test :<br>
+        if ($db instanceof DB_common) {</p>
+<p>So I reached to short-cut the bug by adding this line at the beginning of my script :<br>
+require_once (&#039;DB/common.php&#039;);</p>
+<p>But it&#039;s not I good deal!</p>
+<p>Therefore that &quot;This package [DB] been superseded by MDB2 but is still maintained for bugs and security fixes&quot;</p>
+<p>So, if I use MDB2, I&#039;d like not to install DB ;-)</p>
+<p>Maybe this patch is correct :</p>
+<p>private function __construct($db)<br>
+    {<br>
+		$parentName = get_parent_class($db);<br>
+        if ($parentName == &#039;DB_common&#039;) {<br>
+            $this-&gt;_isMDB2 = false;<br>
+            $this-&gt;_db = $db;<br>
+        } elseif ($parentName == &#039;MDB2_Driver_Common&#039;) {<br>
+            $this-&gt;_isMDB2 = true;<br>
+            $this-&gt;_db = $db;<br>
+        } elseif (PEAR::isError($db)) {<br>
+            throw new XML_Query2XML_DBException(<br>
+                &#039;Could not connect to database: &#039; . $db-&gt;toString()<br>
+            );<br>
+        } else {<br>
+            throw new XML_Query2XML_ConfigException(<br>
+                &#039;Argument passed to the XML_Query2XML constructor is not an &#039;<br>
+                . &#039;instance of DB_common or MDB2_Driver_Common.&#039;<br>
+            );<br>
+        }<br>
+        <br>
+        if ($this-&gt;_isMDB2) {<br>
+            $fetchModeError = $this-&gt;_db-&gt;setFetchMode(MDB2_FETCHMODE_ASSOC);<br>
+        } else {<br>
+            $fetchModeError = $this-&gt;_db-&gt;setFetchMode(DB_FETCHMODE_ASSOC);<br>
+        }<br>
+        if (PEAR::isError($fetchModeError)) {<br>
+            throw new XML_Query2XML_DBException(<br>
+                &#039;Could not set fetch mode to FETCHMODE_ASSOC: &#039;<br>
+                . $fetchModeError-&gt;toString()<br>
+            );<br>
+        }<br>
+    }</p>
+<p>Good job !</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+require_once(&#039;XML/Query2XML.php&#039;);<br>
+require_once(&#039;MDB2.php&#039;);</p>
+<p>$db =&amp; MDB2::connect(DBTYPE.&#039;://&#039;.VISITOR.&#039;:&#039;.PASSWORD_VISITOR.&#039;@&#039;.HOST.&#039;/&#039;.BASE, $dboptions);<br>
+$query2xml = XML_Query2XML::factory($db);<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Nothing ;-)</p>
+<p>Actual result:<br>
+--------------<br>
+Fatal error: Class &#039;DB_common&#039; not found in d:\php\of2\pear\XML\Query2XML.php on line 132</p>
+</section>
+<section>
+<h3>[2006-09-27 21:17 UTC] lukasfeiler at php dot net</h3>
+<p>Thanks a lot for reporting this!<br>
+I&#039;ll fix this tomorrow.</p>
+</section>
+<section>
+<h3>[2006-09-27 21:18 UTC] lukasfeiler at php dot net</h3>
+<p>Thanks a lot for reporting this!<br>
+I&#039;ll fix this tomorrow.</p>
+</section>
+<section>
+<h3>[2006-09-28 10:34 UTC] lukasfeiler at php dot net</h3>
+<p>Thank you for your bug report. This issue has been fixed<br>
+in the latest released version of the package, which you can download at<br>
+http://pear.php.net/get/XML_Query2XML</p>
+</section>
+<section>
+<h3>[2006-09-29 07:34 UTC] christophe dot laratte at openflyers dot org</h3>
+<p>Perfect !</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

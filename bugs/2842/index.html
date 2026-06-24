@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2842</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_Table/index.html">DB_Table</a> &#187; Bug #2842</h1>
+<p>autodrop sequencing table - w/ patch</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #2842</th><td>autodrop sequencing table - w/ patch</td></tr>
+<tr><th>Submitted</th><td>2004-11-28 01:23 UTC</td></tr>
+<tr><th>From</th><td>seangirard at yahoo dot com</td></tr>
+<tr><th>Assigned</th><td>wiesemann</td></tr>
+<tr><th>Status</th><td>Suspended</td></tr>
+<tr><th>Package</th><td><a href="package/DB_Table/index.html">DB_Table</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>win/linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-11-28 01:23 UTC] seangirard at yahoo dot com</h3>
+<p>Description:<br>
+------------<br>
+Paul,</p>
+<p>Following up on the wiki, I would like to see a call DB_Table::create() clean up the sequencing table associated with the object. I think you know already what I&#039;m getting at.</p>
+<p>Below I put a patch to Table.php that might say it more succinctly. Note that patch below requires adding</p>
+<p>var $seq = null; // or something else</p>
+<p>to the class you are working with.</p>
+<p>As you pointed out, going down this road pretty much requires storing the sequence suffix in the schema (or else doing some ugly string matching maybe).</p>
+<p>So as a consequence, for example, I added the following to my &#039;example&#039; class:</p>
+<p>function nextId()<br>
+    {<br>
+        return parent::nextId($this-&gt;seq);<br>
+    }</p>
+<p>Anyway, the code below would essentially replace the line of Table.php where create() returns the DB_Table_Manager::create() value. Hope it helps.</p>
+<p>-sean</p>
+<p>Reproduce code:<br>
+---------------<br>
+           // originally returned here; trap value so we can return it later<br>
+            $create =  DB_Table_Manager::create(<br>
+                $this-&gt;db, $this-&gt;table, $this-&gt;col, $this-&gt;idx, $flag<br>
+            );            <br>
+            // build sequencing table name<br>
+            if (is_null($this-&gt;seq)) { // note we have a new class member: $seq<br>
+                $seq_name = &quot;_{$this-&gt;table}_id&quot;;<br>
+            } else {<br>
+                $seq_name = &quot;_{$this-&gt;table}_{$this-&gt;seq}&quot;; // again, $this-&gt;seq<br>
+            }            <br>
+            // manually add &#039;_seq&#039; or similar to replicate PEAR::DB::nextID() behavior - db agnostic?<br>
+            $seq_name = sprintf($this-&gt;db-&gt;options[&#039;seqname_format&#039;], $seq_name);<br>
+            // only drop if the sequencing table actually exists<br>
+            if (in_array($seq_name, $list) ) {<br>
+                $drop = $this-&gt;db-&gt;query(&quot;DROP TABLE {$seq_name}&quot;);<br>
+                if (PEAR::isError($drop)) { // no idea if i&#039;m handling pear errors properly<br>
+                    // $this-&gt;throwError(); // need a new error constant? return something here?<br>
+                }  <br>
+            }<br>
+            // return expected value<br>
+            return $create;</p>
+<p>Expected result:<br>
+----------------<br>
+Now a successful call to DB_Table_Manager::create() should trigger dropping of associated sequencing table. Only tested w/ mySQL.</p>
+</section>
+<section>
+<h3>[2004-12-01 04:19 UTC] seangirard at yahoo dot com</h3>
+<p>changed type from bug to request. oops.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

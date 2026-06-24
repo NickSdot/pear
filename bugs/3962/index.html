@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3962</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Traceroute/index.html">Net_Traceroute</a> &#187; Bug #3962</h1>
+<p>_prepareParseResult fails in Net_Traceroute_Result</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-03-25 22:47 UTC</td></tr>
+<tr><th>From</th><td>bertolinisj at earthlink dot net</td></tr>
+<tr><th>Assigned</th><td>neufeind</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Traceroute/index.html">Net_Traceroute</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0</td></tr>
+<tr><th>OS</th><td>windows 200 + XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-25 22:47 UTC] bertolinisj at earthlink dot net</h3>
+<p>Description:<br>
+------------<br>
+ The  _prepareParseResult function of the Net_Traceroute_Result Container Class  always returns false on Windows 200 and XP.</p>
+<p>I applied the same fix as the one used for BUG #2314 for NET_Ping and it appears to fix the issue.</p>
+<p>*/<br>
+        function _prepareParseResult($sysname)<br>
+        {<br>
+-        return in_array(strtolower(&#039;_parseresult&#039;.$sysname),get_class_methods(&#039;Net_Traceroute_Result&#039;));</p>
+<p>+        $parse_methods = array_values(array_map(&#039;strtolower&#039;,get_class_methods(&#039;Net_Traceroute_Result&#039;)));<br>
+        return in_array(&#039;_parseresult&#039;.$sysname,<br>
+              $parse_methods);<br>
+        } /* function _prepareParseResult() */</p>
+<p>Reproduce code:<br>
+---------------<br>
+if(!PEAR::isError($objtrace)) <br>
+{<br>
+            $response = $objtrace-&gt;traceroute(&#039;www.google.com&#039;);<br>
+             print_r($response);<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+$response should be a Net_Traceroute_Result object.</p>
+<p>Actual result:<br>
+--------------<br>
+Pear Error , Backend not supported.</p>
+</section>
+<section>
+<h3>[2006-04-16 23:47 UTC] elmo at muppets dot com</h3>
+<p>I also stumbled across this problem and corrected it by manually patching the _prepareParseResult function in Traceroute.php</p>
+<p>Please release a patched version of Net_Traceroute, as many people might be losing their time with this bug.</p>
+<p>I&#039;m using PHP 5.1.2, PEAR 1.4.6 and Net_Traceroute 0.21</p>
+<p>Thanks</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

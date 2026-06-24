@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Net_GeoIP Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_GeoIP/index.html">Net_GeoIP</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Net_GeoIP/docs/index.html#package-networking-net-geoip-getinstance">Net_GeoIP::getInstance()</a>
+</li>
+<li><a href="package/Net_GeoIP/docs/index.html#package-networking-net-geoip-lookupcountryname">Net_GeoIP::lookupCountryName()</a>
+</li>
+<li><a href="package/Net_GeoIP/docs/index.html#package-networking-net-geoip-lookupcountrycode">Net_GeoIP::lookupCountryCode()</a>
+</li>
+<li><a href="package/Net_GeoIP/docs/index.html#package-networking-net-geoip-lookupregion">Net_GeoIP::lookupRegion()</a>
+</li>
+<li><a href="package/Net_GeoIP/docs/index.html#package-networking-net-geoip-lookuplocation">Net_GeoIP::lookupLocation()</a>
+</li>
+<li><a href="package/Net_GeoIP/docs/index.html#package-networking-net-geoip-lookuporg">Net_GeoIP::lookupOrg()</a>
+</li></ul>
+</nav>
+<p>Library to perform geo-location lookups of IP addresses. This package is built on top of MaxMind&#039;s GeoIP databases to accurately determine the geographic location of an IP address. MaxMind offers both free and non-free database. Please refer to their website for specific instructures on obtaining both database types.</p>
+<section id="package-networking-net-geoip-getinstance">
+<h2>Net_GeoIP::getInstance()</h2>
+<h3>Synopsis</h3>
+    
+      
+        require_once &quot;Net/GeoIP.php&quot;;
+      
+      <p><code>
+        object <strong>getInstance()</strong> ( 
+        
+          string $filename [, int $flags]
+        
+      )</code></p>
+    
+  
+  
+    <h3>Description</h3>
+    
+    <p>This method is an implementation of the so-called singleton pattern
+      and is the preferred way to create instances of 
+      <strong>Net_GeoIP</strong>.</p>
+
+    <p><strong>
+        Creating an instance of <strong>Net_GeoIP</strong>
+      </strong></p>
+      
+
+      <pre><code>&lt;?php
+require_once &quot;Net/GeoIP.php&quot;;
+
+$geoip = Net_GeoIP::getInstance(&quot;/path/to/geoipdb.dat&quot;, Net_GeoIP::SHARED_MEMORY);
+?&gt;</code></pre>
+    
+
+    <h3>Multiple Instances</h3>
+
+      
+
+      <p>If you want to use multiple databases in one application, you 
+        will need to create an instance of <strong>Net_GeoIP</strong>
+        for each database.  Using the singleton <strong>getInstance()</strong>
+        method will make sure that at any given point exactly one
+        object for each database exists, which saves on overhead of
+        setting up database segments.</p>
+    
+
+  
+
+  
+    <h3>Parameter</h3>
+     
+    <ul>
+        <li>
+          
+            <code>string $filename</code> - Name of (and path 
+            to) the database file
+          
+        </li>
+        <li>
+          
+            <code>int $flags</code> - Flags that control the 
+            class behaviour.  This parameter can be one of the following
+            class constants:
+            
+            <ul>
+              <li>
+                
+                  <strong>Net_GeoIp::SHARED_MEMORY</strong> - use 
+                  SHMOP to share a database among multiple PHP 
+                  instances.
+                
+                <blockquote>
+                  <p>Only one <strong>Net_GeoIP</strong> instance 
+                    can use shared memory at a time.</p>
+                  <p>If you are using <strong>Net_GeoIP::SHARED_MEMORY</strong>
+                    (shmop) you can only use <strong>Net_GeoIP::SHARED_MEMORY</strong> 
+                    for one (1) instance  (i.e. for one database). Any
+                    subsequent attempts to instantiate using 
+                    <strong>SHARED_MEMORY</strong> will read the same
+                    shared memory block already initialized, and therefore 
+                    will cause problems since the expected database format
+                    won&#039;t match the database in the shared memory block.</p>
+                  <p>Note that there is no easy way to flag &quot;nice 
+                    errors&quot; to prevent attempts to create new 
+                    instances using <strong>Net_GeoIP::SHARED_MEMORY</strong>
+                    flag and it is also not posible (in a safe way) to
+                    allow new instances to overwrite the shared memory 
+                    block.</p>
+                  <p>In short, is you are using multiple databases, use
+                    the <strong>Net_GeoIP::SHARED_MEMORY</strong> 
+                    flag with care.</p>
+                </blockquote>
+
+              </li>
+              <li>
+                
+                  <strong>Net_GeoIp::MEMORY_CACHE</strong> - store 
+                  the full contents of the database in memory for 
+                  current script.
+                
+                
+                  This is useful if you access the database several
+                  times in a script.
+                
+              </li>
+              <li>
+                
+                  <strong>Net_GeoIp::STANDARD</strong> - standard 
+                  no-cache version.  This is also the default value if
+                  this parameter is ommitted.
+                
+              </li>
+            </ul>
+          
+        </li>
+      </ul>
+</section>
+<section id="package-networking-net-geoip-lookupcountryname">
+<h2>Net_GeoIP::lookupCountryName()</h2>
+<h3>Synopsis</h3>
+    
+      
+        require_once &quot;Net/GeoIP.php&quot;;
+      
+      <p><code>
+        string <strong>lookupCountryName()</strong> ( 
+        
+          string $addr
+        
+      )</code></p>
+    
+  
+  
+    <h3>Description</h3>
+
+    <p>This method returns the full country name for the given IP address.
+      It works with both the free and the non-free databases.</p>
+
+    <p><strong>
+        Looking up the country name
+      </strong></p>
+      
+
+      <pre><code>&lt;?php
+require_once &quot;Net/GeoIP.php&quot;;
+
+$geoip = Net_GeoIP::getInstance(&quot;/path/to/geoipdb.dat&quot;);
+
+try {
+    echo $geoip-&gt;lookupCountryName($_SERVER[&#039;REMOTE_ADDR&#039;]);
+} catch (Exception $e) {
+    // Handle exception
+}
+?&gt;</code></pre>
+    
+  
+
+  
+    <h3>Parameter</h3>
+    
+    <ul>
+        <li>
+          
+            <code>string $addr</code> - IP address
+          
+          <blockquote><strong>Lookups on Hostnames</strong><br>
+            
+
+            <p>Note that this PHP API does NOT support lookups on 
+              hostnames.  This is so that the public API can be kept 
+              simple and so that the lookup functions don&#039;t need to try 
+              name lookups if IP lookup fails (which would be the only 
+              way to keep the API simple and support name-based lookups).</p>
+            <p>If you do not know the IP address, you can convert an name 
+              to IP very simply using PHP native functions or other 
+              libraries:</p>
+
+            <pre><code>&lt;?php
+$geoip-&gt;lookupCountryName(gethostbyname(&quot;example.com&quot;));
+?&gt;</code></pre>
+
+            <p>Or, if you don&#039;t know whether an address is a name or IP
+              address, use application-level logic:</p>
+
+            <pre><code>&lt;?php
+if (ip2long($ip_or_name) === false) {
+    $ip = gethostbyname($ip_or_name);
+} else {
+    $ip = $ip_or_name;
+}
+
+$country = $geoip-&gt;lookupCountryName($ip);
+?&gt;</code></pre>
+          </blockquote>
+
+        </li>
+      </ul>
+    
+  
+
+  
+    <h3>Throws</h3>
+    
+    <p>This method sthrow an exception if the IP address is invalid 
+      or if the database type is incorrect.</p>
+</section>
+<section id="package-networking-net-geoip-lookupcountrycode">
+<h2>Net_GeoIP::lookupCountryCode()</h2>
+<h3>Synopsis</h3>
+    
+      
+        require_once &quot;Net/GeoIP.php&quot;;
+      
+      <p><code>
+        string <strong>lookupCountryCode()</strong> ( 
+        
+          string $addr
+        
+      )</code></p>
+    
+  
+  
+    <h3>Description</h3>
+
+    <p>This method returns the 2-letter country code for the given IP 
+      address. It works with both the free and the non-free databases.</p>
+
+    <p><strong>
+        Looking up the country code
+      </strong></p>
+      
+
+      <pre><code>&lt;?php
+require_once &quot;Net/GeoIP.php&quot;;
+
+$geoip = Net_GeoIP::getInstance(&quot;/path/to/geoipdb.dat&quot;);
+
+try {
+    echo $geoip-&gt;lookupCountryCode($_SERVER[&#039;REMOTE_ADDR&#039;]);
+} catch (Exception $e) {
+    // Handle exception
+}
+?&gt;</code></pre>
+    
+  
+
+  
+    <h3>Parameter</h3>
+    
+    <ul>
+        <li>
+          
+            <code>string $addr</code> - IP address
+          
+          <blockquote>
+            <p>Hostnames are not supported.
+              <a href="package/Net_GeoIP/docs/index.html#package-networking-net-geoip-lookupcountryname">More information</a>.</p>
+          </blockquote>
+
+        </li>
+      </ul>
+    
+  
+
+  
+    <h3>Throws</h3>
+    
+    <p>This method throws an exception if the IP address is invalid 
+      or if the database type is incorrect.</p>
+</section>
+<section id="package-networking-net-geoip-lookupregion">
+<h2>Net_GeoIP::lookupRegion()</h2>
+<h3>Synopsis</h3>
+    
+      
+        require_once &quot;Net/GeoIP.php&quot;;
+      
+      <p><code>
+        array <strong>lookupRegion()</strong> ( 
+        
+          string $addr
+        
+      )</code></p>
+    
+  
+  
+    <h3>Description</h3>
+
+    <p>This method returns an array containing the country code and the
+      region for the specified IP address.  It works only with a
+      non-free Region database.</p>
+
+    <p><strong>
+        Looking up the region
+      </strong></p>
+      
+
+      <pre><code>&lt;?php
+require_once &quot;Net/GeoIP.php&quot;;
+
+$geoip = Net_GeoIP::getInstance(&quot;/path/to/geoipdb.dat&quot;);
+
+try {
+    list($country_code, $region) = $geoip-&gt;lookupRegion($_SERVER[&#039;REMOTE_ADDR&#039;]);
+} catch (Exception $e) {
+    // Handle exception
+}
+?&gt;</code></pre>
+    
+  
+
+  
+    <h3>Parameter</h3>
+    
+    <ul>
+        <li>
+          
+            <code>string $addr</code> - IP address
+          
+          <blockquote>
+            <p>Hostnames are not supported.
+              <a href="package/Net_GeoIP/docs/index.html#package-networking-net-geoip-lookupcountryname">More information</a>.</p>
+          </blockquote>
+
+        </li>
+      </ul>
+    
+  
+
+  
+    <h3>Throws</h3>
+    
+    <p>This method throws an exception if the IP address is invalid.</p>
+</section>
+<section id="package-networking-net-geoip-lookuplocation">
+<h2>Net_GeoIP::lookupLocation()</h2>
+<h3>Synopsis</h3>
+    
+      
+        require_once &quot;Net/GeoIP.php&quot;;
+      
+      <p><code>
+        object <strong>lookupLocation()</strong> ( 
+        
+          string $addr
+        
+      )</code></p>
+    
+  
+  
+    <h3>Description</h3>
+
+    <p>This method returns an instance of <strong>Net_GeoIP_Location</strong>
+      for the specified IP address.  It works only with a non-free City
+      database.</p>
+
+    <p><strong>
+        Looking up the location record
+      </strong></p>
+      
+
+      <pre><code>&lt;?php
+require_once &quot;Net/GeoIP.php&quot;;
+
+$geoip = Net_GeoIP::getInstance(&quot;/path/to/geoipdb.dat&quot;);
+
+try {
+    $location = $geoip-&gt;lookupLocation($_SERVER[&#039;REMOTE_ADDR&#039;]);
+
+    var_dump($location);
+
+    printf(&quot;City: %s, %s\nLatitude: %s, Longitude: %s\n&quot;,
+           $location-&gt;city, $location-&gt;region,
+           $location-&gt;latitude, $location-&gt;longitude);
+
+} catch (Exception $e) {
+    // Handle exception
+}
+?&gt;</code></pre>
+    
+  
+
+  
+    <h3>Parameter</h3>
+    
+    <ul>
+        <li>
+          
+            <code>string $addr</code> - IP address
+          
+          <blockquote>
+            <p>Hostnames are not supported.
+              <a href="package/Net_GeoIP/docs/index.html#package-networking-net-geoip-lookupcountryname">More information</a>.</p>
+          </blockquote>
+
+        </li>
+      </ul>
+    
+  
+
+  
+    <h3>Throws</h3>
+    
+    <p>This method throws an exception if the IP address is invalid.</p>
+</section>
+<section id="package-networking-net-geoip-lookuporg">
+<h2>Net_GeoIP::lookupOrg()</h2>
+<h3>Synopsis</h3>
+    
+      
+        require_once &quot;Net/GeoIP.php&quot;;
+      
+      <p><code>
+        string <strong>lookupOrg()</strong> ( 
+        
+          string $addr
+        
+      )</code></p>
+    
+  
+  
+    <h3>Description</h3>
+
+    <p>This method returns the name of the organization or of the ISP
+      which has registered the IP address range that contains the 
+      specified IP address.  It works only with a non-free 
+      Organization/ISP database.</p>
+
+    <p><strong>
+        Looking up organization name
+      </strong></p>
+      
+
+      <pre><code>&lt;?php
+require_once &quot;Net/GeoIP.php&quot;;
+
+$geoip = Net_GeoIP::getInstance(&quot;/path/to/geoipdb.dat&quot;);
+
+try {
+    echo $geoip-&gt;lookupOrg($_SERVER[&#039;REMOTE_ADDR&#039;]);
+} catch (Exception $e) {
+    // Handle exception
+}
+?&gt;</code></pre>
+    
+  
+
+  
+    <h3>Parameter</h3>
+    
+    <ul>
+        <li>
+          
+            <code>string $addr</code> - IP address
+          
+          <blockquote>
+            <p>Hostnames are not supported.
+              <a href="package/Net_GeoIP/docs/index.html#package-networking-net-geoip-lookupcountryname">More information</a>.</p>
+          </blockquote>
+
+        </li>
+      </ul>
+    
+  
+
+  
+    <h3>Throws</h3>
+    
+    <p>This method throws an exception if the IP address is invalid or
+      the database type is wrong.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

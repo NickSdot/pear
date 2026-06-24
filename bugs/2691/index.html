@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2691</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #2691</h1>
+<p>Object Disconnect Closes all connections</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-11-04 19:14 UTC</td></tr>
+<tr><th>From</th><td>apassos at vernoncollege dot edu</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>Windows 2003</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-11-04 19:14 UTC] apassos at vernoncollege dot edu</h3>
+<p>Description:<br>
+------------<br>
+2 Connections to the same database:</p>
+<p>a1 = connect to db1<br>
+a2 = connect to db1</p>
+<p>do some work with a1<br>
+disconnect a1</p>
+<p>do some work with a2<br>
+ERROR: cannot run the query because no database is selected</p>
+<p>-----------<br>
+Removing the line &quot;disconnect a1&quot; fixes the problem so it can only be understood that when a1 disconnects, all open connections to the same database are closed.</p>
+<p>The database in question is MySQL.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?<br>
+	error_reporting(E_ALL);<br>
+	require_once(&quot;DB.php&quot;);<br>
+	<br>
+	$dsn= &quot;mysql://someuser:somepasswd@localhost/somedb&quot;;<br>
+	$db =&amp; DB::connect($dsn, array());<br>
+	if (DB::isError($db)) {<br>
+   	 die($db-&gt;getMessage());<br>
+	}<br>
+	$db2 =&amp; DB::connect($dsn, array());<br>
+	if (DB::isError($db2)) {<br>
+	 die($db2-&gt;getMessage());<br>
+	}<br>
+	<br>
+	$res =&amp; $db-&gt;query(&quot;select * from shell_homepage&quot;);<br>
+	if (DB::isError($res)) {<br>
+   	 die($res-&gt;getMessage());<br>
+	}<br>
+	$db-&gt;disconnect();<br>
+	<br>
+	$res =&amp; $db2-&gt;query(&quot;select * from shell_homepage&quot;);<br>
+	if (DB::isError($res)) {<br>
+   	 die($res-&gt;getMessage());<br>
+	}<br>
+	$db2-&gt;disconnect();<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+2 successful queries</p>
+<p>(removing the line $db-&gt;disconnect fixes this bug)</p>
+<p>Actual result:<br>
+--------------<br>
+Error: Database not selected</p>
+</section>
+<section>
+<h3>[2006-02-03 07:25 UTC] steudel at attraction dot de</h3>
+<p>The solution you provide is not very helpful. In my opinion the application that manages the db connection pool has to enshure that getting a connection wich DB::connect() returns an open connection and/or that closing one wich &lt;ConnectionObject&gt;-&gt;disconnect() not realy closes the connection but returns it to the pool.</p>
+<p>One can&#039;t be serious to say that people doing GOOD programming have to change their implementation.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

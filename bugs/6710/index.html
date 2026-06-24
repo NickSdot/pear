@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6710</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #6710</h1>
+<p>tableInfo() always returns field length 0 when using mysqli driver</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-02-06 21:38 UTC</td></tr>
+<tr><th>From</th><td>geeksam at gmail dot com</td></tr>
+<tr><th>Status</th><td>Duplicate</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Linux (kernel 2.4)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-06 21:38 UTC] geeksam at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Field lengths returned by DB::tableInfo() are always zero when using the mysqli driver.  (See attached script.)</p>
+<p>I&#039;m not sure how to find some of the other requested helpful info.  I&#039;m using shared Linux hosting at dreamhost (.com).  If more detail is needed, email me.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;? <br>
+	require_once(&#039;DB.php&#039;);</p>
+<p>//	Connect using mysql<br>
+	$dsn = &#039;mysql://user:pass@dbhost.example.com/dbname&#039;;<br>
+	$dbWithCorrectBehavior =&amp; DB::connect($dsn);<br>
+	<br>
+	//	Connect using mysqli<br>
+	$dsn = &#039;mysqli://user:pass@dbhost.example.com/dbname&#039;;<br>
+	$dbWithBug =&amp; DB::connect($dsn);<br>
+	<br>
+	//	Create a demo table<br>
+	$sql  = &quot;drop table if exists `demo`;\n&quot;;<br>
+	$sql .= &quot;CREATE TABLE `demo` (`id` int(11) default NULL, `foo` varchar(10) default NULL, `bar` varchar(20) default NULL);&quot;;<br>
+	$dbWithCorrectBehavior-&gt;query($sql);<br>
+	<br>
+	//	Output tableInfo on the demo table using both drivers<br>
+	$info = print_r($dbWithCorrectBehavior-&gt;tableInfo(&#039;demo&#039;), true);<br>
+	echo &quot;&lt;p&gt;Right metadata (using mysql driver):&lt;/p&gt;&quot;;<br>
+	echo &quot;&lt;pre&gt;$info&lt;/pre&gt;&quot;;</p>
+<p>echo &quot;&lt;p&gt;Wrong metadata (using mysqli driver):&lt;/p&gt;&quot;;<br>
+	$info = print_r($dbWithBug-&gt;tableInfo(&#039;demo&#039;), true);<br>
+	echo &quot;&lt;pre&gt;$info&lt;/pre&gt;&quot;;<br>
+	<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+The two printed arrays should be identical.</p>
+<p>Actual result:<br>
+--------------<br>
+The array returned using mysqli has &quot;[len] =&gt; 0&quot; for all columns in the demo table.</p>
+<p>(As I look at the output, I also see that the &#039;id&#039; field has &quot;[flags] =&gt; group_by&quot; when using the mysqli driver.  This is also odd, but not what I care about.)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

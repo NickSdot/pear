@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5485</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #5485</h1>
+<p>Spurious carriage returns mess up encoding</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-09-22 03:31 UTC</td></tr>
+<tr><th>From</th><td>gsstark at mit dot edu</td></tr>
+<tr><th>Assigned</th><td>cipri</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-09-22 03:31 UTC] gsstark at mit dot edu</h3>
+<p>Description:<br>
+------------<br>
+When I send mail with send() The resulting email has <br>
+linefeeds at the end of every line.  <br>
+ <br>
+Since the mail constructed by Mail_mime is in quoted <br>
+printable encoding (even though there are no characters <br>
+that wouldn&#039;t fit in 7bit encoding just fine!) this causes <br>
+a problem. Any long line is continued in quoted-printable <br>
+with an = character at the end of the line. The linefeed <br>
+messes that up and instead people report spurious spaces <br>
+being displayed in the middle of words whereever these <br>
+continuations occurred.</p>
+<p>Test script:<br>
+---------------<br>
+    $mime = new Mail_mime();<br>
+    $mime-&gt;setHTMLBody(&quot;...long multiline text...&quot;));<br>
+    $body = $mime-&gt;get();<br>
+    $head = $mime-&gt;headers();    <br>
+    $mailer = Mail::factory(&#039;mail&#039;);<br>
+    $mailer-&gt;send($recipients, $head, $body);</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;b&gt;Update Registration!&lt;/b&gt;&lt;br&gt;  <br>
+  <br>
+Change your email address, password or any of your account  <br>
+information. &lt;br&gt;  <br>
+&lt;a href=&quot;http://www.example.com/register.php&quot;&gt;Click here  <br>
+to Update Registration!&lt;/a&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;b&gt;Update Registration!&lt;/b&gt;&lt;br&gt;^M  <br>
+^M  <br>
+Change your email address, password or any of your account  <br>
+information. &lt;br=^M  <br>
+&gt;^M  <br>
+&lt;a href=3D&quot;http://www.example.com/register.php&quot;&gt;Click here  <br>
+to Update Regist=^M  <br>
+ration!&lt;/a&gt;^M</p>
+</section>
+<section>
+<h3>[2005-09-22 16:08 UTC] gsstark at mit dot edu</h3>
+<p>I guess I mean carriage returns, not linefeeds</p>
+</section>
+<section>
+<h3>[2006-06-27 19:41 UTC] joliver at gmx dot at</h3>
+<p>The problem is line 314 in mimePart.php:</p>
+<p>function _quotedPrintableEncode($input , $line_max = 76)<br>
+{<br>
+$lines  = preg_split(&quot;/\r?\n/&quot;, $input);</p>
+<p>if $input has \n instead of \r\n, no carriage return is <br>
+found, and unnessessary additional line breaks are <br>
+inserted.</p>
+</section>
+<section>
+<h3>[2006-06-27 19:58 UTC] joliver at gmx dot at</h3>
+<p>Please ignore/remove my last posting, the code is ok.</p>
+<p>(I had this problem with a very old version of mail_mime, <br>
+with the current version everything seems to be fine).</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

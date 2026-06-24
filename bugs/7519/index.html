@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7519</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PHP &#187; <a href="package/PHP_Compat/index.html">PHP_Compat</a> &#187; Bug #7519</h1>
+<p>clone does not return reference</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-04-28 16:54 UTC</td></tr>
+<tr><th>From</th><td>ben at benjaminku dot com</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/PHP_Compat/index.html">PHP_Compat</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Mac OS X 10.4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-28 16:54 UTC] ben at benjaminku dot com</h3>
+<p>Description:<br>
+------------<br>
+even if code is executed in the __clone method (say, re-<br>
+linking new cloned child objects), it breaks when trying to <br>
+assign to a new variable.</p>
+<p>For example, I have child objects that link back to the <br>
+parent, so when I clone an object, I have the following <br>
+__clone method:</p>
+<p>function __clone() {<br>
+  parent::__clone();<br>
+  $this-&gt;child =&amp; clone($this-&gt;child);<br>
+  $this-&gt;child-&gt;parent =&amp; $this;<br>
+}</p>
+<p>This does not work for the resulting new_object&#039;s child is <br>
+linked to the original cloned object and PHP 4 creates an <br>
+additional copy of this object which when referenced, is <br>
+different from the original object.</p>
+<p>Test script:<br>
+---------------<br>
+I have found a solution that seems to fix this issue:</p>
+<p>Change:<br>
+        function clone($object)<br>
+To:<br>
+        function &amp;clone($object)</p>
+<p>This allows you to get the object modified by the __clone method back.<br>
+$new_obj =&amp; clone($original);</p>
+</section>
+<section>
+<h3>[2006-12-14 13:53 UTC] ben at benjaminku dot com</h3>
+<p>what&#039;s arpad?</p>
+<p>The workaround described should give the desired <br>
+functionality, otherwise, you are essentially making 2 copies <br>
+of the object, one inside the function, and another during the <br>
+assignment to the variable.  However, if we want to be able to <br>
+use constructors and initializers using the __clone() <br>
+function, we need to be able to get a handle to the instance <br>
+of the object created by clone() and not just a copy of it.</p>
+</section>
+<section>
+<h3>[2006-12-14 13:54 UTC] ben at benjaminku dot com</h3>
+<p>oh, and what&#039;s phpt?</p>
+</section>
+<section>
+<h3>[2007-04-06 17:14 UTC] ben at benjaminku dot com</h3>
+<p>yes, unfortunately, because of something in PHP5, I don&#039;t <br>
+think it&#039;s possible to have code that works in PHP 4 and 5 for <br>
+this kind of complex object-reference mapping.  I had to strip <br>
+out all the &amp;$variable and =&amp; from my code to get the <br>
+relationships to work right under PHP5.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

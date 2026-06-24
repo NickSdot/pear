@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6275</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_DNS/index.html">File_DNS</a> &#187; Bug #6275</h1>
+<p>Added features/Patch</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #6275</th><td>Added features/Patch</td></tr>
+<tr><th>Submitted</th><td>2005-12-17 22:09 UTC</td></tr>
+<tr><th>From</th><td>pear at bekar dot id dot au</td></tr>
+<tr><th>Assigned</th><td>cipri</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/File_DNS/index.html">File_DNS</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-12-17 22:09 UTC] pear at bekar dot id dot au</h3>
+<p>Description:<br>
+------------<br>
+A patch including bug 4528, plus Add/Remove items.  Also expanded the allowed record types.</p>
+<p>--- DNS.php.orig        2004-06-29 06:52:26.000000000 +1000<br>
++++ DNS.php     2005-12-18 09:05:01.000000000 +1100<br>
+@@ -200,10 +200,17 @@<br>
+      * CNAME<br>
+      * PTR<br>
+      *<br>
++     * // bekar@20050326 updates //<br>
++     *  Added support for a few extra record types:<br>
++     *      TXT<br>
++     *      NXT<br>
++     *      HINFO<br>
++     * // end of updates //<br>
++     *<br>
+      * @var array<br>
+      * @see _parseRR<br>
+      */<br>
+-    var $_types = array(&#039;SOA&#039;, &#039;A&#039;, &#039;AAAA&#039;, &#039;NS&#039;, &#039;MX&#039;, &#039;CNAME&#039;, &#039;PTR&#039;);<br>
++    var $_types = array(&#039;SOA&#039;, &#039;A&#039;, &#039;AAAA&#039;, &#039;NS&#039;, &#039;MX&#039;, &#039;CNAME&#039;, &#039;PTR&#039;, &#039;TXT&#039;, &#039;NXT&#039;, &#039;HINFO&#039;);<br>
+ <br>
+     /**<br>
+      * zonefile modification check<br>
+@@ -490,16 +497,31 @@<br>
+                 case &#039;NS&#039;:<br>
+                 case &#039;CNAME&#039;:<br>
+                 case &#039;PTR&#039;:<br>
+-                    $record[&#039;data&#039;] = $item;<br>
++                    $zone[] = implode(&quot;\t&quot;, array(<br>
++                        $record[&#039;name&#039;],<br>
++                        $record[&#039;ttl&#039;],<br>
++                        $record[&#039;class&#039;],<br>
++                        $record[&#039;type&#039;],<br>
++                        $record[&#039;data&#039;]));<br>
+                     break;<br>
+-<br>
+                 case &#039;MX&#039;:<br>
+                     //MX have an extra element. Save both right away.<br>
+                     //The setting itself is in the next item.<br>
+                     $record[&#039;data&#039;] = $items[$key+1];<br>
+                     $record[&#039;options&#039;] = array(&#039;MXPreference&#039; =&gt; $item);<br>
+                     break;<br>
+-<br>
++// bekar@20050326 updates //<br>
++                case &#039;TXT&#039;:<br>
++                case &#039;NXT&#039;:<br>
++                case &#039;HINFO&#039;:<br>
++                    //TXT and HINFO records are quoted text strings<br>
++                    if ( preg_match( &#039;/TXT (.*)$/i&#039;, $line, $data ) ) {<br>
++                        $record[&#039;data&#039;] = $data[1];<br>
++                    } else {<br>
++                        $record[&#039;data&#039;] = $items[$key+1];<br>
++                    }<br>
++                    break;<br>
++// end updates //<br>
+                 default:<br>
+                     return PEAR::raiseError(&#039;Unable to parse RR. &#039; .<br>
+                                             $record[&#039;type&#039;] .<br>
+@@ -1127,6 +1149,88 @@<br>
+     }<br>
+ <br>
+     // }}}<br>
++    // {{{ addRecord()<br>
++<br>
++    /**<br>
++     * quick hack to add a record to the zone<br>
++     *<br>
++     * @param   string  $name       The new record name<br>
++     * @param   int     $ttl        TTL for record  (Defaults to SOA TTL)<br>
++     * @param   string  $class      Class of record (Default of &#039;IN&#039;)<br>
++     * @param   string  $type       record type<br>
++     * @param   string  $data       the data<br>
++     * @param   string  $mx         MX priority<br>
++     * @return  bool                true/false based on validity of passed data<br>
++     */<br>
++    function addRecord($name = NULL, $ttl = NULL, $class = &quot;IN&quot;, $type, $data, $mx = 0)<br>
++    {<br>
++        if (array_search($type, $this-&gt;_types) &amp;&amp; (($ttl == NULL) || is_int($ttl))) {<br>
++            $quotedDomain = preg_quote($this-&gt;_domain);<br>
++            if (ereg(&quot;[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}&quot;, $data)) {<br>
++            } else {<br>
++                if (substr($data, -1) == &#039;.&#039;) {<br>
++                    //String already correct.<br>
++                } elseif (preg_match(&quot;/$quotedDomain&quot; . &#039;$/i&#039;, $data)) {<br>
++                    //String ends with this domain. Append a .<br>
++                    $data .= &#039;.&#039;;<br>
++                } else {<br>
++                    //Subdomain specified. Append domainname<br>
++                    $data .= &#039;.&#039; . $this-&gt;_domain . &#039;.&#039;;<br>
++                }<br>
++            }<br>
++            if ($name != null) {<br>
++                if (substr($name, -1) == &#039;.&#039;) {<br>
++                    //String already correct.<br>
++                } elseif (preg_match(&quot;/$quotedDomain&quot; . &#039;$/i&#039;, $name)) {<br>
++                    //String ends with this domain. Append a .<br>
++                    $name .= &#039;.&#039;;<br>
++                } else {<br>
++                    //Subdomain specified. Append domainname<br>
++                    $name .= &#039;.&#039; . $this-&gt;_domain . &#039;.&#039;;<br>
++                }<br>
++            } else {<br>
++                $name = $this-&gt;_domain . &#039;.&#039;;<br>
++            }<br>
++            $this-&gt;_records[]    = Array(<br>
++                    &#039;name&#039;  =&gt; $name,<br>
++                    &#039;ttl&#039;   =&gt; ( $ttl == NULL ? $this-&gt;_SOA[&#039;ttl&#039;] : $ttl ),<br>
++                    &#039;class&#039; =&gt; $class,<br>
++                    &#039;type&#039;  =&gt; $type,<br>
++                    &#039;data&#039;  =&gt; $data<br>
++                );<br>
++            if ($type == &quot;MX&quot;) {<br>
++                $this-&gt;setMXPref($mx, $data, $name);<br>
++            }<br>
++        } else {<br>
++            return false;<br>
++        }<br>
++        $this-&gt;_isModified = true;<br>
++        return true;<br>
++    }<br>
++    // }}}<br>
++    // {{{ delRecord()<br>
++<br>
++    /**<br>
++     * quick hack to remove a single named record from zone<br>
++     *<br>
++     * @param   string  $name       name of record to remove<br>
++     * @return  bool                true/falase based on whether a record was removed or not<br>
++     */<br>
++<br>
++    function delRecord($name, $class = &quot;IN&quot;, $type = null, $data = null)<br>
++    {<br>
++        foreach ($this-&gt;_records as $key =&gt; $record) {<br>
++            if ( (strcasecmp($record[&#039;name&#039;], $name) == 0) || (strcasecmp(&quot;$name.{$this-&gt;_domain}.&quot;, $record[&#039;name&#039;]) == 0) ) {<br>
++                    if ((($type == null) || ($type == $record[&#039;type&#039;])) &amp;&amp; (($data == null) || ($data == $record[&#039;data&#039;]))) {<br>
++                        unset($this-&gt;_records[$key]);<br>
++                        $this-&gt;_isModified = true;<br>
++                        return true;<br>
++                    }<br>
++            }<br>
++        }<br>
++        return false;<br>
++    }<br>
++    // }}}<br>
+     // {{{ isIP()</p>
+</section>
+<section>
+<h3>[2006-07-02 15:27 UTC] metz at php dot net</h3>
+<p>your Patch is broken.<br>
+$record[&#039;data&#039;] = $item;<br>
+in _parseRR should not be removed.</p>
+</section>
+<section>
+<h3>[2006-07-05 09:25 UTC] neufeind at php dot net</h3>
+<p>Note: Still apply patch 4528 after this patch. Otherwise Zoneentries will be incorrectly generated.</p>
+<p>(Thought this new patch would already incorporate the other one - but it didn&#039;t.)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

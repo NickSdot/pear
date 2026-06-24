@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3089</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #3089</h1>
+<p>Structures_DataGrid_Column::formatter() does not support static method callback</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3089</th><td>Structures_DataGrid_Column::formatter() does not support static method callback</td></tr>
+<tr><th>Submitted</th><td>2005-01-04 01:20 UTC</td></tr>
+<tr><th>From</th><td>rolf at winmutt dot com</td></tr>
+<tr><th>Assigned</th><td>asnagy</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>Linux 2.6</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-04 01:20 UTC] rolf at winmutt dot com</h3>
+<p>Description:<br>
+------------<br>
+When passing array(&#039;class&#039;,&#039;method&#039;) to formatter it does not allow you to pass any type of additional arguments. It would be nice to do so.</p>
+</section>
+<section>
+<h3>[2005-01-04 03:59 UTC] winmutt at winmutt dot com</h3>
+<p>snowcrash DataGrid # diff Column.php ~winmutt/pear/Structures_DataGrid/DataGrid/Column.php<br>
+186,189c186<br>
+&lt;         } elseif (is_array($this-&gt;formatter) &amp;&amp; is_array($this-&gt;formatter[0])) {<br>
+&lt;               $formatter = $this-&gt;formatter[0];<br>
+&lt;               $paramList = array_merge($this-&gt;formatter[1], $record);<br>
+&lt;       } else {<br>
+---<br>
+&gt;         } else {<br>
+196c193<br>
+&lt;             $result = call_user_func($formatter, ($paramList?$paramList:$record));<br>
+---<br>
+&gt;             $result = call_user_func($formatter, $paramList);</p>
+</section>
+<section>
+<h3>[2005-01-05 19:16 UTC] asnagy at webitecture dot org</h3>
+<p>I am curious as to why you would want to pass an array of class and method?</p>
+<p>The code supports both syntaxes:<br>
+$class-&gt;method() and<br>
+Class::method()</p>
+<p>For example:<br>
+$dg-&gt;addColumn(new Structures_DataGrid_Column(&#039;Edit&#039;, null, null, array(&#039;align&#039; =&gt; &#039;center&#039;), null, Printer::printLink($label=Edit)&#039;);</p>
+<p>Please explain your reasoning better</p>
+</section>
+<section>
+<h3>[2005-01-07 00:40 UTC] winmutt at winmutt dot com</h3>
+<p>The problem is passing more complex paramaters to the  <br>
+callback function. If I want to pass an object or complex  <br>
+array, the current string parsing failes.</p>
+</section>
+<section>
+<h3>[2005-01-10 15:24 UTC] asnagy at webitecture dot org</h3>
+<p>Yes, you can&#039;t pass parameters into a callback array.</p>
+<p>Try something like this:<br>
+$callback = &#039;Printer::printLink($label=Edit, $foo=Bar, $name=John Doe)&#039;;<br>
+$dg-&gt;addColumn(new Structures_DataGrid_Column(&#039;Edit&#039;, null, null, array(&#039;align&#039; =&gt; &#039;center&#039;), null, $callback);</p>
+<p>This way you can call a method and pass numerous parameters.</p>
+<p>If this is not the answer to your question, please include an example of what you are trying to do.  Otherwise this bug will be closed as bogus.</p>
+</section>
+<section>
+<h3>[2005-01-18 17:46 UTC] asnagy at webitecture dot org</h3>
+<p>Thank you for taking the time to write to us, but this is not<br>
+a bug.</p>
+<p>All features asked for already exists</p>
+</section>
+<section>
+<h3>[2005-01-19 23:57 UTC] rolf at winmutt dot com</h3>
+<p>I&#039;m trying to pass complex data back to a callback <br>
+function in a object : <br>
+ <br>
+mixed call_user_func ( callback function [, mixed <br>
+parameter [, mixed ...]] ) <br>
+ <br>
+IE : <br>
+ <br>
+call_user_func(array(&amp;$bsq,&#039;shop&#039;),&amp;$someobj,$cloneobj,<br>
+$somearray); <br>
+ <br>
+My patch listed works just fine and does not break any <br>
+existing functionality.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

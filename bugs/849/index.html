@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #849</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail/index.html">Mail</a> &#187; Bug #849</h1>
+<p>RFC822.php doesn&#039;t generate error for malformed addresses</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-02-24 17:03 UTC</td></tr>
+<tr><th>From</th><td>n dot dose at leo-media dot de</td></tr>
+<tr><th>Assigned</th><td>chagenbu</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail/index.html">Mail</a></td></tr>
+<tr><th>PHP Version</th><td>4.2.2</td></tr>
+<tr><th>OS</th><td>SusE Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-02-24 17:03 UTC] n dot dose at leo-media dot de</h3>
+<p>Description:<br>
+------------<br>
+(Revision 1.1.0)</p>
+<p>This doesn&#039;t seem to work on single addresses that are badly formed.</p>
+<p>I did some lame debugging by changing the source code with a few echo statements to tell which function we&#039;re in and what its args are. Output below.</p>
+<p>The problem seems to be on line 475 (in _validateAddress()):<br>
+array_walk($addresses, array($this, &#039;validateMailbox&#039;));</p>
+<p>I&#039;ve never seen array_walk() used like this. Maybe call_user_func_array() was meant, or maybe this is a sneaky way to call object methods.</p>
+<p>But validateMailbox() is indeed called. However when it returns false, nothing is done with this information. Execution proceeds to the end of the method: a structure object is returned, just as it is when validateMailbox() doesn&#039;t detect any errors and returns something other than false.</p>
+<p>In the stuff I included here, &#039;mai %lu$sa.com&#039; as a domain name is an invalid domain. validateDomain() recognizes this, but execution goes on without raising an error.</p>
+<p>&#039;aaa ss&#039; is also dubious as a local part, but that&#039;s not my main point.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$emailToTest=&#039;aaa ss@mai %lu$sa.com&#039;;</p>
+<p>Expected result:<br>
+----------------<br>
+validateAddress(aaa ss@mai %lu$sa.com)<br>
+validateMailbox(aaa ss@mai %lu$sa.com)<br>
+validateAddrSpec(aaa ss@mai %lu$sa.com)<br>
+validateLocalPart(aaa ss)<br>
+local part OK<br>
+validateDomain(mai %lu$sa.com)<br>
+validateAddrSpec()===false<br>
+after array_walk()<br>
+exiting validateAddress(), raising error<br>
+returned to parseAddressList(), raising error.</p>
+<p>Actual result:<br>
+--------------<br>
+validateAddress(aaa ss@mai %lu$sa.com)<br>
+validateMailbox(aaa ss@mai %lu$sa.com)<br>
+validateAddrSpec(aaa ss@mai %lu$sa.com)<br>
+validateLocalPart(aaa ss)<br>
+local part OK<br>
+validateDomain(mai %lu$sa.com)<br>
+validateAddrSpec()===false<br>
+after array_walk()<br>
+exiting validateAddress(), everything OK<br>
+returned to parseAddressList(), no error raised.</p>
+</section>
+<section>
+<h3>[2004-02-25 20:30 UTC] chagenbu at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

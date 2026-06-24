@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6270</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/Translation2/index.html">Translation2</a> &#187; Bug #6270</h1>
+<p>Latin1 returned instead of UTF-8</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-12-16 20:48 UTC</td></tr>
+<tr><th>From</th><td>pentarim at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Translation2/index.html">Translation2</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.5</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-12-16 20:48 UTC] pentarim at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I spotted a little bug in MDB storage driver.My MySql (5.0.15) stores all data in utf-8. I have hungarian language (in translation_i18n and translation_langs_avail tables), with utf-8 encoding. I used PEAR::MDB package for storage. The returned labels by Translation2 get function are latin1 encoded.</p>
+<p>Reffering to:<br>
+http://forums.mysql.com/read.php?103,14397,25128<br>
+http://php.morva.net/manual/en/function.mysql-client-encoding.php</p>
+<p>Partially resolved by adding to Translation2/Container/mdb.php at line 111 (after $this-&gt;db =&amp; MDB::connect($db);):<br>
+$this-&gt;db-&gt;query(&quot;SET NAMES utf8&quot;);</p>
+<p>It is hardcoded utf-8 this way, it would be better with encoding property in future like:<br>
+$this-&gt;db-&gt;query(&quot;SET NAMES &quot;.$this-&gt;encoding);</p>
+<p>Test script:<br>
+---------------<br>
+bundled example script</p>
+<p>Expected result:<br>
+----------------<br>
+utf8 encoded characters</p>
+<p>Actual result:<br>
+--------------<br>
+latin1 encoded characters</p>
+</section>
+<section>
+<h3>[2006-06-23 14:19 UTC] mstamat at csd dot uoc dot gr</h3>
+<p>If your database server holds one database only or if you want the same behavior for all your databases, you cound add to my.conf under the [mysqld] section the following line:<br>
+init_connect=&quot;SET NAMES utf8&quot;</p>
+<p>(picked up from http://golgote.freeflux.net/blog/archiv/php-mysql-4-1-and-utf.html)</p>
+<p>Unfortunatelly, my server holds several databases that will break with the above fix, so I am looking forward for a solution within PEAR. <br>
+Currently I have done a similar hack with pentarim in the _connect() function of DB_DataObject. Admittedly, fixing MDB to support this sounds like a more appropriate solution.</p>
+</section>
+<section>
+<h3>[2006-06-23 15:11 UTC] pentarim at gmail dot com</h3>
+<p>I have tried it, I have lines in my.cnf like:</p>
+<p>default-character-set=utf8<br>
+init-connect=&quot;SET NAMES utf8&quot;</p>
+<p>But on sql: SHOW VARIABLES LIKE &quot;%character%&quot; i get this</p>
+<p>+--------------------------+----------------------------------------------+<br>
+| Variable_name            | Value                                        |<br>
++--------------------------+----------------------------------------------+<br>
+| character_set_client     | latin1                                       |<br>
+| character_set_connection | latin1                                       |<br>
+| character_set_database   | utf8                                         |<br>
+| character_set_results    | latin1                                       |<br>
+| character_set_server     | utf8                                         |<br>
+| character_set_system     | utf8                                         |<br>
+| character_sets_dir       | C:\Program Files\xampp\mysql\share\charsets/ |<br>
++--------------------------+----------------------------------------------+</p>
+<p>It only helps when I run it &quot;by hand&quot;, from connect function. This is a stupid mysql bug altrough, but it would be great if the driver could handle encodings. I tought that it is a stupid Win issue, but got exactly the same on debian. I have checked data, tables, collations, db , all are in UTF-8, so this is kind of black magic. I havent resolved this for half a year...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

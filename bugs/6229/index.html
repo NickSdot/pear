@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6229</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail/index.html">Mail</a> &#187; Bug #6229</h1>
+<p>Protection against mail injection</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #6229</th><td>Protection against mail injection</td></tr>
+<tr><th>Submitted</th><td>2005-12-12 15:32 UTC</td></tr>
+<tr><th>From</th><td>web2005 at ahlenstorf dot ch</td></tr>
+<tr><th>Assigned</th><td>jon</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail/index.html">Mail</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.5</td></tr>
+<tr><th>OS</th><td>Debian GNU/Linux 3.1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-12-12 15:32 UTC] web2005 at ahlenstorf dot ch</h3>
+<p>Description:<br>
+------------<br>
+We experienced some mail injection attacks (http://securephp.damonkohler.com/index.php/Email_Injection) against forms using PEAR::Mail (and raw mail()). The problem is not the package itself, but the programmers who forget to sanitize the input.</p>
+<p>I wrote a small patch that tries to address the issue in PEAR::Mail. You can see it here (not very well tested, but works at the moment):</p>
+<p>http://andreas.ahlenstorf.ch/Mail.patch</p>
+<p>It looks at every value in the headers array and strips everything that comes after a character, that may be interpreted as header separator (eg. new line or carriage return). In the end, it&#039;s a general purpose solution (a.k.a. sledgehammer) to prevent the worst case (lots of spam). Additional checks to prevent bounces et al. can be performed later or somewhere else.</p>
+<p>I don&#039;t know how&#039;s your policy regarding protection against forged input, but I really think it&#039;s worth thinking about the inclusion of the patch or a similar solution, because PEAR::Mail&#039;s sensitivity for email injection is not obvious, above all for beginners. That comes from the API, that takes the headers as associative array where you don&#039;t expect that a value can become another header.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php</p>
+<p>// &quot;user supplied input&quot;<br>
+$reply_to = &quot;att@cker.tld\nBcc:spam@victim.tld&quot;;</p>
+<p>include(&#039;Mail.php&#039;);</p>
+<p>$recipients = &#039;foo@owner.tld&#039;;</p>
+<p>$headers[&#039;From&#039;]    =  &quot;website@owner.tld&quot;;<br>
+$headers[&#039;To&#039;]      = &#039;recipient@owner.tld&#039;;<br>
+$headers[&#039;Subject&#039;] = &#039;Test message&#039;;<br>
+$headers[&#039;Reply-To&#039;] = $reply_to;</p>
+<p>$body = &#039;Test message&#039;;</p>
+<p>// Create the mail object using the Mail::factory method<br>
+$mail_object =&amp; Mail::factory(&#039;mail&#039;);</p>
+<p>var_dump($mail_object-&gt;send($recipients, $headers, $body));</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Only email in the mailbox of recipient@owner.tld.</p>
+<p>Actual result:<br>
+--------------<br>
+Email in the mailbox of recipient@owner.tld, spam@victim.tld and emails from AOL to our abuse address...</p>
+</section>
+<section>
+<h3>[2006-03-08 05:30 UTC] soporte at onfocus dot cl</h3>
+<p>At least the new &quot;Zend_Mail&quot; provides protection for this trick by default. will be nice if PEAR Mail can do the a similar thing.</p>
+</section>
+<section>
+<h3>[2006-09-14 07:13 UTC] c dot sar dot miyasato at gmail dot com</h3>
+<p>function _sanitizeHeaders in Mail.php erase &quot;boundary&quot; in &quot;Content-Type&quot;.</p>
+<p>Can not send a html mail in the sample,<br>
+http://pear.php.net/manual/en/package.mail.mail-mime.example.php</p>
+<p>Expected result:<br>
+----------------<br>
+Content-Type: multipart/alternative;<br>
+  boundary--&quot;=_29e435fcd1c17793cd33f23cc34b7c1e&quot;</p>
+<p>Actual result:<br>
+--------------<br>
+Content-Type: multipart/alternative;</p>
+<p>--=_29e435fcd1c17793cd33f23cc34b7c1e</p>
+<p>Adding a &quot;return;&quot; in front of the function is an emergency measure.</p>
+<p>function _sanitizeHeaders(&amp;$headers)<br>
+{ return;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

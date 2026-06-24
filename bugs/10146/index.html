@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #10146</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #10146</h1>
+<p>mbstring fails to recognize encodings.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-02-21 16:12 UTC</td></tr>
+<tr><th>From</th><td>jebissey at axytrans dot com</td></tr>
+<tr><th>Assigned</th><td>cipri</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>kubuntu dapper</td></tr>
+<tr><th>Roadmaps</th><td>1.4.0, 1.4.0a2</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-02-21 16:12 UTC] jebissey at axytrans dot com</h3>
+<p>Description:<br>
+------------<br>
+With the test script, I got this email<br>
+=====================================================<br>
+To: me@xx.com<br>
+Subject: Test mime message<br>
+MIME-Version: 1.0<br>
+From: me@mydomain.com<br>
+Content-Type: text/html; charset=&quot;ISO-8859-1&quot;<br>
+Content-Transfer-Encoding: quoted-printable<br>
+Mime-Version: 1.0<br>
+Message-Id: &lt;20070221152304.953827D8167@servubuntu&gt;<br>
+Date: Wed, 21 Feb 2007 16:23:04 +0100 (CET)<br>
+X-Virus-Scanned: by Amavis at axytrans.com</p>
+<p>&lt;html&gt;&lt;body&gt;HTML version of email.&lt;/body&gt;&lt;/html&gt;<br>
+=====================================================<br>
+It&#039;s ok but html display this:<br>
+=====================================================<br>
+Warning: mb_send_mail() [function.mb-send-mail]: Unsupported charset &quot;&quot;ISO-8859-1&quot;&quot; - will be regarded as ascii in /usr/share/php/Mail/mail.php on line 125</p>
+<p>Warning: mb_send_mail() [function.mb-send-mail]: Unsupported transfer encoding &quot;quoted-printable&quot; - will be regarded as 8bit in /usr/share/php/Mail/mail.php on line 125<br>
+=====================================================<br>
+but if I uncomment setTXTBody() and/or addAttachement(), I got an empty mail (see below the source code)</p>
+<p>Test script:<br>
+---------------<br>
+$to=&#039;you@yourdomain.com&#039;;<br>
+$from=&#039;me@mydomain.com&#039;;<br>
+$subject=&#039;Test mime message&#039;;<br>
+$text = &#039;Text version of email.&#039;;</p>
+<p>// example from http://pear.php.net/manual/en/package.mail.mail-mime.example.php <br>
+include(&#039;Mail.php&#039;);<br>
+include(&#039;Mail/mime.php&#039;);</p>
+<p>$html = &#039;&lt;html&gt;&lt;body&gt;HTML version of email.&lt;/body&gt;&lt;/html&gt;&#039;;<br>
+$file = &#039;test-Mail_mime.php&#039;;</p>
+<p>$crlf = &quot;\n&quot;;<br>
+$hdrs = array(<br>
+              &#039;From&#039;    =&gt; $from,<br>
+              &#039;Subject&#039; =&gt; $subject<br>
+              );</p>
+<p>$mime = new Mail_mime($crlf);</p>
+<p>//$mime-&gt;setTXTBody($text.&#039;send()&#039;);<br>
+$mime-&gt;setHTMLBody($html);<br>
+//$mime-&gt;addAttachment($file, &#039;text/plain&#039;);</p>
+<p>//do not ever try to call these lines in reverse order<br>
+$body = $mime-&gt;get();<br>
+$hdrs = $mime-&gt;headers($hdrs);</p>
+<p>$mail =&amp; Mail::factory(&#039;mail&#039;);<br>
+$mail-&gt;send($to, $hdrs, $body);</p>
+<p>Expected result:<br>
+----------------<br>
+I expect got a multipart/mixed email ok</p>
+<p>Actual result:<br>
+--------------<br>
+To: x@xx.com<br>
+Subject: Test mime message<br>
+MIME-Version: 1.0<br>
+From: me@mydomain.com<br>
+Content-Type: multipart/mixed;<br>
+	boundary=&quot;=_b981b48f40fa491c044f8cd63d7b3995&quot;<br>
+Mime-Version: 1.0<br>
+Content-Transfer-Encoding: BASE64<br>
+Message-Id: &lt;20070221152133.940C77D8167@servubuntu&gt;<br>
+Date: Wed, 21 Feb 2007 16:21:33 +0100 (CET)<br>
+X-Virus-Scanned: by Amavis at xx.com</p>
+<p>LS09X2I5ODFiNDhmNDBmYTQ5MWMwNDRmOGNkNjNkN2IzOTk1CkNvbnRlbnQtVHlwZTogdGV4dC9w<br>
+bGFpbgpDb250ZW50LVRyYW5zZmVyLUVuY29kaW5nOiBiYXNlNjQKQ29udGVudC1EaXNwb3NpdGlv<br>
+bjogYXR0YWNobWVudDsgZmlsZW5hbWU9InRlc3QtTWFpbF9taW1lLnBocCIKCklEdy9jR2h3Q2dv<br>
+a2RHODlKMnBsWWtCaGVIbDBjbUZ1Y3k1amIyMG5Pd29rWm5KdmJUMG5iV1ZBYlhsa2IyMWhhVzR1<br>
+WTI5dEp6c0sKSkhOMVltcGxZM1E5SjFSbGMzUWdiV2x0WlNCdFpYTnpZV2RsSnpzS0pIUmxlSFFn<br>
+UFNBblZHVjRkQ0IyWlhKemFXOXVJRzltSUdWdApZV2xzTGljN0Nnb3ZMeUJsZUdGdGNHeGxJR1p5<br>
+YjIwZ2FIUjBjRG92TDNCbFlYSXVjR2h3TG01bGRDOXRZVzUxWVd3dlpXNHZjR0ZqCmEyRm5aUzV0<br>
+WVdsc0xtMWhhV3d0YldsdFpTNWxlR0Z0Y0d4bExuQm9jQ0FLYVc1amJIVmtaU2duVFdGcGJDNXdh<br>
+SEFuS1RzS2FXNWoKYkhWa1pTZ25UV0ZwYkM5dGFXMWxMbkJvY0NjcE93b0tKR2gwYld3Z1BTQW5Q<br>
+R2gwYld3K1BHSnZaSGsrU0ZSTlRDQjJaWEp6YVc5dQpJRzltSUdWdFlXbHNMand2WW05a2VUNDhM<br>
+MmgwYld3K0p6c0tKR1pwYkdVZ1BTQW5kR1Z6ZEMxTllXbHNYMjFwYldVdWNHaHdKenNLCkNpUmpj<br>
+bXhtSUQwZ0lseHVJanNLSkdoa2NuTWdQU0JoY25KaGVTZ0tJQ0FnSUNBZ0lDQWdJQ0FnSUNBblJu<br>
+SnZiU2NnSUNBZ1BUNGcKSkdaeWIyMHNDaUFnSUNBZ0lDQWdJQ0FnSUNBZ0oxTjFZbXBsWTNRbklE<br>
+MCtJQ1J6ZFdKcVpXTjBDaUFnSUNBZ0lDQWdJQ0FnSUNBZwpLVHNLQ2lSdGFXMWxJRDBnYm1WM0lF<br>
+MWhhV3hmYldsdFpTZ2tZM0pzWmlrN0Nnb3ZMeVJ0YVcxbExUNXpaWFJVV0ZSQ2IyUjVLQ1IwClpY<br>
+aDBMaWR6Wlc1a0tDa25LVHNLTHk4a2JXbHRaUzArYzJWMFNGUk5URUp2Wkhrb0pHaDBiV3dwT3dv<br>
+a2JXbHRaUzArWVdSa1FYUjAKWVdOb2JXVnVkQ2drWm1sc1pTd2dKM1JsZUhRdmNHeGhhVzRuS1Rz<br>
+S0NpOHZaRzhnYm05MElHVjJaWElnZEhKNUlIUnZJR05oYkd3ZwpkR2hsYzJVZ2JHbHVaWE1nYVc0<br>
+Z2NtVjJaWEp6WlNCdmNtUmxjZ29rWW05a2VTQTlJQ1J0YVcxbExUNW5aWFFvS1RzS0pHaGtjbk1n<br>
+ClBTQWtiV2x0WlMwK2FHVmhaR1Z5Y3lna2FHUnljeWs3Q2dva2JXRnBiQ0E5SmlCTllXbHNPanBt<br>
+WVdOMGIzSjVLQ2R0WVdsc0p5azcKQ2lSdFlXbHNMVDV6Wlc1a0tDUjBieXdnSkdoa2NuTXNJQ1Jp<br>
+YjJSNUtUc0tDZ292S2dvdkwybGtaVzBnZDJsMGFDQnRZV2xzS0NrSwpKR2hsWVdSbGNuTWdJRDBn<br>
+SWsxSlRVVXRWbVZ5YzJsdmJqb2dNUzR3WEhKY2JpSTdDaVJvWldGa1pYSnpJQzQ5SUNKRGIyNTBa<br>
+VzUwCkxYUjVjR1U2SUhSbGVIUXZhSFJ0YkRzZ1kyaGhjbk5sZEQxcGMyOHRPRGcxT1MweFhISmNi<br>
+aUk3Q20xaGFXd29KSFJ2TENBa2MzVmkKYW1WamRDd2dKSFJsZUhRdUoyMWhhV3dvS1Njc0lDUm9a<br>
+V0ZrWlhKekxpSkdjbTl0T2lBa1puSnZiVnh5WEc0aUtUc0tLaThLUHo0SwotLT1fYjk4MWI0OGY0<br>
+MGZhNDkxYzA0NGY4Y2Q2M2Q3YjM5OTUtLQo=</p>
+</section>
+<section>
+<h3>[2007-03-09 16:24 UTC] jebissey at axytrans dot com</h3>
+<p>I have the same result with this version.</p>
+</section>
+<section>
+<h3>[2007-03-19 12:59 UTC] jebissey at axytrans dot com</h3>
+<p>You found the solution. <br>
+When I installed egroupware, I add  this line in my php.ini :<br>
+mbstring.func_overload = 7<br>
+All other lines mbstring are commented.</p>
+<p>I commented this line and now it&#039;s OK.</p>
+<p>Thanks a lot for your response.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

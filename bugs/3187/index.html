@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3187</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #3187</h1>
+<p>Validate could be smarter with sequences</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3187</th><td>Validate could be smarter with sequences</td></tr>
+<tr><th>Submitted</th><td>2005-01-13 15:02 UTC</td></tr>
+<tr><th>From</th><td>mcraig at leadehealth dot com</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-13 15:02 UTC] mcraig at leadehealth dot com</h3>
+<p>Description:<br>
+------------<br>
+Relates to bug: http://pear.php.net/bugs/bug.php?id=1873</p>
+<p>I&#039;ve been having problems with Postgres and DO validating sequences on INSERT.  The sequences are native but validate() sees those fields&#039; values as (DB_DATAOBJECT_INT &amp; DB_DATAOBJECT_NOTNULL).  Of course, validate() says &quot;hey you can&#039;t be null.  ERROR! ERROR!&quot;, even though Generetor has already marked those native keys (and only keys that are native) with &#039;N&#039;.</p>
+<p>Having an extra validate&lt;ID&gt;() methods is quite a burden, especially when in a development phase and the database structure is changing a lot, i.e. lots of rebuilds and copying back in the validate methods from the old class defs.</p>
+<p>Below are two different approaches to solve this.  The first seems better.</p>
+<p>Reproduce code:<br>
+---------------<br>
+1)  In DO::validate() check if a blank field is actually a native sequence.</p>
+<p>cvs diff: Diffing pear/DB_DataObject<br>
+Index: pear/DB_DataObject/DataObject.php<br>
+===================================================================<br>
+RCS file: /repository/pear/DB_DataObject/DataObject.php,v<br>
+retrieving revision 1.309<br>
+diff -r1.309 DataObject.php<br>
+3015a3016<br>
+&gt;	global $_DB_DATAOBJECT;<br>
+3018a3020<br>
+&gt;	$keys = $_DB_DATAOBJECT[&#039;INI&#039;][$this-&gt;_database][$this-&gt;__table.&quot;__keys&quot;];<br>
+3032a3035<br>
+&gt;		if ($keys[$key]!=&#039;N&#039;){<br>
+3033a3037<br>
+&gt;               }</p>
+<p>OR<br>
+2) Never mark native sequences as DB_DATAOBJECT_NOTNULL in the first place.  Probably a bad idea.</p>
+<p>cvs diff: Diffing pear/DB_DataObject/DataObject<br>
+Index: pear/DB_DataObject/DataObject/Generator.php<br>
+===================================================================<br>
+RCS file: /repository/pear/DB_DataObject/DataObject/Generator.php,v<br>
+retrieving revision 1.82<br>
+diff -r1.82 Generator.php<br>
+393c393,395<br>
+&lt;	$type += DB_DATAOBJECT_NOTNULL;<br>
+---<br>
+&gt;       	if (!preg_match(&quot;/(auto_increment|nextval\()/i&quot;,rawurldecode($t-&gt;flags))) {<br>
+&gt;               	$type += DB_DATAOBJECT_NOTNULL;<br>
+&gt;               }</p>
+</section>
+<section>
+<h3>[2005-01-26 17:56 UTC] mcraig at leadehealth dot com</h3>
+<p>Two things concern me:</p>
+<p>1)<br>
+if (($key == $seq[0]) &amp;&amp; ($seq[1] = &#039;N&#039;)) { <br>
+   continue;                 <br>
+}</p>
+<p>should be something like:</p>
+<p>if (($key == $seq[0]) &amp;&amp; ($seq[1] == true)) {<br>
+  continue;<br>
+}</p>
+<p>since $seq[1] = &#039;N&#039; is missing an extra &#039;=&#039; and is actually always a TRUE or FALSE value returned from sequenceKey.</p>
+<p>2)<br>
+Without sequenceKey() recognizing Postgres sequences, which it seems it should be able to do when the &lt;database&gt;.ini file is set up  properly.  This still requires extra (redundant) configuration in the DataObject.ini file.</p>
+<p>A reference for this is one of my postings to the pear-dev list http://marc.theaimsgroup.com/?l=pear-dev&amp;m=110557740324421&amp;w=2</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

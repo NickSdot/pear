@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2202</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Bug #2202</h1>
+<p>inherit method is not updated when parent class file updated</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>#2202</th><td>inherit method is not updated when parent class file updated</td></tr>
+<tr><th>Submitted</th><td>2004-08-24 03:34 UTC</td></tr>
+<tr><th>From</th><td>xuefer at 21cn dot com</td></tr>
+<tr><th>Status</th><td>Open</td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-24 03:34 UTC] xuefer at 21cn dot com</h3>
+<p>Description:<br>
+------------<br>
+1. load test.php in browser (via apache+php+apc)<br>
+2. update &quot;in p2&quot; to &quot;in p2**&quot; (*** is random text)<br>
+3. reload test.php, nothing changed (even with ctrl+f5 in ie, reload with nocache)</p>
+<p>4. uncomment class p3::set<br>
+5. do 1-3, message is updated</p>
+<p>Reproduce code:<br>
+---------------<br>
+test.php:<br>
+require(&quot;./p12.php&quot;);<br>
+require(&quot;./p3.php&quot;);<br>
+$p3 = new p3();<br>
+$p3-&gt;set();</p>
+<p>p12.php<br>
+class p1<br>
+{<br>
+function set()<br>
+{<br>
+echo &quot;in p1&lt;br&gt;&quot;;<br>
+}<br>
+}</p>
+<p>class p2 extends p3<br>
+{<br>
+function set()<br>
+{<br>
+echo &quot;in p2&lt;br&gt;&quot;;<br>
+return parent::set();<br>
+}<br>
+}</p>
+<p>p3.php<br>
+class p3 extends p2<br>
+{<br>
+/* if this exists, no error<br>
+function set()<br>
+{<br>
+echo &quot;in p3&lt;br&gt;&quot;;<br>
+return parent::set();<br>
+}<br>
+*/<br>
+}</p>
+</section>
+<section>
+<h3>[2004-09-07 08:38 UTC] xuefer at 21cn dot com</h3>
+<p>sorry, it&#039;s my typo while reporting this bug</p>
+<p>class p3 extends p2<br>
+class p2 extends p1 (not p3)</p>
+<p>p1 and p2 in same file(p12.php), while p3 is alone(p3.php)</p>
+<p>update code in class p2::set() (file p12.php)<br>
+no errors/warnnings, but result it wrong</p>
+<p>may times i have to re-update the file or clear apc cache</p>
+</section>
+<section>
+<h3>[2004-09-07 17:19 UTC] xuefer at 21cn dot com</h3>
+<p>updated summary.</p>
+<p>verified with lastest apc</p>
+<p>i think my mistake make u ignored my &quot;reproduce steps&quot;</p>
+<p>step 1-3 is required to reproduce the bug<br>
+without p3::set, compare result of 3 to 1, result is(but shouldn&#039;t be) same until i `touch p3.php`, this is the bug.<br>
+u may try steps2-3 more times</p>
+<p>step 4-5 is an exception of the bug(i.e.: not a bug)</p>
+<p>i&#039;ve once trace apc optimizer, and noticed some function opcode is optimized twice.<br>
+(the following notes is just my guessing, hope it help to explain this bug)<br>
+situtation 1: without p3::set<br>
+it seems apc copied all methods from p2 (p2::set) to class p3, once p2 is updated, p3 is not, this is the bug</p>
+<p>situtation 1: with p3::set<br>
+p3 has it&#039;s own p3::set thus won&#039;t copy p2::set to p3::set, thus not triggering this bug</p>
+</section>
+<section>
+<h3>[2004-09-12 06:39 UTC] xuefer at 21cn dot com</h3>
+<p>my config is:<br>
+extension = apc.so<br>
+apc.enabled = 1<br>
+apc.optimization = 1<br>
+apc.ttl = 3600</p>
+<p>verified with:<br>
+apc.enabled = 1<br>
+apc.optimization = 0</p>
+<p>ok with:<br>
+apc.enabled = 0<br>
+apc.optimization = 0</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

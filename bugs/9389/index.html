@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9389</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #9389</h1>
+<p>JoinAdd / SelectAs overwriting each other</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #9389</th><td>JoinAdd / SelectAs overwriting each other</td></tr>
+<tr><th>Submitted</th><td>2006-11-19 22:36 UTC</td></tr>
+<tr><th>From</th><td>Bill at Explosivo dot com</td></tr>
+<tr><th>Status</th><td>Suspended</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux / Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-19 22:36 UTC] Bill at Explosivo dot com</h3>
+<p>Description:<br>
+------------<br>
+When I joinAdd two tables, and use selectAs to keep the fields from one from clashing with the other, they simply overwrite the contents of the first field.</p>
+<p>$BUSINESS = DB_DataObject::factory(&quot;Business&quot;);<br>
+$BUSINESS-&gt;setId($buid);<br>
+$PERSON = DB_DataObject::factory(&quot;Person&quot;);<br>
+$BUSINESS-&gt;joinadd($PERSON);<br>
+$BUSINESS-&gt;selectAs($PERSON,&#039;person_%s&#039;);</p>
+<p>With this example, if I have:<br>
+BUSINESS.CITY = &quot;BC&quot;<br>
+PERSON.CITY = &quot;PC&quot;</p>
+<p>I will get results containing:</p>
+<p>CITY= &quot;PC&quot;<br>
+person_city = &quot;PC&quot;</p>
+<p>My Query runs like:<br>
+QUERY: SELECT *, `person`.`id` as `person_id` , `person`.`firstname` as `person_firstname` , `person`.`lastname` as `person_lastname` , `person`.`address1` as `person_address1` , `person`.`address2` as `person_address2` , `person`.`city` as `person_city` , `person`.`state` as `person_state` , `person`.`zipcode` as `person_zipcode` , `person`.`latitude` as `person_latitude` , `person`.`longitude` as `person_longitude` , `person`.`gcscore` as `person_gcscore` , `person`.`contactphone` as `person_contactphone` , `person`.`birthdate` as `person_birthdate` , `person`.`role` as `person_role` , `person`.`activeind` as `person_activeind` , `person`.`email` as `person_email` , `person`.`updatedate` as `person_updatedate` , `person`.`accessdate` as `person_accessdate` , `person`.`passwordx` as `person_passwordx` , `person`.`passphrase` as `person_passphrase`<br>
+FROM `business`<br>
+INNER JOIN `findwellnesspros`.`person` ON `findwellnesspros`.`person`.`id`=`business`.`customerid`<br>
+WHERE ( `business`.`id` = 77590 )</p>
+<p>Which if I cut it out and run it manually returns the data correctly (appears so).</p>
+<p>Anyway, this comes back from debug level 5</p>
+<p>dataobjects_business: RESULT: O:9:&quot;db_result&quot;:11:{s:8:&quot;autofree&quot;;b:0;s:3:&quot;dbh&quot;;O:8:&quot;db_mysql&quot;:8:{s:10:&quot;autocommit&quot;;b:1;s:8:&quot;dbsyntax&quot;;s:5:&quot;mysql&quot;;s:3:&quot;dsn&quot;;a:9:{s:7:&quot;phptype&quot;;s:5:&quot;mysql&quot;;s:8:&quot;dbsyntax&quot;;s:5:&quot;mysql&quot;;s:8:&quot;username&quot;;s:8:&quot;fwpuser1&quot;;s:8:&quot;password&quot;;s:13:&quot;working101dog&quot;;s:8:&quot;protocol&quot;;s:3:&quot;tcp&quot;;s:8:&quot;hostspec&quot;;s:9:&quot;localhost&quot;;s:4:&quot;port&quot;;b:0;s:6:&quot;socket&quot;;b:0;s:8:&quot;database&quot;;s:16:&quot;findwellnesspros&quot;;}s:8:&quot;features&quot;;a:7:{s:5:&quot;limit&quot;;s:5:&quot;alter&quot;;s:8:&quot;new_link&quot;;s:5:&quot;4.2.0&quot;;s:7:&quot;numrows&quot;;b:1;s:8:&quot;pconnect&quot;;b:1;s:7:&quot;prepare&quot;;b:0;s:3:&quot;ssl&quot;;b:0;s:12:&quot;transactions&quot;;b:1;}s:9:&quot;fetchmode&quot;;i:1;s:22:&quot;fetchmode_object_class&quot;;s:8:&quot;stdClass&quot;;s:7:&quot;options&quot;;a:8:{s:16:&quot;result_buffering&quot;;i:500;s:10:&quot;persistent&quot;;b:0;s:3:&quot;ssl&quot;;b:0;s:5:&quot;debug&quot;;i:0;s:14:&quot;seqname_format&quot;;s:6:&quot;%s_seq&quot;;s:8:&quot;autofree&quot;;b:0;s:11:&quot;portability&quot;;i:0;s:8:&quot;optimize&quot;;s:11:&quot;performance&quot;;}s:13:&quot;was_connected&quot;;b:1;}s:9:&quot;fetchmode&quot;;i:1;s:22:&quot;fetchmode_object_class&quot;;s:8:&quot;stdClass&quot;;s:11:&quot;limit_count&quot;;N;s:10:&quot;limit_from&quot;;N;s:10:&quot;parameters&quot;;a:0:{}s:5:&quot;query&quot;;s:1045:&quot;SELECT *, `person`.`id` as `person_id` , `person`.`firstname` as `person_firstname` , `person`.`lastname` as `person_lastname` , `person`.`address1` as `person_address1` , `person`.`address2` as `person_address2` , `person`.`city` as `person_city` , `person`.`state` as `person_state` , `person`.`zipcode` as `person_zipcode` , `person`.`latitude` as `person_latitude` , `person`.`longitude` as `person_longitude` , `person`.`gcscore` as `person_gcscore` , `person`.`contactphone` as `person_contactphone` , `person`.`birthdate` as `person_birthdate` , `person`.`role` as `person_role` , `person`.`activeind` as `person_activeind` , `person`.`email` as `person_email` , `person`.`updatedate` as `person_updatedate` , `person`.`accessdate` as `person_accessdate` , `person`.`passwordx` as `person_passwordx` , `person`.`passphrase` as `person_passphrase`<br>
+FROM `business` INNER JOIN `findwellnesspros`.`person` ON `findwellnesspros`.`person`.`id`=`business`.`customerid`<br>
+WHERE ( `business`.`id` = 77590) &quot;;s:6:&quot;result&quot;;i:0;s:11:&quot;row_counter&quot;;N;s:9:&quot;statement&quot;;N;}</p>
+<p>Then when I try to get the data:</p>
+<p>dataobjects_business: FETCH: a:63:{s:2:&quot;id&quot;;s:1:&quot;2&quot;;s:10:&quot;customerid&quot;;s:1:&quot;2&quot;;s:4:&quot;name&quot;;s:13:&quot;My Big Muscle&quot;;s:9:&quot;activeind&quot;;s:1:&quot;0&quot;;s:5:&quot;email&quot;;s:18:&quot;bill@explosivo.com&quot;;s:10:&quot;websiteurl&quot;;s:24:&quot;http://www.explosivo.com&quot;;s:8:&quot;address1&quot;;s:8:&quot;74 UpUrs&quot;;s:8:&quot;address2&quot;;s:0:&quot;&quot;;s:4:&quot;city&quot;;s:11:&quot;New Britian&quot;;s:5:&quot;state&quot;;s:2:&quot;CT&quot;;s:7:&quot;zipcode&quot;;s:5:&quot;06489&quot;;s:8:&quot;latitude&quot;;s:8:&quot;0.000000&quot;;s:9:&quot;longitude&quot;;s:8:&quot;0.000000&quot;;s:7:&quot;gcscore&quot;;s:1:&quot;0&quot;;s:12:&quot;contactphone&quot;;s:10:&quot;8606215380&quot;;s:10:&quot;contactfax&quot;;s:0:&quot;&quot;;s:9:&quot;photofile&quot;;s:0:&quot;&quot;;s:10:&quot;updatedate&quot;;N;s:15:&quot;servicelocation&quot;;s:6:&quot;office&quot;;s:10:&quot;traveldist&quot;;s:1:&quot;0&quot;;s:13:&quot;referencesind&quot;;s:1:&quot;0&quot;;s:12:&quot;callbackdays&quot;;s:1:&quot;0&quot;;s:11:&quot;hoursmonbeg&quot;;s:1:&quot;0&quot;;s:11:&quot;hoursmonend&quot;;s:1:&quot;0&quot;;s:11:&quot;hourstuebeg&quot;;s:1:&quot;0&quot;;s:11:&quot;hourstueend&quot;;s:1:&quot;0&quot;;s:11:&quot;hourswedbeg&quot;;s:1:&quot;0&quot;;s:11:&quot;hourswedend&quot;;s:1:&quot;0&quot;;s:11:&quot;hoursthubeg&quot;;s:1:&quot;0&quot;;s:11:&quot;hoursthuend&quot;;s:1:&quot;0&quot;;s:11:&quot;hoursfribeg&quot;;s:1:&quot;0&quot;;s:11:&quot;hoursfriend&quot;;s:1:&quot;0&quot;;s:11:&quot;hourssatbeg&quot;;s:1:&quot;0&quot;;s:11:&quot;hourssatend&quot;;s:1:&quot;0&quot;;s:11:&quot;hourssunbeg&quot;;s:1:&quot;0&quot;;s:11:&quot;hourssunend&quot;;s:1:&quot;0&quot;;s:9:&quot;firstname&quot;;s:4:&quot;Bill&quot;;s:8:&quot;lastname&quot;;s:6:&quot;Chmura&quot;;s:9:&quot;birthdate&quot;;s:10:&quot;1969-08-08&quot;;s:4:&quot;role&quot;;s:13:&quot;administrator&quot;;s:10:&quot;accessdate&quot;;N;s:9:&quot;passwordx&quot;;s:0:&quot;&quot;;s:10:&quot;passphrase&quot;;s:0:&quot;&quot;;s:9:&quot;person_id&quot;;s:1:&quot;2&quot;;s:16:&quot;person_firstname&quot;;s:4:&quot;Bill&quot;;s:15:&quot;person_lastname&quot;;s:6:&quot;Chmura&quot;;s:15:&quot;person_address1&quot;;s:8:&quot;74 UpUrs&quot;;s:15:&quot;person_address2&quot;;s:0:&quot;&quot;;s:11:&quot;person_city&quot;;s:11:&quot;New Britian&quot;;s:12:&quot;person_state&quot;;s:2:&quot;CT&quot;;s:14:&quot;person_zipcode&quot;;s:5:&quot;06489&quot;;s:15:&quot;person_latitude&quot;;s:8:&quot;0.000000&quot;;s:16:&quot;person_longitude&quot;;s:8:&quot;0.000000&quot;;s:14:&quot;person_gcscore&quot;;s:1:&quot;0&quot;;s:19:&quot;person_contactphone&quot;;s:10:&quot;8606215380&quot;;s:16:&quot;person_birthdate&quot;;s:10:&quot;1969-08-08&quot;;s:11:&quot;person_role&quot;;s:13:&quot;administrator&quot;;s:16:&quot;person_activeind&quot;;s:1:&quot;0&quot;;s:12:&quot;person_email&quot;;s:18:&quot;bill@explosivo.com&quot;;s:17:&quot;person_updatedate&quot;;N;s:17:&quot;person_accessdate&quot;;N;s:16:&quot;person_passwordx&quot;;s:0:&quot;&quot;;s:17:&quot;person_passphrase&quot;;s:0:&quot;&quot;;}<br>
+dataobjects_business: fetchrow LINE: id = 2<br>
+dataobjects_business: fetchrow LINE: customerid = 2<br>
+dataobjects_business: fetchrow LINE: name = My Big Muscle<br>
+dataobjects_business: fetchrow LINE: activeind = 0<br>
+dataobjects_business: fetchrow LINE: email = bill@explosivo.com<br>
+dataobjects_business: fetchrow LINE: websiteurl = http://www.explosivo.com<br>
+dataobjects_business: fetchrow LINE: address1 = 74 UpUrs<br>
+dataobjects_business: fetchrow LINE: address2 =<br>
+dataobjects_business: fetchrow LINE: city = New Britian<br>
+dataobjects_business: fetchrow LINE: state = CT<br>
+dataobjects_business: fetchrow LINE: zipcode = 06489<br>
+dataobjects_business: fetchrow LINE: latitude = 0.000000<br>
+dataobjects_business: fetchrow LINE: longitude = 0.000000<br>
+dataobjects_business: fetchrow LINE: gcscore = 0<br>
+dataobjects_business: fetchrow LINE: contactphone = 8606215380<br>
+dataobjects_business: fetchrow LINE: contactfax =<br>
+dataobjects_business: fetchrow LINE: photofile =<br>
+dataobjects_business: fetchrow LINE: updatedate =<br>
+dataobjects_business: fetchrow LINE: servicelocation = office<br>
+dataobjects_business: fetchrow LINE: traveldist = 0<br>
+dataobjects_business: fetchrow LINE: referencesind = 0<br>
+dataobjects_business: fetchrow LINE: callbackdays = 0<br>
+dataobjects_business: fetchrow LINE: hoursmonbeg = 0<br>
+dataobjects_business: fetchrow LINE: hoursmonend = 0<br>
+dataobjects_business: fetchrow LINE: hourstuebeg = 0<br>
+dataobjects_business: fetchrow LINE: hourstueend = 0<br>
+dataobjects_business: fetchrow LINE: hourswedbeg = 0<br>
+dataobjects_business: fetchrow LINE: hourswedend = 0<br>
+dataobjects_business: fetchrow LINE: hoursthubeg = 0<br>
+dataobjects_business: fetchrow LINE: hoursthuend = 0<br>
+dataobjects_business: fetchrow LINE: hoursfribeg = 0<br>
+dataobjects_business: fetchrow LINE: hoursfriend = 0<br>
+dataobjects_business: fetchrow LINE: hourssatbeg = 0<br>
+dataobjects_business: fetchrow LINE: hourssatend = 0<br>
+dataobjects_business: fetchrow LINE: hourssunbeg = 0<br>
+dataobjects_business: fetchrow LINE: hourssunend = 0<br>
+dataobjects_business: fetchrow LINE: firstname = Bill<br>
+dataobjects_business: fetchrow LINE: lastname = Chmura<br>
+dataobjects_business: fetchrow LINE: birthdate = 1969-08-08<br>
+dataobjects_business: fetchrow LINE: role = administrator<br>
+dataobjects_business: fetchrow LINE: accessdate =<br>
+dataobjects_business: fetchrow LINE: passwordx =<br>
+dataobjects_business: fetchrow LINE: passphrase =<br>
+dataobjects_business: fetchrow LINE: person_id = 2<br>
+dataobjects_business: fetchrow LINE: person_firstname = Bill<br>
+dataobjects_business: fetchrow LINE: person_lastname = Chmura<br>
+dataobjects_business: fetchrow LINE: person_address1 = 74 UpUrs<br>
+dataobjects_business: fetchrow LINE: person_address2 =<br>
+dataobjects_business: fetchrow LINE: person_city = New Britian<br>
+dataobjects_business: fetchrow LINE: person_state = CT<br>
+dataobjects_business: fetchrow LINE: person_zipcode = 06489<br>
+dataobjects_business: fetchrow LINE: person_latitude = 0.000000<br>
+dataobjects_business: fetchrow LINE: person_longitude = 0.000000<br>
+dataobjects_business: fetchrow LINE: person_gcscore = 0<br>
+dataobjects_business: fetchrow LINE: person_contactphone = 8606215380<br>
+dataobjects_business: fetchrow LINE: person_birthdate = 1969-08-08<br>
+dataobjects_business: fetchrow LINE: person_role = administrator<br>
+dataobjects_business: fetchrow LINE: person_activeind = 0<br>
+dataobjects_business: fetchrow LINE: person_email = bill@explosivo.com<br>
+dataobjects_business: fetchrow LINE: person_updatedate =<br>
+dataobjects_business: fetchrow LINE: person_accessdate =<br>
+dataobjects_business: fetchrow LINE: person_passwordx =<br>
+dataobjects_business: fetchrow LINE: person_passphrase =<br>
+dataobjects_business: fetchrow: business DONE</p>
+<p>The business city should be returned as southington.</p>
+<p>$BUSINESS = DB_DataObject::factory(&quot;Business&quot;);<br>
+$BUSINESS-&gt;setId($buid);<br>
+$PERSON = DB_DataObject::factory(&quot;Person&quot;);<br>
+$BUSINESS-&gt;joinadd($PERSON);<br>
+$BUSINESS-&gt;selectAs($PERSON,&#039;person_%s&#039;);<br>
+$BUSINESS-&gt;selectAs($BUSINESS,&#039;business_%s&#039;);</p>
+<p>Now, if I do this... I get back the original data as shown above, the person table, and the business_ also.  The Person_ and the Business_ both show correct info, but the orignal business data fields are overwritten.</p>
+<p>Anything I can do to help, or if you can tell me where to look at the code, or if I am an idiot...</p>
+<p>let me know</p>
+<p>Expected result:<br>
+----------------<br>
+SelectAs fields should not overwrite the default fields</p>
+</section>
+<section>
+<h3>[2006-11-20 01:37 UTC] Bill at Explosivo dot com</h3>
+<p>Just doing a selectAs on a single table, without joins, produces the duplication of field names also...</p>
+<p>orginalfields<br>
+renamed_orignalfields</p>
+</section>
+<section>
+<h3>[2006-11-20 21:30 UTC] Bill at Explosivo dot com</h3>
+<p>Thank you for the rapid response on this.</p>
+<p>I think it is definately in order to add to the documentation for the joinAdd that this behavior exists and refer to the selectAll() statement as the solution.</p>
+<p>So I have two objects (BUSINESS and PERSON) and I join them.  Can I have all the fields as BUSINESS just as they are and the PERSON ones renamed?</p>
+<p>$BUSINESS-&gt;joinadd($PERSON);<br>
+$BUSINESS-&gt;selectAdd();<br>
+$BUSINESS-&gt;selectAs($BUSINESS,&#039;%s&#039;);<br>
+$BUSINESS-&gt;selectAs($PERSON,&#039;person_%s&#039;);</p>
+<p>I am not near the code for a little while and the suspense on if that will work is killing me.</p>
+<p>If I can help by writing a patch to joinAdd docs let me know and I will submit it.</p>
+<p>No problem on dbdataobjects2 ... I do cpmFetch <br>
+http://coppermine-gallery.net/forum/index.php?board=87.0<br>
+and have had my v 2 release on the table for months :)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

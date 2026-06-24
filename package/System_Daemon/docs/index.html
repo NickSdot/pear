@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System_Daemon Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; System &#187; <a href="package/System_Daemon/index.html">System_Daemon</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/System_Daemon/docs/index.html#package-system-system-daemon-introduction">Introduction to System_Daemon</a>
+</li>
+<li><a href="package/System_Daemon/docs/index.html#package-system-system-daemon-what-is-a-daemon">What is a Daemon?</a>
+</li>
+<li><a href="package/System_Daemon/docs/index.html#package-system-system-daemon-why-php">Why PHP?</a>
+</li>
+<li><a href="package/System_Daemon/docs/index.html#package-system-system-daemon-possible-use-cases">Possible use cases</a>
+</li>
+<li><a href="package/System_Daemon/docs/index.html#package-system-system-daemon-daemons-vs-cronjobs">What is a Daemon?</a>
+</li>
+<li><a href="package/System_Daemon/docs/index.html#package-system-system-daemon-how-it-works-internally">How it works internally</a>
+</li>
+<li><a href="package/System_Daemon/docs/index.html#package-system-system-daemon-system-daemon">System_Daemon</a>
+</li>
+<li><a href="package/System_Daemon/docs/index.html#package-system-system-daemon-examples">System_Daemon examples</a>
+<ul>
+<li><a href="package/System_Daemon/docs/index.html#package-system-system-daemon-examples-simple">System_Daemon examples</a>
+</li></ul>
+</li>
+<li><a href="package/System_Daemon/docs/index.html#package-system-system-daemon-console-action">Console action</a>
+</li>
+<li><a href="package/System_Daemon/docs/index.html#package-system-system-daemon-troubleshooting">Troubleshooting</a>
+</li></ul>
+</nav>
+<p>Allows developers to create their own daemon applications on Linux systems using nothing but PHP.</p>
+<section id="package-system-system-daemon-introduction">
+<h2>Introduction to System_Daemon</h2>
+<p>Everyone knows PHP can be used to create websites.
+  But it can also be used to create desktop applications and commandline tools.
+  And now with a class called <a href="package/System_Daemon/docs/index.html">System_Daemon</a>, you can
+  even create daemons using nothing but PHP. And did I mention it was easy?</p>
+
+ <p>This how-to was ported from:
+
+    <a href="http://kevin.vanzonneveld.net/techblog/article/create_daemons_in_php/">
+       http://kevin.vanzonneveld.net/techblog/article/create_daemons_in_php/</a>.
+     you can leave a comment there as well.</p>
+</section>
+<section id="package-system-system-daemon-what-is-a-daemon">
+<h2>What is a Daemon?</h2>
+<p>A daemon is a Linux program that run in the background, just
+  like a &#039;Service&#039; on Windows. It can perform all sorts of tasks
+  that do not require direct user input. Apache is a daemon, so
+  is MySQL. All you ever hear from them is found in somewhere in
+  <code>/var/log</code>, yet they silently power over 40%
+  of the Internet.
+
+  You reading this page, would not have been possible without them.
+  So clearly: a daemon is a powerful thing, and can be bend to do a
+  lot of different tasks.</p>
+</section>
+<section id="package-system-system-daemon-why-php">
+<h2>Why PHP?</h2>
+<p>Most daemons are written in C. It&#039;s fast &amp; robust. But if you are
+   in a LAMP oriented company like me, and you need to create a lot
+   of software in PHP anyway, it makes sense:</p><ul>
+    <li>
+     
+      Efficiency. Reuse &amp; connect existing code
+      Think of database connections, classes that create customers from
+      your CRM, etc.
+     
+    </li>
+    <li>
+     
+      Speed. Deliver new applications very fast
+      PHP has a lot of build in functions that speed up development
+      greatly.
+     
+    </li>
+    <li>
+     
+      Continuity. Everyone knows PHP (right?)
+      If you work in a small company: chances are there are more PHP 
+      programmers than there are C programmers. What if your C guy
+      abandons ship?
+     
+    </li>
+   </ul>
+</section>
+<section id="package-system-system-daemon-possible-use-cases">
+<h2>Possible use cases</h2>
+<ul>
+    <li>
+     
+        Website optimization
+        If you&#039;re running a (large) website, jobs that do heavy lifting should be taken away from the user interface and scheduled to run on the machine separately.
+     
+    </li>
+    <li>
+     
+        Log parser
+        Continually scan logfiles and import critical messages in your database.
+     
+    </li>
+    <li>
+     
+        SMS daemon
+        Read a database queue, and let your little daemon interface with your SMS provider. If it fails, it can easily try again later!
+     
+    </li>
+    <li>
+     
+        Video converter (think Youtube)
+        Scan a queue/directory for incoming video uploads. Make some system calls to ffmpeg to finally store them as Flash video files. Surely you don&#039;t want to convert video files right after the upload, blocking the user interface that long? No: the daemon will send the uploader a mail when the conversion is done, and proceed with the next scheduled upload
+     
+    </li>
+   </ul>
+</section>
+<section id="package-system-system-daemon-daemons-vs-cronjobs">
+<h2>What is a Daemon?</h2>
+<p>Some people use cronjobs for the same Possible use cases. Crontab is
+    fine but it only allows you to run a PHP file every minute or so.</p><ul>
+    <li>
+     
+        What if the previous run hasn&#039;t finished yet? Overlap can seriously damage your data &amp; cause siginificant load on your machines.
+     
+    </li>
+    <li>
+     
+        What if you can&#039;t afford to wait a minute for the cronjob to run? Maybe you need to trigger a process the moment a record is inserted?
+     
+    </li>
+    <li>
+     
+        What if you want to keep track of multiple &#039;runs&#039; and store data in memory.
+     
+    </li>
+    <li>
+     
+        What if you need to keep your application listening (on a socket for example)
+     
+    </li>
+   </ul><p>Cronjobs are a bit rude for this, they may spin out of control and
+    don&#039;t provide a framework for logging, etc. Creating a daemon would
+    offer more elegance &amp; possibilities. Let&#039;s just say: there are very
+    good reasons why a Linux OS isn&#039;t composed entirely of Cronjobs :)</p>
+</section>
+<section id="package-system-system-daemon-how-it-works-internally">
+<h2>How it works internally</h2>
+<p>Nerd alert!) When a daemon program is started, it fires up a second
+    child process, detaches it, and then the parent process dies. This is
+    called forking. Because the parent process dies, it will give the
+    console back and it will look like nothing has happened. But wait:
+    the child process is still running. Even if you close your terminal,
+    the child continues to run in memory, until it either stops, crashes
+    or is killed.
+
+    In PHP: forking can be achieved by using the Process Control Extensions.
+    Getting a good grip on it, may take some studying though.</p>
+</section>
+<section id="package-system-system-daemon-system-daemon">
+<h2>System_Daemon</h2>
+<p>Because the Process Control Extensions&#039; documentation is a bit rough,
+    I decided to figure it out once, and then wrap my knowledge and the
+    required code inside a PEAR class called: System_Daemon. And so now
+    you can just:</p><p><strong><strong>System_Daemon</strong> Usage</strong></p>
+
+   <pre><code>&lt;?php
+    require_once &quot;System/Daemon.php&quot;;                 // Include the Class
+
+    System_Daemon::setOption(&quot;appName&quot;, &quot;mydaemon&quot;);  // Minimum configuration
+    System_Daemon::start();                           // Spawn Deamon!
+?&gt;</code></pre>
+  <p>And that&#039;s all there is to it. The code after that, will run in your
+    server&#039;s background. So next, if you create a while(true) loop
+    around that code, the code will run indefinitely. Remember to build
+    in a sleep(5) to ease up on system resources.</p>
+ <p>Features &amp; Characteristics
+    Here&#039;s a grab of System_Daemon&#039;s features:</p><ul>
+    <li>
+     
+        Daemonize any PHP-CLI script
+     
+    </li>
+    <li>
+     
+        Simple syntax
+     
+    </li>
+    <li>
+     
+        Driver based Operating System detection
+     
+    </li>
+    <li>
+     
+        Unix only
+     
+    </li>
+    <li>
+     
+        Additional features for Debian / Ubuntu based systems like:
+     
+    </li>
+    <li>
+     
+        Automatically generate startup files (init.d)
+     
+    </li>
+    <li>
+     
+        Support for PEAR&#039;s Log package
+     
+    </li>
+    <li>
+     
+        Can run with PEAR (more elegance &amp; functionality) or without PEAR (for standalone packages)
+     
+    </li>
+    <li>
+     
+        Default signal handlers, but optionally reroute signals to your own handlers.
+     
+    </li>
+    <li>
+     
+        Set options like max RAM usage
+     
+    </li>
+   </ul>
+</section>
+<section id="package-system-system-daemon-examples">
+<h2>System_Daemon examples</h2>
+<p>To get the feeling how System_Daemon is used, try out the following examples.</p>
+</section>
+<section id="package-system-system-daemon-examples-simple">
+<h3>System_Daemon examples</h3>
+<p>If you run this code successfully, a daemon will be spawned
+      and stopped directly. You should find a log enty in
+      <code>/var/log/simple.log</code></p>
+
+  <pre><code>#!/usr/bin/php -q
+&lt;?php
+/**
+ * System_Daemon turns PHP-CLI scripts into daemons.
+ * 
+ * PHP version 5
+ *
+ * @category  System
+ * @package   System_Daemon
+ * @author    Kevin &lt;kevin@vanzonneveld.net&gt;
+ * @copyright 2008 Kevin van Zonneveld
+ * @license   http://www.opensource.org/licenses/bsd-license.php New BSD Licence
+ * @version   SVN: Release: $Id: simple.php 276201 2009-02-20 16:55:07Z kvz $
+ * @link      http://trac.plutonia.nl/projects/system_daemon
+ */
+
+/**
+ * System_Daemon Example Code
+ * 
+ * If you run this code successfully, a daemon will be spawned
+ * and stopped directly. You should find a log enty in 
+ * /var/log/simple.log
+ * 
+ */
+
+// Make it possible to test in source directory
+// This is for PEAR developers only
+ini_set(&#039;include_path&#039;, ini_get(&#039;include_path&#039;).&#039;:..&#039;);
+
+// Include Class
+error_reporting(E_ALL);
+require_once &quot;System/Daemon.php&quot;;
+
+// Bare minimum setup
+System_Daemon::setOption(&quot;appName&quot;, &quot;simple&quot;);
+System_Daemon::setOption(&quot;authorEmail&quot;, &quot;kevin@vanzonneveld.net&quot;);
+
+//System_Daemon::setOption(&quot;appDir&quot;, dirname(__FILE__));
+System_Daemon::log(System_Daemon::LOG_INFO, &quot;Daemon not yet started so &quot;.
+    &quot;this will be written on-screen&quot;);
+
+// Spawn Deamon!
+System_Daemon::start();
+System_Daemon::log(System_Daemon::LOG_INFO, &quot;Daemon: &#039;&quot;.
+    System_Daemon::getOption(&quot;appName&quot;).
+    &quot;&#039; spawned! This will be written to &quot;.
+    System_Daemon::getOption(&quot;logLocation&quot;));
+
+// Your normal PHP code goes here. Only the code will run in the background
+// so you can close your terminal session, and the application will
+// still run.
+
+System_Daemon::stop();
+?&gt;</code></pre>
+</section>
+<section id="package-system-system-daemon-console-action">
+<h2>Console action</h2>
+<p>Now that we&#039;ve created an example daemon, it&#039;s time to fire
+    it up! I&#039;m going to assume the name of your daemon is logparser.
+    This can be changed with the statement:</p><pre><code>&lt;?php
+    System_Daemon::setOption(&quot;appName&quot;, &quot;logparser&quot;)
+?&gt;</code></pre><p>But the name of the daemon is very important because it is also
+    used in filenames (like the logfile).</p>
+<p>Execute
+
+    Just make your daemon script executable, and then execute it:</p><pre>
+    chmod a+x ./logparser.php
+    ./logparser.php</pre>
+
+
+<p>Check
+
+    Your daemon has no way of communicating through your console, so check for messages in:</p><pre>
+    tail /var/log/logparser.log</pre>
+<p>And see if it&#039;s still running:</p><pre>
+    ps uf -C logparser.php</pre>
+
+
+
+<p>Kill
+
+    Without the start/stop files (see below for howto), you need to:</p><pre>
+    killall -9 logparser.php</pre>
+<p>Autch.. Let&#039;s work on those start / stop files, right?</p>
+<p>Start / Stop files (Debian &amp; Ubuntu only)
+
+    Real daemons have an init.d file. Remember you can restart Apache with the following statement?</p><pre>
+    /etc/init.d/apache2 restart</pre>
+<p>That&#039;s a lot better than killing. So you should be able to control your own daemon like this as well:</p><pre>
+    /etc/init.d/logparser stop
+    /etc/init.d/logparser start</pre>
+<p>Well with System_Daemon you can write autostartup files using the writeAutoRun() method, look:</p><pre><code>&lt;?php
+    $path = System_Daemon::writeAutoRun();
+?&gt;</code></pre><p>On success, this will return the path to the autostartup file: /etc/init.d/logparser, and you&#039;re good to go!</p>
+<p>Run on boot
+
+        Surely you want your daemon to run at system boot..  So on Debian &amp; Ubuntu you could type:</p><pre>
+        update-rc.d logparser defaults</pre>
+<p>Done your daemon now starts every time your server boots. Cancel it with:</p><pre>
+        update-rc.d -f logparser remove</pre>
+</section>
+<section id="package-system-system-daemon-troubleshooting">
+<h2>Troubleshooting</h2>
+<p>Here are some issues you may encounter down the road.</p><ul>
+    <li>
+     
+      Connect to MySQL after you start() the daemon.
+      Otherwise only the parent process will have a MySQL connection, and 
+      since that dies.. It&#039;s lost and you will get a &#039;MySQL has gone away&#039;
+      error.
+     
+    </li>
+    <li>
+     
+      Error handling
+      Good error handling is imperative. Daemons are often mission critical 
+      applications and you don&#039;t want an uncatched error to bring it to it&#039;s
+      knees.
+
+       <ul>
+        <li>
+         
+            Reconnect to MySQL
+            A connection may be interrupted. Think about network downtime or
+            lock-ups when your database server makes backups. Whatever the
+            cause: You don&#039;t want your daemon to die for this, let it try
+            again later.
+         
+        </li>
+        <li>
+          
+            Write your own php error handler
+            It should forward all the PHP errors to the log() method, so they end 
+            up in your logfile. Otherwise it&#039;s very hard to spot errors, since the
+            daemon has no way of writing to your console anymore! See
+            set_error_handler.
+          
+         </li>
+       </ul>
+     
+    </li>
+    <li>
+     
+        Monit
+        Monit is a standalone program that can kickstart any daemon,
+        based on your parameters. Should your daemon fail, monit will
+        mail you and try to restart it.
+     
+    </li>
+   </ul>
+ 
+
+ <p>I know I&#039;m saying MySQL a lot, but you can obviously replace that
+  with Oracle, MSSQL, PostgreSQL, etc.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

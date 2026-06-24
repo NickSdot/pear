@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5182</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Logging &#187; <a href="package/Log/index.html">Log</a> &#187; Bug #5182</h1>
+<p>Return new instance without including the handler class</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5182</th><td>Return new instance without including the handler class</td></tr>
+<tr><th>Submitted</th><td>2005-08-23 10:58 UTC</td></tr>
+<tr><th>From</th><td>o dot persson at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>jon</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Log/index.html">Log</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-23 10:58 UTC] o dot persson at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I believe it&#039;s unnecessary to try include the $classfile before checking if the class already exists. For internal handlers it makes sense since these will always be included by this function -- but not for custom handlers.</p>
+<p>Using a custom handler which you&#039;ve manually already loaded into memory, this function will try to load the file Log/handler.php.</p>
+<p>This patch doesn&#039;t change anything more than this. What I&#039;d also rather see is the check for the class_exists removed below this. Isn&#039;t it a fatal error if the log handler can&#039;t be loaded?</p>
+<p>Test script:<br>
+---------------<br>
+Index: ../components/PEAR/Log.php<br>
+===================================================================<br>
+--- ../components/PEAR/Log.php  (revision 23)<br>
++++ ../components/PEAR/Log.php  (working copy)<br>
+@@ -117,9 +117,16 @@<br>
+         $classfile = &#039;Log/&#039; . $handler . &#039;.php&#039;;</p>
+<p>/*<br>
++         * The caller may have already included their own version of the named<br>
++         * class. Check first if the class exists.<br>
++         */<br>
++        if (class_exists($class)) {<br>
++            return new $class($name, $ident, $conf, $level);<br>
++        }<br>
++<br>
++        /*<br>
+          * Attempt to include our version of the named class, but don&#039;t treat<br>
+-         * a failure as fatal.  The caller may have already included their own<br>
+-         * version of the named class.<br>
++         * a failure as fatal.<br>
+          */<br>
+         @include_once $classfile;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

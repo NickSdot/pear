@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6546</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_Archive/index.html">File_Archive</a> &#187; Bug #6546</h1>
+<p>File added twice</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-21 17:17 UTC</td></tr>
+<tr><th>From</th><td>david at olate dot co dot uk</td></tr>
+<tr><th>Assigned</th><td>pfischer</td></tr>
+<tr><th>Status</th><td>Assigned</td></tr>
+<tr><th>Package</th><td><a href="package/File_Archive/index.html">File_Archive</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Red Hat Enterprise Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-21 17:17 UTC] david at olate dot co dot uk</h3>
+<p>Description:<br>
+------------<br>
+If you archive a directory, the first file is added to the archive twice.</p>
+<p>Test script:<br>
+---------------<br>
+Directory /home/frame4net/public_html/downloads/cart-2 contains:</p>
+<p>-rw-r--r--  1 apache    apache    1024 Jan 21 12:02 1mb.test-file</p>
+<p>&lt;?php<br>
+$tmpdir = &#039;/home/frame4net/public_html/downloads/cart-2&#039;;<br>
+File_Archive::extract($tmpdir, File_Archive::toArchive(&#039;Cart-2.zip&#039;, File_Archive::toOutput()));<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+The output Cart-2.zip file should only contain 1 instance of 1mb.test-file</p>
+<p>Actual result:<br>
+--------------<br>
+There are 2 instances of 1mb.test-file both exactly the same.</p>
+</section>
+<section>
+<h3>[2006-04-28 18:25 UTC] bryn at mrpath dot com</h3>
+<p>We&#039;re seeing this not just for the first file. We get 3 copies of files that are in subfolders when we pass file_archive a folder to zip</p>
+<p>We are zipping a directory tree that looks like this:</p>
+<p>folder/<br>
+  file1.jpg<br>
+  file2.jpg<br>
+  SubFolder1/<br>
+    file3.jpg<br>
+    file4.jpg</p>
+<p>so the zip ends up containing</p>
+<p>file1.jpg<br>
+file2.jpg<br>
+file3.jpg<br>
+file3.jpg<br>
+file3.jpg<br>
+file4.jpg<br>
+file4.jpg<br>
+file4.jpg</p>
+</section>
+<section>
+<h3>[2006-06-05 07:22 UTC] dsanders at baselinesolutions dot com dot au</h3>
+<p>Perhaps a patch is in order...</p>
+<p>@@ -101,6 +101,8 @@ class File_Archive_Reader_Directory exte<br>
+             }<br>
+         }</p>
+<p>+        $this-&gt;source = null;<br>
++<br>
+         while ($this-&gt;source === null ||<br>
+               ($error = $this-&gt;source-&gt;next()) !== true) {</p>
+</section>
+<section>
+<h3>[2006-06-05 07:24 UTC] dsanders at baselinesolutions dot com dot au</h3>
+<p>PS. That file was File/Archive/Reader/Directory.php</p>
+</section>
+<section>
+<h3>[2006-07-24 11:02 UTC] dsanders at baselinesolutions dot com dot au</h3>
+<p>Actually that diff is incorrect, I didn&#039;t understand how the process of adding files worked.  I think the following patch takes care of this bug:</p>
+<p>@@ -101,7 +101,9 @@ class File_Archive_Reader_Directory exte<br>
+             }<br>
+         }</p>
+<p>+        $file = null;<br>
+         while ($this-&gt;source === null ||<br>
++               $file == &#039;.&#039; || $file == &#039;..&#039; ||<br>
+               ($error = $this-&gt;source-&gt;next()) !== true) {</p>
+<p>if ($this-&gt;source !== null) {</p>
+<p>The problem is that the dot and dotdot directories don&#039;t always appear first.  Run ls -Ul on a directory (U lists the entries in directory order, which I presume is the same as readdir).  When the dot and dotdot entries are skipped, the next() in the while condition is called again, causing the file or directory to be duplicated in the archive.</p>
+</section>
+<section>
+<h3>[2007-01-08 19:08 UTC] pfischer at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>I couldn&#039;t reproduce it in SVN I think Vincent fixed it but forgot to close this bug.</p>
+</section>
+<section>
+<h3>[2007-01-17 02:27 UTC] pfischer at php dot net</h3>
+<p>I&#039;ll try to find a better solution since seems the patch only works in some cases.</p>
+</section>
+<section>
+<h3>[2007-01-17 02:29 UTC] pfischer at php dot net</h3>
+<p>Here&#039;s a copy of a mail I got from David Sanders, the reason to have it here is for feedback.</p>
+<p>====<br>
+Doing an ls -lUa should show you the order in which the filesystem stores the files which is the same order as readdir()</p>
+<p>Here&#039;s an example:</p>
+<p>[dave@mozart contacts]$ ls -lUa<br>
+total 20<br>
+-rw-rw-r--  1 dave dave  172 Jan 17 11:48 prospective.csv<br>
+drwxrwxr-x  3 dave dave 4096 Jan 16 23:41 ..<br>
+drwxr-xr-x  2 dave dave 4096 Jan 17 11:48 .<br>
+-rw-r--r--  1 dave dave  150 Jan 17 11:48 current.csv<br>
+-rw-r--r--  1 dave dave  146 Jan 17 11:48 assessors.csv</p>
+<p>Note that &#039;.&#039; and &#039;..&#039; do not come first.  I&#039;ve attached the zip file that was created from this directory.</p>
+<p>The files that are duplicated are the ones before &#039;.&#039; and &#039;..&#039;, that is prospective.csv which is duplicated twice due to both &#039;.&#039; and &#039;..&#039; following it straight after.<br>
+====</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

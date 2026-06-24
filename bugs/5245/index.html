@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5245</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #5245</h1>
+<p>Some fixes to work hierselect on MAC IE5.2.3</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-30 18:44 UTC</td></tr>
+<tr><th>From</th><td>sotela at sotela dot com</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>MAC</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-30 18:44 UTC] sotela at sotela dot com</h3>
+<p>Description:<br>
+------------<br>
+hello !</p>
+<p>i have hounded that existing hierselect doesn&#039;t works on MAC Iòåóêòóå Explorer 5.2.3</p>
+<p>here is working part of code:<br>
+                $this-&gt;_js .= &lt;&lt;&lt;JAVASCRIPT<br>
+function Array_shift() {<br>
+	var A_s = 0<br>
+	var response = this[0]<br>
+	for (A_s = 0; A_s &lt; this.length-1; A_s++) {<br>
+		this[A_s] = this[A_s + 1];<br>
+	}<br>
+	this.length--;<br>
+	return response;<br>
+}</p>
+<p>if (typeof Array.prototype.shift == &quot;undefined&quot;) {<br>
+	Array.prototype.shift = Array_shift<br>
+}</p>
+<p>function _hs_findOptions(ary, keys)<br>
+{<br>
+    var key = keys.shift();<br>
+// IE5.2MACFIX<br>
+//    if (!key in ary) {<br>
+    if (!ary[key]) {<br>
+          return {};<br>
+    } else if (0 == keys.length) {<br>
+        return ary[key];<br>
+    } else {<br>
+        return _hs_findOptions(ary[key], keys);<br>
+    }<br>
+}</p>
+<p>function _hs_findSelect(form, groupName, selectIndex)<br>
+{<br>
+// IE5.2MACFIX<br>
+//    if (groupName+&#039;[&#039;+ selectIndex +&#039;]&#039; in form) {<br>
+	if(form[groupName+&#039;[&#039;+ selectIndex +&#039;]&#039;]){<br>
+        return form[groupName+&#039;[&#039;+ selectIndex +&#039;]&#039;]; <br>
+    } else {<br>
+        return form[groupName+&#039;[&#039;+ selectIndex +&#039;][]&#039;]; <br>
+    }<br>
+}</p>
+<p>function _hs_replaceOptions(ctl, optionList)<br>
+{<br>
+    var j = 0;<br>
+    ctl.options.length = 0;<br>
+    for (i in optionList) {<br>
+        ctl.options[j++] = new Option(optionList[i], i, false, false);<br>
+    }<br>
+}</p>
+<p>function _hs_setValue(ctl, value)<br>
+{<br>
+    var testValue = {};<br>
+// IE5.2MACFIX<br>
+//    if (value instanceof Array) {<br>
+	if(typeof(value)==&#039;array&#039; || typeof(value)==&#039;object&#039;){<br>
+        for (var i = 0; i &lt; value.length; i++) {<br>
+            testValue[value[i]] = true;<br>
+        }<br>
+    } else {<br>
+        testValue[value] = true;<br>
+    }<br>
+    for (var i = 0; i &lt; ctl.options.length; i++) {<br>
+// IE5.2MACFIX<br>
+//        if (ctl.options[i].value in testValue) {<br>
+        if (testValue[ctl.options[i].value]) {<br>
+            ctl.options[i].selected = true;<br>
+        }<br>
+    }<br>
+}</p>
+<p>function _hs_swapOptions(form, groupName, selectIndex)<br>
+{<br>
+    var hsValue = [];<br>
+    for (var i = 0; i &lt;= selectIndex; i++) {<br>
+        hsValue[i] = _hs_findSelect(form, groupName, i).value;<br>
+    }</p>
+<p>_hs_replaceOptions(_hs_findSelect(form, groupName, selectIndex + 1), <br>
+                       _hs_findOptions(_hs_options[groupName][selectIndex], hsValue));<br>
+    if (selectIndex + 1 &lt; _hs_options[groupName].length) {<br>
+        _hs_swapOptions(form, groupName, selectIndex + 1);<br>
+    }<br>
+}</p>
+<p>function instanceOf(object, constructorFunction) {<br>
+  while (object != null) {<br>
+    if (object == constructorFunction.prototype)<br>
+     {return true}<br>
+	 object = object.__proto__;<br>
+  }<br>
+  return false;<br>
+}</p>
+<p>function _hs_onReset(form, groupNames)<br>
+{<br>
+    for (var i = 0; i &lt; groupNames.length; i++) {<br>
+        try {<br>
+            for (var j = 0; j &lt;= _hs_options[groupNames[i]].length; j++) {<br>
+                _hs_setValue(_hs_findSelect(form, groupNames[i], j), _hs_defaults[groupNames[i]][j]);<br>
+                if (j &lt; _hs_options[groupNames[i]].length) {<br>
+                    _hs_replaceOptions(_hs_findSelect(form, groupNames[i], j + 1), <br>
+                                       _hs_findOptions(_hs_options[groupNames[i]][j], _hs_defaults[groupNames[i]].slice(0, j + 1)));<br>
+                }<br>
+            }<br>
+        } catch (e) {<br>
+// IE5.2MACFIX<br>
+//            if (!(e instanceof TypeError)) {<br>
+			if(instanceOf(e, TypeError)){<br>
+                throw e;<br>
+            }<br>
+        }<br>
+    }<br>
+}</p>
+<p>function _hs_setupOnReset(form, groupNames)<br>
+{<br>
+    setTimeout(function() { _hs_onReset(form, groupNames); }, 25);<br>
+}</p>
+<p>function _hs_onReload()<br>
+{<br>
+    var ctl;<br>
+    for (var i = 0; i &lt; document.forms.length; i++) {<br>
+        for (var j in _hs_defaults) {<br>
+            if (ctl = _hs_findSelect(document.forms[i], j, 0)) {<br>
+                for (var k = 0; k &lt; _hs_defaults[j].length; k++) {<br>
+                    _hs_setValue(_hs_findSelect(document.forms[i], j, k), _hs_defaults[j][k]);<br>
+                }<br>
+            }<br>
+        }<br>
+    }</p>
+<p>if (_hs_prevOnload) {<br>
+        _hs_prevOnload();<br>
+    }<br>
+}</p>
+<p>var _hs_prevOnload = null;<br>
+if (window.onload) {<br>
+    _hs_prevOnload = window.onload;<br>
+}<br>
+window.onload = _hs_onReload;</p>
+<p>var _hs_options = {};<br>
+var _hs_defaults = {};</p>
+<p>JAVASCRIPT;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

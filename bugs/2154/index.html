@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2154</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth_SASL/index.html">Auth_SASL</a> &#187; Bug #2154</h1>
+<p>&quot;realm&quot; isn&#039;t contained in challange, DigestMD5 doesn&#039;t work on Windows</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-08-18 05:20 UTC</td></tr>
+<tr><th>From</th><td>kmizuno9999 at yahoo dot co dot jp</td></tr>
+<tr><th>Assigned</th><td>amistry</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Auth_SASL/index.html">Auth_SASL</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.7</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-18 05:20 UTC] kmizuno9999 at yahoo dot co dot jp</h3>
+<p>Description:<br>
+------------<br>
+When the server&#039;s response &quot;realm&quot; isn&#039;t contained in challange, Auth_SASL_DigestMD5() doesn&#039;t work on Windows platforms.</p>
+<p>It should not use posix_uname().<br>
+This function is not available on Windows platforms.</p>
+<p>DigestMD5.php line 129<br>
+// Realm<br>
+if (empty($tokens[&#039;realm&#039;])) {<br>
+    $uname = posix_uname(); &lt;--- this function is problem.<br>
+             ^^^^^^^^^^^^^<br>
+    $tokens[&#039;realm&#039;] = $uname[&#039;nodename&#039;];<br>
+}</p>
+<p>e.g. Communigate PRO&#039;s challange doesn&#039;t contain &#039;realm&#039;.</p>
+</section>
+<section>
+<h3>[2004-09-16 01:31 UTC] miyabe at port4 dot info</h3>
+<p>Why don&#039;t we omit the realm directive when the challenge did not contain realm?<br>
+See RFC 2831 2.1.2</p>
+<p>Here&#039;s patch which is mixed with a change for Bug#2143:</p>
+<p>--- DigestMD5.php.orig  2003-09-12 03:53:56.000000000 +0900<br>
++++ DigestMD5.php       2004-09-16 09:57:50.000000000 +0900<br>
+@@ -32,7 +32,7 @@<br>
+ // | Author: Richard Heyes &lt;richard@php.net&gt;                               |<br>
+ // +-----------------------------------------------------------------------+<br>
+ //<br>
+-// $Id: DigestMD5.php,v 1.7 2003/09/11 18:53:56 mbretter Exp $<br>
++// $Id: DigestMD5.php,v 1.6 2003/02/21 16:07:17 mj Exp $</p>
+<p>/**<br>
+ * Implmentation of DIGEST-MD5 SASL mechanism<br>
+@@ -74,7 +74,11 @@<br>
+             $digest_uri     = sprintf(&#039;%s/%s&#039;, $service, $hostname);<br>
+             $response_value = $this-&gt;_getResponseValue($authcid, $pass, $challe<br>
+nge[&#039;realm&#039;], $challenge[&#039;nonce&#039;], $cnonce, $digest_uri, $authzid);</p>
+<p>-            return sprintf(&#039;username=&quot;%s&quot;,realm=&quot;%s&quot;&#039; . $authzid_string  . &#039;,no<br>
+nce=&quot;%s&quot;,cnonce=&quot;%s&quot;,nc=&quot;00000001&quot;,qop=auth,digest-uri=&quot;%s&quot;,response=%s,%d&#039;, $au<br>
+thcid, $challenge[&#039;realm&#039;], $challenge[&#039;nonce&#039;], $cnonce, $digest_uri, $response<br>
+_value, $challenge[&#039;maxbuf&#039;]);<br>
++            if ($challenge[&#039;realm&#039;]) {<br>
++                return sprintf(&#039;username=&quot;%s&quot;,realm=&quot;%s&quot;&#039; . $authzid_string  .<br>
+&#039;,nonce=&quot;%s&quot;,cnonce=&quot;%s&quot;,nc=00000001,qop=auth,digest-uri=&quot;%s&quot;,response=%s,maxbuf<br>
+=%d&#039;, $authcid, $challenge[&#039;realm&#039;], $challenge[&#039;nonce&#039;], $cnonce, $digest_uri,<br>
+$response_value, $challenge[&#039;maxbuf&#039;]);<br>
++            } else {<br>
++                return sprintf(&#039;username=&quot;%s&quot;&#039; . $authzid_string  . &#039;,nonce=&quot;%s<br>
+&quot;,cnonce=&quot;%s&quot;,nc=00000001,qop=auth,digest-uri=&quot;%s&quot;,response=%s,maxbuf=%d&#039;, $auth<br>
+cid, $challenge[&#039;nonce&#039;], $cnonce, $digest_uri, $response_value, $challenge[&#039;max<br>
+buf&#039;]);<br>
++            }<br>
+         } else {<br>
+             return PEAR::raiseError(&#039;Invalid digest challenge&#039;);<br>
+         }<br>
+@@ -125,8 +129,7 @@<br>
+         */<br>
+         // Realm<br>
+         if (empty($tokens[&#039;realm&#039;])) {<br>
+-            $uname = posix_uname();<br>
+-            $tokens[&#039;realm&#039;] = $uname[&#039;nodename&#039;];<br>
++            $tokens[&#039;realm&#039;] = &#039;&#039;;<br>
+         }</p>
+<p>// Maxbuf</p>
+</section>
+<section>
+<h3>[2006-03-22 05:20 UTC] amistry at php dot net</h3>
+<p>damian is inactive.  I&#039;ve committed the patch to the CVS.  Please verify that it is correct.  Thank you.</p>
+</section>
+<section>
+<h3>[2006-05-21 07:12 UTC] amistry at php dot net</h3>
+<p>Thank you for your bug report. This issue has been fixed<br>
+in the latest released version of the package, which you can download at<br>
+http://pear.php.net/get/Auth_SASL</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

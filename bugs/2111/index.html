@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2111</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #2111</h1>
+<p>Faulty Message from freeResults() in sybase.php</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-08-11 13:25 UTC</td></tr>
+<tr><th>From</th><td>phopfgartner at tin dot it</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>Debian testing</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-11 13:25 UTC] phopfgartner at tin dot it</h3>
+<p>Description:<br>
+------------<br>
+When freeing a DB::result, somtimes a notice is generated.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+require_once &#039;DB.php&#039;;</p>
+<p>error_reporting(E_ALL);</p>
+<p>$host = &#039;&#039;;<br>
+$dbname = &#039;&#039;;<br>
+$login = &#039;&#039;;<br>
+$passwd = &#039;&#039;;</p>
+<p>$conn_str = sprintf(&quot;sybase://%s:%s@%s/%s&quot;, $login, $passwd, $host, $dbname);</p>
+<p>$db = DB::connect($conn_str);</p>
+<p>// Create temp table and fill it<br>
+$db-&gt;query(&#039;CREATE TABLE #test (id INT, name CHAR(10));&#039;);<br>
+$db-&gt;query(&quot;INSERT #test (id, name) VALUES (1, &#039;one&#039;)&quot;);</p>
+<p>$query = &#039;SELECT id FROM #test WHERE id=1&#039;;</p>
+<p>$result =&amp; $db-&gt;query($query);<br>
+$qrow = $result-&gt;fetchRow();<br>
+$result-&gt;free();<br>
+?&gt;</p>
+<p>generates this message:<br>
+Notice: Undefined property: num_rows in /usr/share/pear/DB/sybase.php on line 375</p>
+<p>This ugly patch quit the message:</p>
+<p>--- sybase.php.old      2004-08-11 15:11:26.000000000 +0200<br>
++++ sybase.php  2004-08-11 15:12:52.000000000 +0200<br>
+@@ -371,7 +371,9 @@<br>
+      */<br>
+     function freeResult($result)<br>
+     {<br>
+-        unset($this-&gt;num_rows[(int)$result]);<br>
++        if (isset($this-&gt;num_rows[(int)$result])){<br>
++            unset($this-&gt;num_rows[(int)$result]);<br>
++        }<br>
+         return @sybase_free_result($result);<br>
+     }</p>
+<p>Expected result:<br>
+----------------<br>
+Notice: Undefined property: num_rows in /usr/share/pear/DB/sybase.php on line 375</p>
+</section>
+<section>
+<h3>[2004-08-30 16:02 UTC] phopfgartner at tin dot it</h3>
+<p>This code works on PHP on Windows. I changed my FreeTDS installation fro 0.61 to 0.62.4 and the code turned out to work flawlessly also on Linux. Summing up: This seems to be caused by bugs in FreeTDS 0.61 (with the FreeTDS upgrade a lot of problems with the Python Sybase driver and other software went away, too)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

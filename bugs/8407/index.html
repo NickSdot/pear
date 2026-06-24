@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8407</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth/index.html">Auth</a> &#187; Bug #8407</h1>
+<p>Database containers don&#039;t quote table/field names</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-08-10 03:43 UTC</td></tr>
+<tr><th>From</th><td>pear at adamharvey dot name</td></tr>
+<tr><th>Assigned</th><td>aashley</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Auth/index.html">Auth</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-10 03:43 UTC] pear at adamharvey dot name</h3>
+<p>Description:<br>
+------------<br>
+The four database containers that exist in Auth (DB, DBLite, MDB and MDB2) currently use the table and field names as is without any quoting. Furthermore, the documentation at present doesn&#039;t actually inform the developer that the table and field names should be quoted.</p>
+<p>The linked patch quotes identifiers before using them in SQL queries, thereby avoiding any possibility of SQL injection. (Any injection attack would still require some seriously sloppy code on the part of developer using Auth, but this closes the door fairly decisively.)</p>
+<p>This patch *will* break BC for the case where Auth users are already quoting identifiers before passing them to the container. The behaviour of the db_fields option has also changed somewhat, as the case where a string &quot;, field_a, field_b&quot; was given for this option will now break. Note that it wouldn&#039;t have worked without the preceding comma anyway; the preferred way of doing this has always been array(&#039;field_a&#039;, &#039;field_b&#039;) to my mind.</p>
+<p>In short, this is probably a candidate for Auth 2 rather than 1.x.</p>
+<p>Test script:<br>
+---------------<br>
+Patch is at: http://www.adamharvey.name/patches/Auth-container-quoting.patch</p>
+</section>
+<section>
+<h3>[2006-08-11 01:15 UTC] aashley at php dot net</h3>
+<p>Patch merged to CVS, rolling RC to get feedback from users.</p>
+</section>
+<section>
+<h3>[2006-08-16 23:23 UTC] ohm at morishima dot net</h3>
+<p>The simplest example below, just like in the Introduction - Auth tutorial in the documentation:</p>
+<p>&lt;?php<br>
+require_once &quot;Auth.php&quot;;</p>
+<p>$dsn = &quot;pgsql://user@localhost/database&quot;;<br>
+$a = new Auth(&quot;DB&quot;, $dsn);<br>
+$a-&gt;start();<br>
+if ($a-&gt;checkAuth()) {<br>
+  echo &quot;login completed.\n&quot;;<br>
+} else {<br>
+  echo &quot;login incorrect.\n&quot;;<br>
+}<br>
+?&gt;</p>
+<p>does not work.  PostgreSQL complains that</p>
+<p>ERROR:  zero-length delimited identifier at or near &quot;&quot;&quot;&quot; at character 32</p>
+<p>and the SQL in question was:</p>
+<p>SELECT &quot;username&quot;, &quot;password&quot;, &quot;&quot; FROM &quot;auth&quot; WHERE &quot;username&quot; = &#039;testuser&#039;</p>
+<p>I didn&#039;t test on MySQL but it&#039;s likely similar error will be produced.</p>
+<p>This is because the default value of options[&#039;db_fields&#039;] is &#039;&#039; (that is, not &#039;unset&#039;) and the patched _quoteDBFields() just checks the value is set or not, and quoteIdentifier($str) (DB/common.php) does not check $str is empty string or not.</p>
+<p>Quick fix, add 2 lines to _quoteDBFields():</p>
+<p>function _quoteDBFields()<br>
+    {<br>
+        if (isset($this-&gt;options[&#039;db_fields&#039;])) {<br>
+            if (is_array($this-&gt;options[&#039;db_fields&#039;])) {<br>
+                $fields = array();<br>
+                foreach ($this-&gt;options[&#039;db_fields&#039;] as $field) {<br>
+                    if (!$field) continue;  // &lt;- added<br>
+                    $fields[] = $this-&gt;db-&gt;quoteIdentifier($field);<br>
+                }<br>
+                return implode(&#039;, &#039;, $fields);<br>
+            } else {<br>
+                if (!$this-&gt;options[&#039;db_fields&#039;]) return &#039;&#039;;      // &lt;- added<br>
+                return $this-&gt;db-&gt;quoteIdentifier($this-&gt;options[&#039;db_fields&#039;]);<br>
+            }<br>
+        }</p>
+<p>return &#039;&#039;;<br>
+    }</p>
+</section>
+<section>
+<h3>[2006-08-17 01:04 UTC] aashley at php dot net</h3>
+<p>Thanx for catching that Akitoshi, fix in CVS.</p>
+</section>
+<section>
+<h3>[2006-08-21 02:20 UTC] aashley at php dot net</h3>
+<p>Thank you for your bug report. This issue has been fixed<br>
+in the latest released version of the package, which you can download at<br>
+http://pear.php.net/get/Auth</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2515</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_QueryTool/index.html">DB_QueryTool</a> &#187; Bug #2515</h1>
+<p>Adding more than one Left-Join doesn´t work properly</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-10-12 15:21 UTC</td></tr>
+<tr><th>From</th><td>skopek at mediatac dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_QueryTool/index.html">DB_QueryTool</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-12 15:21 UTC] skopek at mediatac dot com</h3>
+<p>Description:<br>
+------------<br>
+Version:<br>
+DB_QueryTool 0.10.1, PHP 4.3.6, MySQL 4.0.20a-nt</p>
+<p>There is a problem with adding multiple LEFT-joins (or RIGHT-Joins) using DB_QueryTool. The resulting SQL-Statement doesn´t work properly.<br>
+Adding multiple Joins (not LEFT or RIGHT, but with WHERE!) are working perfectly instead.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$qt = new DB_QueryTool($aDSN);<br>
+//Product-Table<br>
+$qt-&gt;table = &quot;product_data&quot;;<br>
+$qt-&gt;primaryCol = &quot;id&quot;;<br>
+//add Joins on tables manufacturer_data and product_groups<br>
+$qt-&gt;addJoin(&quot;manufacturer_data&quot;, &quot;product_data.manufacturer_id=manufacturer_data.id&quot;, &quot;left&quot;);<br>
+$qt-&gt;addJoin(&quot;product_groups&quot;, &quot;product_data.product_groups_id=product_groups.id&quot;, &quot;left&quot;);<br>
+echo $qt-&gt;getQueryString();</p>
+<p>Expected result:<br>
+----------------<br>
+SELECT manufacturer_data.id AS &quot;_data_id&quot;, manufacturer_data.name AS &quot;_data_name&quot;, manufacturer_data.description AS &quot;_data_description&quot;, manufacturer_data.notice AS &quot;_data_notice&quot;, manufacturer_data._deleted AS &quot;_data__deleted&quot;, manufacturer_data._lastmodified AS &quot;_data__lastmodified&quot;, manufacturer_data._datecreated AS &quot;_data__datecreated&quot;, product_groups.id AS &quot;_groups_id&quot;, product_groups.name AS &quot;_groups_name&quot;, product_groups.description AS &quot;_groups_description&quot;, product_groups._deleted AS &quot;_groups__deleted&quot;, product_groups._lastmodified AS &quot;_groups__lastmodified&quot;, product_groups._datecreated AS &quot;_groups__datecreated&quot;, product_data.id AS &quot;id&quot;, product_data.name AS &quot;name&quot;, product_data.description AS &quot;description&quot;, product_data.buy_price AS &quot;buy_price&quot;, product_data.sell_price AS &quot;sell_price&quot;, product_data.weight AS &quot;weight&quot;, product_data.bulkgood AS &quot;bulkgood&quot;, product_data.width AS &quot;width&quot;, product_data.height AS &quot;height&quot;, product_data.length AS &quot;length&quot;, product_data.manufacturer_id AS &quot;manufacturer_id&quot;, product_data.tax_class_id AS &quot;tax_class_id&quot;, product_data.product_groups_id AS &quot;product_groups_id&quot;, product_data.product_images_id AS &quot;product_images_id&quot;, product_data.is_active AS &quot;is_active&quot;, product_data._deleted AS &quot;_deleted&quot;, product_data._lastmodified AS &quot;_lastmodified&quot;, product_data._datecreated AS &quot;_datecreated&quot;<br>
+FROM product_data<br>
+LEFT JOIN manufacturer_data ON product_data.manufacturer_id = manufacturer_data.id<br>
+LEFT JOIN product_groups ON product_data.product_groups_id = product_groups.id<br>
+LIMIT 0 , 30</p>
+<p>Actual result:<br>
+--------------<br>
+SELECT manufacturer_data.id AS &quot;_data_id&quot;,manufacturer_data.name AS &quot;_data_name&quot;,manufacturer_data.description AS &quot;_data_description&quot;,manufacturer_data.notice AS &quot;_data_notice&quot;,manufacturer_data._deleted AS &quot;_data__deleted&quot;,manufacturer_data._lastmodified AS &quot;_data__lastmodified&quot;,manufacturer_data._datecreated AS &quot;_data__datecreated&quot;,product_groups.id AS &quot;_groups_id&quot;,product_groups.name AS &quot;_groups_name&quot;,product_groups.description AS &quot;_groups_description&quot;,product_groups._deleted AS &quot;_groups__deleted&quot;,product_groups._lastmodified AS &quot;_groups__lastmodified&quot;,product_groups._datecreated AS &quot;_groups__datecreated&quot;,product_data.id AS &quot;id&quot;,product_data.name AS &quot;name&quot;,product_data.description AS &quot;description&quot;,product_data.buy_price AS &quot;buy_price&quot;,product_data.sell_price AS &quot;sell_price&quot;,product_data.weight AS &quot;weight&quot;,product_data.bulkgood AS &quot;bulkgood&quot;,product_data.width AS &quot;width&quot;,product_data.height AS &quot;height&quot;,product_data.length AS &quot;length&quot;,product_data.manufacturer_id AS &quot;manufacturer_id&quot;,product_data.tax_class_id AS &quot;tax_class_id&quot;,product_data.product_groups_id AS &quot;product_groups_id&quot;,product_data.product_images_id AS &quot;product_images_id&quot;,product_data.is_active AS &quot;is_active&quot;,product_data._deleted AS &quot;_deleted&quot;,product_data._lastmodified AS &quot;_lastmodified&quot;,product_data._datecreated AS &quot;_datecreated&quot; FROM product_data LEFT JOIN manufacturer_data ON product_data.manufacturer_id=manufacturer_data.id AND product_data.product_groups_id=product_groups.id</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

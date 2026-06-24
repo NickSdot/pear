@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7469</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #7469</h1>
+<p>After a failed SOAP-call, further calls fail too</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-04-24 08:17 UTC</td></tr>
+<tr><th>From</th><td>programmieren at compusmile dot net</td></tr>
+<tr><th>Assigned</th><td>yunosh</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Debian Sarge + backports PHP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-24 08:17 UTC] programmieren at compusmile dot net</h3>
+<p>Description:<br>
+------------<br>
+For session handling it may be neccessary, that a script continues to send SOAP-Requests although a previous request may failed. I use a soap proxy to check a session identifier. If that fails, a new session is created.</p>
+<p>If the first call fails, all further calls through SOAP fail too. This is because in Client::call, the return status of a request is determined by checking the presence of a _soap_transport-&gt;fault object. Since, in subsequent calls, the _soap_transport object is not re-created, the _soap_transport-&gt;fault object is not reset for new requests.</p>
+<p>So, every request after a failed one will fail too, since Client::call checks the _soap_transport-&gt;fault object which may be present due to an earlier error.</p>
+<p>As a workaround, I set the fault-Object of my transport-class (HTTP) to null on calls to HTTP::send.</p>
+<p>Test script:<br>
+---------------<br>
+reproduce BUG:<br>
+$soapWSDL = new SOAP_WSDL(&#039;http://www.example.com/soap_server.php?wsdl&#039;);<br>
+$soapProxy =&amp; $soapWSDL-&gt;getProxy();<br>
+$result = $soapProxy-&gt;checkSession($sessionID);<br>
+$result = $soapProxy-&gt;startSession(&#039;username&#039;,&#039;password&#039;);</p>
+<p>workaround:<br>
+In the respective transport class (in Transport/*.php), add the following line to the send-method:<br>
+$this-&gt;fault = null;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

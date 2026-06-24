@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XML_sql2xml Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_sql2xml/index.html">XML_sql2xml</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-intro-simple">Introduction</a>
+</li>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-intro-passing">Introduction</a>
+</li>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-intro-xpath">Introduction</a>
+</li>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-xml-sql2xml">XML_sql2xml::XML_sql2xml</a>
+</li>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-add">XML_sql2xml::add</a>
+</li>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-addxmlfile">XML_sql2xml::addXmlFile</a>
+</li>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-addxmlstring">XML_sql2xml::addXmlString</a>
+</li>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-addresult">XML_sql2xml::addResult</a>
+</li>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-addsql">XML_sql2xml::addSql</a>
+</li>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-addarray">XML_sql2xml::addArray</a>
+</li>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-getxml">XML_sql2xml::getXML</a>
+</li>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-getxmlobject">XML_sql2xml::getXMLObject</a>
+</li>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-setoptions">XML_sql2xml::setOptions</a>
+</li>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-setencoding">XML_sql2xml::setEncoding</a>
+</li>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-getxpathvalue">XML_sql2xml::getXpathValue</a>
+</li>
+<li><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-getxpathchildvalues">XML_sql2xml::getXpathChildValues</a>
+</li></ul>
+</nav>
+<p>Translates SQL-Queries to XML-Resultsets. XML_sql2xml takes an existing result set or a SQL statement and transforms it to an XML representation</p>
+<section id="package-xml-xml-sql2xml-intro-simple">
+<h2>Introduction</h2>
+<h3>Example database</h3>
+
+   
+   
+   <p>In this tutorial, the examples refers to this
+    database tables:</p>
+     <br>mysql&gt; select * from bands;<br>+----+--------------+------------+-------------+-------------+<br>| id | name         | birth_year | birth_place | genre       |<br>+----+--------------+------------+-------------+-------------+<br>|  1 | The Blabbers |       1998 | London      | Rock&#039;n&#039;Roll |<br>|  2 | Only Stupids |       1997 | New York    | Hip Hop     |<br>+----+--------------+------------+-------------+-------------+<br><br>mysql&gt; select * from albums;<br>+----+---------+------------------+------+-----------------+<br>| id | bandsID | title            | year | comment         |<br>+----+---------+------------------+------+-----------------+<br>|  1 |       1 | BlaBla           | 1998 | Their first one |<br>|  2 |       1 | More Talks       | 2000 | The second one  |<br>|  3 |       2 | All your base... | 1999 | The Classic     |<br>+----+---------+------------------+------+-----------------+
+    
+   
+  
+  <h3>The typical using</h3>
+
+   
+   <p>Let&#039;s start with an example using the default options.
+    The new instance is bind to an <a href="package/DB/docs/index.html#package-database-db-intro-dsn">DSN</a>, so you 
+    have only to provide an SQL query. The instance 
+    fetches the result automatically; in 
+    <code>$xmlstring</code> you found the
+    XML representation of the result set.</p>
+   <p><strong>The simplest example</strong></p>
+    
+    <pre><code>&lt;?php
+require_once &quot;XML/sql2xml.php&quot;;
+$sql2xmlclass = new xml_sql2xml(&quot;mysql://username:password@localhost/xmltest&quot;);
+$xmlstring = $sql2xmlclass-&gt;getxml(&quot;select * from bands&quot;);
+?&gt;</code></pre>
+    <p>The content of <code>$xmlstring</code> based on the
+     DB tables above is:</p>
+    
+    <br>&lt;?xml version=&quot;1.0&quot;?&gt;<br>    &lt;root&gt;<br>        &lt;result&gt;<br>            &lt;row&gt;<br>                &lt;id&gt;1&lt;/id&gt;<br>                &lt;name&gt;The Blabbers&lt;/name&gt;<br>                &lt;birth_year&gt;1998&lt;/birth_year&gt;<br>                &lt;birth_place&gt;London&lt;/birth_place&gt;<br>                &lt;genre&gt;Rock&#039;n&#039;Roll&lt;/genre&gt;<br>            &lt;/row&gt;<br>            &lt;row&gt;<br>                &lt;id&gt;2&lt;/id&gt;<br>                &lt;name&gt;Only Stupids&lt;/name&gt;<br>                &lt;birth_year&gt;1997&lt;/birth_year&gt;<br>                &lt;birth_place&gt;New York&lt;/birth_place&gt;<br>                &lt;genre&gt;Hip Hop&lt;/genre&gt;<br>            &lt;/row&gt;<br>        &lt;/result&gt;<br>    &lt;/root&gt;
+    
+   
+  
+  <h3>Transformations based on Join queries</h3>
+
+   
+   <p>If your query result base on joined tables, a nested XML
+    data structure can represent how the DBMS joins the
+    tables. To enable or to disable this behavoir
+    use 
+    <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-setoptions">
+     <strong>setOptions()</strong></a> with the
+    option key <code>&#039;nested&#039;</code>. The default
+    value is <strong>TRUE</strong> - the nesting is enabled.</p>
+   <p><strong>Nested result set</strong></p>
+    
+    <pre><code>&lt;?php
+$sql2xmlclass = new xml_sql2xml(&quot;mysql://username:password@localhost/xmltest&quot;);
+$xmlstring = $sql2xmlclass-&gt;getxml(&quot;select * from bands left join albums on bands.id = bandsID&quot;);
+?&gt;</code></pre>
+    <p>The generated XML output in <code>$xmlstring</code>:</p>
+    
+     <br>&lt;?xml version=&quot;1.0&quot;?&gt;<br>    &lt;root&gt;<br>        &lt;result&gt;<br>            &lt;row&gt;<br>                &lt;id&gt;1&lt;/id&gt;<br>                &lt;name&gt;The Blabbers&lt;/name&gt;<br>                &lt;birth_year&gt;1998&lt;/birth_year&gt;<br>                &lt;birth_place&gt;London&lt;/birth_place&gt;<br>                &lt;genre&gt;Rock&#039;n&#039;Roll&lt;/genre&gt;<br>                &lt;row&gt;<br>                    &lt;id&gt;1&lt;/id&gt;<br>                    &lt;bandsID&gt;1&lt;/bandsID&gt;<br>                    &lt;title&gt;BlaBla&lt;/title&gt;<br>                    &lt;year&gt;1998&lt;/year&gt;<br>                    &lt;comment&gt;Their first one&lt;/comment&gt;<br>                &lt;/row&gt;<br>                &lt;row&gt;<br>                    &lt;id&gt;2&lt;/id&gt;<br>                    &lt;bandsID&gt;1&lt;/bandsID&gt;<br>                    &lt;title&gt;More Talks&lt;/title&gt;<br>                    &lt;year&gt;2000&lt;/year&gt;<br>                    &lt;comment&gt;The second one&lt;/comment&gt;<br>                &lt;/row&gt;<br>            &lt;/row&gt;<br>            &lt;row&gt;<br>                &lt;id&gt;2&lt;/id&gt;<br>                &lt;name&gt;Only Stupids&lt;/name&gt;<br>                &lt;birth_year&gt;1997&lt;/birth_year&gt;<br>                &lt;birth_place&gt;New York&lt;/birth_place&gt;<br>                &lt;genre&gt;Hip Hop&lt;/genre&gt;<br>                &lt;row&gt;<br>                    &lt;id&gt;3&lt;/id&gt;<br>                    &lt;bandsID&gt;2&lt;/bandsID&gt;<br>                    &lt;title&gt;All your base...&lt;/title&gt;<br>                    &lt;year&gt;1999&lt;/year&gt;<br>                    &lt;comment&gt;The Classic&lt;/comment&gt;<br>                &lt;/row&gt;<br>            &lt;/row&gt;<br>        &lt;/result&gt;<br>    &lt;/root&gt;
+    
+   
+   <p>If you disable the nesting, the XML structure of rows is flat.</p>
+   <p><strong>Unnested result sets</strong></p>
+    
+    <pre><code>&lt;?php
+$sql2xmlclass = new xml_sql2xml(&quot;mysql://username:password@localhost/xmltest&quot;);
+$options      = array(&#039;nested&#039; =&gt; false);
+$sql2xmlclass-&gt;setOptions($options);
+$xmlstring    = $sql2xmlclass-&gt;getxml(&quot;select * from bands left join albums on bands.id = bandsID&quot;);
+?&gt;</code></pre>
+    <p>XML output:</p>
+    
+     <br>$xmlstring =&gt;<br><br>&lt;?xml version=&quot;1.0&quot;?&gt;<br>    &lt;root&gt;<br>        &lt;result&gt;<br>            &lt;row&gt;<br>                &lt;id&gt;1&lt;/id&gt;<br>                &lt;name&gt;The Blabbers&lt;/name&gt;<br>                &lt;birth_year&gt;1998&lt;/birth_year&gt;<br>                &lt;birth_place&gt;London&lt;/birth_place&gt;<br>                &lt;genre&gt;Rock&#039;n&#039;Roll&lt;/genre&gt;<br>                &lt;id&gt;1&lt;/id&gt;<br>                &lt;bandsID&gt;1&lt;/bandsID&gt;<br>                &lt;title&gt;BlaBla&lt;/title&gt;<br>                &lt;year&gt;1998&lt;/year&gt;<br>                &lt;comment&gt;Their first one&lt;/comment&gt;<br>            &lt;/row&gt;<br>            &lt;row&gt;<br>                &lt;id&gt;1&lt;/id&gt;<br>                &lt;name&gt;The Blabbers&lt;/name&gt;<br>                &lt;birth_year&gt;1998&lt;/birth_year&gt;<br>                &lt;birth_place&gt;London&lt;/birth_place&gt;<br>                &lt;genre&gt;Rock&#039;n&#039;Roll&lt;/genre&gt;<br>                &lt;id&gt;2&lt;/id&gt;<br>                &lt;bandsID&gt;1&lt;/bandsID&gt;<br>                &lt;title&gt;More Talks&lt;/title&gt;<br>                &lt;year&gt;2000&lt;/year&gt;<br>                &lt;comment&gt;The second one&lt;/comment&gt;<br>            &lt;/row&gt;<br>            &lt;row&gt;<br>                &lt;id&gt;2&lt;/id&gt;<br>                &lt;name&gt;Only Stupids&lt;/name&gt;<br>                &lt;birth_year&gt;1997&lt;/birth_year&gt;<br>                &lt;birth_place&gt;New York&lt;/birth_place&gt;<br>                &lt;genre&gt;Hip Hop&lt;/genre&gt;<br>                &lt;id&gt;3&lt;/id&gt;<br>                &lt;bandsID&gt;2&lt;/bandsID&gt;<br>                &lt;title&gt;All your base...&lt;/title&gt;<br>                &lt;year&gt;1999&lt;/year&gt;<br>                &lt;comment&gt;The Classic&lt;/comment&gt;<br>            &lt;/row&gt;<br>        &lt;/result&gt;<br>    &lt;/root&gt;
+</section>
+<section id="package-xml-xml-sql2xml-intro-passing">
+<h2>Introduction</h2>
+<h3>Overview</h3>
+
+   
+   
+   <p>There are three ways to pass the data for transforming to the object:</p><ul>
+     <li>
+      
+       <em>with a direct query</em>
+      
+      
+       This way you see in the <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-intro-simple">first part</a> of the introduction already.
+
+      
+     </li>
+     <li>
+      
+       <em>with an existing <a href="package/DB/docs/index.html#package-database-db-db-result"><strong>DB_result</strong></a> object</em>      
+      
+      
+       If you need the full power of the <strong>PEAR::DB</strong>
+       or <strong>PEAR::MDB</strong> API, you should choose this way. 
+      
+     </li>
+     <li>
+      
+       <em>with an array</em>
+      
+      
+       This is not directly an SQL to XML transformation; if you pass an
+       indice array to the instance, the keys of the array are transformed
+       into XML tags, their values into the tag content.
+       This feature his helpful for adding data to an XML transformed result set.
+      
+     </li>
+     
+    </ul>
+   
+  
+  <h3>Direct query</h3>
+
+   
+   <p>This behavoir does connecting to the DBMS, quering and
+    fetching he result automatically. 
+    <strong>XML_sql2xml</strong> requires an valid
+    <a href="package/DB/docs/index.html#package-database-db-intro-dsn">DSN</a> as <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-xml-sql2xml">construtor</a> parameter. 
+    The query has to be passed to the <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-getxml"><strong>getXML()</strong></a>
+    or <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-getxml"><strong>add()</strong></a>
+    method.</p>
+   <p>Take a look into the <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-intro-simple">first part</a> of the introduction
+    for examples.</p>
+  
+  
+  <h3>Passing an DB_Result object</h3>
+
+   
+   <p><strong>PEAR::DB</strong>
+    and <strong>PEAR::MDB</strong> return the result set of a query
+    as <a href="package/DB/docs/index.html#package-database-db-db-result"><strong>DB_result</strong></a> object. You have to provide a <a href="package/DB/docs/index.html#package-database-db-db-common"><strong>DB_common</strong></a>
+    instance to the <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-xml-sql2xml">construtor</a>
+    and the <a href="package/DB/docs/index.html#package-database-db-db-result"><strong>DB_result</strong></a> instance to <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-getxml"><strong>getXML()</strong></a>
+    or <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-getxml"><strong>add()</strong></a>.</p>   
+   <p><strong>Passing a DB_Result object</strong></p>
+    
+    <pre><code>&lt;?php
+require_once &quot;XML/sql2xml.php&quot;;
+require_once &quot;DB.php&quot;;
+
+$db = db::connect(&quot;mysql://username:password@localhost/xmltest&quot;);
+$result = $db-&gt;query(&quot;select * from bands&quot;);
+
+$sql2xmlclass = new xml_sql2xml($db);
+$xmlstring = $sql2xmlclass-&gt;getxml($result);
+?&gt;</code></pre>
+   
+   <p>The XML output in <code>$xmlstring</code> is equal to the
+    example in
+    <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-intro-simple">
+    &quot;The typical using&quot;</a>.</p>
+   <p>This way is the only one, if you want to benefit from all the 
+    features of the database APIs.</p>
+  
+
+  <h3>Passing an array</h3>
+
+   
+   <p>If you pass an nested array to <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-getxml"><strong>getXML()</strong></a>
+    or <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-getxml"><strong>add()</strong></a>,
+    it will be transformed into an XML document.</p>
+   <p><strong>Passing an array</strong></p>
+    
+    <pre><code>&lt;?php
+require_once &quot;XML/sql2xml.php&quot;;
+
+$sql2xmlclass = new xml_sql2xml();
+
+$array = array (
+            array(&quot;name&quot;=&gt;&quot;The Blabbers&quot;,
+                  &quot;birth_year&quot;=&gt;&quot;1998&quot;,
+                  &quot;birth_place&quot;=&gt;&quot;London&quot;,
+                  &quot;genre&quot;=&gt;&quot;Rock&#039;n&#039;Roll&quot;),
+            array(&quot;name&quot;=&gt;&quot;Only Stupids&quot;,
+                  &quot;birth_year&quot;=&gt;&quot;1997&quot;,
+                  &quot;birth_place&quot;=&gt;&quot;New York&quot;,
+                  &quot;genre&quot;=&gt;&quot;hiphop&quot;)
+);
+
+$xmlstring = $sql2xmlclass-&gt;getXML($array);
+?&gt;</code></pre>
+   <p>The XML output in <code>$xmlstring</code>:</p>
+   <pre><code>&lt;?xml version=&quot;1.0&quot;?&gt;
+    &lt;root&gt;
+        &lt;result&gt;
+            &lt;row&gt;
+                &lt;name&gt;The Blabbers&lt;/name&gt;
+                &lt;birth_year&gt;1998&lt;/birth_year&gt;
+                &lt;birth_place&gt;London&lt;/birth_place&gt;
+                &lt;genre&gt;Rock&#039;n&#039;Roll&lt;/genre&gt;
+            &lt;/row&gt;
+            &lt;row&gt;
+                &lt;name&gt;Only Stupids&lt;/name&gt;
+                &lt;birth_year&gt;1997&lt;/birth_year&gt;
+                &lt;birth_place&gt;New York&lt;/birth_place&gt;
+                &lt;genre&gt;hiphop&lt;/genre&gt;
+            &lt;/row&gt;
+        &lt;/result&gt;
+    &lt;/root&gt;</code></pre>
+  
+ 
+ <h3>Passing more then one result set</h3>
+
+  
+   <p>You can call <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-add"><strong>add()</strong></a>
+    several result sets to XML document. Just
+    call the method for every result set; if you have added all result sets,
+    call <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-getxml"><strong>getXml()</strong></a>
+    without any arguments to get the XML document.</p>
+   <p><strong>Adding result sets</strong></p>
+    
+    <pre><code>&lt;?php
+$sql2xmlclass-&gt;add(&quot;select * from bands&quot;);
+$sql2xmlclass-&gt;add(&quot;select * from albums&quot;);
+$xmlstring= $sql2xmlclass-&gt;getxml();
+?&gt;</code></pre>
+</section>
+<section id="package-xml-xml-sql2xml-intro-xpath">
+<h2>Introduction</h2>
+<h3>Why XPath support?</h3>
+
+    
+   <p>The XPath support was introduced to provide an access to the result
+    set after doing the SQL query. This allows further proccessing of the 
+    result set without quering the database again.</p>
+   <p>XPath is a W3-Standard and for further information about that, 
+    ask your preferred XSL/XML book, or 
+    <a href="http://www.w3.org/">http://www.w3.org/</a>.</p>
+  
+  <h3>Passing an XPath expression</h3>
+
+   
+   <p><strong>XML_sql2xml</strong> provides two functions for
+    querying the result set: <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-getxpathvalue">
+     <strong>getXpathValue()</strong></a> and <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-getxpathchildvalues">
+     <strong>getXpathChildValues()</strong></a>. Both expect a
+    XPath query and return the result as string or array.</p><p><strong>getXpathValue</strong></p>
+     
+     <pre><code>&lt;?php
+include_once(&quot;XML/sql2xml.php&quot;);
+$sql2xmlclass = new xml_sql2xml(&quot;mysql://username:password@localhost/xmltest&quot;);
+$sql2xmlclass-&gt;add(&quot;select * from bands&quot;);
+$xmlstring  = $sql2xmlclass-&gt;getXpathValue(&quot;/root/result/row[id = &#039;2&#039;]/name&quot;);
+?&gt;</code></pre>
+     <p><code>$xmlstring</code> contains:</p>
+     
+      <br>      $xmlstring = &#039;Only Stupids&#039;
+     
+    
+    <p><strong>getXpathChildValues</strong></p>
+     
+     <pre><code>&lt;?php
+include_once(&quot;XML/sql2xml.php&quot;);
+$sql2xmlclass = new xml_sql2xml(&quot;mysql://username:password@localhost/xmltest&quot;);
+$sql2xmlclass-&gt;add(&quot;select * from bands&quot;);
+$xmlstring  = $sql2xmlclass-&gt;getXpathChildValues(&quot;/root/result/row[id = &#039;2&#039;]&quot;);
+?&gt;</code></pre>
+     <p><code>$xmlstring</code> contains:</p>
+     
+      <br>Array<br>(<br>    [] =&gt; <br>    [id] =&gt; 2<br>    [name] =&gt; Only Stupids<br>    [birth_year] =&gt; 1997<br>    [birth_place] =&gt; New York<br>    [genre] =&gt; Hip Hop<br>)      
+     
+         
+    
+     
+   
+   <h3>Mixing SQL and XPath query</h3>
+
+    
+    <p>You can insert an XPath query into an SQL query. In the example, first
+     a SQL query is done, in the second a SQL query done again - but the
+     parameter for <code>bandsID</code> is taken from
+     the XPath expression in the curly braces. This expression is processed on
+     the result set of the <em>first</em> SQL query.</p>
+    <p><strong>Mixed query</strong></p>
+     
+     <pre><code>&lt;?php
+include_once(&quot;XML/sql2xml.php&quot;);
+$sql2xmlclass = new xml_sql2xml(&quot;mysql://username:password@localhost/xmltest&quot;);
+$sql2xmlclass-&gt;add(&quot;select * from bands&quot;);
+$sql2xmlclass-&gt;add(&quot;select * from albums where bandsID = {/root/result/row[name = &#039;The Blabbers&#039;]/id}&quot;);
+$xmlstring = $sql2xmlclass-&gt;getxml();
+?&gt;</code></pre>
+     
+      <br>$xmlstring = &#039;<br><br>&lt;?xml version=&quot;1.0&quot;?&gt;<br>    &lt;root&gt;<br>        &lt;result&gt;<br>            &lt;row&gt;<br>                &lt;id&gt;1&lt;/id&gt;<br>                &lt;name&gt;The Blabbers&lt;/name&gt;<br>                &lt;birth_year&gt;1998&lt;/birth_year&gt;<br>                &lt;birth_place&gt;London&lt;/birth_place&gt;<br>                &lt;genre&gt;Rock&#039;n&#039;Roll&lt;/genre&gt;<br>            &lt;/row&gt;<br>            &lt;row&gt;<br>                &lt;id&gt;2&lt;/id&gt;<br>                &lt;name&gt;Only Stupids&lt;/name&gt;<br>                &lt;birth_year&gt;1997&lt;/birth_year&gt;<br>                &lt;birth_place&gt;New York&lt;/birth_place&gt;<br>                &lt;genre&gt;Hip Hop&lt;/genre&gt;<br>            &lt;/row&gt;<br>        &lt;/result&gt;<br>        &lt;result&gt;<br>            &lt;row&gt;<br>                &lt;id&gt;1&lt;/id&gt;<br>                &lt;bandsID&gt;1&lt;/bandsID&gt;<br>                &lt;title&gt;BlaBla&lt;/title&gt;<br>                &lt;year&gt;1998&lt;/year&gt;<br>                &lt;comment&gt;Their first one&lt;/comment&gt;<br>            &lt;/row&gt;<br>            &lt;row&gt;<br>                &lt;id&gt;2&lt;/id&gt;<br>                &lt;bandsID&gt;1&lt;/bandsID&gt;<br>                &lt;title&gt;More Talks&lt;/title&gt;<br>                &lt;year&gt;2000&lt;/year&gt;<br>                &lt;comment&gt;The second one&lt;/comment&gt;<br>            &lt;/row&gt;<br>        &lt;/result&gt;<br>    &lt;/root&gt;
+</section>
+<section id="package-xml-xml-sql2xml-xml-sql2xml-xml-sql2xml">
+<h2>XML_sql2xml::XML_sql2xml</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &quot;XML/sql2xml.php&quot;;
+     
+     <p><code>
+      void <strong>XML_sql2xml::XML_sql2xml</strong> ( 
+
+      
+       mixed $dsn
+        = null
+      
+
+       , 
+       string $root=&quot;root&quot;
+      
+
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>The Constructor can take a Pear::DB <a href="package/DB/docs/index.html#package-database-db-intro-dsn">Data Source Name (DSN)</a> and will then connect
+     to the database; or a PEAR::DB object handle, if you already connected the
+     database before. Providing sql-strings will not work.</p>
+    <p>If you provide only a DSN, you have to <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-add">add</a>
+     a <a href="package/DB/docs/index.html#package-database-db-db-result"><strong>DB_result</strong></a> object, SQL statement or an array later.</p>
+    <p>The <code>$root</code> parameter is used, if you want to provide another name for your
+     root-tag than &lt;root&gt;. If you give an empty string (&quot;&quot;), there will be no
+     root element created here, but only when you add a resultset, array or
+     SQL Statement.
+     And the first tag of this result is used as the root tag.</p>
+   
+
+   
+    <h3>Parameter</h3>
+    <ul>
+
+      <li>
+       
+        <code>mixed $dsn</code> -
+        PEAR::DB &quot;data source name&quot; or <a href="package/DB/docs/index.html#package-database-db-db-common"><strong>DB_common</strong></a> object
+       
+      </li>
+
+      <li>
+       
+        <code>string $root</code> -
+        the name of the XML-root element.
+       
+      </li>
+
+     </ul>
+    
+   
+
+
+
+
+   
+    <h3>Note</h3>
+
+    <p>This function can be called
+statically.</p>
+
+
+
+  
+   
+
+   
+    <h3>See</h3>
+    
+    <p><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-add"><strong>XML_sql2xml::add()</strong></a></p>
+   
+   
+    <h3>Example</h3>
+    <p><strong>Using <strong>XML_sql2xml()</strong></strong></p>
+
+      <pre><code>&lt;?php
+$sql2xml = new xml_sql2xml(&quot;mysql://root@localhost/xmltest&quot;);
+$sql2xml-&gt;Add(&quot;select * from bands&quot;);
+?&gt;</code></pre>
+</section>
+<section id="package-xml-xml-sql2xml-xml-sql2xml-add">
+<h2>XML_sql2xml::add</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &quot;XML/sql2xml.php&quot;;
+     
+     <p><code>
+      void <strong>XML_sql2xml::add</strong> ( 
+
+      
+       string $resultset
+      
+
+       , 
+       mixed $params
+        = null
+      
+
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>General method for adding new result sets to the object.
+     Give a SQL statement, a PEAR::<a href="package/DB/docs/index.html#package-database-db-db-result"><strong>DB_result</strong></a> object or an array as
+     input parameter and the method calls the appropriate method for this
+     input.</p>
+   
+
+   
+    <h3>Parameter</h3>
+    <ul>
+
+      <li>
+       
+        <code>string $resultset</code> -
+        SQL statement, an <a href="package/DB/docs/index.html#package-database-db-db-result"><strong>DB_result</strong></a> object or an array
+       
+      </li>
+
+      <li>
+       
+        <code>mixed $params</code> -
+        parameters for the following functions
+       
+      </li>
+
+     </ul>
+    
+   
+
+
+
+
+   
+    <h3>Note</h3>
+
+    <p>This function can not be called
+statically.</p>
+
+
+
+  
+   
+
+   
+    <h3>See</h3>
+    
+    <p><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-addresult">XML_sql2xml::addResult()</a>,
+
+        <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-addsql">XML_sql2xml::addSql()</a>,
+
+        <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-addarray">XML_sql2xml::addArray()</a>,
+
+        <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-addxmlfile">XML_sql2xml::addXmlFile()</a></p>
+   
+   
+    <h3>Example</h3>
+    <p><strong>Using <strong>add()</strong></strong></p>
+
+      <pre><code>&lt;?php
+$sql2xml-&gt;Add(&quot;select * from bands&quot;);
+?&gt;</code></pre>
+</section>
+<section id="package-xml-xml-sql2xml-xml-sql2xml-addxmlfile">
+<h2>XML_sql2xml::addXmlFile</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &quot;XML/sql2xml.php&quot;;
+     
+     <p><code>
+      void <strong>XML_sql2xml::addXmlFile</strong> ( 
+
+      
+       string $file
+      
+
+       , 
+       mixed $xpath
+        = null
+      
+
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Adds the content of a XML file on the same level
+     as a normal result set (mostly just below &lt;root&gt;).</p>
+   
+
+   
+    <h3>Parameter</h3>
+    <ul>
+
+      <li>
+       
+        <code>string $file</code> -
+        file name
+       
+      </li>
+
+      <li>
+       
+        <code>mixed $xpath</code> -
+        either a string with the XPath expression or an array with the keys
+        &quot;xpath&quot;=&gt;XPath expression and &quot;root&quot;=&gt;tag/subtag/etc,
+        which are the tags to be inserted before the result.
+       
+      </li>
+
+     </ul>
+    
+   
+
+
+
+
+   
+    <h3>Note</h3>
+
+    <p>This function can not be called
+statically.</p>
+
+
+
+  
+   
+
+   
+    <h3>See</h3>
+    
+    <p><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-add"><strong>XML_sql2xml::add()</strong></a></p>
+</section>
+<section id="package-xml-xml-sql2xml-xml-sql2xml-addxmlstring">
+<h2>XML_sql2xml::addXmlString</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &quot;XML/sql2xml.php&quot;;
+     
+     <p><code>
+      void <strong>XML_sql2xml::addXmlString</strong> ( 
+
+      
+       string $string
+      
+
+       , 
+       mixed $xpath
+        = null
+      
+
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Adds the content of a xml-string on the same level
+     as a normal result set (mostly just below &lt;root&gt;)</p>
+   
+
+   
+    <h3>Parameter</h3>
+    <ul>
+
+      <li>
+       
+        <code>string $string</code> -
+        XML string
+       
+      </li>
+
+      <li>
+       
+        <code>mixed $xpath</code> -
+        either a string with the XPath expression or an array with the keys
+        &quot;xpath&quot;=&gt;XPath expression
+        and &quot;root&quot;=&gt;tag/subtag/etc, which are the tags to be inserted
+        before the result.
+       
+      </li>
+
+     </ul>
+    
+   
+
+
+
+
+   
+    <h3>Note</h3>
+
+    <p>This function can not be called
+statically.</p>
+
+
+
+  
+   
+
+   
+    <h3>See</h3>
+    
+    <p><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-add"><strong>XML_sql2xml::add()</strong></a></p>
+</section>
+<section id="package-xml-xml-sql2xml-xml-sql2xml-addresult">
+<h2>XML_sql2xml::addResult</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &quot;XML/sql2xml.php&quot;;
+     
+     <p><code>
+      void <strong>XML_sql2xml::addResult</strong> ( 
+      
+      
+       Object $result
+      
+      
+                  
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Adds an additional PEAR::<a href="package/DB/docs/index.html#package-database-db-db-result"><strong>DB_result</strong></a> result set</p>
+      
+   
+   
+    <h3>Parameter</h3>
+    <ul>
+      
+      <li>
+       
+        <code>Object $result</code> -
+        a <a href="package/DB/docs/index.html#package-database-db-db-result"><strong>DB_result</strong></a> object
+       
+      </li>      
+            
+     </ul>
+    
+      
+      
+            
+               
+                
+   
+    <h3>Note</h3>  
+                 
+    <p>This function can not be called
+statically.</p>
+    
+                         
+                             
+  
+       
+                   
+   
+    <h3>See</h3>    
+    
+    <p><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-add">XML_sql2xml::add()</a></p>
+</section>
+<section id="package-xml-xml-sql2xml-xml-sql2xml-addsql">
+<h2>XML_sql2xml::addSql</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &quot;XML/sql2xml.php&quot;;
+     
+     <p><code>
+      void <strong>XML_sql2xml::addSql</strong> ( 
+      
+      
+       string $sql
+      
+      
+                  
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Adds an aditional result set generated from an SQL statement.
+     The function executes the statement and transform it into
+     XML. You have to pass an <a href="package/DB/docs/index.html#package-database-db-intro-dsn">
+      DSN</a> to the <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-xml-sql2xml">
+      constructor</a>.</p>
+      
+   
+   
+    <h3>Parameter</h3>
+    <ul>
+      
+      <li>
+       
+        <code>string $sql</code> -
+        a string containing an SQL statement.
+       
+      </li>      
+            
+     </ul>
+    
+      
+      
+            
+               
+                
+   
+    <h3>Note</h3>  
+                 
+    <p>This function can not be called
+statically.</p>
+    
+                         
+                             
+  
+       
+                   
+   
+    <h3>See</h3>    
+    
+    <p><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-xml-sql2xml"><strong>XML_sql2xml::XML_sql2xml()</strong></a>,     
+     <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-add"><strong>XML_sql2xml::add()</strong></a></p>
+</section>
+<section id="package-xml-xml-sql2xml-xml-sql2xml-addarray">
+<h2>XML_sql2xml::addArray</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &quot;XML/sql2xml.php&quot;;
+     
+     <p><code>
+      void <strong>XML_sql2xml::addArray</strong> ( 
+      
+      
+       array $array
+      
+      
+                  
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Adds an aditional result set generated from an array. The
+     XML represents the nesting of the array.</p>
+      
+   
+   
+    <h3>Parameter</h3>
+    <ul>
+      
+      <li>
+       
+        <code>array $array</code> -
+        data array
+       
+      </li>      
+            
+     </ul>
+    
+      
+      
+            
+               
+                
+   
+    <h3>Note</h3>  
+                 
+    <p>This function can not be called
+statically.</p>
+    
+                         
+                             
+  
+       
+                   
+   
+    <h3>See</h3>    
+    
+    <p><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-add">XML_sql2xml::add()</a></p>
+</section>
+<section id="package-xml-xml-sql2xml-xml-sql2xml-getxml">
+<h2>XML_sql2xml::getXML</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &quot;XML/sql2xml.php&quot;;
+     
+     <p><code>
+      string <strong>XML_sql2xml::getXML</strong> ( 
+
+      
+       mixed $result
+        = null
+      
+
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Returns an XML string with a XML representation of the result set.
+     The result set can be directly provided here, or if you need more than one
+     in your XML, then you have to provide each of them with <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-add"><strong>add()</strong></a>
+      before you call <strong>getXML()</strong>, but the last one can also be provided here.</p>
+   
+
+   
+    <h3>Parameter</h3>
+    <ul>
+
+      <li>
+       
+        <code>mixed $result</code> -
+        a <a href="package/DB/docs/index.html#package-database-db-db-result"><strong>DB_result</strong></a> object from a <strong>DB</strong> query or
+        a SQL query
+       
+      </li>
+
+     </ul>
+    
+   
+
+
+   
+    <h3>Return value</h3>
+    <p><code>string</code> - the XML string</p>
+   
+
+
+
+   
+    <h3>Note</h3>
+
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-xml-xml-sql2xml-xml-sql2xml-getxmlobject">
+<h2>XML_sql2xml::getXMLObject</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &quot;XML/sql2xml.php&quot;;
+     
+     <p><code>
+      Object <strong>XML_sql2xml::getXMLObject</strong> ( 
+
+      
+       mixed $result
+        = null
+      
+
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Returns an XML DomDocument object with a XML representation of the result sets.
+     The result set can be directly provided here, or if you need more than one
+     in your XML, then you have to provide each of them with
+     <a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-add"><strong>add()</strong></a>
+     before you call <strong>getXMLObject()</strong>,
+     but the last one can also be provided here.</p>
+   
+
+   
+    <h3>Parameter</h3>
+    <ul>
+
+      <li>
+       
+        <code>mixed $result</code> -
+        a <a href="package/DB/docs/index.html#package-database-db-db-result"><strong>DB_result</strong></a> object from a <strong>DB</strong> query
+       
+      </li>
+
+     </ul>
+    
+   
+
+
+   
+    <h3>Return value</h3>
+    <p><code>Object</code> - DomDocument object</p>
+   
+
+
+
+   
+    <h3>Note</h3>
+
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-xml-xml-sql2xml-xml-sql2xml-setoptions">
+<h2>XML_sql2xml::setOptions</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &quot;XML/sql2xml.php&quot;;
+     
+     <p><code>
+      void <strong>XML_sql2xml::setOptions</strong> ( 
+
+      
+       array $options
+      
+
+       , 
+       constant $delete
+        = false
+      
+
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>This method sets the options for the class instance.</p>
+   
+
+   
+    <h3>Parameter</h3>
+    <ul>
+
+      <li>
+       
+        <code>array $options</code> -
+        array of options. The array key defines the option to set.
+        Avaible options are:
+        <ul>
+         <li>
+          boolean <code>$options[&#039;nested&#039;]</code> -
+           if <strong>TRUE</strong> the result of an join query will be nested. The default
+           value is <strong>FALSE</strong>.
+          
+         </li>
+         <li>
+          boolean <code>$options[&#039;tagNameRow&#039;]</code> -
+           name for the row mark up tag. Default is &gt;row&lt;
+          
+         </li>
+         <li>
+          boolean <code>$options[&#039;tagNameResult&#039;]</code> -
+           name for the result-set mark up tag. Default is &gt;result&lt;
+          
+         </li>
+        </ul>
+       
+      </li>
+
+      <li>
+       
+        <code>constant $delete</code> -
+        the old sub options should be deleted
+       
+      </li>
+
+     </ul>
+    
+   
+
+
+
+
+   
+    <h3>Note</h3>
+
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-xml-xml-sql2xml-xml-sql2xml-setencoding">
+<h2>XML_sql2xml::setEncoding</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &quot;XML/sql2xml.php&quot;;
+     
+     <p><code>
+      void <strong>XML_sql2xml::setEncoding</strong> ( 
+      
+      
+       string $encoding_from=&quot;ISO-8859-1&quot;
+      
+      
+       , 
+       string $encoding_to=&quot;UTF-8&quot;
+      
+      
+                  
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Sets the encoding for the db2xml transformation. The 
+     <code>$encoding_from</code> value depends on 
+     your database system; check the DBMS manual which encoding
+     your system use to deliever result sets.</p>
+    <p>The <code>$encoding_to</code> sets the
+     charset for the created XML document.</p>
+      
+   
+   
+    <h3>Parameter</h3>
+    <ul>
+      
+      <li>
+       
+        <code>string $encoding_from</code> -
+        encoding to transform from
+       
+      </li>      
+      
+      <li>
+       
+        <code>string $encoding_to</code> -
+        encoding to transform to
+       
+      </li>      
+            
+     </ul>
+    
+      
+      
+            
+               
+                
+   
+    <h3>Note</h3>  
+                 
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-xml-xml-sql2xml-xml-sql2xml-getxpathvalue">
+<h2>XML_sql2xml::getXpathValue</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &quot;XML/sql2xml.php&quot;;
+     
+     <p><code>
+      mixed <strong>XML_sql2xml::getXpathValue</strong> ( 
+      
+      
+       string $expr
+      
+      
+                  
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Returns the content of the first match of the XPath expression.</p>
+      
+   
+   
+    <h3>Parameter</h3>
+    <ul>
+      
+      <li>
+       
+        <code>string $expr</code> -
+        XPath expression
+       
+      </li>      
+            
+     </ul>
+    
+      
+      
+         
+   
+    <h3>Return value</h3>
+    <p><code>mixed</code> - content of the evaluated XPath expression</p>
+         
+            
+               
+                
+   
+    <h3>Note</h3>  
+                 
+    <p>This function can not be called
+statically.</p>
+    
+                         
+                             
+  
+       
+                   
+   
+    <h3>See</h3>    
+    
+    <p><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-getxpathchildvalues">
+      <strong>XML_sql2xml::getXpathChildValues()</strong>
+     </a></p>
+</section>
+<section id="package-xml-xml-sql2xml-xml-sql2xml-getxpathchildvalues">
+<h2>XML_sql2xml::getXpathChildValues</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &quot;XML/sql2xml.php&quot;;
+     
+     <p><code>
+      array <strong>XML_sql2xml::getXpathChildValues</strong> ( 
+      
+      
+       string $expr
+      
+      
+                  
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Returns the values from the child tags from the first match of the XPath.</p>
+      
+   
+   
+    <h3>Parameter</h3>
+    <ul>
+      
+      <li>
+       
+        <code>string $expr</code> -
+        XPath expression
+       
+      </li>      
+            
+     </ul>
+    
+      
+      
+         
+   
+    <h3>Return value</h3>
+    <p><code>array</code> - the content of the child tags.
+     The child tag name is assigned as key, the content as value.</p>
+         
+            
+               
+                
+   
+    <h3>Note</h3>  
+                 
+    <p>This function can not be called
+statically.</p>
+    
+                         
+                             
+  
+       
+                   
+   
+    <h3>See</h3>    
+    
+    <p><a href="package/XML_sql2xml/docs/index.html#package-xml-xml-sql2xml-xml-sql2xml-getxpathvalue">
+      <strong>XML_sql2xml::getXpathValue()</strong>
+     </a></p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

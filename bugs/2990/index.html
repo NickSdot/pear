@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2990</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_Crypt/index.html">HTML_Crypt</a> &#187; Bug #2990</h1>
+<p>Encrypted Javascript String not valid in XHTML DTDs</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-12-19 18:19 UTC</td></tr>
+<tr><th>From</th><td>sjwalter at visi dot com</td></tr>
+<tr><th>Assigned</th><td>cweiske</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_Crypt/index.html">HTML_Crypt</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0</td></tr>
+<tr><th>OS</th><td>Windows 2000</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-19 18:19 UTC] sjwalter at visi dot com</h3>
+<p>Description:<br>
+------------<br>
+The encrypted string generated in the class will fail an HTML validation test when attempting to validate against the XHTML 1.0 DTDs.  Both Strict and Transitional have been tried.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+$crypt = new HTML_Crypt(&#039;my_email@home.com&#039;, 6);</p>
+<p>$crypt-&gt;setText(&#039;&lt;a href=&quot;mailto:my_email@home.com&quot;&gt;Email me&lt;/a&gt;&#039;);</p>
+<p>echo $crypt-&gt;output();<br>
+?&gt;</p>
+<p>Save out page, and attempt to validate against a service such as W3C&#039;s HTML Validator.</p>
+<p>Expected result:<br>
+----------------<br>
+Successfull validation.</p>
+<p>Actual result:<br>
+--------------<br>
+The validator fails because the encrypted string contains characters that are outside the acceptable range for SGML documents.</p>
+<p>This could be remedied by changing the encoding slightly:</p>
+<p>1)  in cryptText(), replace</p>
+<p>$enc_string.=($enc_char == &#039;\\&#039; ? &#039;\\\\&#039; : $enc_char);</p>
+<p>with</p>
+<p>$enc_string.=(strlen(dechex($inter))&lt;2)?&quot;0&quot;.dechex($inter):dechex($inter);</p>
+<p>2)  in getScript(), replace</p>
+<p>$script = &quot;&lt;script language=\&quot;JavaScript\&quot; type=\&quot;text/JavaScript\&quot;&gt;var a,s,n;function $rnd(s){r=&#039;&#039;;for(i=0;i&lt;s.length;i++){n=s.charCodeAt(i);if(n&gt;=8364){n=128;}r+=String.fromCharCode(n-&quot;.$this-&gt;offset.&quot;);}return r;}a=&#039;&quot;.$this-&gt;cryptString.&quot;&#039;;document.write ($rnd(a));&lt;/script&gt;&quot;;</p>
+<p>with</p>
+<p>$script = &quot;&lt;script type=\&quot;text/javascript\&quot;&gt;\r//&lt;![CDATA[\rvar a,s,n;function $rnd(s){r=&#039;&#039;;for(i=0;i&lt;s.length;i+=2){n=parseInt(s.charAt(i) + s.charAt(i+1), 16);if(n&gt;=8364){n=128;}r+=String.fromCharCode(n-&quot;.$this-&gt;offset.&quot;);}return r;}a=&#039;&quot;.$this-&gt;cryptString.&quot;&#039;;document.write ($rnd(a));\r//]]&gt;\r&lt;/script&gt;&quot;;</p>
+<p>Note, this also removes the &#039;language&#039; attribute of the &lt;script&gt; element (as that&#039;s no longer needed).</p>
+<p>This effectively converts the encripted string to 2-character hex, making it palatable to the validator.</p>
+</section>
+<section>
+<h3>[2006-02-27 16:26 UTC] phunkymunky at gmail dot com</h3>
+<p>The supplied fix didn&#039;t work for me.  Is this bug going to be attended to???</p>
+<p>It is a bit annoying as the only page I use the HTML_Crypt function is on my &#039;about&#039; page, which also has the link to the XHTML validator :-/</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

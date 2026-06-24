@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9366</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Tools and Utilities &#187; <a href="package/PhpDocumentor/index.html">PhpDocumentor</a> &#187; Bug #9366</h1>
+<p>Last line with comment in &lt;code&gt; disappears</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-17 18:25 UTC</td></tr>
+<tr><th>From</th><td>anode at goo dot cz</td></tr>
+<tr><th>Assigned</th><td>ashnazg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PhpDocumentor/index.html">PhpDocumentor</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>1.3.2</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-17 18:25 UTC] anode at goo dot cz</h3>
+<p>Description:<br>
+------------<br>
+In HTML output, in a DocBlock inside  block, the last line of code which ends with a comment disappears. All the previous lines are OK. If there is no comment at the last line, it&#039;s printed correctly (although indented one space right).<br>
+Ran the following test script with command:<br>
+phpdoc -f phpdoc.php -t docs -o &quot;HTML:Smarty:PHP&quot;<br>
+which didn&#039;t report any errors or warnings.</p>
+<p>Test script:<br>
+---------------</p>
+<p>* this_line_works(); // even with a comment<br>
+ * this_one_doesnt(); // because of this comment<br>
+ * <br>
+ * @package     BugReport<br>
+ */<br>
+class Wheee {}<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+ this_line_works(); // even with a comment<br>
+  this_one_doesnt(); // because of this comment</p>
+</section>
+<section>
+<h3>[2006-11-29 18:41 UTC] ashnazg at users dot sourceforge dot net</h3>
+<p>Confirmed that this bug exists in v1.3.1, using PHP v4.4.4 and v5.1.6, testing all the HTML:default and HTML:Smarty converters.</p>
+</section>
+<section>
+<h3>[2006-11-29 18:46 UTC] ashnazg at users dot sourceforge dot net</h3>
+<p>Tried it with three lines in the &lt;code&gt; block.  The second line does appear, third line does not.  However, the second line is indented once space, like anode described, but the comments on each code line don&#039;t seem to be the culprit since all three of my lines have a comment:</p>
+<p>* &lt;code&gt;<br>
+ * this_line_works(); // even with a comment<br>
+ * does_this_one_work(); // yes, but indented one space<br>
+ * this_one_doesnt(); // because of this comment<br>
+ * &lt;/code&gt;</p>
+</section>
+<section>
+<h3>[2006-11-29 18:48 UTC] ashnazg at users dot sourceforge dot net</h3>
+<p>When I remove the comment from the third line, it will appear in the output, but it too is indented one space along with the second line...</p>
+</section>
+<section>
+<h3>[2006-11-29 18:56 UTC] ashnazg at users dot sourceforge dot net</h3>
+<p>More fun...</p>
+<p>I removed the comment from the first and third lines, leaving only the second line with a comment.  In the output, the first line appears ok, the second line appears ok (NOT indented), and the third line appears but IS indented.</p>
+<p>I then added two more lines, so that only the 2nd and 4th had comments.  In the output, all five lines appear, but only the 3rd and 5th are indented.</p>
+<p>I then removed all but the 1st line, and put a comment on it.  In the output, it was missing.</p>
+<p>OBSERVATIONS:<br>
+- any occurrence of a comment will cause only the very next line to be indented one space.<br>
+- a comment on the last line will cause it to be missing.<br>
+- the Converter is irrelevant.</p>
+</section>
+<section>
+<h3>[2006-11-29 19:56 UTC] ashnazg at users dot sourceforge dot net</h3>
+<p>Looking deeper at the tutorial documentation where &lt;code&gt; examples are shown, I noticed that they usually included the PHP start and end tags inside the &lt;code&gt; block.  When I add them, I still get an indention after a commented line, but the last line is no longer missing when it has a comment.</p>
+<p>So, unless you include the PHP start/end tags in your code block, then the parser treats it like it&#039;s HTML code, and NOT like it&#039;s PHP code.  I tested this thought by removing the PHP tags, then rewriting the comments using the &quot;&lt;-- comment --&gt;&quot; syntax for HTML comments instead of the &quot;// comment&quot; syntax for PHP comments... all five comment lines appeared ok in the output.</p>
+<p>I carried that thought further by only surrounding the comments themselves with PHP start/end tags, and that output looks absolutely perfect... all five lines appeared ok, with no extraneous indentions.  Granted, this meant that only the comments themselves were syntax-highlighted.</p>
+<p>Even further... I surrounded each individual line with each&#039;s own PHP start/end tags.  Those results were perfect also.</p>
+<p>The bottom line?  If it&#039;s PHP code you&#039;re showing, you need to include the PHP start/end tags in the code block... otherwise the code won&#039;t be parsed/highlighted as PHP, it&#039;ll be parsed as HTML.</p>
+<p>However, I still can&#039;t explain away why the line immediately following a PHP comment is ALWAYS indented one space...  manipulating the PHP tags did NOT solve that oddity.</p>
+</section>
+<section>
+<h3>[2006-11-29 21:51 UTC] ashnazg at users dot sourceforge dot net</h3>
+<p>After further reading of the tutorial docs regarding use of the &lt;code&gt; construct, I&#039;m not completely convinced that my earlier assertion of &quot;surround your PHP code with PHP tags&quot; is an _intentional_ necessity.  Of the many uses of the &lt;code&gt; construct I&#039;m seeing in the tutorials and in phpDoc&#039;s own unit tests, I don&#039;t think such a PHP tag was intended by Greg/Josh to be required... I think the code is just coincidentally behaving that way.</p>
+<p>This appears to be a legit bug, at least for the indention problem, but I _feel_ like PHP tag issue may also be another bug.</p>
+</section>
+<section>
+<h3>[2006-11-29 22:05 UTC] anode at goo dot cz</h3>
+<p>cellog: Yes, that&#039;s exactly what I used to solve this issue (but doesn&#039;t look very nice). And I can say that it works ok.</p>
+</section>
+<section>
+<h3>[2006-12-01 22:45 UTC] ashnazg at users dot sourceforge dot net</h3>
+<p>Greg, your example does indeed correctly display the third line and its comment, as well as displaying the standalone semicolon line.</p>
+<p>On your advice, I&#039;ve been digging my way through HighlightParser.inc.  Not intimately knowing the code, I&#039;ve really just been adding &quot;debug&quot; prints in all the methods that are being triggered as I spot them being executed... all the while looking for some pattern of behavior.  In short, I&#039;m trying to learn the code, but it&#039;s a slow dig.</p>
+<p>However, I have a question that might possibly lead YOU directly to a solution.  The description of the handleDocBlock method in the phpDocumentor_HighlightParser class indicates it knows to call the handleComment method when it realizes it&#039;s dealing with a plain &quot;comment&quot; rather than a &quot;docblock&quot;.  However, I see nowhere in handleDocBlock where handleComment is being called.  Do you think you can take a look and see (with your knowledge of the code) if that is exactly the culprit here?</p>
+</section>
+<section>
+<h3>[2006-12-05 15:54 UTC] ashnazg at users dot sourceforge dot net</h3>
+<p>I&#039;m still adding debug statements to methods, still trying to digest the worfklow as well as look for behavior patterns to help illuminate the problem.</p>
+<p>On the issue of the extra space on each following line, behavior suggests to me that ANY comment line will result in the following line getting a leading space.  I tried a block like this:<br>
+ * &lt;code&gt;<br>
+ * // line 0<br>
+ * $line1 = 1; // line 1<br>
+ * $line2 = 2; // line 2<br>
+ * &lt;/code&gt;</p>
+<p>and the result had the $line1 line indented as well as the expected $line2 indention.  So, it looks like the extra space is solely due to an immediately preceding comment line.</p>
+<p>I&#039;m making less progress understanding the main problem of phpdoc not generating the last line of the &lt;code&gt; block.  However, seeing two PHP Notice errors in the generation output does lean me toward my original suspicion of an off-by-one type problem (my line numbers don&#039;t match CVS version of file, due to my added debug lines):</p>
+<p>Notice: Undefined offset:  3 in c:\HighlightParser.inc on line 92 ($token = $this-&gt;_all[$linenum][$pos];)</p>
+<p>Notice: Undefined index:   in c:\HighlightParser.inc on line 437 ($tok = $this-&gt;_wp-&gt;_all[$tok1[0]][$tok1[1]];)</p>
+</section>
+<section>
+<h3>[2006-12-05 17:09 UTC] ashnazg at users dot sourceforge dot net</h3>
+<p>More on the indention...</p>
+<p>It now seems to me that a comment ALWAYS results in a trailing space on the following line, while a code line always causes its own leading space.  One comment line leading a second comment line does NOT cause the second line to indent.</p>
+<p>Perhaps that trailing space caused by the comment line should instead be suppressed?  I don&#039;t see a trailing space being caused by a code line.  Or, perhaps that trailing space THINKS it is being placed at the beginning of the comment line itself?  If the comment line doesn&#039;t actually realize it is on the same line as its code line, it may be trying to place its own leading space before placing itself in the output line... maybe the comment itself is being placed on the correct line but the leading space it not?</p>
+</section>
+<section>
+<h3>[2006-12-05 18:16 UTC] ashnazg at users dot sourceforge dot net</h3>
+<p>Good grief, Chuck, get with it...</p>
+<p>Those PHP Notices should be enough to tell me that some function call that should RESULT in outputting the last line is ITSELF failing, and therefore is not FINISHING its work of getting said line into the output.  No more mysterious than that.</p>
+<p>I&#039;ll see what I can figure out regarding those offset/index notices...</p>
+</section>
+<section>
+<h3>[2006-12-06 16:34 UTC] ashnazg at users dot sourceforge dot net</h3>
+<p>Interestingly, the same indention problem (though not the missing line problem) occur when the filesource tag causes the entire source file to be parsed/converted.  I made the class piece look like this:</p>
+<p>class Whee {<br>
+   $line1 = 1; // line 1<br>
+   $line2 = 2; // line2<br>
+}</p>
+<p>and the resulting filesource page shows line2 ok in the class block but indented THREE spaces...</p>
+</section>
+<section>
+<h3>[2006-12-08 21:00 UTC] ashnazg at users dot sourceforge dot net</h3>
+<p>Eureka... tiny fix in HighlightParser.inc handleComment().  I&#039;ll submit a sourceforge patch as soon as I&#039;ve satisfied myself (through testing phpdoc generation against known-to-me codebases) that the fix doesn&#039;t break anything.</p>
+</section>
+<section>
+<h3>[2006-12-08 21:20 UTC] ashnazg at users dot sourceforge dot net</h3>
+<p>Submitted patch to sourceforge:</p>
+<p>https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1611847&amp;group_id=11194&amp;atid=311194</p>
+</section>
+<section>
+<h3>[2006-12-09 11:08 UTC] anode at goo dot cz</h3>
+<p>Thank you! Just tested with my scripts and everything works fine. Should I mark this bug as closed?</p>
+</section>
+<section>
+<h3>[2006-12-11 13:59 UTC] ashnazg at users dot sourceforge dot net</h3>
+<p>Probably not... need to wait to see if Greg or Josh choose to either commit the patch to CVS or fix it a different way.</p>
+</section>
+<section>
+<h3>[2006-12-18 17:24 UTC] ashnazg at php dot net</h3>
+<p>I&#039;ve committed sourceforge patch #1611847 to CVS... marking this bug as closed.</p>
+</section>
+<section>
+<h3>[2006-12-18 17:38 UTC] ashnazg at php dot net</h3>
+<p>The patch is now available at sourceforge with the same item number, but it&#039;s listed under &quot;bugs&quot;:</p>
+<p>https://sourceforge.net/tracker/index.php?func=detail&amp;aid=1611847&amp;group_id=11194&amp;atid=111194</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

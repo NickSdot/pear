@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9622</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Bug #9622</h1>
+<p>&quot;No handlers for package.xml version 2.0&quot; answer is lame</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Doc Bug #9622</th><td>&quot;No handlers for package.xml version 2.0&quot; answer is lame</td></tr>
+<tr><th>Submitted</th><td>2006-12-14 22:48 UTC</td></tr>
+<tr><th>From</th><td>chuck dot hoffman at t8design dot com</td></tr>
+<tr><th>Assigned</th><td>wiesemann</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td>Documentation</td></tr>
+<tr><th>PHP Version</th><td>5.2.0</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-12-14 22:48 UTC] chuck dot hoffman at t8design dot com</h3>
+<p>Description:<br>
+------------<br>
+The solution given states to upgrade PEAR with &quot;pear upgrade PEAR.&quot;  However, it was in the process of attempting this very thing that I got the error to begin with, so if the solution to the error only repeats the same error, it can hardly be considered a solution.</p>
+<p>Two seemingly relevant previous requests appeared when I first attempted submitting this a moment ago; neither is helping:</p>
+<p>submitter of<br>
+http://www.go-pear.org/bugs/bug.php?id=9552&amp;edit=2<br>
+resolved issue with:<br>
+export PHP_PEAR_INSTALL_DIR=/path/to/my/pair/installation</p>
+<p>Mine being a Windows install (included with xampp), I did the equivalent (control Panel-&gt;System-&gt;Advanced-&gt;Environment Variables) and found that PHP_PEAR_INSTALL_DIR already appeared to be set correctly there.</p>
+<p>submitter of<br>
+http://www.go-pear.org/bugs/bug.php?id=8273&amp;edit=2<br>
+resolved issue with:<br>
+pear upgrade Archive_Tar<br>
+pear upgrade pear<br>
+Archive_Tar upgraded successfully, but &quot;pear upgrade pear&quot; (actually in my case, pear upgrade -a pear, since my version is 1.3, so 1.3.2 needed to be installed first before 1.4.?) still bombed out with the exact same error as before.</p>
+</section>
+<section>
+<h3>[2006-12-15 14:20 UTC] chuck dot hoffman at t8design dot com</h3>
+<p>That is pretty much exactly what I am _attempting_ to do by including the -a switch.  This causes pear upgrade to download 1.3.6 first, but then fails to install it because of the lack of the aforementioned handler for the xml handler.  Would it work to do the upgrade in two separate steps by somehow specifically requesting v1.3.6, then upgrading to 1.4.? afterwards?  And if so, how do I specify the version to upgrade to?  Otherwise this is a circular dependency (the upgrade requires the file handler, but the file handler comes with the upgrade) that needs to be resolved.</p>
+</section>
+<section>
+<h3>[2006-12-15 15:45 UTC] chuck dot hoffman at t8design dot com</h3>
+<p>Excellent, 1.3.6 came through all right.  However, on the second command I received a new error, possibly a separate issue:</p>
+<p>downloading PEAR-1.4.11.tgz ...<br>
+Starting to download PEAR-1.4.11.tgz (283,272 bytes)<br>
+..........................................................done: 283,272 bytes<br>
+Release for &#039;pear&#039;      Release for &#039;pear&#039; dependency<br>
+dependency              &#039;PEAR_Frontend_Gtk&#039; has state &#039;beta&#039;, requires<br>
+&#039;PEAR_Frontend_Web&#039; has &#039;stable&#039;<br>
+state &#039;alpha&#039;, requires<br>
+&#039;stable&#039;<br>
+upgrade failed</p>
+<p>I don&#039;t even know where to start with this... I can barely make sense of it.</p>
+</section>
+<section>
+<h3>[2006-12-15 15:52 UTC] chuck dot hoffman at t8design dot com</h3>
+<p>I guess it makes more sense if you read it as two columns, but it took some serious staring at it to figure that out.  It looks like a complete mess.</p>
+<p>I have attempted a pear upgrade on both PEAR_Frontend_Web and PEAR_Frontend_Gtk to no avail:</p>
+<p>C:\xampp\php\pear&gt;pear install PEAR_Frontend_Web<br>
+No release with state equal to: &#039;stable&#039; found for &#039;PEAR_Frontend_Web&#039;</p>
+<p>C:\xampp\php\pear&gt;pear install PEAR_Frontend_Gtk<br>
+No release with state equal to: &#039;stable&#039; found for &#039;PEAR_Frontend_Gtk&#039;</p>
+<p>C:\xampp\php\pear&gt;pear upgrade-all<br>
+Will upgrade auth<br>
+Will upgrade auth_http<br>
+Will upgrade auth_prefmanager<br>
+[...snip...]<br>
+downloading Auth-1.4.3.tgz ...<br>
+Starting to download Auth-1.4.3.tgz (54,619 bytes)<br>
+.............done: 54,619 bytes<br>
+downloading Auth_HTTP-2.1.6.tgz ...<br>
+Starting to download Auth_HTTP-2.1.6.tgz (9,327 bytes)<br>
+...done: 9,327 bytes<br>
+downloading Auth_PrefManager-1.1.4.tgz ...<br>
+Starting to download Auth_PrefManager-1.1.4.tgz (4,911 bytes)<br>
+...done: 4,911 bytes<br>
+downloading Auth_SASL-1.0.2.tgz ...<br>
+Starting to download Auth_SASL-1.0.2.tgz (5,645 bytes)<br>
+...done: 5,645 bytes<br>
+No handlers for package.xml version 2.0</p>
+</section>
+<section>
+<h3>[2006-12-15 16:19 UTC] chuck dot hoffman at t8design dot com</h3>
+<p>pear -v gives me a list of commands. ;) pear -V however, gives me:</p>
+<p>PEAR Version: 1.4.11<br>
+PHP Version: 5.0.2<br>
+Zend Engine Version: 2.0.2<br>
+Running on: Windows NT COMPY3000 5.1 build 2600</p>
+<p>However I have now managed to get pear to upgrade to latest version, and these Gtk/Web frontend packages mentioned, installed, after installing console_getopt.</p>
+<p>Which gets me back down my mental stack far enough to what started this whole mess for me in the first place, my desire to upgrade to the newest version of PHPUnit.  That was a couple days ago...</p>
+<p>C:\xampp\php\pear&gt;pear install phpunit/PHPUnit<br>
+Did not download optional dependencies: pear/Testing_Selenium, use --alldeps to<br>
+download automatically<br>
+phpunit/PHPUnit requires PHP (version &gt;= 5.1.4), installed version is 5.0.2<br>
+phpunit/PHPUnit requires PHP extension &quot;reflection&quot;<br>
+phpunit/PHPUnit requires package &quot;pear/Image_GraphViz&quot; (version &gt;= 1.2.1), insta<br>
+lled version is 1.0.3<br>
+phpunit/PHPUnit can optionally use package &quot;pear/Testing_Selenium&quot; (version &gt;= 0<br>
+.2.0)<br>
+phpunit/PHPUnit can optionally use PHP extension &quot;json&quot;<br>
+phpunit/PHPUnit can optionally use PHP extension &quot;xdebug&quot; (version &gt;= 2.0.0RC1)<br>
+No valid packages found<br>
+install failed</p>
+<p>Crap... I don&#039;t suppose PEAR can upgrade PHP for me now?  ;-)</p>
+</section>
+<section>
+<h3>[2006-12-15 18:46 UTC] chuck dot hoffman at t8design dot com</h3>
+<p>Yes, exactly, I know.  The version of PEAR I had didn&#039;t *have* channels, which was why I was trying to upgrade PEAR in the first place.</p>
+<p>One of these days maybe I&#039;ll get some actual work done!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

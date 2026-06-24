@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8312</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #8312</h1>
+<p>Only variable references should be returned by reference</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-07-28 10:07 UTC</td></tr>
+<tr><th>From</th><td>ross at golder dot org</td></tr>
+<tr><th>Assigned</th><td>cipri</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Ubuntu Dapper</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-28 10:07 UTC] ross at golder dot org</h3>
+<p>Description:<br>
+------------<br>
+Notice: Only variable references should be returned by reference in /usr/share/php/Mail/mime.php on line 320</p>
+<p>Notice: Only variable references should be returned by reference in /usr/share/php/Mail/mime.php on line 593</p>
+<p>Notice: Only variable references should be returned by reference in /usr/share/php/Mail/mime.php on line 356</p>
+<p>Notice: Only variable references should be returned by reference in /usr/share/php/Mail/mime.php on line 434</p>
+<p>Notice: Only variable references should be returned by reference in /usr/share/php/Mail/mime.php on line 593</p>
+<p>Warning: Cannot modify header information - headers already sent by...</p>
+<p>Test script:<br>
+---------------<br>
+Sorry, not enough time. Patched locally already.</p>
+<p>Expected result:<br>
+----------------<br>
+No warnings/notices.</p>
+<p>Actual result:<br>
+--------------<br>
+Lots of notices.</p>
+</section>
+<section>
+<h3>[2006-07-28 10:11 UTC] ross at golder dot org</h3>
+<p>Well, I would attach my local patch but I can&#039;t seem to figure out how. Daft bug tracker. Here it is cut&#039;n&#039;pasted:</p>
+<p>--- mime.php.orig       2006-07-28 16:57:28.000000000 +0700<br>
++++ mime.php    2006-07-28 17:00:14.000000000 +0700<br>
+@@ -315,10 +315,11 @@<br>
+         $params[&#039;encoding&#039;]     = $this-&gt;_build_params[&#039;text_encoding&#039;];<br>
+         $params[&#039;charset&#039;]      = $this-&gt;_build_params[&#039;text_charset&#039;];<br>
+         if (is_object($obj)) {<br>
+-            return $obj-&gt;addSubpart($text, $params);<br>
++            $part = $obj-&gt;addSubpart($text, $params);<br>
+         } else {<br>
+-            return new Mail_mimePart($text, $params);<br>
++            $part = new Mail_mimePart($text, $params);<br>
+         }<br>
++        return $part;<br>
+     }<br>
+ <br>
+     /**<br>
+@@ -353,7 +354,8 @@<br>
+     function &amp;_addMixedPart()<br>
+     {<br>
+         $params[&#039;content_type&#039;] = &#039;multipart/mixed&#039;;<br>
+-        return new Mail_mimePart(&#039;&#039;, $params);<br>
++        $part = new Mail_mimePart(&#039;&#039;, $params);<br>
++        return $part;<br>
+     }<br>
+ <br>
+     /**<br>
+@@ -430,7 +432,8 @@<br>
+         $params[&#039;encoding&#039;]     = $value[&#039;encoding&#039;];<br>
+         $params[&#039;disposition&#039;]  = &#039;attachment&#039;;<br>
+         $params[&#039;dfilename&#039;]    = $value[&#039;name&#039;];<br>
+-        $obj-&gt;addSubpart($value[&#039;body&#039;], $params);<br>
++        $part = $obj-&gt;addSubpart($value[&#039;body&#039;], $params);<br>
++        return $part;<br>
+     }<br>
+ <br>
+     /**<br>
+@@ -590,7 +593,8 @@<br>
+         }<br>
+         $this-&gt;_headers = array_merge($headers, $this-&gt;_headers);<br>
+ <br>
+-        return $this-&gt;_encodeHeaders($this-&gt;_headers);<br>
++        $headers = $this-&gt;_encodeHeaders($this-&gt;_headers);<br>
++        return $headers;<br>
+     }<br>
+ <br>
+     /**</p>
+</section>
+<section>
+<h3>[2006-09-12 16:50 UTC] bytewise at gmx dot net</h3>
+<p>Patch works for me (and I had the same problem). Please accept this patch.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5891</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #5891</h1>
+<p>cannot upgrade/install package PEAR</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-08 10:24 UTC</td></tr>
+<tr><th>From</th><td>mdv at inyourpocket dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.5</td></tr>
+<tr><th>OS</th><td>Debian</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-08 10:24 UTC] mdv at inyourpocket dot com</h3>
+<p>Description:<br>
+------------<br>
+when i try install downloaded package PEAR or run command upgrade-all or upgrade PEAR pear consume all of my memory (see below) it&#039;s only for PEAR package</p>
+<p>PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND                                                      <br>
+9632 root      17   0 1102m 472m  584 R 46.0 93.8   0:32.60 php</p>
+<p>Test script:<br>
+---------------<br>
+Configuration (channel pear.php.net):<br>
+=====================================<br>
+Auto-discover new Channels     auto_discover    &lt;not set&gt;<br>
+Default Channel                default_channel  pear.php.net<br>
+HTTP Proxy Server Address      http_proxy       &lt;not set&gt;<br>
+PEAR server [DEPRECATED]       master_server    pear.php.net<br>
+Default Channel Mirror         preferred_mirror pear.php.net<br>
+Remote Configuration File      remote_config    &lt;not set&gt;<br>
+PEAR executables directory     bin_dir          /usr/local/php/bin<br>
+PEAR documentation directory   doc_dir          /usr/local/php/lib/php/doc<br>
+PHP extension directory        ext_dir          /usr/local/php/lib/php/extensions/no-debug-non-zts-20041030<br>
+PEAR directory                 php_dir          /usr/local/php/lib/php<br>
+PEAR Installer cache directory cache_dir        /tmp/pear/cache<br>
+PEAR data directory            data_dir         /usr/local/php/lib/php/data<br>
+PHP CLI/CGI binary             php_bin          /usr/local/php/bin/php<br>
+PEAR test directory            test_dir         /usr/local/php/lib/php/test<br>
+Cache TimeToLive               cache_ttl        3600<br>
+Preferred Package State        preferred_state  stable<br>
+Unix file mask                 umask            22<br>
+Debug Log Level                verbose          1<br>
+PEAR password (for             password         &lt;not set&gt;<br>
+maintainers)<br>
+Signature Handling Program     sig_bin          /usr/bin/gpg<br>
+Signature Key Directory        sig_keydir       /usr/local/php/etc/pearkeys<br>
+Signature Key Id               sig_keyid        &lt;not set&gt;<br>
+Package Signature Type         sig_type         gpg<br>
+PEAR username (for             username         &lt;not set&gt;<br>
+maintainers)<br>
+User Configuration File        Filename         /root/.pearrc<br>
+System Configuration File      Filename         /usr/local/php/etc/pear.conf</p>
+<p>PEAR Version: 1.4.2<br>
+PHP Version: 5.0.5<br>
+Zend Engine Version: 2.0.5<br>
+Running on: Linux system 2.4.20 #1 Wed Jan 1 18:31:58 CET 2003 i686</p>
+<p>Expected result:<br>
+----------------<br>
+that package will upgrade or install new version</p>
+<p>Actual result:<br>
+--------------<br>
+SIGSEGV or Terminated</p>
+</section>
+<section>
+<h3>[2005-11-11 09:01 UTC] mdv at inyourpocket dot com</h3>
+<p>in function PEAR_Downloader::download() in file PEAR/Downloader.php (about line 380)</p>
+<p>foreach ($params as $i =&gt; $package) {<br>
+            PEAR::staticPushErrorHandling(PEAR_ERROR_RETURN);<br>
+            $pf = &amp;$params[$i]-&gt;download();<br>
+            <br>
+            var_dump(&#039;here&#039;);<br>
+            die(&#039;DEBUG&#039;);</p>
+<p>PEAR::staticPopErrorHandling();<br>
+            if (PEAR::isError($pf)) {</p>
+<p>statement var_dump(&#039;here&#039;) and rest is never reached, so it looks that here is problem:</p>
+<p>$params[$i]-&gt;download();</p>
+<p>i can send you var_dump($params[$i]); (is about 1.5M unpacked)</p>
+</section>
+<section>
+<h3>[2005-11-13 07:21 UTC] mdv at inyourpocket dot com</h3>
+<p>pear install -Z PEAR:</p>
+<p>Skipping package &quot;pear/PEAR&quot;, already installed as version 1.4.2<br>
+No valid packages found<br>
+install failed</p>
+<p>but pear upgrade -Z PEAR:</p>
+<p>same as first (php get all of my memory)</p>
+<p>and it&#039;s only PEAR package other packages installed with no problem (Mail, Mail_Mime installed and other upgraded from distro versions)</p>
+<p>var_dump($params[$i]-&gt;getPackage(), $params[$i]-&gt;getVersion()) returns:</p>
+<p>string(4) &quot;PEAR&quot;<br>
+string(5) &quot;1.4.4&quot;</p>
+<p>i will try to determine the source of the problem</p>
+</section>
+<section>
+<h3>[2005-11-13 07:49 UTC] mdv at inyourpocket dot com</h3>
+<p>in PEAR/Downloader/Package.php function _fromUrl($param, $saveparam = &#039;&#039;)</p>
+<p>input are:<br>
+string(38) &quot;http://pear.php.net/get/PEAR-1.4.4.tgz&quot;<br>
+string(9) &quot;pear/PEAR&quot;</p>
+<p>is code (about line 1387):<br>
+$pf = &amp;$pkg-&gt;fromAnyFile($file, PEAR_VALIDATE_INSTALLING);<br>
+PEAR::popErrorHandling();</p>
+<p>if i put between two lines above print_r($pf); - everything is ok (i have dump - 520k) but if i put var_dump($pf); - it hangs and code after (eg. PEAR::popErrorHandling(); and rest is not executed)</p>
+</section>
+<section>
+<h3>[2005-11-13 11:25 UTC] mdv at inyourpocket dot com</h3>
+<p>i transfered whole PEAR and php.ini to another machine and here was SIGSEGV so i put php in gdb and there is result (maybe it helps):</p>
+<p>(gdb) set arg -C -q -d include_path=/usr/local/php/lib/php -d output_buffering=1 /usr/local/php/lib/php/pearcmd.php upgrade PEAR<br>
+(gdb) r<br>
+Starting program: /usr/local/php/bin/php -C -q -d include_path=/usr/local/php/lib/php -d output_buffering=1 /usr/local/php/lib/php/pearcmd.php upgrade PEAR<br>
+downloading PEAR-1.4.4.tgz ...<br>
+Starting to download PEAR-1.4.4.tgz (276,978 bytes)<br>
+.........................................................done: 276,978 bytes</p>
+<p>Program received signal SIGSEGV, Segmentation fault.<br>
+0xb7c6112f in free () from /lib/tls/libc.so.6</p>
+<p>backtrack:<br>
+#1  0xb7c62cec in malloc () from /lib/tls/libc.so.6<br>
+#2  0x081ac80f in _emalloc (size=3084056672) at /root/src/php-5.0.5/Zend/zend_alloc.c:183<br>
+#3  0x081c7bfe in _zend_hash_add_or_update (ht=0x99d7934, arKey=Variable &quot;arKey&quot; is not available.<br>
+) at /root/src/php-5.0.5/Zend/zend_hash.c:242<br>
+#4  0x081c7e2a in zend_hash_copy (target=0x99d7934, source=0x8a5d23c, pCopyConstructor=0x81d2000 &lt;zval_add_ref_or_clone&gt;, tmp=0x0, size=4) at /root/src/php-5.0.5/Zend/zend_hash.c:760<br>
+#5  0x081d20df in zend_objects_clone_members (new_object=0x99d7914, new_obj_val={handle = 23717, handlers = 0x827a880}, old_object=0x8a1230c, handle=61) at /root/src/php-5.0.5/Zend/zend_objects.c:139<br>
+#6  0x081d227c in zend_objects_clone_obj (zobject=0x3c) at /root/src/php-5.0.5/Zend/zend_objects.c:186<br>
+#7  0x081d2060 in zval_add_ref_or_clone (p=0x99d78c0) at /root/src/php-5.0.5/Zend/zend_objects.c:127<br>
+#8  0x081c7e3a in zend_hash_copy (target=0x99d74f4, source=0x8a223cc, pCopyConstructor=0x81d2000 &lt;zval_add_ref_or_clone&gt;, tmp=0x0, size=4) at /root/src/php-5.0.5/Zend/zend_hash.c:765<br>
+#9  0x081d20df in zend_objects_clone_members (new_object=0x99d74d4, new_obj_val={handle = 23716, handlers = 0x827a880}, old_object=0x8a25c24, handle=62) at /root/src/php-5.0.5/Zend/zend_objects.c:139<br>
+#10 0x081d227c in zend_objects_clone_obj (zobject=0x3c) at /root/src/php-5.0.5/Zend/zend_objects.c:186<br>
+#11 0x081d2060 in zval_add_ref_or_clone (p=0x99d7488) at /root/src/php-5.0.5/Zend/zend_objects.c:127<br>
+#12 0x081c7e3a in zend_hash_copy (target=0x99d7404, source=0x8a5d23c, pCopyConstructor=0x81d2000 &lt;zval_add_ref_or_clone&gt;, tmp=0x0, size=4) at /root/src/php-5.0.5/Zend/zend_hash.c:765<br>
+#13 0x081d20df in zend_objects_clone_members (new_object=0x99d73e4, new_obj_val={handle = 23715, handlers = 0x827a880}, old_object=0x8a1230c, handle=61) at /root/src/php-5.0.5/Zend/zend_objects.c:139<br>
+#14 0x081d227c in zend_objects_clone_obj (zobject=0x3c) at /root/src/php-5.0.5/Zend/zend_objects.c:186</p>
+</section>
+<section>
+<h3>[2005-11-14 06:48 UTC] mdv at inyourpocket dot com</h3>
+<p>zend.ze1_compatibility_mode = On</p>
+<p>with zend.ze1_compatibility_mode = Off upgrade with no problems</p>
+<p>so thank you for solution (little easy, isn&#039;t ? :))</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

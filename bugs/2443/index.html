@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2443</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #2443</h1>
+<p>AddUser error when using DB-container</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-10-04 15:30 UTC</td></tr>
+<tr><th>From</th><td>jan at ivtaco dot se</td></tr>
+<tr><th>Assigned</th><td>dufuz</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>All</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-04 15:30 UTC] jan at ivtaco dot se</h3>
+<p>Description:<br>
+------------<br>
+I had problems with having the admin class (latest version) to add user with custom and optional fields. Maybe I have misunderstood it, but I find it something strange when I call the Admin-&gt;addUser() with the options specified and then the Admin-&gt;addUser wants to send it to Admin::Auth:DB addUser and the parameters don&#039;t match at all.</p>
+<p>Admin.php code: (line 372)<br>
+$authId = $this-&gt;auth-&gt;addUser($handle, $password, $active, $owner_user_id, $owner_group_id, $id, $customFields);</p>
+<p>whereas in the DB (Admin/Auth/Container/DB.php) to where the call goes has:<br>
+DB.php (line: 156)<br>
+function addUser($handle, $password = &#039;&#039;, optionalFields = array(), $customFields = array(), $authId = null)</p>
+<p>This sent out a couple of errors as well as it sends notices on the defintion of (Admin.php line 170)<br>
+$col = $val = array();</p>
+<p>because of the error above if they are not set then you get a sql parse error since you get a query:<br>
+INSERT INTO ... , Array() ) VALUES (.... Array())</p>
+<p>I fixed all these errors my self (on my own distribution) by changing:<br>
+--------------------------------------------------<br>
+$col = $val = array();</p>
+<p>to</p>
+<p>$col = $val = &quot;&quot; //doesn&#039;t matter that they are inited to null<br>
+--------------------------------------------------</p>
+<p>Changed the function header from:</p>
+<p>function addUser($handle, $password = &#039;&#039;, optionalFields = array(), $customFields = array(), $authId = null)</p>
+<p>to</p>
+<p>function addUser($handle, $password = &#039;&#039;, $active, $owner_user_id,$owner_group_id, $authId, $customFields)</p>
+<p>----------------------------------------------------</p>
+<p>Then changed within the AddUser function to make use of the new inparams.</p>
+<p>I just thought I would notice this and get your feedback on this, maybe it is something I misunderstood or you missed... =/</p>
+<p>Thanks for a great pacakage otherwise,<br>
+//Jan Bolmeson</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #440</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_FTP/index.html">Net_FTP</a> &#187; Bug #440</h1>
+<p>Notice appears</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-12-16 17:24 UTC</td></tr>
+<tr><th>From</th><td>alexandre at tela-botanica dot org</td></tr>
+<tr><th>Assigned</th><td>toby</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_FTP/index.html">Net_FTP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Mandrake linux 9.2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-12-16 17:24 UTC] alexandre at tela-botanica dot org</h3>
+<p>Description:<br>
+------------<br>
+Many notice from the php engine occurs while deleting a directory.</p>
+<p>these are the messages :<br>
+Notice: Undefined variable: list in /usr/share/pear/Net/FTP.php on line 887</p>
+<p>Notice: Undefined variable: list in /usr/share/pear/Net/FTP.php on line 887</p>
+<p>Notice: Undefined variable: list in /usr/share/pear/Net/FTP.php on line 887</p>
+<p>Notice: Undefined variable: true in /usr/share/pear/Net/FTP.php on line 812</p>
+<p>Notice: Undefined variable: true in /usr/share/pear/Net/FTP.php on line 812</p>
+<p>etc.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$ftp = new Net_FTP ($Host, $Port) ;<br>
+     $ftp-&gt;connect() ;</p>
+<p>$resultat =$ftp-&gt;login($User, $Pwd) ;<br>
+    if (PEAR::isError($resultat)) $msg .= &quot;Impossible de s&#039;identifier au serveur FTP&quot; ;</p>
+<p>$resultat = $ftp-&gt;rm (GEN_CHEMIN_FTP.&quot;sites/$managedProject/&quot;, true) ;  // here is the problem</p>
+<p>Expected result:<br>
+----------------<br>
+The code works perfectly, but i&#039;d prefer without the notice messages</p>
+<p>Actual result:<br>
+--------------<br>
+Notice: Undefined variable: list in /usr/share/pear/Net/FTP.php on line 887</p>
+<p>Notice: Undefined variable: true in /usr/share/pear/Net/FTP.php on line 812</p>
+</section>
+<section>
+<h3>[2003-12-31 10:04 UTC] chip at php dot net</h3>
+<p>I think this patch should fix these notices:</p>
+<p>--- FTP.php.dist        2003-12-31 09:49:15.000000000 +0000<br>
++++ FTP.php     2003-12-31 10:04:33.000000000 +0000<br>
+@@ -809,7 +808,7 @@<br>
+             if (!$res) {<br>
+                 return $this-&gt;raiseError(&quot;Could not delete directory &#039;$dir&#039;.&quot;, 0);<br>
+             } else {<br>
+-                return true;<br>
++                return $true;<br>
+             }<br>
+         }</p>
+<p>@@ -884,10 +883,10 @@<br>
+         */</p>
+<p>function _ls_dirs ( $dir ) {<br>
+-            if (!is_array($list[&quot;files&quot;])) {<br>
++            $list = $this-&gt;_list_and_parse($dir);<br>
++            if (!is_array($list[&quot;dirs&quot;])) {<br>
+                 $list[&quot;dirs&quot;] = array();<br>
+             }<br>
+-            $list = $this-&gt;_list_and_parse($dir);<br>
+             return $list[&quot;dirs&quot;];<br>
+         }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

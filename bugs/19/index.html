@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #19</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail/index.html">Mail</a> &#187; Bug #19</h1>
+<p>Mail_mail::send() fails with safe mode switched on</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-09-17 14:54 UTC</td></tr>
+<tr><th>From</th><td>christof dot roduner at npocom dot ch</td></tr>
+<tr><th>Assigned</th><td>chagenbu</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail/index.html">Mail</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-09-17 14:54 UTC] christof dot roduner at npocom dot ch</h3>
+<p>Description:<br>
+------------<br>
+If safe mode is switched on, Mail_mail::send() will fail with the following error message:</p>
+<p>Warning: mail(): SAFE MODE Restriction in effect. The fifth parameter is disabled in SAFE MODE.</p>
+<p>The problem occurs even though only a backend driver, but no params are passed to the factory method.</p>
+<p>Here&#039;s a patch that fixed the problem for me:</p>
+<p>--- mail.php~   Wed Sep 17 16:09:02 2003<br>
++++ mail.php    Wed Sep 17 16:14:47 2003<br>
+@@ -109,7 +109,12 @@<br>
+         // flatten the headers out.<br>
+         list(,$text_headers) = Mail::prepareHeaders($headers);</p>
+<p>-        return mail($recipients, $subject, $body, $text_headers, $this-&gt;_params);<br>
++        // Only pass fifth parameter to mail() if safe mode is off.<br>
++        if (ini_get(&#039;safe_mode&#039;) == &#039;1&#039;) {<br>
++            return mail($recipients, $subject, $body, $text_headers);<br>
++        } else {<br>
++            return mail($recipients, $subject, $body, $text_headers, $this-&gt;_params);<br>
++        }<br>
+     }</p>
+<p>}</p>
+<p>Best regards,</p>
+<p>Christof</p>
+</section>
+<section>
+<h3>[2003-09-18 14:44 UTC] chagenbu at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a PHP problem, snapshots of the sources are packaged<br>
+every three hours; this change will be in the next snapshot. You can<br>
+grab the snapshot at http://snaps.php.net/.<br>
+ <br>
+In case this was a documentation problem, the fix will show up soon at<br>
+http://www.php.net/manual/.</p>
+<p>In case this was a PHP.net website problem, the change will show<br>
+up on the PHP.net site and on the mirror sites in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PHP better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

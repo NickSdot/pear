@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9859</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #9859</h1>
+<p>Empty strings are treated as booleans</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-17 21:45 UTC</td></tr>
+<tr><th>From</th><td>gahorth1234 at yahoo dot co dot uk</td></tr>
+<tr><th>Assigned</th><td>aharvey</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>5.2.0</td></tr>
+<tr><th>OS</th><td>Suse Linux 10.2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-17 21:45 UTC] gahorth1234 at yahoo dot co dot uk</h3>
+<p>Description:<br>
+------------<br>
+I&#039;ve noticed that if my SQL query contains an empty string as one of the values, &quot;smartQuote&quot; in common.php treats this value as a boolean and so stores a zero in the database, instead of an empty string as expected.</p>
+<p>e.g.<br>
+$db-&gt;query(&quot;UPDATE `Stock` SET `Spec` = ?&quot;, array(substr(&#039;&#039;,0,255)));</p>
+<p>Obviously the &quot;substr&quot; function above would normally have a proper string in it! But if it&#039;s from, say $_POST or $_GET, and that field was left blank on the form, the query then becomes &quot;UPDATE `Stock` SET `Spec` = 0&quot; (from the mysql log).</p>
+<p>It could be that this is actually considered a PHP problem, but a quick fix (for me) is to replace the following line in common.php within the &quot;smartQuote&quot; function (line 429 in common.php from DB release 1.7.7):</p>
+<p>Original line:<br>
+  } elseif (is_bool($in)) {</p>
+<p>My replaced line:<br>
+  } elseif (is_bool($in) &amp;&amp; !empty($in)) {</p>
+<p>Test script:<br>
+---------------<br>
+$db-&gt;query(&quot;UPDATE `Stock` SET `Spec` = ?&quot;, array(substr($_GET[&#039;value&#039;],0,255)));</p>
+<p>Expected result:<br>
+----------------<br>
+UPDATE `Stock` SET `Spec` = &#039;&#039;</p>
+<p>Actual result:<br>
+--------------<br>
+UPDATE `Stock` SET `Spec` = 0</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #94</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #94</h1>
+<p>segmentation fault when connecting to database</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-10-13 13:38 UTC</td></tr>
+<tr><th>From</th><td>nikolaj dot jansen at telfort dot nl</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>redhat linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-10-13 13:38 UTC] nikolaj dot jansen at telfort dot nl</h3>
+<p>Description:<br>
+------------<br>
+segmentation fault when connecting to db.<br>
+This happens only on our production server, not on my development machine (debian, php 4.3.3RC3). Both use latest DataObject version.<br>
+  <br>
+Using exit(); at several points I found the offending line in function _connect():<br>
+        // it&#039;s not currently connected!<br>
+        // try and work out what to use for the dsn !</p>
+<p>$options= &amp;$_DB_DATAOBJECT[&#039;CONFIG&#039;];<br>
+        $dsn = @$this-&gt;_database_dsn;</p>
+<p>if (!$dsn) {<br>
+            if (!$this-&gt;_database) {<br>
+#Offending line############<br>
+                $this-&gt;_database = @$options[&quot;table_{$this-&gt;__table}&quot;];<br>
+######################<br>
+            }<br>
+            if (@$this-&gt;_database &amp;&amp; @$options[&quot;database_{$this-&gt;_database}&quot;])  {<br>
+                $dsn = $options[&quot;database_{$this-&gt;_database}&quot;];<br>
+            } else if ($options[&#039;database&#039;]) {<br>
+                $dsn = $options[&#039;database&#039;];<br>
+            }<br>
+        }</p>
+<p>Reproduce code:<br>
+---------------<br>
+This is a dump of the $options<br>
+array(17) {<br>
+  [&quot;dont_die&quot;]=&gt;<br>
+  string(1) &quot;0&quot;<br>
+  [&quot;database&quot;]=&gt;<br>
+  string(29) &quot;mysql://root@localhost/websms&quot;<br>
+  [&quot;#schema_location&quot;]=&gt;<br>
+  string(15) &quot;../../../../etc&quot;<br>
+  [&quot;schema_location&quot;]=&gt;<br>
+  string(35) &quot;/home/sta01/www/testsite/etc/websms&quot;<br>
+  [&quot;class_location&quot;]=&gt;<br>
+  string(9) &quot;generated&quot;<br>
+  [&quot;require_prefix&quot;]=&gt;<br>
+  string(12) &quot;DataObjects/&quot;<br>
+  [&quot;class_prefix&quot;]=&gt;<br>
+  string(11) &quot;WEBSMS_DBO_&quot;<br>
+  [&quot;ignore_sequence_keys&quot;]=&gt;<br>
+  string(0) &quot;&quot;<br>
+  [&quot;extends_location&quot;]=&gt;<br>
+  string(18) &quot;grap_dbo.class.php&quot;<br>
+  [&quot;extends&quot;]=&gt;<br>
+  string(8) &quot;GRAP_DBO&quot;<br>
+  [&quot;generator_class_rewrite&quot;]=&gt;<br>
+  string(0) &quot;&quot;<br>
+  [&quot;debug&quot;]=&gt;<br>
+  int(3)<br>
+  [&quot;debug_force_updates&quot;]=&gt;<br>
+  string(1) &quot;0&quot;<br>
+  [&quot;production&quot;]=&gt;<br>
+  string(1) &quot;0&quot;<br>
+  [&quot;table_VoucherLog&quot;]=&gt;<br>
+  string(6) &quot;websms&quot;<br>
+  [&quot;table_Statistics&quot;]=&gt;<br>
+  string(6) &quot;websms&quot;<br>
+  [&quot;database_websms&quot;]=&gt;<br>
+  string(40) &quot;mysql://websms:XXXXXXX@localhost/websms&quot;<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+I expected it to happily connect ;)</p>
+<p>Actual result:<br>
+--------------<br>
+Through a webbrowser a zero sized result, through command line a segmentation fault (no core dump)</p>
+</section>
+<section>
+<h3>[2003-10-13 13:44 UTC] datenpunk at php dot net</h3>
+<p>Do you have Zend Optimizer enabled?<br>
+Zend Optimizer has some problems with oeverload() AFAIK.</p>
+<p>Try to lower your optimization level in php.ini:<br>
+zend_optimizer.optimization_level=14</p>
+<p>hth</p>
+<p>Daniel Khan</p>
+</section>
+<section>
+<h3>[2003-10-13 13:49 UTC] nikolaj dot jansen at telfort dot nl</h3>
+<p>nope, no optimizer installed...</p>
+</section>
+<section>
+<h3>[2003-10-13 14:01 UTC] datenpunk at php dot net</h3>
+<p>Have you tried upgrading to the latest php version?<br>
+You say you are using 4.3.2 on one host and 4.3.3RC3 on the other.<br>
+A segfault usually is caused by php itself and not by PEAR but it makes no sense to file a bug for php if you don&#039;t use the most recent version.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

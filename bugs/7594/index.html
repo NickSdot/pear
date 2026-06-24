@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7594</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #7594</h1>
+<p>Bug in PEAR-DB installation</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-05-10 05:32 UTC</td></tr>
+<tr><th>From</th><td>contact at manfred-muench dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Linux (Gentoo) on AMD64</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-05-10 05:32 UTC] contact at manfred-muench dot com</h3>
+<p>Description:<br>
+------------<br>
+When installing PEAR-DB (version 1.7.6-r1) I get the following error message (emerging in gentoo with debug option switched on):</p>
+<p>###############################<br>
+000355 + pear -d php_bin=/usr/lib/php5/bin/php install --force --loose --nodeps --offline --packagingroot=/var/tmp/portage/PEAR-DB-1.7.6-r1/image/ /var/tmp/portage/PEAR-DB-1.7.6-r1/work/DB-1.7.6/package.xml<br>
+000356 + diefunc php-pear-r1_src_install 66 1 &#039;Unable to install PEAR package&#039;<br>
+000357 + local funcname=php-pear-r1_src_install lineno=66 exitcode=1<br>
+000358 + shift 3<br>
+000359 + echo<br>
+000360<br>
+000361 + echo &#039;!!! ERROR: dev-php/PEAR-DB-1.7.6-r1 failed.&#039;<br>
+000362 !!! ERROR: dev-php/PEAR-DB-1.7.6-r1 failed. <br>
+###############################</p>
+<p>Running this pear command on the shell reveals:</p>
+<p>###############################<br>
+fozzie ~ # pear -d php_bin=/usr/lib/php5/bin/php install --force --loose --nodeps --offline --packagingroot=/var/tmp/portage/PEAR-DB-1.7.6-r1/image/ /var/tmp/portage/PEAR-DB-1.7.6-r1/work/DB-1.7.6/package.xml<br>
+warning: pear/DB requires package &quot;pear/PEAR&quot; (version &gt;= 1.0b1)<br>
+install ok: channel://pear.php.net/DB-1.7.6</p>
+<p>Fatal error: Call to a member function setConfig() on a non-object in /usr/local/lib64/php/PEAR/Command/Install.php on line 546 <br>
+###############################</p>
+<p>PEAR/PEAR is installed (version 1.4.9-r1), so I don&#039;t understand the warning. However, debugging this install.php file a little, showed this:<br>
+in line 545 is a call to retrieve the $pkg variable from $reg with two parameters: $param-&gt;getPackage() and $param-&gt;getChannel. The first parameter is empty while the second parameter contains &quot;pear.php.net&quot; (as expected). That&#039;s why I render that $pkg is null so the call $pkg-&gt;... in line 546 fails.</p>
+<p>My USE-flags for php:<br>
+bcmath cgi cli apache2 berkdb bzip2 calendar crypt curl curlwrappers cjk dba exif ftp gettext gd gdbm gmp hash iconv imap ipv6 kerberos ldap mbstring mcrypt mhash mssql mysql mysqli ncurses nls odbc pcre pcntl pspell readline sasl session simplexml snmp soap sockets spell ssl truetype xml xmlreader xmlwriter xmlrpc xpm xsl yaz zip zlib</p>
+<p>Reference: http://forums.gentoo.org/viewtopic.php?p=3307725</p>
+<p>Test script:<br>
+---------------<br>
+Just type:<br>
+emerge PEAR-PEAR PEAR-DB on an AMD64 system running Gentoo, php-5.1.4 compiled with the USE flags as in my bug description.</p>
+<p>Expected result:<br>
+----------------<br>
+I expect that everything installs ok.</p>
+<p>Actual result:<br>
+--------------<br>
+see Description.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8429</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Schema/index.html">MDB2_Schema</a> &#187; Bug #8429</h1>
+<p>bad handling of tables named &#039;update&#039;</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-08-14 15:48 UTC</td></tr>
+<tr><th>From</th><td>landrzejak at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Schema/index.html">MDB2_Schema</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>linux2.6.17.8</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-14 15:48 UTC] landrzejak at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+When issuing $foo-&gt;dumpDatabase ($foo being an instance of MDB2_Schema), a simple check of $database_definition is lacking, adding:</p>
+<p>if (PEAR::isError($database_definition)) {<br>
+    return $database_definition;<br>
+}</p>
+<p>will resolve this.<br>
+Without it - in some cases the scripts will fail with a logged error:</p>
+<p>PHP Fatal error:  Cannot use object of type MDB2_Error as array in /foo/PEAR/lib/MDB2/Schema.php on line 1852</p>
+<p>I came by this problem when trying do dump a database that contained a table named &#039;upgrade&#039; under mysql 5.x. The reason was that 5.x has a (newly introduced in the late 4.1.19 - or so series) keyword &#039;upgrade&#039; which conflicts with the tables name.<br>
+Regardless, this means that somewhere earlier the table name was not escaped properly.<br>
+Presumably the method that caused it was getDefinitionFromDatabase.</p>
+<p>Test script:<br>
+---------------<br>
+The bug can be reproduced with the example.php script attached to the pear package of MDB2_Schema, when acting on a 5.0 series mysql database, using the mysqli extension. <br>
+Only other requirement is that the database contains a table named &#039;upgrade&#039;. All dumps of such a table will fail.<br>
+Please attempt trying to dump a database into an example schema.xml file to see for yourself.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

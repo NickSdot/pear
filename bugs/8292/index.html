@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8292</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB_QueryTool/index.html">MDB_QueryTool</a> &#187; Bug #8292</h1>
+<p>Joining tables where one table name occurs in another table name</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-07-26 07:18 UTC</td></tr>
+<tr><th>From</th><td>tbarsness at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/MDB_QueryTool/index.html">MDB_QueryTool</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.2</td></tr>
+<tr><th>OS</th><td>Windows XP, Operating System Ind</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-26 07:18 UTC] tbarsness at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I have run into a problem with this package in the _buildWhere function in Query.php when joining tables where one table name, and the containing table name has the contained table name preceded and succeded by an underscore.</p>
+<p>Say I am joining tables `category` and `xref_catecory_item`.</p>
+<p>I get a problem around line 1885.</p>
+<p>In the where clause, the table name ends up looking like xrefcategory.super_category, which isn&#039;t what I want at all.</p>
+<p>This looks like it is a feature based on the comments around these lines of code, but is the only way around this to rename my table?</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+require_once &#039;MDB/QueryTool.php&#039;;<br>
+define(&#039;TABLE_CARS&#039;, &#039;cars&#039;);<br>
+define(&#039;TABLE_XREF_CAR_DRIVER&#039;, &#039;xref_car_driver&#039;);<br>
+$dsn = &#039;mysql://user:pass@host/dbname&#039;;</p>
+<p>/**<br>
+ * Let&#039;s suppose the &quot;car&quot; table has the following fields:<br>
+ * (id, model, hp, color, clima, price)<br>
+ */<br>
+class Car extends MDB_QueryTool<br>
+{<br>
+    var $table        = TABLE_CARS;<br>
+    var $sequenceName = TABLE_CARS;</p>
+<p>// this is default, but to demonstrate it here ...<br>
+    var $primaryCol =   &#039;id&#039;;</p>
+<p>/**<br>
+     * This table spec assigns a short name to a table name<br>
+     * this short name is needed in case the table name changes<br>
+     * i.e. when u put the application on a provider&#039;s db, where you have to<br>
+     * prefix each table, and you dont need to change the entire application to<br>
+     * where you refer to joined table columns, for that joined results the<br>
+     * short name is used instead of the table name<br>
+     */<br>
+    var $tableSpec = array(<br>
+        array(&#039;name&#039;  =&gt; TABLE_CARS, &#039;shortName&#039; =&gt;  &#039;cars&#039;)<br>
+    );<br>
+}</p>
+<p>$car = new Car($dsn);<br>
+$car-&gt;setSelect(&#039;*&#039;);<br>
+$car-&gt;addJoin(TABLE_XREF_CAR_DRIVER, &#039;`&#039;.TABLE_CAR.&#039;`.`id_car` = `&#039;.TABLE_XREF_CAR_DRIVER.&#039;`.`id_car`&#039;);<br>
+echo $car-&gt;getQueryString();</p>
+<p>Expected result:<br>
+----------------<br>
+SELECT * FROM car, xref_car_driver <br>
+WHERE `car`.`id_car` = `xref_car_driver`.`id_car`</p>
+<p>Actual result:<br>
+--------------<br>
+SELECT * FROM car, xref_car_driver <br>
+WHERE `car`.`id_car` = `xrefcar.driver`.`id_car`</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

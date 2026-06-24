@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #335</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #335</h1>
+<p>Date::addSeconds() adds hours instead of seconds</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-12-02 02:31 UTC</td></tr>
+<tr><th>From</th><td>aashley at optimiser dot com</td></tr>
+<tr><th>Assigned</th><td>pajoye</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Gentoo Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-12-02 02:31 UTC] aashley at optimiser dot com</h3>
+<p>Description:<br>
+------------<br>
+Date::addSeconds() incorrectly calls the creation of the of the Date_Span object so that the Span assumes that the number specified is in hours not seconds.</p>
+<p>Patch to fix code:</p>
+<p>--- /home/aashley/pear/Date/Date.php  2003-11-18 10:21:44.000000000 +0800<br>
++++ /usr/share/pear/Date.php  2003-12-02 10:25:12.097214200 +0800<br>
+@@ -576,7 +576,7 @@<br>
+      */<br>
+     function addSeconds($sec)<br>
+     {<br>
+-        $this-&gt;addSpan(new Date_Span($sec));<br>
++        $this-&gt;addSpan(new Date_Span(&#039;00:00:&#039;.$sec));<br>
+     }<br>
+                                                                                <br>
+     /**</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+                                                                                <br>
+$date = new Date(&#039;2003-01-01 00:00:00&#039;);<br>
+                                                                                <br>
+$date-&gt;addSeconds(10);<br>
+                                                                                <br>
+print $date-&gt;getDate();<br>
+                                                                                <br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+2003-01-01 00:00:10</p>
+<p>Actual result:<br>
+--------------<br>
+2003-01-01 10:00:00</p>
+</section>
+<section>
+<h3>[2003-12-03 21:32 UTC] baba at php dot net</h3>
+<p>Thank you for taking the time to write to us, but this is not<br>
+a bug.</p>
+<p>reproduce code produces expected result for me.<br>
+Date_Span code treates integer only paramater as seconds.<br>
+please check against 1.4rc1 package and comment if you can still produce this error.</p>
+</section>
+<section>
+<h3>[2003-12-04 02:11 UTC] aashley at optimiser dot com</h3>
+<p>Okay further investigation and I narrowed down the problem. The seconds value I was adding was being retireved from a database so was being passed to addSeconds as a string, which cases setFromString to be called which interperates the value as hours.</p>
+<p>The following code demonstrates this:</p>
+<p>&lt;?php<br>
+include_once &#039;Date.php&#039;;<br>
+$date = new Date(&#039;2003-12-01 03:09:16&#039;);<br>
+$date-&gt;addSeconds(&#039;10&#039;);<br>
+print &#039;Add 10 seconds as a string: &#039;.$date-&gt;getDate().&quot;\n&quot;;<br>
+$date = new Date(&#039;2003-12-01 03:09:16&#039;);<br>
+$date-&gt;addSeconds(10);<br>
+print &#039;Add 10 seconds as an integer: &#039;.$date-&gt;getDate().&quot;\n&quot;;<br>
+?&gt;</p>
+<p>Patch to fix:</p>
+<p>--- /home/aashley/pear/Date/Date.php    2003-12-04 10:11:51.978938200 +0800<br>
++++ /usr/share/pear/Date.php    2003-12-04 10:10:34.500899754 +0800<br>
+@@ -582,7 +582,7 @@<br>
+      */<br>
+     function addSeconds($sec)<br>
+     {<br>
+-        $this-&gt;addSpan(new Date_Span($sec));<br>
++        $this-&gt;addSpan(new Date_Span((integer)$sec));<br>
+     }<br>
+  <br>
+     /**</p>
+</section>
+<section>
+<h3>[2003-12-15 08:22 UTC] aashley at optimiser dot com</h3>
+<p>if thats your intended behaviour for the function why have it at all? its just works as an alias for addSpan().</p>
+<p>the fix I did was to make it behave as the name of the function implies its doing, adding this value as seconds.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

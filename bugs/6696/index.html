@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6696</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_XSPF/index.html">File_XSPF</a> &#187; Bug #6696</h1>
+<p>critical error with parsing an xspf playlist in string format</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-02-05 13:23 UTC</td></tr>
+<tr><th>From</th><td>spam at electroteque dot org</td></tr>
+<tr><th>Assigned</th><td>djg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/File_XSPF/index.html">File_XSPF</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>n/a</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-05 13:23 UTC] spam at electroteque dot org</h3>
+<p>Description:<br>
+------------<br>
+Hi i found your new method for parsing xspf playlists in <br>
+string format however there is a critical bug in the xml <br>
+parser, you may have to change the method from setInput <br>
+to setInputString, here is the issue, file_exists is <br>
+returning true in php 5.1.2, when its in fact a string, <br>
+i guess this is a bug in xml parser but i guess you <br>
+should prob use setInputString instead ??</p>
+<p>function setInput($fp)<br>
+    {<br>
+        if (is_resource($fp)) {<br>
+            $this-&gt;fp = $fp;<br>
+            return true;<br>
+        }<br>
+        // see if it&#039;s an absolute URL (has a scheme at <br>
+the beginning)<br>
+        elseif (eregi(&#039;^[a-z]+://&#039;, substr($fp, 0, 10))) <br>
+{<br>
+            return $this-&gt;setInputFile($fp);<br>
+        }<br>
+        // see if it&#039;s a local file<br>
+        elseif (file_exists($fp)) {<br>
+            die(&quot;yes&quot;);<br>
+            return $this-&gt;setInputFile($fp);<br>
+        }<br>
+        // it must be a string<br>
+        else {<br>
+            die(&quot;yes&quot;);<br>
+            $this-&gt;fp = $fp;<br>
+            return true;<br>
+        }</p>
+<p>return $this-&gt;raiseError(&#039;Illegal input format&#039;, <br>
+XML_PARSER_ERROR_INVALID_INPUT);<br>
+    }</p>
+<p>Test script:<br>
+---------------<br>
+Just to confirm this works fine, somehow it had stopped working when i made the upgrade in php 5.1.2 i think, maybe this is also a bug in php 5.1.2 ?? Ill ask the list.</p>
+<p>function parse($text) {<br>
+        <br>
+        $parser =&amp; new XML_Parser();<br>
+        $handle =&amp; new File_XSPF_Handler($this);<br>
+        $result = $parser-&gt;setInputString($text);<br>
+        if (PEAR::isError($result)) {<br>
+            return PEAR::raiseError($result-&gt;getMessage(), $result-&gt;getCode());<br>
+        }<br>
+        $parser-&gt;setHandlerObj($handle);<br>
+        $result = $parser-&gt;parse();<br>
+        <br>
+        if (PEAR::isError($result)) {<br>
+            return PEAR::raiseError($result-&gt;getMessage(), $result-&gt;getCode());<br>
+        }<br>
+        if (PEAR::isError($this-&gt;_parse_error)) {<br>
+            return PEAR::raiseError($this-&gt;_parse_error-&gt;getMessage(), $this-&gt;_parse_error-&gt;getCode());<br>
+        }<br>
+        return true;<br>
+    }</p>
+</section>
+<section>
+<h3>[2006-02-05 15:40 UTC] spam at electroteque dot org</h3>
+<p>Sorry to reproduce the error</p>
+<p>$data = &quot;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;<br>
+&lt;playlist version=&quot;1&quot; xmlns=&quot;http://xspf.org/ns/0/&quot;&gt;<br>
+ &lt;title&gt;electroteque&#039;s Recent Tracks&lt;/title&gt;<br>
+ &lt;creator&gt;Audioscrobbler&lt;/creator&gt;<br>
+ &lt;info&gt;http://www.last.fm/user/electroteque/&lt;/info&gt;<br>
+ &lt;license&gt;http://creativecommons.org/licenses/by-nc-sa/<br>
+2.0/uk/&lt;/license&gt;<br>
+ &lt;trackList&gt;<br>
+  &lt;track&gt;<br>
+    &lt;title&gt;Sleepy Mimer&lt;/title&gt;<br>
+    &lt;creator&gt;electroteque&lt;/creator&gt;<br>
+    &lt;info&gt;http://www.last.fm/music/electroteque/_/<br>
+Sleepy+Mimer&lt;/info&gt;<br>
+  &lt;/track&gt;<br>
+  &lt;track&gt;<br>
+    &lt;title&gt;Looking for Sophie&lt;/title&gt;<br>
+    &lt;creator&gt;doc&lt;/creator&gt;<br>
+    &lt;info&gt;http://www.last.fm/music/doc/_/<br>
+Looking+for+Sophie&lt;/info&gt;<br>
+  &lt;/track&gt;<br>
+  &lt;track&gt;<br>
+    &lt;title&gt;Norkhaberg&lt;/title&gt;<br>
+    &lt;creator&gt;KraftiM&lt;/creator&gt;<br>
+    &lt;info&gt;http://www.last.fm/music/KraftiM/_/<br>
+Norkhaberg&lt;/info&gt;<br>
+  &lt;/track&gt;<br>
+  &lt;track&gt;<br>
+    &lt;title&gt;Nocturnal Nail Clipping&lt;/title&gt;<br>
+    &lt;creator&gt;frags&lt;/creator&gt;<br>
+    &lt;info&gt;http://www.last.fm/music/frags/_/<br>
+Nocturnal+Nail+Clipping&lt;/info&gt;<br>
+  &lt;/track&gt;<br>
+  &lt;track&gt;<br>
+    &lt;title&gt;Climate Changes&lt;/title&gt;<br>
+    &lt;creator&gt;electroteque&lt;/creator&gt;<br>
+    &lt;info&gt;http://www.last.fm/music/electroteque/_/<br>
+Climate+Changes&lt;/info&gt;<br>
+  &lt;/track&gt;<br>
+  &lt;track&gt;<br>
+    &lt;title&gt;Tre Komma Fem Procent&lt;/title&gt;<br>
+    &lt;creator&gt;Unknown Forces&lt;/creator&gt;<br>
+    &lt;info&gt;http://www.last.fm/music/Unknown+Forces/_/<br>
+Tre+Komma+Fem+Procent&lt;/info&gt;<br>
+  &lt;/track&gt;<br>
+  &lt;track&gt;<br>
+    &lt;title&gt;Airports for Music&lt;/title&gt;<br>
+    &lt;creator&gt;doc&lt;/creator&gt;<br>
+    &lt;info&gt;http://www.last.fm/music/doc/_/<br>
+Airports+for+Music&lt;/info&gt;<br>
+  &lt;/track&gt;<br>
+  &lt;track&gt;<br>
+    &lt;title&gt;Mayfirst&lt;/title&gt;<br>
+    &lt;creator&gt;Move D&lt;/creator&gt;<br>
+    &lt;info&gt;http://www.last.fm/music/Move+D/_/Mayfirst&lt;/<br>
+info&gt;<br>
+    &lt;duration&gt;486000&lt;/duration&gt;<br>
+  &lt;/track&gt;<br>
+ &lt;/trackList&gt;<br>
+&lt;/playlist&gt;&quot;;</p>
+<p>@require_once &quot;File/XSPF.php&quot;;<br>
+$xspf = new File_XSPF();<br>
+$xspf-&gt;parse($data);<br>
+return $xspf-&gt;getTracks();</p>
+</section>
+<section>
+<h3>[2006-02-06 13:20 UTC] djg at php dot net</h3>
+</section>
+<section>
+<h3>[2006-02-06 13:22 UTC] djg at php dot net</h3>
+</section>
+<section>
+<h3>[2006-02-06 13:23 UTC] djg at php dot net</h3>
+<p>Fixed in CVS.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

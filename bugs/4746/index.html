@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4746</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #4746</h1>
+<p>SOAP-ENC:arrayType=&quot;xsd:anyType[20]&quot; SOAP-ENC:offset=&quot;[0]&quot;</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-07-05 08:10 UTC</td></tr>
+<tr><th>From</th><td>kinliang at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>yunosh</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-07-05 08:10 UTC] kinliang at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+ $query=&quot;SELECT * FROM news&quot;;<br>
+        $q-&gt;query($query);<br>
+        $i=1;<br>
+        $news=array();<br>
+        $news[]=&amp;new SOAP_Value(&quot;pages&quot;, &quot;int&quot;, &quot;$pages&quot;);<br>
+        $news[]=&amp;new SOAP_Value(&quot;max_item&quot;, &quot;int&quot;, $q-&gt;nf());<br>
+        $return_value[$i]=new SOAP_Value(&quot;$i&quot;, &quot;{http://soapinterop.org/xsd}InfoListStruct&quot;, $news);<br>
+        if ($q-&gt;nf()&gt;0) {<br>
+          $i=2;<br>
+          while ($q-&gt;next_record()) {<br>
+            //contruct data<br>
+            $news=array();<br>
+            $content = eregi_replace(&quot;&lt;br /&gt;&quot;, &quot;\n&quot;, $content);<br>
+            $content = strip_tags($q-&gt;f(&quot;content&quot;));<br>
+            $news[]=&amp;new SOAP_Value(&quot;news_title&quot;, &quot;string&quot;, $i.$q-&gt;f(&quot;title&quot;));<br>
+            $news[]=&amp;new SOAP_Value(&quot;news_description&quot;, &quot;string&quot;, substr($content,0,50).&quot;...&quot;);<br>
+            $news[]=&amp;new SOAP_Value(&quot;news_author&quot;, &quot;string&quot;,$q-&gt;f(&quot;source&quot;));<br>
+            $news[]=&amp;new SOAP_Value(&quot;news_id&quot;, &quot;string&quot;, $q-&gt;f(&quot;id&quot;));<br>
+            $news[]=&amp;new SOAP_Value(&quot;news_date&quot;, &quot;string&quot;, $q-&gt;f(&quot;entry_stamp&quot;));<br>
+            $return_value[$i]=new SOAP_Value(&quot;$i&quot;, &quot;{http://soapinterop.org/xsd}NewsListStruct&quot;, $news);<br>
+            $i++;<br>
+          }</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;ns5:NewsListResponse&gt;<br>
+&lt;return xsi:type=&quot;SOAP-ENC:Array&quot; SOAP-ENC:arrayType=&quot;xsd:anyType[20]&quot; SOAP-ENC:offset=&quot;[0]&quot;&gt;<br>
+&lt;item xsi:type=&quot;ns4:InfoListStruct&quot;&gt;<br>
+&lt;pages xsi:type=&quot;xsd:int&quot;&gt;1&lt;/pages&gt;<br>
+&lt;max_item xsi:type=&quot;xsd:int&quot;&gt;19&lt;/max_item&gt;<br>
+&lt;/item&gt;<br>
+&lt;item xsi:type=&quot;ns4:NewsListStruct&quot;&gt;<br>
+&lt;news_title xsi:type=&quot;xsd:string&quot;&gt;23454gths&lt;/news_title&gt;<br>
+&lt;news_description xsi:type=&quot;xsd:string&quot;&gt;sfsdf<br>
+...&lt;/news_description&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;ns5:NewsListResponse&gt;<br>
+&lt;return&gt;<br>
+&lt;item xsi:type=&quot;ns4:InfoListStruct&quot;&gt;<br>
+&lt;pages xsi:type=&quot;xsd:int&quot;&gt;1&lt;/pages&gt;<br>
+&lt;max_item xsi:type=&quot;xsd:int&quot;&gt;19&lt;/max_item&gt;<br>
+&lt;/item&gt;<br>
+&lt;item xsi:type=&quot;ns4:NewsListStruct&quot;&gt;<br>
+&lt;news_title xsi:type=&quot;xsd:string&quot;&gt;23454gths&lt;/news_title&gt;<br>
+&lt;news_description xsi:type=&quot;xsd:string&quot;&gt;sfsdf<br>
+...&lt;/news_description&gt;</p>
+</section>
+<section>
+<h3>[2005-07-05 08:11 UTC] kinliang at gmail dot com</h3>
+<p>anyone got any idea, why when i return more than 11 items in a response, it will create SOAP-ENC:arrayType=&quot;xsd:anyType[20]&quot; SOAP-ENC:offset=&quot;[0]&quot; inside the return tag? thanks in advance</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

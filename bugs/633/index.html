@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #633</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB/index.html">MDB</a> &#187; Bug #633</h1>
+<p>&quot;ORA-01002 Fetch Out Of Sequence&quot; error</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-01-27 14:54 UTC</td></tr>
+<tr><th>From</th><td>thierry dot bo at netcourrier dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB/index.html">MDB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>Win32 XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-01-27 14:54 UTC] thierry dot bo at netcourrier dot com</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>With latest MDB1.* branch cvs files, I got this specific error with oci8 driver :</p>
+<p>&quot;php(1538): ocifetchinto(): OCIFetchInto: ORA-01002 Fetch Out Of Sequence in oci8.php line 1538&quot;.</p>
+<p>Switching to mysql driver and mssql driver I got no error.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$sql = &quot;SELECT      room_name, capacity, id <br>
+        FROM        mrbs_room <br>
+        WHERE       area_id=$area <br>
+        ORDER BY    1&quot;;<br>
+$types = array(&#039;text&#039;, &#039;integer&#039;, &#039;integer&#039;);<br>
+$res = $mdb-&gt;query($sql, $types);<br>
+$counte = $mdb-&gt;numRows($res);<br>
+if (0 == $counte)<br>
+{<br>
+    echo &quot;&lt;h1&gt;$vocab[no_rooms_for_area]&lt;/h1&gt;&quot;;<br>
+    $mdb-&gt;freeResult($res);<br>
+}<br>
+else<br>
+{<br>
+    $room_column_width = (int)(95 / $counte);<br>
+&gt;&gt;&gt;&gt; while ($row = $mdb-&gt;fetchInto($res)) &lt;&lt;&lt;&lt;ERROR<br>
+    {<br>
+        echo &quot;&lt;th width=\&quot;$room_column_width%\&quot;&gt;&quot; . htmlspecialchars($row[0])<br>
+            . &quot;($row[1])&lt;/th&gt;&quot;;<br>
+        $rooms[] = $row[2];<br>
+    }<br>
+}</p>
+</section>
+<section>
+<h3>[2004-01-27 21:24 UTC] thierry dot bo at netcourrier dot com</h3>
+<p>Variables values :<br>
+this              nil<br>
+$result_value     20<br>
+$rownum           2<br>
+$result           nil<br>
+$buffer           NULL</p>
+</section>
+<section>
+<h3>[2004-01-28 13:43 UTC] thierry dot bo at netcourrier dot com</h3>
+<p>After some investigations, I found this:</p>
+<p>Although the error itself is not in the oci8 $mdb-&gt;numRows() function, the bug I reported only occurs if I call $mdb-&gt;numRows() before. I commented this function in some places in my code just before the fetchInto call and I did not get the error.</p>
+</section>
+<section>
+<h3>[2004-01-28 17:59 UTC] thierry dot bo at netcourrier dot com</h3>
+<p>I did not set this option, so I see default is FALSE.</p>
+<p>I think I understand why there is an error, even if I don&#039;t undestand why. I tried this:</p>
+<p>I filled &#039;mrbs_room&#039; table with only ONE row in MySQL and Oracle. With Mysql, the &gt;&gt; while ($row = $mdb-&gt;fetchInto($res)) &lt;&lt; loop is executed once, normal. But with Oracle, the loop is executed twice! Hence, there is no error during the first loop, the error occurs when the second fetchInto() is executed. Again, the table contains only ONE row.</p>
+</section>
+<section>
+<h3>[2004-01-29 01:09 UTC] thierry dot bo at netcourrier dot com</h3>
+<p>Follow-up.<br>
+If I remove the call to numRows() before, the &#039;while&#039; loop is executed one times as expected.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #10254</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR_Command_Packaging/index.html">PEAR_Command_Packaging</a> &#187; Bug #10254</h1>
+<p>RPM-building specs for external channels fails</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-03-03 11:48 UTC</td></tr>
+<tr><th>From</th><td>timj at php dot net</td></tr>
+<tr><th>Assigned</th><td>timj</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR_Command_Packaging/index.html">PEAR_Command_Packaging</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>0.2.0</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-03-03 11:48 UTC] timj at php dot net</h3>
+<p>Description:<br>
+------------<br>
+This is related to bug #9932.</p>
+<p>Specs for packages from channels other than pear.php.net can be correctly generated from the latest CVS version, but when you try to rpmbuild them, the process fails due to the fact that the temporary rpmbuild PEAR installation does not have the external channel registered.</p>
+<p>Test script:<br>
+---------------<br>
+$ pear make-rpm-spec Chiara_PEAR_Server-0.18.7.tgz<br>
+...<br>
+$ rpmbuild -ba CHIARA::Chiara_PEAR_Server-0.18.7.spec<br>
+...<br>
++ pear -c pearrc install --nodeps --packagingroot /var/tmp/CHIARA::Chiara_PEAR_Server-0.18.7-root-user /path/to/rpmbuild/SOURCES/Chiara_PEAR_Server-0.18.7.tgz<br>
+Unknown channel &quot;pear.chiaraquartet.net&quot;<br>
+Parsing of package.xml from file &quot;/path/to/cache/package.xml&quot; failed<br>
+Cannot initialize &#039;/path/to/rpmbuild/SOURCES/Chiara_PEAR_Server-0.18.7.tgz&#039;, invalid or missing package file<br>
+Package &quot;/path/to/rpmbuild/SOURCES/Chiara_PEAR_Server-0.18.7.tgz&quot; is not valid<br>
+install failed</p>
+</section>
+<section>
+<h3>[2007-03-03 11:52 UTC] timj at php dot net</h3>
+<p>This is not particularly easy to fix in a &quot;clean&quot; way due to PEAR&#039;s intrinsic linking of channel metadata with package metadata. I think we could possibly do with a --ignore-channel-metadata flag to the &quot;pear&quot; binary.</p>
+<p>Anyway in the meantime I guess the fix is (as suggested in bug #9932) for PCP to include a copy of channel.xml with external packages. This is not particularly nice.</p>
+</section>
+<section>
+<h3>[2007-03-04 11:20 UTC] timj at php dot net</h3>
+<p>Actually, on reflection, the right way to do this is with separate &quot;channel&quot; RPM packages (goodness knows what we&#039;d call them, maybe php-channel-chiara or something) which are a BR of packages from that channel.</p>
+<p>We&#039;d still have to fiddle at RPM build time to make sure that the channel gets channel-discover&#039;d in the package&#039;s build process. I&#039;m not sure whether it&#039;s possible to channel-discover from a static XML file. If not, this is a major problem.</p>
+<p>I guess PEAR_Command_Packaging is the right place to generate &quot;channel&quot; RPM packages. My initial thought is to make it such that:</p>
+<p>pear make-rpm-spec channel:pear.chiaraquartet.net</p>
+<p>generates an RPM spec file for that channel.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

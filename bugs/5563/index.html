@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5563</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #5563</h1>
+<p>mysql connect() on php 4.1.x</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5563</th><td>mysql connect() on php 4.1.x</td></tr>
+<tr><th>Submitted</th><td>2005-09-29 15:56 UTC</td></tr>
+<tr><th>From</th><td>norbert_m at php dot net</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-09-29 15:56 UTC] norbert_m at php dot net</h3>
+<p>Description:<br>
+------------<br>
+First of all, of course I know that PEAR requires PHP 4.2.0+.</p>
+<p>On the other hand, I&#039;m proud to announce that by adding a single condition to the source, the DB package works perfectly with the MySQL backend even on PHP 4.1.x!</p>
+<p>Why I&#039;m asking you to add this is that it doesn&#039;t hurt anyone but extends the portability of the package.</p>
+<p>DB/mysql.php: Current Lines 217-229 (Revision 1.117):<br>
+if (!$persistent) {<br>
+    if (isset($dsn[&#039;new_link&#039;])<br>
+    &amp;&amp; ($dsn[&#039;new_link&#039;] == &#039;true&#039; || $dsn[&#039;new_link&#039;] === true))<br>
+    {<br>
+        $params[] = true;<br>
+    } else {<br>
+        $params[] = false;<br>
+    }<br>
+}</p>
+<p>if (version_compare(phpversion(), &#039;4.3.0&#039;, &#039;&gt;=&#039;)) {<br>
+    $params[] = isset($dsn[&#039;client_flags&#039;])<br>
+    ? $dsn[&#039;client_flags&#039;] : null;<br>
+}</p>
+<p>The lines above should be surrounded by the following condition:<br>
+if (version_compare(phpversion(), &#039;4.2.0&#039;, &#039;&gt;=&#039;)) {<br>
+}</p>
+<p>This way the $params[] array (which will be passed to mysql_connect() in the following lines) won&#039;t get more than 3 parameters in PHP 4.1.x and below.</p>
+<p>Expected result:<br>
+----------------<br>
+connect() works fine even on php 4.1.x</p>
+<p>Actual result:<br>
+--------------<br>
+connect() is failing because the 4th and 5th parameters of the mysql_connect() function didn&#039;t exist before php 4.1.2</p>
+<p>However, this can be patched by adding a single, reasonable condition which has only advantages and no disadvantages, which means that DB/mysql will work in earlier versions of PHP as well.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

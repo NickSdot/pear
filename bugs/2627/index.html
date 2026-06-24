@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2627</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #2627</h1>
+<p>Array in return object was not parsed correctly</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-10-27 00:32 UTC</td></tr>
+<tr><th>From</th><td>song dot qiu at tumbleweed dot com</td></tr>
+<tr><th>Assigned</th><td>cweiske</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.2.2</td></tr>
+<tr><th>OS</th><td>Redhat 8.0</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-27 00:32 UTC] song dot qiu at tumbleweed dot com</h3>
+<p>Description:<br>
+------------<br>
+I have a PEAR:SOAP client to call a SOAP sever to get an object which suppose to contain two array of objects. But I just got the first array right. The second array becomes the object which is the last element of the second array. However, in the trace information, I did see two arrays being returned in xml format which means PEAR:SOAP did not parse this xml response correctly.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$incoming_entries = array();<br>
+$outgoing_entries = array();<br>
+$soapclient = new SOAP_Client(&#039;http://localhost:8085&#039;);<br>
+$messageTraceLog = $soapclient-&gt;call(&quot;getMessageTraceLog&quot;, $v=array(&#039;messageId&#039;=&gt;$msg_id), array(&#039;namespace&#039;=&gt;&#039;urn:MailGate&#039;, &#039;soapaction&#039;=&gt;&#039;&#039;, &#039;style&#039;=&gt;&#039;rpc&#039;, &#039;use&#039;=&gt;&#039;encoded&#039;));<br>
+$incoming_entries = $messageTraceLog[&#039;incoTraceEntries&#039;];<br>
+$outgoing_entries = array();<br>
+$outgoing_entries[0] = $messageTraceLog[&#039;outgTraceEntries&#039;];</p>
+<p>Expected result:<br>
+----------------<br>
+$messageTraceLog[&#039;outgTraceEntries&#039;]; should be an array instead of a single object</p>
+<p>Actual result:<br>
+--------------<br>
+$messageTraceLog[&#039;outgTraceEntries&#039;] is a single object.</p>
+</section>
+<section>
+<h3>[2005-02-23 17:12 UTC] bruce dot drummond at tribalinternet dot co dot uk</h3>
+<p>I have a similar problem:<br>
+My return xml looks like this:</p>
+<p>&lt;Activities diffgr:id=&quot;Activities1&quot; msdata:rowOrder=&quot;0&quot;&gt;<br>
+     &lt;field1&gt;val1&lt;/field1&gt;<br>
+     &lt;field2&gt;val1&lt;/field2&gt;<br>
+&lt;/Activities&gt;<br>
+&lt;Activities diffgr:id=&quot;Activities2&quot; msdata:rowOrder=&quot;1&quot;&gt;<br>
+     &lt;field1&gt;val2&lt;/field1&gt;<br>
+     &lt;field2&gt;val2&lt;/field2<br>
+&lt;/Activities&gt;<br>
+&lt;Activities diffgr:id=&quot;Activities3&quot; msdata:rowOrder=&quot;2&quot;&gt;<br>
+     &lt;field1&gt;val3&lt;/field1&gt;<br>
+     &lt;field2&gt;val3&lt;/field2<br>
+&lt;/Activities&gt;</p>
+<p>And yet the Soap response is just</p>
+<p>[Activities] =&gt; stdClass Object<br>
+                                (<br>
+                                    [field1] =&gt; val3<br>
+                                    [field2] =&gt; val3<br>
+                                )</p>
+<p>Like it is overwriting each array element instead of appending it to the array.</p>
+<p>However what seems strange is there are multiple arrays and it always manages to correctly parse the first one, and then fails on all the rest.</p>
+<p>Any word on how to get around this?</p>
+</section>
+<section>
+<h3>[2005-11-27 00:09 UTC] park at redsummit dot com</h3>
+<p>The problem is that the $isstruct flag is not reset after processing the first array. I have a work around that is not very elegant, but it works. There are 3 changes in the section of code below, beginning around line 889 in SOAP/Base.php. It should be noted that this bug is not OS specific.</p>
+<p>&lt;pre&gt;<br>
+            $counter = 1;<br>
+            $testname = &quot;&quot;;   // NEW CODE - 1 LINE<br>
+            $isstruct = !$SOAP_OBJECT_STRUCT || !is_array($return);<br>
+            foreach ($soapval-&gt;value as $item) {<br>
+                if (is_object($return)) {<br>
+                	// NEW CODE - 3 LINES<br>
+                	if ($testname != $item-&gt;name) {<br>
+                		$isstruct = !$SOAP_OBJECT_STRUCT || !is_array($return);<br>
+                		$testname = &quot;&quot;;<br>
+                	}<br>
+                	// END OF NEW CODE<br>
+                    if ($this-&gt;_wsdl) {<br>
+                        // Get this child&#039;s WSDL information.<br>
+                        // /$soapval-&gt;ns/$soapval-&gt;type/$item-&gt;ns/$item-&gt;name<br>
+                        $child_type = $this-&gt;_wsdl-&gt;getComplexTypeChildType(<br>
+                            $soapval-&gt;namespace,<br>
+                            $soapval-&gt;name,<br>
+                            $item-&gt;namespace,<br>
+                            $item-&gt;name);<br>
+                        if ($child_type) {<br>
+                            $item-&gt;type = $child_type;<br>
+                        }<br>
+                    }<br>
+                    if (!$isstruct || $item-&gt;type == &#039;Array&#039;) {<br>
+                        if (isset($return-&gt;{$item-&gt;name}) &amp;&amp;<br>
+                            is_object($return-&gt;{$item-&gt;name})) {<br>
+                            $return-&gt;{$item-&gt;name} =&amp; $this-&gt;_decode($item);<br>
+                        } elseif (isset($return-&gt;{$item-&gt;name}) &amp;&amp;<br>
+                                  is_array($return-&gt;{$item-&gt;name})) {<br>
+                            $return-&gt;{$item-&gt;name}[] =&amp; $this-&gt;_decode($item);<br>
+                        } elseif (is_array($return)) {<br>
+                            $return[] =&amp; $this-&gt;_decode($item);<br>
+                        } else {<br>
+                            $return-&gt;{$item-&gt;name} =&amp; $this-&gt;_decode($item);<br>
+                        }<br>
+                    } elseif (isset($return-&gt;{$item-&gt;name})) {<br>
+                        $isstruct = false;<br>
+                        $testname = $item-&gt;name;  // NEW CODE - 1 LINE<br>
+                        if (count(get_object_vars($return)) == 1) {<br>
+                            $d =&amp; $this-&gt;_decode($item);<br>
+                            $return = array($return-&gt;{$item-&gt;name}, $d);<br>
+                        } else {<br>
+                            $d =&amp; $this-&gt;_decode($item);<br>
+                            $return-&gt;{$item-&gt;name} = array($return-&gt;{$item-&gt;name}, $d);<br>
+                        }<br>
+                    } else {<br>
+                        $return-&gt;{$item-&gt;name} =&amp; $this-&gt;_decode($item);<br>
+                    }<br>
+&lt;/pre&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

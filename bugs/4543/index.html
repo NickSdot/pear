@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4543</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_Request/index.html">HTTP_Request</a> &#187; Bug #4543</h1>
+<p>Function _readChunked gives errors when magic_quotes are on</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-06-07 11:18 UTC</td></tr>
+<tr><th>From</th><td>Steven at offstage dot be</td></tr>
+<tr><th>Assigned</th><td>avb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_Request/index.html">HTTP_Request</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Gentoo Linux - Kernel 2.6.9</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-07 11:18 UTC] Steven at offstage dot be</h3>
+<p>Description:<br>
+------------<br>
+Situation:<br>
+- magic_quotes_gpc/runtime are OFF in php.ini<br>
+- magic_quotes_runtime is ON in php-script</p>
+<p>When I get a XML file from a URL with the code below, I get an error (see below)</p>
+<p>actual error is in pear/HTTP/Request.php  function  _readChunked:  $this-&gt;_chunkLength -= strlen($data);<br>
+With the slashes added, strlen(data) is larger than _chunkLength giving a negative value.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$Parser = &amp;new HTTP_Request($file);<br>
+$Parser-&gt;sendRequest();<br>
+$xml_body = $Parser-&gt;getResponseBody();</p>
+<p>quickfix for Request.php: (+/- line 1119)<br>
+---<br>
+$data = $this-&gt;_sock-&gt;read($this-&gt;_chunkLength);<br>
+$this-&gt;_chunkLength -= strlen($data);<br>
+        <br>
+//Added by Steven - 20050607<br>
+if ($this-&gt;_chunkLength &lt; 0) $this-&gt;_chunkLength = 0;<br>
+        <br>
+if (0 == $this-&gt;_chunkLength) {<br>
+    $this-&gt;_sock-&gt;readLine(); // Trailing CRLF<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+Valid XML structure</p>
+<p>Actual result:<br>
+--------------<br>
+time       : 2005-06-07 13:05:23<br>
+error type : Warning<br>
+error msg  : fread(): Length parameter must be greater than 0.<br>
+file       : /home/www/powercity/www/inc/pear/Net/Socket.php<br>
+line num   : 274</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

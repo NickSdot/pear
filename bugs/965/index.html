@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #965</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB/index.html">MDB</a> &#187; Bug #965</h1>
+<p>[MDB1] bug #946 fix -&gt; fetchInto infinite loop if numRows() called before</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-07 23:38 UTC</td></tr>
+<tr><th>From</th><td>thierrybo at freesurf dot fr</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB/index.html">MDB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>win32XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-07 23:38 UTC] thierrybo at freesurf dot fr</h3>
+<p>Description:<br>
+------------<br>
+Bug fix #946 fixed OutOfSequence in fetchInto but introduced an infinite loop in fetchInto now.</p>
+<p>You fixed bug #946 by changing :</p>
+<p>if (is_null($rownum)) {<br>
+    $rownum = $this-&gt;highest_fetched_row[$result_value] + 1;<br>
+}</p>
+<p>to</p>
+<p>if (is_null($rownum)) {<br>
+    $rownum = $this-&gt;current_row[$result_value] + 1;<br>
+}</p>
+<p>so that fetchinto use $this-&gt;result instead of OCIFetchInto in case numrows() was called before. The problem now is that $this-&gt;current_row[$result_value] is not incremented between line 1568 and 1571, so $rownum is always -1 to each fetchInto() call, so fetchInto never returns NULL, so the loop never ends.</p>
+<p>I tried to insert the following code line 1572 :</p>
+<p>$this-&gt;current_row[$result_value]++;</p>
+<p>and this  seems to fix this specific problem. You said me that current_row is the pointer to the last fetched row. Does this mean the last &quot;hard&quot; fetched row (I mean &#039;with OCIFecthInto&#039;), or is this the last MDB fetched row (either usinf buffer or not) ?</p>
+<p>Thierry Bothorel</p>
+</section>
+<section>
+<h3>[2004-03-08 19:30 UTC] thierrybo at freesurf dot fr</h3>
+<p>Yes, except if you only call numRows() before fetchInto(). NumRows() does not call MDB::fetchInto() method. $currentRow is not set by NumRows() and not by fetchInto() if $results[result_value] exist.<br>
+The result set is not empty, and I did not used limit emulation, just query, numRows and fetchinto.</p>
+</section>
+<section>
+<h3>[2004-03-09 01:30 UTC] thierrybo at freesurf dot fr</h3>
+<p>Yeah, don&#039;t touch anything now! It works perfectly, either calling numRows before or after fetchInto . <br>
+Thanks</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

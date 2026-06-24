@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2975</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth_PrefManager/index.html">Auth_PrefManager</a> &#187; Bug #2975</h1>
+<p>is_subclass_of at line 131 warnings</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-12-16 06:12 UTC</td></tr>
+<tr><th>From</th><td>aashley at optimiser dot com</td></tr>
+<tr><th>Assigned</th><td>jellybob</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Auth_PrefManager/index.html">Auth_PrefManager</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.2</td></tr>
+<tr><th>OS</th><td>Any. PHP 5.0.3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-16 06:12 UTC] aashley at optimiser dot com</h3>
+<p>Description:<br>
+------------<br>
+With the upgrade to PHP5.0.3 is_subclass_of generates a warning message if the class you are checking to see if the object is a subclass off has not yet been defined.</p>
+<p>Due to the way DB works if DB::connect has not yet been called then DB_common and DB_&lt;db specific&gt; will not yet of been included and as such defined. So when passing in a DSN string and expecting Auth_PrefManager to make its own connection the following warning is generated:</p>
+<p>Warning: Unknown class passed as parameter in PrefManager.php at line 131<br>
+Backtrace<br>
+/var/www/&lt;site&gt;/objects/Auth/PrefManager.php:myErrorHandler() at line 131 in PrefManager.php<br>
+/var/www/&lt;site&gt;/objects/Auth/PrefManager.php:is_subclass_of() at line 131 in PrefManager.php<br>
+/var/www/&lt;site&gt;/index.php:Auth_PrefManager-&gt;Auth_PrefManager() at line 146 in index.php</p>
+<p>Note: Prefmanager is in our own file tree and not its own at this point as we require the previously submitted patch in bug #2512 for the site to work. Other than that applied patch the file is identical.</p>
+<p>This problem is also only most annoying when using a custom error handler function. The user error function since 5.0.1 ignores all the built in limits on errors so @ doesnt work to squash it and the error_reporting ini setting has no effect on what is passed to the function.</p>
+<p>As such to fix this problem I have reordered the checks in Auth_PrefManager::Auth_PrefManager(). First it checks if dsn is a string, then checks if its a subclass of DB_common. This will prevent the most common occurance of this problem. A warning will still however be generated if an something other than a DB_common object is passed and DB_common has not yet been loaded.</p>
+<p>Fix is available at http://frood.cernun.net/stuff/PrefManager.php-reorder-checks.patch</p>
+</section>
+<section>
+<h3>[2004-12-16 06:13 UTC] aashley at optimiser dot com</h3>
+<p>gah Note should read:</p>
+<p>Note: Prefmanager is in our own file tree and not in the usual PEAR objects tree in this site as we require the previously submitted patch in bug #2512 for the site to work. Other than that applied patch the file is identical.</p>
+</section>
+<section>
+<h3>[2005-10-05 10:17 UTC] u dot gioia at sinedita dot it</h3>
+<p>Got the same problem using HTML_QuickForm which in the class select.php use the function is_subclass_of</p>
+<p>Any triks to solve the problem?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

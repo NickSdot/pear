@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3182</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject_FormBuilder/index.html">DB_DataObject_FormBuilder</a> &#187; Bug #3182</h1>
+<p>_getFieldsToRender() and _reorderElements() drop fields in certain situations</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-12 21:22 UTC</td></tr>
+<tr><th>From</th><td>ate2 at cornell dot edu</td></tr>
+<tr><th>Assigned</th><td>justinpatrin</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject_FormBuilder/index.html">DB_DataObject_FormBuilder</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-12 21:22 UTC] ate2 at cornell dot edu</h3>
+<p>Description:<br>
+------------<br>
+There a some related (I think) issues here:<br>
+1. _getFieldsToRender() drops special fields when fieldsToRender property is set.<br>
+2. _reorderElements() drops any fields that are not in preDefOrder, including both special fields and fieldsToRender fields<br>
+3. even if special elements could be reordered, it would be difficult to specify the correct field name for reordering or other purposes (e.g. field labels).<br>
+4. _getFieldsToRender() always includes values returned from keys() but sometimes there are values from keys() that I don&#039;t need/want in my form.</p>
+<p>so some requests:</p>
+<p>1. fix problems 1 and 2 (I&#039;ve got a solution that seems to be working so far for me (see reproduce code))<br>
+2. implement a method or methods like getSpecialElementName($type,$tableName) to reference the element in question<br>
+3. consider removing the feature described in 4 or making it optional through a class property</p>
+<p>Reproduce code:<br>
+---------------<br>
+$do =&amp; new DB_DataObject();<br>
+$fb =&amp; new DB_DataObject_FormBuilder($do);<br>
+$fb-&gt;fieldsToRender=array(&quot;someField&quot;,&quot;someOtherField&quot;);<br>
+$fb-&gt;preDefOrder=array(&quot;someOtherField&quot;);<br>
+$fb-&gt;crossLinks=array(array(&quot;table&quot;=&gt;&quot;links&quot;));<br>
+$form =&amp; $fb-&gt;getForm();<br>
+echo $form-&gt;toHtml();</p>
+<p>My fix for this issue is available at:</p>
+<p>http://environment.cornell.edu/source/DB.DataObject.FormBuilder.phps</p>
+<p>Expected result:<br>
+----------------<br>
+Form with elements:</p>
+<p>someOtherField<br>
+keyField (from $do-&gt;keys())<br>
+otherField<br>
+__crossLink_links</p>
+<p>Actual result:<br>
+--------------<br>
+Form with element:</p>
+<p>someOtherField</p>
+</section>
+<section>
+<h3>[2005-01-12 21:39 UTC] ate2 at cornell dot edu</h3>
+<p>Noticed another problem with my fix... the special elements that are rendered are frozen because of a glitch with _getUserEditableFields().  I added an example workaround that resolves this for me to the same place as the other fixes.  It involves overriding that method.</p>
+</section>
+<section>
+<h3>[2005-01-12 22:35 UTC] ate2 at cornell dot edu</h3>
+<p>With point 3, I was trying to imagine a scenario down the road where the naming convention might change and refactoring might be an issue... really is just feature request.<br>
+But I still don&#039;t like 2.  preDefOrder is only supposed to specify the order in which fields are arranged; why should every field have to be explicitly list twice in code if there are one or more fields I don&#039;t want displayed?  I especially see this as a bug because preDefOrder is doing something that is not part of its API - preventing elements from being rendered.<br>
+As for 1, I guess it might just be my taste but it seems more intuitive to eliminate special element fields by not adding them to crossLinks, tripleLinks, etc. properties.  Same sort of double-listing issue as with 2, but in this case no method actually does something the docs don&#039;t say it does.<br>
+BTW, great package, don&#039;t mean to be a nag.</p>
+</section>
+<section>
+<h3>[2005-01-13 00:09 UTC] ate2 at cornell dot edu</h3>
+<p>Thx. I&#039;m not sure whether this changes anything but what I was talking about in 1 pertains only to fieldsToRender.  In the workaround I&#039;m using special elements can still be repositioned with preDefOrder.  They just don&#039;t have to be included in fieldsToRender when that option is used.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

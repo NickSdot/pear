@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7129</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR_Command_Packaging/index.html">PEAR_Command_Packaging</a> &#187; Bug #7129</h1>
+<p>A better template.spec</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #7129</th><td>A better template.spec</td></tr>
+<tr><th>Submitted</th><td>2006-03-15 18:07 UTC</td></tr>
+<tr><th>From</th><td>Fedora at FamilleCollet dot com</td></tr>
+<tr><th>Assigned</th><td>timj</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR_Command_Packaging/index.html">PEAR_Command_Packaging</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>FC4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-03-15 18:07 UTC] Fedora at FamilleCollet dot com</h3>
+<p>Description:<br>
+------------<br>
+See https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=185321</p>
+<p>I think the template.spec use by &quot;makerpm&quot; could be improve in somme ways.</p>
+<p>I know PEAR_Command_Packaging is on the road but &quot;makerpm&quot; still usefull, at least to make the rpm of PEAR_Command_Packaging ;)</p>
+<p>I see a lot of bugs with the comment &quot;fixed in CVS&quot; but i don&#039;t see any change in pear-1.4.8.</p>
+<p>Some improvement :</p>
+<p>1. don&#039;t remove the .xml (it&#039;s owned by the RPM)<br>
+2. use &quot;pear config-get php_dir&quot;<br>
+3. use &quot;--nodeps --soft --force --register-only&quot; on install / upgrade (because upgrading a RPM could keep the same package version)<br>
+4. use &quot;-ignore-errors --register-only&quot; on uninstall<br>
+5. remove .channels, .depdb, .depdblock during %install<br>
+6. don&#039;t own / but %{peardir}/* and @rpm_xml_dir@/@package@.xml instead.</p>
+<p>Next is the patch I use on FC4 to build the RPM of php-pear-1.4.8 (some changes are already include in the official RPM in Fedora &quot;rawhide&quot;). I think it can apply on all distro and could be include upstream.</p>
+<p>Hope that help a little.</p>
+<p>Test script:<br>
+---------------<br>
+--- data/PEAR/template.spec.orig	2006-03-13 17:57:44.000000000 +0100<br>
++++ data/PEAR/template.spec	2006-03-13 18:27:51.000000000 +0100<br>
+@@ -1,7 +1,9 @@<br>
++%define peardir %(pear config-get php_dir 2&gt; /dev/null || echo %{_datadir}/pear)<br>
++<br>
+ Summary: PEAR: @summary@<br>
+ Name: @rpm_package@<br>
+ Version: @version@<br>
+-Release: 1<br>
++Release: @release@<br>
+ License: @release_license@<br>
+ Group: Development/Libraries<br>
+ Source: http://@master_server@/get/@package@-%{version}.tgz<br>
+@@ -19,11 +21,11 @@<br>
+ %setup -c -T<br>
+ # XXX Source files location is missing here in pear cmd<br>
+ pear -v -c %{buildroot}/pearrc \<br>
+-        -d php_dir=%{_libdir}/php/pear \<br>
++        -d php_dir=%{peardir} \<br>
+         -d doc_dir=/docs \<br>
+         -d bin_dir=%{_bindir} \<br>
+-        -d data_dir=%{_libdir}/php/pear/data \<br>
+-        -d test_dir=%{_libdir}/php/pear/tests \<br>
++        -d data_dir=%{peardir}/data \<br>
++        -d test_dir=%{peardir}/tests \<br>
+         -d ext_dir=%{_libdir} \@extra_config@<br>
+         -s<br>
+ <br>
+@@ -33,40 +35,41 @@<br>
+ %postun<br>
+ # if refcount = 0 then package has been removed (not upgraded)<br>
+ if [ &quot;$1&quot; -eq &quot;0&quot; ]; then<br>
+-    pear uninstall --nodeps -r @possible_channel@@package@<br>
+-    rm @rpm_xml_dir@/@package@.xml<br>
++    pear uninstall --nodeps --ignore-errors --register-only @possible_channel@@package@<br>
+ fi<br>
+ <br>
+ <br>
+ %post<br>
+ # if refcount = 2 then package has been upgraded<br>
+ if [ &quot;$1&quot; -ge &quot;2&quot; ]; then<br>
+-    pear upgrade --nodeps -r @rpm_xml_dir@/@package@.xml<br>
++    pear upgrade --nodeps --soft --force --register-only @rpm_xml_dir@/@package@.xml<br>
+ else<br>
+-    pear install --nodeps -r @rpm_xml_dir@/@package@.xml<br>
++    pear install --nodeps --soft --force --register-only @rpm_xml_dir@/@package@.xml<br>
+ fi<br>
+ <br>
+ %install<br>
+ pear -c %{buildroot}/pearrc install --nodeps -R %{buildroot} \<br>
+         $RPM_SOURCE_DIR/@package@-%{version}.tgz<br>
++<br>
+ rm %{buildroot}/pearrc<br>
+-rm %{buildroot}/%{_libdir}/php/pear/.filemap<br>
+-rm %{buildroot}/%{_libdir}/php/pear/.lock<br>
+-rm -rf %{buildroot}/%{_libdir}/php/pear/.registry<br>
++rm %{buildroot}/%{peardir}/.filemap<br>
++rm %{buildroot}/%{peardir}/.lock<br>
++rm -rf %{buildroot}/%{peardir}/.registry<br>
++rm -rf %{buildroot}/%{peardir}/.channels<br>
++rm %{buildroot}/%{peardir}/.depdb<br>
++rm %{buildroot}/%{peardir}/.depdblock<br>
++<br>
+ if [ &quot;@doc_files@&quot; != &quot;&quot; ]; then<br>
+      mv %{buildroot}/docs/@package@/* .<br>
+      rm -rf %{buildroot}/docs<br>
+ fi<br>
++<br>
+ mkdir -p %{buildroot}@rpm_xml_dir@<br>
+ tar -xzf $RPM_SOURCE_DIR/@package@-%{version}.tgz package@package2xml@.xml<br>
+ cp -p package@package2xml@.xml %{buildroot}@rpm_xml_dir@/@package@.xml<br>
+ <br>
+-#rm -rf %{buildroot}/*<br>
+-#pear -q install -R %{buildroot} -n package@package2xml@.xml<br>
+-#mkdir -p %{buildroot}@rpm_xml_dir@<br>
+-#cp -p package@package2xml@.xml %{buildroot}@rpm_xml_dir@/@package@.xml<br>
+-<br>
+ %files<br>
+     %defattr(-,root,root)<br>
+     %doc @doc_files@<br>
+-    /<br>
++    %{peardir}/*<br>
++    @rpm_xml_dir@/@package@.xml</p>
+</section>
+<section>
+<h3>[2006-03-15 19:40 UTC] Fedora at FamilleCollet dot com</h3>
+<p>Mini patch (as most improvement already in)</p>
+<p>--- data/PEAR_Command_Packaging/template.spec.orig      2006-03-15 20:35:12.000000000 +0100<br>
++++ data/PEAR_Command_Packaging/template.spec   2006-03-15 20:36:39.000000000 +0100<br>
+@@ -67,4 +67,5 @@<br>
+ %files<br>
+ %defattr(-,root,root)<br>
+ %doc @doc_files@<br>
+-/<br>
++%{peardir}/*<br>
++@rpm_xml_dir@/@package@.xml</p>
+<p>However, the previous still needed (i think) while  PEAR_Command_Packaging is an &quot;alpha&quot; version.</p>
+</section>
+<section>
+<h3>[2006-03-15 23:36 UTC] timj at php dot net</h3>
+<p>We are not going to make any more fixes to the old &quot;makerpm&quot; code in PEAR. Although PEAR_Command_Packaging is marked as alpha, it is a direct fork of the &quot;makerpm&quot; code and is therefore no less stable than it. Please use PEAR_Command_Packaging. If there are any bugs in that please file as appropriate. The specific bug with ownership of / has been fixed in CVS (for PEAR_Command_Packaging) just now, so thanks for that fix. (It may be fixed more comprehensively at some point by fulling enumerating all the expected owned files)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

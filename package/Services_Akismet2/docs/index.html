@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services_Akismet2 Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/Services_Akismet2/index.html">Services_Akismet2</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Services_Akismet2/docs/index.html#package-webservices-services-akismet2-intro">Introduction</a>
+</li>
+<li><a href="package/Services_Akismet2/docs/index.html#package-webservices-services-akismet2-setup">Setup</a>
+</li>
+<li><a href="package/Services_Akismet2/docs/index.html#package-webservices-services-akismet2-comment">The Comment Class</a>
+</li>
+<li><a href="package/Services_Akismet2/docs/index.html#package-webservices-services-akismet2-methods">API Methods</a>
+<ul>
+<li><a href="package/Services_Akismet2/docs/index.html#package-webservices-services-akismet2-methods-is-spam">isSpam()</a>
+</li>
+<li><a href="package/Services_Akismet2/docs/index.html#package-webservices-services-akismet2-methods-submit-spam">submitSpam()</a>
+</li>
+<li><a href="package/Services_Akismet2/docs/index.html#package-webservices-services-akismet2-methods-submit-false-positive">submitFalsePositive()</a>
+</li></ul>
+</li>
+<li><a href="package/Services_Akismet2/docs/index.html#package-webservices-services-akismet2-examples">Examples</a>
+</li></ul>
+</nav>
+<p>PHP implementation of the Akismet REST API</p>
+<section id="package-webservices-services-akismet2-intro">
+<h2>Introduction</h2>
+<p>About the Akismet API and the <strong>Services_Akismet2</strong> package.</p>
+  
+ 
+
+ 
+
+  
+   <h3>The Akismet API</h3>
+  
+
+  <p>The <a href="http://akismet.com/development/api/">Akismet API</a>
+   is a web-service API used to filter spam from user-submitted comments. The
+   Akismet API allows for both detecting and marking spam comments. When used
+   correctly, the Akismet API can tremendously reduce the amount of work
+   required to maintain user-submitted comments on a website. Often, the use of
+   the Akismet API can reduce or eliminate the need for other spam-filtering
+   solutions.</p>
+
+ 
+
+ 
+
+  
+   <h3>Services_Akismet2</h3>
+  
+
+  <p><strong>Services_Akismet2</strong>
+   is an object-oriented implementation of the Akismet API.
+   <strong>Services_Akismet2</strong> supports all features of the Akismet
+   API and provides and easy-to-use PHP 5 interface.</p>
+
+  <p><strong>Services_Akismet2</strong> is derived from the
+   <a href="http://www.miphp.net/blog/view/php4_akismet_class">miPHP
+   Akismet class</a> written by Bret Kuhns for use in PHP 4.
+   <strong>Services_Akismet2</strong> requires PHP 5.2.1 or greater.</p>
+</section>
+<section id="package-webservices-services-akismet2-setup">
+<h2>Setup</h2>
+<h3>Service Providers</h3>
+  
+
+  <p>Though originally created for use with the
+   <a href="http://www.akismet.com/">Akismet service</a>, the
+   Akismet API is also used by other spam-filtering services.
+   <strong>Services_Akismet2</strong> works with any service that uses the
+   Akismet API. To use <strong>Services_Akismet2</strong> with other
+   spam-filtering service providers, specify the API server in either the
+   <a href="package/Services_Akismet2/docs/index.html">constructor</a>,
+   or by using the
+   <code><a href="package/Services_Akismet2/docs/index.html">setConfig()</a></code>
+   method.</p>
+
+  <p>For example:</p>
+    <pre><code>&lt;?php
+
+require_once &#039;Services/Akismet2.php&#039;;
+
+// set service provider in constructor
+$akismet = new Services_Akismet2(&#039;http://example.com&#039;, &#039;AABBCCDDEEFF&#039;, array(
+    &#039;apiServer&#039; =&gt; &#039;antispam.example.com&#039;
+));
+
+// set service provider using setConfig() method
+$akismet = new Services_Akismet2(&#039;http://example.com&#039;, &#039;AABBCCDDEEFF&#039;);
+$akismet-&gt;setConfig(&#039;apiServer&#039;, &#039;antispam.example.com&#039;);
+
+// for a service provider that uses a non-standard port (8080)
+$akismet = new Services_Akismet2(&#039;http://example.com&#039;, &#039;AABBCCDDEEFF&#039;);
+$akismet-&gt;setConfig(&#039;apiServer&#039;, &#039;antispam.example.com&#039;)
+        -&gt;setConfig(&#039;apiPort&#039;, 8080);
+
+?&gt;</code></pre>
+   
+  
+
+  <p>Popular spam-filtering service providers using the Akismet API include:</p><ul>
+    <li>
+     Akismet, and
+    </li>
+    <li>
+     <a href="http://antispam.typepad.com/">TypePad AntiSpam</a>.
+    </li>
+   </ul>
+  
+
+ 
+
+ 
+
+  
+   <h3>API Keys</h3>
+  
+
+  <p>All requests using the Akismet API must be verified using an API key. The
+   API key is usually tied to a particular website and ensures the user is
+   allowed to use the service (which is not free to provide). Most service
+   providers offer API keys free of charge for personal or low-volume use, and
+   offer licensing for commercial or high-volume applications.</p>
+
+  <blockquote>
+    <p>API keys are specific to a particular service provider. If you switch
+     spam-filtering service providers, you will need to acquire an API key for
+     the particular service.</p>
+   </blockquote>
+
+  
+
+  <p>The format of the API key may vary between service providers. The API key
+   itself is specified in the constructor. A
+   <strong><a href="package/Services_Akismet2/docs/index.html">Services_Akismet2_InvalidApiKeyException</a></strong>
+   will be thrown when a request is made using an invalid API key.</p>
+
+ 
+
+ 
+
+  
+   <h3>Testing Your API Key</h3>
+  
+
+  <p>After you have acquired an API key, you may want to test it. A comment with
+   the author set to <code>viagra-test-123</code> should always be
+   detected as spam, so it is a good way to make sure things are working
+   properly.</p>
+    <pre><code>&lt;?php
+
+require_once &#039;Services/Akismet2.php&#039;;
+require_once &#039;Services/Akismet2/Comment.php&#039;;
+
+$comment = new Services_Akismet2_Comment(array(
+    &#039;comment_author&#039; =&gt; &#039;viagra-test-123&#039;,
+    &#039;user_ip&#039;        =&gt; &#039;127.0.0.1&#039;,
+    &#039;user_agent&#039;     =&gt; &#039;just testing&#039;,
+    &#039;referrer&#039;       =&gt; &#039;http://example.com&#039;
+));
+
+$akismet = new Services_Akismet2(&#039;http://myblog.example.com&#039;, &#039;AABBCCDDEEFF&#039;);
+if ($akismet-&gt;isSpam($comment)) {
+    echo &#039;Everything is working properly.&#039;;
+} else {
+    echo &#039;Something\&#039;s not right!&#039;;
+}
+
+?&gt;</code></pre>
+</section>
+<section id="package-webservices-services-akismet2-comment">
+<h2>The Comment Class</h2>
+<h3>Overview</h3>
+  
+
+  <p>The class <strong><a href="package/Services_Akismet2/docs/index.html">Services_Akismet2_Comment</a></strong>
+   represents a comment on a website. All Akismet API methods take a comment as
+   the first parameter. The comment class contains content-related information
+   such as the comment text, author name, author email and Web link; as well as
+   server-related information such as the HTTP referer, timestamp and IP
+   address. The accuracy provided by the Akismet API increases as more fields
+   are included in the comment.</p>
+
+ 
+
+ 
+
+  
+   <h3>Required Fields</h3>
+  
+
+  <p>There are two required fields:</p><ul>
+    <li>
+     
+      User Agent (the browser used to submit the comment), and
+     
+    </li>
+    <li>
+     
+      User IP (IP address from which the comment was submitted).
+     
+    </li>
+   </ul><p>The blog URL, as referenced in the Akismet
+   <a href="http://akismet.com/development/api/#comment-check">API documentation</a>,
+   is specified in the <strong>Services_Akismet2</strong> constructor and
+   does not need to be specified in the comment object.</p>
+
+ 
+
+ 
+
+  
+   <h3>Auto-Setting Server Fields</h3>
+  
+
+  <p>When checking if a comment is spam, it is possible to set the required
+   fields, and several other server-related fields automatically. To do so, use
+   the second parameter of the
+   <code>Services_Akismet2::<a href="package/Services_Akismet2/docs/index.html">isSpam()</a></code>
+   method. When using this parameter, usually only the content-related fields
+   need to be specified manually.</p>
+
+  <blockquote>
+    <p>Only auto-set server-related fields on actual comments submitted in
+     real-time. If you check comments using an external system, you run the
+     risk of submitting your own server information as spam. Instead, save the
+     server information in the database and set it manually using the
+     <code>Services_Akismet2::<a href="package/Services_Akismet2/docs/index.html">setField()</a></code>
+     method.</p>
+   </blockquote>
+
+  
+
+ 
+
+ 
+
+  
+   <h3>Examples</h3>
+  
+
+  <p>There are two ways to specify fields in the comment object: setter methods,
+   and in the <a href="package/Services_Akismet2/docs/index.html">constructor</a>.
+   As a shortcut, <strong>Services_Akismet2</strong> methods that require
+   a comment also accept an array of fields. For example:</p>
+    <pre><code>&lt;?php
+
+require_once &#039;Services/Akismet2/Comment.php&#039;;
+
+// set in constructor
+$comment = new Services_Akismet2_Comment(array(
+    &#039;comment_author&#039;       =&gt; &#039;Test User&#039;,
+    &#039;comment_author_email&#039; =&gt; &#039;test@example.com&#039;,
+    &#039;comment_author_url&#039;   =&gt; &#039;http://myblog.example.com&#039;,
+    &#039;comment_content&#039;      =&gt; &#039;Buy V1agra!&#039;
+));
+
+// using setter methods
+$comment = new Services_Akismet2_Comment();
+$comment-&gt;setAuthor(&#039;Test User&#039;)
+        -&gt;setAuthorEmail(&#039;test@example.com&#039;)
+        -&gt;setAuthorUrl(&#039;http://myblog.example.com&#039;)
+        -&gt;setContent(&#039;Buy V1agra!&#039;);
+
+// using an array as a shortcut
+$akismet-&gt;isSpam(array(
+    &#039;comment_author&#039;       =&gt; &#039;Test User&#039;,
+    &#039;comment_author_email&#039; =&gt; &#039;test@example.com&#039;,
+    &#039;comment_author_url&#039;   =&gt; &#039;http://myblog.example.com&#039;,
+    &#039;comment_content&#039;      =&gt; &#039;Buy V1agra!&#039;
+));
+
+?&gt;</code></pre>
+</section>
+<section id="package-webservices-services-akismet2-methods">
+<h2>API Methods</h2>
+<p>TODO</p>
+</section>
+<section id="package-webservices-services-akismet2-methods-is-spam">
+<h3>isSpam()</h3>
+<p>TODO</p>
+</section>
+<section id="package-webservices-services-akismet2-methods-submit-spam">
+<h3>submitSpam()</h3>
+<p>TODO</p>
+</section>
+<section id="package-webservices-services-akismet2-methods-submit-false-positive">
+<h3>submitFalsePositive()</h3>
+<p>TODO</p>
+</section>
+<section id="package-webservices-services-akismet2-examples">
+<h2>Examples</h2>
+<blockquote>
+   <p>If you are using the Akismet API, it is recommended you build a system to
+    enter data back into the API either by submitting missed spam, or by
+    submitting false positives. While not strictly required, passing data back
+    using the API will allow the service to learn from its mistakes, and will
+    ensure the service stays relevant for your needs.</p>
+  </blockquote>
+
+ 
+
+ 
+
+  
+   <h3>Handling User-Submitted Comments</h3>
+  
+
+  
+    <pre><code>&lt;?php
+
+require_once &#039;Services/Akismet2.php&#039;;
+require_once &#039;Services/Akismet2/Comment.php&#039;;
+
+$comment = new Services_Akismet2_Comment(array(
+    &#039;comment_author&#039;       =&gt; &#039;Test Author&#039;,
+    &#039;comment_author_email&#039; =&gt; &#039;test@example.com&#039;,
+    &#039;comment_author_url&#039;   =&gt; &#039;http://example.com/&#039;,
+    &#039;comment_content&#039;      =&gt; &#039;Hello, World!&#039;
+));
+
+try {
+    $apiKey  = &#039;AABBCCDDEEFF&#039;;
+    $akismet = new Services_Akismet2(&#039;http://blog.example.com/&#039;, $apiKey);
+    if ($akismet-&gt;isSpam($comment)) {
+        // rather than simply ignoring the spam comment, it is recommended
+        // to save the comment and mark it as spam in case the comment is a
+        // false positive.
+    } else {
+        // save comment as normal comment
+    }
+} catch (Services_Akismet2_InvalidApiKeyException $keyException) {
+    echo &#039;Invalid API key!&#039;;
+} catch (Services_Akismet2_HttpException $httpException) {
+    echo &#039;Error communicating with Akismet API server: &#039; .
+        $httpException-&gt;getMessage();
+} catch (Services_Akismet2_InvalidCommentException $commentException) {
+    echo &#039;Specified comment is missing one or more required fields.&#039; .
+        $commentException-&gt;getMessage();
+}
+
+?&gt;</code></pre>
+   
+  
+
+ 
+
+ 
+
+  
+   <h3>Marking a Missed Comment as Spam</h3>
+  
+
+  
+    <pre><code>&lt;?php
+
+require_once &#039;Services/Akismet2.php&#039;;
+require_once &#039;Services/Akismet2/Comment.php&#039;;
+
+$comment = new Services_Akismet2_Comment(array(
+    &#039;comment_author&#039;       =&gt; &#039;Test Author&#039;,
+    &#039;comment_author_email&#039; =&gt; &#039;test@example.com&#039;,
+    &#039;comment_author_url&#039;   =&gt; &#039;http://example.com/&#039;,
+    &#039;comment_content&#039;      =&gt; &#039;Hello, World!&#039;
+));
+
+try {
+    $apiKey  = &#039;AABBCCDDEEFF&#039;;
+    $akismet = new Services_Akismet2(&#039;http://blog.example.com/&#039;, $apiKey);
+    $akismet-&gt;submitSpam($comment);
+} catch (Services_Akismet2_InvalidApiKeyException $keyException) {
+    echo &#039;Invalid API key!&#039;;
+} catch (Services_Akismet2_HttpException $httpException) {
+    echo &#039;Error communicating with Akismet API server: &#039; .
+        $httpException-&gt;getMessage();
+} catch (Services_Akismet2_InvalidCommentException $commentException) {
+    echo &#039;Specified comment is missing one or more required fields.&#039; .
+        $commentException-&gt;getMessage();
+}
+
+?&gt;</code></pre>
+   
+  
+
+ 
+
+ 
+
+  
+   <h3>Marking a Comment as a False Positive</h3>
+  
+
+  
+    <pre><code>&lt;?php
+
+require_once &#039;Services/Akismet2.php&#039;;
+require_once &#039;Services/Akismet2/Comment.php&#039;;
+
+$comment = new Services_Akismet2_Comment(array(
+    &#039;comment_author&#039;       =&gt; &#039;Test Author&#039;,
+    &#039;comment_author_email&#039; =&gt; &#039;test@example.com&#039;,
+    &#039;comment_author_url&#039;   =&gt; &#039;http://example.com/&#039;,
+    &#039;comment_content&#039;      =&gt; &#039;Hello, World!&#039;
+));
+
+try {
+    $apiKey  = &#039;AABBCCDDEEFF&#039;;
+    $akismet = new Services_Akismet2(&#039;http://blog.example.com/&#039;, $apiKey);
+    $akismet-&gt;submitFalsePositive($comment);
+} catch (Services_Akismet2_InvalidApiKeyException $keyException) {
+    echo &#039;Invalid API key!&#039;;
+} catch (Services_Akismet2_HttpException $httpException) {
+    echo &#039;Error communicating with Akismet API server: &#039; .
+        $httpException-&gt;getMessage();
+} catch (Services_Akismet2_InvalidCommentException $commentException) {
+    echo &#039;Specified comment is missing one or more required fields.&#039; .
+        $commentException-&gt;getMessage();
+}
+
+?&gt;</code></pre>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

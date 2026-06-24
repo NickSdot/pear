@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7156</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #7156</h1>
+<p>segfault in SOAP_Value::serialize()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-03-18 23:53 UTC</td></tr>
+<tr><th>From</th><td>jhannus at php dot net</td></tr>
+<tr><th>Assigned</th><td>yunosh</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Centos 4.2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-03-18 23:53 UTC] jhannus at php dot net</h3>
+<p>Description:<br>
+------------<br>
+php segaults when I return a SOAP_Fault in any of my methods. I&#039;ve traced it down to SOAP_Value::serialize(), which is really in SOAP_Base::_serializeValue().</p>
+<p>around line #478 in SOAP/Base.php, if a value contains other SOAP_Values it recurses, and the segfault happens under there somewhere.<br>
+if (is_a($vars[$k], &#039;SOAP_Value&#039;)) {<br>
+  $xmlout_value .= $vars[$k]-&gt;serialize($this);<br>
+}</p>
+<p>The SOAP_Fault has each attribute as a SOAP_Value so when it recurses on the first one it barfs somewhere.</p>
+<p>i&#039;ve also tried this on windows with 5.1.1 and same thing. i can help debug some more if you need.</p>
+<p>-justin</p>
+<p>Test script:<br>
+---------------<br>
+class SOAP_Foo_Server <br>
+{<br>
+  var $__dispatch_map = array();</p>
+<p>function SOAP_Foo_Server() {<br>
+    $this-&gt;__dispatch_map[&#039;doFoo&#039;] = array (<br>
+        &#039;in&#039;  =&gt; array(&#039;bar&#039; =&gt; &#039;string&#039;),<br>
+        &#039;out&#039; =&gt; array(&#039;value&#039; =&gt; &#039;boolean&#039;)<br>
+    );<br>
+  }</p>
+<p>function doFoo($bar) {<br>
+    return new SOAP_Fault(&#039;whoops!&#039;, &#039;Server&#039;);<br>
+  }<br>
+}</p>
+</section>
+<section>
+<h3>[2006-03-19 02:24 UTC] jhannus at php dot net</h3>
+<p>i put it down for a little while and came back to it and found that the segfault happens in the serialization of the backtrace and userinfo properties of the SOAP_Fault.</p>
+<p>comment out those 2 lines and the segfault goes away:<br>
+Fault.php #73<br>
+if (isset($this-&gt;backtrace)) {<br>
+            //$params[] =&amp; new SOAP_Value(&#039;detail&#039;, &#039;string&#039;, $this-&gt;backtrace);<br>
+        } else {<br>
+            //$params[] =&amp; new SOAP_Value(&#039;detail&#039;, &#039;string&#039;, $this-&gt;userinfo);<br>
+        }</p>
+<p>hope this helps,<br>
+-justin</p>
+</section>
+<section>
+<h3>[2006-03-19 19:13 UTC] jhannus at php dot net</h3>
+<p>&gt;Backtraces almost always have recursive structures if used with<br>
+&gt;sufficient complex objects.</p>
+<p>nevertheless, you shouldn&#039;t have to set a property to avoid segfaults when coding with php. maybe the backtrace should be turned off by default? either that or the code should correct itself in that condition.</p>
+<p>&gt;The serialize methods runs into<br>
+&gt;an endless loop as a result.</p>
+<p>again, a condition that should be met...<br>
+// would you do this....<br>
+while (true);</p>
+<p>// and supply this for the fix?<br>
+$fix = &amp;PEAR::getStaticProperty(&#039;My_Foo&#039;, &#039;fix_my_bugs&#039;);<br>
+$fix = true;</p>
+<p>:)</p>
+<p>when a user trys a PEAR package out and follows even the simplest of examples... a segfault might just turn them off to the package alltogether. i wouldn&#039;t consider the bug &quot;Bogus&quot; but in this case i guess its better than &quot;Closed&quot;.</p>
+<p>IMHO: in terms of SOAP and SOAP Faults i dont see the real point of having a backtrace and userinfo in there by default anyway. its just a pear and php thing. aside from the security thing other clients may not even look for it. yeah, nice for debugging but when using a package/library you should have to turn debugging on, not off.</p>
+<p>&gt;See request 6936 for instructions how to<br>
+&gt;disable backtraces.</p>
+<p>thanks, i found that documentation last night.</p>
+<p>-justin</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

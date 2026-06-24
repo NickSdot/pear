@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9591</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_Template_Flexy/index.html">HTML_Template_Flexy</a> &#187; Bug #9591</h1>
+<p>a patch to allow radiobuttons not to have id</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #9591</th><td>a patch to allow radiobuttons not to have id</td></tr>
+<tr><th>Submitted</th><td>2006-12-09 16:11 UTC</td></tr>
+<tr><th>From</th><td>seta_t at mail dot goo dot ne dot jp</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_Template_Flexy/index.html">HTML_Template_Flexy</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>Linux/Fedora Core 5</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-12-09 16:11 UTC] seta_t at mail dot goo dot ne dot jp</h3>
+<p>Description:<br>
+------------<br>
+I want radiobuttons not to require IDs, and setValue to become able to be called with name of radiobuttons.</p>
+<p>Expected result:<br>
+----------------<br>
+I want to<br>
+a template like:</p>
+<p>&lt;html&gt;<br>
+ &lt;body&gt;<br>
+  &lt;form&gt;<br>
+   &lt;input type=&quot;radio&quot; name=&quot;radio&quot; value=&quot;1&quot;/&gt; 1<br>
+   &lt;input type=&quot;radio&quot; name=&quot;radio&quot; value=&quot;2&quot;/&gt; 2<br>
+  &lt;/form&gt;<br>
+ &lt;/body&gt;<br>
+&lt;/html&gt;</p>
+<p>and PHP code like:</p>
+<p>...<br>
+$elements = $template-&gt;getElements();<br>
+$elements[&#039;radio&#039;]-&gt;setValue(&#039;2&#039;);<br>
+$template-&gt;outputObject($data,$elements);<br>
+...</p>
+<p>output HTML like:</p>
+<p>&lt;html&gt;<br>
+ &lt;body&gt;<br>
+  &lt;form&gt;<br>
+   &lt;input type=&quot;radio&quot; name=&quot;radio&quot; value=&quot;1&quot; /&gt; 1<br>
+   &lt;input type=&quot;radio&quot; name=&quot;radio&quot; value=&quot;2&quot; checked /&gt; 2<br>
+ &lt;/body&gt;<br>
+&lt;/html&gt;</p>
+<p>The following patch is written to do that.</p>
+<p>diff -ru Flexy.orig/Element.php Flexy/Element.php<br>
+--- Flexy.orig/Element.php      2006-12-08 23:48:38.000000000 +0900<br>
++++ Flexy/Element.php   2006-12-09 23:53:37.000000000 +0900<br>
+@@ -387,6 +387,11 @@<br>
+                 HTML_Template_Flexy_Element_Xul::setValue($this,$value);<br>
+                 return ;</p>
+<p>+            case &#039;_radiogroup&#039;:<br>
++                foreach($this-&gt;children as $i=&gt;$child){<br>
++                    $child-&gt;setValue($value);<br>
++                }<br>
++                return;<br>
+             default:<br>
+                 if (is_array($value)) {<br>
+                     return;<br>
+--- Flexy.php.orig      2006-12-09 22:35:11.000000000 +0900<br>
++++ Flexy.php   2006-12-10 00:04:44.000000000 +0900<br>
+@@ -146,6 +146,7 @@<br>
+                                         // eg. = array(&#039;Savant&#039;) - loads the Savant methods.<br>
+                                         // = array(&#039;MyClass_Plugins&#039; =&gt; &#039;MyClass/Plugins.php&#039;)<br>
+                                         //    Class, and where to include it from..<br>
++       &#039;setRadioValueByName&#039; =&gt; false,  // allows to call setValue for radiobuttons by name, and allows radiobuttons not to have IDs<br>
+     );<br>
+     /**<br>
+     * The compiled template filename (Full path)<br>
+diff -ru Flexy.orig/Compiler/Flexy/Tag.php Flexy/Compiler/Flexy/Tag.php<br>
+--- Flexy.orig/Compiler/Flexy/Tag.php   2006-12-08 23:48:38.000000000 +0900<br>
++++ Flexy/Compiler/Flexy/Tag.php        2006-12-10 00:54:27.000000000 +0900<br>
+@@ -634,6 +634,19 @@<br>
+             $mergeWithName =  true;<br>
+         }</p>
+<p>+        if ($this-&gt;compiler-&gt;options[&#039;setRadioValueByName&#039;] &amp;&amp;<br>
++            (strtolower($this-&gt;element-&gt;getAttribute(&#039;TYPE&#039;)) == &#039;radio&#039; )) {<br>
++            if ($this-&gt;element-&gt;getAttribute(&#039;ID&#039;) === false) {<br>
++                $id = &#039;tmpId&#039;. (++$tmpId);<br>
++                // do not set ID to the element in order not to show tmpId in the output html<br>
++                //$this-&gt;element-&gt;attributes[&#039;id&#039;] = $id;<br>
++                //$this-&gt;element-&gt;ucAttributes[&#039;ID&#039;] = $id; // Actually, this one is not important for not showing tmpId<br>
++            } else {<br>
++                $id = $this-&gt;element-&gt;getAttribute(&#039;ID&#039;);<br>
++            }<br>
++            // in this case, $_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][$name] becomes not false, and be output if $mergeWithName == true<br>
++            $mergeWithName =  false;<br>
++        }</p>
+<p>@@ -740,6 +753,11 @@<br>
+         // this is for a case where you can use a sprintf as the name, and overlay it with a variable element..<br>
+         $_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][$id] = $this-&gt;toElement($this-&gt;element);</p>
+<p>+        if($this-&gt;compiler-&gt;options[&#039;setRadioValueByName&#039;] &amp;&amp;<br>
++            (strtolower($this-&gt;element-&gt;getAttribute(&#039;TYPE&#039;)) == &#039;radio&#039; )) {<br>
++            // set the radio element as a &quot;child&quot; of the &quot;parent&quot; _radiogroup element<br>
++            $_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][strtolower($this-&gt;element-&gt;getAttribute(&#039;NAME&#039;))]-&gt;children[] = &amp; $_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][$id];<br>
++        }</p>
+<p>if ($varsOnly) { // used by form tag.<br>
+@@ -866,27 +884,48 @@<br>
+         }<br>
+         // checkboxes need more work.. - at the momemnt assume one with the same value...<br>
+         if (in_array(strtoupper($this-&gt;element-&gt;getAttribute(&#039;TYPE&#039;)), array(&#039;RADIO&#039;))) {<br>
+-<br>
+-            if (!isset($_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][$id])) {<br>
+-                // register it..  - so we dont overwrite it...<br>
+-                $_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][$id] = false;<br>
+-            } else if ($_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][$id] != false) {<br>
+-<br>
+-<br>
+-                return HTML_Template_Flexy::raiseError(<br>
+-                    &quot;Error:{$_HTML_TEMPLATE_FLEXY[&#039;filename&#039;]} on Line {$this-&gt;element-&gt;line} &quot;.<br>
+-                    &quot;in Tag &lt;{$this-&gt;element-&gt;tag}&gt;:&lt;BR&gt;&quot;.<br>
+-                    &quot;The Dynamic tag Name &#039;$id&#039; has already been used previously by &quot;.<br>
+-                    &quot;tag &lt;{$_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][$id]-&gt;tag}&gt;&quot;,<br>
+-                     null, HTML_TEMPLATE_FLEXY_ERROR_DIE<br>
+-                );<br>
++            if ((strtoupper($this-&gt;element-&gt;getAttribute(&#039;TYPE&#039;)) == &#039;RADIO&#039;) &amp;&amp;<br>
++                $this-&gt;compiler-&gt;options[&#039;setRadioValueByName&#039;]){<br>
++                if (!isset($_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][$id])) {<br>
++                    $_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][$id] = new HTML_Template_Flexy_Element(&#039;_radiogroup&#039;);<br>
++                } else if ($_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][$id]-&gt;tag != &#039;_radiogroup&#039;){<br>
++<br>
++<br>
++                    return HTML_Template_Flexy::raiseError(<br>
++                        &quot;Error:{$_HTML_TEMPLATE_FLEXY[&#039;filename&#039;]} on Line {$this-&gt;element-&gt;line} &quot;.<br>
++                        &quot;in Tag &lt;{$this-&gt;element-&gt;tag}&gt;:&lt;BR&gt;&quot;.<br>
++                        &quot;The Dynamic tag Name &#039;$id&#039; has already been used previously by &quot;.<br>
++                        &quot;tag &lt;{$_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][$id]-&gt;tag}&gt;&quot;,<br>
++                         null, HTML_TEMPLATE_FLEXY_ERROR_DIE<br>
++                    );<br>
++                }<br>
++            } else {<br>
++                if (!isset($_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][$id])) {<br>
++                    // register it..  - so we dont overwrite it...<br>
++                    $_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][$id] = false;<br>
++                } else if ($_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][$id] != false) {<br>
++<br>
++<br>
++                    return HTML_Template_Flexy::raiseError(<br>
++                        &quot;Error:{$_HTML_TEMPLATE_FLEXY[&#039;filename&#039;]} on Line {$this-&gt;element-&gt;line} &quot;.<br>
++                        &quot;in Tag &lt;{$this-&gt;element-&gt;tag}&gt;:&lt;BR&gt;&quot;.<br>
++                        &quot;The Dynamic tag Name &#039;$id&#039; has already been used previously by &quot;.<br>
++                        &quot;tag &lt;{$_HTML_TEMPLATE_FLEXY[&#039;elements&#039;][$id]-&gt;tag}&gt;&quot;,<br>
++                         null, HTML_TEMPLATE_FLEXY_ERROR_DIE<br>
++                    );<br>
++                }<br>
+             }</p>
+<p>$id = $this-&gt;element-&gt;getAttribute(&#039;ID&#039;);<br>
+             if (!$id) {<br>
+-                return HTML_Template_Flexy::raiseError(&quot;Error on Line {$this-&gt;element-&gt;line} &lt;{$this-&gt;element-&gt;tag}&gt;:<br>
+-                 Radio Input&#039;s require an ID attribute (eg &lt;input type=&#039;radio&#039; id=&#039;1&#039; name=&#039;xxxx&#039; value=&#039;yyy&#039;&gt;..&quot;,<br>
+-                 null, HTML_TEMPLATE_FLEXY_ERROR_DIE);<br>
++                if ((strtoupper($this-&gt;element-&gt;getAttribute(&#039;TYPE&#039;)) == &#039;RADIO&#039;) &amp;&amp;<br>
++                    $this-&gt;compiler-&gt;options[&#039;setRadioValueByName&#039;]){<br>
++                    $id = &#039;dummy&#039;;<br>
++                } else {<br>
++                    return HTML_Template_Flexy::raiseError(&quot;Error on Line {$this-&gt;element-&gt;line} &lt;{$this-&gt;element-&gt;tag}&gt;:<br>
++                     Radio Input&#039;s require an ID attribute (eg &lt;input type=&#039;radio&#039; id=&#039;1&#039; name=&#039;xxxx&#039; value=&#039;yyy&#039;&gt;..&quot;,<br>
++                     null, HTML_TEMPLATE_FLEXY_ERROR_DIE);<br>
++                }<br>
+             }<br>
+             $mergeWithName = true;</p>
+<p>diff -ru Flexy.orig/Element.php Flexy/Element.php<br>
+--- Flexy.orig/Element.php      2006-12-08 23:48:38.000000000 +0900<br>
++++ Flexy/Element.php   2006-12-09 23:53:37.000000000 +0900<br>
+@@ -387,6 +387,11 @@<br>
+                 HTML_Template_Flexy_Element_Xul::setValue($this,$value);<br>
+                 return ;</p>
+<p>+            case &#039;_radiogroup&#039;:<br>
++                foreach($this-&gt;children as $i=&gt;$child){<br>
++                    $child-&gt;setValue($value);<br>
++                }<br>
++                return;<br>
+             default:<br>
+                 if (is_array($value)) {<br>
+                     return;</p>
+</section>
+<section>
+<h3>[2006-12-31 21:14 UTC] mail at paul dot kishimoto dot name</h3>
+<p>I don&#039;t have any comments on the proposed patch, but the requirement that radio &lt;input&gt;s have an ID is troublesome when using the &lt;label&gt; element.</p>
+<p>I tried to use:</p>
+<p>&lt;label flexy:foreach=&quot;fruit,id,name&quot; for=&quot;fruit-{id}&quot;&gt;&lt;input id=&quot;fruit-{id}&quot; name=&quot;fruit&quot; type=&quot;radio&quot; value=&quot;{id}&quot; /&gt; {name} &lt;/label&gt;</p>
+<p>to produce code like:</p>
+<p>&lt;label for=&quot;fruit-1&quot;&gt;&lt;input id=&quot;fruit-1&quot; name=&quot;fruit&quot; type=&quot;radio&quot; value=&quot;1&quot; /&gt; Apple&lt;/label&gt;<br>
+&lt;label for=&quot;fruit-5&quot;&gt;&lt;input id=&quot;fruit-5&quot; name=&quot;fruit&quot; type=&quot;radio&quot; value=&quot;5&quot; /&gt; Orange&lt;/label&gt;<br>
+&lt;label for=&quot;fruit-12&quot;&gt;&lt;input id=&quot;fruit-12&quot; name=&quot;fruit&quot; type=&quot;radio&quot; value=&quot;12&quot; /&gt; Banana&lt;/label&gt;</p>
+<p>from an array:</p>
+<p>$this-&gt;fruit = array(<br>
+  1 =&gt; &#039;Apple&#039;,<br>
+  5 =&gt; &#039;Orange&#039;,<br>
+  12 =&gt; &#039;Banana&#039;<br>
+);</p>
+<p>... but was told the input element must have an ID. I assume this means that the {id} variable in the &lt;input id=&gt; attribute cannot be parsed by Flexy and is being ignored. Flexy doesn&#039;t complain about the value attribute when I replace id=&quot;fruit-{id}&quot; with id=&quot;fruit-x&quot;, which generates three elements with the same ID (ie. invalid  XHTML) but different values.</p>
+<p>In my expected output, clicking on the label text causes the corresponding radio input to be selected. This is good form design and common in XHTML. The flexy:nameuses attribute isn&#039;t helpful here, because it causes the radio inputs to have different names, breaking their behaviour.</p>
+<p>Aside from generating HTML in my PHP code, I can&#039;t figure out a way to dynamically generate radio buttons with labels. Perhaps relaxing the id requirement, parsing the {id} variable or some other API change would allow this sort of output.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

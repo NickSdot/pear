@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5771</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Logging &#187; <a href="package/Log/index.html">Log</a> &#187; Bug #5771</h1>
+<p>Log_sql objects passed a DB handle fail when log() is called</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-10-24 18:39 UTC</td></tr>
+<tr><th>From</th><td>mjohnson at pitsco dot com</td></tr>
+<tr><th>Assigned</th><td>jon</td></tr>
+<tr><th>Status</th><td>Duplicate</td></tr>
+<tr><th>Package</th><td><a href="package/Log/index.html">Log</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-24 18:39 UTC] mjohnson at pitsco dot com</h3>
+<p>Description:<br>
+------------<br>
+The new version (1.9.0) runs DB::prepare() in open(). open() is not called if the constructor is passed a DB handle.</p>
+<p>The fix is simple:<br>
+  * In the constructor, don&#039;t set _opened for a passed DB<br>
+    handle<br>
+  * In in open(), wrap the $this-&gt;_db assignment and<br>
+    success check in an if statement that has the<br>
+    expression &#039;!$this-&gt;_db&#039;</p>
+<p>If you&#039;d like an actual diff, please let me know.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php ;</p>
+<p>require_once(&#039;DB.php&#039;);<br>
+require_once(&#039;Log.php&#039;);</p>
+<p>$db =&amp; DB::connect(&#039;mysql://user:pwd@localhost/log&#039;);<br>
+$logger =&amp; Log::singleton(&#039;sql&#039;, &#039;log.log_table&#039;, &#039;xyz&#039;,<br>
+                          array(&#039;db&#039; =&gt; &amp;$db,<br>
+                          &#039;sequence&#039; =&gt; &#039;log.log_id&#039;));<br>
+echo ($logger-&gt;log(&#039;This is a test&#039;, PEAR_LOG_ERR)) ? &#039;Success&#039; : &#039;Failure&#039;;</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Success, with an entry in log.log_table.</p>
+<p>Actual result:<br>
+--------------<br>
+Failure, with no entry in log.log_table</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

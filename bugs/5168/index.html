@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5168</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_Template_Sigma/index.html">HTML_Template_Sigma</a> &#187; Bug #5168</h1>
+<p>Functions inside includes sometimes get »forgotten«</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-21 18:55 UTC</td></tr>
+<tr><th>From</th><td>christian dot seiler at selfhtml dot org</td></tr>
+<tr><th>Assigned</th><td>avb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_Template_Sigma/index.html">HTML_Template_Sigma</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-21 18:55 UTC] christian dot seiler at selfhtml dot org</h3>
+<p>Description:<br>
+------------<br>
+When using functions inside includes (e.g. test.html includes test1.html and test1.html contains {variable:h}) sometimes the expression {variable:h} does not get replaced.</p>
+<p>Please have a look at the example script for a demonstration.</p>
+<p>The reason: You do $funcId   = substr(md5(serialize($funcData)), 0, 10); to generate an ID for this function. This works fine as long you do *not* have includes. When you have includes it still works fine *if* (and only if) the substring does not entirely consist of digits. If it *does* entirely consist of digits, PHP will treat the array index of $this-&gt;_functions[$block][$funcID] as a numer and the call to array_merge() in _pullTriggers will force the array to be renumerated.</p>
+<p>Possible bugfixes:</p>
+<p>1) make sure non-numeric IDs are generated, e.g. replacing all occurrences of</p>
+<p>$funcId   = substr(md5(serialize($funcData)), 0, 10);</p>
+<p>with</p>
+<p>$funcId   = &#039;F&#039;.substr(md5(serialize($funcData)), 0, 10);</p>
+<p>2) don&#039;t do array_merge but use the + operator, so replace</p>
+<p>$this-&gt;_functions[$parents[0]] = array_merge($this-&gt;_functions[$parents[0]], $this-&gt;_functions[$placeholder]);</p>
+<p>with</p>
+<p>$this-&gt;_functions[$parents[0]] = $this-&gt;_functions[$placeholder] + $this-&gt;_functions[$parents[0]];</p>
+<p>(in _pullTriggers)</p>
+<p>Test script:<br>
+---------------<br>
+----------------- test.php<br>
+&lt;?php<br>
+require_once &#039;HTML/Template/Sigma.php&#039;;<br>
+$template =&amp; new HTML_Template_Sigma(&#039;./templates&#039;);<br>
+$template-&gt;loadTemplateFile(&#039;test.html&#039;);<br>
+$template-&gt;setVariable(&#039;home_mail&#039;, &#039;test@example.org&#039;);<br>
+$template-&gt;show();<br>
+?&gt;</p>
+<p>----------------- templates/test.html<br>
+&lt;!-- INCLUDE test1.html --&gt;</p>
+<p>----------------- templates/test1.html<br>
+{home_mail:h}</p>
+<p>Expected result:<br>
+----------------<br>
+test@example.org</p>
+<p>Actual result:<br>
+--------------<br>
+[no output]</p>
+</section>
+<section>
+<h3>[2005-08-21 19:11 UTC] christian dot seiler at selfhtml dot org</h3>
+<p>Additional note:</p>
+<p>In this example the substring of the MD5 hash is &#039;7455632580&#039;. Therefore the given example will *only* show the bug on 64bit systems - on 32bit systems the class will behave correctly because 7455632580 does not fit into 32 bits. Nevertheless, an MD5 hash may also start with a 0 digit and therefore this bug also affects 32bit systems - it&#039;s just that probably nobody has yet come up with a digit-only MD5 hash of this function data that starts with.</p>
+</section>
+<section>
+<h3>[2005-09-29 13:44 UTC] christian dot seiler at selfhtml dot org</h3>
+<p>May I ask when this will be fixed in the official version? I don&#039;t really like to be forced to have a patched version of a PEAR package installed.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

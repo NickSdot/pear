@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7921</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_Diff/index.html">Text_Diff</a> &#187; Bug #7921</h1>
+<p>inline renderer hangs indefinitely on strings with \0</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-06-16 12:22 UTC</td></tr>
+<tr><th>From</th><td>mrten+pear at ii dot nl</td></tr>
+<tr><th>Assigned</th><td>chagenbu</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Text_Diff/index.html">Text_Diff</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-16 12:22 UTC] mrten+pear at ii dot nl</h3>
+<p>Description:<br>
+------------<br>
+preliminary report:</p>
+<p>if one would compare two strings where one string contains a \0 (zero byte), the inline renderer hangs (and terminates with a memory overflow) in _splitOnWords() in Diff/Renderer/inline.php.</p>
+<p>this happens because both strspn() and strcspn() in the while-loop return 0 (is perhaps a php-bug? ISTR that the C-counterpart has the same problem), so $spaces and $nextpos are both 0, which causes $pos to never be incremented. $words[] does keep getting larger and larger, which terminates the script in the end with a fatal memory overflow.</p>
+<p>i&#039;ve temporarily patched it with</p>
+<p>$string = str_replace(&quot;\0&quot;,&#039;&#039;,$string);</p>
+<p>at the start of the function.</p>
+</section>
+<section>
+<h3>[2006-06-16 12:41 UTC] mrten+pear at ii dot nl</h3>
+<p>that is, to say the least, a silly response to a one-line patch.</p>
+<p>if you really dont want to add the fix, please add to the documentation a remark that ones script will terminate with a fatal memory error if there happens to be a \0 in the data.</p>
+<p>(im not comparing binaries, the fact that there is a \0 in the -textual- data is considered a bug indeed!)</p>
+<p>but crashing php like that is just plain silly.</p>
+</section>
+<section>
+<h3>[2006-06-16 14:07 UTC] chagenbu at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>I agree with the reporter; we don&#039;t have to do anything /nice/ with bad data, but not crashing is good.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

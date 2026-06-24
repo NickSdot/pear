@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5904</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #5904</h1>
+<p>WSDL loading in client and params order</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-09 14:20 UTC</td></tr>
+<tr><th>From</th><td>iconeb at yahoo dot it</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-09 14:20 UTC] iconeb at yahoo dot it</h3>
+<p>Description:<br>
+------------<br>
+I have two different behaviours when calling a soapclient, both wrong<br>
+1) SOAP_Client($wsdlurl, &#039;wsdl&#039;) does not build parameters in SOAP message (it returns an empty tag with called function name).</p>
+<p>2) SOAP_Client with $wsdl-&gt;getProxy() builds correctly SOAP parameters, but they&#039;re not ordered (in wsdl they are a &#039;sequence&#039;).</p>
+<p>I would really like to use PEAR::SOAP because I also need SOAP::Server, but the SOAP Client still works with nusoap libraries</p>
+<p>If needed, I can provide test $wsdlurl to connect</p>
+<p>Thanks federico</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+require (&#039;SOAP/Client.php&#039;);<br>
+include_once &#039;Var_Dump.php&#039;;<br>
+Var_Dump::displayInit(array(&#039;display_mode&#039; =&gt; &#039;HTML4_Text&#039;));</p>
+<p>$wsdlurl = &#039;http://........&#039;;</p>
+<p>$pearwsdl = new SOAP_WSDL($wsdlurl);<br>
+$pearclient1 = $pearwsdl-&gt;getProxy();<br>
+$pearclient2 = new SOAP_Client($wsdlurl, &#039;wsdl&#039;);</p>
+<p>$pearclient1-&gt;setOpt(&#039;trace&#039;, 1);<br>
+$pearclient2-&gt;setOpt(&#039;trace&#039;, 1);<br>
+$pearclient2-&gt;setOpt(&#039;namespace&#039;, &#039;urn:Grid_HelpDesk&#039;);</p>
+<p>$params = array( &#039;Origin_ID&#039;=&gt;&#039;999&#039;,&#039;Loginname&#039; =&gt; &#039;trystring&#039;, &#039;Last_login&#039; =&gt; &#039;trystring&#039;, &#039;Name&#039; =&gt; &#039;Federico&#039;, &#039;E-mail&#039; =&gt; &#039;foo@bar.com&#039;, &#039;Phone&#039; =&gt; &#039;09887798&#039;, &#039;Date_Time_of_problem&#039; =&gt; &#039;2005-11-11 11:11&#039;, &#039;Short_description&#039; =&gt; &#039;Prova description&#039;, &#039;G_XML_Short_Desc&#039; =&gt; &#039;Prova description&#039;, &#039;Description&#039; =&gt; &#039;Prova description&#039;, &#039;G_XML_Desc&#039; =&gt; &#039;Prova description&#039;, &#039;Diary_of_steps&#039; =&gt; &#039;update_log&#039;, &#039;Priority&#039; =&gt; &#039;urgent&#039;, &#039;Experiment_specific_problem&#039; =&gt; &#039;No&#039;, &#039;Experiment&#039; =&gt; &#039;Alice&#039;, &#039;Status&#039; =&gt; &#039;new&#039;, &#039;Responsible_Unit&#039; =&gt; &#039;GlobalGrid_UserSupport&#039;, &#039;Last_Modifier&#039; =&gt; &#039;Federico&#039;, &#039;Origin_SG&#039; =&gt; &#039;ROC_Italy&#039;);</p>
+<p>$resp1 = $pearclient1-&gt;call(&#039;OpCreate&#039;, $params);<br>
+$resp2 = $pearclient2-&gt;OpCreate($params);</p>
+<p>Var_Dump::display($pearclient1);<br>
+Var_Dump::display($pearclient2);</p>
+<p>?&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+This is the outgoing message with SOAP_Client without $wsdl-&gt;getProxy() <br>
+SOAPAction: &quot;urn:Grid_HelpDesk/OpCreate&quot;<br>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;<br>
+&lt;SOAP-ENV:Envelope  xmlns:SOAP-ENV=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;        xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;<br>
+xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;<br>
+xmlns:SOAP-ENC=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot;<br>
+xmlns:ns4=&quot;urn:Grid_HelpDesk&quot;<br>
+SOAP-ENV:encodingStyle=&quot;http://schemas.xmlsoap.org/soap/encoding/&quot;&gt;<br>
+&lt;SOAP-ENV:Body&gt;<br>
+&lt;ns4:OpCreate xsi:nil=&quot;true&quot;/&gt;<br>
+&lt;/SOAP-ENV:Body&gt;<br>
+&lt;/SOAP-ENV:Envelope&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

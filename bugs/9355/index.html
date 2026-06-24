@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9355</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #9355</h1>
+<p>Bug in GLIBC detection (OS/Guess.php), patch proposal</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-16 17:47 UTC</td></tr>
+<tr><th>From</th><td>Fedora at FamilleCollet dot com</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5.2.0</td></tr>
+<tr><th>OS</th><td>Linux (Fedora)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-16 17:47 UTC] Fedora at FamilleCollet dot com</h3>
+<p>Description:<br>
+------------<br>
+GLIBC version is detected in OS/Guess.php</p>
+<p>This require &quot;cpp&quot; and &quot;/usr/include/features.h&quot; (glibc-headers)</p>
+<p>If &quot;cpp&quot; is available, the script compile a small piece of code which include &quot;features.h&quot; without testing if it is installed.</p>
+<p>And finaly the failback (reading the link /lib/libc.so.6) seems broken (regex problem).</p>
+<p>Test script:<br>
+---------------<br>
+php -r &#039;require(&quot;OS/Guess.php&quot;); print_r(new OS_Guess());&#039;</p>
+<p>Expected result:<br>
+----------------<br>
+OS_Guess Object<br>
+(<br>
+    [sysname] =&gt; linux<br>
+    [nodename] =&gt; remi<br>
+    [cpu] =&gt; x86_64<br>
+    [release] =&gt; 2.6<br>
+    [extra] =&gt; glibc2.5<br>
+)</p>
+<p>Actual result:<br>
+--------------<br>
+/tmp/glibctest3HeaAL:1:22: erreur: features.h : Aucun fichier ou répertoire de ce type<br>
+OS_Guess Object<br>
+(<br>
+    [sysname] =&gt; linux<br>
+    [nodename] =&gt; remi<br>
+    [cpu] =&gt; x86_64<br>
+    [release] =&gt; 2.6<br>
+    [extra] =&gt; glibc__GLIBC__.__GLIBC_MINOR__<br>
+)</p>
+</section>
+<section>
+<h3>[2006-11-16 17:49 UTC] Fedora at FamilleCollet dot com</h3>
+<p>Here is a patch :</p>
+<p>--- OS/Guess.php.orig	2006-11-01 08:26:23.000000000 +0100<br>
++++ OS/Guess.php	2006-11-01 08:42:32.000000000 +0100<br>
+@@ -202,11 +202,11 @@<br>
+             return $glibc; // no need to run this multiple times<br>
+         }<br>
+         include_once &quot;System.php&quot;;<br>
+-        if (!@file_exists(&#039;/usr/bin/cpp&#039;) || !@is_executable(&#039;/usr/bin/cpp&#039;)) {<br>
+-            // Use glibc&#039;s &lt;features.h&gt; header file to<br>
+-            // get major and minor version number:<br>
+-            if (@file_exists(&#039;/usr/include/features.h&#039;) &amp;&amp;<br>
+-                  @is_readable(&#039;/usr/include/features.h&#039;)) {<br>
++        // Use glibc&#039;s &lt;features.h&gt; header file to<br>
++        // get major and minor version number:<br>
++        if (@file_exists(&#039;/usr/include/features.h&#039;) &amp;&amp;<br>
++            @is_readable(&#039;/usr/include/features.h&#039;)) {<br>
++            if (!@file_exists(&#039;/usr/bin/cpp&#039;) || !@is_executable(&#039;/usr/bin/cpp&#039;)) {<br>
+                 $features_file = fopen(&#039;/usr/include/features.h&#039;, &#039;rb&#039;);<br>
+                 while (!feof($features_file)) {<br>
+                     $line = fgets($features_file, 8192);<br>
+@@ -238,29 +238,31 @@<br>
+                     return $glibc = &#039;&#039;;<br>
+                 }<br>
+                 return $glibc = &#039;glibc&#039; . trim($glibc_major) . &quot;.&quot; . trim($glibc_minor) ;<br>
++            } // No cpp<br>
++            $tmpfile = System::mktemp(&quot;glibctest&quot;);<br>
++            $fp = fopen($tmpfile, &quot;w&quot;);<br>
++            fwrite($fp, &quot;#include &lt;features.h&gt;\n__GLIBC__ __GLIBC_MINOR__\n&quot;);<br>
++            fclose($fp);<br>
++            $cpp = popen(&quot;/usr/bin/cpp $tmpfile&quot;, &quot;r&quot;);<br>
++            $major = $minor = 0;<br>
++            while ($line = fgets($cpp, 1024)) {<br>
++                if ($line{0} == &#039;#&#039; || trim($line) == &#039;&#039;) {<br>
++                    continue;<br>
++                }<br>
++                if (list($major, $minor) = explode(&#039; &#039;, trim($line))) {<br>
++                    break;<br>
++                }<br>
+             }<br>
+-            return $glibc = &#039;&#039;;<br>
+-        }<br>
+-        $tmpfile = System::mktemp(&quot;glibctest&quot;);<br>
+-        $fp = fopen($tmpfile, &quot;w&quot;);<br>
+-        fwrite($fp, &quot;#include &lt;features.h&gt;\n__GLIBC__ __GLIBC_MINOR__\n&quot;);<br>
+-        fclose($fp);<br>
+-        $cpp = popen(&quot;/usr/bin/cpp $tmpfile&quot;, &quot;r&quot;);<br>
+-        $major = $minor = 0;<br>
+-        while ($line = fgets($cpp, 1024)) {<br>
+-            if ($line{0} == &#039;#&#039; || trim($line) == &#039;&#039;) {<br>
+-                continue;<br>
+-            }<br>
+-            if (list($major, $minor) = explode(&#039; &#039;, trim($line))) {<br>
+-                break;<br>
++            pclose($cpp);<br>
++            unlink($tmpfile);<br>
++            if (!($major &amp;&amp; $minor)) {<br>
++	       return $glibc = &quot;glibc{$major}.{$minor}&quot;;<br>
+             }<br>
+-        }<br>
+-        pclose($cpp);<br>
+-        unlink($tmpfile);<br>
+-        if (!($major &amp;&amp; $minor) &amp;&amp; is_link(&#039;/lib/libc.so.6&#039;)) {<br>
++        } // features.h<br>
++        if (is_link(&#039;/lib/libc.so.6&#039;)) {<br>
+             // Let&#039;s try reading the libc.so.6 symlink<br>
+-            if (ereg(&#039;^libc-([.*])\.so$&#039;, basename(readlink(&#039;/lib/libc.so.6&#039;)), $matches)) {<br>
+-                list($major, $minor) = explode(&#039;.&#039;, $matches);<br>
++            if (ereg(&#039;^libc-(.*)\.so$&#039;, basename(readlink(&#039;/lib/libc.so.6&#039;)), $matches)) {<br>
++                list($major, $minor) = explode(&#039;.&#039;, $matches[1]);<br>
+             }<br>
+         }<br>
+         if (!($major &amp;&amp; $minor)) {</p>
+</section>
+<section>
+<h3>[2006-11-16 17:50 UTC] Fedora at FamilleCollet dot com</h3>
+<p>Change summary.</p>
+</section>
+<section>
+<h3>[2006-11-21 06:34 UTC] Fedora at FamilleCollet dot com</h3>
+<p>Thank&#039;s for fixing this bug.</p>
+<p>It seems to me there still a problem with the &quot;ereg&quot; command as it return an array :<br>
+array(2) {<br>
+  [0]=&gt;<br>
+  string(11) &quot;libc-2.5.so&quot;<br>
+  [1]=&gt;<br>
+  string(3) &quot;2.5&quot;<br>
+}<br>
+From php doc :<br>
+If matches are found for parenthesized substrings of pattern and the function is called with the third argument regs, the matches will be stored in the elements of the array regs. $regs[1] will contain the substring which starts at the first left parenthesis; $regs[2] will contain the substring starting at the second, and so on. $regs[0] will contain a copy of the complete string matched.</p>
+<p>So, you should use (line 262) :<br>
+list($major, $minor) = explode(&#039;.&#039;, $matches[1]);</p>
+</section>
+<section>
+<h3>[2006-12-09 18:12 UTC] Fedora at FamilleCollet dot com</h3>
+<p>What about fixing the last problem with ereg ?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4405</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_Template_Flexy/index.html">HTML_Template_Flexy</a> &#187; Bug #4405</h1>
+<p>Patch to allow overriding variable names in included templates</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4405</th><td>Patch to allow overriding variable names in included templates</td></tr>
+<tr><th>Submitted</th><td>2005-05-22 12:13 UTC</td></tr>
+<tr><th>From</th><td>rshaull at gmail dot com</td></tr>
+<tr><th>Status</th><td>Open</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_Template_Flexy/index.html">HTML_Template_Flexy</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Slackware Linux 10</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-22 12:13 UTC] rshaull at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Using HTML_Template_Flexy 1.2.1 installed through Pear.</p>
+<p>The Flexy Compiler automatically passes variables defined in the scope of the current template into the scope of a template included with &lt;flexy:include&gt;. I have patched the code to allow variable names to be changed before being passed to the included template (without changing them in the calling template). This makes it easier to combine templates without have to change variable names in an included template to match the variable names in the calling template. It also makes template recursion possible.</p>
+<p>In the patched code, you can add child elements named &lt;flexy:variableOverride&gt; to the &lt;flexy:include&gt; element. <br>
+This allows you to override the name of a variable being passed to the included template.</p>
+<p>For example, this _snippet_ from &quot;element.html&quot; (used to format the output of single elements in a form) will result in an infinite loop:<br>
+-----------------------------------------------------<br>
+{foreach:elem.elements,grouped_elem}<br>
+    &lt;flexy:include src=&quot;element.html&quot; /&gt;<br>
+{end:}<br>
+-----------------------------------------------------</p>
+<p>But &lt;flexy:variableOverride&gt; allows you to do this:<br>
+-----------------------------------------------------<br>
+{foreach:elem.elements,grouped_elem}<br>
+    &lt;flexy:include src=&quot;element.html&quot;&gt;<br>
+        &lt;flexy:variableOverride name=&quot;grouped_elem&quot; newName=&quot;elem&quot; /&gt;<br>
+    &lt;/flexy:include&gt;<br>
+{end:}<br>
+-----------------------------------------------------</p>
+<p>... which allows the recursive call to handle the elements from the element group.</p>
+<p>I added some comments to the function includeToString in the patch I sent to you by email, so I will not reproduce them here. The PHP code that needs to be added to function includeToString in Compiler/Flexy/Flexy.php is reproduced in this bug report.</p>
+<p>Thanks,</p>
+<p>-Ross</p>
+<p>Reproduce code:<br>
+---------------<br>
+in Compiler/Flexy/Flexy.php, around line 125, add this:<br>
+-----------------------------------------------------<br>
+$variableOverrides = &#039;&#039;;<br>
+foreach($element-&gt;children as $child) {<br>
+    if($child-&gt;tag == &#039;FLEXY:VARIABLEOVERRIDE&#039;) {<br>
+        $current_name = $child-&gt;getAttribute(&#039;NAME&#039;);<br>
+        $new_name = $child-&gt;getAttribute(&#039;NEWNAME&#039;);<br>
+        if(!$current_name || !$new_name) {<br>
+            return $this-&gt;compiler-&gt;appendHTML(&quot;&lt;B&gt;Flexy:variableOverride without a new=&quot;current-name&quot; and newName=&quot;new-name&quot;&lt;/B&gt;&quot;);<br>
+        }<br>
+        $variableOverrides .= &quot;\$_t-&gt;$new_name = \$$current_name;\n&quot;;<br>
+    }<br>
+}<br>
+-----------------------------------------------------</p>
+<p>Then adjust lines 143-145 to look like this:<br>
+-----------------------------------------------------<br>
+&quot;}\n&quot; .<br>
+$variableOverrides .<br>
+&quot;\$x-&gt;outputObject(\$_t, \$this-&gt;elements);\n&quot;<br>
+-----------------------------------------------------</p>
+<p>... note that this concatenates the $variableOverrides variable into the php code that gets stored into the template. The important point is that it happens after the assignments in lines 141-143.</p>
+<p>Expected result:<br>
+----------------<br>
+Without the patch, recursive calls to &lt;flexy:include&gt; can result in an infinite loop. With the patch and proper use of  &lt;flexy:variableOverride&gt; tag(s) inside the &lt;flexy:include&gt; tag, an infinite loop is not generated and useful behavior can be achieved.</p>
+</section>
+<section>
+<h3>[2005-05-22 20:41 UTC] rshaull at gmail dot com</h3>
+<p>I made an error in my initial report. If there is no clone function available, then the variable overrides will also apply in the calling template as well as in the child template. To solve this, I added a little code to track the variable overrides and restore the original values in the template after the child template is included.</p>
+<p>I am just going to paste the entire fixed includeToString method here. If anybody wants a proper patch file, just drop me an email.</p>
+<p>-Ross</p>
+<p>----------------------------------------</p>
+<p>/**<br>
+* include handler<br>
+* &lt;flexy:include src=&quot;test.html&quot;&gt;<br>
+*<br>
+* May include one or more child tags:<br>
+* &lt;flexy:variableOverride name=&quot;current-name&quot; newName=&quot;new-name&quot;&gt;<br>
+*<br>
+* Use the flexy:variableOverride tags to change the value of variables that<br>
+* are passed into the scope of the included template. This overrides the<br>
+* default behavior of passing all the variables in the current scope into<br>
+* the template scope with their same names. The name attribute contains the<br>
+* name of the variable in the current scope; attribute newName specifies the<br>
+* name you want to assign the variable to in the include template&#039;s scope.<br>
+* The new name can override the name of a variable that would otherwise be<br>
+* passed to the include template&#039;s scope from the current template&#039;s scope.<br>
+*<br>
+* flexy:variableOverride makes it possible to have templates that call<br>
+* themselves recursively.<br>
+*<br>
+* flexy:variableOverride added 19 May 2005 Ross Shaull (rshaull@gmail.com)<br>
+* <br>
+* @see parent::toString()<br>
+*/<br>
+function includeToString($element) <br>
+{<br>
+    //<br>
+    // Variable Overrides<br>
+    //<br>
+    // Ross Shaull<br>
+    // rshaull@gmail.com<br>
+    // Added 19 May 2005<br>
+    //<br>
+    // If &lt;Flexy:Include&gt; contains any &lt;flexy:variableOverride&gt; child<br>
+    // elements, interpret their name and newname attributes to set up a<br>
+    // variable override string.<br>
+    //<br>
+    // Track overridden values so that they can be replaced in the template.<br>
+    // This is critical because if there is no clone() function, the<br>
+    // overrides will be done in the current template. We restore the<br>
+    // overridden values after we are done with the include template.<br>
+    //</p>
+<p>$initVariableOverrideSystem = &quot;\$oldValues = array();\n&quot;;<br>
+    $variableOverrides = &#039;&#039;;<br>
+    $restoreOverriddenVariables = &#039;&#039;;</p>
+<p>foreach($element-&gt;children as $child) {<br>
+        if($child-&gt;tag == &#039;FLEXY:VARIABLEOVERRIDE&#039;) {<br>
+            $current_name = $child-&gt;getAttribute(&#039;NAME&#039;);<br>
+            $new_name = $child-&gt;getAttribute(&#039;NEWNAME&#039;);<br>
+            if(!$current_name || !$new_name) {<br>
+                return $this-&gt;compiler-&gt;appendHTML(&quot;&lt;B&gt;Flexy:variableOverride without a new=&quot;current-name&quot; and newName=&quot;new-name&quot;&lt;/B&gt;&quot;);<br>
+            }</p>
+<p>$variableOverrides .= &quot;\$oldValues[&#039;$new_name&#039;] = \$_t-&gt;$new_name;\n&quot; .<br>
+                                  &quot;\$_t-&gt;$new_name = \$$current_name;\n&quot;;</p>
+<p>$restoreOverriddenVariables .= &quot;\$_t-&gt;$new_name = \$oldValues[&#039;$new_name&#039;];\n&quot;;<br>
+        }<br>
+    }</p>
+<p>// this is disabled by default...<br>
+    // we ignore modifier pre/suffix</p>
+<p>$arg = $element-&gt;getAttribute(&#039;SRC&#039;);<br>
+    if (!$arg) {<br>
+        return $this-&gt;compiler-&gt;appendHTML(&quot;&lt;B&gt;Flexy:Include without a src=filename&lt;/B&gt;&quot;);<br>
+    }<br>
+    // ideally it would be nice to embed the results of one template into another.<br>
+    // however that would involve some complex test which would have to stat<br>
+    // the child templates anyway..<br>
+    // compile the child template....<br>
+    // output... include $this-&gt;options[&#039;compiled_templates&#039;] . $arg . $this-&gt;options[&#039;locale&#039;] . &#039;.php&#039;<br>
+    return $this-&gt;compiler-&gt;appendPHP( &quot;\n&quot;.<br>
+            &quot;\$x = new HTML_Template_Flexy(\$this-&gt;options);\n&quot;.<br>
+            &quot;\$x-&gt;compile(&#039;{$arg}&#039;);\n&quot;.<br>
+            &quot;\$_t = function_exists(&#039;clone&#039;) ? clone(\$t) : \$t;\n&quot;.<br>
+            &quot;foreach(get_defined_vars()  as \$k=&gt;\$v) {\n&quot; .<br>
+            &quot;    if (\$k != &#039;t&#039;) { \$_t-&gt;\$k = \$v; }\n&quot; .<br>
+            &quot;}\n&quot; .<br>
+            $initVariableOverrideSystem .<br>
+            $variableOverrides .<br>
+            &quot;\$x-&gt;outputObject(\$_t, \$this-&gt;elements);\n&quot; .<br>
+            $restoreOverriddenVariables<br>
+        );</p>
+<p>}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

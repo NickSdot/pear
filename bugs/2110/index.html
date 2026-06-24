@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2110</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_Download/index.html">HTTP_Download</a> &#187; Bug #2110</h1>
+<p>long delay until &quot;Save as...&quot; popup</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-08-11 05:51 UTC</td></tr>
+<tr><th>From</th><td>matthewh at meta-bit dot com</td></tr>
+<tr><th>Assigned</th><td>mike</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_Download/index.html">HTTP_Download</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-11 05:51 UTC] matthewh at meta-bit dot com</h3>
+<p>Description:<br>
+------------<br>
+We&#039;re currently writing a secure web download application with MVC-Phrame and PEAR::HTTP::Download.</p>
+<p>I&#039;ve written some working code that receives a download request POSTed to a Phrame Action, then initiates a HTTP::Download based response.</p>
+<p>This code works fine for various Mime-types [Mime Magic is used along with the HTTP Content Disposition etc], but for larger files - 16Mbytes - 50 Mbytes - the download fails.</p>
+<p>Tests within our development env. show that these large files are being loaded into the servers runtime/RAM memory heap prior to download.</p>
+<p>We&#039;ve selected the download as an &#039;Attachment&#039; setting within HTTP::Download.  Within the development environment we run PHP4.3.6 as an Apache SAPI module.  Similarly, the production CGI based enviroment exhibits similar problems.</p>
+<p>The production enviroment has the following PHP4 settings:<br>
+implicit_flush     Off	        Off<br>
+output_buffering   no value     no value<br>
+output_handler	   no value     no value</p>
+<p>Development has: flush on, buffering at 4096, no special handler.</p>
+<p>Should the download request be:<br>
+- processed as a HTTP GET (via a client side redirect), or<br>
+- processed within a HTTP POST but with a custom output buffer handler, or<br>
+- processed with a mockup multi-body-part HTTP header to force splitting of the download file into smaller chunks</p>
+<p>[We can&#039;t alter the php.ini&#039;s output_buffer setting in production]</p>
+<p>Any suggestions for a workaround ?</p>
+<p>Reproduce code:<br>
+---------------<br>
+Examination of the HTTP::Download::send() code shows it uses PHP output buffering wrapped about the HTTP body response:<br>
+-----PEAR::HTTP::Download excerpt start------------<br>
+function send()<br>
+    {<br>
+.....<br>
+ ob_start();<br>
+.....<br>
+   $this-&gt;sendChunks($chunks)) {<br>
+ ob_end_clean();<br>
+.....<br>
+   $this-&gt;sendHeaders();<br>
+    } <br>
+-----PEAR::HTTP::Download excerpt end--------------</p>
+<p>Expected result:<br>
+----------------<br>
+The POST HTTP response downloads the file without out-of-memory problems, &#039;streaming&#039; the file to the client.</p>
+<p>Actual result:<br>
+--------------<br>
+The following error is logged within the Web Server error log:<br>
+----error.log-start----<br>
+[Wed Aug 11 01:25:04 2004] [error] [client 203.23.236.66] Premature end of script headers: /u/httpd/cgi-bin/php4.cgi.<br>
+----error.log-end----</p>
+<p>Basically, the HTTP response is started, and then the connection is prematurely terminated [most likely due to an out of memory error].</p>
+</section>
+<section>
+<h3>[2004-08-12 04:44 UTC] matthewh at meta-bit dot com</h3>
+<p>Mike,<br>
+We&#039;ve incorporated the various patches as per your suggestion but in examining the system runtime heap, it&#039;s obvious that the whole of the data file in still being loaded into memory, even if the output buffering is turned off whilst transferring the HTTP body.</p>
+<p>Indeed, in attempting a download of, for instance, a 50Mbyte file, the system memory jumps 50Mbytes during the transfer.  Whilst this works okay on our development <br>
+platform, the production system still croaks.</p>
+<p>I suspect the following line is to blame:<br>
+......in sendChunk().....<br>
+            fseek($this-&gt;handle, $offset);<br>
+            echo fread($this-&gt;handle, $length); // read 50Mb into a string in RAM !!<br>
+....................................</p>
+<p>I&#039;d like to suggest adding a specific method for managing the download of a file through use of a file buffer.  I&#039;ve attached my attempt at this method and the patch within the existing HTTP_Download::sendChunk() method to utilise the new _sendFile() method:<br>
+---start--Modified HTTP_Download.php ------------------<br>
+// 16K transfer file buffer per connection<br>
+define( &#039;HTTP_DOWNLOAD_DEFAULT_FILE_BUFFER_SIZE&#039;, 16*1024 );<br>
+.....</p>
+<p>function sendChunk($chunk, $cType = null, $bound = null)<br>
+    {<br>
+...<br>
+ if (!$this-&gt;handle) {<br>
+                $this-&gt;handle = fopen($this-&gt;file, &#039;rb&#039;);<br>
+                // btw - where is the fclose() ?<br>
+            }<br>
+             // MiH added...<br>
+            $this-&gt;_sendFile( $this-&gt;handle, $offset, $length );<br>
+        }<br>
+        return true;<br>
+    } // sendChunk()<br>
+-----------------------------------------<br>
+    /**<br>
+     * Send a file (or portion thereof) to the browser.<br>
+     *<br>
+     * Doesn&#039;t send raw &#039;data&#039; resources - just handles file scenario.<br>
+     *<br>
+     * Uses a file buffer (by default, of size HTTP_DOWNLOAD_FILE_BUFFER_SIZE)<br>
+     * for transfers so that large files don&#039;t waste server resources.<br>
+     *<br>
+     * Avoids out of memory errors for large (50Mbyte) sized transfers.<br>
+     *<br>
+     * Also checks the connection status to see if the client has cancelled the<br>
+     * connection and aborts the transfer if so.<br>
+     *<br>
+     * @param    int aHandle              a filestream handle (eg, from fopen)<br>
+     * @param    int aStartOffset         byte offset within the file to start reading from (0 = start)<br>
+     * @param    int aTotalBytes          number of bytes to transfer<br>
+     * @param    int aBufferSize          (optional)<br>
+     * @return   bool                     true on success - all bytes transferred |<br>
+     *                                    false on error - client aborted connection,<br>
+     *                                    file i/o error etc.<br>
+     * @access   private<br>
+     **/<br>
+    function _sendFile( $aHandle, $aStartOffset, $aTotalBytes,<br>
+             $aBufferSize = HTTP_DOWNLOAD_DEFAULT_FILE_BUFFER_SIZE )<br>
+    {<br>
+        $retVal = false;<br>
+        $bytesSent = 0;<br>
+        $bytesRemaining = $aTotalBytes;</p>
+<p>fseek( $aHandle, $aStartOffset );</p>
+<p>while(!feof($aHandle) &amp;&amp;<br>
+              ($bytesRemaining &gt;0) &amp;&amp;<br>
+              (connection_status()==0))<br>
+        {<br>
+            if ($bytesRemaining &lt; $aBufferSize)<br>
+               $transferSize = $bytesRemaining;<br>
+            else<br>
+               $transferSize = $aBufferSize;</p>
+<p>echo fread($aHandle, $transferSize );<br>
+            flush();</p>
+<p>$bytesSent += $transferSize;<br>
+            $bytesRemaining = $aTotalBytes - $bytesSent;<br>
+        }</p>
+<p>if ($bytesSent &gt;= $aTotalBytes)<br>
+           $retVal = true;</p>
+<p>return $retVal;<br>
+   }  // _sendFile()<br>
+---------------end suggested updates--------------------<br>
+The code is based on some of the suggestions within the<br>
+discussion section of the online manual for fread() at http://www.php.net.</p>
+<p>Preliminary testing shows there is hardly any memory heap fluctuation in XP for large transfers.  Could you vett this code and consider its inclusion ?</p>
+<p>Rgds,<br>
+MiH</p>
+</section>
+<section>
+<h3>[2004-08-26 06:50 UTC] matthewh at meta-bit dot com</h3>
+<p>[Apologies for the delay in further feedback, re: your HTTP_Download [v1.42] patch on CVS.</p>
+<p>It seems that there are indeed still some problems with the Download module.  Whilst we can now get downloads to complete with the new patch, there is a delay to the initial response of the server, that varies depending upon the size of the file being transmitted:<br>
+File Size:    Delay until [Save As] appears:<br>
+4.9Mb         8 seconds<br>
+8Mb           31 seconds<br>
+16Mb          122 seconds<br>
+65Mb          Did not respond - Internal Error<br>
+-------------------<br>
+Indeed, examination with a packet sniffer shows, for the smallest of the above files, no data is received by the browser for 6-8 seconds.</p>
+<p>I inserted some PEAR logging within HTTP_Download v1.42:<br>
+===========<br>
+=<br>
+= PEAR::HTTP Download operations start.<br>
+=<br>
+===========<br>
+Aug 26 02:17:38 HTTP_Download [notice] send(): Chunks list init-ed:array (<br>
+  0 =&gt; <br>
+  array (<br>
+    0 =&gt; 0,<br>
+    1 =&gt; 4970417,<br>
+  ),<br>
+)<br>
+Aug 26 02:17:38 HTTP_Download [notice] setChunks(): sending as a single chunk..<br>
+Aug 26 02:17:38 HTTP_Download [notice] sendHeaders(): About to send HTTP Headers:array (<br>
+  &#039;Content-Type&#039; =&gt; &#039;application/x-octetstream&#039;,<br>
+  &#039;Accept-Ranges&#039; =&gt; &#039;bytes&#039;,<br>
+  &#039;Connection&#039; =&gt; &#039;close&#039;,<br>
+  &#039;X-Sent-By&#039; =&gt; &#039;PEAR::HTTP::Download&#039;,<br>
+  &#039;Content-Disposition&#039; =&gt; &#039;attachment; filename=&quot;large-archive.zip&quot;&#039;,<br>
+  &#039;Content-Length&#039; =&gt; 4970417,<br>
+)<br>
+Aug 26 02:17:38 HTTP_Download [notice] sendHeaders(): HTTP headers sent to output buffer<br>
+Aug 26 02:17:38 HTTP_Download [notice] sendChunk(): sent 1st block ok.  Bytes sent so far:2097152<br>
+Aug 26 02:17:39 HTTP_Download [notice] sendChunk(): sent 2th block ok.  Bytes sent so far:4194304<br>
+Aug 26 02:17:40 HTTP_Download [notice] sendChunk(): sending last block.<br>
+Aug 26 02:17:40 HTTP_Download [notice] sendChunk(): sent whole chunk ok.<br>
+Aug 26 02:17:40 HTTP_Download [notice] send(): sent ok. About to close output buffer. Time now:1093501060<br>
+Aug 26 02:17:40 HTTP_Download [notice] send(): Output buffer closed. Time now:1093501060 Done.<br>
+Aug 26 02:17:40 Action [info] DownloadContentDataAction:execute(): Transferred file large-archive.zip contentDataID:2 to user:guest ok<br>
+Aug 26 02:17:40 Action [debug] DownloadContentDataAction:DownloadContentDataAction, forwarding to:false<br>
+===================================<br>
+The above server-side log shows that although the transfer is complete almost immediately by the server [within 2 seconds or so], the actual response isn&#039;t received until a further 6 seconds.</p>
+<p>I don&#039;t think this is network latency, as the delay increases significantly for larger files - hinting at a buffering problem.</p>
+<p>Our relevant deployment PHP.ini settings are:<br>
+ignore_user_abort	Off	        Off<br>
+implicit_flush	        Off	        Off<br>
+output_buffering	no value	no value<br>
+output_handler	        no value	no value<br>
+max_execution_time	30	        30<br>
+max_input_time 	        -1	       -1</p>
+<p>Rgds,<br>
+Matthew</p>
+</section>
+<section>
+<h3>[2004-08-26 07:14 UTC] matthewh at meta-bit dot com</h3>
+<p>Mike,</p>
+<p>After further testing, it seems indeed there was an output buffering problem within the v1.42 patch of HTTP_Download.php.</p>
+<p>I initially tried using ob_flush() within the sendChunk() loop  to force the output of the body data.  This made no difference, as it was the header that was being delayed in its transmission to the client.</p>
+<p>[Reception of the HTTP header is responsible for triggering the Save-as... File dialog].</p>
+<p>I subsequently placed a ob_end_flush() call after the setHeaders() call within sendChunk().  This forces the headers to be sent to the client, and [apparently] turns off  output buffering whilst the body data is sent.</p>
+<p>This code is based on the example at the end of the PHP manual entry for ob_implicit_flush():<br>
+http://au.php.net/manual/en/function.ob-implicit-flush.php</p>
+<p>Being a PHP neophyte, you may want to check the logic within my solution, namely:<br>
+- should a loop of ob_end_flush() invocations be used to clear any output buffers enclosing the sendChunk() main loop, a la:<br>
+http://au.php.net/manual/en/function.ob-end-flush.php</p>
+<p>- should the ob_end_flush() call actually be at the end of HTTP_Download::sendHeaders() method ?</p>
+<p>- I&#039;ve currently placed an error suppressing &#039;@&#039; character in front of the ob_flush() call within sendChunk().  I believe there is a performance drain associated with doing this, and I&#039;m not even sure its needed.</p>
+<p>- At present I&#039;ve added a sleep(1) within the sendChunk() loop - mainly for debugging purposes so you can see the flow of packets coming through on a development box.  This has the side effect of limiting the download bandwidth to a maximum of a single 2Mbyte data buffer per second [ie, 2MBytes per sec] transfer rate.  This has the nice side effect that people could easily throttle/limit the download rate by altering the buffersize, via your HTTP_Download::setBufferSize() method.<br>
+// Limit download rate to: 512 kbits per second for a single connection<br>
+eg: HTTP_Download::setBufferSize( 512 * 1024 / 8 ); <br>
+....send()</p>
+<p>Some other interesting notes:<br>
+- IE6 apparently has several problems in receiving downloads over SSL connections if cache headers are turned on.<br>
+[See discussion PHP&#039;s fpassthru() manual page: <br>
+http://au.php.net/manual/en/function.fpassthru.php ]</p>
+<p>- Mozilla Firefox v0.93+ downloads the file in a background thread whilst waiting for the user to enter the filename within the Save as... File Dialog box.   Poor old dumb IE6SP1 stops listening on the socket until you actually select a filename, and confirm overwrites etc.</p>
+<p>Matt<br>
+Sydney, Australia.<br>
+[Mike - I&#039;ll e-mail you my patches directly for evaluation.  Thanks for your help with all this]</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2458</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_Parser/index.html">XML_Parser</a> &#187; Bug #2458</h1>
+<p>Put allow_url_fopen back in original state when opening from URL</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #2458</th><td>Put allow_url_fopen back in original state when opening from URL</td></tr>
+<tr><th>Submitted</th><td>2004-10-05 09:42 UTC</td></tr>
+<tr><th>From</th><td>leond at summitmedia dot co dot uk</td></tr>
+<tr><th>Assigned</th><td>schst</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_Parser/index.html">XML_Parser</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>All</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-05 09:42 UTC] leond at summitmedia dot co dot uk</h3>
+<p>Description:<br>
+------------<br>
+Was looking through XML/Parser.php and noticed that it set<br>
+allow_url_fopen on but didn&#039;t reset it afterwards, possibly allowing anything after the inclusion of Parser.php to use fopen wrappers even if php.ini had them turned off. This patch gets the state of allow_url_fopen and restores it after the call to fopen(). Diff below based on XML_Parser-1.2.1</p>
+<p>Reproduce code:<br>
+---------------<br>
+380c380,383<br>
+&lt;                 ini_set(&#039;allow_url_fopen&#039;, 1);<br>
+---<br>
+&gt;                  $allow_fopen = (ini_get(&#039;allow_url_fopen&#039;) == &#039;1&#039;);<br>
+&gt;                  if (!$allow_fopen) {<br>
+&gt;                      ini_set(&#039;allow_url_fopen&#039;, 1);<br>
+&gt;                  }<br>
+386a390,392<br>
+&gt;         if (!$allow_fopen) {<br>
+&gt;             ini_set(&#039;allow_url_fopen&#039;, 0);<br>
+&gt;         }</p>
+<p>Expected result:<br>
+----------------<br>
+This should pick up the state of allow_url_fopen; if it is disabled, it will be temporarily enabled to allow the fopen call to work, and then turned back off so that the rest of the script executes with fopen() disabled</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

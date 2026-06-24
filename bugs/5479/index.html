@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5479</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_Table/index.html">DB_Table</a> &#187; Bug #5479</h1>
+<p>Deeper abstraction of DB_Table</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5479</th><td>Deeper abstraction of DB_Table</td></tr>
+<tr><th>Submitted</th><td>2005-09-21 23:56 UTC</td></tr>
+<tr><th>From</th><td>bhill at sims dot berkeley dot edu</td></tr>
+<tr><th>Assigned</th><td>morse</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_Table/index.html">DB_Table</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.5</td></tr>
+<tr><th>OS</th><td>WinXP/xampp</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-09-21 23:56 UTC] bhill at sims dot berkeley dot edu</h3>
+<p>Description:<br>
+------------<br>
+An extension of DB_Table that is an even greater abstraction:</p>
+<p>All the user does is write an XML file (based on a defined DTD) that completely describes a schema.  The DB_Table package uses the XML file to create, populate, etc the database and QuickForms.  Any additional customizations can be done the same way they are done now, but I think that this would eliminate the majority of busywork when using DB_Table, remain completely database agnostic, and not require code editing.</p>
+<p>Example (notice &quot;ref&quot; elements that are a one-to-many link) in test script.</p>
+<p>I think that DB_Table is very close to this (at least, the closest I&#039;ve found!)</p>
+<p>Test script:<br>
+---------------<br>
+db.xml</p>
+<p>&lt;db prefix=&quot;wmap&quot;&gt;<br>
+    &lt;table name=&quot;content&quot; description=&quot;sighting of an item at a location/time&quot;&gt;<br>
+        &lt;ref name=&quot;location&quot; display=&quot;name&quot; /&gt;<br>
+        &lt;ref name=&quot;item&quot; display=&quot;name&quot; /&gt;<br>
+        &lt;col name=&quot;html&quot; type=&quot;varchar&quot; length=&quot;255&quot; description=&quot;content&quot; /&gt;<br>
+        &lt;col name=&quot;date&quot; type=&quot;datetime&quot; /&gt;<br>
+        &lt;col name=&quot;author&quot; type=&quot;varchar&quot; length=&quot;255&quot; /&gt;<br>
+    &lt;/table&gt;<br>
+    &lt;table name=&quot;item&quot; description=&quot;mappable thing&quot;&gt;<br>
+        &lt;col name=&quot;name&quot; type=&quot;varchar&quot; length=&quot;255&quot; description=&quot;name of mappable thing&quot; /&gt;<br>
+    &lt;/table&gt;<br>
+    &lt;table name=&quot;location&quot; description=&quot;location of a mappable thing&quot;&gt;<br>
+        &lt;col name=&quot;name&quot; type=&quot;varchar&quot; length=&quot;255&quot; description=&quot;location and address&quot; /&gt;<br>
+        &lt;col name=&quot;lat&quot; type=&quot;real&quot; length=&quot;30&quot; visibility=&quot;false&quot; /&gt;<br>
+        &lt;col name=&quot;lng&quot; type=&quot;real&quot; length=&quot;30&quot; visibility=&quot;false&quot; /&gt;<br>
+    &lt;/table&gt;<br>
+&lt;/db&gt;</p>
+<p>test.php</p>
+<p>// connect using uri, verifies all tables once per session, default to safe creation of tables.<br>
+DB_Table_Rails::connect($dsn, &quot;db.xml&quot;);</p>
+<p>// Create and use<br>
+$content =&amp; DB_Table_Rails::getTable(&#039;content&#039;);<br>
+$content-&gt;displayInsert();</p>
+</section>
+<section>
+<h3>[2005-09-24 22:00 UTC] bhill at sims dot berkeley dot edu</h3>
+<p>&quot;ref&quot; elements - a foreign key to the other table.</p>
+<p>Like if you have tables &quot;book&quot;, &quot;user&quot;<br>
+you could have</p>
+<p>&lt;table name(type id)=&quot;book&quot;&gt;<br>
+ &lt;ref table(type idref)=&quot;user&quot; name=&quot;author&quot; displaycol=&quot;name_first&quot;/&gt;<br>
+ &lt;ref table(type idref)=&quot;user&quot; name=&quot;owner&quot; displaycol=&quot;name_first&quot;/&gt;<br>
+ &lt;col name=&quot;title&quot; ...</p>
+<p>Which would create foreign keys automagically. (Which would then create drop-downs in the QuickForm just as automagically?  I think that would be the bigest win.)</p>
+<p>I agree that DB_Table is per-table, but allowing the flexibility of defining multiple tables in a db.xml file allows you to define an entire program&#039;s schema (and prefix) in one file, and provides referential integritity in the XML file&#039;s IDREF tags.  You could always choose to define just one table in an XML file.</p>
+<p>&gt; And, I would not add a new class like DB_Table_Rails</p>
+<p>I agree.</p>
+<p>&gt; Is this what you like to get?<br>
+this is exactly what I was hoping for - a one-stop shop where you write a small XML file that defines an entire schema along with some display hints, and whammo, you have automagically generated cross-database compatible forms with foreign-key dropdowns, with no SQL writing.  And it seems that DB_table is just inches away!  (I had started writing a big chunk of code before discovering DB_Table and finding out it did everything I had, but better)</p>
+</section>
+<section>
+<h3>[2005-09-25 21:51 UTC] bhill at sims dot berkeley dot edu</h3>
+<p>&gt; As MySQL doesn&#039;t know foreign keys I would not add support for foreign keys into DB_Table at the moment.</p>
+<p>True, the database doesn&#039;t support referential integrity, but any system that has dropdowns is using a foreign key RDBMS design, yes?  It just is done in the software layer.</p>
+</section>
+<section>
+<h3>[2005-09-26 18:07 UTC] post at mark-wiesemann dot de</h3>
+<p>Paul, you are right, a new class like DB_Table_Join would be even better. I&#039;m currently unsure, how this class would be used in user&#039;s scripts, but I really like the idea.</p>
+<p>&quot;bhill&quot; and Paul, if you have further comments or ideas on this, please post it here. Otherwise, I will get back to both of you, when I find the time for it.</p>
+</section>
+<section>
+<h3>[2006-09-21 16:46 UTC] benjaminhill at gmail dot com</h3>
+<p>After watching the dabble-db demo at http://dabbledb.com/explore/7minutedemo/ I went and looked up this feature again.  Glad to hear it is moved to the new MDB2_Table feature request list!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

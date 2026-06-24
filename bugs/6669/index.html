@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6669</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Testing &#187; <a href="package/PHPUnit2/index.html">PHPUnit2</a> &#187; Bug #6669</h1>
+<p>Unintuitive behavior in ExceptionTestCase</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #6669</th><td>Unintuitive behavior in ExceptionTestCase</td></tr>
+<tr><th>Submitted</th><td>2006-02-02 14:04 UTC</td></tr>
+<tr><th>From</th><td>johan dot forsberg at ongame dot com</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PHPUnit2/index.html">PHPUnit2</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-02 14:04 UTC] johan dot forsberg at ongame dot com</h3>
+<p>Description:<br>
+------------<br>
+Extensions/ExceptionTestCase.php:</p>
+<p>The default expected exception is simply &quot;Exception&quot;. This leads to the test below passing when it should fail.</p>
+<p>Why? Because setExpectedException throws an exception, which is caught in runTest and matches the default expected exception &quot;Exception&quot;.</p>
+<p>Related RFE: Please allow setExpectedException(false) to stop expecting exceptions for a part of a test!</p>
+<p>Test script:<br>
+---------------<br>
+public function testSomething()<br>
+{<br>
+  $this-&gt;setExpectedException(&#039;MipselledException&#039;);<br>
+  return;<br>
+}<br>
+--<br>
+Suggested patch:<br>
+class PHPUnit2_Extensions_InvalidExceptionException extends Exception {}<br>
+public function setExpectedException($exceptionName) {<br>
+  ...<br>
+  throw new PHPUnit2_Extensions_InvalidExceptionException (&#039;Undefined exception &#039;.$exceptionName);</p>
+<p>}<br>
+protected function runTest() {<br>
+  ...<br>
+} catch (PHPUnit2_Extensions_InvalidExceptionException $e) {<br>
+  throw $e;<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+Test should fail.</p>
+<p>Actual result:<br>
+--------------<br>
+Test passes</p>
+</section>
+<section>
+<h3>[2006-02-02 15:12 UTC] sebastian at php dot net</h3>
+<p>Please test the patch below:</p>
+<p>Index: Extensions/ExceptionTestCase.php<br>
+===================================================================<br>
+RCS file: /repository/pear/PHPUnit2/Extensions/ExceptionTestCase.php,v<br>
+retrieving revision 1.22<br>
+diff -u -b -B -r1.22 ExceptionTestCase.php<br>
+--- Extensions/ExceptionTestCase.php	4 Jan 2006 07:04:51 -0000	1.22<br>
++++ Extensions/ExceptionTestCase.php	2 Feb 2006 15:11:22 -0000<br>
+@@ -74,10 +74,10 @@<br>
+     /**<br>
+      * The name of the expected Exception.<br>
+      *<br>
+-     * @var    string<br>
++     * @var    mixed<br>
+      * @access private<br>
+      */<br>
+-    private $expectedException = &#039;Exception&#039;;<br>
++    private $expectedException = NULL;<br>
+ <br>
+     /**<br>
+      * @return string<br>
+@@ -90,17 +90,15 @@<br>
+     }<br>
+ <br>
+     /**<br>
+-     * @param  string  $exceptionName<br>
++     * @param  mixed  $exceptionName<br>
+      * @throws InvalidArgumentException<br>
+      * @access public<br>
+      * @since  Method available since Release 2.2.0<br>
+      */<br>
+     public function setExpectedException($exceptionName)<br>
+     {<br>
+-        if (is_string($exceptionName) &amp;&amp; class_exists($exceptionName)) {<br>
++        if ((is_string($exceptionName) &amp;&amp; class_exists($exceptionName)) || $exceptionName === NULL) {<br>
+             $this-&gt;expectedException = $exceptionName;<br>
+-        } else {<br>
+-            throw new InvalidArgumentException;<br>
+         }<br>
+     }<br>
+ <br>
+@@ -109,6 +107,7 @@<br>
+      */<br>
+     protected function runTest()<br>
+     {<br>
++        if ($this-&gt;expectedException !== NULL) {<br>
+         try {<br>
+             parent::runTest();<br>
+         }<br>
+@@ -122,6 +121,9 @@<br>
+         }<br>
+ <br>
+         $this-&gt;fail(&#039;Expected exception &#039; . $this-&gt;expectedException);<br>
++        } else {<br>
++            parent::runTest();<br>
++        }<br>
+     }<br>
+ }</p>
+</section>
+<section>
+<h3>[2006-02-08 08:21 UTC] sebastian at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

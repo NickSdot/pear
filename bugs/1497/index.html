@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1497</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth_HTTP/index.html">Auth_HTTP</a> &#187; Bug #1497</h1>
+<p>custom Auth_Container data storage broken</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-25 19:06 UTC</td></tr>
+<tr><th>From</th><td>sine at donkeypunchmedia dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Auth_HTTP/index.html">Auth_HTTP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>Linux 2.2.20</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-25 19:06 UTC] sine at donkeypunchmedia dot com</h3>
+<p>Description:<br>
+------------<br>
+When $this-&gt;_auth_obj-&gt;setAuthData() is called from within a custom Auth_Container class by a parent Auth_HTTP class the authData is stored under the session variable &#039;_authsession&#039; during authentication. After authentication the internal session variable is moved to &#039;_authttp&#039;.md5(realm) but the previously stored session data is not copied to the new session variable.</p>
+<p>Reproduce code:<br>
+---------------<br>
+http://www.theduckets.com/auth_http_container_bug.tar.gz</p>
+<p>Expected result:<br>
+----------------<br>
+test1 and test2 were inserted into authData during authentication.<br>
+they are no longer accessible.<br>
+test1 = test data1<br>
+test2 = test data2<br>
+Adding test3 and test2 to the authData.<br>
+Test3 and test4 are still accessible.<br>
+test3 = test data3<br>
+test4 = test data4</p>
+<p>Actual result:<br>
+--------------<br>
+test1 and test2 were inserted into authData during authentication.<br>
+they are no longer accessible.<br>
+test1 =<br>
+test2 =<br>
+Adding test3 and test2 to the authData.<br>
+Test3 and test4 are still accessible.<br>
+test3 = test data3<br>
+test4 = test data4</p>
+</section>
+<section>
+<h3>[2004-05-25 20:03 UTC] sine at donkeypunchmedia dot com</h3>
+<p>You can workaround this by by inserting the follow line in Auth/HTTP.php at line 183</p>
+<p>182:$this-&gt;Auth($storageDriver, $options);<br>
+183:$this-&gt;storage-&gt;_auth_obj-&gt;_sessionName =&amp; $this-&gt;_sessionName;<br>
+184:}</p>
+</section>
+<section>
+<h3>[2005-02-26 21:43 UTC] pear at sapphire dot no</h3>
+<p>This problem also affects scripts that uses DB as container. None of my PHP applications that uses AUTH_HTTP works anymore after updating from Auth_HTTP 2.0 to 2.1.4.<br>
+The data of the additional fields that I want returned from getAuthData is gone.<br>
+After testing different CVS versions betveen release 2.0 and 2.1.4, the last CVS version that this worked was 1.13.<br>
+In version 1.14, there was new code in assignData that changes the session name. Since DB uses $this-&gt;storage-&gt;_auth_obj-&gt;_sessionName to find the session name to store the data in, it looks like you have to do as the second comment describes: &quot;Set $this-&gt;storage-&gt;_auth_obj-&gt;_sessionName&quot; too.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

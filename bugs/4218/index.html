@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4218</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/Translation2/index.html">Translation2</a> &#187; Bug #4218</h1>
+<p>Admin Container removeLang bug</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-04-25 04:23 UTC</td></tr>
+<tr><th>From</th><td>ivanchoo at singnet dot com dot sg</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Translation2/index.html">Translation2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Darwin OS X</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-25 04:23 UTC] ivanchoo at singnet dot com dot sg</h3>
+<p>Description:<br>
+------------<br>
+removeLang() in Translation2/Admin/Container/db.php <br>
+drops the entire table even though there is ONE language <br>
+column left.</p>
+<p>Reproduce code:<br>
+---------------<br>
+function removeLang($langID, $force) {<br>
+  ....<br>
+  if (count($langs) &gt; 1 &amp;&amp; !$force) {<br>
+    ..<br>
+  }<br>
+}</p>
+<p>change to</p>
+<p>function removeLang($langID, $force) {<br>
+  ....<br>
+  if (count($langs) &gt; 0 &amp;&amp; !$force) {<br>
+    ..<br>
+  }<br>
+}</p>
+</section>
+<section>
+<h3>[2005-04-25 13:12 UTC] ivanchoo at singnet dot com dot sg</h3>
+<p>Sorry, I&#039;m kinda new to all these. I checked the latest <br>
+Translation2 package and at cvs.php.net, the &quot;problem&quot; <br>
+is the same.</p>
+<p>My point is that removeLang() will drop the entire <br>
+$lang_table if there is lesser then 2 languages defined.</p>
+<p>--------------------<br>
+..<br>
+if (count($langs) &gt; 1 &amp; !$force) { <br>
+  [alter table statement];<br>
+  return [alter table result];</p>
+<p>}<br>
+[drop entire $lang_table here!];<br>
+--------------------</p>
+<p>It makes sense to alter the table when there&#039;s at least <br>
+one language left, instead of dropping the table.</p>
+<p>if (count($langs) &gt;= 1 &amp; !$force) {..<br>
+                   ^</p>
+<p>Anyway, I suggest not dropping the $lang_table at all, <br>
+as it may cause some error when we try to access the <br>
+$lang_table via other interface like DB_DataObject.</p>
+<p>Sorry if I&#039;m missing something here. Thanks for your <br>
+patience.</p>
+</section>
+<section>
+<h3>[2005-04-27 02:45 UTC] ivanchoo at singnet dot com dot sg</h3>
+<p>I am using a single table to hold all the string <br>
+data, and I would assume that the stringID &amp; pageID are <br>
+used as the keys in this table.</p>
+<p>In my case, i removed all but one language column and</p>
+<p>$langs = $this-&gt;_getLangsInTable($lang_table);</p>
+<p>returns the last language column.</p>
+<p>array {<br>
+  [0] = &#039;lang_ID_here&#039;;<br>
+}</p>
+<p>Therefore, in my case, the table shouldn&#039;t be dropped.</p>
+<p>I am using DB_DataObject_FormBuilder to dynamically <br>
+built a web form to access/modify/add the languages. All <br>
+actions are proxied through my DB_DataObject and passed <br>
+on to the Translations2_Admin interface. Hence it will <br>
+cause some problems when the table is dropped.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

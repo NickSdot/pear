@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6269</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #6269</h1>
+<p>System::which() returns silliness if passed null</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-12-16 19:58 UTC</td></tr>
+<tr><th>From</th><td>cconstantine at php dot net</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-12-16 19:58 UTC] cconstantine at php dot net</h3>
+<p>Description:<br>
+------------<br>
+System::which(null) returns the first element in the envvar <br>
+PATH. Would be wise to test the arg for is_string() and <br>
+nonempty, and return early if caller is violating the API.</p>
+<p>Diff for CV Id: System.php,v 1.51 2005/11/16 03:28:56 cellog <br>
+Exp</p>
+<p>--- System.php.orig     2005-12-16 14:55:38.000000000 -0500<br>
++++ System.php.new      2005-12-16 14:56:47.000000000 -0500<br>
+@@ -447,6 +447,11 @@<br>
+     */<br>
+     function which($program, $fallback = false)<br>
+     {<br>
++        // enforce API<br>
++        if (!is_string($program) || &#039;&#039; == $program) {<br>
++            return $fallback;<br>
++        }<br>
++<br>
+         // avaible since 4.3.0RC2<br>
+         if (defined(&#039;PATH_SEPARATOR&#039;)) {<br>
+             $path_delim = PATH_SEPARATOR;</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php</p>
+<p>require &#039;System.php&#039;;</p>
+<p>$result = System::which(null, false);</p>
+<p>if ( false === $result ) {<br>
+    print(&quot;got false&quot;);<br>
+} else {<br>
+    print $result;<br>
+}</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+$result should be false.</p>
+<p>Actual result:<br>
+--------------<br>
+prints &quot;/bin/&quot; (which is the first element in my PATH envvar.)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

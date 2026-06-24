@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1795</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #1795</h1>
+<p>DataObject method update() not working correctly</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-07-05 16:49 UTC</td></tr>
+<tr><th>From</th><td>haziz at ut dot ee</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>Suse 9.1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-05 16:49 UTC] haziz at ut dot ee</h3>
+<p>Description:<br>
+------------<br>
+The sql in update() is wrong when you want to update data like in your example in update().</p>
+<p>Reproduce code:<br>
+---------------<br>
+$joinTableObj = DB_DataObject::factory(&quot;mod_intranet_group_join_user&quot;);<br>
+$joinTableObj-&gt;groupId = 1;<br>
+$joinTableObj-&gt;whereAdd(&quot;groupId = 5&quot;);<br>
+$joinTableObj-&gt;update();</p>
+<p>Expected result:<br>
+----------------<br>
+UPDATE mod_intranet_group_join_user SET groupId = 1 WHERE groupId = 5</p>
+<p>Actual result:<br>
+--------------<br>
+UPDATE mod_intranet_group_join_user SET groupId = 1 WHERE groupId = 5 AND mod_intranet_group_join_user.groupId = 1</p>
+</section>
+<section>
+<h3>[2004-11-30 12:47 UTC] laura at unique-media dot com</h3>
+<p>Even if it is not the primary key, it still causes problems!</p>
+<p>I am trying to use an update clause similar to that documented here:</p>
+<p>http://pear.php.net/manual/en/package.database.db-dataobject.db-dataobject.update.php</p>
+<p>...in example 26.3 - the syntax for an update query with a whereAdd(). However, either there is a fault with the documentation or a bug within the class, as it does not work in this manner. The variable I am trying to update is not a primary key (in fact it&#039;s not even an index).</p>
+<p>$shw_req = new DataObjects_Shw_requirement;	<br>
+$shw_req-&gt;status = 1;	<br>
+$shw_req-&gt;whereAdd(&#039;show_id = 7&#039;);<br>
+$shw_req-&gt;whereAdd(&#039;requirement_id = 20&#039;);		<br>
+$shw_req-&gt;update();</p>
+<p>This code yields<br>
+dataobjects_shw_requirement: QUERY: UPDATE shw_requirement SET status = 1 WHERE show_id = 7 AND requirement_id = 20</p>
+<p>And not<br>
+dataobjects_shw_requirement: QUERY: UPDATE shw_requirement SET status = 1 WHERE show_id = 7 AND requirement_id = 20 AND shw_requirement.status = 1</p>
+<p>:(</p>
+</section>
+<section>
+<h3>[2004-11-30 12:49 UTC] laura at unique-media dot com</h3>
+<p>Whoops, on my previous comment it should read:</p>
+<p>This code yields<br>
+dataobjects_shw_requirement: QUERY: UPDATE shw_requirement SET status =<br>
+1 WHERE show_id = 7 AND requirement_id = 20 AND shw_requirement.status =<br>
+1</p>
+<p>And not<br>
+dataobjects_shw_requirement: QUERY: UPDATE shw_requirement SET status =<br>
+1 WHERE show_id = 7 AND requirement_id = 20</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XML_Parser Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_Parser/index.html">XML_Parser</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/XML_Parser/docs/index.html#package-xml-xml-parser-intro">Introduction</a>
+</li>
+<li><a href="package/XML_Parser/docs/index.html#package-xml-xml-parser-example">Example</a>
+</li>
+<li><a href="package/XML_Parser/docs/index.html#package-xml-xml-parser-modes">Modes</a>
+</li>
+<li><a href="package/XML_Parser/docs/index.html#package-xml-xml-parser-input">Choosing input</a>
+</li></ul>
+</nav>
+<p>Object-oriented abstraction for PHP&#039;s xml extension.</p>
+<section id="package-xml-xml-parser-intro">
+<h2>Introduction</h2>
+<h3>Introduction to XML_Parser</h3>
+
+   
+   <p>XML_Parser provides an object-oriented abstraction to
+    PHP&#039;s ext/xml. It helps you processing XML documents
+    by supplying methods that are needed when working with
+    XML documents, like automatic error handling, parsing
+    from a file, URL or string as well as an easy way to register
+    callbacks.</p>
+   <p>XML_Parser uses SAX-based parsing, which is a simple
+    API to retrieve information from XML documents. While
+    the parser reads the document, it will call methods for
+    the different nodes that are found. These nodes range from
+    opening and closing tags to character data and processing
+    instructions.</p>
+   <p>You will not be able to use XML_Parser directly to parse
+    your documents, but you have to create a new class that
+    extends XML_Parser and implement handlers for the tags
+    and all other elements you need to process.</p>
+   <p>Several of PEAR&#039;s XML packages use this approach and thus
+    rely on XML_Parser. If you would like to take a look at real-life
+    examples, just install XML_RDDL, XML_Beautifier, XML_Statistics
+    or XML_Serializer.</p>
+   <p>A tutorial that explains nearly every feature of XML_Parser is
+    available at <a href="http://www.schst.net/articles/XML_Parser">http://www.schst.net/articles/XML_Parser</a>.</p>
+</section>
+<section id="package-xml-xml-parser-example">
+<h2>Example</h2>
+<h3>Basic example</h3>
+
+   
+   <p>This example shows you how to create a very simple parser that
+      handles start, end elements (i.e. opening and closing tags), and
+      character data (the &quot;content&quot; between the tags).</p>
+   <pre><code>&lt;?php
+require_once &#039;XML/Parser.php&#039;;
+
+class myParser extends XML_Parser
+{
+  function myParser()
+  {
+    parent::XML_Parser();
+  }
+
+ /**
+  * handle start element
+  *
+  * @access private
+  * @param  resource  xml parser resource
+  * @param  string    name of the element
+  * @param  array     attributes
+  */
+  function startHandler($xp, $name, $attribs)
+  {
+    printf(&#039;handle start tag: %s&lt;br /&gt;&#039;, $name);
+  }
+
+ /**
+  * handle end element
+  *
+  * @access private
+  * @param  resource  xml parser resource
+  * @param  string    name of the element
+  */
+  function endHandler($xp, $name)
+  {
+    printf(&#039;handle end tag: %s&lt;br /&gt;&#039;, $name);
+  }
+
+ /**
+  * handle character data
+  *
+  * @access private
+  * @param  resource  xml parser resource
+  * @param  string    character data
+  */
+  function cdataHandler($xp, $cdata)
+  {
+    // does nothing here, but might e.g. print $cdata
+  }
+}
+
+$p = &amp;new myParser();
+
+$result = $p-&gt;setInputFile(&#039;xml_parser_file.xml&#039;);
+$result = $p-&gt;parse();
+?&gt;</code></pre>
+   <p>This parser will just output the names of the opening and closing
+    tags that are found while parsing the document.</p>
+</section>
+<section id="package-xml-xml-parser-modes">
+<h2>Modes</h2>
+<h3>Parser modes of XML_Parser</h3>
+
+   
+   <p>XML_Parser provides two modes for parsing:</p><ul>
+        <li>
+            func
+        </li>
+        <li>
+            event
+        </li>
+    </ul>
+   
+   <p>In the &#039;event&#039; mode, XML_Parser will always call the methods
+    <strong>startHandler()</strong> and <strong>endHandler()</strong>,
+    independent of the tag name. In these methods you&#039;ll have to check
+    for the tagname, which is passed as the second parameter and decide
+    what you need to do. In most cases, this is done with a switch/case
+    statement.</p>
+   <p>In the &#039;func&#039; mode, XML_Parser will call different methods
+    based on the name of the tag. This allows you to dispatch different
+    tags to different methods. The methods to handle the start tag have
+    to be called <strong>xmltag_[tagname]()</strong>, where [tagname]
+    has to be substituted by the name of the element that you
+    wish to process. That means if you wish to write a method to process all opening
+    &lt;title&gt; tags, it has to be called xmltag_title.</p>
+   <p>Methods to handle closing tags have to be named
+    <strong>xmltag_[tagname]_()</strong> (distinguishes from the start
+    element handler using a traling underscore).</p>
+   <p>As XML tags may contain chars like &quot;.&quot;, &quot;:&quot; and &quot;-&quot; and
+    those chars are not allowed in PHP function names, XML_Parser will replace them with &quot;_&quot;
+    when building the name of the callback function.</p>
+   <p>If a method does not exist, XML_Parser will skip the tag without
+    handling the element, unless you implemented the methods
+    <strong>xmltag()</strong> and <strong>xmltag_()</strong>, which will
+    be used as fallback methods.</p>
+  
+
+  <h3>Setting the mode</h3>
+
+   
+   <p>There are two ways of setting the mode:</p><ul>
+        <li>
+            
+              Specifying the mode in the constructor as the second parameter.
+            
+            
+              In the subclass of XML_Parser that you implemented to process the XML
+              documents, you will have to call <strong>XML_Parser::XML_Parser()</strong>
+              in the constructor. This method accepts the mode as its second parameter.
+            
+        </li>
+        <li>
+            Setting the mode using <strong>XML_Parser::setMode()</strong>.
+        </li>
+    </ul>
+</section>
+<section id="package-xml-xml-parser-input">
+<h2>Choosing input</h2>
+<h3>Selecting the input for XML_Parser</h3>
+
+   
+   <p>XML_Parser is able to parse from several inputs:</p><ul>
+        <li>
+            filesystem or anything that can be accessed via stream
+        </li>
+        <li>
+            strings
+        </li>
+        <li>
+            resources
+        </li>
+    </ul>
+   
+   <p>You will have to set the input using <strong>setInputFile()</strong>,
+    <strong>setInputString()</strong> or <strong>setInput()</strong>
+    and then call <strong>parse()</strong> to start the XML processing.</p>
+  
+
+  <h3>Parsing from a file</h3>
+
+   
+   <p>To parse from a file or URL, you&#039;ll have to set the name or URI using
+    <strong>XML_Parser::setInputFile()</strong>. You may not only use 
+    files located on the filesystem, but any location that can be opened using
+    <strong>fopen()</strong>. You may combine this functionality with
+    the <a href="http://www.php.net/manual/en/ref.stream.php">stream functions</a>
+    or PEAR&#039;s Streams packages
+    to parse documents from shared memory, databases or anything else.</p>
+   <p>You may also use any of PHP&#039;s <a href="http://www.php.net/manual/en/wrappers.php">built-in</a>
+    wrappers to open HTTP or FTP locations as well as STDIN.</p>
+  
+
+  <h3>Parsing from a string</h3>
+
+   
+   <p>To parse an XML string, pass the string to XML_Parser (or your
+    subclass of XML_Parser) using <strong>XML_Parser::setInputString()</strong>.
+    A big advantage of SAX-based parsing is that the parser does not have to read the
+    whole XML document to process it. If you are parsing very large documents, you should
+    aboid <strong>setInputString()</strong> and use <strong>setInput()</strong>
+    or <strong>setInputFile()</strong> instead.</p>
+  
+
+  <h3>Parsing from any resource</h3>
+
+   
+   <p>There&#039;s a third, but seldomly used way to specify XML_Parser&#039;s input. XML_Parser
+    allows you to pass a PHP resource, like a file pointer that has been returned by
+    <strong>fopen()</strong>. This can be useful, if you are generating the document
+    on-the-fly and already opened it before. Instead of closing the file and passing its
+    name to XML_Parser, you may simply use <strong>XML_Parser::setInput()</strong> to
+    pass the resource. Make sure that the file pointer is at the correct location in your
+    file using <strong>fseek()</strong>.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

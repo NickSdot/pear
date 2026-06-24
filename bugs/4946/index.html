@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4946</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/Pager/index.html">Pager</a> &#187; Bug #4946</h1>
+<p>Allow for different url separator</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4946</th><td>Allow for different url separator</td></tr>
+<tr><th>Submitted</th><td>2005-07-29 14:19 UTC</td></tr>
+<tr><th>From</th><td>reywob at php dot net</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Pager/index.html">Pager</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>-</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-07-29 14:19 UTC] reywob at php dot net</h3>
+<p>Description:<br>
+------------<br>
+When using a custom URL setup for use with mod_rewrite (eg:<br>
+$params = array(<br>
+    &#039;append&#039;    =&gt; false,<br>
+    &#039;urlVar&#039;    =&gt; &#039;num&#039;,<br>
+    &#039;path&#039;      =&gt; &#039;/cat/&#039; . $cat_id,<br>
+    &#039;fileName&#039;  =&gt; &#039;-%d&#039;,  //Pager replaces &quot;%d&quot; with page number...<br>
+);<br>
+)</p>
+<p>Pager assumes that you want a / added between the params &#039;path&#039; and &#039;fileName&#039;.</p>
+<p>From the above, I want to produce URLs such as:<br>
+/cat/foo/22-2, /cat/foo/22-3 etc.</p>
+<p>Instead it produces:<br>
+/cat/foo/22/-2, /cat/foo/22/-3</p>
+<p>An extra parameter, urlSeparator, solves this problem, and the following patch provides this.  I have tested it on PHP 4.3.10</p>
+<p>Test script:<br>
+---------------<br>
+*** C:\Temp\Tortoise3464.rev.1.38-Common.php	Mon Jul 04 09:18:42 2005<br>
+--- C:\code\pear\Pager\Common.php	Fri Jul 29 15:13:36 2005<br>
+***************<br>
+*** 1285,1290 ****<br>
+--- 1285,1291 ----<br>
+              &#039;extraVars&#039;,<br>
+              &#039;excludeVars&#039;,<br>
+              &#039;currentPage&#039;,<br>
++             &#039;urlSeparator&#039;,<br>
+          );<br>
+          <br>
+          foreach ($options as $key =&gt; $value) {<br>
+***************<br>
+*** 1292,1297 ****<br>
+--- 1293,1303 ----<br>
+                  $this-&gt;{&#039;_&#039; . $key} = $value;<br>
+              }<br>
+          }<br>
++         <br>
++         if (!isset($this-&gt;_urlSeparator)) {<br>
++         	print &#039;Seaparator not set&#039;;<br>
++         	$this-&gt;_urlSeparator = &#039;/&#039;;<br>
++         }<br>
+  <br>
+          //autodetect http method<br>
+          if (!isset($options[&#039;httpMethod&#039;])<br>
+***************<br>
+*** 1312,1318 ****<br>
+          } else {<br>
+              $this-&gt;_url = $this-&gt;_path;<br>
+              if (strncasecmp($this-&gt;_fileName, &#039;javascript&#039;, 10) != 0) {<br>
+!                 $this-&gt;_url .= &#039;/&#039;;<br>
+              }<br>
+              if (!strstr($this-&gt;_fileName, &#039;%d&#039;)) {<br>
+                  trigger_error($this-&gt;errorMessage(ERROR_PAGER_INVALID_USAGE), E_USER_WARNING);<br>
+--- 1318,1324 ----<br>
+          } else {<br>
+              $this-&gt;_url = $this-&gt;_path;<br>
+              if (strncasecmp($this-&gt;_fileName, &#039;javascript&#039;, 10) != 0) {<br>
+!                 $this-&gt;_url .= $this-&gt;_urlSeparator;<br>
+              }<br>
+              if (!strstr($this-&gt;_fileName, &#039;%d&#039;)) {<br>
+                  trigger_error($this-&gt;errorMessage(ERROR_PAGER_INVALID_USAGE), E_USER_WARNING);</p>
+</section>
+<section>
+<h3>[2005-07-29 14:47 UTC] reywob at php dot net</h3>
+<p>Doh :)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5525</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #5525</h1>
+<p>Namespace issues: MAIL_MIMEPART_CRLF</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-09-26 20:48 UTC</td></tr>
+<tr><th>From</th><td>jsirovic at gmail dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevent</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-09-26 20:48 UTC] jsirovic at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Using PEAR::SOAP with PEAR::Mail_mime results in a major issue if you want your mime encoded emails to be correctly formed.</p>
+<p>The problem is the fact that the class uses the constant MAIL_MIMEPART_CRLF to designate the proper line seperator.</p>
+<p>If you&#039;re using Unix, you want \n, not \r\n.</p>
+<p>Well, in PEAR::SOAP in /SOAP/Base.php<br>
+------------------------------------------<br>
+@include_once &#039;Mail/mimePart.php&#039;;<br>
+@include_once &#039;Mail/mimeDecode.php&#039;;<br>
+if (class_exists(&#039;Mail_mimePart&#039;)) {<br>
+    $GLOBALS[&#039;SOAP_options&#039;][&#039;Mime&#039;] = 1;<br>
+    define(&#039;MAIL_MIMEPART_CRLF&#039;, &quot;\r\n&quot;);<br>
+}<br>
+------------------------------------------</p>
+<p>it decides what you want.  So if you&#039;re using Unix, and what to send email somewhere where you&#039;re using SOAP, forget it.</p>
+<p>This is related, but the converse of</p>
+<p>&quot;Bug #466: &#039;MAIL_MIMEPART_CRLF&#039; is defined as only line break. It must be &#039;\r\n&#039;&quot;</p>
+<p>It&#039;s the same issue ..., just backwards.  At this point, though, it is difficult to fix, because constants are in a global namespace, and really, that&#039;s a bad idea for classes.  But I won&#039;t complain about free code :)</p>
+<p>Test script:<br>
+---------------<br>
+require_once &quot;SOAP/Client.php&quot;;<br>
+require_once &quot;Mail/mimePart.php&quot;;</p>
+<p>$x = new Mail_mime(&quot;\n&quot;);<br>
+$y = new Mail_mimePart();</p>
+<p>echo MAIL_MIMEPART_CRLF;</p>
+<p>Expected result:<br>
+----------------<br>
+This should not create a dependency.  I&#039;d argue PHP constants are a bad idea here.</p>
+<p>Not knowing the code, I&#039;d expect \n, but we get \r\n.  Even worse, it only affects the mime parts constant MAIL_MIMEPART_CRLF, not MAIL_MIME_CRLF, so you pull your hair out wondering why you only get a \r in one spot in the header.</p>
+<p>Actual result:<br>
+--------------<br>
+\r\n</p>
+</section>
+<section>
+<h3>[2005-09-26 20:53 UTC] jsirovic at gmail dot com</h3>
+<p>What I said is incorrect, it&#039;s not really related in the way I said to bug 466, but quite obviously, if you use Mail_mime and SOAP, the order of declaration will cause one or the other to not be in spec ...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

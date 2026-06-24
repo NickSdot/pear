@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5905</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #5905</h1>
+<p>LiveUser::singleton() doesn&#039;t return object</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-09 16:06 UTC</td></tr>
+<tr><th>From</th><td>c dot weyland at gmx dot de</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-09 16:06 UTC] c dot weyland at gmx dot de</h3>
+<p>Description:<br>
+------------<br>
+example5 even doesn&#039;t work with the latest CVS Version (LiveUser.php,v 1.120 2005/11/08) because</p>
+<p>- uniqid is called without mandatory parameter<br>
+- no instance is returned at all</p>
+<p>changing the code to the folliwing worked for me (not intensively tested!):</p>
+<p>function &amp;singleton(&amp;$conf, $signature = null)<br>
+{<br>
+    static $instances;<br>
+    if (!isset($instances)) {<br>
+        $instances = array();<br>
+    }</p>
+<p>if (is_null($signature)) {<br>
+        if (empty($instances)) {<br>
+            $signature = uniqid(rand());<br>
+        } else {<br>
+            $signature = key($instances);<br>
+        }<br>
+        <br>
+    }<br>
+    <br>
+    if (!array_key_exists($signature, $instances)) {<br>
+        $instances[$signature] =&amp; LiveUser::factory($conf);<br>
+    }</p>
+<p>return $instances[$signature];<br>
+}</p>
+</section>
+<section>
+<h3>[2005-11-09 17:37 UTC] c dot weyland at gmx dot de</h3>
+<p>no, it is not a dupe because i am using the latest cvs version of LiveUser.php and thus using the code that was meant to fix the original bug.</p>
+<p>As you can see at [1] uniqid() is being called without any argument.</p>
+<p>[1] http://cvs.php.net/co.php/pear/LiveUser/LiveUser.php</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

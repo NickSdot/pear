@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7170</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #7170</h1>
+<p>length/scale support for numeric types</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #7170</th><td>length/scale support for numeric types</td></tr>
+<tr><th>Submitted</th><td>2006-03-21 10:27 UTC</td></tr>
+<tr><th>From</th><td>nolife at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-03-21 10:27 UTC] nolife at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+There are a few issues with numeric datatypes and the oci8 driver (did not check other drivers).<br>
+for once: when the integer datatype is used oracle (9r2) changes it into a number(38) which is probably more than expected and required.<br>
+when the boolean datatype is used the oci8.php driver also uses an INT type internal, which means we have 38 digits for a true/false datatype.</p>
+<p>a length parameter is not supported.</p>
+<p>The patch below can be used to implements a length parameter for INT,NUMBER and DECIMAL. it also changes the default of INT for boolean to a NUMBER(1)</p>
+<p>Test script:<br>
+---------------<br>
+Changes in:<br>
+/usr/share/php/MDB2/Driver/Datatype/oci8.php<br>
+-------------------------------------------------------<br>
+--- oci8_orig.php	2006-03-17 11:24:18.000000000 +0100<br>
++++ oci8.php	2006-03-17 11:43:38.000000000 +0100<br>
+@@ -123,9 +123,11 @@<br>
+         case &#039;blob&#039;:<br>
+             return &#039;BLOB&#039;;<br>
+         case &#039;integer&#039;:<br>
+-            return &#039;INT&#039;;<br>
++           $length = array_key_exists(&#039;length&#039;, $field)<br>
++                ? $field[&#039;length&#039;] : &quot;*&quot;;<br>
++            return &#039;NUMBER(&#039;.$length.&#039;)&#039;;<br>
+         case &#039;boolean&#039;:<br>
+-            return &#039;INT&#039;;<br>
++            return &#039;NUMBER(1)&#039;;<br>
+         case &#039;date&#039;:<br>
+         case &#039;time&#039;:<br>
+         case &#039;timestamp&#039;:<br>
+@@ -133,7 +135,9 @@<br>
+         case &#039;float&#039;:<br>
+             return &#039;NUMBER&#039;;<br>
+         case &#039;decimal&#039;:<br>
+-            return &#039;NUMBER(*,&#039;.$db-&gt;options[&#039;decimal_places&#039;].&#039;)&#039;;<br>
++            $length = array_key_exists(&#039;length&#039;, $field)<br>
++                ? $field[&#039;length&#039;] : &quot;*&quot;;<br>
++            return &#039;NUMBER(&#039;.$length.&#039;,&#039;.$db-&gt;options[&#039;decimal_places&#039;].&#039;)&#039;;<br>
+         }<br>
+     }<br>
+ <br>
+@@ -282,4 +286,4 @@<br>
+     }<br>
+ }<br>
+ <br>
+-?&gt;<br>
+\ Kein Zeilenumbruch am Dateiende.<br>
++?&gt;<br>
+-------------------------------------------------------</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

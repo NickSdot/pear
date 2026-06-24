@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6295</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_AJAX/index.html">HTML_AJAX</a> &#187; Bug #6295</h1>
+<p>$HTTP_RAW_POST_DATA not set</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-12-20 01:51 UTC</td></tr>
+<tr><th>From</th><td>me at thomaskeller dot biz</td></tr>
+<tr><th>Assigned</th><td>jeichorn</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_AJAX/index.html">HTML_AJAX</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Linux FC4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-12-20 01:51 UTC] me at thomaskeller dot biz</h3>
+<p>Description:<br>
+------------<br>
+$HTTP_RAW_POST_DATA wasn&#039;t set on my system for whatever reason (maybe because I set register_globals to off, there is   a php bug about that here [0]), thus instead of getting the JSON encoded result of my AJAX request, I got a &quot;undefined variable: $HTTP_RAW_POST_DATA&quot;.</p>
+<p>This can be fixed by altering line 462 of AJAX.php:</p>
+<p>- return $GLOBALS[&#039;HTTP_RAW_POST_DATA&#039;];<br>
++ return isset($GLOBALS[&#039;HTTP_RAW_POST_DATA&#039;]) ?<br>
++    $GLOBALS[&#039;HTTP_RAW_POST_DATA&#039;] :<br>
++    implode(&quot;\r\n&quot;, file(&#039;php://input&#039;));</p>
+<p>[0] http://bugs.php.net/bug.php?id=22338</p>
+</section>
+<section>
+<h3>[2005-12-20 01:52 UTC] me at thomaskeller dot biz</h3>
+<p>btw... I&#039;m using HTML_AJAX-0.3.3</p>
+</section>
+<section>
+<h3>[2005-12-20 02:14 UTC] jeichorn at php dot net</h3>
+<p>HTTP_RAW_POST_DATA should always be set if the mime type of the input is unknown.</p>
+<p>I&#039;m willing to put this patch in, but i would like to see if there is a header problem that is causing it, or just yet another BC issue with PHP 5.1</p>
+<p>Can you include the headers sent from the request, (Firefox Live HTTP Headers works good for that) and the value of $_POST  (should be empty but i&#039;d like to check).</p>
+<p>Also whats your apache version</p>
+</section>
+<section>
+<h3>[2005-12-20 03:33 UTC] me at thomaskeller dot biz</h3>
+<p>At first, sorry that I&#039;ve initially posted the wrong PHP version, I just did php -v on cmdline while totally forgetting about the fact that I have still 4.3.11 running on my webserver.</p>
+<p>The output of $_POST is always array().</p>
+<p>Here is the LiveHeaders snippet:</p>
+<p>http://localhost/v1/livebookmarks.php?c=mmmdi_ajax_livebookmarks&amp;m=setsaveindb</p>
+<p>POST /v1/livebookmarks.php?c=mmmdi_ajax_livebookmarks&amp;m=setsaveindb HTTP/1.1<br>
+Host: localhost<br>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; de; rv:1.8) Gecko/20051111 Firefox/1.5<br>
+Accept: text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5<br>
+Accept-Language: de,en;q=0.7,en-us;q=0.3<br>
+Accept-Encoding: gzip,deflate<br>
+Accept-Charset: UTF-8,*<br>
+Keep-Alive: 300<br>
+Connection: keep-alive<br>
+Content-Type: application/json; charset=UTF-8; charset=utf-8<br>
+Content-Length: 6<br>
+Cookie: userid=4; pass=bda916b341a47301b41001b28e0c5fab; ZDEDebuggerPresent=php,phtml,php3; PHPSESSID=5811fdf5690c5a1ec3d2b141106ee0f6<br>
+Pragma: no-cache<br>
+Cache-Control: no-cache<br>
+[true]<br>
+HTTP/1.x 200 OK<br>
+Date: Tue, 20 Dec 2005 03:22:51 GMT<br>
+Server: Apache/2.0.54 (Fedora)<br>
+X-Powered-By: PHP/4.3.11<br>
+Set-Cookie: ZDEDebuggerPresent=php,phtml,php3; path=/<br>
+Expires: Mon, 26 Jul 1997 05:00:00 GMT<br>
+Cache-Control: no-cache, must-revalidate<br>
+Pragma: no-cache<br>
+Content-Length: 6<br>
+Last-Modified: Tue, 20 Dec 2005 03:22:51GMT<br>
+Connection: close<br>
+Content-Type: application/json; charset=utf-8</p>
+</section>
+<section>
+<h3>[2005-12-20 03:43 UTC] jeichorn at php dot net</h3>
+<p>Thanks for the help on debugging the root cause</p>
+<p>Any chance you could run your test without the zend debugging enabled.</p>
+<p>And get the value of $_SERVER[&#039;Content-Type&#039;]</p>
+<p>We should have your patch in the next release, i just want to verify what is really happening</p>
+</section>
+<section>
+<h3>[2005-12-20 05:20 UTC] me at thomaskeller dot biz</h3>
+<p>The server vars do not contain an entry for content-type (in neither spelling):</p>
+<p>array(32) {<br>
+  [&quot;UNIQUE_ID&quot;]=&gt;<br>
+  string(24) &quot;yA7cz8CoAgoAADquEfwAAAAC&quot;<br>
+  [&quot;HTTP_HOST&quot;]=&gt;<br>
+  string(9) &quot;localhost&quot;<br>
+  [&quot;HTTP_USER_AGENT&quot;]=&gt;<br>
+  string(71) &quot;Mozilla/5.0 (X11; U; Linux i686; de; rv:1.8) Gecko/20051111 Firefox/1.5&quot;<br>
+  [&quot;HTTP_ACCEPT&quot;]=&gt;<br>
+  string(99) &quot;text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5&quot;<br>
+  [&quot;HTTP_ACCEPT_LANGUAGE&quot;]=&gt;<br>
+  string(23) &quot;de,en;q=0.7,en-us;q=0.3&quot;<br>
+  [&quot;HTTP_ACCEPT_ENCODING&quot;]=&gt;<br>
+  string(12) &quot;gzip,deflate&quot;<br>
+  [&quot;HTTP_ACCEPT_CHARSET&quot;]=&gt;<br>
+  string(7) &quot;UTF-8,*&quot;<br>
+  [&quot;HTTP_KEEP_ALIVE&quot;]=&gt;<br>
+  string(3) &quot;300&quot;<br>
+  [&quot;HTTP_CONNECTION&quot;]=&gt;<br>
+  string(10) &quot;keep-alive&quot;<br>
+  [&quot;HTTP_COOKIE&quot;]=&gt;<br>
+  string(77) &quot;ZDEDebuggerPresent=php,phtml,php3; PHPSESSID=bc9154451d5cf4349003c9d4505c0776&quot;<br>
+  [&quot;HTTP_CACHE_CONTROL&quot;]=&gt;<br>
+  string(9) &quot;max-age=0&quot;<br>
+  [&quot;PATH&quot;]=&gt;<br>
+  string(44) &quot;/sbin:/usr/sbin:/bin:/usr/bin:/usr/X11R6/bin&quot;<br>
+  [&quot;SERVER_SIGNATURE&quot;]=&gt;<br>
+  string(70) &quot;&lt;address&gt;Apache/2.0.54 (Fedora) Server at localhost Port 80&lt;/address&gt;<br>
+&quot;<br>
+  [&quot;SERVER_SOFTWARE&quot;]=&gt;<br>
+  string(22) &quot;Apache/2.0.54 (Fedora)&quot;<br>
+  [&quot;SERVER_NAME&quot;]=&gt;<br>
+  string(9) &quot;localhost&quot;<br>
+  [&quot;SERVER_ADDR&quot;]=&gt;<br>
+  string(9) &quot;127.0.0.1&quot;<br>
+  [&quot;SERVER_PORT&quot;]=&gt;<br>
+  string(2) &quot;80&quot;<br>
+  [&quot;REMOTE_ADDR&quot;]=&gt;<br>
+  string(9) &quot;127.0.0.1&quot;<br>
+  [&quot;DOCUMENT_ROOT&quot;]=&gt;<br>
+  string(13) &quot;/data/webroot&quot;<br>
+  [&quot;SERVER_ADMIN&quot;]=&gt;<br>
+  string(20) &quot;root@localhost&quot;<br>
+  [&quot;SCRIPT_FILENAME&quot;]=&gt;<br>
+  string(26) &quot;/data/webroot/v1/index.php&quot;<br>
+  [&quot;REMOTE_PORT&quot;]=&gt;<br>
+  string(5) &quot;47530&quot;<br>
+  [&quot;GATEWAY_INTERFACE&quot;]=&gt;<br>
+  string(7) &quot;CGI/1.1&quot;<br>
+  [&quot;SERVER_PROTOCOL&quot;]=&gt;<br>
+  string(8) &quot;HTTP/1.1&quot;<br>
+  [&quot;REQUEST_METHOD&quot;]=&gt;<br>
+  string(3) &quot;GET&quot;<br>
+  [&quot;QUERY_STRING&quot;]=&gt;<br>
+  string(0) &quot;&quot;<br>
+  [&quot;REQUEST_URI&quot;]=&gt;<br>
+  string(4) &quot;/v1/&quot;<br>
+  [&quot;SCRIPT_NAME&quot;]=&gt;<br>
+  string(13) &quot;/v1/index.php&quot;<br>
+  [&quot;PHP_SELF&quot;]=&gt;<br>
+  string(13) &quot;/v1/index.php&quot;<br>
+  [&quot;PATH_TRANSLATED&quot;]=&gt;<br>
+  string(26) &quot;/data/webroot/v1/index.php&quot;<br>
+  [&quot;argv&quot;]=&gt;<br>
+  array(0) {<br>
+  }<br>
+  [&quot;argc&quot;]=&gt;<br>
+  int(0)<br>
+}</p>
+<p>This is with ZDE client/server disabled (note that the <br>
+cookie isn&#039;t deleted but it shouldn&#039;t do any harm):</p>
+<p>http://localhost/v1/livebookmarks.php?c=mmmdi_ajax_livebookmarks&amp;m=getlist</p>
+<p>POST /v1/livebookmarks.php?c=mmmdi_ajax_livebookmarks&amp;m=getlist HTTP/1.1<br>
+Host: localhost<br>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; de; rv:1.8) Gecko/20051111 Firefox/1.5<br>
+Accept: text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5<br>
+Accept-Language: de,en;q=0.7,en-us;q=0.3<br>
+Accept-Encoding: gzip,deflate<br>
+Accept-Charset: UTF-8,*<br>
+Keep-Alive: 300<br>
+Connection: keep-alive<br>
+Content-Type: application/json; charset=UTF-8; charset=utf-8<br>
+Content-Length: 4<br>
+Cookie: ZDEDebuggerPresent=php,phtml,php3; PHPSESSID=bc9154451d5cf4349003c9d4505c0776<br>
+Pragma: no-cache<br>
+Cache-Control: no-cache<br>
+null<br>
+HTTP/1.x 200 OK<br>
+Date: Tue, 20 Dec 2005 05:13:44 GMT<br>
+Server: Apache/2.0.54 (Fedora)<br>
+X-Powered-By: PHP/4.3.11<br>
+Expires: Mon, 26 Jul 1997 05:00:00 GMT<br>
+Cache-Control: no-cache, must-revalidate<br>
+Pragma: no-cache<br>
+Content-Length: 230<br>
+Last-Modified: Tue, 20 Dec 2005 05:13:44GMT<br>
+Connection: close<br>
+Content-Type: application/json; charset=utf-8<br>
+----------------------------------------------------------</p>
+</section>
+<section>
+<h3>[2005-12-20 05:21 UTC] me at thomaskeller dot biz</h3>
+<p>The server vars do not contain an entry for content-type (in neither spelling):</p>
+<p>array(32) {<br>
+  [&quot;UNIQUE_ID&quot;]=&gt;<br>
+  string(24) &quot;yA7cz8CoAgoAADquEfwAAAAC&quot;<br>
+  [&quot;HTTP_HOST&quot;]=&gt;<br>
+  string(9) &quot;localhost&quot;<br>
+  [&quot;HTTP_USER_AGENT&quot;]=&gt;<br>
+  string(71) &quot;Mozilla/5.0 (X11; U; Linux i686; de; rv:1.8) Gecko/20051111 Firefox/1.5&quot;<br>
+  [&quot;HTTP_ACCEPT&quot;]=&gt;<br>
+  string(99) &quot;text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5&quot;<br>
+  [&quot;HTTP_ACCEPT_LANGUAGE&quot;]=&gt;<br>
+  string(23) &quot;de,en;q=0.7,en-us;q=0.3&quot;<br>
+  [&quot;HTTP_ACCEPT_ENCODING&quot;]=&gt;<br>
+  string(12) &quot;gzip,deflate&quot;<br>
+  [&quot;HTTP_ACCEPT_CHARSET&quot;]=&gt;<br>
+  string(7) &quot;UTF-8,*&quot;<br>
+  [&quot;HTTP_KEEP_ALIVE&quot;]=&gt;<br>
+  string(3) &quot;300&quot;<br>
+  [&quot;HTTP_CONNECTION&quot;]=&gt;<br>
+  string(10) &quot;keep-alive&quot;<br>
+  [&quot;HTTP_COOKIE&quot;]=&gt;<br>
+  string(77) &quot;ZDEDebuggerPresent=php,phtml,php3; PHPSESSID=bc9154451d5cf4349003c9d4505c0776&quot;<br>
+  [&quot;HTTP_CACHE_CONTROL&quot;]=&gt;<br>
+  string(9) &quot;max-age=0&quot;<br>
+  [&quot;PATH&quot;]=&gt;<br>
+  string(44) &quot;/sbin:/usr/sbin:/bin:/usr/bin:/usr/X11R6/bin&quot;<br>
+  [&quot;SERVER_SIGNATURE&quot;]=&gt;<br>
+  string(70) &quot;&lt;address&gt;Apache/2.0.54 (Fedora) Server at localhost Port 80&lt;/address&gt;<br>
+&quot;<br>
+  [&quot;SERVER_SOFTWARE&quot;]=&gt;<br>
+  string(22) &quot;Apache/2.0.54 (Fedora)&quot;<br>
+  [&quot;SERVER_NAME&quot;]=&gt;<br>
+  string(9) &quot;localhost&quot;<br>
+  [&quot;SERVER_ADDR&quot;]=&gt;<br>
+  string(9) &quot;127.0.0.1&quot;<br>
+  [&quot;SERVER_PORT&quot;]=&gt;<br>
+  string(2) &quot;80&quot;<br>
+  [&quot;REMOTE_ADDR&quot;]=&gt;<br>
+  string(9) &quot;127.0.0.1&quot;<br>
+  [&quot;DOCUMENT_ROOT&quot;]=&gt;<br>
+  string(13) &quot;/data/webroot&quot;<br>
+  [&quot;SERVER_ADMIN&quot;]=&gt;<br>
+  string(20) &quot;root@localhost&quot;<br>
+  [&quot;SCRIPT_FILENAME&quot;]=&gt;<br>
+  string(26) &quot;/data/webroot/v1/index.php&quot;<br>
+  [&quot;REMOTE_PORT&quot;]=&gt;<br>
+  string(5) &quot;47530&quot;<br>
+  [&quot;GATEWAY_INTERFACE&quot;]=&gt;<br>
+  string(7) &quot;CGI/1.1&quot;<br>
+  [&quot;SERVER_PROTOCOL&quot;]=&gt;<br>
+  string(8) &quot;HTTP/1.1&quot;<br>
+  [&quot;REQUEST_METHOD&quot;]=&gt;<br>
+  string(3) &quot;GET&quot;<br>
+  [&quot;QUERY_STRING&quot;]=&gt;<br>
+  string(0) &quot;&quot;<br>
+  [&quot;REQUEST_URI&quot;]=&gt;<br>
+  string(4) &quot;/v1/&quot;<br>
+  [&quot;SCRIPT_NAME&quot;]=&gt;<br>
+  string(13) &quot;/v1/index.php&quot;<br>
+  [&quot;PHP_SELF&quot;]=&gt;<br>
+  string(13) &quot;/v1/index.php&quot;<br>
+  [&quot;PATH_TRANSLATED&quot;]=&gt;<br>
+  string(26) &quot;/data/webroot/v1/index.php&quot;<br>
+  [&quot;argv&quot;]=&gt;<br>
+  array(0) {<br>
+  }<br>
+  [&quot;argc&quot;]=&gt;<br>
+  int(0)<br>
+}</p>
+<p>This is with ZDE client/server disabled (note that the <br>
+cookie isn&#039;t deleted but it shouldn&#039;t do any harm):</p>
+<p>http://localhost/v1/livebookmarks.php?c=mmmdi_ajax_livebookmarks&amp;m=getlist</p>
+<p>POST /v1/livebookmarks.php?c=mmmdi_ajax_livebookmarks&amp;m=getlist HTTP/1.1<br>
+Host: localhost<br>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; de; rv:1.8) Gecko/20051111 Firefox/1.5<br>
+Accept: text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5<br>
+Accept-Language: de,en;q=0.7,en-us;q=0.3<br>
+Accept-Encoding: gzip,deflate<br>
+Accept-Charset: UTF-8,*<br>
+Keep-Alive: 300<br>
+Connection: keep-alive<br>
+Content-Type: application/json; charset=UTF-8; charset=utf-8<br>
+Content-Length: 4<br>
+Cookie: ZDEDebuggerPresent=php,phtml,php3; PHPSESSID=bc9154451d5cf4349003c9d4505c0776<br>
+Pragma: no-cache<br>
+Cache-Control: no-cache<br>
+null<br>
+HTTP/1.x 200 OK<br>
+Date: Tue, 20 Dec 2005 05:13:44 GMT<br>
+Server: Apache/2.0.54 (Fedora)<br>
+X-Powered-By: PHP/4.3.11<br>
+Expires: Mon, 26 Jul 1997 05:00:00 GMT<br>
+Cache-Control: no-cache, must-revalidate<br>
+Pragma: no-cache<br>
+Content-Length: 230<br>
+Last-Modified: Tue, 20 Dec 2005 05:13:44GMT<br>
+Connection: close<br>
+Content-Type: application/json; charset=utf-8<br>
+----------------------------------------------------------</p>
+</section>
+<section>
+<h3>[2006-01-25 16:34 UTC] jeichorn at php dot net</h3>
+<p>Resolved will be in 0.3.4</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

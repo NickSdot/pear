@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9407</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth/index.html">Auth</a> &#187; Bug #9407</h1>
+<p>Add callback for extra validity checks by developer</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-21 16:17 UTC</td></tr>
+<tr><th>From</th><td>jonw at improov dot com</td></tr>
+<tr><th>Assigned</th><td>aashley</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Auth/index.html">Auth</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-21 16:17 UTC] jonw at improov dot com</h3>
+<p>Description:<br>
+------------<br>
+Doing a checkAuth() seems to store the password into session to be used until logout. No further password checks are done after checkAuth().</p>
+<p>I have an application that allows a user to log in, and then an administrator (another user) to change the user&#039;s password, or even delete the user altogether. Since Pear::Auth does not do anymore password checks after the initial checkAuth(), Pear::Auth assumes that the user is still logged on, even though the user&#039;s password may already have been changed, or the user may have been deleted.</p>
+<p>Test script:<br>
+---------------<br>
+Just do a checkAuth(), which uses POST parameters &#039;username&#039; and &#039;password&#039;. So populate those parameters before calling checkAuth().</p>
+<p>Now, delete the logged in user (from your datastore) or change the password.</p>
+<p>Then do a checkAuth() again. The logged in user is still logged in, though all records of the user in the datastore are already purged (or the password changed).</p>
+<p>Expected result:<br>
+----------------<br>
+checkAuth() should be sensitive to any changes to the logged in user&#039;s password.</p>
+<p>Actual result:<br>
+--------------<br>
+The logged in user is still logged in, though all records of the user in the datastore are already purged (or the password changed).</p>
+</section>
+<section>
+<h3>[2006-11-21 23:05 UTC] aashley at php dot net</h3>
+<p>Umm, how?</p>
+<p>Auth is only aware of the users password at the point the form submission is processed. After it validates the password it is not stored anywhere.</p>
+<p>Plus the definition of a &#039;deleted&#039; or &#039;changed&#039; account will change depending upon application and backend used. There is no way to reliably implement this sort of functionality in a generic way.</p>
+</section>
+<section>
+<h3>[2006-11-22 01:36 UTC] jonw at improov dot com</h3>
+<p>Speaking of generic methods, how about making it generic to have an &quot;last_updated&quot; variable? You already have 2 generic variables: &quot;userid&quot; and &quot;password&quot; (plus &quot;dsn&quot; and some other I may have forgotten). It&#039;s very common, if not actually de facto, for applications to have such mechanisms.</p>
+<p>Of course, you may say that different applications may view the &quot;last_updated&quot; variable differently. Sure, let applications override the generic processing of &quot;last_updated&quot;. But isn&#039;t it generic/common to process it thus?: force a re-login if password was last updated AFTER the login time.</p>
+<p>Seems like a trivial extension, probably no more than 10-20 lines of code. That&#039;s the extension I had to do in my application for now.</p>
+</section>
+<section>
+<h3>[2006-11-22 01:51 UTC] aashley at php dot net</h3>
+<p>That still is adding a forced interrogation of the authentication backend. Which is completely against the design of Auth. The backend is checked once at login and then thats it.</p>
+<p>The best I&#039;d be willing to add is another callback that enables extra checks which is called from checkAuth(). it is supplied the username and the Auth object and it&#039;s up to the developer to provide a true/false response on whether to continue the session.</p>
+</section>
+<section>
+<h3>[2006-11-22 05:07 UTC] jonw at improov dot com</h3>
+<p>Sounds great!</p>
+<p>How about tying default functions (say the &quot;last_updated&quot; mechanism I mentioned) to this checkAuth()&#039;s callback you&#039;re suggesting, and letting users override this default generic behavior?</p>
+</section>
+<section>
+<h3>[2006-11-22 06:53 UTC] aashley at php dot net</h3>
+<p>A checkAuth() call back will be added. That is all. Behaviour like your &#039;last_updated&#039; stuff should be implemented using said callback.</p>
+</section>
+<section>
+<h3>[2006-12-06 00:44 UTC] aashley at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

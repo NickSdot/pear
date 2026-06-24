@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #681</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB/index.html">MDB</a> &#187; Bug #681</h1>
+<p>Oracle numRows() now returns -1 if no row</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-02-04 15:45 UTC</td></tr>
+<tr><th>From</th><td>thierry dot bo at netcourrier dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB/index.html">MDB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>Win32 XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-02-04 15:45 UTC] thierry dot bo at netcourrier dot com</h3>
+<p>Description:<br>
+------------<br>
+Using MDB1 latest CVS, recent bug fix #633 and #670 creatad a new bug for Oracle. Now Oracle numRows returns -1 if there is no row in the result set, instead of 0, thus breaking code compatibility with other drivers.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$res = $mdb-&gt;query(&quot;SELECT * FROM MTABLE&quot;);<br>
+$counte = $mdb-&gt;numRows($res);</p>
+<p>Expected result:<br>
+----------------<br>
+$counte == 0 if no row</p>
+<p>Actual result:<br>
+--------------<br>
+$counte = -1</p>
+</section>
+<section>
+<h3>[2004-02-07 00:45 UTC] thierry dot bo at netcourrier dot com</h3>
+<p>Hi,</p>
+<p>I don&#039;t know how works the overall MDB api, so the following code may contains stupid things, but here is what I did.<br>
+As I seen the oci8 numRows() function in DB was quite more simple than MDB one, I tried to use DB code instead in MDB numRows(). With just little changes from DB, here is what I use now:</p>
+<p>function numRows($result)<br>
+    {<br>
+        if ($this-&gt;options[&#039;optimize&#039;] == &#039;portability&#039;) {<br>
+            $countquery = &quot;SELECT COUNT(*) FROM (&quot;.$this-&gt;last_query.&quot;)&quot;;<br>
+            $save_query = $this-&gt;last_query;<br>
+            $count = $this-&gt;query($countquery);<br>
+            if (MDB::isError($count) ||<br>
+                MDB::isError($row = $this-&gt;fetchRow($count, MDB_FETCHMODE_ORDERED)))<br>
+            {<br>
+                $this-&gt;last_query = $save_query;<br>
+                return $this-&gt;raiseError(MDB_ERROR_NOT_CAPABLE);<br>
+            }<br>
+            return $row[0];<br>
+        }<br>
+        return $this-&gt;raiseError(MDB_ERROR_NOT_CAPABLE);<br>
+    }</p>
+<p>For the moment it works with my current application.</p>
+</section>
+<section>
+<h3>[2004-02-19 00:07 UTC] thierry dot bo at netcourrier dot com</h3>
+<p>Hi,</p>
+<p>sorry to open this bug again, but this does not works ever for me. Now the function always returns 0, whatever the number of rows.</p>
+<p>It seems in the last line of the function :</p>
+<p>return(max(0, $this-&gt;highest_fetched_row[$result_value];</p>
+<p>that the return code is based on a varaible ($this-&gt;highest_fetched_row[$result_value]) that is never used or set before inside this function. So in all case it is -1.</p>
+<p>Thierry Bothorel</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

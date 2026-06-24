@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1379</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #1379</h1>
+<p>is_file returns true when seeing pear binary when trying to install pear packag</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-11 01:43 UTC</td></tr>
+<tr><th>From</th><td>i at camerongreen dot org</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0RC1 (Release Candidate 1)</td></tr>
+<tr><th>OS</th><td>Fedora</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-11 01:43 UTC] i at camerongreen dot org</h3>
+<p>Description:<br>
+------------<br>
+On attempting to upgrade the pear package from within the directory which contains the pear binary, the is_file call in the doDownload function of Downloader.php returns true.</p>
+<p>The is_file function is trying to figure out whether the packages it intends to upgrade are already downloaded.  When it sees the pear binary, although it is really looking for the &#039;pear&#039; package, it can&#039;t tell the difference and says &quot;yes I have already downloaded this package&quot;.</p>
+<p>It then tries to see if it is a valid tgz file, which of course fails and the whole upgrade fails for all packages.  You should do the check for whether it is a valid tgz file at the same time as you do the is_file, if one of these fails, go and download a new copy of the module.</p>
+<p>More of an oddity than anything else, but it is easily fixable and I am sure it will come up for other users and probably should be fixed.</p>
+<p>Reproduce code:<br>
+---------------<br>
+line 333 of Downloader.php</p>
+<p>function doDownload($packages)<br>
+    {<br>
+        $mywillinstall = array();<br>
+        $state = $this-&gt;_preferredState;</p>
+<p>// {{{ download files in this list if necessary<br>
+        foreach($packages as $pkgfile) {<br>
+            $need_download = false;<br>
+            if (!is_file($pkgfile)) {</p>
+<p>If you put a print after the is_file, you will note all other upgradeable packages are listed but not the &#039;pear&#039; package.</p>
+<p>Expected result:<br>
+----------------<br>
+Fail all upgrades.</p>
+<p>Actual result:<br>
+--------------<br>
+[root@helios bin]# pwd<br>
+/usr/local/php/bin</p>
+<p>[root@helios bin]# ./pear upgrade-all<br>
+Will upgrade archive_tar<br>
+Will upgrade http<br>
+Will upgrade mail<br>
+Will upgrade net_smtp<br>
+Will upgrade net_socket<br>
+Will upgrade pear<br>
+Will upgrade xml_parser<br>
+Will upgrade xml_rpc<br>
+downloading Archive_Tar-1.2.tgz ...<br>
+Starting to download Archive_Tar-1.2.tgz (14,792 bytes)<br>
+.....done: 14,792 bytes<br>
+downloading HTTP-1.2.3.tgz ...<br>
+Starting to download HTTP-1.2.3.tgz (3,515 bytes)<br>
+...done: 3,515 bytes<br>
+downloading Mail-1.1.3.tgz ...<br>
+Starting to download Mail-1.1.3.tgz (13,415 bytes)<br>
+...done: 13,415 bytes<br>
+downloading Net_SMTP-1.2.6.tgz ...<br>
+Starting to download Net_SMTP-1.2.6.tgz (9,106 bytes)<br>
+...done: 9,106 bytes<br>
+downloading Net_Socket-1.0.2.tgz ...<br>
+Starting to download Net_Socket-1.0.2.tgz (3,706 bytes)<br>
+...done: 3,706 bytes<br>
+Could not get contents of package &quot;/usr/local/php-5-0-0rc1/bin/pear&quot;. Invalid tgz file.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

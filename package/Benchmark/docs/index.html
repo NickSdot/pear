@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benchmark Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Benchmarking &#187; <a href="package/Benchmark/index.html">Benchmark</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Benchmark/docs/index.html#package-benchmarking-benchmark-intro">Introduction</a>
+</li>
+<li><a href="package/Benchmark/docs/index.html#package-benchmarking-benchmark-timer">Benchmark_Timer</a>
+</li>
+<li><a href="package/Benchmark/docs/index.html#package-benchmarking-benchmark-profiler">Benchmark_Profiler</a>
+</li>
+<li><a href="package/Benchmark/docs/index.html#package-benchmarking-benchmark-iterate">Benchmark_Iterate</a>
+</li></ul>
+</nav>
+<p>Provides a simple framework for profiling and benchmarking your PHP applications.</p>
+<section id="package-benchmarking-benchmark-intro">
+<h2>Introduction</h2>
+<h3>About Benchmarking_Benchmark</h3>
+
+  
+  <p>Benchmark is a simple framework that allows you time, profile and
+   benchmark your PHP scripts and applications. Benchmark provides you
+   with three classes to enable you to profile:
+   <strong>Benchmark_Timer</strong>,
+   <strong>Benchmark_Profiler</strong> and
+   <strong>Benchmark_Iterate</strong>.</p>
+  <p>The package is very easy to use. We&#039;ll discuss each of the three classes
+   in detail, but some concepts are common. You basically instantiate one of the 
+   classes, begin your script (or portion of code that you want to profile)
+   and analyze the results afterward.</p>
+  <p>All the three classes have two modes of operation:
+   <em>automatic</em> and <em>manual</em>.
+   In the <em>automatic</em> mode of operation, 
+   the profiling is automatically started and stopped, and results displayed.
+   In the <em>manual</em> mode, you are responsible for starting,
+   stopping and displaying the results.</p>
+  <p>The <em>automatic</em> mode makes sense in cases where you
+   want to quickly test a fixed portion of code like a script or a single
+   function. The <em>manual</em> mode offers you more control,
+   which means arbitrary portions of code can be profiled, and the results can
+   be carefully analyzed before being displayed. In the <em>automatic</em>
+   mode of operation, the results are always displayed; while in the
+   <em>manual</em> mode you have the option of logging them or
+   storing them in a database.</p>
+  <p>If you wish to operate a class in <em>automatic</em> mode,
+   simply pass the <strong>TRUE</strong> parameter to its constructor.
+   Instantiating a class without a parameter or with the
+   <strong>FALSE</strong> parameter sets the mode of operation to
+   <em>manual</em> for that class.</p>
+ 
+ <h3>Which class to choose?</h3>
+
+  
+  <p><strong>Benchmark_Timer</strong> is the most fundamental class
+   in the package. It performs the simple function of recording the amount
+   of time it takes for a fixed amount of code to execute.</p>
+  <p><strong>Benchmark_Profiler</strong> behaves just like 
+   <strong>Benchmark_Timer</strong> with the exception that 
+   you are allowed to specify sections between the start and stop
+   times, at which point the timing details are recorded.
+   This provides the ability to nest timers and profile functions
+   which are called multiple times.</p>
+  <p><strong>Benchmark_Iterate</strong> is a class that runs a particular
+   function several times over and records the amount of time it took for
+   each iteration to execute.</p>
+</section>
+<section id="package-benchmarking-benchmark-timer">
+<h2>Benchmark_Timer</h2>
+<h3>About Benchmark_Timer</h3>
+
+  
+  <p>As mentioned before, this class simply records the time
+   taken for a particular snippet of code to execute. In 
+   the <em>automatic</em> mode, this means the code remaining after
+   the class&#039;s instantiation. In <em>manual</em> mode, the snippet of
+   code to be timed is specified between calls to the
+   <strong>start()</strong> and <strong>stop()</strong>
+   methods of the class.</p>
+  <p>Additionally, you may specify <em>markers</em>
+   between the snippet of code to be timed. The timing
+   information is recorded wherever markers are defined.</p>
+  <p>An example will make this clear.</p>
+  <p><strong>
+    Benchmark_Timer in automatic mode
+   </strong></p>
+   
+   <pre><code>&lt;?php
+require_once &quot;Benchmark/Timer.php&quot;;
+
+$timer = new Benchmark_Timer(TRUE);
+// Timer is in automatic mode, so timing starts here.
+
+$j = array();
+for ($i = 0; $i &lt; 100; $i++) {
+    $j[] = $i;
+    if ($i == 49)
+        $timer-&gt;setMarker(&#039;Midway&#039;);
+}
+
+// Timer automatically stops and results are displayed.
+?&gt;</code></pre>
+  
+  <p>The example above will generate an output as shown below
+   when run with the PHP CLI SAPI. Running it with the 
+   Apache SAPI will produce the same results, but formatted
+   as HTML.</p>
+  <p><strong>
+    Results of a test run of Benchmark_Timer
+   </strong></p>
+   
+   
+   <pre>
+----------------------------------------------------
+marker  time index            ex time         perct   
+----------------------------------------------------
+Start   1182558324.48638900   -                0.00%
+----------------------------------------------------
+Midway  1182558324.48655800   0.000169        62.13%
+----------------------------------------------------
+Stop    1182558324.48666100   0.000103        37.87%
+----------------------------------------------------
+total   -                     0.000272       100.00%
+----------------------------------------------------</pre>
+
+   
+  
+  <p>In most cases however, you would like to do something
+   with that information. When you run the timer in
+   <em>manual</em> mode, you can obtain the results as an
+   associative array using the
+   <strong>getProfiling()</strong> method. To display
+   the information (as shown above) use the
+   <strong>display()</strong> method. More information
+   on the methods that <strong>Benchmark_Timer</strong>
+   implements is available in the API Documentation.</p>
+</section>
+<section id="package-benchmarking-benchmark-profiler">
+<h2>Benchmark_Profiler</h2>
+<h3>About Benchmark_Profiler</h3>
+
+  
+  <p>This class behaves mostly like
+   <strong>Benchmark_Timer</strong> with the
+   exception that you are allowed to specify the beginning
+   and end of <em>sections</em> within the code
+   to be profiled. <em>sections</em> are different
+   from <em>markers</em> (<em>markers</em>)
+   don&#039;t have <em>ends</em> in the sense that they are
+   stateful and remember how many times they have been
+   <em>entered</em>.</p>
+  <p>Timing information is recorded at the beginning and end of the code
+   to be profiled and at the beginning and end of every
+   <em>section</em> everytime it is encountered. An
+   example follows.</p>
+  <p><strong>
+   	Benchmark_Profiler in manual mode
+   </strong></p>
+   
+   <pre><code>&lt;?php
+
+require_once &#039;Benchmark/Profiler.php&#039;;
+
+$profiler = new Benchmark_Profiler;
+
+function wasteTime() {
+    $j = 2;
+    for ($i = 0; $i &lt; 100; $i++) {
+        $j = $j * 10;
+    }
+    return;
+}    
+
+function myFunction() {
+    global $profiler;
+    $profiler-&gt;enterSection(&#039;myFunction&#039;);
+    wasteTime();
+    $profiler-&gt;leaveSection(&#039;myFunction&#039;);
+    return;
+}
+
+// Manual mode, so start manually
+$profiler-&gt;start();
+
+wasteTime();
+myFunction();
+myFunction();
+wasteTime();
+
+// Manual mode, stop and display results
+$profiler-&gt;stop();
+$profiler-&gt;display();
+
+?&gt;</code></pre>
+  
+  <p>The example above will generate an output as shown below
+   when run with the PHP CLI SAPI. Running it with the 
+   Apache SAPI will produce the same results, but formatted
+   as HTML.</p>
+  <p><strong>
+    Results of a test run of Benchmark_Profiler
+   </strong></p>
+   
+   
+   <pre>
+------------------------------------------------------------------------------------
+Section             Total Ex Time         Netto Ex Time         #Calls    Percentage
+------------------------------------------------------------------------------------
+myFunction          5.8174133300781E-5    5.8174133300781E-5    2          17.22%
+Global              0.00033783912658691   0.00027966499328613   1         100.00%</pre>
+
+   
+  
+  <p>As you can see, the default output may not be too helpful.
+   You can obtain detailed section by section profiling
+   information in <em>manual</em> mode through methods like
+   <strong>getSectionInformations()</strong> and
+   <strong>getAllSectionsInformations()</strong>. Refer to
+   the API documentation for more information.</p>
+</section>
+<section id="package-benchmarking-benchmark-iterate">
+<h2>Benchmark_Iterate</h2>
+<h3>About Benchmark_Iterate</h3>
+
+  
+  <p>This class is useful when you want to iterate over a single piece
+   of code (a function) several times over. Timing information is
+   recorded for every iteration. An example follows.</p>
+  <p><strong>
+   	Benchmark_Iterate in manual mode
+   </strong></p>
+   
+   <pre><code>&lt;?php
+
+require_once &#039;Benchmark/Iterate.php&#039;;
+
+$benchmark = new Benchmark_Iterate;
+
+function calculation($num) {
+    $x = sin($num) * 100;
+    $y = tan($x);
+    return;    
+}
+
+$benchmark-&gt;run(100, &#039;calculation&#039;, 45.6);
+$result = $benchmark-&gt;get();
+print_r($result);
+
+?&gt;</code></pre>
+  
+  <p>The example above will generate an output as shown below
+   when run with the PHP CLI SAPI.</p>
+  <p><strong>
+    Results of a test run of Benchmark_Iterate
+   </strong></p>
+   
+   
+   <pre>
+Array
+(
+    [1] =&gt; 0.000073
+    [2] =&gt; 0.000014
+    [3] =&gt; 0.000011
+    [4] =&gt; 0.000011
+    [5] =&gt; 0.000011
+	..93 more results..
+	[99] =&gt; 0.000011
+    [100] =&gt; 0.000011
+    [mean] =&gt; 0.000011
+    [iterations] =&gt; 100
+)</pre>
+
+   
+  
+  <p>You can display formatted results either by running the
+   script in <em>automatic</em> mode or by using
+   the <strong>display()</strong> method. For more information
+   of the methods this class implements, refer to the API
+   documentation.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4496</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/Pager/index.html">Pager</a> &#187; Bug #4496</h1>
+<p>New Feature to add first and last pages with diffs</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4496</th><td>New Feature to add first and last pages with diffs</td></tr>
+<tr><th>Submitted</th><td>2005-06-01 03:24 UTC</td></tr>
+<tr><th>From</th><td>danielr at electroteque dot org</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Pager/index.html">Pager</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>N/A</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-01 03:24 UTC] danielr at electroteque dot org</h3>
+<p>Description:<br>
+------------<br>
+I have created diffs on some changes I find useful I <br>
+have added first and last page link methods, I have only <br>
+showed them in Jumping but could be transfered to <br>
+Sliding. New settings are allowed, lastImg , firstImg, <br>
+altLast and altFirst.</p>
+<p>www.electroteque.org/pear/Common.diff<br>
+www.electroteque.org/pear/Jumping.diff</p>
+<p>Please let me know if its possible or if the diff is not <br>
+correct.</p>
+</section>
+<section>
+<h3>[2005-06-01 10:47 UTC] danielr at electroteque dot org</h3>
+<p>Lets look at this for starters</p>
+<p>/**<br>
+     * Print [1]<br>
+     *<br>
+     * @return string String with link to 1st page,<br>
+     *                or empty string if this is the 1st <br>
+page.<br>
+     * @access private<br>
+     */<br>
+    function _printFirstPage()<br>
+    {<br>
+        if ($this-&gt;isFirstPage()) {<br>
+            return &#039;&#039;;<br>
+        }<br>
+        $this-&gt;_linkData[$this-&gt;_urlVar] = 1;<br>
+        return $this-&gt;_renderLink(<br>
+                $this-&gt;_altPage.&#039; 1&#039;,<br>
+                $this-&gt;_firstPagePre . $this-<br>
+&gt;_firstPageText . $this-&gt;_firstPagePost<br>
+        ) . $this-&gt;_spacesBefore . $this-&gt;_spacesAfter;<br>
+    }</p>
+<p>Ok we have an option for make the option firstPageText <br>
+an image, however, you have a method for next and prev, <br>
+why not first and last, so i can use firstImg and <br>
+altFirst, which is customisable and standard for all of <br>
+them ? I dont see any alt text for the href either.</p>
+<p>/**<br>
+     * Returns back link<br>
+     *<br>
+     * @param $url  URL to use in the link  [deprecated: <br>
+use the factory instead]<br>
+     * @param $link HTML to use as the link [deprecated: <br>
+use the factory instead]<br>
+     * @return string The link<br>
+     * @access private<br>
+     */<br>
+    function _getBackLink($url=&#039;&#039;, $link=&#039;&#039;)<br>
+    {<br>
+        //legacy settings... the preferred way to set an <br>
+option<br>
+        //now is passing it to the factory<br>
+        if (!empty($url)) {<br>
+            $this-&gt;_path = $url;<br>
+        }<br>
+        if (!empty($link)) {<br>
+            $this-&gt;_prevImg = $link;<br>
+        }<br>
+        $back = &#039;&#039;;<br>
+        if ($this-&gt;_currentPage &gt; 1) {<br>
+            $this-&gt;_linkData[$this-&gt;_urlVar] = $this-<br>
+&gt;getPreviousPageID();<br>
+            $back = $this-&gt;_renderLink($this-&gt;_altPrev, <br>
+$this-&gt;_prevImg)<br>
+                  . $this-&gt;_spacesBefore . $this-<br>
+&gt;_spacesAfter;<br>
+        }<br>
+        return $back;<br>
+    }</p>
+<p>I then execute the methods inside the structures <br>
+datagrid flexy renderer like so, much cleaner</p>
+<p>function getPaging()<br>
+    {<br>
+        return $this-&gt;pager-&gt;links;<br>
+    }</p>
+</section>
+<section>
+<h3>[2005-06-02 10:26 UTC] danielr at electroteque dot org</h3>
+<p>If I can simply do this somehow i&#039;ll be done with it, as <br>
+this is called from my flexy template, chunking arrays <br>
+is really silly</p>
+<p>function getPaging()<br>
+{<br>
+      return $this-&gt;pager-&gt;links;<br>
+}</p>
+</section>
+<section>
+<h3>[2005-06-02 10:30 UTC] danielr at electroteque dot org</h3>
+<p>btw you never explained why you have a nextImg and <br>
+prevImg setting and then its not standard to have a <br>
+lastImg and firstImg sounds pretty straight forward than <br>
+lastPageText and firstPageText doesnt it ? How <br>
+confusing. Oh well u are god.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

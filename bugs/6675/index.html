@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6675</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #6675</h1>
+<p>postinstallscript validation fails</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-02-02 17:53 UTC</td></tr>
+<tr><th>From</th><td>hans at velum dot ent</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Gentoo Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-02 17:53 UTC] hans at velum dot ent</h3>
+<p>Description:<br>
+------------<br>
+When attempting to install a package that uses &lt;task:postinstallscript&gt; I get errors like this (I&#039;m trying to install Chiara_PEAR_Server):</p>
+<p>task &lt;tasks:postinstallscript&gt; in file Server/mysqlinstall.php is invalid because of &quot;Post-install script &quot;Server/mysqlinstall.php&quot; must declare exactly 1 class&quot;<br>
+Parsing of package.xml from file &quot;/tmp/tmpOvtlaj/package.xml&quot; failed<br>
+Cannot initialize &#039;Chiara_PEAR_Server-0.18.3.tgz&#039;, invalid or missing package file<br>
+Package &quot;Chiara_PEAR_Server-0.18.3.tgz&quot; is not valid<br>
+install failed</p>
+<p>Well, Server/mysqlinstall.php does declare exactly 1 class.</p>
+<p>This would appear to be a bug in PEAR_Task_Postinstallscript and/or PEAR_PackageFile_v2 (depending on how you look at it).</p>
+<p>What seems to be the problem:</p>
+<p>On/around line 82, PEAR_Task_Postinstallscript calls $pkg-&gt;analyzeSourceCode($file, true);</p>
+<p>$file is the contents of the file, not the file _name_ which appears to be what is expected by PEAR_PackageFile_v2.</p>
+</section>
+<section>
+<h3>[2006-02-06 21:25 UTC] hans at velum dot ent</h3>
+<p>When I upgrade PEAR per CVS instructions (which incidentally seem wrong, since &#039;anoncvs&#039; is not a valid CVS user), I get the same error.  Furthermore after the upgrade (which it says was successful), PEAR is still at version 1.4.7.</p>
+</section>
+<section>
+<h3>[2006-02-07 15:50 UTC] hans at velum dot ent</h3>
+<p>oh, ok, my apologies.</p>
+<p>yes, I think this is a differnet type of bug afterall.  I am missing the tokenizer and the analyzeSourceCode() in the validator is returning false if the tokenizer is not present.  -- It also returns false if it can&#039;t open the file, which is I think what made me think it was related to the param type.  I see the error of my ways, though, by the if ($string) check :)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

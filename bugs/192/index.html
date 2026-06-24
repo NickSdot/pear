@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #192</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_Template_IT/index.html">HTML_Template_IT</a> &#187; Bug #192</h1>
+<p>No replacements = no output</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-11-04 14:39 UTC</td></tr>
+<tr><th>From</th><td>adam at tux dot appstate dot edu</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_Template_IT/index.html">HTML_Template_IT</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>RehHat Linux 9</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-11-04 14:39 UTC] adam at tux dot appstate dot edu</h3>
+<p>Description:<br>
+------------<br>
+If you create a template file that does not have any replacements but contains valid html that you wish to have displayed, nothing is displayed when using the get() function.  But if you force a single replacement within the file, the output will be shown.  This poses a problem when parsing files that may or may not have replacements.  As a simple example, you can use a &quot;shell&quot; template and a &quot;nut&quot; template.  Obviously the nut goes in the shell.  But the nut may or may not contain replacements.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Shell.html:<br>
+&lt;html&gt;<br>
+&lt;head&gt;&lt;title&gt;{TITLE}&lt;/title&gt;&lt;/head&gt;<br>
+&lt;body&gt;<br>
+{CONTENT}<br>
+&lt;/body&gt;<br>
+&lt;/html&gt;</p>
+<p>Nut1.html:<br>
+&lt;table border=&quot;1&quot;&gt;<br>
+{ITEMS}<br>
+&lt;/table&gt;</p>
+<p>Nut2.html:<br>
+&lt;b&gt;No items were found!&lt;/b&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+If we find items to show the user then nut1 is used in the shell, otherwise nut2 is used.  When no items are present the expected output is an html page with &quot;No items were found!&quot; placed where the {CONTENT} variable is in the shell.  However, we instead get a blank page with head information.</p>
+<p>Actual result:<br>
+--------------<br>
+The actual result is, if we have items to show the user, they will be shown fine since the template replacement is being done, but if no items were found the actual output is just an empty html page with the head information from shell.html.</p>
+</section>
+<section>
+<h3>[2003-11-04 20:58 UTC] adam at tux dot appstate dot edu</h3>
+<p>OK That worked but it&#039;s actually a little different than you told me.  The function is loadTemplateFile not setTemplateFile and you need to pass FALSE as the last 2 arguements, not TRUE:</p>
+<p>$tpl-&gt;loadTemplateFile($template, FALSE, FALSE);</p>
+<p>This tells the parser to NOT remove unknown blocks or variables.  Personally, I think these should default to FALSE since there is very few times when you want it to remove things you don&#039;t know about.</p>
+<p>Thanks for your help Pierre!</p>
+</section>
+<section>
+<h3>[2005-07-26 08:46 UTC] zmbpetr at seznam dot cz</h3>
+<p>Hello,</p>
+<p>I think it&#039;s still not working.</p>
+<p>I have a valid html template:<br>
+&lt;html&gt;<br>
+  &lt;head&gt;<br>
+    &lt;title&gt;{title}&lt;/title&gt;<br>
+  &lt;/head&gt;<br>
+  &lt;body&gt;<br>
+  &lt;/body&gt;<br>
+&lt;/html&gt;</p>
+<p>and script:<br>
+$this-&gt;template-&gt;setTemplate($tpl, true, true);</p>
+<p>output is: nothing (bug?)</p>
+<p>but if i define variable &quot;title&quot; (setVariable) it come to work.<br>
+---</p>
+<p>another options to print result:<br>
+setTemplate($tpl, false, false);<br>
+output is: {title} (correct html in result with {title] tag in head, but I will not print this tag - no setVariable method called)</p>
+<p>setTemplate($tpl, true, false);<br>
+output is: nothing (no html in result)</p>
+<p>setTemplate($tpl, false, true);<br>
+output is: {title} (correct html in result with {title] tag in head, but I will not print this tag - no setVariable method called)<br>
+---</p>
+<p>I want to display html tags (from template) without unknown tags ({title}). Is there any way to do this? Without calling  setVariable? (because now I have to declare empty tag on every template and than calling setVarible method)</p>
+<p>Thanks for answer.<br>
+Regards,<br>
+Petr Pospisil</p>
+</section>
+<section>
+<h3>[2005-07-26 09:17 UTC] pierre at dotgeek dot org</h3>
+<p>See previous comment.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

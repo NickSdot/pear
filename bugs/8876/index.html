@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8876</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #8876</h1>
+<p>Oracle session persist when using count() on an DB_DataObject instance</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-10-06 14:21 UTC</td></tr>
+<tr><th>From</th><td>renaud dot l at free dot fr</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>windows, Solaris (5.9)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-10-06 14:21 UTC] renaud dot l at free dot fr</h3>
+<p>Description:<br>
+------------<br>
+Using oracle 9i (on solaris) with oci8 and a tns name.<br>
+On windows with xampp 1.5.1 and custom php on solaris.<br>
+With or without oci8 persistent at true.<br>
+With or without DB or MDB2 driver.</p>
+<p>Each time we using count() on an instance of DataObject we create a new oracle session which persist until apache is shutdown.</p>
+<p>Test script:<br>
+---------------<br>
+$dbdoCal =&amp; DB_DataObject::factory(&#039;calendrier&#039;);<br>
+$dbdoCal-&gt;whereAdd(&quot;CAL_DATE is not null&quot;);<br>
+$calCount = $dbdoCal-&gt;count();<br>
+$dbdoCal-&gt;free();</p>
+<p>The oracle session created when we call the count() will not end until apache is shutdown.</p>
+<p>In the count() method of DataObject we clone the current instance and then query the &quot;select count&quot;.</p>
+<p>function count($countWhat = false,$whereAddOnly = false)<br>
+{<br>
+ ...<br>
+ $t = clone($this);<br>
+ ...<br>
+ $result  = &amp;$_DB_DATAOBJECT[&#039;RESULTS&#039;][$t-&gt;_DB_resultid];<br>
+ $l = $result-&gt;fetchRow(DB_DATAOBJECT_FETCHMODE_ORDERED);<br>
+ return (int) $l[0];<br>
+}</p>
+<p>Workaround : applying free() on the $t instance let the session released as expected.</p>
+<p>function count($countWhat = false,$whereAddOnly = false)<br>
+{<br>
+ ...<br>
+ $t = clone($this);<br>
+ ...<br>
+ $result  = &amp;$_DB_DATAOBJECT[&#039;RESULTS&#039;][$t-&gt;_DB_resultid];<br>
+ $l = $result-&gt;fetchRow(DB_DATAOBJECT_FETCHMODE_ORDERED);<br>
+ // to let the db connection released with oci8 (only?)<br>
+ $t-&gt;free();<br>
+ return (int) $l[0];<br>
+}</p>
+<p>Have we to $t-&gt;free()  there ?  A better place would be in the DataObject free() method (but $t must be a class attribute then).</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

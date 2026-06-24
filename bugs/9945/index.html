@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9945</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail/index.html">Mail</a> &#187; Bug #9945</h1>
+<p>Mail not compatible with stable release of Net_SMTP stable</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-25 17:27 UTC</td></tr>
+<tr><th>From</th><td>tms at infamous dot net</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Mail/index.html">Mail</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>RHEL ES Release 3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-25 17:27 UTC] tms at infamous dot net</h3>
+<p>Description:<br>
+------------<br>
+Quick summary: /usr/share/pear/Mail/smtp.php calls getResponse() on a Net_SMTP object (line 338).</p>
+<p>However, the stable version of Net_SMTP (1.2.8) does not include this method:</p>
+<p>http://cvs.php.net/viewvc.cgi/pear/Net_SMTP/SMTP.php?revision=1.28&amp;view=markup</p>
+<p>All goes ok until an SMTP problem occurs, then a fatal error results:</p>
+<p>Fatal error: Call to undefined function: getresponse() in /usr/share/pear/Mail/smtp.php on line 338</p>
+<p>I don&#039;t know if the appropriate action is a fix for Mail/smtp.php, or a packaging adjustment to set the proper dependencies. But the current situation makes for a nasty surprise...</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+require_once &#039;Mail.php&#039;;<br>
+define(&#039;SMTP_HOST&#039;, &#039;www.trocadero.com&#039;); // use your own!</p>
+<p>$mail =&amp; Mail::factory(&#039;smtp&#039;,array (&#039;host&#039; =&gt; SMTP_HOST));<br>
+if (PEAR::isError($mail)) {<br>
+    echo &#039;&lt;p&gt;Unable to connect to smtp server.&#039;;<br>
+}<br>
+echo &quot;&lt;p&gt;created mailer instance&quot;;<br>
+$addrs=array(&#039;tms@infamous.net&#039;,&#039;bogus&#039;);<br>
+foreach ($addrs as $to) {<br>
+  $hdrs = array(&#039;From&#039; =&gt;  &#039;tms@trocadero.com&#039;, &#039;Subject&#039; =&gt; &#039;test message&#039;,<br>
+                &#039;To&#039; =&gt; $to);</p>
+<p>if (!$mail-&gt;send($to, $hdrs, &quot;This is a test e-mail message.&quot;)) {<br>
+      echo &quot;&lt;p&gt;Unable to send e-mail: &quot;. <br>
+           $mail-&gt;getMessage().&#039; &#039;.$mail-&gt;toString();<br>
+  }<br>
+  echo &quot;&lt;p&gt;sent mail to $to&quot;;<br>
+}<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+I expect Mail::send to return an error when it encounters the bogus address.</p>
+<p>I expect that Mail 1.1.14 would have appropriate dependencies to require a version of Net_SMTP that won&#039;t cause a fatal error.</p>
+<p>Actual result:<br>
+--------------<br>
+Fatal error: Call to undefined function: getresponse() in /usr/share/pear/Mail/smtp.php on line 338</p>
+</section>
+<section>
+<h3>[2007-01-25 17:34 UTC] tms at infamous dot net</h3>
+<p>May have had a PEAR config problem on our end. Investigating and will re-file if bug is real.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

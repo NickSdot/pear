@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1148</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_Beautifier/index.html">XML_Beautifier</a> &#187; Bug #1148</h1>
+<p>Fails under PHP5 RC1</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-06 18:35 UTC</td></tr>
+<tr><th>From</th><td>ahundiak at ingr dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/XML_Beautifier/index.html">XML_Beautifier</a></td></tr>
+<tr><th>PHP Version</th><td>5CVS-2004-04-06 (dev)</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-06 18:35 UTC] ahundiak at ingr dot com</h3>
+<p>Description:<br>
+------------<br>
+Under PHP 5.0.0RC1 (cli),<br>
+$xml = &#039;&lt;?xml version=&quot;1.0&quot;?&gt;&#039; . &quot;\n&quot; . &#039;&lt;tables&gt;&lt;table&gt;&lt;/table&gt;&lt;/tables&gt;&#039;;<br>
+$fmt = new XML_Beautifier();<br>
+echo $fmt-&gt;formatString($xml);<br>
+Fails with:<br>
+Fatal error: Object does not support method calls in /home/ahundiak/include/pear/XML/Parser.php on line 303<br>
+It works under PHP 4.3.4 (cli)</p>
+<p>XML_Beautifier_Tokenizer does not have a constructor.  Instead, it calls XML_Parser from the tokenize  method.    PHP5 does not like it when you call a constructor as a regular method.  There was some discussion on this on the internals mailing list.  So create a XML_Beautifier_Tokenizer constructor and call XML_Parser from there.  Then use:<br>
+$tokenizer =&amp; new XML_Beautifier_Tokenizer(); <br>
+to avoid problems with $this and xml_set_object.</p>
+<p>The class will now work under PHP5 except that the &lt;?xml string get&#039;s lost.  As far as I can tell, xml_set_default_handler does not work in PHP5.  Still researching it.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

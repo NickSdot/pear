@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3759</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #3759</h1>
+<p>Array DSN not converted to string in PEAR::ERROR user info</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-03-09 21:23 UTC</td></tr>
+<tr><th>From</th><td>j_kimrey at yahoo dot com</td></tr>
+<tr><th>Assigned</th><td>aharvey</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>All</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-09 21:23 UTC] j_kimrey at yahoo dot com</h3>
+<p>Description:<br>
+------------<br>
+If a connection fails, and the DSN was an array, the getDebugInfo() and getUserInfo() functions of the error class show &#039;** Array&#039; instead of the converting the DSN array data to a string.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+require_once &#039;DB.php&#039;;</p>
+<p>// make one of these parameters bad so that the connection<br>
+// will fail<br>
+$dsn = array(<br>
+    &#039;phptype&#039;  =&gt; &quot;oci8&quot;,<br>
+    &#039;dbsyntax&#039; =&gt; &quot;oracle&quot;,<br>
+    &#039;username&#039; =&gt; &quot;foo&quot;,<br>
+    &#039;password&#039; =&gt; &quot;badpw&quot;,<br>
+    &#039;hostspec&#039; =&gt; &quot;bat&quot;<br>
+);</p>
+<p>$conn =&amp; DB::connect($dsn); // will generate an error</p>
+<p>// error string will have &#039;** Array&#039; instead of dsn array<br>
+// parameters.<br>
+print($conn-&gt;getDebugInfo());<br>
+?&gt;</p>
+<p>Patch by changing lines 557 - 560 in DB.php 1.7.4 to<br>
+        if (DB::isError($err)) {<br>
+            if (is_array($dsn)) {<br>
+                $dsn[&#039;password&#039;] = preg_replace(&#039;/./&#039;, &#039;x&#039;, $dsn[&#039;password&#039;]);<br>
+                $err-&gt;addUserInfo(var_export($dsn, true));<br>
+            } else {<br>
+                $err-&gt;addUserInfo($dsn);<br>
+            }<br>
+            return $err;<br>
+        }</p>
+<p>Expected result:<br>
+----------------<br>
+Something similar to</p>
+<p>... ** &#039;phptype&#039;  =&gt; &quot;oci8&quot;, &#039;dbsyntax&#039; =&gt; &quot;oracle&quot;, &#039;username&#039; =&gt; &quot;foo&quot;, &#039;password&#039; =&gt; &quot;badpw&quot;, &#039;database&#039; =&gt; &quot;bar&quot;, &#039;hostspec&#039; =&gt; &quot;bat&quot;</p>
+<p>Actual result:<br>
+--------------<br>
+... ** Array</p>
+</section>
+<section>
+<h3>[2005-03-10 01:37 UTC] j_kimrey at yahoo dot com</h3>
+<p>Cool.</p>
+<p>Feel free to use or discard the patch I provided.  I&#039;m glad I can contribute in some small way to the development of this excellent module.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

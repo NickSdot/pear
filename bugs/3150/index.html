@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3150</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #3150</h1>
+<p>Incorrect check for &#039;select&#039; elements in RuleRegistry::_getJsValue()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-10 13:29 UTC</td></tr>
+<tr><th>From</th><td>sebab at info dot com dot pl</td></tr>
+<tr><th>Assigned</th><td>avb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-10 13:29 UTC] sebab at info dot com dot pl</h3>
+<p>Description:<br>
+------------<br>
+Required rule for Hierselect doesn&#039;t work - form is being submitted with empty values set in hs element.<br>
+It&#039;s probably caused by bug in RuleRegistry.php _getJsValue() method (line 236 in latest version $Id: RuleRegistry.php,v 1.12 2004/02/28 15:47:22 avb Exp $) where JS &quot;case&quot; statement checks if element is &#039;select&#039; type, where JS element property for &lt;select&gt; tag receives one of the following values:<br>
+select-multiple - The MULTIPLE attribute is true. Multiple OPTION elements can be selected.  <br>
+select-one - Default. The MULTIPLE attribute is false. Only one OPTION element can be selected. (according to MSDN DHTML library http://msdn.microsoft.com/workshop/author/dhtml/reference/properties/type_9.asp)</p>
+<p>HTML_QuickForm 3.2.4pl1</p>
+<p>Reproduce code:<br>
+---------------<br>
+modified code from pear docs for QF (elements.php)<br>
+&lt;?php<br>
+require_once &#039;HTML/QuickForm.php&#039;;<br>
+$form =&amp; new HTML_QuickForm(&#039;frmTest&#039;, &#039;get&#039;);<br>
+$renderer =&amp; $form-&gt;defaultRenderer();</p>
+<p>$form-&gt;addElement(&#039;submit&#039;, &#039;isubTest&#039;, &#039;Test Submit&#039;);</p>
+<p>$main[&#039;&#039;] = &quot;&quot;;<br>
+$main[1] = &quot;Pop&quot;;<br>
+$main[2] = &quot;Rock&quot;;</p>
+<p>$secondary[1][0] = &quot;Belle &amp; Sebastian&quot;;<br>
+$secondary[1][1] = &quot;Elliot Smith&quot;;<br>
+$secondary[2][3] = &quot;Noir Desir&quot;;<br>
+$secondary[2][4] = &quot;Violent Femmes&quot;;<br>
+$opts[] = $main;<br>
+$opts[] = $secondary;<br>
+$hs =&amp; $form-&gt;addElement(&#039;hierselect&#039;, &#039;ihsTest&#039;, &#039;Hierarchical select:&#039;, array(&#039;style&#039; =&gt; &#039;width: 20em;&#039;), &#039;&lt;br /&gt;&#039;);<br>
+$hs-&gt;setOptions($opts);<br>
+$form-&gt;addRule(&#039;ihsTest&#039;, &#039;HS is a required field&#039;, &#039;required&#039;, null, &#039;client&#039;);</p>
+<p>if ($form-&gt;validate()) {<br>
+    $form-&gt;freeze();<br>
+   echo &#039;&lt;pre&gt;&#039;;<br>
+    var_dump($form-&gt;exportValues());<br>
+    echo &#039;&lt;/pre&gt;&#039;;<br>
+}<br>
+$form-&gt;display();<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+if submit with empty values for hs element alert with error msg should be displayed.</p>
+<p>Actual result:<br>
+--------------<br>
+form submits with empty values for hs element.</p>
+</section>
+<section>
+<h3>[2005-01-13 15:45 UTC] sebab at info dot com dot pl</h3>
+<p>Indeed that works. Thanks. But, correct me if I&#039;m wrong, shouldn&#039;t SWITCH in JavaScript validate_frmTest() catch on &#039;select&#039; instead on &#039;default&#039; as it does now? For hierselect element of course. If you add <br>
+alert(_element.name+&quot;:&quot;+_element.type);<br>
+somewhere inside the SWITCH you&#039;ll see that type is never &#039;select&#039; but &#039;select-one&#039; or &#039;select-multiple&#039;.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

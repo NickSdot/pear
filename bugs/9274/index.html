@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9274</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PHP &#187; <a href="package/PHP_CodeSniffer/index.html">PHP_CodeSniffer</a> &#187; Bug #9274</h1>
+<p>nested_parenthesis element not set for open and close parenthesis tokens</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-08 14:55 UTC</td></tr>
+<tr><th>From</th><td>brobertson at adviva dot com</td></tr>
+<tr><th>Assigned</th><td>squiz</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PHP_CodeSniffer/index.html">PHP_CodeSniffer</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-08 14:55 UTC] brobertson at adviva dot com</h3>
+<p>Description:<br>
+------------<br>
+All tokens get the &#039;nested_parenthesis&#039; element in their token array when it is applicable - except for T_OPEN_PARENTHESIS and T_CLOSE_PARENTHESIS.</p>
+<p>This can be fixed with a simple change to PHP_CodeSniffer_File::_createParenthesisNestingMap()</p>
+<p>Test script:<br>
+---------------<br>
+Test file to Parse:<br>
+-----------------------------------------<br>
+&lt;?php<br>
+    echo ((10 + 15) * 22);<br>
+?&gt;<br>
+-----------------------------------------<br>
+Patch:<br>
+--- pear.orig/php/PHP/CodeSniffer/File.php      2006-10-17 12:37:28.000000000 +0100<br>
++++ pear/php/PHP/CodeSniffer/File.php   2006-11-08 15:51:16.074794538 +0000<br>
+@@ -752,9 +752,17 @@<br>
+         $map = array();<br>
+         for ($i = 0; $i &lt; $numTokens; $i++) {<br>
+             if (isset($this-&gt;_tokens[$i][&#039;parenthesis_opener&#039;]) === true &amp;&amp; $i === $this-&gt;_tokens[$i][&#039;parenthesis_opener&#039;]) {<br>
++                if (empty($map) === false) {<br>
++                    $this-&gt;_tokens[$i][&#039;nested_parenthesis&#039;] = $map;<br>
++                }<br>
+                 $map[$this-&gt;_tokens[$i][&#039;parenthesis_opener&#039;]] = $this-&gt;_tokens[$i][&#039;parenthesis_closer&#039;];<br>
++<br>
+             } else if (isset($this-&gt;_tokens[$i][&#039;parenthesis_closer&#039;]) === true &amp;&amp; $i === $this-&gt;_tokens[$i][&#039;parenthesis_closer&#039;]) {<br>
+                 array_pop($map);<br>
++                if (empty($map) === false) {<br>
++                    $this-&gt;_tokens[$i][&#039;nested_parenthesis&#039;] = $map;<br>
++                }<br>
++<br>
+             } else {<br>
+                 if (empty($map) === false) {<br>
+                     $this-&gt;_tokens[$i][&#039;nested_parenthesis&#039;] = $map;</p>
+<p>Expected result:<br>
+----------------<br>
+Array<br>
+(<br>
+... SNIP ...<br>
+    [4] =&gt; Array<br>
+        (<br>
+            [type] =&gt; T_OPEN_PARENTHESIS<br>
+            [code] =&gt; 1004<br>
+            [content] =&gt; (<br>
+            [line] =&gt; 2<br>
+            [parenthesis_opener] =&gt; 4<br>
+            [parenthesis_closer] =&gt; 16<br>
+            [column] =&gt; 10<br>
+            [level] =&gt; 0<br>
+            [conditions] =&gt; Array<br>
+                (<br>
+                )</p>
+<p>)</p>
+<p>[5] =&gt; Array<br>
+        (<br>
+            [type] =&gt; T_OPEN_PARENTHESIS<br>
+            [code] =&gt; 1004<br>
+            [content] =&gt; (<br>
+            [line] =&gt; 2<br>
+            [parenthesis_opener] =&gt; 5<br>
+            [parenthesis_closer] =&gt; 11<br>
+            [nested_parenthesis] =&gt; Array<br>
+                (<br>
+                    [4] =&gt; 16<br>
+                )</p>
+<p>[column] =&gt; 11<br>
+            [level] =&gt; 0<br>
+            [conditions] =&gt; Array<br>
+                (<br>
+                )</p>
+<p>)<br>
+... SNIP ...<br>
+)</p>
+<p>Actual result:<br>
+--------------<br>
+Array<br>
+(<br>
+... SNIP ...<br>
+    [4] =&gt; Array<br>
+        (<br>
+            [type] =&gt; T_OPEN_PARENTHESIS<br>
+            [code] =&gt; 1004<br>
+            [content] =&gt; (<br>
+            [line] =&gt; 2<br>
+            [parenthesis_opener] =&gt; 4<br>
+            [parenthesis_closer] =&gt; 16<br>
+            [column] =&gt; 10<br>
+            [level] =&gt; 0<br>
+            [conditions] =&gt; Array<br>
+                (<br>
+                )</p>
+<p>)</p>
+<p>[5] =&gt; Array<br>
+        (<br>
+            [type] =&gt; T_OPEN_PARENTHESIS<br>
+            [code] =&gt; 1004<br>
+            [content] =&gt; (<br>
+            [line] =&gt; 2<br>
+            [parenthesis_opener] =&gt; 5<br>
+            [parenthesis_closer] =&gt; 11<br>
+            [column] =&gt; 11<br>
+            [level] =&gt; 0<br>
+            [conditions] =&gt; Array<br>
+                (<br>
+                )</p>
+<p>)<br>
+... SNIP ...<br>
+)</p>
+</section>
+<section>
+<h3>[2006-11-09 04:18 UTC] squiz at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>Thanks for the patch. Worked perfectly.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

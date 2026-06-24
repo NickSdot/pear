@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5735</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_Request2/index.html">HTTP_Request2</a> &#187; Bug #5735</h1>
+<p>No &quot;true&quot; timeout exists</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5735</th><td>No &quot;true&quot; timeout exists</td></tr>
+<tr><th>Submitted</th><td>2005-10-20 19:46 UTC</td></tr>
+<tr><th>From</th><td>seth at pricepages dot org</td></tr>
+<tr><th>Assigned</th><td>avb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_Request2/index.html">HTTP_Request2</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.0</td></tr>
+<tr><th>OS</th><td>Mac</td></tr>
+<tr><th>Roadmaps</th><td>0.2.0</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-20 19:46 UTC] seth at pricepages dot org</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m not sure if this is a bug or a feature request, but <br>
+although there exists two timeout options in HTTP_Request, <br>
+it can be delayed indefinitely.</p>
+<p>This is done by sending a little data at a time. The <br>
+documentation says:<br>
+&quot;timeout - Connection timeout in seconds&quot;<br>
+&quot;readTimeout - Timeout for reading / writing data over the <br>
+socket&quot;</p>
+<p>It seems to imply that there is a true way to limit the <br>
+connection time, but there is not. (Leading to some of my <br>
+pages taking a 22 seconds to render.)</p>
+<p>I think that the way to be the most BC would be to make a <br>
+third timeout option that limits the total time taken <br>
+(including connection time and redirects). This option could <br>
+be checked after each socket read. If requested, I could <br>
+implement this.</p>
+<p>Test script:<br>
+---------------<br>
+test.php:<br>
+&lt;?php<br>
+require_once(&#039;PEAR.php&#039;);<br>
+require_once(&#039;HTTP/Request.php&#039;);<br>
+$url = &#039;http://pricepages.org/pear/slow_page.php&#039;;<br>
+$req = new HTTP_Request($url, array(<br>
+			&#039;timeout&#039; =&gt; 2,<br>
+			&#039;readTimeout&#039; =&gt; array(2,0)));<br>
+$req-&gt;sendRequest();<br>
+?&gt;</p>
+<p>slow_page.php:<br>
+&lt;?php<br>
+sleep(1);</p>
+<p>ob_end_flush();<br>
+for($i = 0; $i &lt; 100; $i++){<br>
+	echo &quot;a big block of text, just rendered &quot;;<br>
+	flush();<br>
+	usleep(100000);<br>
+}</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+$ time php -f test.php</p>
+<p>real    0m2.000s<br>
+user    0m0.085s<br>
+sys     0m0.059s</p>
+<p>Actual result:<br>
+--------------<br>
+$ time php -f test.php</p>
+<p>real    0m12.258s<br>
+user    0m0.085s<br>
+sys     0m0.059s</p>
+</section>
+<section>
+<h3>[2005-11-08 05:17 UTC] seth at pricepages dot org</h3>
+<p>Would the best way to do this be to readAll() from the <br>
+socket in non-blocking mode and then after each read, check <br>
+the utime? (That is the best I can think of.)</p>
+<p>There would also need to be another option passed into the <br>
+constructor for the true timeout time. (Instead of the other <br>
+fake times :)</p>
+</section>
+<section>
+<h3>[2005-11-08 17:31 UTC] seth at pricepages dot org</h3>
+<p>Please excuse any of my ignorance, I haven&#039;t worked at the <br>
+socket level before. (Well, only once, and that was for a <br>
+Comp. Sci. class.)</p>
+<p>I think the problem that I am having with the listener is <br>
+that I don&#039;t see how the listener can respond to an expired <br>
+timeout. It can check the elapsed time, but it can&#039;t do <br>
+anything about it without changing the interface between the <br>
+Response and the Listener classes. Also, no ticks are called <br>
+during the reading of the header (from what I can tell from <br>
+the code).</p>
+<p>I suppose I could add a &quot;shouldEndRequest()&quot; method to the <br>
+Listener class that returns a boolean, but you run into <br>
+problems with multiple listeners, or calling <br>
+Request::getResponseBody <br>
+after a listener ends the request. It just seems like it <br>
+opens up a big can of unpredictable behavior.</p>
+<p>Also, how would the Listener deal with setting the socket&#039;s <br>
+timeout so the various Socket::readLine calls would return <br>
+at an appropriate time? Instead of shouldEndRequest, we <br>
+could use timeRemaining, and for each readLine call, set the <br>
+socket timeout to be the time returned from timeRemaining.</p>
+<p>The best way that I see it working is if the code is <br>
+located in the request and response classes.</p>
+<p>However, if you prefer shouldEndRequest or timeRemaining, <br>
+I&#039;d be willing to work on it.</p>
+</section>
+<section>
+<h3>[2006-10-11 11:01 UTC] lobbin at gmail dot com</h3>
+<p>This is related to a problem with readTimeout I&#039;m having.</p>
+<p>As far as I&#039;ve debugged this. HTTP_Request sets this on Net_Socket which uses stream_set_timeout , but something probably in Net_Socket or PHP makes the timeout not work, however, it works with the really small example available on stream_set_timeout manual page.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

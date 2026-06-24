@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3773</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #3773</h1>
+<p>Re: [PEAR-BUG] Bug #3773 [Ctl-&gt;Fbk]: PostgreSQL SERIAL type not supported</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3773</th><td>Re: [PEAR-BUG] Bug #3773 [Ctl-&gt;Fbk]: PostgreSQL SERIAL type not supported</td></tr>
+<tr><th>Submitted</th><td>2005-03-11 13:24 UTC</td></tr>
+<tr><th>From</th><td>ej dot grace at imperial dot ac dot uk</td></tr>
+<tr><th>Status</th><td>Suspended</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-11 13:24 UTC] ej dot grace at imperial dot ac dot uk</h3>
+<p>Description:<br>
+------------<br>
+[PREFIX]<br>
+This appears to have been mentioned in bug #57 Auto Sequence problem with PostgreSQL.  This bug report does however contain a workaround which may be useful.</p>
+<p>There appears to be a bug in DB::DataObject which causes the autoincrement of primary keys to use a different table to the default table created by PostgreSQL when specifying the SERIAL type.</p>
+<p>I suspect that the function -&gt;keys(), -&gt;sequenceKey() et al.  does not return the correct name of the primary key. For this reason the internal bits of DB::DataObject determine the sequence table to be [TABLENAME]_seq rather than the PostgreSQL default [TABLENAME]_[KEYNAME]_seq.</p>
+<p>This results in TWO sequence tables, one that is consulted when doing an explicit INSERT query, the other when using the -&gt;insert() member function.</p>
+<p>Needless to say these can (and do) clash.</p>
+<p>The workaround is as follows:</p>
+<p>Instead of using SERIAL, which implies</p>
+<p>colname integer DEFAULT nextval(&#039;tablename_colname_seq&#039;) NOT NULL</p>
+<p>Specify the key as:</p>
+<p>id BIGINT DEFAULT nextval(&#039;idclash_seq&#039;) NOT NULL</p>
+<p>This will mean -&gt;insert() and the pgsql INSERT command will use the same sequence key table.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Starting from a blank database:</p>
+<p>CREATE TABLE idclash (<br>
+  id SERIAL,<br>
+  PRIMARY KEY id<br>
+);</p>
+<p>Then at the psql command line do:</p>
+<p>INSERT INTO idclash (id) VALUES (default);<br>
+INSERT INTO idclash (id) VALUES (default);</p>
+<p>In a script call the insert member function:<br>
+-&gt;insert()<br>
+-&gt;insert()<br>
+-&gt;insert()</p>
+<p>Finally at the psql command line do</p>
+<p>INSERT INTO idclash (id) VALUES (default);<br>
+SELECT id FROM idclash;</p>
+<p>Expected result:<br>
+----------------<br>
+id | <br>
+----|<br>
+  1 |<br>
+  2 |<br>
+  3 |<br>
+  4 |<br>
+  5 |<br>
+  6 |<br>
+(6 rows)</p>
+<p>Actual result:<br>
+--------------<br>
+id |<br>
+----<br>
+ 1 |<br>
+ 2 |<br>
+ 3 |<br>
+(3 rows)</p>
+</section>
+<section>
+<h3>[2005-03-14 19:06 UTC] ej dot grace at imperial dot ac dot uk</h3>
+<p>&gt; the official fix for this is to define sequenceKey:</p>
+<p>That follows the advice given to me by Justin Patrin a developer on DataObject::FormBuilder. I think something is seriously broken as neither sequenceKey redefinitions work, DB::DataObject is still trying to get its sequence from the wrong sequence table.</p>
+<p>o.k. create table from scratch, dropping any sequences if they are defined</p>
+<p>DROP TABLE idclash;<br>
+DROP SEQUENCE idclash_seq;<br>
+DROP SEQUENCE idclash_id_seq;</p>
+<p>CREATE TABLE idclash (<br>
+	id SERIAL,<br>
+	PRIMARY KEY (id)<br>
+);</p>
+<p>Overload sequenceKey in Idclash.php such that it follows the same form as below:</p>
+<p>&gt; // for native postgres sequences.<br>
+&gt; function sequenceKey() { return array(&#039;colname&#039;, true); }</p>
+<p>function sequenceKey() {<br>
+  return array(&#039;id&#039;,true);<br>
+}</p>
+<p>Result of three -&gt;insert() operations</p>
+<p>ojdb=# SELECT last_value FROM idclash_seq ;<br>
+ last_value<br>
+------------<br>
+          3<br>
+(1 row)</p>
+<p>ojdb=# SELECT last_value FROM idclash_id_seq;<br>
+ last_value<br>
+------------<br>
+          1<br>
+(1 row)</p>
+<p>In other words it still creates the tablename_seq sequence and ignores the existing one.</p>
+<p>Likewise if I define it as:</p>
+<p>&gt; // for DB compatible postgres sequences.<br>
+&gt; function sequenceKey() { return array(&#039;colname&#039;, false,<br>
+&gt;&#039;tablename_colname_seq&#039;); }</p>
+<p>function sequenceKey() {<br>
+  return array(&#039;id&#039;,false,&#039;idclash_id_seq&#039;);<br>
+}</p>
+<p>This gives the same (wrong) result:</p>
+<p>ojdb=# SELECT last_value FROM idclash_seq ;<br>
+ last_value<br>
+------------<br>
+          3<br>
+(1 row)</p>
+<p>ojdb=# SELECT last_value FROM idclash_id_seq;<br>
+ last_value<br>
+------------<br>
+          1<br>
+(1 row)</p>
+<p>Version info:</p>
+<p>DB                        1.7.2    stable<br>
+DB_DataObject             1.7.7    stable</p>
+<p>Surely the sequenceKey() method should enquire from the database what the correct sequence is and use that?</p>
+<p>In case it is of any use the DataObject looks like this:</p>
+<p>&lt;?php<br>
+/**<br>
+ * Table Definition for idclash<br>
+ */<br>
+require_once &#039;DB/DataObject.php&#039;;</p>
+<p>class DataObjects_Idclash extends DB_DataObject <br>
+{<br>
+    ###START_AUTOCODE<br>
+    /* the code below is auto generated do not remove the above tag */</p>
+<p>var $__table = &#039;idclash&#039;;                         // table name<br>
+    var $id;                              // int4(4)  not_null default_nextval%28public.idclash_id_seq%29 primary_key</p>
+<p>/* ZE2 compatibility trick*/<br>
+    function __clone() { return $this;}</p>
+<p>/* Static get */<br>
+    function staticGet($k,$v=NULL) { return DB_DataObject::staticGet(&#039;DataObjects_Idclash&#039;,$k,$v); }</p>
+<p>/* the code above is auto generated do not remove the tag below */<br>
+    ###END_AUTOCODE</p>
+<p>function sequenceKey() {<br>
+    return array(&#039;id&#039;,false,&#039;idclash_id_seq&#039;);<br>
+  }</p>
+<p>}</p>
+<p>Regards,</p>
+<p>-ed</p>
+</section>
+<section>
+<h3>[2005-03-16 09:20 UTC] ej dot grace at imperial dot ac dot uk</h3>
+<p>My apologies.  Repeating the tests again I see I made an error:</p>
+<p>array(&#039;id&#039;,false,&#039;idclash_id_seq&#039;);</p>
+<p>Gives the correct behaviour.</p>
+<p>Just to reiterate, after a fresh recreation of the table and dropping of sequence tables, 6 -&gt;insert() opterations give the following with:</p>
+<p>return array(&#039;id&#039;,true), the result is bool(false).  idclash_id_seq.lastvalue = 1, idclash_seq does not exist:</p>
+<p>return array(&#039;id&#039;,false,&#039;idclash_id_seq&#039;), the result is string (&quot;1&quot;), (&quot;2&quot;) etc..  idclash_id_seq.lastvalue=6, idclash_seq does not exist.</p>
+<p>return array(&#039;id&#039;,true,&#039;idclash_id_seq&#039;), the result is <br>
+bool(false).  idclash_id_seq.lastvalue=1, idclash_seq does not exist.</p>
+<p>So, to reaffirm</p>
+<p>function sequenceKey() {<br>
+  return array(&#039;id&#039;,false,&#039;idclash_id_seq&#039;);<br>
+}</p>
+<p>*DOES* give the correct behaviour.</p>
+<p>Can this not be made the default behaviour for dataobjects when using postgres?  It seems silly to use the createTables.php script, only to have to overload each and every DO with the same type of function.</p>
+</section>
+<section>
+<h3>[2005-03-21 17:13 UTC] phil at africacomputing dot org</h3>
+<p>With the official fix to define sequenceKey with postgresql :</p>
+<p>function sequenceKey() { return array(&#039;colname&#039;, true); }</p>
+<p>insert works fine but there is now a problem with update operations :</p>
+<p>- without the fix : update OK, insert KO<br>
+- with the fix : update KO, insert OK</p>
+<p>ERROR: update: trying to perform an update without the key set, and argument to update is not DB_DATAOBJECT_WHEREADD_ONLY</p>
+<p>An idea ?</p>
+</section>
+<section>
+<h3>[2005-03-21 17:20 UTC] phil at africacomputing dot org</h3>
+<p>My apologies.</p>
+<p>I did an error in the colname : it&#039;s why insert operations are working and not update operations !</p>
+<p>;-)</p>
+</section>
+<section>
+<h3>[2005-05-10 16:44 UTC] ej dot grace at imperial dot ac dot uk</h3>
+<p>In my opinion the original bug is not fixed.  Surely sequenceKey() and its relatives should work out of the box for postgres?</p>
+</section>
+<section>
+<h3>[2005-06-27 08:40 UTC] ej dot grace at imperial dot ac dot uk</h3>
+<p>&gt; postgres has 2 ways to define sequences/serial etc.<br>
+&gt;<br>
+&gt; id SERIAL, -which doesnt work<br>
+&gt;<br>
+&gt; id default nextval(&#039;my_sequence&#039;) not null;  - which works.</p>
+<p>Indeed.  SERIAL is in fact an alias for</p>
+<p>DEFAULT nextval(&#039;tablename_colname_seq&#039;) not null</p>
+<p>&gt; If we support SERIAL, how do you get the last inserted id back from the<br>
+&gt; insert() call?</p>
+<p>I imagine in the same manner as it is done at the moment.</p>
+<p>$pgsql_key = $DB-&gt;getOne(&quot;SELECT last_value FROM &quot;.$seq);<br>
+ <br>
+I think the point is that it is getting the last_value from the wrong SEQUENCE!</p>
+<p>A more detailed (and possibly redundant) explanation follows..</p>
+<p>=======================================</p>
+<p>Ok, I should begin by saying I don&#039;t thoroughly know the inner workings of DataObject.php or its design philosophy, however I think the following stands to reason without this knowledge.</p>
+<p>What  I think is going wrong is that the case for pgsql is not functioning correctly in -&gt;insert() where the  <br>
+       <br>
+         <br>
+        // nativeSequences or Sequences..</p>
+<p>// big check for using sequences</p>
+<p>section occurs.  For this reason I think it picks up the wrong sequence name, e.g. from :</p>
+<p>case &#039;pgsql&#039;:<br>
+                        if (!$seq) {<br>
+                            $seq = $DB-&gt;getSequenceName($this-&gt;__table );<br>
+                        }<br>
+                        $pgsql_key = $DB-&gt;getOne(&quot;SELECT last_value FROM &quot;.$seq);<br>
+                        if (PEAR::isError($pgsql_key)) {<br>
+                            $this-&gt;raiseError($r);<br>
+                            return false;<br>
+                        }</p>
+<p>My reason for this line of thought is the following:</p>
+<p>If I define a table key as SERIAL the DataObject code (incorrectly) creates a sequence table named:</p>
+<p>table_seq</p>
+<p>e.g. person_seq</p>
+<p>it if does not exist which DataObject uses to keep track of sequences, whereas for SERIAL postgres defines the sequence:</p>
+<p>table_column_seq</p>
+<p>e.g. person_id_seq</p>
+<p>which *it* uses to keep track of IDs.  The fact that there can be two separate sequences relating to the same table and key is what causes the mismatch between -&gt;insert() and INSERT.</p>
+<p>If one can make the DataObject use the correct sequence, i.e. table_column_seq instead of table_seq then it will behave in a consistent manner with the SQL INSERT.</p>
+<p>This is why defining the automatically incrementing key with:</p>
+<p>CREATE TABLE tablename (<br>
+       id BIGINT DEFAULT nextval(&#039;tablename_seq&#039;) NOT NULL,<br>
+..<br>
+..<br>
+..<br>
+);</p>
+<p>works.  Since it forces Postgres to generate a sequence called tablename_seq, which is the same sequence DataObjects will use to keep track of keys.  Rather than tablename_id_seq which is what would be generated using SERIAL as the type.</p>
+<p>After all SERIAL is just an alias for</p>
+<p>BIGINT DEFAULT nextval(&#039;tablename_colname_seq&#039;) NOT NULL</p>
+<p>in postgres.</p>
+<p>-ed</p>
+</section>
+<section>
+<h3>[2006-10-13 12:21 UTC] mcraig at leadehealth dot com</h3>
+<p>I&#039;ve been working with sequences in PostgreSQL &gt;=7.4.7 and a modified DataObject for about 2 years without problems. The whole problem is in DB with the sequence code.  (Sorry I never got the fix in.  I submitted a change once but the version had bumped up a few times and my patch was no longer usable.)</p>
+<p>Regardless of using &quot;SERIAL&quot; or &quot;nextval(...)&quot; in the create table command, Postgres keeps the string &quot;DEFAULT nextval(...)&quot; in the schema definition and it is easy for DataObject to use it correctly.</p>
+<p>I will submit a patch for this against the most current version of DataObject because there is also a fix in there for a race condition against selecting nextval from the sequence.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

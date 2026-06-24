@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5859</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #5859</h1>
+<p>New renderer driver interface</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5859</th><td>New renderer driver interface</td></tr>
+<tr><th>Submitted</th><td>2005-11-03 21:23 UTC</td></tr>
+<tr><th>From</th><td>olivierg at php dot net</td></tr>
+<tr><th>Assigned</th><td>wiesemann</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-03 21:23 UTC] olivierg at php dot net</h3>
+<p>Description:<br>
+------------<br>
+In bug #5298, Mark Wiesemann and I agreed that, for more flexibility and coherence, the rendering layer needs to be rewritten.</p>
+<p>The main idea is to define a new renderer driver interface to make it easy for people to adapt Structures_DataGrid to their own need.</p>
+<p>Additionally, in bug #5858, Helgi Þormar suggested to split Structures_DataGrid drivers apart, as in the MDB2 package.</p>
+<p>I think that this is a very good idea, because in the current situation Structures_DataGrid will only get stable when every driver is stable. That means we need to refuse new drivers if we want to reach stable, which is pretty sad.</p>
+<p>Both of these discussions have one common point : defining a new renderer driver interface.</p>
+<p>In this regard, the challenge is to avoid design mistakes,  keeping in mind that we&#039;re into pure MVC :<br>
+- Controller = Structures_DataGrid<br>
+- View = Renderer driver<br>
+- Model = DataSource driver</p>
+<p>Last but not least, Structures_DataGrid is beta, so backward compatibility is important.</p>
+</section>
+<section>
+<h3>[2005-11-03 22:12 UTC] asnagy at php dot net</h3>
+<p>Can you please explain your goals in terms of refactoring the renderer?  It sounds like a good idea, but I am curious as to how you plan to do this as the renderers are already abstracted with an Abstract Base Class.</p>
+<p>While on the topic of refactoring, it might be good to look at other components such as how the SDG class extends the SDG_Render class with then extends the SDG_Core class.  I did this to abstract the different parts of the class for easier maintainability however, all methods are accesible from 1 class.  This might be good to revisit and implement some sort of object pattern.</p>
+<p>Please explain your goals in more detail for commenting.</p>
+</section>
+<section>
+<h3>[2005-11-03 22:15 UTC] asnagy at php dot net</h3>
+<p>Oops, I was thinking of the data source class.  The renderer should definitly have an abstract base class to work from.</p>
+</section>
+<section>
+<h3>[2005-11-03 22:38 UTC] olivierg at php dot net</h3>
+<p>Indeed, the renderer layer needs an abstract driver class. Calling column formatters has nothing to do with renderer drivers, and should happen inside this abstract class.</p>
+<p>And, the renderer driver interface must be clarified for users to be able to write/adapt drivers easily.</p>
+<p>Something like :<br>
+class Renderer_FooBar extends Renderer<br>
+{<br>
+function header($labels) {}<br>
+function row($content) {}<br>
+function footer() {} // optional<br>
+}</p>
+<p>should be fine. A user could for example overload the header() method of the Renderer_HTMLTable driver, while leaving the row() method untouched. See bug #5298 for more on this. Currently the driver interface consists in one render() method where everything is mixed up. That is not flexible.</p>
+<p>I completely agree on the problem of the DataGrid extending the Renderer extending the Core. It is well known that big class trees eat memory in PHP, and this hierarchy is useless.</p>
+<p>The solution is to move everything from the Core and the Renderer into the DataGrid. The Core would disappear, and the Renderer, now empty, could become the driver abstract class.</p>
+<p>So, to answer you first question, my goals are : clarification, flexibility, optimization and, by splitting drivers apart (thanks Helgi), maintainability.</p>
+<p>AFAICS this refactoring shouldn&#039;t cause any major BC break.</p>
+</section>
+<section>
+<h3>[2005-11-04 17:09 UTC] asnagy at php dot net</h3>
+<p>So how do you see the render method working?  Does it call the header, row and footer methods?  With the the HTML table renderer, it builds the header, body and footer into an HTML_Table object then you can access the resulting object via the getTable method, you get to the html via the toHTML method or you can just print it via the render method.  How would this transfer over to the new model?</p>
+</section>
+<section>
+<h3>[2005-11-16 10:02 UTC] post at mark-wiesemann dot de</h3>
+<p>Late, but not too late, here are some opinions from me:</p>
+<p>- render() should behave the way it behaves now, i.e. in the HTMLTable renderer it will output the whole table and therefore call the methods Olivier described: header(), row() and footer().<br>
+If people (like me) want now to have custom header and footer rows they can extend this renderer class and overload header() and footer()</p>
+<p>- Regarding the renderer class: it should not extend the main class, but there should a base class that the renderers extend from. render() (calling the render() method in the chosen renderer) should be available in the main class for users comfort and for BC reasons.</p>
+<p>- The package split should be done like in MDB2, so there will be new packages like Structures_DataGrid_Renderer_XLS, Structures_DataGrid_Renderer_HTMLTable, Structures_DataGrid_Renderer_XML, ... and Structures_DataGrid_DataSource_DB, Structures_DataGrid_DataSource_DBQuery, Structures_DataGrid_DataSource_Array, ... including all the checks that MDB2 does (cp. factory method in MDB2/MDB2.php).</p>
+<p>With this, there won&#039;t be any BC breaks, but a lot more flexibility for using and extending SDG.</p>
+</section>
+<section>
+<h3>[2005-12-05 08:44 UTC] contact at demental dot info</h3>
+<p>Hi all,<br>
+Just to say I made a temporary workaround for those like <br>
+me who want to render structures_datagrid thru a template <br>
+engine like smarty. It&#039;s <br>
+Structures_Datagrid_Renderer_Array, you can get it on my <br>
+website. I didn&#039;t want to propose it to integrate to the <br>
+current sdg release for the simple reason that I knew the <br>
+refactoring was about to be done regarding the rendering <br>
+system.<br>
+Anyway it seems obvious to me that the an array renderer <br>
+would be needed in the next release, or as a separate <br>
+package depending on what you decide.<br>
+The main purpose for this class was to have a renderer <br>
+that would make a result similar to what is done with the <br>
+array renderer used in HTML_QuickForm. IMHO the next <br>
+release of structures_datagrid, while keeping the current <br>
+API, should strongly inspire from HTML_QuickForm <br>
+rendering API so that for the many projects that are <br>
+mainly database frontends, the use of both SDG and QF in <br>
+the same rendering environment sounds coherent.<br>
+PS : the Structures_DataGrid_Renderer_Array I wrote is a <br>
+patch made from Structures_DataGrid_Renderer_HTMLTable, <br>
+in my version I removed the header comments because I was <br>
+not sure what to put in while it&#039;s not part of the SDG <br>
+package. What do you think about this, should I at least <br>
+declare the original author and myself, the package, the <br>
+licence ?</p>
+</section>
+<section>
+<h3>[2005-12-14 23:10 UTC] olivierg at php dot net</h3>
+<p>Hi,</p>
+<p>Thank you for your comment, this array renderer seems very useful indeed.</p>
+<p>I have just started to rearrange the core classes, merging DataGrid, DataGrid_Core, and DataGrid_Renderer (in CVS), as Andrew and I agreed (see above). The Structures_DataGrid_Renderer class is now becoming the Renderer drivers&#039; base class. It should soon be easier to write a such Array driver.</p>
+<p>No, you can&#039;t wipe the copyright header this way. Article number 1 in the PHP license is : &quot;Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.&quot;</p>
+<p>It does not matter wether this file is part of SDG or not. You can modify it, use it in some other software, sell it, etc, provided that you keep the header and copyright. Simply add your name to the list of authors.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2102</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #2102</h1>
+<p>render -&gt; toHtml() or add getTable() method</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #2102</th><td>render -&gt; toHtml() or add getTable() method</td></tr>
+<tr><th>Submitted</th><td>2004-08-10 13:18 UTC</td></tr>
+<tr><th>From</th><td>bmansion at mamasam dot com</td></tr>
+<tr><th>Assigned</th><td>asnagy</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>OSX</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-10 13:18 UTC] bmansion at mamasam dot com</h3>
+<p>Description:<br>
+------------<br>
+I wish there was a getTable() method in Structures_DataGrid_Renderer_HTMLTable.</p>
+<p>IMO, the render() method should be changed to execute the rendering operation only, not to output HTML.</p>
+<p>Ususally, method that output html are called toHtml(), this is a de facto standard for PEAR classes.</p>
+<p>function &amp;getTable()<br>
+{<br>
+  if ($this-&gt;_rendered) {<br>
+    return $this-&gt;_table;<br>
+  }<br>
+  $this-&gt;_dg = &amp;$dg;<br>
+  // Define Table Header<br>
+  if ($this-&gt;header) {<br>
+    $this-&gt;_buildHTMLTableHeader();<br>
+  }<br>
+  // Build Table Data<br>
+  $this-&gt;_buildHTMLTableBody();<br>
+  // Define Alternating Row attributes<br>
+  $this-&gt;_table-&gt;altRowAttributes(1,                                      <br>
+    $this-&gt;evenRowAttributes,                                   <br>
+    $this-&gt;oddRowAttributes,<br>
+    TRUE);<br>
+  $this-&gt;_rendered = true;<br>
+  return $this-&gt;_table;<br>
+}</p>
+<p>function render(&amp;$dg)<br>
+{<br>
+  $table =&amp; $this-&gt;getTable($dg);<br>
+  return $table-&gt;toHtml();<br>
+}</p>
+<p>And render() should be called toHtml().</p>
+<p>Why that ? Because there are time when you want to modify the table structure yourself once it has been filled by SDG. For example to add a total row at the bottom of it.</p>
+</section>
+<section>
+<h3>[2004-08-10 14:01 UTC] asnagy at webitecture dot org</h3>
+<p>This is now fixed in CVS.  Please take a look and let me know if you agree with the changes.</p>
+<p>I changed the render method to print the HTML and added a toHTML method for returning the HTML string as well as a getTable method.</p>
+<p>Thanks for the help!</p>
+</section>
+<section>
+<h3>[2004-08-10 14:39 UTC] bmansion at mamasam dot com</h3>
+<p>In my comments, I added a new instance variable called $_rendered set by default to false, this to make sure that the table is not rendered twice by successive calls to render() and the like. Don&#039;t you think it is useful, I didn&#039;t see it in your commits.</p>
+<p>Another thing, I think you should return the table by reference (add &amp; in front of getTable()) so that the table returned is not a copy (better for memory and might be useful for other manipulations later). Don&#039;t you agree ?</p>
+</section>
+<section>
+<h3>[2004-08-10 14:54 UTC] asnagy at webitecture dot org</h3>
+<p>I added the return by reference, thanks for catching that.</p>
+<p>I also added the rendered switch, I like the idea, I am just concerned that it could have a bad side effect.  It&#039;s like caching, with no way to flush the cache.  Maybe a setRendered method might be appropriate?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

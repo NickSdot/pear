@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4623</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Configuration &#187; <a href="package/Config/index.html">Config</a> &#187; Bug #4623</h1>
+<p>Apache container breaks on sections with arguments</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-06-18 04:15 UTC</td></tr>
+<tr><th>From</th><td>matt at conundrum dot com</td></tr>
+<tr><th>Assigned</th><td>aashley</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Config/index.html">Config</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>any</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-18 04:15 UTC] matt at conundrum dot com</h3>
+<p>Description:<br>
+------------<br>
+the Apache container is unable to handle standard apache sections which contain arguments, such as &lt;Virtualhost foo.com&gt; or &lt;Directory /path&gt;</p>
+<p>for example, given the file &quot;test_in.conf&quot;:<br>
+&lt;VirtualHost 127.0.0.1&gt;<br>
+  ServerName www.foo.com<br>
+&lt;/VirtualHost&gt;</p>
+<p>&lt;Directory /path/to/foo&gt;<br>
+  Limit GET<br>
+&lt;/Directory&gt;</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+require_once(&#039;Config.php&#039;);<br>
+$conf = new Config;<br>
+$root =&amp; $conf-&gt;parseConfig(&#039;./test_in.conf&#039;, &#039;Apache&#039;);<br>
+echo $root-&gt;toString(&#039;Apache&#039; );<br>
+$conf-&gt;writeConfig(&#039;./test_out.conf&#039;, &#039;Apache&#039; );<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;VirtualHost 127.0.0.1&gt;<br>
+  ServerName www.foo.com<br>
+&lt;/VirtualHost&gt;</p>
+<p>&lt;Directory /path/to/foo&gt;<br>
+  Limit GET<br>
+&lt;/Directory&gt;</p>
+<p>test_out.conf should be identical to test_in.conf</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;VirtualHost 127.0.0.1&gt;<br>
+  ServerName www.foo.com<br>
+&lt;/VirtualHost&gt;</p>
+<p>&lt;Directory /path/to/foo&gt;<br>
+  Limit GET<br>
+&lt;/Directory&gt;</p>
+<p>test_out.conf is missing data:</p>
+<p>&lt;VirtualHost&gt;<br>
+  ServerName www.foo.com<br>
+&lt;/VirtualHost&gt;</p>
+<p>&lt;Directory&gt;<br>
+  Limit GET<br>
+&lt;/Directory&gt;</p>
+<p>Given that the toString output is correct, but the data saved to test_out.conf is not, I suspect the problem is in writeConfig</p>
+</section>
+<section>
+<h3>[2005-12-19 08:03 UTC] aashley at php dot net</h3>
+<p>Problem is related to use of each in Config_Container_Apache::toString(). You would experience the same problem doing:</p>
+<p>echo $root-&gt;toString(&#039;Apache&#039; );<br>
+echo $root-&gt;toString(&#039;Apache&#039; );</p>
+<p>Replaced it with a foreach to fix problem.<br>
+http://www.adamashley.name/stuff/config-apache-container.patch</p>
+</section>
+<section>
+<h3>[2005-12-24 02:34 UTC] aashley at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

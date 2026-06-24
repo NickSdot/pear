@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8301</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_Barcode/index.html">Image_Barcode</a> &#187; Bug #8301</h1>
+<p>Not compatible with Safe Mode</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-07-27 02:02 UTC</td></tr>
+<tr><th>From</th><td>alan dot levee at prometheus-designs dot net</td></tr>
+<tr><th>Assigned</th><td>cweiske</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Image_Barcode/index.html">Image_Barcode</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Debian GNU/Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-27 02:02 UTC] alan dot levee at prometheus-designs dot net</h3>
+<p>Description:<br>
+------------<br>
+The Pear package Image_Barcode uses coding in it&#039;s function Image_Barcode::draw() which causes problems with people running PHP in Safe Mode.</p>
+<p>This is because the function uses opendir() and closedir() to validate if a dependancy is required rather than more safer checks such as MDB2::filExists() and MDB2::loadFile() which uses fopen and fclose to check the validatity of a file. To solve this issue I&#039;ve made the following patch.</p>
+<p>This was just a quick patch not a very thorough one but you&#039;re welcome to modify it to something a bit more organised similar to that of the two functions from MDB2 listed above.</p>
+<p>Test script:<br>
+---------------<br>
+--- Barcode.php.new 2006-07-26 20:55:29.000000000 -0500<br>
++++ Barcode.php 2006-07-26 20:41:30.000000000 -0500<br>
+@@ -62,13 +62,17 @@</p>
+<p>// Check if include file exists<br>
+         $barcodepath = PEAR_INSTALL_DIR . DIRECTORY_SEPARATOR . &quot;Image&quot; . DIRECTORY_SEPARATOR . &quot;Barcode&quot;;<br>
+-        $barcodefile = &#039;/&#039;.$type.&#039;.php&#039;;<br>
+         $supportedtypes = array();<br>
+-<br>
+-        $fp = fopen($barcodepath.$barcodefile, &#039;r&#039;, true);<br>
++        if ( $incdir = opendir($barcodepath) ) {<br>
++            while ( false != ( $avaiabletype = readdir($incdir) ) ) {<br>
++                if ( strstr($avaiabletype, &quot;.php&quot;) ) {<br>
++                    $supportedtypes[] = $avaiabletype;<br>
++                }<br>
++            }<br>
++            closedir($incdir);<br>
++        }</p>
+<p>-        if (is_resource($fp)) {<br>
+-            fclose($fp);<br>
++        if ( in_array($type . &quot;.php&quot;, $supportedtypes) ) {<br>
+             include_once(&quot;Image/Barcode/${type}.php&quot;);<br>
+         } else {<br>
+             return PEAR::raiseError(&quot;$type barcode is not supported&quot;);</p>
+<p>Expected result:<br>
+----------------<br>
+The expected result is that it should generate the image of the desired barcode but instead throws a Safe Mode Exception error instead due to the use of opendir() and closedir() rather than fopen() and fclose() similar to that of MDB2::filExists() and MDB2::loadFile()</p>
+<p>Actual result:<br>
+--------------<br>
+PHP Warning:  opendir(/usr/share/php/Image/Barcode) [function.opendir] failed to open dir: Success in /usr/share/php/Image/Barcode.php on line 66</p>
+</section>
+<section>
+<h3>[2006-07-27 02:03 UTC] alan dot levee at prometheus-designs dot net</h3>
+<p>First patch was generated wrong. Here is the correct patch<br>
+--- Barcode.php 2006-07-26 20:41:30.000000000 -0500<br>
++++ Barcode.php.new 2006-07-26 20:55:29.000000000 -0500<br>
+@@ -62,17 +62,13 @@</p>
+<p>// Check if include file exists<br>
+         $barcodepath = PEAR_INSTALL_DIR . DIRECTORY_SEPARATOR . &quot;Image&quot; . DIRECTORY_SEPARATOR . &quot;Barcode&quot;;<br>
++        $barcodefile = &#039;/&#039;.$type.&#039;.php&#039;;<br>
+         $supportedtypes = array();<br>
+-        if ( $incdir = opendir($barcodepath) ) {<br>
+-            while ( false != ( $avaiabletype = readdir($incdir) ) ) {<br>
+-                if ( strstr($avaiabletype, &quot;.php&quot;) ) {<br>
+-                    $supportedtypes[] = $avaiabletype;<br>
+-                }<br>
+-            }<br>
+-            closedir($incdir);<br>
+-        }<br>
++<br>
++        $fp = fopen($barcodepath.$barcodefile, &#039;r&#039;, true);</p>
+<p>-        if ( in_array($type . &quot;.php&quot;, $supportedtypes) ) {<br>
++        if (is_resource($fp)) {<br>
++            fclose($fp);<br>
+             include_once(&quot;Image/Barcode/${type}.php&quot;);<br>
+         } else {<br>
+             return PEAR::raiseError(&quot;$type barcode is not supported&quot;);</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

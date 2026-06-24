@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1877</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Configuration &#187; <a href="package/Config/index.html">Config</a> &#187; Bug #1877</h1>
+<p>XML not well formed</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #1877</th><td>XML not well formed</td></tr>
+<tr><th>Submitted</th><td>2004-07-14 19:30 UTC</td></tr>
+<tr><th>From</th><td>phperror at mail dot linkas dot it</td></tr>
+<tr><th>Assigned</th><td>aashley</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Config/index.html">Config</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.7</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-14 19:30 UTC] phperror at mail dot linkas dot it</h3>
+<p>Description:<br>
+------------<br>
+If you read an XML file (well formed) with a structure like RSS (which has multiple &lt;item&gt; tags):<br>
+1) You will not get the same XML on re-rewriting down it<br>
+2) The XML is not well formed</p>
+<p>Reproduce code:<br>
+---------------<br>
+$vecchio_rss = new Config();<br>
+$root =&amp; $vecchio_rss-&gt;parseConfig(&#039;home.xml&#039;,&#039;xml&#039;,array());<br>
+$dati=$root-&gt;toArray();</p>
+<p>$nuovo_rss = new Config();<br>
+$nuovi =&amp;$nuovo_rss-&gt;parseConfig($dati,&quot;phparray&quot;,array());<br>
+$erro=$nuovo_rss-&gt;writeConfig(&#039;home2.xml&#039;,&#039;xml&#039;,array());</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;item&gt;hello&lt;/item&gt;<br>
+&lt;item&gt;hello2&lt;/item&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;item&gt;<br>
+&lt;0&gt;hello&lt;/0&gt;<br>
+&lt;1&gt;hello2&lt;/1&gt;<br>
+&lt;/item&gt;</p>
+<p>which is not well formed and not the same as the one read this because of the transformation into an array.</p>
+<p>How to solve:<br>
+the writeConfig should &#039;compress&#039; the structure when writing xml data imported from phparray structure</p>
+</section>
+<section>
+<h3>[2004-08-20 10:47 UTC] bat at flurf dot net</h3>
+<p>Certainly true.  I think an array that has only numeric indices should be converted to something like:</p>
+<p>$muppets = array(&#039;Kermit&#039;,&#039;Fozzie&#039;,&#039;Ralph&#039;);</p>
+<p>&lt;muppets type=&quot;numeric-index-array&quot;&gt;<br>
+  &lt;item index=&quot;0&quot;&gt;Kermit&lt;/item&gt;<br>
+  &lt;item index=&quot;1&quot;&gt;Fozzie&lt;/item&gt;<br>
+  &lt;item index=&quot;2&quot;&gt;Ralph&lt;/item&gt;<br>
+&lt;/muppets&gt;</p>
+<p>Note that muppets/@type and item/@index are set to make it easier to read the data back in reliably.</p>
+<p>Of course, I&#039;m new to this, having just started looking at PEAR, so I may be wrong about how well this fits in with the existing software.</p>
+</section>
+<section>
+<h3>[2005-01-12 02:25 UTC] scragz at hotmail dot com</h3>
+<p>Okay, this bug was really messing me up since I need to convert between PHP arrays and XML, so I banged this patch out. I&#039;ve been up coding for way too long and I&#039;m sure it&#039;s totally ridiculous, absolutely the wrong way to go about it, and it probably breaks something else ... but maybe someone can use it as a starting point for a proper patch and it works for my application in any case.</p>
+<p>Note that this may wrap when it is output.</p>
+<p>$ svn diff XML.php<br>
+Index: XML.php<br>
+===================================================================<br>
+--- XML.php     (revision 162)<br>
++++ XML.php     (working copy)<br>
+@@ -173,6 +173,8 @@<br>
+     function toString(&amp;$obj)<br>
+     {<br>
+         static $deep = -1;<br>
++        static $sectionPath = array();<br>
++        static $sectionOpen = array();<br>
+         $indent = &#039;&#039;;<br>
+         if (!$obj-&gt;isRoot()) {<br>
+             // no indent for root<br>
+@@ -206,12 +208,30 @@<br>
+                 break;<br>
+             case &#039;section&#039;:<br>
+                 if (!$obj-&gt;isRoot()) {<br>
+-                    $string = $indent.&#039;&lt;&#039;.$obj-&gt;name;<br>
+-                    $string .= ($this-&gt;options[&#039;useAttr&#039;]) ? XML_Util::attributesToString($obj-&gt;attributes) : &#039;&#039;;<br>
++                    if (!is_int($obj-&gt;name)) {<br>
++                        $string = $indent.&#039;&lt;&#039;.$obj-&gt;name;<br>
++                        $string .= ($this-&gt;options[&#039;useAttr&#039;]) ? XML_Util::attributesToString($obj-&gt;attributes) : &#039;&#039;;<br>
++                    } else {<br>
++                        $deep--;<br>
++                        $indent = str_repeat($this-&gt;options[&#039;indent&#039;], $deep);<br>
++                        if (!$sectionOpen[count($sectionOpen) - 1]) {<br>
++                            $sectionOpen[count($sectionOpen) - 1] = true;<br>
++                        } else {<br>
++                            $currentSection = $sectionPath[count($sectionPath) - 1];<br>
++                            if ($currentSection) {<br>
++                                $string .= $indent.&#039;&lt;/&#039;.$currentSection.&#039;&gt;&#039;.$this-&gt;options[&#039;linebreak&#039;];<br>
++                                $string .= $indent.&#039;&lt;&#039;.$currentSection.&#039;&gt;&#039;.$this-&gt;options[&#039;linebreak&#039;];<br>
++                            }<br>
++                        }<br>
++                    }<br>
+                 }<br>
+                 if ($children = count($obj-&gt;children)) {<br>
+                     if (!$obj-&gt;isRoot()) {<br>
+-                        $string .= &#039;&gt;&#039;.$this-&gt;options[&#039;linebreak&#039;];<br>
++                        if (!is_int($obj-&gt;name)) {<br>
++                            $sectionPath[] = $obj-&gt;name;<br>
++                            $sectionOpen[] = false;<br>
++                            $string .= &#039;&gt;&#039;.$this-&gt;options[&#039;linebreak&#039;];<br>
++                        }<br>
+                     }<br>
+                     for ($i = 0; $i &lt; $children; $i++) {<br>
+                         $string .= $this-&gt;toString($obj-&gt;getChild($i));<br>
+@@ -219,7 +239,13 @@<br>
+                 }<br>
+                 if (!$obj-&gt;isRoot()) {<br>
+                     if ($children) {<br>
+-                        $string .= $indent.&#039;&lt;/&#039;.$obj-&gt;name.&#039;&gt;&#039;.$this-&gt;options[&#039;linebreak&#039;];<br>
++                        if (!is_int($obj-&gt;name)) {<br>
++                            $string .= $indent.&#039;&lt;/&#039;.$obj-&gt;name.&#039;&gt;&#039;.$this-&gt;options[&#039;linebreak&#039;];<br>
++                            array_pop($sectionPath);<br>
++                            array_pop($sectionOpen);<br>
++                        } else {<br>
++                            $deep++;<br>
++                        }<br>
+                     } else {<br>
+                         $string .= &#039;/&gt;&#039;.$this-&gt;options[&#039;linebreak&#039;];<br>
+                     }</p>
+</section>
+<section>
+<h3>[2005-04-01 23:34 UTC] ryansking at mac dot com</h3>
+<p>Ok, forgive me for ignoring this bug for so long, but <br>
+I&#039;m kinda confused by it.</p>
+<p>Why use Config to read something like RSS? Why not just <br>
+XML_Serializer?</p>
+</section>
+<section>
+<h3>[2005-04-10 20:52 UTC] scragz at hotmail dot com</h3>
+<p>Not RSS, but something _like_ RSS that has multiple sibling tags with the same name. For example, here is part one of my system&#039;s main conf files:</p>
+<p>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;<br>
+&lt;conf&gt;<br>
+    &lt;website&gt;<br>
+        &lt;!-- settings for 1st site --&gt;<br>
+    &lt;/website&gt;<br>
+    &lt;website&gt;<br>
+        &lt;!-- settings for 2nd site --&gt;<br>
+    &lt;/website&gt;<br>
+    &lt;!-- etc. --&gt;<br>
+&lt;/conf&gt;</p>
+<p>Send that to a PHP array and back to XML with Conf, and it ends up like the OP described:</p>
+<p>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;<br>
+&lt;conf&gt;<br>
+    &lt;website&gt;<br>
+        &lt;0&gt;<br>
+            &lt;!-- settings for 1st site --&gt;<br>
+        &lt;/0&gt;<br>
+        &lt;1&gt;<br>
+            &lt;!-- settings for 2nd site --&gt;<br>
+        &lt;/1&gt;<br>
+    &lt;/website&gt;<br>
+&lt;/conf&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

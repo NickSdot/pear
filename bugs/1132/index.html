@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1132</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #1132</h1>
+<p>Fails to decode attachements with BASE64</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-05 03:33 UTC</td></tr>
+<tr><th>From</th><td>shaun at aegisdesign dot co dot uk</td></tr>
+<tr><th>Assigned</th><td>sean</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-05 03:33 UTC] shaun at aegisdesign dot co dot uk</h3>
+<p>Description:<br>
+------------<br>
+Sony Ericsson T610 mobile phones send email with <br>
+attachments encoded <br>
+with uppercase &#039;BASE64&#039; instead of &#039;base64&#039;...</p>
+<p>eg..</p>
+<p>----_MULTIPART_BOUNDARY_189F42D57FDCBA93<br>
+Content-Type: TEXT/PLAIN;<br>
+        charset=&quot;ISO-8859-1&quot;<br>
+Content-Transfer-Encoding: QUOTED-PRINTABLE</p>
+<p>Try this picture<br>
+----_MULTIPART_BOUNDARY_189F42D57FDCBA93<br>
+Content-Type: IMAGE/JPEG;<br>
+        name=&quot;picture(4).jpg&quot;<br>
+Content-Disposition: attachment;<br>
+        filename=&quot;picture(4).jpg&quot;<br>
+Content-Transfer-Encoding: BASE64</p>
+<p>In mimeDecode.php, function _decodeBody</p>
+<p>change the switch to...</p>
+<p>switch (strtolower($encoding)) {</p>
+<p>and it will decode the attachments correctly.</p>
+</section>
+<section>
+<h3>[2004-05-19 18:41 UTC] pear at woeitje dot com</h3>
+<p>i had the same problem, spend some hours looking for the bug :(</p>
+<p>i added the <br>
+switch (strtolower($encoding)) <br>
+as well =&gt; problem solved</p>
+<p>btw, thanks for the nice class ;)</p>
+</section>
+<section>
+<h3>[2004-06-04 13:20 UTC] domi at saargate dot de</h3>
+<p>I can only confirm this problem. To make the needed change more explizit, here is a patch:</p>
+<p>--- mimeDecode.php.orig Fri Jun  4 15:29:00 2004<br>
++++ mimeDecode.php      Fri Jun  4 15:29:04 2004<br>
+@@ -522,7 +522,7 @@<br>
+      */<br>
+     function _decodeBody($input, $encoding = &#039;7bit&#039;)<br>
+     {<br>
+-        switch ($encoding) {<br>
++        switch (strtolower($encoding)) {<br>
+             case &#039;7bit&#039;:<br>
+                 return $input;<br>
+                 break;</p>
+</section>
+<section>
+<h3>[2004-12-07 20:53 UTC] sean at caedmon dot net</h3>
+<p>http://rfc.net/rfc2045.html#p14</p>
+<p>Indicates that this field is case-insensitive.</p>
+<p>S</p>
+</section>
+<section>
+<h3>[2004-12-07 21:06 UTC] sean at caedmon dot net</h3>
+<p>Was fixed by Urs Gehrig in 1.37<br>
+http://cvs.php.net/co.php/pear/Mail_Mime/mimeDecode.php?r=1.37</p>
+<p>S</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2905</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #2905</h1>
+<p>Proxy generation parse error</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-12-06 07:30 UTC</td></tr>
+<tr><th>From</th><td>dst at dmc dot de</td></tr>
+<tr><th>Assigned</th><td>chagenbu</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.2</td></tr>
+<tr><th>OS</th><td>WinXP / Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-06 07:30 UTC] dst at dmc dot de</h3>
+<p>Description:<br>
+------------<br>
+Testing the 0.8.1 release caused a parse error in the evaluated code of the generated proxyclass. The WSDL used was the eCommerce Service Version 4 of Amazon.de (ECS4).</p>
+<p>Detailed information about ECS4 can be obtained under http://webservices.amazon.com/</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+  require_once(&#039;SOAP/Client.php&#039;);</p>
+<p>$wsdl = &#039;http://webservices.amazon.com/AWSECommerceService/US/AWSECommerceService.wsdl&#039;;<br>
+  $proxyParams = array(<br>
+    &#039;proxy_host&#039; =&gt; &#039;define.proxy.here.com&#039;,<br>
+    &#039;proxy_port&#039; =&gt; 3128,<br>
+  );</p>
+<p>$wsdl  = new SOAP_WSDL($wsdl, $proxyParams);<br>
+  $proxy = $wsdl-&gt;getProxy();</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+A valid proxyclass.</p>
+<p>Actual result:<br>
+--------------<br>
+Parse error: syntax error, unexpected &#039;:&#039;, expecting &#039;)&#039; in C:\Programme\php5\PEAR\SOAP\WSDL.php(614) : eval()&#039;d code on line 259</p>
+<p>Fatal error: Class &#039;WebService_AWSECommerceService_AWSECommerceServicePort&#039; not found in C:\Programme\php5\PEAR\SOAP\WSDL.php on line 617</p>
+</section>
+<section>
+<h3>[2005-02-08 13:33 UTC] pear dot php dot net at johntoews dot com</h3>
+<p>The eval-ed code causing the issue is below. It seems to have to do with the &quot;tns:&quot; in the variable names. I am not familiar enough with PHP to know whether &quot;:&quot; is valid...</p>
+<p>function &amp;MultiOperation($tns:Help, $tns:ItemSearch, $tns:ItemLookup, $tns:ListSearch, $tns:ListLookup, $tns:CustomerContentSearch, $tns:CustomerContentLookup, $tns:SimilarityLookup, $tns:SellerLookup, $tns:CartGet, $tns:CartAdd, $tns:CartCreate, $tns:CartModify, $tns:CartClear, $tns:TransactionLookup, $tns:SellerListingSearch, $tns:SellerListingLookup, $tns:BrowseNodeLookup) {<br>
+        $tns:Help =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:Help&#039;,&#039;&#039;,$tns:Help);<br>
+        $tns:ItemSearch =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:ItemSearch&#039;,&#039;&#039;,$tns:ItemSearch);<br>
+        $tns:ItemLookup =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:ItemLookup&#039;,&#039;&#039;,$tns:ItemLookup);<br>
+        $tns:ListSearch =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:ListSearch&#039;,&#039;&#039;,$tns:ListSearch);<br>
+        $tns:ListLookup =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:ListLookup&#039;,&#039;&#039;,$tns:ListLookup);<br>
+        $tns:CustomerContentSearch =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:CustomerContentSearch&#039;,&#039;&#039;,$tns:CustomerContentSearch);<br>
+        $tns:CustomerContentLookup =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:CustomerContentLookup&#039;,&#039;&#039;,$tns:CustomerContentLookup);<br>
+        $tns:SimilarityLookup =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:SimilarityLookup&#039;,&#039;&#039;,$tns:SimilarityLookup);<br>
+        $tns:SellerLookup =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:SellerLookup&#039;,&#039;&#039;,$tns:SellerLookup);<br>
+        $tns:CartGet =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:CartGet&#039;,&#039;&#039;,$tns:CartGet);<br>
+        $tns:CartAdd =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:CartAdd&#039;,&#039;&#039;,$tns:CartAdd);<br>
+        $tns:CartCreate =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:CartCreate&#039;,&#039;&#039;,$tns:CartCreate);<br>
+        $tns:CartModify =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:CartModify&#039;,&#039;&#039;,$tns:CartModify);<br>
+        $tns:CartClear =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:CartClear&#039;,&#039;&#039;,$tns:CartClear);<br>
+        $tns:TransactionLookup =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:TransactionLookup&#039;,&#039;&#039;,$tns:TransactionLookup);<br>
+        $tns:SellerListingSearch =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:SellerListingSearch&#039;,&#039;&#039;,$tns:SellerListingSearch);<br>
+        $tns:SellerListingLookup =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:SellerListingLookup&#039;,&#039;&#039;,$tns:SellerListingLookup);<br>
+        $tns:BrowseNodeLookup =&amp; new SOAP_Value(&#039;{http://webservices.amazon.com/AWSECommerceService/2005-01-19}tns:BrowseNodeLookup&#039;,&#039;&#039;,$tns:BrowseNodeLookup);<br>
+        return $this-&gt;call(&quot;MultiOperation&quot;, <br>
+                        $v = array(&quot;tns:Help&quot;=&gt;$tns:Help, &quot;tns:ItemSearch&quot;=&gt;$tns:ItemSearch, &quot;tns:ItemLookup&quot;=&gt;$tns:ItemLookup, &quot;tns:ListSearch&quot;=&gt;$tns:ListSearch, &quot;tns:ListLookup&quot;=&gt;$tns:ListLookup, &quot;tns:CustomerContentSearch&quot;=&gt;$tns:CustomerContentSearch, &quot;tns:CustomerContentLookup&quot;=&gt;$tns:CustomerContentLookup, &quot;tns:SimilarityLookup&quot;=&gt;$tns:SimilarityLookup, &quot;tns:SellerLookup&quot;=&gt;$tns:SellerLookup, &quot;tns:CartGet&quot;=&gt;$tns:CartGet, &quot;tns:CartAdd&quot;=&gt;$tns:CartAdd, &quot;tns:CartCreate&quot;=&gt;$tns:CartCreate, &quot;tns:CartModify&quot;=&gt;$tns:CartModify, &quot;tns:CartClear&quot;=&gt;$tns:CartClear, &quot;tns:TransactionLookup&quot;=&gt;$tns:TransactionLookup, &quot;tns:SellerListingSearch&quot;=&gt;$tns:SellerListingSearch, &quot;tns:SellerListingLookup&quot;=&gt;$tns:SellerListingLookup, &quot;tns:BrowseNodeLookup&quot;=&gt;$tns:BrowseNodeLookup), <br>
+                        array(&#039;namespace&#039;=&gt;&#039;http://webservices.amazon.com/AWSECommerceService/2005-01-19&#039;,<br>
+                            &#039;soapaction&#039;=&gt;&#039;http://soap.amazon.com&#039;,<br>
+                            &#039;style&#039;=&gt;&#039;document&#039;,<br>
+                            &#039;use&#039;=&gt;&#039;literal&#039; ));<br>
+    }</p>
+</section>
+<section>
+<h3>[2005-02-10 07:42 UTC] dst at dmc dot de</h3>
+<p>Well yes, of course &quot;:&quot; is not allowed within variable names, however Amazon provides a 100% SOAP conform WSDL so PEAR::SOAP must be able to handle it.</p>
+<p>Regards,<br>
+Dominique</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

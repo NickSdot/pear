@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDB2_TableBrowser Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_TableBrowser/index.html">MDB2_TableBrowser</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/MDB2_TableBrowser/docs/index.html#package-database-mdb2-tablebrowser-intro">Introduction</a>
+</li>
+<li><a href="package/MDB2_TableBrowser/docs/index.html#package-database-mdb2-tablebrowser-installation">Installation</a>
+</li>
+<li><a href="package/MDB2_TableBrowser/docs/index.html#package-database-mdb2-tablebrowser-usage-basic">Basic Usage</a>
+</li>
+<li><a href="package/MDB2_TableBrowser/docs/index.html#package-database-mdb2-tablebrowser-usage-fullexample">Advanced Usage</a>
+</li></ul>
+</nav>
+<p>PEAR::MDB2_TableBrowser is a lightweight ORM(object relation mapping) library. Turn any database table(or table view) into an easy to use php object.</p>
+<section id="package-database-mdb2-tablebrowser-intro">
+<h2>Introduction</h2>
+<h3>Introduction to MDB2_TableBrowser</h3>
+
+    
+   <p>MDB2_TableBrowser is a lightweight ORM(object relation mapping) 
+    library. Turn any database table(or table view) into an easy to use
+    php object.</p>
+   <p>Table browsing objects allow your code to handle any database table in an
+    abstract way. By freeing your code from the database details it is possible 
+    for you to build generic data reporting or manipulation functions.</p>
+   <p>Put another way, if you really hate using sql in your code, having to piece 
+    together bits of sql to make queries...this library gives you an alternative.</p>
+   <p>Currently only the single table browser is implemented. If you need to work 
+    with data that spans multiple tables, you can build a table view as this
+    library works with them as well.</p>
+</section>
+<section id="package-database-mdb2-tablebrowser-installation">
+<h2>Installation</h2>
+<h3>Installation</h3>
+
+    
+    <p>First you need MDB2 installed:</p>
+    
+      $ pear install --alldeps MDB2
+    
+
+    <p>You should install a driver for each database you are working with. For
+      MySQL it would be:</p>
+    
+      $ pear install MDB2_Driver_Mysql
+    
+
+    <p>Finally you install MDB2_TableBrowser using the PEAR installer. Since
+      the package is in alpha you have to add the -d option as below:</p>
+    
+      $ pear -d preferred_state=alpha install --alldeps MDB2_TableBrowser
+</section>
+<section id="package-database-mdb2-tablebrowser-usage-basic">
+<h2>Basic Usage</h2>
+<h3>Creating a Table Object</h3>
+
+    
+    <p>Steps to creating a table object out of your database table or view. This 
+      example connects to a mysql database animal_db and constructs a table 
+      object from the tbl_animals table.</p>
+    
+    <p>Create an MDB2 object:</p>
+    <pre><code>&lt;?php
+require_once &quot;MDB2.php&quot;;
+
+$dsn     = &#039;mysql://username:pass@localhost/animal_db&#039;;
+$mdb2 = MDB2::singleton($dsn);
+?&gt;</code></pre>
+
+    <p>Load the TableBrowser extention:</p>
+    <pre><code>&lt;?php
+$mdb2-&gt;loadModule(&#039;TableBrowser&#039;);
+?&gt;</code></pre>
+  
+      <p>Create the table object Create a table browser for the tbl_animals table, 
+      and specify id as the primary key:</p>
+    <pre><code>&lt;?php
+$browser = $mdb2-&gt;tableBrowserFactory(&#039;tbl_animals&#039;, &#039;id&#039;);
+?&gt;</code></pre>
+  
+  
+  
+    <h3>Retreiving Data</h3>
+
+    
+    <p>A table object allows you several ways of retrieving data from the 
+      underlying table. The examples below continue from the animals_db 
+      database.</p>
+    
+    <p>Retrieving a single row is done via the <code>getRows</code>
+      method. This call returns the row data as a hash array:</p>
+    <pre><code>&lt;?php
+$browser-&gt;getRow(1);
+?&gt;</code></pre>
+
+    <p>Retrieving multiple rows is done via the <code>getRows</code>
+     method. This call returns an MDB2_Results object. From the animals db 
+     example...
+     Get data the 3 animals in the table sorted by name starting with the 
+     5th animal</p>
+    <pre><code>&lt;?php
+$browser-&gt;getRows(&#039;name&#039;, 3, 5);
+?&gt;</code></pre>
+  
+    <p>Retrieving the different values in a column has is done via the 
+     <code>getColumnValues</code> method. In our example, we can
+     get the different kinds of animals in tbl_animals eg: mammal, reptile,...</p>
+    <pre><code>&lt;?php
+$browser-&gt;getColumnValues(&#039;type&#039;);
+?&gt;</code></pre>
+  
+
+  
+    <h3>Inserting</h3>
+
+    
+    <p>Inserting a single row is done via <code>insertRow</code> 
+      method. It takes a single hash array as input.</p>
+    <pre><code>&lt;?php
+$rowData = array(&#039;id&#039;=&gt;13, &#039;name&#039; =&gt; &#039;duck&#039;,&#039;type&#039; =&gt; &#039;bird&#039;,&#039;lifespan&#039; =&gt; 5);
+$browser-&gt;insertRow($rowData);
+?&gt;</code></pre>
+  
+    <p>Inserting multiple rows at once is done via 
+      <code>insertRows</code> method.</p>
+    <pre><code>&lt;?php
+$data = array(
+    array(1,&#039;dog&#039;,&#039;mammal&#039;,12),
+    array(2,&#039;cat&#039;,&#039;mammal&#039;,30),
+    array(3,&#039;parrot&#039;,&#039;bird&#039;,60),
+    array(4,&#039;shark&#039;,&#039;fish&#039;,30),
+    array(5,&#039;dolphin&#039;,&#039;mammal&#039;,50),
+    array(6,&#039;crocodile&#039;,&#039;reptile&#039;,50),
+    array(7,&#039;snake&#039;,&#039;reptile&#039;,20),
+    array(8,&#039;spider&#039;,&#039;arachnid&#039;,1),
+    array(9,&#039;housefly&#039;,&#039;insect&#039;,1),
+    array(10,&#039;ostrich&#039;,&#039;bird&#039;,35),
+    array(11,&#039;bat&#039;,&#039;mammal&#039;,6),
+    array(12,&#039;human&#039;,&#039;mammal&#039;,100)
+        );
+$browser-&gt;insertRows(array(&#039;id&#039;, &#039;name&#039;,&#039;type&#039;,&#039;lifespan&#039;), $data);
+?&gt;</code></pre>
+  
+  
+  
+    <h3>Updating</h3>
+
+    
+    <p>Updating a single row is done via <code>updateRow</code> 
+      method.</p>
+    <pre><code>&lt;?php
+//Get the row data
+$rowData = $browser-&gt;getRow(3);
+
+//Modify the data
+$rowData[&#039;lifespan&#039;] = 65;
+
+//Update the row
+$browser-&gt;updateRow(3, $rowData);
+?&gt;</code></pre>
+</section>
+<section id="package-database-mdb2-tablebrowser-usage-fullexample">
+<h2>Advanced Usage</h2>
+<h3>Full example use the MDB2_TableBrowser API</h3>
+
+    
+    <p>The example source below contains all the different methods available to 
+     tableBrowser object beyond the features explained in the basic usage
+     documentation.</p>
+    
+    <pre><code>&lt;?php
+require_once &quot;MDB2.php&quot;;
+
+define(&#039;DSN&#039;, &#039;mysql://username:pass@localhost/animal_db&#039;);
+
+/**
+ * The example below relies on the following data from the table tbl_animals
+ * ID       NAME        TYPE        LIFESPAN
+ * 1        dog         mammal      12
+ * 2        cat         mammal      30
+ * 3        parrot      bird        60
+ * 4        shark       fish        30
+ * 5        dolphin     mammal      50
+ * 6        crocodile   reptile     50
+ * 7        snake       reptile     20
+ * 8        spider      arachnid    1
+ * 9        housefly    insect      1
+ * 10       ostrich     bird        35
+ * 11       bat         mammal      6
+ * 12       human       mammal      100
+ */
+
+$dsn     = &#039;mysql://username:pass@localhost/animal_db&#039;;
+$options = array(
+    &#039;debug&#039; =&gt; 2,
+    &#039;result_buffering&#039; =&gt; false,
+);
+
+$mdb2 = MDB2::singleton($dsn, $options);
+
+//Create the table
+setupDb($mdb2);
+
+$mdb2-&gt;loadModule(&#039;TableBrowser&#039;);
+
+//Create a table browser for the tbl_animals table, and specify id as the primary key
+$browser = $mdb2-&gt;tableBrowserFactory(&#039;tbl_animals&#039;, &#039;id&#039;);
+
+//The data browsing object is now ready
+//First insert the needed data
+$data = array(
+            array(1,&#039;dog&#039;,&#039;mammal&#039;,12),
+            array(2,&#039;cat&#039;,&#039;mammal&#039;,30),
+            array(3,&#039;parrot&#039;,&#039;bird&#039;,60),
+            array(4,&#039;shark&#039;,&#039;fish&#039;,30),
+            array(5,&#039;dolphin&#039;,&#039;mammal&#039;,50),
+            array(6,&#039;crocodile&#039;,&#039;reptile&#039;,50),
+            array(7,&#039;snake&#039;,&#039;reptile&#039;,20),
+            array(8,&#039;spider&#039;,&#039;arachnid&#039;,1),
+            array(9,&#039;housefly&#039;,&#039;insect&#039;,1),
+            array(10,&#039;ostrich&#039;,&#039;bird&#039;,35),
+            array(11,&#039;bat&#039;,&#039;mammal&#039;,6),
+            array(12,&#039;human&#039;,&#039;mammal&#039;,100)
+            );
+$browser-&gt;insertRows(array(&#039;id&#039;, &#039;name&#039;,&#039;type&#039;,&#039;lifespan&#039;), $data);
+
+//Get info on a single animal, getRow returns a hash array and getRows returns 
+//an MDB2_Result object 
+$browser-&gt;getRow(1);
+print &quot;\n&quot; . $browser-&gt;getLastSQL();
+//Prints: SELECT `ID`,`NAME`,`TYPE`,`LIFESPAN` FROM tbl_animals WHERE (`id` = 1)
+
+//Get info on 3 animals in the table sorted by name starting with the 5th animal
+$browser-&gt;getRows(&#039;name&#039;, 3, 5);
+print &quot;\n&quot; . $browser-&gt;getLastSQL();
+//The limits/offsets are not shown below as they are set by mdb2 library
+//Prints: SELECT `ID`,`NAME`,`TYPE`,`LIFESPAN` FROM tbl_animals
+
+//Hide the ID column and rename the column &quot;TYPE&quot; to &quot;Animal Type&quot;
+$browser-&gt;selectColumns(array(&#039;name&#039;,&#039;type&#039;,&#039;lifespan&#039;));
+$browser-&gt;setColumnAlias(&#039;TYPE&#039;, &#039;ANIMAL TYPE&#039;);
+$browser-&gt;getRows(&#039;name&#039;, 3, 5);
+print &quot;\n&quot; . $browser-&gt;getLastSQL();
+//Prints:SELECT `NAME`,`TYPE` AS `ANIMAL TYPE`,`LIFESPAN` FROM tbl_animals
+
+//Get the different kinds of animal types in the table eg: mammal, reptile,...
+$browser-&gt;getColumnValues(&#039;type&#039;);
+print &quot;\n&quot; . $browser-&gt;getLastSQL();
+//Prints:SELECT DISTINCT `TYPE` FROM tbl_animals
+
+//This also works with aliases you have set up
+$browser-&gt;getColumnValues(&#039;ANIMAL TYPE&#039;);
+print &quot;\n&quot; . $browser-&gt;getLastSQL();
+//Prints:SELECT DISTINCT `TYPE` FROM tbl_animals
+
+/*
+ * Example using filters, look for mammals with a lifespan &lt;60 years Multiple
+ * filters can be added and removed. This functionality can be used to quickly
+ * build a browsing application that gives the user the freedom to traverse the
+ * table data in different ways.
+ */
+$browser-&gt;addFilter(&#039;MaxAge&#039;, &#039;lifespan&#039;, &#039;&lt;=&#039;, 60);
+$browser-&gt;addFilter(&#039;AnimalType&#039;, &#039;type&#039;, &#039;=&#039;, &#039;mammal&#039;);
+//Once a filter has been set, it affects the browser&#039;s output
+$browser-&gt;getRows();
+print &quot;\n&quot; . $browser-&gt;getLastSQL();
+//Prints: SELECT `NAME`,`TYPE` AS `ANIMAL TYPE`,`LIFESPAN` FROM tbl_animals WHERE (`lifespan` &lt;= 60 AND `type` = &#039;mammal&#039;)
+
+//A single filter can be removed by specifying the filter name
+$browser-&gt;removeFilter(&#039;MaxAge&#039;);
+$browser-&gt;getRows();
+print &quot;\n&quot; . $browser-&gt;getLastSQL();
+//Prints: SELECT `NAME`,`TYPE` AS `ANIMAL TYPE`,`LIFESPAN` FROM tbl_animals WHERE (`type` = &#039;mammal&#039;)
+
+//All Filters set can be cleared using this method
+$browser-&gt;resetFilters();
+$browser-&gt;getRows();
+print &quot;\n&quot; . $browser-&gt;getLastSQL();
+//Prints: SELECT `NAME`,`TYPE` AS `ANIMAL TYPE`,`LIFESPAN` FROM tbl_animals
+
+//Insert a new row
+$rowData = array(&#039;id&#039;=&gt;13, &#039;name&#039; =&gt; &#039;duck&#039;,&#039;type&#039; =&gt; &#039;bird&#039;,&#039;lifespan&#039; =&gt; 5);
+$browser-&gt;insertRow($rowData);
+print &quot;\n&quot; . $browser-&gt;getLastSQL();
+//The whole statement is not shown as this sql is prepared and excectues by mdb2 library
+//Prints: INSERT INTO tbl_animals VALUES (?,?,?,?)
+
+//Update the parrot&#039;s data
+$rowData             = $browser-&gt;getRow(3);
+$rowData[&#039;lifespan&#039;] = 65;
+$browser-&gt;updateRow(3, $rowData);
+
+print &quot;\n&quot; . $browser-&gt;getLastSQL();
+//Prints: UPDATE tbl_animals SET `id`= NULL,`name`= &#039;parrot&#039;,`type`= NULL,`lifespan`= 65 WHERE (`id` = 3)
+
+$browser-&gt;addFilter(&#039;AnimalType&#039;, &#039;type&#039;, &#039;=&#039;, &#039;bird&#039;);
+//Clear all colum selections and aliases
+$browser-&gt;resetSelectColumns();
+$browser-&gt;resetColumAliases();
+$browser-&gt;getRows();
+print &quot;\n&quot; . $browser-&gt;getLastSQL();
+//Prints: SELECT `ID`,`NAME`,`TYPE`,`LIFESPAN` FROM tbl_animals WHERE (`type` = &#039;bird&#039;)
+
+/**
+ * You can also create multiple filter chains to query for different conditions 
+ * in parallel. Say you were interested in mammals with a lifespan &gt; 30 or birds
+ * with a lifespan &lt; 10. This can be accomplished using 2 filter chains as
+ * follows.
+ */
+$browser-&gt;resetFilters();
+//Call the first chain &#039;Mammal Group&#039; and the second &quot;Bird Group&#039;. You can use any identifier that makes sense to you
+$browser-&gt;createFilterChain(&#039;Mammal Group&#039;);
+$browser-&gt;createFilterChain(&#039;Bird Group&#039;);
+
+//Define the mammals filter chain
+$browser-&gt;selectFilterChain(&#039;Mammal Group&#039;);
+$browser-&gt;addFilter(&#039;AnimalType&#039;, &#039;type&#039;, &#039;=&#039;, &#039;mammal&#039;, &#039;Mammal Group&#039;);
+$browser-&gt;addFilter(&#039;Lifespan&#039;, &#039;lifespan&#039;, &#039;&gt;&#039;, 30, &#039;Mammal Group&#039;);
+
+//Define the birds filter chain
+$browser-&gt;selectFilterChain(&#039;Bird Group&#039;);
+$browser-&gt;addFilter(&#039;AnimalType&#039;, &#039;type&#039;, &#039;=&#039;, &#039;bird&#039;, &#039;Bird Group&#039;);
+$browser-&gt;addFilter(&#039;Lifespan&#039;, &#039;lifespan&#039;, &#039;&lt;&#039;, 10, &#039;Bird Group&#039;);
+
+$browser-&gt;getRows();
+print &quot;\n&quot; . $browser-&gt;getLastSQL();
+//Prints: SELECT `ID`,`NAME`,`TYPE`,`LIFESPAN` FROM tbl_animals WHERE ((`type` = &#039;mammal&#039; AND `lifespan` &gt; 30)) OR ((`type` = &#039;bird&#039; AND `lifespan` &lt; 10))
+
+//This resets all the filters chains
+$browser-&gt;resetAllFilters();
+
+//Switch back to the default filter chain
+$browser-&gt;selectFilterChain();
+
+//You can delete a filterChain like this. Any user defined filter chain can be removed
+//But the default filter chain is always there
+$browser-&gt;deleteFilterChain(&#039;Mammal Group&#039;);
+$browser-&gt;deleteFilterChain(&#039;Bird Group&#039;);
+
+//You can add custom columns as well for columns like &#039;md5()&#039; or your own custom functions
+$browser-&gt;addCustomColumn(&#039;md5(TYPE)&#039;, &#039;Special Column&#039;);
+$browser-&gt;getRows();
+print &quot;\n&quot; . $browser-&gt;getLastSQL();
+//Prints: SELECT `id`,`name`,`type`,`lifespan`,md5(TYPE) AS `Special Column` FROM tbl_animals
+
+$browser-&gt;removeCustomColumn(&#039;md5(TYPE)&#039;);
+
+//You can also add grouping and sorting methods
+$browser-&gt;setOrderBy(&#039;lifespan&#039;);
+$browser-&gt;setGroupBy(&#039;type&#039;);
+$browser-&gt;selectColumns(array(&#039;type&#039;,&#039;lifespan&#039;));
+$browser-&gt;addCustomColumn(&#039;count(*)&#039;, &#039;Number of Species&#039;);
+$browser-&gt;getRows();
+print &quot;\n&quot; . $browser-&gt;getLastSQL();
+//Prints: SELECT `type`,`lifespan`,count(*) AS `Number of Species` FROM tbl_animals GROUP BY `type` ORDER BY `lifespan`
+
+//Delete sharks (id 4)
+$browser-&gt;deleteRow(4);
+print &quot;\n&quot; . $browser-&gt;getLastSQL() . &quot;\n\n&quot;;
+//Prints: DELETE  FROM tbl_animals WHERE (`id` = 4)
+
+/**
+ * Creates the tbl_animals table
+ *
+ * @param ref &amp;$mdb2 An mdb2 object reference
+ * 
+ * @return void
+ */
+function setupDb(&amp;$mdb2)
+{
+    // loading the Manager module
+    $mdb2-&gt;loadModule(&#039;Manager&#039;);
+    $tableDefinition = array (
+        &#039;id&#039; =&gt; array (
+            &#039;type&#039; =&gt; &#039;integer&#039;,
+            &#039;unsigned&#039; =&gt; 1,
+            &#039;notnull&#039; =&gt; 1,
+            &#039;default&#039; =&gt; 0,
+        ),
+        &#039;name&#039; =&gt; array (
+            &#039;type&#039; =&gt; &#039;text&#039;,
+            &#039;length&#039; =&gt; 300,
+            &#039;notnull&#039; =&gt; 1
+        ),
+        &#039;type&#039; =&gt; array (
+            &#039;type&#039; =&gt; &#039;text&#039;,
+            &#039;length&#039; =&gt; 300,
+            &#039;notnull&#039; =&gt; 1
+        ),
+        &#039;lifespan&#039; =&gt; array (
+            &#039;type&#039; =&gt; &#039;integer&#039;,
+            &#039;unsigned&#039; =&gt; 1,
+            &#039;notnull&#039; =&gt; 1,
+            &#039;default&#039; =&gt; 0,
+        ),
+    );
+    
+    $tableConstraints = array (
+        &#039;primary&#039; =&gt; true,
+        &#039;fields&#039; =&gt; array (
+            &#039;id&#039; =&gt; array()
+        )
+    );
+    $mdb2-&gt;dropTable(&#039;tbl_animals&#039;);
+    $mdb2-&gt;createTable(&#039;tbl_animals&#039;, $tableDefinition);
+    $mdb2-&gt;createConstraint(&#039;tbl_animals&#039;, &#039;primary_key&#039;, $tableConstraints);
+    $mdb2-&gt;createSequence(&#039;primary_key&#039;);
+    
+}
+?&gt;</code></pre>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

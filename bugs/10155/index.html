@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #10155</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Bug #10155</h1>
+<p>php5servlet support for java 1.5 or 1.6</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-02-22 09:30 UTC</td></tr>
+<tr><th>From</th><td>camille dot gauthier at neuf dot fr</td></tr>
+<tr><th>Assigned</th><td>wiesemann</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td>Bug System</td></tr>
+<tr><th>PHP Version</th><td>5.2.1</td></tr>
+<tr><th>OS</th><td>windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-02-22 09:30 UTC] camille dot gauthier at neuf dot fr</h3>
+<p>Description:<br>
+------------<br>
+the last version of servlet.java in php5servlet.jar is not java5/6 compatible; it is linked to the fact that servlet.java uses enum (new reserved java word) for a local variable name; to fix that issue, it is sufficient to replace enum by en for example; i have recompiled it, rebuilt php5servlet.jar with it and now php over tomcat works fine. the complete new code for servlet.java is pasted below:</p>
+<p>/*<br>
+   +----------------------------------------------------------------------+<br>
+   | PHP Version 4                                                        |<br>
+   +----------------------------------------------------------------------+<br>
+   | Copyright (c) 1997-2006 The PHP Group                                |<br>
+   +----------------------------------------------------------------------+<br>
+   | This source file is subject to version 3.01 of the PHP license,      |<br>
+   | that is bundled with this package in the file LICENSE, and is        |<br>
+   | available through the world-wide-web at the following url:           |<br>
+   | http://www.php.net/license/3_01.txt                                  |<br>
+   | If you did not receive a copy of the PHP license and are unable to   |<br>
+   | obtain it through the world-wide-web, please send a note to          |<br>
+   | license@php.net so we can mail you a copy immediately.               |<br>
+   +----------------------------------------------------------------------+<br>
+   | Author: Sam Ruby (rubys@us.ibm.com)                                  |<br>
+   +----------------------------------------------------------------------+<br>
+*/</p>
+<p>/* $Id: servlet.java,v 1.19.8.1.8.1 2006/01/01 13:47:02 sniper Exp $ */</p>
+<p>package net.php;</p>
+<p>import java.io.IOException;<br>
+import java.net.URLEncoder;<br>
+import java.util.Enumeration;<br>
+import javax.servlet.*;<br>
+import javax.servlet.http.*;</p>
+<p>import java.lang.reflect.Method;</p>
+<p>public class servlet extends HttpServlet {<br>
+  char slash = System.getProperty(&quot;file.separator&quot;).charAt(0);</p>
+<p>HttpServletRequest  request;<br>
+  HttpServletResponse response;<br>
+  ServletInputStream  stream;</p>
+<p>static int startup_count = 0;</p>
+<p>protected boolean display_source_mode = false;<br>
+  private Method addHeader;</p>
+<p>// Native methods</p>
+<p>public native void startup();<br>
+  public native long define(String name);<br>
+  public native void send(String  requestMethod,<br>
+                          String  queryString,<br>
+                          String  pathInfo,<br>
+                          String  pathTranslated,<br>
+                          String  contentType,<br>
+                          int     contentLength,<br>
+                          String  authUser,<br>
+                          boolean display_source_mode<br>
+                         );<br>
+  public native void shutdown();</p>
+<p>// SAPI Callbacks</p>
+<p>public String readPost(int bytes) {<br>
+    String result;</p>
+<p>if (!request.getMethod().equals(&quot;POST&quot;)) {<br>
+      result = request.getQueryString();<br>
+    } else { <br>
+      Enumeration enum = request.getParameterNames();<br>
+      String concat = &quot;&quot;;<br>
+      result = &quot;&quot;;</p>
+<p>while (enum.hasMoreElements()) {<br>
+        String name  = (String)enum.nextElement();<br>
+        String value = request.getParameter(name);</p>
+<p>try {<br>
+          result += concat + name + &quot;=&quot; + URLEncoder.encode(value, &quot;UTF-8&quot;);<br>
+        }</p>
+<p>catch (Exception e) {<br>
+          e.printStackTrace(System.err);<br>
+        }</p>
+<p>concat = &quot;&amp;&quot;;<br>
+      }<br>
+    }</p>
+<p>if (result == null) return &quot;&quot;;</p>
+<p>return result; <br>
+  }</p>
+<p>public String readCookies() {<br>
+     reflect.setResult(define(&quot;request&quot;),  request);<br>
+     reflect.setResult(define(&quot;response&quot;), response);<br>
+     reflect.setResult(define(&quot;PHP_SELF&quot;), request.getRequestURI());</p>
+<p>return request.getHeader(&quot;cookie&quot;);<br>
+  }</p>
+<p>public void header(String data) {<br>
+    // try to send the header using the most specific servlet API<br>
+    // as possible (some servlet engines will add a content type<br>
+    // header unless the setContentType method is called).<br>
+    try {<br>
+      if (data.startsWith(&quot;Content-type: &quot;)) {<br>
+        response.setContentType(data.substring(data.indexOf(&quot; &quot;) + 1));<br>
+      }</p>
+<p>else if (data.startsWith(&quot;Location: &quot;)) {<br>
+        response.sendRedirect(data.substring(data.indexOf(&quot; &quot;) + 1));<br>
+      } else if (data.startsWith(&quot;HTTP/1&quot;)) {<br>
+      	return; // this one is added from servlet container (Tomcat 4.1), we have to check for others<br>
+      }</p>
+<p>else {<br>
+        int colon = data.indexOf(&quot;: &quot;);</p>
+<p>if (colon &gt; 0) {<br>
+          try {<br>
+            addHeader.invoke(response, new Object[]<br>
+              { data.substring(0, colon), data.substring(colon + 2) } );<br>
+          }</p>
+<p>catch (Exception e) {<br>
+            e.printStackTrace(System.err);<br>
+          }<br>
+        }</p>
+<p>else {<br>
+          write(data);<br>
+        }<br>
+      }<br>
+    }</p>
+<p>catch (IOException e) {<br>
+      e.printStackTrace(System.err);<br>
+    }<br>
+  }</p>
+<p>public void write(String data) {<br>
+    try {<br>
+      response.getWriter().print(data);<br>
+    }</p>
+<p>catch (IOException e) {<br>
+      e.printStackTrace(System.err);<br>
+    }<br>
+  }</p>
+<p>// Servlet interface</p>
+<p>public void init(ServletConfig config)<br>
+  throws ServletException {<br>
+    super.init(config);</p>
+<p>// first time in, initialize native code<br>
+    if (0 == startup_count++) {<br>
+      reflect.loadLibrary(&quot;servlet&quot;);<br>
+      startup();<br>
+    }</p>
+<p>// try to find the addHeader method (added in the servlet API 2.2)<br>
+    // otherwise settle for the setHeader method</p>
+<p>try {<br>
+      Class c = Class.forName(&quot;javax.servlet.http.HttpServletResponse&quot;);<br>
+      Method method[] = c.getDeclaredMethods();</p>
+<p>for (int i = 0; i &lt; method.length; i++) {<br>
+        if (method[i].getName().equals(&quot;addHeader&quot;)) {<br>
+          addHeader = method[i];<br>
+          break;<br>
+        }</p>
+<p>if (method[i].getName().equals(&quot;setHeader&quot;)) {<br>
+          addHeader = method[i];<br>
+        }<br>
+      }<br>
+    }</p>
+<p>catch (Exception e) {<br>
+      e.printStackTrace(System.err);<br>
+    }<br>
+  }</p>
+<p>public void service(HttpServletRequest request, HttpServletResponse response, String contextPath)<br>
+  throws ServletException {<br>
+    this.request  = request;<br>
+    this.response = response;</p>
+<p>send(request.getMethod(),<br>
+         request.getQueryString(),<br>
+         request.getRequestURI(),<br>
+         contextPath,<br>
+         request.getContentType(),<br>
+         request.getContentLength(),<br>
+         request.getRemoteUser(),<br>
+         display_source_mode<br>
+        );</p>
+<p>try {<br>
+      if (stream != null) stream.close();<br>
+    }</p>
+<p>catch (IOException e) {<br>
+      throw new ServletException(e.toString());<br>
+    }<br>
+  }</p>
+<p>public void service(HttpServletRequest request, HttpServletResponse response)<br>
+  throws ServletException {<br>
+    String servletPath = request.getServletPath();<br>
+    String contextPath = getServletContext().getRealPath(servletPath);</p>
+<p>service(request, response, contextPath);<br>
+  }</p>
+<p>public void destroy() {<br>
+    if (0 == --startup_count) shutdown();<br>
+    super.destroy();<br>
+  }<br>
+}</p>
+</section>
+<section>
+<h3>[2007-04-20 06:26 UTC] biplab_babu at rediffmail dot com</h3>
+<p>i want to run php5 by using tomcat6 pls.. help me .<br>
+how i will get php5servlet.jar file</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

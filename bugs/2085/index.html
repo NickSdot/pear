@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2085</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #2085</h1>
+<p>getListOf(&#039;views&#039;) lists Postgresql internal views</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-08-08 01:37 UTC</td></tr>
+<tr><th>From</th><td>ylf at xung dot org</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Linux Debian (testing)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-08 01:37 UTC] ylf at xung dot org</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>I&#039;m using DB 1.6.5</p>
+<p>Trying to list the views from my Postgresql (7.2) database, I got some irrelevant views returned (named &quot;pg_*&quot;). These are postgresql internal views.</p>
+<p>This actually comes from DB_pgsql::getSpecialQuery which doesn&#039;t ignore Postgresql&#039;s internal objects for views as it does for tables.</p>
+<p>--<br>
+   Olivier Guilyardi</p>
+<p>Reproduce code:<br>
+---------------<br>
+require_once &#039;PEAR.php&#039;;<br>
+require_once &#039;DB.php&#039;;</p>
+<p>$db =&amp; DB::connect(&quot;pgsql://...&quot;);</p>
+<p>$db-&gt;query(&quot;CREATE TABLE a (i INTEGER, j INTEGER)&quot;);<br>
+$db-&gt;query(&quot;CREATE view v AS SELECT i FROM a&quot;);</p>
+<p>$views = $db-&gt;getListOf(&quot;views&quot;);</p>
+<p>print_r ($views);</p>
+<p>/* <br>
+A small patch :</p>
+<p>815c815<br>
+&lt;                 return &#039;SELECT viewname FROM pg_views&#039;;<br>
+---<br>
+&gt;                 return &quot;SELECT viewname FROM pg_views WHERE viewname !~ &#039;^pg_&#039;&quot;;</p>
+<p>*/</p>
+<p>Expected result:<br>
+----------------<br>
+Array<br>
+(<br>
+    [0] =&gt; v<br>
+)</p>
+<p>Actual result:<br>
+--------------<br>
+Array<br>
+(<br>
+    [0] =&gt; pg_stat_user_indexes<br>
+    [1] =&gt; pg_statio_all_indexes<br>
+    [2] =&gt; pg_statio_sys_indexes<br>
+    [3] =&gt; pg_statio_user_indexes<br>
+    [4] =&gt; pg_statio_all_sequences<br>
+    [5] =&gt; pg_statio_sys_sequences<br>
+    [6] =&gt; pg_statio_user_sequences<br>
+    [7] =&gt; pg_stat_activity<br>
+    [8] =&gt; pg_stat_database<br>
+    [9] =&gt; v<br>
+    [10] =&gt; pg_user<br>
+    [11] =&gt; pg_rules<br>
+    [12] =&gt; pg_views<br>
+    [13] =&gt; pg_tables<br>
+    [14] =&gt; pg_indexes<br>
+    [15] =&gt; pg_stats<br>
+    [16] =&gt; pg_stat_all_tables<br>
+    [17] =&gt; pg_stat_sys_tables<br>
+    [18] =&gt; pg_stat_user_tables<br>
+    [19] =&gt; pg_statio_all_tables<br>
+    [20] =&gt; pg_statio_sys_tables<br>
+    [21] =&gt; pg_statio_user_tables<br>
+    [22] =&gt; pg_stat_all_indexes<br>
+    [23] =&gt; pg_stat_sys_indexes<br>
+)</p>
+</section>
+<section>
+<h3>[2004-08-09 14:48 UTC] ylf at xung dot org</h3>
+<p>Hi,</p>
+<p>No I&#039;m not, please read my bug report properly and give a try to the reproduce code, using either DB 1.6.5 or the CVS.</p>
+<p>--<br>
+  og</p>
+</section>
+<section>
+<h3>[2004-08-10 11:08 UTC] ylf at xung dot org</h3>
+<p>In Postgresql 7.2, which I used for the repoduce code, all system views have the &#039;pg_&#039; prefix. I&#039;ve checked against Postgresql 7.4 and can see the additional (about 30 more) views you&#039;re mentioning.</p>
+<p>I&#039;m no Postgresql expert either. The point is that whatever you want to list (tables, functions, views, etc...) the postgresql ml archives and other docs always end up refering to the psql command line tool : &#039;\dt&#039; for tables, &#039;\dv&#039; for views, etc...</p>
+<p>psql actually translates these short commands into sql statements. But, it looks like it&#039;s not very consistant accross versions :</p>
+<p>If you happen to read C, I recommend you take a look at these :</p>
+<p>Postgresql 7.2 : http://tinyurl.com/5vy2y<br>
+Postgresql 7.4 : http://tinyurl.com/594tp</p>
+<p>Both of these point at describe.c, which contain the generic function listTables(), which psql calls for listing views among other objects.</p>
+<p>Inside of listTables(), there&#039;s the &quot;if (showSystem)&quot; statement, which means &quot;do we want to list system tables/views/etc or not&quot;.</p>
+<p>Now, in 7.2 this is performed with : <br>
+  c.relname !~ &#039;^pg_&#039;<br>
+while, in 7.4, it relies on a join against pg_catalog.pg_namespace (aliased &quot;n&quot; in describe.c).</p>
+<p>And... the pg_namespace table does not exist in Postgresql 7.2</p>
+<p>As for bugs #682 and #1607 (and my bogus #2084), this is a Postgresql backward compatibility issue, raised with version 7.3 which introduced schemas (this is what pg_namespace is all about).</p>
+<p>I believe the _only_ solution is to execute an extra query in DB_pgsql constructor or connect(), to know the Postgresql version and adapt queries accordingly.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

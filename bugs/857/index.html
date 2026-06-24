@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #857</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #857</h1>
+<p>Bug in addUser in LiveUser_Admin_Auth_Container_MDB</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-02-26 01:15 UTC</td></tr>
+<tr><th>From</th><td>simon dot hamilton at ntlworld dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>ANY</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-02-26 01:15 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Description:<br>
+------------<br>
+As per my email to the list...</p>
+<p>The [&#039;name&#039;] key was missing from the vars used in the INSERT...perhaps due to some copy/paste^h^h^h^h^h^h^h^h^h^hporting from the DB container :).</p>
+<p>Here&#039;s the diff to fix it:</p>
+<p>--- MDB.php.new	2004-02-26 00:08:59.656250000 +0000<br>
++++ MDB.php	2004-02-26 00:08:25.578125000 +0000<br>
+@@ -223,17 +223,17 @@<br>
+         $col = $val = &#039;&#039;;<br>
+ <br>
+         if (isset($this-&gt;authTableCols[&#039;is_active&#039;])) {<br>
+-            $col[] = $this-&gt;authTableCols[&#039;is_active&#039;][&#039;name&#039;];<br>
++            $col[] = $this-&gt;authTableCols[&#039;is_active&#039;];<br>
+             $val[] = $this-&gt;dbc-&gt;getValue(&#039;boolean&#039;, $active);<br>
+         }<br>
+ <br>
+         if (isset($this-&gt;authTableCols[&#039;owner_user_id&#039;])) {<br>
+-            $col[] = $this-&gt;authTableCols[&#039;owner_user_id&#039;][&#039;name&#039;];<br>
++            $col[] = $this-&gt;authTableCols[&#039;owner_user_id&#039;];<br>
+             $val[] = $this-&gt;dbc-&gt;getValue(&#039;integer&#039;, $owner_user_id);<br>
+         }<br>
+ <br>
+         if (isset($this-&gt;authTableCols[&#039;owner_group_id&#039;])) {<br>
+-            $col[] = $this-&gt;authTableCols[&#039;owner_group_id&#039;][&#039;name&#039;];<br>
++            $col[] = $this-&gt;authTableCols[&#039;owner_group_id&#039;];<br>
+             $val[] = $this-&gt;dbc-&gt;getValue(&#039;integer&#039;, $owner_group_id);<br>
+         }<br>
+ <br>
+Hope this helps!</p>
+<p>Reproduce code:<br>
+---------------<br>
+n/a</p>
+<p>Expected result:<br>
+----------------<br>
+An Auth user id.</p>
+<p>Actual result:<br>
+--------------<br>
+a SQL error causing arrays to get added to the query.</p>
+</section>
+<section>
+<h3>[2004-02-26 01:17 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>lol....I did it again.</p>
+<p>Here&#039;s the patch the right way around.</p>
+<p>--- MDB.php	2004-02-26 00:08:25.578125000 +0000<br>
++++ MDB.php.new	2004-02-26 00:08:59.656250000 +0000<br>
+@@ -223,17 +223,17 @@<br>
+         $col = $val = &#039;&#039;;<br>
+ <br>
+         if (isset($this-&gt;authTableCols[&#039;is_active&#039;])) {<br>
+-            $col[] = $this-&gt;authTableCols[&#039;is_active&#039;];<br>
++            $col[] = $this-&gt;authTableCols[&#039;is_active&#039;][&#039;name&#039;];<br>
+             $val[] = $this-&gt;dbc-&gt;getValue(&#039;boolean&#039;, $active);<br>
+         }<br>
+ <br>
+         if (isset($this-&gt;authTableCols[&#039;owner_user_id&#039;])) {<br>
+-            $col[] = $this-&gt;authTableCols[&#039;owner_user_id&#039;];<br>
++            $col[] = $this-&gt;authTableCols[&#039;owner_user_id&#039;][&#039;name&#039;];<br>
+             $val[] = $this-&gt;dbc-&gt;getValue(&#039;integer&#039;, $owner_user_id);<br>
+         }<br>
+ <br>
+         if (isset($this-&gt;authTableCols[&#039;owner_group_id&#039;])) {<br>
+-            $col[] = $this-&gt;authTableCols[&#039;owner_group_id&#039;];<br>
++            $col[] = $this-&gt;authTableCols[&#039;owner_group_id&#039;][&#039;name&#039;];<br>
+             $val[] = $this-&gt;dbc-&gt;getValue(&#039;integer&#039;, $owner_group_id);<br>
+         }</p>
+<p>--<br>
+Simon H</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

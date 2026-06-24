@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4812</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Socket/index.html">Net_Socket</a> &#187; Bug #4812</h1>
+<p>Protocol string in gethostbyname</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4812</th><td>Protocol string in gethostbyname</td></tr>
+<tr><th>Submitted</th><td>2005-07-13 02:04 UTC</td></tr>
+<tr><th>From</th><td>aarondoom at cookiedoom dot com</td></tr>
+<tr><th>Assigned</th><td>cweiske</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Socket/index.html">Net_Socket</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Gentoo Linux 1.6.12</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-07-13 02:04 UTC] aarondoom at cookiedoom dot com</h3>
+<p>Description:<br>
+------------<br>
+Sending the protocol inside of the gethostbyname even though the function returns a value URI sends garbage to DNS servers.<br>
+I think it would be a good idea to check first, this keeps DNS servers that are not hosted by you from banning your traffic.<br>
+I know why the file wrappers need to be there, we just don&#039;t want to constantly get failures because they exist.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+$Host = gethostbyname(&quot;ssl://www.example.com&quot;);<br>
+?&gt;</p>
+<p>With the current code DNS servers respond with non-existant domain errors.<br>
+18:36:56.535962 IP test.example.net.35010 &gt; cachedns.net.domain:  8097+ A? ssl://www.example.com. (41)<br>
+18:36:56.546296 IP cachedns.net.domain &gt; test.example.net.35009:  5162 NXDomain 0/1/0 (102)</p>
+<p>The following patch fixes this.<br>
+@@ -103,8 +103,10 @@<br>
+             return $this-&gt;raiseError(&#039;$addr cannot be empty&#039;);<br>
+         } elseif (strspn($addr, &#039;.0123456789&#039;) == strlen($addr)) {<br>
+             $this-&gt;addr = $addr;<br>
+-        } else {<br>
++        } elseif (preg_match(&quot;^/[0-9A-Za-z][-0-9A-Za-z.]+/$&quot;, $addr)) { // Understandibly, using socket modifiers like ssl:// or tcp:// will cause this to send garbage to our DNS servers and waste time, thus we check to see if we&#039;re a real valid hostname before running gethostbyname<br>
+             $this-&gt;addr = @gethostbyname($addr);<br>
++        } else { // We leave it alone hoping that someone sent us something that makes sense later on<br>
++            $this-&gt;addr = $addr;<br>
+         }</p>
+<p>$this-&gt;port = $port % 65536;<br>
+EOF</p>
+<p>Expected result:<br>
+----------------<br>
+ssl://www.example.com</p>
+<p>Actual result:<br>
+--------------<br>
+ssl://www.example.com</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

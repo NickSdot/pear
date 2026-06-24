@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7459</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Event &#187; <a href="package/Event_Dispatcher/index.html">Event_Dispatcher</a> &#187; Bug #7459</h1>
+<p>Add support for filtering notifications by class hierarchy rather than name</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #7459</th><td>Add support for filtering notifications by class hierarchy rather than name</td></tr>
+<tr><th>Submitted</th><td>2006-04-22 18:10 UTC</td></tr>
+<tr><th>From</th><td>jared at intuitivefuture dot com</td></tr>
+<tr><th>Status</th><td>Open</td></tr>
+<tr><th>Package</th><td><a href="package/Event_Dispatcher/index.html">Event_Dispatcher</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Mac OS X 10.4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-22 18:10 UTC] jared at intuitivefuture dot com</h3>
+<p>Description:<br>
+------------<br>
+When using the third argument of addObserver to filter <br>
+notifications based on class name, the problem is that only <br>
+that single class name is used when checking the class that <br>
+posted a notification. If a subclass of that class posts a <br>
+notification, the notification will be filtered out, <br>
+resulting in a 1:1 coupling of an observer and a single <br>
+superclass rather than a coupling of an observer and a class <br>
+hierarchy. So I changed the postNotification method slightly <br>
+to check the class hierarchy so that if a superclass in the <br>
+hierarchy matches the class name given via addObserver, it <br>
+doesn&#039;t filter out the notification.</p>
+<p>The patch:</p>
+<p>--- Event/Dispatcher.php	2005-09-22 08:37:10.000000000 <br>
+-0700<br>
++++ DispatcherNEW.php	2006-04-22 11:03:56.000000000 -0700<br>
+@@ -267,6 +267,8 @@<br>
+             $this-&gt;_pending[$nName][] =&amp; $notification;<br>
+         }<br>
+         $objClass = get_class($notification-<br>
+&gt;getNotificationObject());<br>
++		$objClasses = array(strtolower($objClass));<br>
++		while($objClass = get_parent_class($objClass)) <br>
+{ $objClasses[] = strtolower($objClass); }<br>
+ <br>
+         // Find the registered observers<br>
+         if (isset($this-&gt;_ro[$nName])) {<br>
+@@ -276,7 +278,7 @@<br>
+                     return $notification;<br>
+                 }<br>
+                 if (empty($rObserver[&#039;class&#039;]) ||<br>
+-                	strcasecmp($rObserver[&#039;class&#039;], <br>
+$objClass) == 0) {<br>
++                	array_search(strtolower($rObserver<br>
+[&#039;class&#039;]), $objClasses) !== false) {<br>
+                     call_user_func_array($rObserver<br>
+[&#039;callback&#039;], array(&amp;$notification));<br>
+                     $notification-<br>
+&gt;increaseNotificationCount();<br>
+                 }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

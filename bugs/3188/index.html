@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3188</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #3188</h1>
+<p>Can the callbacks pass the DataGrid_Column?</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3188</th><td>Can the callbacks pass the DataGrid_Column?</td></tr>
+<tr><th>Submitted</th><td>2005-01-13 15:34 UTC</td></tr>
+<tr><th>From</th><td>dasher at inspiredthinking dot co dot uk</td></tr>
+<tr><th>Assigned</th><td>asnagy</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>N/A</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-13 15:34 UTC] dasher at inspiredthinking dot co dot uk</h3>
+<p>Description:<br>
+------------<br>
+Can the callback code pass a DataGrid_Column as one of the arguments?<br>
+Sometimes the width of the cell depends on what the callback does.<br>
+In the project I&#039;m working on - links are generated - which depend on the arguments being passed in.</p>
+<p>Reproduce code:<br>
+---------------<br>
+My column is:<br>
+$dg-&gt;addColumn(new Structures_DataGrid_Column(&#039;Actions&#039;, null, null, array(&#039;width&#039; =&gt; &#039;30%&#039;, &#039;align&#039;=&gt;&#039;center&#039;), null, &quot;recordLinks(\$field=auth_user_id,\$type=edit|del)&quot;));</p>
+<p>With my callback recordLinks function:<br>
+function recordLinks($params) {<br>
+	$script = ScriptName();<br>
+	$editTypes = explode(&quot;|&quot;,$params[&#039;type&#039;]);<br>
+	reset($editTypes);<br>
+	$actions = &quot;&quot;;<br>
+	while(list($key, $type) = each($editTypes)) {<br>
+		if (!(strpos($type,&quot;:&quot;)===false)) {<br>
+			$elements = explode(&quot;:&quot;,$type);<br>
+			$opTag = $elements[0];<br>
+			$url = $elements[1];<br>
+		} else {<br>
+			$url = $script;<br>
+			$opTag = $type;<br>
+		}<br>
+		$actions .=&quot;&lt;a href=&#039;{$url}?op={$opTag}&amp;id={$params[&#039;record&#039;][$params[&#039;field&#039;]]} &#039;&gt;&quot;.ucfirst($opTag).&quot;&lt;/a&gt; | &quot;;<br>
+	}<br>
+	$actions = substr($actions,0,strlen($actions)-2);<br>
+    return $actions;<br>
+}</p>
+</section>
+<section>
+<h3>[2005-01-18 19:29 UTC] asnagy at webitecture dot org</h3>
+<p>I don&#039;t think this is necessary.  You are asking for data to be passed into the formatter callback that is speccified in the same line of code.  If you want the cell width, why don&#039;t you pass that into the callback also?</p>
+</section>
+<section>
+<h3>[2005-01-19 10:26 UTC] dasher at inspiredthinking dot co dot uk</h3>
+<p>I&#039;d like to be able to set the cell width.<br>
+The callback generates some data - which affects the size of the cell.  If the cell size has been specified when at addColumn  - the callback might want to adjust things.</p>
+</section>
+<section>
+<h3>[2005-01-19 20:17 UTC] asnagy at webitecture dot org</h3>
+<p>That sounds a bit tricky.  What if you have one cell trying to make the width = 200px and another cell trying to make the width = 100px.  Since they are all in the same column, you will not get the results that you desire.</p>
+<p>I think that this request is outside the scope of the formatter function.  It&#039;s goals are to format what is inside the cell and not the cell itself.</p>
+<p>I think the next step for this feature is to look into a new column class dedicated to controlling the size similiar to Bug#3170.</p>
+</section>
+<section>
+<h3>[2005-02-01 19:04 UTC] rolf at winmutt dot com</h3>
+<p>I think formatter should be modified to accpet complex   <br>
+data types as I mentioned in bug 3089 (which I had <br>
+completelty labeled incorrectly). The patch I   <br>
+supplied would allow any complex data to be passed, not   <br>
+just some fixed string as we are currently limited to. In   <br>
+php5 atleast you can pass any type of complex data into   <br>
+call_user_func.   <br>
+   <br>
+This patch :   <br>
+   <br>
+snowcrash DataGrid # diff Column.php   <br>
+~winmutt/pear/Structures_DataGrid/DataGrid/Column.php   <br>
+186,189c186   <br>
+&lt;         } elseif (is_array($this-&gt;formatter) &amp;&amp;   <br>
+is_array($this-&gt;formatter[0])) {   <br>
+&lt;               $formatter = $this-&gt;formatter[0];   <br>
+&lt;               $paramList =   <br>
+array_merge($this-&gt;formatter[1],   <br>
+$record);   <br>
+&lt;       } else {   <br>
+---   <br>
+&gt;         } else {   <br>
+196c193   <br>
+&lt;             $result = call_user_func($formatter,   <br>
+($paramList?$paramList:$record));   <br>
+---   <br>
+&gt;             $result = call_user_func($formatter,   <br>
+$paramList);   <br>
+   <br>
+   <br>
+   <br>
+works just fine when passing complex data in :   <br>
+   <br>
+$dg-&gt;addColumn(new Structures_DataGrid_Column($v, $v, $v,   <br>
+null, null,   <br>
+array(array(&amp;$this,&#039;printCrossLink&#039;),array($v))));</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1695</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #1695</h1>
+<p>wrong time initialization for pseudo-null parameters</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-06-21 16:10 UTC</td></tr>
+<tr><th>From</th><td>christophe dot laratte at laposte dot net</td></tr>
+<tr><th>Assigned</th><td>pajoye</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>1.4.3</td></tr>
+<tr><th>OS</th><td>windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-06-21 16:10 UTC] christophe dot laratte at laposte dot net</h3>
+<p>Description:<br>
+------------<br>
+When you create a new Date class with a pseudo-null parameter, initialization is wrong twice times :</p>
+<p>ie: $test=new Date(&#039;&#039;);</p>
+<p>- the &#039;&#039; parameter is not null for is_null() function, so the $this-&gt;setDate($date) is used to init values.</p>
+<p>- even with a real null parameter ($test=new Date();), the initialization of values is wrong, because there is no take care of timezone.</p>
+</section>
+<section>
+<h3>[2004-06-21 16:58 UTC] pierre at dotgeek dot org</h3>
+<p>Thank you for taking the time to write to us, but this is not<br>
+a bug.</p>
+<p>Hello,</p>
+<p>The docs say: &quot;A date optionally passed in may be in the ISO 8601, TIMESTAMP or UNIXTIME format, or another Date object&quot;.</p>
+<p>An empty string is none of them and not null.</p>
+<p>About the TZ issue when no arg are passed, the constructor gets always the default TZ.</p>
+<p>Please, provide the Date version in the next reports :)</p>
+<p>--Pierre</p>
+</section>
+<section>
+<h3>[2004-06-28 16:37 UTC] christophe dot laratte at laposte dot net</h3>
+<p>Hello,</p>
+<p>I confirm one of two bugs.</p>
+<p>For the first (which is not a bug) :</p>
+<p>I agree that pseudo-null (ie: &#039;&#039;) is different from null (ie: null) and that the Date class interpretation is correct (even if I consider it as too restrictive).</p>
+<p>$test=new Date(&#039;&#039;); has non sens result. But it&#039;s not important.</p>
+<p>For the second bug (real bug), this is a short description with two suggestions :</p>
+<p>$test=new Date(); initialize $test with current hour value without taking care of the DEFAULT TZ !!!</p>
+<p>Try it with setting this before : <br>
+$_DATE_TIMEZONE_DEFAULT=&#039;UTC&#039;;<br>
+(if you are in a country with an offset ;-)</p>
+<p>Here are two bug-fixed for Date initialization :</p>
+<p>first (simple but bad) :</p>
+<p>function Date($date = null)<br>
+    {<br>
+        $this-&gt;tz = Date_TimeZone::getDefault();<br>
+        if (is_null($date)) <br>
+        {<br>
+            $env_tz = &quot;&quot;;<br>
+            if(getenv(&quot;TZ&quot;)) <br>
+            {<br>
+                $env_tz = getenv(&quot;TZ&quot;);<br>
+            }<br>
+            $tz=$this-&gt;tz;<br>
+            putenv(&quot;TZ=&quot;.$tz-&gt;id);<br>
+            $this-&gt;setDate(date(&quot;Y-m-d H:i:s&quot;));<br>
+            putenv(&quot;TZ=&quot;.$env_tz);<br>
+        }<br>
+        elseif (is_a($date, &#039;Date&#039;)) <br>
+        {<br>
+            $this-&gt;copy($date);<br>
+        }<br>
+        else <br>
+        {<br>
+            $this-&gt;setDate($date);<br>
+        }<br>
+    }</p>
+<p>It&#039;s a bad solution, because I directly use putenv without using ConvertTzbyId().</p>
+<p>So, the second solution :</p>
+<p>function Date($date = null)<br>
+    {<br>
+        global $hostTzId;<br>
+        $this-&gt;tz = Date_TimeZone::getDefault();<br>
+        if (is_null($date)) <br>
+        {<br>
+            $this-&gt;setDate(date(&quot;Y-m-d H:i:s&quot;));<br>
+            $this-&gt;setTZbyID($hostTzId);<br>
+            $this-&gt;convertTZbyID($tz-&gt;id);<br>
+        }<br>
+        elseif (is_a($date, &#039;Date&#039;)) <br>
+        {<br>
+            $this-&gt;copy($date);<br>
+        }<br>
+        else <br>
+        {<br>
+            $this-&gt;setDate($date);<br>
+        }<br>
+    }</p>
+<p>But you have to know the system timezone by setting $hostTzId...</p>
+<p>My Date version is 1.4.3.</p>
+<p>And I got a question : have you project to rewrite inDaylightTime function in TimeZone class so as to use internal computation based on DST change dates array like there : http://www.twinsun.com/tz/tz-link.htm ?</p>
+</section>
+<section>
+<h3>[2004-08-25 11:16 UTC] pierre at dotgeek dot org</h3>
+<p>&gt; I agree that pseudo-null (ie: &#039;&#039;) is different from null<br>
+&gt; (ie: null) and that the Date class interpretation is <br>
+&gt; correct (even if I &gt; consider it as<br>
+&gt; too restrictive).</p>
+<p>BC problem and consistency.</p>
+<p>&gt;$test=new Date(); initialize $test with current hour value &gt; without taking care of the DEFAULT TZ !!!</p>
+<p>It does (see Date/TimeZone.php, at the end of this file we initialized the default TZ, using either the global, PHP_TZ or env(TZ)).</p>
+<p>There is no point to fetch system TZ info in Date itself. This is a job for Date/TimeZone. In which TZ are you? What&#039;s the problem with your TZ? If you set the default TZ to UTC, what else do you expect?</p>
+<p>&gt; have you project to rewrite inDaylightTime<br>
+&gt; function in TimeZone class so as to use internal<br>
+&gt; computation based on DST change dates array like there</p>
+<p>Not really in pear::date but on its way for pecl/datetime, using this TZ database natively.</p>
+<p>--Pierre</p>
+</section>
+<section>
+<h3>[2004-08-25 12:46 UTC] christophe dot laratte at laposte dot net</h3>
+<p>I maintain that initialization like this :</p>
+<p>$test=new Date();</p>
+<p>products a mistake and DO NOT take care of the timezone.</p>
+<p>OK  that  timezone  value  is  set  in PEAR::Date, but the time is not initiated<br>
+correctly (and don&#039;t take care of the timezone) !</p>
+<p>An exemple :</p>
+<p>I am in France now. The timezone is UTC+2.</p>
+<p>Local time is 14:34:00</p>
+<p>so utc time is 12:34:00</p>
+<p>everywhere in the world utc time is the same and is 12:34:00</p>
+<p>So if I set :</p>
+<p>$_DATE_TIMEZONE_DEFAULT=&#039;UTC&#039;;</p>
+<p>and after I set :</p>
+<p>$test=new Date();</p>
+<p>the timezone in $test is UTC but time as been initiated at 14:34:00.</p>
+<p>That&#039;s  the  mistake  ! The time should have been initiated at 12:34:00 which is<br>
+the real current time in UTC timezone.</p>
+<p>The mistake is the same whatever you set $_DATE_TIMEZONE_DEFAULT.</p>
+<p>If  I  have  computed the code somewhere else in the world where the timezone is<br>
+different and I don&#039;t know it, I can&#039;t have an idea of the result.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

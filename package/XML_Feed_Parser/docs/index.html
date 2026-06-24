@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XML_Feed_Parser Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_Feed_Parser/index.html">XML_Feed_Parser</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/XML_Feed_Parser/docs/index.html#package-xml-xml-feed-parser-intro">Introduction and Quick Start</a>
+</li>
+<li><a href="package/XML_Feed_Parser/docs/index.html#package-xml-xml-feed-parser-extensions">XML_Feed_Parser and Extensions</a>
+</li></ul>
+</nav>
+<p>XML_Feed_Parser is a parser for (the various) RSS and Atom format XML feeds. It provides a somewhat unified API while still allowing access to the full details of each feed type.</p>
+<section id="package-xml-xml-feed-parser-intro">
+<h2>Introduction and Quick Start</h2>
+<h3>Description</h3>
+
+  <p>XML_Feed_Parser provides a generic interface to a number of the
+   most popular XML-based syndication formats (Atom, RSS1, RSS2, etc). In
+   order to focus on its core competencies, it does not provide any HTTP or
+   feed creation features, but instead parses a wide range of formats quickly
+   and simply.</p>
+
+  <p>Presuming the XML for a feed is stored in the variable
+   $xml_source, the simplest way to create an instance of the parser is:</p><pre><code>&lt;?php
+try {
+    $feed = new XML_Feed_Parser($xml_source);
+} catch (XML_Feed_Parser_Exception $e) {
+    die(&#039;Feed invalid: &#039; . $e-&gt;getMessage());
+}
+?&gt;</code></pre>
+  
+
+  <p>The constructor accepts a number of parameters, as follows:</p><pre><code>&lt;?php
+/* The file you wish to parse */
+$source = &#039;my_source.xml&#039;;
+
+/* Where Relax NG is available, we can force validation of the feed */
+$validate = true;
+
+/* Whether or not to suppress non-fatal warnings */
+$suppress_warnings = false;
+
+/* If the feed is not valid XML and the tidy extension is installed we can
+ * attempt to use it to fix the feed */
+$use_tidy = true;
+
+$feed = new XML_Feed_Parser($source, $validate, $suppress_warnings, $use_tidy);
+?&gt;</code></pre>
+  
+
+  <p>Once you have an instance of the parser you can extract
+   feed-level data by querying it directly. eg.</p><pre><code>&lt;?php
+$title = $feed-&gt;title;
+?&gt;</code></pre>
+  
+
+  <p>You can also access elements by iterating over the feed, or
+   directly by offset or id.</p><pre><code>&lt;?php
+foreach ($feed as $entry) {
+    print $entry-&gt;title . &quot;\n&quot;;
+}
+
+$first_entry = $feed-&gt;getEntryByOffset(0);
+
+$particular_entry = $feed-&gt;getEntryById(&#039;http://jystewart.net/entry/1&#039;);
+?&gt;</code></pre>
+</section>
+<section id="package-xml-xml-feed-parser-extensions">
+<h2>XML_Feed_Parser and Extensions</h2>
+<h3>Description</h3>
+
+  <p>Using XML namespaces, the various syndication formats are very
+   easy to extend and the number of extensions in use is enormous.</p>
+
+  <p>XML_Feed_Parser focuses on core functionality shared between the
+   various syndication formats. Some of the most common extensions are
+   handled natively—particularly when they provide one format with
+   features to bring it into line with others, such as the content
+   extension for RSS2—but the majority provide specialist content and
+   providing support for them would quickly result in a bloated package.</p>
+
+  <p>It is possible that a proper extensions mechanism may be introduced
+   in a future version, but as an alternative the DOM models in use within the
+   classes are publicly accessible, allowing the package to be wrapped with
+   special handlers.</p>
+
+  <p>For example, to make use of the &#039;pheed&#039; extension (namespace
+   http://www.pheed.com/pheed/) we might use:</p><pre><code>&lt;?php
+$feed = new XML_Feed_Parser($xml_source);
+$entry = $feed-&gt;getEntryByOffset(0);
+$eModel = $entry-&gt;model;
+
+$thumbnails = $eModel-&gt;getElementsByTagNameNS(
+    &#039;http://www.pheed.com/pheed/&#039;, &#039;thumbnail&#039;);
+
+if ($thumbnails-&gt;length) {
+    $thumbnail_url = $thumbnails-&gt;item(0)-&gt;nodeValue;
+}
+?&gt;</code></pre>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

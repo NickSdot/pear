@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4435</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #4435</h1>
+<p>Custom callback rules not evaluated correctly when value = 0</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-25 20:48 UTC</td></tr>
+<tr><th>From</th><td>ptermaten at teris dot nl</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-25 20:48 UTC] ptermaten at teris dot nl</h3>
+<p>Description:<br>
+------------<br>
+A 0 (zero) value is not considered to be correct when using a callback function. The same rexexp in a regex-type rule does work correctly.</p>
+<p>Quickform version: 3.2.4pl1</p>
+<p>Reproduce code:<br>
+---------------<br>
+call back function:</p>
+<p>function test($val)<br>
+      {<br>
+         if (!preg_match(&#039;/^[0-9]+$/&#039;, $val)) {<br>
+            return false;<br>
+         }<br>
+         return $val;<br>
+      }</p>
+<p>============<br>
+$form-&gt;registerRule(&#039;test&#039;, &#039;callback&#039;, &#039;test&#039;, &#039;Validate&#039;);<br>
+$form-&gt;addRule(&#039;fielda&#039;, $this-&gt;getMessage(1), &#039;test&#039;);<br>
+$form-&gt;addRule(&#039;fieldb&#039;, $this-&gt;getMessage(1), &#039;regex&#039;, &#039;/^[0-9]+$/&#039;);</p>
+<p>Expected result:<br>
+----------------<br>
+Entering a 0 in Field a triggers the error message.</p>
+<p>Entering a 0 in Field b is accepted.</p>
+</section>
+<section>
+<h3>[2005-05-28 21:29 UTC] ptermaten at teris dot nl</h3>
+<p>See the code below. Obviously, validate() evaluates the value 0 that the test method returns as a &#039;false&#039;.</p>
+<p>==============================<br>
+&lt;?php<br>
+/**<br>
+ * Bug4435 test<br>
+ */</p>
+<p>require_once &#039;HTML/QuickForm.php&#039;;</p>
+<p>class Validate<br>
+{<br>
+  function test($val)<br>
+      {<br>
+         if (!preg_match(&#039;/^[0-9]+$/&#039;, $val)) {<br>
+            return false;<br>
+         }<br>
+         return $val;<br>
+      }</p>
+<p>}</p>
+<p>$form =&amp; new HTML_QuickForm(&#039;custom&#039;);<br>
+$form-&gt;addElement(&#039;header&#039;, null, &#039;Bug4435 test&#039;);<br>
+$form-&gt;registerRule(&#039;test&#039;, &#039;callback&#039;, &#039;test&#039;, &#039;Validate&#039;);<br>
+$form-&gt;addElement(&#039;text&#039;, &#039;field_a&#039;, &#039;The custom rule:&#039;);<br>
+$form-&gt;addElement(&#039;text&#039;, &#039;field_b&#039;, &#039;The regexp rule:&#039;);<br>
+$form-&gt;addRule(&#039;field_a&#039;, &#039;Enter number from 0 to 9&#039;, &#039;test&#039;);<br>
+$form-&gt;addRule(&#039;field_b&#039;, &#039;Enter number from 0 to 9&#039;, &#039;regex&#039;, &#039;/^[0-9]+$/&#039;);<br>
+$form-&gt;addElement(&#039;submit&#039;, null, &#039;Send&#039;);</p>
+<p>$form-&gt;validate();</p>
+<p>$form-&gt;display();<br>
+?&gt;</p>
+</section>
+<section>
+<h3>[2005-06-18 21:48 UTC] ptermaten at teris dot nl</h3>
+<p>Yes, I know what is causing it. The question is: should Quickform test for whether it gets a boolean or other type, using a indentical (===) operator?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

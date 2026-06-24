@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1338</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #1338</h1>
+<p>Permit oci8:execute() bind output</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #1338</th><td>Permit oci8:execute() bind output</td></tr>
+<tr><th>Submitted</th><td>2004-05-04 19:35 UTC</td></tr>
+<tr><th>From</th><td>dave at mausner dot us</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Duplicate</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.5</td></tr>
+<tr><th>OS</th><td>win2000</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-04 19:35 UTC] dave at mausner dot us</h3>
+<p>Description:<br>
+------------<br>
+because execute is defined as &quot;execute($stmt,$data)&quot; one cannot bind to output variables -- only input variables. if one prepares a package function call which outputs results via its parameters, the binding occurs but the output data values are not transmitted back to the caller of execute.<br>
+...<br>
+therefore, i request that you consider a way to make an output binding succeed via PEAR. i would consider any of these a fair alternative:<br>
+(a) a special &quot;prepare&quot; binding code character which indicates an output value which is copied back thru another array;<br>
+(b) changing the prototype to &quot;execute($stmt,&amp;$data)&quot; so that the binding occurs in the callers address space;<br>
+(c) anything else which is reasonable.<br>
+...<br>
+here is a workaround:<br>
+consider the case of:<br>
+  $code = &quot;begin dbms_output.get_line(:M,:S); end;&quot;;<br>
+this code returns a message into :M and a status into :S.<br>
+the explicit binding codes are necessary because &quot;?&quot; is bound to the address space of &quot;execute&quot; and is thus inaccessible.<br>
+ $sth = $dbh-&gt;prepare($code);<br>
+it is necessary to mix metaphors by calling the OCI8 API:<br>
+ ociBindByName($sth,&quot;:M&quot;,$msg,255);<br>
+ ociBindByName($sth,&quot;:S&quot;,$okk,NULL);<br>
+which allows me to bind to my own address space:<br>
+ while (true) {<br>
+	$res =&amp; $dbh-&gt;execute($sth);<br>
+	if ($okk) break;<br>
+	echo(&quot;$msg\n&quot;);<br>
+ }<br>
+the above WORKS but is contrary to the spirit of PEAR.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$sth = $dbh-&gt;prepare(begin dbms_output.enable(1000); dbms_output.put_line(&#039;Hello.&#039;); end;&quot;);<br>
+$dbh-&gt;execute($sth);<br>
+$sth = $dbh-&gt;prepare(&quot;begin dbms_output.get_line(?,?); end;&quot;);<br>
+$msg = &quot;NONE RETURNED&quot;;<br>
+$okk = 99;<br>
+while (true) {<br>
+ $dbh-&gt;execute($sth,array($msg,$okk);<br>
+ if ($okk) break;<br>
+ echo(&quot;$msg\n&quot;);<br>
+}<br>
+echo($okk);</p>
+<p>Expected result:<br>
+----------------<br>
+Hello.<br>
+1</p>
+<p>Actual result:<br>
+--------------<br>
+NONE RETURNED<br>
+99</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

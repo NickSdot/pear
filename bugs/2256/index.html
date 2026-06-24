@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2256</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/Translation2/index.html">Translation2</a> &#187; Bug #2256</h1>
+<p>Cache flushing/write update</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #2256</th><td>Cache flushing/write update</td></tr>
+<tr><th>Submitted</th><td>2004-08-31 03:10 UTC</td></tr>
+<tr><th>From</th><td>matthewh at meta-bit dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Translation2/index.html">Translation2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-31 03:10 UTC] matthewh at meta-bit dot com</h3>
+<p>Description:<br>
+------------<br>
+The current Translation2 Decorator CacheMemory, does not provide a facility to flush/purge the cache.</p>
+<p>This is required in order to re-read strings after the Translation2_Admin class has added,updated or removed a string.</p>
+<p>A similar flush method should possibly be provided on the CacheLiteFunction  Translation2 Decorator too.  For example, allowing invocation of the underlying CacheLite::clean() method.</p>
+<p>Reproduce code:<br>
+---------------<br>
+// Init. an Admin + Cache.<br>
+$admin =&amp; new Translation2_Admin( .... );<br>
+$translation2 =&amp; $translation2-&gt;getDecorator(&#039;CacheMemory&#039;);<br>
+// Retrieve something...[populates cache]<br>
+$initialString = $translation2-&gt;get( $id, $page, &#039;en&#039; );<br>
+// Now update that string<br>
+$dirtyList = array( &#039;en&#039; =&gt; &#039;new &#039;);<br>
+// Update dbase..<br>
+$admin-&gt;add( $id, $page, $dirtyList );<br>
+// Dbase + Cache are now out of sync.<br>
+$staleString = $translation2-&gt;get( $id, $page, &#039;en&#039; );<br>
+// assert: $staleString != &#039;new&#039;<br>
+// Want to be able to do this - flush the cache...<br>
+$translation2-&gt;flush( $page, &#039;en&#039; );<br>
+$correctString = $translation2-&gt;get( $id, $page, &#039;en&#039; );<br>
+// assert: $correctString == &#039;new&#039;<br>
+--------------------------------------------------------<br>
+Similarly, a Translation2_Decorator_CacheLiteFunction instance could delegate the flush() to the underlying clean() method within its CacheLiteFunction member.</p>
+<p>Expected result:<br>
+----------------<br>
+* After flushing the cache, the given page of strings are cleared.</p>
+<p>* Subsequent retrieves from the cache populate it with the newly updated strings.</p>
+<p>Actual result:<br>
+--------------<br>
+* Currently, once the strings are loaded into the CacheMemory decorator, there&#039;s no way to clear the cache and re-read them after an update/addition/removal of a string.</p>
+<p>* Same applies with Translation2_Decorator_CacheLiteFunction - no easy way to flush/purge cache.</p>
+</section>
+<section>
+<h3>[2004-08-31 11:46 UTC] matthewh at meta-bit dot com</h3>
+<p>I&#039;d like to contribute some source that extends the current Translation2 Decorator framework with the flush methods discussed in the previous comment.  This code seems to be working within my current application:<br>
+-------------------------------------------------------<br>
+&lt;?php</p>
+<p>/**<br>
+ * @package Translation2<br>
+ * @version $Id$<br>
+ */<br>
+/**<br>
+ * Load Translation2 decorator CacheMemory base class<br>
+ */<br>
+require_once &#039;Translation2/Decorator/CacheMemory.php&#039;;</p>
+<p>/**<br>
+ * Decorator to cache fetched data in memory + allow flushing of the cache<br>
+ * after a write/delete operation.<br>
+ *<br>
+ * @package Translation2<br>
+ * @access public<br>
+ */<br>
+class Translation2_Decorator_FlushableCacheMemory extends Translation2_Decorator_CacheMemory<br>
+{</p>
+<p>// NB: Assumes parent members were protected members...poor OO style...<br>
+  // Possibly rewrite this to decorate the decorator + just replicate the attribs here.</p>
+<p>/**<br>
+     * MIH: Delete strings out of the cache.<br>
+     *<br>
+     * Use this if strings are written to the translation tables (ie, via<br>
+     * Translation2_Admin).  Ensures the cache entries don&#039;t become stale.<br>
+     *<br>
+     * @param string         pageID   the page of translation strings to flush<br>
+     * @param string         langID   the translation string language, en, ja etc.<br>
+     **/<br>
+    function flushPage( $pageID=TRANSLATION2_DEFAULT_PAGEID, $langID=null )<br>
+    {<br>
+        $pageID_key = $this-&gt;_getPageIDKey($pageID);<br>
+        $langID_key = empty($langID) ? $this-&gt;translation2-&gt;lang[&#039;id&#039;] : $langID;</p>
+<p>if (<br>
+           (array_key_exists($langID_key, $this-&gt;data)) &amp;&amp;<br>
+           (array_key_exists($pageID_key, $this-&gt;data[$langID_key]))<br>
+           )<br>
+        {<br>
+// MIH<br>
+// error_log( &quot;flushPage(): Flushing &quot;.count( $this-&gt;data[$langID_key][$pageID_key] ).&quot; values &quot;, 0 );<br>
+            unset( $this-&gt;data[$langID_key][$pageID_key] );<br>
+        }</p>
+<p>if (<br>
+           (array_key_exists($langID_key, $this-&gt;rawData)) &amp;&amp;<br>
+           (array_key_exists($pageID_key, $this-&gt;rawData[$langID_key]))<br>
+           )<br>
+        {<br>
+// error_log( &quot;flushPage(): Flushing &quot;.count( $this-&gt;rawData[$langID_key][$pageID_key] ).&quot; raw values &quot;, 0 );<br>
+            unset( $this-&gt;rawData[$langID_key][$pageID_key] );<br>
+        }<br>
+    }</p>
+<p>/**<br>
+     * MIH: Flushes a page for several languages<br>
+     *<br>
+     * Iterates over all languages in the nominated list and purges the<br>
+     * corresponding page&#039;s strings from the cache.<br>
+     *<br>
+     * Use this method after writing a new set of strings to the cache.<br>
+     *<br>
+     * @param  string pageID      page name to purge from cache.<br>
+     * @param  array  langList    array of locales to purge: en, ja etc.<br>
+     *<br>
+     **/<br>
+    function flushPages( $pageID=TRANSLATION2_DEFAULT_PAGEID, $langList )<br>
+    {<br>
+// error_log( &quot;flushPages()&quot;, 0 );<br>
+        if (is_array( $langList ))<br>
+        {<br>
+            foreach( $langList as $langID)<br>
+            {<br>
+// error_log( &quot;flushPages(): Flushing: page:&quot;.$pageID.&quot; lang:&quot;.$langID, 0 );<br>
+                $this-&gt;flushPage( $pageID, $langID );<br>
+            }<br>
+        }<br>
+//      else<br>
+// error_log( &quot;flushPages(): Error : bad arg:&quot;.var_export( $langList, true ), 0 );<br>
+    }</p>
+<p>/**<br>
+     *  Delete all cached strings.<br>
+     *<br>
+     **/<br>
+    function flushAll()<br>
+    {<br>
+        $this-&gt;rawData = array();<br>
+        $this-&gt;data = array();<br>
+    }</p>
+<p>// }}}<br>
+}<br>
+?&gt;<br>
+-------------------------------------------<br>
+Instantiation is via :<br>
+$myTranslation2-&gt;getDecorator(&#039;FlushableCacheMemory&#039;);</p>
+<p>------<br>
+Invocation via:<br>
+if (method_exists( $this-&gt;_translation2, &quot;flushPages&quot; ))<br>
+{<br>
+   $localeList = $this-&gt;getAvailableLocales();         <br>
+   // flush all locales for nominated page...<br>
+   $this-&gt;m_trRef-&gt;flushPages( $pageID, $localeList );<br>
+}<br>
+// subsequent reads from the stringsd cache (with Translation2::get()) will repopulate the cache.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

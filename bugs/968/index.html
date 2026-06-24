@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #968</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB/index.html">MDB</a> &#187; Bug #968</h1>
+<p>[MDB1] Feature request: oci8 listTables()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-08 04:43 UTC</td></tr>
+<tr><th>From</th><td>thierrybo at freesurf dot fr</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB/index.html">MDB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>win32XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-08 04:43 UTC] thierrybo at freesurf dot fr</h3>
+<p>Description:<br>
+------------<br>
+I need the listTables() method for oci8. Here is the code.</p>
+<p>I use the USER_TABLES view instead of ALL_TABLES. This restricts the table list to those tables owned by the calling user rather than those accessible to the calling user.  This is necessary because if we need to know if a table exist in one schema (typically the user schema), ALL_TABLES may returns tables with the same name in more than one schema, or return the name of the table we are looking for, but from another schema.</p>
+<p>Also, perhaps you may lower case of field name if &#039;portability&#039; is set?</p>
+<p>Thierry Bothorel</p>
+<p>348,363d347<br>
+&lt;     // {{{ listTables()<br>
+&lt;<br>
+&lt;     /**<br>
+&lt;      * list all tables in the current database<br>
+&lt;      *<br>
+&lt;      * @param object    $db        database object that is extended by this class<br>
+&lt;      * @return mixed data array on success, a MDB error on failure<br>
+&lt;      * @access public<br>
+&lt;      **/<br>
+&lt;     function listTables(&amp;$db)<br>
+&lt;     {<br>
+&lt;         $sql = &quot;SELECT table_name FROM sys.user_tables&quot;;<br>
+&lt;         return($db-&gt;queryCol($sql));<br>
+&lt;     }<br>
+&lt;<br>
+&lt;     // }}}</p>
+</section>
+<section>
+<h3>[2004-03-09 00:07 UTC] thierrybo at freesurf dot fr</h3>
+<p>After tweaking with this, I changes my previous code to lower case tables names. The point is, do I need to lwer case them only if &#039;portability&#039; is set, or every time? :</p>
+<p>function listTables(&amp;$db)<br>
+{<br>
+    $sql = &quot;SELECT table_name FROM sys.user_tables&quot;;<br>
+    $table_names = $db-&gt;queryCol($sql);<br>
+    if ($db-&gt;options[&#039;optimize&#039;] == &#039;portability&#039;) {<br>
+        $table_names = array_flip($table_names);<br>
+        $table_names = array_change_key_case($table_names, CASE_LOWER);<br>
+        $table_names = array_flip($table_names);<br>
+    }<br>
+    return($table_names);<br>
+}</p>
+</section>
+<section>
+<h3>[2004-03-10 17:32 UTC] thierrybo at freesurf dot fr</h3>
+<p>I would like to, but for the moment I have really no idea how this beast works!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3926</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File System &#187; <a href="package/File/index.html">File</a> &#187; Bug #3926</h1>
+<p>File_CVS gives no way to CLOSE a file handle</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3926</th><td>File_CVS gives no way to CLOSE a file handle</td></tr>
+<tr><th>Submitted</th><td>2005-03-23 04:53 UTC</td></tr>
+<tr><th>From</th><td>tommythekid at mac dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/File/index.html">File</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>solaris sparc</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-23 04:53 UTC] tommythekid at mac dot com</h3>
+<p>Description:<br>
+------------<br>
+I cannot use File_CSV::write($filename, $data, $conf) because it seems to manage its own filehandles .. which I am sure is nice, but it makes it hard to close said file handle to then send the file to a user with HTTP_Download.</p>
+<p>Tommy</p>
+<p>Reproduce code:<br>
+---------------<br>
+function generateCSVFile($txn_id) {<br>
+    global $debug;</p>
+<p>$conf = array (<br>
+            &#039;fields&#039; =&gt; 31,<br>
+            &#039;sep&#039;    =&gt; &quot;,&quot;,<br>
+            &#039;quote&#039;  =&gt; &#039;&quot;&#039;,<br>
+            &#039;header&#039; =&gt; TRUE<br>
+    );</p>
+<p>$TempFileName = File::getTempFile();<br>
+    $data = getQuotesForTransaction($txn_id);<br>
+    foreach ($data as $value) {<br>
+        File_CSV::write($TempFileName, $value, $conf);<br>
+    }<br>
+    return $TempFileName;<br>
+}</p>
+<p>.. then try to send $TempFileName to someone.. it comes up as zero length cause its still &quot;open&quot; (and not written to disk) till the script exits.</p>
+<p>Expected result:<br>
+----------------<br>
+It should behave like all other PEAR things.. make an object set the params then it should have a destructor like $csvfile-&gt;close();</p>
+<p>(aka a function close():) :)</p>
+<p>Tommy</p>
+<p>Actual result:<br>
+--------------<br>
+since the file is not &quot;written&quot; to disk, when I try to send it to the user via HTTP_Download, the user gets a blank file.</p>
+<p>A possible workaround would maybe be:</p>
+<p>$pointer = File_CSV::getPointer($filename, $conf, FILE_MODE_WRITE);</p>
+<p>flcose($pointer);</p>
+</section>
+<section>
+<h3>[2005-03-23 04:56 UTC] tommythekid at mac dot com</h3>
+<p>uh.. fclose($pointer);</p>
+<p>.. and that may be all thats needed for the close($filename) function anyhow :)</p>
+<p>:)</p>
+</section>
+<section>
+<h3>[2005-08-24 04:05 UTC] tommythekid at mac dot com</h3>
+<p>FWIW, I am sorry, the problem turned out to actually be a PHP/NSAPI problem.</p>
+<p>http://bugs.php.net/bug.php?id=32424</p>
+<p>~tommy</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

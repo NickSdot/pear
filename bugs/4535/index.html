@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4535</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #4535</h1>
+<p>postgresql&#039;s boolean still broken</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-06-06 08:41 UTC</td></tr>
+<tr><th>From</th><td>daniel at konczyk dot net</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>debian gnu/linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-06 08:41 UTC] daniel at konczyk dot net</h3>
+<p>Description:<br>
+------------<br>
+Handling of boolean values in postgresql database is still broken in db_dataobject</p>
+<p>look at the current CVS, method &#039;update&#039;, line 1198<br>
+($v &amp; DB_DATAOBJECT_BOOL) ? (int)(bool)$this-&gt;$k : $this-&gt;$k</p>
+<p>when you select boolean field from postgresql, then the result value will be (let&#039;s assume there&#039;s &#039;not null&#039; flag) &#039;t&#039; for true or &#039;f&#039; for false</p>
+<p>then piece of code above will always return true, in this example it will return 1 and thus will update all boolean fields that do not appear in posted data to true...</p>
+<p>unless I overlooked something</p>
+</section>
+<section>
+<h3>[2005-06-16 08:14 UTC] daniel at konczyk dot net</h3>
+<p>Well, you have to make a dirty patch for postgresql I think. I know you don&#039;t like it and you have already told us a zillion times about it, but as that&#039;s the only way I guess, as this is postgresql-only &#039;feature&#039;</p>
+<p>Actually, you have to take care of false only, for example<br>
+($v &amp; DB_DATAOBJECT_BOOL) ? (int)(bool)($this-&gt;$k == &#039;f&#039;?0:$this-&gt;$k) : $this-&gt;$k</p>
+<p>or so<br>
+I know it looks awful, but I&#039;d better it looks so, than do not work at all..</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

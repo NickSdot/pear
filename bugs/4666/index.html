@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4666</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #4666</h1>
+<p>Different database charsets</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4666</th><td>Different database charsets</td></tr>
+<tr><th>Submitted</th><td>2005-06-23 08:31 UTC</td></tr>
+<tr><th>From</th><td>dan at yes dot lt</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-23 08:31 UTC] dan at yes dot lt</h3>
+<p>Description:<br>
+------------<br>
+Now when we are working with databases - all queries and results must be on the same charset as the current php charset is. If current charset is different from the current one, then we must convert all queries and results manualy. So, how about to implement additional URI parameter &quot;charset&quot; (or &quot;encoding&quot;) and to do automatically charset conversion. I.e. we will be able to work with database using ISO-8859-13 (baltic) when our internal charset is UTF-8 just by adding &amp;charset=ISO-8859-13 to our database uri.</p>
+<p>Below is my working implementation of this functionality:</p>
+<p>function _convertQuery($query)<br>
+{<br>
+    if (! empty($this-&gt;dsn[&#039;charset&#039;])) {<br>
+        $database = $this-&gt;dsn[&#039;charset&#039;];<br>
+        if (extension_loaded(&#039;mbstring&#039;)) {<br>
+    <br>
+            // Working with &quot;MultiByte String&quot; extension<br>
+            $internal = mb_internal_encoding();<br>
+            // Checking if database charset is different from internal charset<br>
+            if (strcasecmp($database, $internal)) {<br>
+                // Converting query<br>
+                return mb_convert_encoding($query, $database, $internal);<br>
+            }<br>
+    <br>
+        } elseif (extension_loaded(&#039;iconv&#039;)) {<br>
+    <br>
+            // Working with &quot;Iconv&quot; extension<br>
+            $internal = iconv_get_encoding(&#039;internal_encoding&#039;);<br>
+            // Checking if database charset is different from internal charset<br>
+            if (strcasecmp($database, $internal)) {<br>
+                // Converting query<br>
+                return iconv($internal, $database, $query);<br>
+            }<br>
+    <br>
+        } else {<br>
+            $this-&gt;raiseError(&#039;Charset conversion not supported&#039;, 0, PEAR_ERROR_DIE);<br>
+        }<br>
+    }<br>
+    return $query;<br>
+}</p>
+<p>function simpleQuery($query)<br>
+{<br>
+    // prepare query<br>
+    ...<br>
+    $query = $this-&gt;_convertQuery($query);<br>
+    ...<br>
+    // execute query<br>
+}</p>
+<p>function _convertResult(&amp;$arr)<br>
+{<br>
+    if (! empty($this-&gt;dsn[&#039;charset&#039;])) {<br>
+        $database = $this-&gt;dsn[&#039;charset&#039;];<br>
+        if (extension_loaded(&#039;mbstring&#039;)) {<br>
+    <br>
+            // Working with &quot;MultiByte String&quot; extension<br>
+            $internal = mb_internal_encoding();<br>
+            // Checking if database charset is different from internal charset<br>
+            if (strcasecmp($database, $internal)) {<br>
+                // Converting result<br>
+                foreach ($arr as $key =&gt; $val) {<br>
+                    $arr[$key] = mb_convert_encoding($val, $internal, $database);<br>
+                }<br>
+            }<br>
+    <br>
+        } elseif (extension_loaded(&#039;iconv&#039;)) {<br>
+    <br>
+            // Working with &quot;Iconv&quot; extension<br>
+            $internal = iconv_get_encoding(&#039;internal_encoding&#039;);<br>
+            // Checking if database charset is different from internal charset<br>
+            if (strcasecmp($database, $internal)) {<br>
+                // Converting result<br>
+                foreach ($arr as $key =&gt; $val) {<br>
+                    $arr[$key] = iconv($database, $internal, $val);<br>
+                }<br>
+            }<br>
+    <br>
+        } else {<br>
+            $this-&gt;raiseError(&#039;Charset conversion not supported&#039;, 0, PEAR_ERROR_DIE);<br>
+        }<br>
+    }<br>
+}</p>
+<p>function fetchInto($result, &amp;$arr, $fetchmode, $rownum = null)<br>
+{<br>
+    // fetch $arr<br>
+    ...<br>
+    $this-&gt;_convertResult($arr);<br>
+    ...<br>
+    // apply portability<br>
+}</p>
+</section>
+<section>
+<h3>[2005-08-11 20:47 UTC] pear dot php dot net at chsc dot dk</h3>
+<p>I believe mysqli_set_character_name() does all this for you, if you are using mysqli. But your code is necessary for drivers like mysql and others that does not support this natively.</p>
+<p>BTW I don&#039;t think it should be part of the DSN but rather an option, because the character set is only relevant within the application as opposed to the DSN that is supplied from outside the application.</p>
+</section>
+<section>
+<h3>[2005-08-11 20:55 UTC] pear dot php dot net at chsc dot dk</h3>
+<p>Sorry, I meant mysqli_set_charset().</p>
+<p>The mysql case can probably be solved using $DB-&gt;query(&quot;SET NAMES utf8&quot;) or similar - see http://dev.mysql.com/doc/mysql/en/charset-connection.html</p>
+<p>But of course it would be nice if all this were standardized in the DB library.</p>
+</section>
+<section>
+<h3>[2005-08-11 21:11 UTC] dan at yes dot lt</h3>
+<p>yes, it would be nice if all this were standardized in the DB library. yes, charset may be set as option.<br>
+also there may be default methods for databases with no charset support, and overriden methods for specified databases (ie. mysql, mysqli).</p>
+<p>ps. thanks for mysql charset queries :) but our software must be db independent (today it works on mysql, mssql, pgsql and oracle), so we need that db library feature :)</p>
+</section>
+<section>
+<h3>[2005-10-18 10:15 UTC] cryptographite at comcast dot net</h3>
+<p>Adding a DSN option for &#039;set names&#039; would be wonderful.  Sometimes doing a query() just isn&#039;t possible (such as when DB is being loaded by another PEAR module and you don&#039;t have direct query access to the connection).</p>
+</section>
+<section>
+<h3>[2005-11-14 23:18 UTC] art at siit dot net</h3>
+<p>$DB-&gt;query(&quot;SET CHARACTER SET &#039;utf8&#039;&quot;);<br>
+is required, in order to convert the results.</p>
+<p>I have added an entry about supporting input/result charset to MDB2&#039;s todo list at<br>
+http://oss.backendmedia.com/MDB2/ToDo</p>
+<p>Currently, I found info about converting charset in two DBMS:<br>
+- MySQL (SET NAMES charset, SET CHARACTER SET &#039;charset&#039;)<br>
+- SQLite (PRAGMA encoding=&quot;charset&quot;; , not really a &#039;conversion&#039;, only has effect for new table creation)</p>
+<p>PostgreSQL also supports UTF-8 but I don&#039;t how to set it, as well as other DMBSs.</p>
+</section>
+<section>
+<h3>[2005-11-14 23:30 UTC] art at siit dot net</h3>
+<p>Note, that $DB-&gt;query(&quot;SET CHARACTER SET &#039;utf8&#039;&quot;); is only for MySQL. (just for an example).</p>
+<p>for the MDB2 API, may be we can have something like:<br>
+$DB-&gt;setCharset(&quot;utf-8&quot;);</p>
+<p>.. or should we set the charset at the result / datatype ?</p>
+</section>
+<section>
+<h3>[2005-11-16 11:15 UTC] art at siit dot net</h3>
+<p>Add more info to<br>
+http://oss.backendmedia.com/MDB2/CharacterSet</p>
+<p>It seems like we have at least 5 different types of charset to  deal with:<br>
+client, connection, database, table, and results (may not be settable in every dbms).</p>
+<p>Please check it out + comment :)</p>
+</section>
+<section>
+<h3>[2006-06-30 21:19 UTC] tokul at users dot sourceforge dot net</h3>
+<p>Include library version information when you add new options.</p>
+<p>I think DSN charset option was introduced in MDB2 v2.1.0 and your docs does not mention that. Only short notice in changelog about added SetCharset function.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

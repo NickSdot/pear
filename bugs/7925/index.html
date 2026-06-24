@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7925</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #7925</h1>
+<p>formatter args ignored in Column-&gt;formatter()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-06-16 14:32 UTC</td></tr>
+<tr><th>From</th><td>clark at thirteen dot net</td></tr>
+<tr><th>Assigned</th><td>wiesemann</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>All</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-16 14:32 UTC] clark at thirteen dot net</h3>
+<p>Description:<br>
+------------<br>
+When you define a new Structures_DataGrid_Column, if you specify arguments to your formatter callback, they do not appear in the function when the function is called.</p>
+<p>I have fixed this bug.</p>
+<p>From looking at the code, they are parsed and stored, but when formatter() is called, they are never used. So all I did was initialize the paramList to $this-&gt;formatterArgs, and it works.</p>
+<p>This worked in 0.6.3, so it looks like it was introduced in CVS.</p>
+<p>Test script:<br>
+---------------<br>
+$datagrid =&amp; new Structures_DataGrid();<br>
+// $hits is a DB_result set or other valid datasource, containing a column called score$n<br>
+$stat = $datagrid-&gt;bind($hits);<br>
+// db field name is score$n<br>
+$datagrid-&gt;addColumn(new Structures_DataGrid_Column($n, &quot;score$n&quot;, null, null, null, &quot;formatScore(score_num=$n)&quot;));</p>
+<p>$datagrid-&gt;render();</p>
+<p>function formatScore($params)<br>
+{<br>
+   if(is_numeric($params[&#039;n&#039;])) {<br>
+       return(&#039;Yes, arg is working&#039;);<br>
+   } else {<br>
+       return(&#039;No, arg not honored&#039;);<br>
+}</p>
+<p>FIX: Replace line 218 in Structures/DataGrid/Column.php with<br>
+$paramList = $this-&gt;formatterArgs;<br>
+(instead of $paramList = array());</p>
+<p>WARNING: if the user-supplied params happens to be any of the following: record, fieldName, columnName, orderBy, attribs, we will have a conflict, but that&#039;s a different bug!</p>
+<p>Expected result:<br>
+----------------<br>
+Each scoreN cell should say Yes, arg is working.</p>
+<p>Actual result:<br>
+--------------<br>
+Each scoreN cell will say No, arg not honored.</p>
+</section>
+<section>
+<h3>[2006-06-16 19:18 UTC] clark at thirteen dot net</h3>
+<p>I see: the array of arguments passed in the seventh arg of the Column constructor are actually treated as &quot;first class&quot; args to the formatter function. Whereas before everything was packed into a single array. Is that right?</p>
+<p>So I define my function e.g.</p>
+<p>function myFormatter($environmentVals, $myArg1, $myArg2)<br>
+{<br>
+  //formatting logic here<br>
+}</p>
+<p>So I just pass a single-dimension array of values to the Column constructor, and they will automatically be assigned to the 2nd, 3rd and so on args of my formatter?</p>
+<p>Sorry, I missed that.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

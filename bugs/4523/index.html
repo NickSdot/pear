@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4523</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #4523</h1>
+<p>SOAP datetimes interpreted incorrectly when timezone absent</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-06-03 23:58 UTC</td></tr>
+<tr><th>From</th><td>cmaddocks at maddocks dot ca</td></tr>
+<tr><th>Assigned</th><td>yunosh</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.2.2</td></tr>
+<tr><th>OS</th><td>Windows 2000 SP4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-03 23:58 UTC] cmaddocks at maddocks dot ca</h3>
+<p>Description:<br>
+------------<br>
+The constructor of the SOAP_Type_dateTime class can take an iso-8601 date as a parameter.  In the absence of a UTC offset and the &#039;Z&#039; character (which signifies UTC time) the time is to be interpreted as in some local timezone.</p>
+<p>However, the way the class processes the timestamp (SOAP_Type_dateTime::toUnixTime -&gt; SOAP_Type_dateTime::_split, strtotime) effectively interprets all timestamps lacking timezone information as UTC times, not local times.</p>
+<p>toUnixtime always returns a UTC-measured timestamp (it tacks a &quot;Z&quot; on the end of its output).  Therefore, _split needs to apply the offset of the *local* timezone if none was specified in the timestamp.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Unit testing the SOAP/Type/dateTime.php :</p>
+<p>$ts = new SOAP_Type_dateTime( &#039;2001-04-25T09:31:41&#039;);<br>
+print $ts-&gt;toString();</p>
+<p>Here&#039;s a diff on dateTime.php (based on PEAR::SOAP 0.9.1 beta):</p>
+<p>68c68,69<br>
+&lt;             if ($regs[8] != &#039;&#039; &amp;&amp; $regs[8] != &#039;Z&#039;) {<br>
+---<br>
+&gt;             if ($regs[8] == &#039;&#039;) $regs[8] = date( &quot;O&quot; );<br>
+&gt;             if ($regs[8] != &#039;Z&#039;) {</p>
+<p>Expected result:<br>
+----------------<br>
+2001-04-25T09:31:41-0400<br>
+(Web server is in UTC-0400)</p>
+<p>Actual result:<br>
+--------------<br>
+2001-04-25T05:31:41-0400</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

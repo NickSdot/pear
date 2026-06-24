@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9726</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth/index.html">Auth</a> &#187; Bug #9726</h1>
+<p>Can&#039;t login with Postgresql and no public schema</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-03 18:50 UTC</td></tr>
+<tr><th>From</th><td>edmar at sc dot usp dot br</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Auth/index.html">Auth</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Ubuntu 6.10 Server</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-03 18:50 UTC] edmar at sc dot usp dot br</h3>
+<p>Description:<br>
+------------<br>
+I try to login with my database in postgresql 8.1, but I get a error. The error is in the query syntaxe sending to Postgresql. My users is in a &quot;seguranca&quot; database on a &quot;admin&quot; schema, not in the &quot;public&quot; schema. My final query sent to a database is SELECT &quot;usuario&quot;, &quot;senha&quot; FROM &quot;admin.usuario&quot; WHERE &quot;usuario&quot; = &#039;teste&#039;. The Postgresql return a error: ERRO:  relação &quot;admin.usuario&quot; não existe. The query SELECT &quot;usuario&quot;, &quot;senha&quot; FROM admin.usuario WHERE &quot;usuario&quot; = &#039;teste&#039;, works correctly.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+require_once &quot;Auth.php&quot;;</p>
+<p>function loginFunction($username=null, $status=null, &amp;$auth=null) {<br>
+    echo &quot;&lt;form method=\&quot;post\&quot; action=\&quot;test.php\&quot;&gt;&quot;;<br>
+    echo &quot;&lt;input type=\&quot;text\&quot; name=\&quot;username\&quot;&gt;&quot;;<br>
+    echo &quot;&lt;input type=\&quot;password\&quot; name=\&quot;password\&quot;&gt;&quot;;<br>
+    echo &quot;&lt;input type=\&quot;submit\&quot;&gt;&quot;; echo &quot;&lt;/form&gt;&quot;;<br>
+}<br>
+$options = array(<br>
+ &quot;dsn&quot; =&gt; &quot;pgsql://seguranca:seg1019@localhost/seguranca&quot;,<br>
+ &quot;table&quot;        =&gt; &quot;admin.usuario&quot;,<br>
+ &quot;usernamecol&quot;  =&gt; &quot;usuario&quot;,<br>
+ &quot;passwordcol&quot;  =&gt; &quot;senha&quot;<br>
+);<br>
+$a = new Auth(&quot;DB&quot;, $options, &quot;loginFunction&quot;);<br>
+$a-&gt;start();<br>
+if ($a-&gt;checkAuth()) echo &#039;Login OK&#039;;<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Login OK</p>
+</section>
+<section>
+<h3>[2007-01-03 19:09 UTC] edmar at sc dot usp dot br</h3>
+<p>The problem is in Auth_Container_DB.<br>
+Auth/Container/DB.php, _prepare function, line 155</p>
+<p>As a temporary solution, I change my code in Auth_Container_DB pear class from:</p>
+<p>$this-&gt;options[&#039;final_table&#039;] = $this-&gt;db-&gt;quoteIdentifier( $this-&gt;options[&#039;table&#039;]);</p>
+<p>to</p>
+<p>$this-&gt;options[&#039;final_table&#039;] = $this-&gt;options[&#039;table&#039;];</p>
+</section>
+<section>
+<h3>[2007-01-03 22:38 UTC] aashley at php dot net</h3>
+<p>Thank you for taking the time to write to us, but this is not<br>
+a bug.</p>
+<p>This behaviour is detailed in the release notes for the last several versions and the documentation for the DB container.</p>
+<p>Add &#039;auto_quote&#039; =&gt; false, to the options array passed to Auth_Container_DB</p>
+</section>
+<section>
+<h3>[2007-01-31 17:51 UTC] edmar at sc dot usp dot br</h3>
+<p>Tank&#039;s for your help.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

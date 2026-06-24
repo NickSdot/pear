@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8168</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Configuration &#187; <a href="package/Config/index.html">Config</a> &#187; Bug #8168</h1>
+<p>Wrong phparray result when the $new_cfg_ary has numeric keys</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-07-09 03:03 UTC</td></tr>
+<tr><th>From</th><td>macroz at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>aashley</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/Config/index.html">Config</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-09 03:03 UTC] macroz at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Please run the test script!</p>
+<p>Test script:<br>
+---------------<br>
+require_once(&quot;Config.php&quot;);<br>
+$new_cfg = array(<br>
+	5=&gt;array(54=&gt;&#039;5aaa&#039;,52=&gt;&#039;5bbb&#039;,56=&gt;&#039;56c&#039;,59=&gt;&#039;59c&#039;),<br>
+	7=&gt;70,<br>
+	3=&gt;array(31=&gt;&#039;test3.0&#039;,&#039;test3.1&#039;,30=&gt;&#039;test3.2&#039;,&#039;test3.3&#039;)<br>
+);<br>
+$c = new Config();<br>
+$root =&amp; $c-&gt;parseConfig($new_cfg, &#039;phparray&#039;);<br>
+echo &#039;&lt;pre&gt;&#039;;<br>
+print_r($new_cfg);<br>
+echo &#039;&lt;hr&gt;&#039; . $root-&gt;toString(&#039;phparray&#039;, array(&#039;name&#039; =&gt; &#039;new_cfg&#039;)) .&#039;&lt;/pre&gt;&#039;;</p>
+<p>exit();</p>
+<p>Expected result:<br>
+----------------<br>
+var_dump($new_cfg):<br>
+=================================<br>
+Array<br>
+(<br>
+    [5] =&gt; Array<br>
+        (<br>
+            [54] =&gt; 5aaa<br>
+            [52] =&gt; 5bbb<br>
+            [56] =&gt; 56c<br>
+            [59] =&gt; 59c<br>
+        )</p>
+<p>[7] =&gt; 70<br>
+    [3] =&gt; Array<br>
+        (<br>
+            [31] =&gt; test3.0<br>
+            [32] =&gt; test3.1<br>
+            [30] =&gt; test3.2<br>
+            [33] =&gt; test3.3<br>
+        )</p>
+<p>)</p>
+<p>Actual result:<br>
+--------------<br>
+$new_cfg[&#039;5&#039;][0] = &#039;5aaa&#039;;<br>
+$new_cfg[&#039;5&#039;][1] = &#039;5bbb&#039;;<br>
+$new_cfg[&#039;5&#039;][2] = &#039;56c&#039;;<br>
+$new_cfg[&#039;5&#039;][3] = &#039;59c&#039;;<br>
+$new_cfg[&#039;7&#039;] = 70;<br>
+$new_cfg[&#039;3&#039;][0] = &#039;test3.0&#039;;<br>
+$new_cfg[&#039;3&#039;][1] = &#039;test3.1&#039;;<br>
+$new_cfg[&#039;3&#039;][2] = &#039;test3.2&#039;;<br>
+$new_cfg[&#039;3&#039;][3] = &#039;test3.3&#039;;</p>
+</section>
+<section>
+<h3>[2006-08-11 02:22 UTC] aashley at php dot net</h3>
+<p>I don&#039;t believe this can be fixed without breaking required behaviour for converting between Container types.</p>
+<p>If you change your keys to strings:<br>
+$new_cfg = array(<br>
+	&#039;5&#039; =&gt; array(&#039;54&#039; =&gt; &#039;5aaa&#039;, &#039;52&#039; =&gt; &#039;5bbb&#039;, &#039;56&#039; =&gt; &#039;56c&#039;, &#039;59&#039; =&gt; &#039;59c&#039;),<br>
+	&#039;7&#039; =&gt; 70,<br>
+	&#039;3&#039; =&gt; array(&#039;31&#039; =&gt; &#039;test3.0&#039;, &#039;test3.1&#039;, &#039;30&#039; =&gt; &#039;test3.2&#039;, &#039;test3.3&#039;)<br>
+);</p>
+<p>it should behave as expected.</p>
+<p>The current behaviour is required for handling conversion to containers that can have multiple sections of the same name. These sections are converted to an integer based array for representation in the PHPArray backend.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

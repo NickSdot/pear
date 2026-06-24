@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9989</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_pgsql/index.html">MDB2_Driver_pgsql</a> &#187; Bug #9989</h1>
+<p>lastInsertID with no table / field specified</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #9989</th><td>lastInsertID with no table / field specified</td></tr>
+<tr><th>Submitted</th><td>2007-01-31 15:25 UTC</td></tr>
+<tr><th>From</th><td>mario dot adam at schaeffler dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_pgsql/index.html">MDB2_Driver_pgsql</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-31 15:25 UTC] mario dot adam at schaeffler dot com</h3>
+<p>Description:<br>
+------------<br>
+The function lastInsertID() returns the result vom CURRVAL for a specified sequence. The function expects two optional parameters $table and $field which both are set to null per default. Calling this function with no parameters (and therefor use null for both $table and $field) would result in CURRVAL(&#039;_seq&#039;), if &#039;_seq&#039; was the suffix for sequences. As long you do not have a sequence called like that, an error will be returned.</p>
+<p>I think, it has to be dicussed, if it wasn&#039;t better to return the last used ID at all. LASTVAL could be used for that. A possible solution is pasted in &quot;Test script&quot; below...</p>
+<p>Test script:<br>
+---------------<br>
+function lastInsertID($table = null, $field = null)<br>
+{<br>
+  if (empty($table) &amp;&amp; empty($field)) {<br>
+    return $this-&gt;queryOne(&quot;SELECT lastval()&quot;, &#039;integer&#039;);<br>
+  } else {<br>
+    $seq = $table.(empty($field) ? &#039;&#039; : &#039;_&#039;.$field);<br>
+    $sequence_name = $this-&gt;getSequenceName($seq);<br>
+    return $this-&gt;queryOne(&quot;SELECT currval(&#039;$sequence_name&#039;)&quot;, &#039;integer&#039;);<br>
+  }<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

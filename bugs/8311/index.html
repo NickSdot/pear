@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8311</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_Wiki_Mediawiki/index.html">Text_Wiki_Mediawiki</a> &#187; Bug #8311</h1>
+<p>Wierd list format produces invalid tag nesting</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-07-27 23:24 UTC</td></tr>
+<tr><th>From</th><td>bjs5075 at rit dot edu</td></tr>
+<tr><th>Assigned</th><td>ritzmo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Text_Wiki_Mediawiki/index.html">Text_Wiki_Mediawiki</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Debian etch</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-27 23:24 UTC] bjs5075 at rit dot edu</h3>
+<p>Description:<br>
+------------<br>
+If the user skips levels while entering lists, the code does not keep track of this and eventually invalid XHTML is output. The parser needs to keep &#039;indenting&#039; until it&#039;s at the right level.</p>
+<p>The patch here queues-up as many levels as needed, and then inserts item-starts between them as necessary.</p>
+<p>Here&#039;s a patch (hopefully won&#039;t get mangled too much):<br>
+--- design/software/Text_Wiki/Text/Wiki/Parse/Mediawiki/List.php        (revision 501)<br>
++++ design/software/Text_Wiki/Text/Wiki/Parse/Mediawiki/List.php        (working copy)<br>
+@@ -139,23 +139,31 @@<br>
+             $text = $val[3];</p>
+<p>// add a level to the list?<br>
+-            if ($level &gt; count($stack)) {<br>
+-<br>
++            $queue = array();<br>
++            while ($level &gt; count($stack)) {<br>
+                 // the current indent level is greater than the<br>
+                 // number of stack elements, so we must be starting<br>
+-                // a new list.  push the new list type onto the<br>
+-                // stack...<br>
+-                array_push($stack, $type);<br>
+-<br>
+-                // ...and add a list-start token to the return.<br>
+-                $return .= $this-&gt;wiki-&gt;addToken(<br>
++                // a new list.<br>
++                // add a list-start token to the temp insertion...<br>
++                $queue[] = $this-&gt;wiki-&gt;addToken(<br>
+                     $this-&gt;rule,<br>
+                     array(<br>
+                         &#039;type&#039; =&gt; $type . &#039;_list_start&#039;,<br>
+-                        &#039;level&#039; =&gt; $level - 1<br>
++                        &#039;level&#039; =&gt; count($stack)<br>
+                     )<br>
+                 );<br>
++<br>
++                // ...and push the new list type onto the stack.<br>
++                array_push($stack, $type);<br>
+             }<br>
++            $return .= implode($this-&gt;wiki-&gt;addToken(<br>
++                $this-&gt;rule,<br>
++                array(<br>
++                    &#039;type&#039; =&gt; $type . &#039;_item_start&#039;,<br>
++                    &#039;level&#039; =&gt; $level - 1<br>
++                )),<br>
++                $queue<br>
++            );</p>
+<p>// remove a level from the list?<br>
+             while (count($stack) &gt; $level) {</p>
+<p>Test script:<br>
+---------------<br>
+* Level 1<br>
+*** Skipped a level<br>
+** Down to level2<br>
+* Almost done</p>
+<p>Expected result:<br>
+----------------<br>
+Something like:</p>
+<p>&lt;ul&gt;<br>
+  &lt;li&gt;Level 1<br>
+    &lt;ul&gt;<br>
+      &lt;li&gt;&lt;!-- Level 2 --&gt;<br>
+        &lt;ul&gt;<br>
+          &lt;li&gt;Skipped a level&lt;/li&gt;<br>
+        &lt;/ul&gt;<br>
+      &lt;li&gt;Down to level2&lt;/li&gt;<br>
+    &lt;/ul&gt;<br>
+  &lt;li&gt;Almost done&lt;/li&gt;<br>
+&lt;/ul&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+Semantically equivalent to:</p>
+<p>&lt;ul&gt;<br>
+  &lt;li&gt;Level 1<br>
+    &lt;ul&gt;<br>
+          &lt;li&gt;Skipped a level&lt;/li&gt;<br>
+        &lt;/ul&gt;<br>
+      &lt;li&gt;Down to level2&lt;/li&gt;<br>
+    &lt;/ul&gt;<br>
+  &lt;li&gt;Almost done&lt;/li&gt;<br>
+&lt;/ul&gt;</p>
+</section>
+<section>
+<h3>[2006-07-29 21:59 UTC] ritzmo at php dot net</h3>
+<p>Unfortunately your patch did not work correctly for me, so I implemented this feature (yeah, I think it&#039;s a feature :-)) on my own.<br>
+I left your arrays out and worked on a string-level which I think is a better way.</p>
+<p>Comments welcome, new revision is in CVS.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

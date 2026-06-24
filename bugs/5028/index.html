@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5028</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #5028</h1>
+<p>PHP 4/5 constructor problems on windows systems</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-08 19:55 UTC</td></tr>
+<tr><th>From</th><td>alex at gengon dot de</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-08 19:55 UTC] alex at gengon dot de</h3>
+<p>Description:<br>
+------------<br>
+I´ve trying to use the MDB2 classes on my windows based dev. environment and found a bug in the constructor usage when developing 4/5 projects. With the 2.0.5 beta i have found<br>
+that when trying to connect to a DB the hole process failes.<br>
+The Browser replys only &#039;The document containes no data&#039;.</p>
+<p>I´ve found an improvement to fix the bug.<br>
+It´s quit simple just rewrite the __construct() on each <br>
+driver to the PHP 4 notation i.e. MDB2_Driver_mysql() and call the parent constructor with parent::MDB2_Driver_Common();<br>
+This solves the problem.</p>
+<p>Only tested with the mysql.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php</p>
+<p>ini_set( &#039;include_path&#039;, <br>
+	&#039;pear/&#039;.PATH_SEPARATOR.<br>
+	ini_get(&#039;include_path&#039;)<br>
+);</p>
+<p>require_once &#039;MDB2.php&#039;;</p>
+<p>$dsn = &quot;mysql://alex:alex@localhost/mdb2test&quot;;<br>
+$db =&amp; MDB2::connect( $dsn );<br>
+if ( PEAR::isError( $db ) ) {<br>
+	die ( __LINE__.$db-&gt;getMessage() );<br>
+} else {<br>
+	echo &quot;DB connection succeded!&quot;;<br>
+}</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Expected output <br>
+DB connection succeded!</p>
+<p>when changing the the contruct things descripied above the <br>
+hole things rocks.</p>
+<p>Actual result:<br>
+--------------<br>
+Browser alert</p>
+<p>The document containes no data.</p>
+<p>nothing else no die or backtrace()</p>
+</section>
+<section>
+<h3>[2005-08-08 20:43 UTC] alex at gengon dot de</h3>
+<p>This style of using mixture php4/5 notation is more<br>
+error-prone than writing it only in 4 notation. This <br>
+is maybe a future error source for other bugs.</p>
+<p>So i think this will not be &#039;fixed&#039; in a later release<br>
+or do i misunderstood???</p>
+<p>yours<br>
+alex</p>
+</section>
+<section>
+<h3>[2005-08-08 21:18 UTC] alex at gengon dot de</h3>
+<p>Ah okay, your right it could be possible<br>
+that the problem will nest in a diffrent <br>
+part than the construct.</p>
+<p>But the whole thing is this<br>
+when calling the MDB2_Driver_mysql __construct() in PHP5<br>
+it also calls the MDB2_Driver_Common() parent constructor automaticly and this will call the __construct() method once again and so on. this will ends in an recursive call.</p>
+<p>i have tried it in diffrent scenarios on calling and this seems to be the point of the error.</p>
+<p>I dont know why in other scenarios this will not be <br>
+occured but this seems to me very comprehensible why the problem is how it is.</p>
+<p>And where is the advantage of using a not on classname dependent constructor???</p>
+<p>I hope I have clarify my probs in detail, and btw. thx for your great work MDB2 is very nice.</p>
+<p>yours <br>
+alex</p>
+</section>
+<section>
+<h3>[2005-08-09 14:32 UTC] david dot coallier at gmail dot com</h3>
+<p>Ok, I worked MDB2 with both php4 and php5 and so far didnt&#039; have this problem.</p>
+<p>The way we are calling the constructor in MDB2_Driver_Common is not wrong because you can see that the php4 constructor is calling the function $this-&gt;__construct() which is fine.</p>
+<p>Just like this, that might be totally irrelevant, but did you try with the dsn array ?</p>
+<p>so instead of this:<br>
+$dsn = &quot;mysql://alex:alex@localhost/mdb2test&quot;;</p>
+<p>try that:</p>
+<p>$dsn = array(<br>
+    &#039;phptype&#039;   =&gt; &#039;mysql&#039;,<br>
+    &#039;hostspec&#039;  =&gt; &#039;localhost&#039;,<br>
+    &#039;username&#039;  =&gt; &#039;alex&#039;,<br>
+    &#039;password&#039;  =&gt; &#039;alex&#039;,<br>
+    &#039;database&#039;  =&gt; &#039;mdb2test&#039;<br>
+);</p>
+<p>Thanks :)</p>
+</section>
+<section>
+<h3>[2005-08-09 19:08 UTC] alex at gengon dot de</h3>
+<p>the dsn don´t matter it´s allways the same problem<br>
+an multi __construct() call. so far i dont know ;)<br>
+strange is that the <br>
+parent::__construct() call in in the mysyl driver <br>
+will call MDB2_Driver_Common() instead of __construct(), this is very strange.<br>
+for now i will use it with my constructor workaround, this works fine and maybe on a newer MDB2 release or PHP 5 release the problem is solved.</p>
+</section>
+<section>
+<h3>[2006-12-28 15:49 UTC] martin dot mesrsmid at sprace dot cz</h3>
+<p>I understand that this bug is closed but I just had the exactly same problem with MDB2 2.3.0 and PHP 5.1.4 on Debian linux with Apache (in my case php runs as cgi)</p>
+<p>The parent constructor call in MDB2_Driver_mysql() hangs up the script no matter what is inside the parent constructor (I tried to play around with it a little). Solution that worked for me was to copy the parent constructor internal code (4 lines only) to MDB2_Driver_mysql() constructor and it works fine.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

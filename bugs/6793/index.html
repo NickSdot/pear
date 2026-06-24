@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6793</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_LDAP/index.html">Net_LDAP</a> &#187; Bug #6793</h1>
+<p>Problem with fetching schema?</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-02-16 10:34 UTC</td></tr>
+<tr><th>From</th><td>b dot hallinger at skyforcesystems dot de</td></tr>
+<tr><th>Assigned</th><td>delatbabel</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_LDAP/index.html">Net_LDAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.2</td></tr>
+<tr><th>OS</th><td>Debian Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-16 10:34 UTC] b dot hallinger at skyforcesystems dot de</h3>
+<p>Description:<br>
+------------<br>
+I think there is a problem with fetching an LDAP-Schema.<br>
+The problem occoures in conjunction with the utf8Decode() method supplied by the LDAP class. First i thought it is a problem there, but Attributes (DIR_STRING) get never decoded, because the Schema remains empty.<br>
+The LDAP-Server is a LDAPv3 Siemens DirX.</p>
+<p>It would be nice to see if others also have problems with this, or if this is a local problem here, but maybe it is related to the following:</p>
+<p>I found a &quot;maybe-bug&quot; in LDAP.php, near line 932:<br>
+if (is_null($dn)) {<br>
+   $dn = &#039;cn=Subschema&#039;;<br>
+}</p>
+<p>The same condition is tested in the if-block above, so $dn gets overwritten.</p>
+<p>a solution to this is replacing this block with:<br>
+if (!is_null($dn)) {<br>
+   $dn = &#039;cn=Subschema&#039;;<br>
+}</p>
+<p>I don&#039;t know if this is related to this bug, but solving the if doesn&#039;t make the schema fetch correctly here.<br>
+Maybe this is also related to Bug #4275</p>
+<p>Test script:<br>
+---------------<br>
+//connects made above, a successfull search was performed<br>
+$attr = $ldap_search-&gt;get_value($attribute_name,&#039;alloptions&#039;);<br>
+echo $attr[0];<br>
+$attr_decoded = $this-&gt;_ldap-&gt;utf8Decode($attr);<br>
+echo $attr_decoded[0];</p>
+<p>Expected result:<br>
+----------------<br>
+If i call this with the Attribute &quot;München&quot;, wich is stored in UTF-8 in the directory, the attribute should be decoded properly:</p>
+<p>MÃ¼nchen<br>
+München</p>
+<p>Actual result:<br>
+--------------<br>
+The actual result is, that the attribute gets not decoded:</p>
+<p>München<br>
+München</p>
+</section>
+<section>
+<h3>[2006-02-16 11:32 UTC] b dot hallinger at skyforcesystems dot de</h3>
+<p>Short addition to my post above:<br>
+if the &quot;if&quot; block gets corrected, then a Net_LDAP_ERROR is generated, the message is:<br>
+&quot;Net_LDAP_Error: Could not fetch Subschema entry&quot;</p>
+</section>
+<section>
+<h3>[2006-02-16 12:11 UTC] b dot hallinger at skyforcesystems dot de</h3>
+<p>:/ I found out that the Problem above is partially a configuration problem at my site.<br>
+The problem was somewhere else, but i&#039;m on it.</p>
+<p>I think i can submit a patch soon.</p>
+</section>
+<section>
+<h3>[2006-02-16 12:33 UTC] b dot hallinger at skyforcesystems dot de</h3>
+<p>Okay, it was a simple uppercase/lowercase mix.<br>
+Here is the patch:</p>
+<p>--- LDAP.php    2005-03-01 13:27:36.000000000 +0100<br>
++++ LDAP.php_fixed      2006-02-16 13:31:34.983151576 +0100<br>
+@@ -921,9 +921,9 @@</p>
+<p>if (is_null($dn)) {<br>
+             // get the subschema entry via root dse<br>
+-            $dse = $this-&gt;rootDSE(array(&#039;subschemaSubentry&#039;));<br>
++            $dse = $this-&gt;rootDSE(array(&#039;subSchemaSubentry&#039;));<br>
+             if (false == Net_LDAP::isError($dse)) {<br>
+-                $base = $dse-&gt;getValue(&#039;subschemaSubentry&#039;, &#039;single&#039;);<br>
++                $base = $dse-&gt;getValue(&#039;subSchemaSubentry&#039;, &#039;single&#039;);<br>
+                 if (!Net_LDAP::isError($base)) {<br>
+                     $dn = $base;<br>
+                 }</p>
+</section>
+<section>
+<h3>[2006-02-16 12:41 UTC] b dot hallinger at skyforcesystems dot de</h3>
+<p>(reopened the bug so maintainers can include the patch in the CVS version)</p>
+</section>
+<section>
+<h3>[2006-02-24 03:15 UTC] delatbabel at php dot net</h3>
+<p>This is a bug in Siemens DirX.</p>
+<p>RFC 2251 section 3.2.1 defines the required entry as &quot;subschemaSubentry&quot; and not &quot;subSchemaSubentry&quot;.  See http://rfc.net/rfc2251.html#s3.2.1.</p>
+<p>I will add a patch that searches for &quot;subSchemaSubentry&quot; as well to work-around such buggy LDAP servers.</p>
+<p>You should also report this bug to your LDAP server vendor (Siemens) and request a fix.</p>
+</section>
+<section>
+<h3>[2006-02-24 03:15 UTC] delatbabel at php dot net</h3>
+<p>Assign to me.</p>
+</section>
+<section>
+<h3>[2006-02-24 03:42 UTC] delatbabel at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

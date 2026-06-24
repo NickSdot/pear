@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #495</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/SQL_Parser/index.html">SQL_Parser</a> &#187; Bug #495</h1>
+<p>User is a reserved word.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-12-25 23:50 UTC</td></tr>
+<tr><th>From</th><td>coil at strangebuzz dot com</td></tr>
+<tr><th>Assigned</th><td>busterb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SQL_Parser/index.html">SQL_Parser</a></td></tr>
+<tr><th>PHP Version</th><td>PHP 4.3.4RC3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-12-25 23:50 UTC] coil at strangebuzz dot com</h3>
+<p>Description:<br>
+------------<br>
+A query that is ok is not validated by SQL_Parser</p>
+<p>Reproduce code:<br>
+---------------<br>
+$sql = &#039;SELECT * FROM user&#039;;</p>
+<p>$parseRes = _SQLParser-&gt;parse($sql);</p>
+<p>Expected result:<br>
+----------------<br>
+Note that when using USERS table it works !!!!!!!!!</p>
+<p>???</p>
+<p>I think that it worked on previous release.</p>
+<p>Actual result:<br>
+--------------<br>
+Parse error: Unexpected clause on line 1<br>
+SELECT * FROM user<br>
+              ^ found: &quot;user&quot;)</p>
+</section>
+<section>
+<h3>[2003-12-28 05:32 UTC] busterb at php dot net</h3>
+<p>Hmm, &#039;user&#039; is marked in Dialect_ANSI.php as a reserved    <br>
+word for SQL, and the parser currently expects that table    <br>
+names are not reserved words.    <br>
+    <br>
+Is there a standard way of handling this? I know that MS    <br>
+SQL uses [] around conflicting table names. Perhaps we    <br>
+could just allow it, or remove user from the list of    <br>
+reserved words (I copied it from MSQL&#039;s list I think)</p>
+</section>
+<section>
+<h3>[2005-04-01 23:49 UTC] epte at ruffdogs dot com</h3>
+<p>The problem, I think, is that different dialects have different standard ways of handling this:</p>
+<p>All of them that I know if are fine if delimiterized, though the delimiters differ between dialects (backtick for MySQL, double quote for Informix, [] for MSSQL, etc...).  This implies that the delimiters used must be select based on dialect.</p>
+<p>And of course the specific reserved words differ between them.  I think this implies that the &quot;Correct Behavior (TM)&quot; is that the set of reserved words be selected based on dialect.</p>
+<p>Now, the real question is, &quot;Is the policy the same between them all?&quot;  All the SQL dialects I know (not that many unfortunately) will error if a reserved word (for that dialect) is used as a table/column name, but not if delimiterized.  This is true at least in MySQL, MSSQL, and I think in Informix and pgSQL.</p>
+</section>
+<section>
+<h3>[2005-04-02 00:00 UTC] epte at ruffdogs dot com</h3>
+<p>Regarding this specific problem, I don&#039;t think &quot;user&quot; should be in the reserved array for the MySQL dialect.  &quot;user&quot; isn&#039;t reserved in MySQL.  See http://www.htmlite.com/mysql002a.php or some similar site.</p>
+<p>Assuming that the above site is correct, then the reserved word array in Dialect_MySQL.php should have this instead:</p>
+<p>&#039;reserved&#039;=array(&#039;add&#039;,&#039;all&#039;,&#039;alter&#039;,&#039;analyze&#039;,&#039;and&#039;,&#039;as&#039;,&#039;asc&#039;,&#039;asensitive&#039;,&#039;auto_increment&#039;,&#039;bdb&#039;,&#039;before&#039;,&#039;berkeley<br>
+db&#039;,&#039;between&#039;,&#039;bigint&#039;,&#039;binary&#039;,&#039;blob&#039;,&#039;both&#039;,&#039;by&#039;,&#039;call&#039;,&#039;cascade&#039;,&#039;case&#039;,&#039;change&#039;,&#039;char&#039;,&#039;character&#039;,&#039;check&#039;,&#039;collat<br>
+e&#039;,&#039;column&#039;,&#039;columns&#039;,&#039;condition&#039;,&#039;connection&#039;,&#039;constraint&#039;,&#039;continue&#039;,&#039;create&#039;,&#039;cross&#039;,&#039;current_date&#039;,&#039;current_time&#039;,<br>
+&#039;current_timestamp&#039;,&#039;cursor&#039;,&#039;database&#039;,&#039;databases&#039;,&#039;day_hour&#039;,&#039;day_microsecond&#039;,&#039;day_minute&#039;,&#039;day_second&#039;,&#039;dec&#039;,&#039;deci<br>
+mal&#039;,&#039;declare&#039;,&#039;default&#039;,&#039;delayed&#039;,&#039;delete&#039;,&#039;desc&#039;,&#039;describe&#039;,&#039;deterministic&#039;,&#039;distinct&#039;,&#039;distinctrow&#039;,&#039;div&#039;,&#039;double&#039;,<br>
+&#039;drop&#039;,&#039;else&#039;,&#039;elseif&#039;,&#039;enclosed&#039;,&#039;escaped&#039;,&#039;exists&#039;,&#039;exit&#039;,&#039;explain&#039;,&#039;false&#039;,&#039;fetch&#039;,&#039;fields&#039;,&#039;float&#039;,&#039;for&#039;,&#039;force&#039;,&#039;<br>
+foreign&#039;,&#039;found&#039;,&#039;frac_second&#039;,&#039;from&#039;,&#039;fulltext&#039;,&#039;grant&#039;,&#039;group&#039;,&#039;having&#039;,&#039;high_priority&#039;,&#039;hour_microsecond&#039;,&#039;hour_min<br>
+ute&#039;,&#039;hour_second&#039;,&#039;if&#039;,&#039;ignore&#039;,&#039;in&#039;,&#039;index&#039;,&#039;infile&#039;,&#039;inner&#039;,&#039;innodb&#039;,&#039;inout&#039;,&#039;insensitive&#039;,&#039;insert&#039;,&#039;int&#039;,&#039;integer&#039;<br>
+,&#039;interval&#039;,&#039;into&#039;,&#039;io_thread&#039;,&#039;is&#039;,&#039;iterate&#039;,&#039;join&#039;,&#039;key&#039;,&#039;keys&#039;,&#039;kill&#039;,&#039;leading&#039;,&#039;leave&#039;,&#039;left&#039;,&#039;like&#039;,&#039;limit&#039;,&#039;line<br>
+s&#039;,&#039;load&#039;,&#039;localtime&#039;,&#039;localtimestamp&#039;,&#039;lock&#039;,&#039;long&#039;,&#039;longblob&#039;,&#039;longtext&#039;,&#039;loop&#039;,&#039;low_priority&#039;,&#039;master_server_id&#039;,&#039;m<br>
+atch&#039;,&#039;mediumblob&#039;,&#039;mediumint&#039;,&#039;mediumtext&#039;,&#039;middleint&#039;,&#039;minute_microsecond&#039;,&#039;minute_second&#039;,&#039;mod&#039;,&#039;natural&#039;,&#039;not&#039;,&#039;no<br>
+_write_to_binlog&#039;,&#039;null&#039;,&#039;numeric&#039;,&#039;on&#039;,&#039;optimize&#039;,&#039;option&#039;,&#039;optionally&#039;,&#039;or&#039;,&#039;order&#039;,&#039;out&#039;,&#039;outer&#039;,&#039;outfile&#039;,&#039;precisi<br>
+on&#039;,&#039;primary&#039;,&#039;privileges&#039;,&#039;procedure&#039;,&#039;purge&#039;,&#039;read&#039;,&#039;real&#039;,&#039;references&#039;,&#039;regexp&#039;,&#039;rename&#039;,&#039;repeat&#039;,&#039;replace&#039;,&#039;requir<br>
+e&#039;,&#039;restrict&#039;,&#039;return&#039;,&#039;revoke&#039;,&#039;right&#039;,&#039;rlike&#039;,&#039;second_microsecond&#039;,&#039;select&#039;,&#039;sensitive&#039;,&#039;separator&#039;,&#039;set&#039;,&#039;show&#039;,&#039;sm<br>
+allint&#039;,&#039;some&#039;,&#039;soname&#039;,&#039;spatial&#039;,&#039;specific&#039;,&#039;sql&#039;,&#039;sqlexception&#039;,&#039;sqlstate&#039;,&#039;sqlwarning&#039;,&#039;sql_big_result&#039;,&#039;sql_calc_f<br>
+ound_rows&#039;,&#039;sql_small_result&#039;,&#039;sql_tsi_day&#039;,&#039;sql_tsi_frac_second&#039;,&#039;sql_tsi_hour&#039;,&#039;sql_tsi_minute&#039;,&#039;sql_tsi_month&#039;,&#039;sql<br>
+_tsi_quarter&#039;,&#039;sql_tsi_second&#039;,&#039;sql_tsi_week&#039;,&#039;sql_tsi_year&#039;,&#039;ssl&#039;,&#039;starting&#039;,&#039;straight_join&#039;,&#039;striped&#039;,&#039;table&#039;,&#039;table<br>
+s&#039;,&#039;terminated&#039;,&#039;then&#039;,&#039;timestampadd&#039;,&#039;timestampdiff&#039;,&#039;tinyblob&#039;,&#039;tinyint&#039;,&#039;tinytext&#039;,&#039;to&#039;,&#039;trailing&#039;,&#039;true&#039;,&#039;undo&#039;,&#039;u<br>
+nion&#039;,&#039;unique&#039;,&#039;unlock&#039;,&#039;unsigned&#039;,&#039;update&#039;,&#039;usage&#039;,&#039;use&#039;,&#039;user_resources&#039;,&#039;using&#039;,&#039;utc_date&#039;,&#039;utc_time&#039;,&#039;utc_timestam<br>
+p&#039;,&#039;values&#039;,&#039;varbinary&#039;,&#039;varchar&#039;,&#039;varcharacter&#039;,&#039;varying&#039;,&#039;when&#039;,&#039;where&#039;,&#039;while&#039;,&#039;with&#039;,&#039;write&#039;,&#039;xor&#039;,&#039;year_month&#039;,&#039;z<br>
+erofill&#039;),</p>
+</section>
+<section>
+<h3>[2005-04-02 00:26 UTC] epte at ruffdogs dot com</h3>
+<p>That works for me, once I got my include path right :)</p>
+<p>Except that &#039;reserved&#039;=blah needs to be changed to &#039;reserved&#039;=&gt;blah in my version I included earlier.  The complete patch follows:</p>
+<p>? diff<br>
+Index: Dialect_MySQL.php<br>
+===================================================================<br>
+RCS file: /repository/pear/SQL_Parser/Dialect_MySQL.php,v<br>
+retrieving revision 1.4<br>
+diff -u -r1.4 Dialect_MySQL.php<br>
+--- Dialect_MySQL.php   3 Jul 2004 04:49:44 -0000       1.4<br>
++++ Dialect_MySQL.php   2 Apr 2005 00:24:17 -0000<br>
+@@ -36,7 +36,7 @@</p>
+<p>&#039;functions&#039;=&gt;array(&#039;avg&#039;,&#039;count&#039;,&#039;max&#039;,&#039;min&#039;,&#039;sum&#039;,&#039;nextval&#039;,&#039;currval&#039;,&#039;concat&#039;,&#039;date_format&#039;),</p>
+<p>-&#039;reserved&#039;=&gt;array(&#039;absolute&#039;,&#039;action&#039;,&#039;add&#039;,&#039;all&#039;,&#039;allocate&#039;,&#039;and&#039;,&#039;any&#039;,&#039;are&#039;,&#039;asc&#039;,&#039;ascending&#039;,&#039;assertion&#039;,&#039;at&#039;,&#039;authorization&#039;,&#039;begin&#039;,&#039;bit_length&#039;,&#039;both&#039;,&#039;cascade&#039;,&#039;cascaded&#039;,&#039;case&#039;,&#039;cast&#039;,&#039;catalog&#039;,&#039;char_length&#039;,&#039;character_length&#039;,&#039;check&#039;,&#039;close&#039;,&#039;coalesce&#039;,&#039;collate&#039;,&#039;collation&#039;,&#039;column&#039;,&#039;commit&#039;,&#039;connect&#039;,&#039;connection&#039;,&#039;constraint&#039;,&#039;constraints&#039;,&#039;continue&#039;,&#039;convert&#039;,&#039;corresponding&#039;,&#039;cross&#039;,&#039;current&#039;,&#039;current_date&#039;,&#039;current_time&#039;,&#039;current_timestamp&#039;,&#039;current_user&#039;,&#039;cursor&#039;,&#039;day&#039;,&#039;deallocate&#039;,&#039;declare&#039;,&#039;default&#039;,&#039;deferrable&#039;,&#039;deferred&#039;,&#039;desc&#039;,&#039;descending&#039;,&#039;describe&#039;,&#039;descriptor&#039;,&#039;diagnostics&#039;,&#039;disconnect&#039;,&#039;distinct&#039;,&#039;domain&#039;,&#039;else&#039;,&#039;end&#039;,&#039;end-exec&#039;,&#039;escape&#039;,&#039;except&#039;,&#039;exception&#039;,&#039;exec&#039;,&#039;execute&#039;,&#039;exists&#039;,&#039;external&#039;,&#039;extract&#039;,&#039;false&#039;,&#039;fetch&#039;,&#039;first&#039;,&#039;for&#039;,&#039;foreign&#039;,&#039;found&#039;,&#039;full&#039;,&#039;get&#039;,&#039;global&#039;,&#039;go&#039;,&#039;goto&#039;,&#039;grant&#039;,&#039;group&#039;,&#039;having&#039;,&#039;hour&#039;,&#039;identity&#039;,&#039;immediate&#039;,&#039;indicator&#039;,&#039;initially&#039;,&#039;inner&#039;,&#039;input&#039;,&#039;insensitive&#039;,&#039;intersect&#039;,&#039;isolation&#039;,&#039;join&#039;,&#039;key&#039;,&#039;language&#039;,&#039;last&#039;,&#039;leading&#039;,&#039;left&#039;,&#039;level&#039;,&#039;limit&#039;,&#039;local&#039;,&#039;lower&#039;,&#039;match&#039;,&#039;minute&#039;,&#039;module&#039;,&#039;month&#039;,&#039;names&#039;,&#039;national&#039;,&#039;natural&#039;,&#039;next&#039;,&#039;no&#039;,&#039;null&#039;,&#039;nullif&#039;,&#039;octet_length&#039;,&#039;of&#039;,&#039;only&#039;,&#039;open&#039;,&#039;option&#039;,&#039;or&#039;,&#039;order&#039;,&#039;outer&#039;,&#039;output&#039;,&#039;overlaps&#039;,&#039;pad&#039;,&#039;partial&#039;,&#039;position&#039;,&#039;precision&#039;,&#039;prepare&#039;,&#039;preserve&#039;,&#039;primary&#039;,&#039;prior&#039;,&#039;privileges&#039;,&#039;procedure&#039;,&#039;public&#039;,&#039;read&#039;,&#039;references&#039;,&#039;relative&#039;,&#039;restrict&#039;,&#039;revoke&#039;,&#039;right&#039;,&#039;rollback&#039;,&#039;rows&#039;,&#039;schema&#039;,&#039;scroll&#039;,&#039;second&#039;,&#039;section&#039;,&#039;session&#039;,&#039;session_user&#039;,&#039;size&#039;,&#039;some&#039;,&#039;space&#039;,&#039;sql&#039;,&#039;sqlcode&#039;,&#039;sqlerror&#039;,&#039;sqlstate&#039;,&#039;substring&#039;,&#039;system_user&#039;,&#039;table&#039;,&#039;temporary&#039;,&#039;then&#039;,&#039;timezone_hour&#039;,&#039;timezone_minute&#039;,&#039;to&#039;,&#039;trailing&#039;,&#039;transaction&#039;,&#039;translate&#039;,&#039;translation&#039;,&#039;trim&#039;,&#039;true&#039;,&#039;union&#039;,&#039;unique&#039;,&#039;unknown&#039;,&#039;upper&#039;,&#039;usage&#039;,&#039;user&#039;,&#039;using&#039;,&#039;value&#039;,&#039;values&#039;,&#039;varying&#039;,&#039;view&#039;,&#039;when&#039;,&#039;whenever&#039;,&#039;work&#039;,&#039;write&#039;,&#039;year&#039;,&#039;zone&#039;,&#039;eoc&#039;),<br>
++&#039;reserved&#039;=&gt;array(&#039;add&#039;,&#039;all&#039;,&#039;alter&#039;,&#039;analyze&#039;,&#039;and&#039;,&#039;as&#039;,&#039;asc&#039;,&#039;asensitive&#039;,&#039;auto_increment&#039;,&#039;bdb&#039;,&#039;before&#039;,&#039;berkeleydb&#039;,&#039;between&#039;,&#039;bigint&#039;,&#039;binary&#039;,&#039;blob&#039;,&#039;both&#039;,&#039;by&#039;,&#039;call&#039;,&#039;cascade&#039;,&#039;case&#039;,&#039;change&#039;,&#039;char&#039;,&#039;character&#039;,&#039;check&#039;,&#039;collate&#039;,&#039;column&#039;,&#039;columns&#039;,&#039;condition&#039;,&#039;connection&#039;,&#039;constraint&#039;,&#039;continue&#039;,&#039;create&#039;,&#039;cross&#039;,&#039;current_date&#039;,&#039;current_time&#039;,&#039;current_timestamp&#039;,&#039;cursor&#039;,&#039;database&#039;,&#039;databases&#039;,&#039;day_hour&#039;,&#039;day_microsecond&#039;,&#039;day_minute&#039;,&#039;day_second&#039;,&#039;dec&#039;,&#039;decimal&#039;,&#039;declare&#039;,&#039;default&#039;,&#039;delayed&#039;,&#039;delete&#039;,&#039;desc&#039;,&#039;describe&#039;,&#039;deterministic&#039;,&#039;distinct&#039;,&#039;distinctrow&#039;,&#039;div&#039;,&#039;double&#039;,&#039;drop&#039;,&#039;else&#039;,&#039;elseif&#039;,&#039;enclosed&#039;,&#039;escaped&#039;,&#039;exists&#039;,&#039;exit&#039;,&#039;explain&#039;,&#039;false&#039;,&#039;fetch&#039;,&#039;fields&#039;,&#039;float&#039;,&#039;for&#039;,&#039;force&#039;,&#039;foreign&#039;,&#039;found&#039;,&#039;frac_second&#039;,&#039;from&#039;,&#039;fulltext&#039;,&#039;grant&#039;,&#039;group&#039;,&#039;having&#039;,&#039;high_priority&#039;,&#039;hour_microsecond&#039;,&#039;hour_minute&#039;,&#039;hour_second&#039;,&#039;if&#039;,&#039;ignore&#039;,&#039;in&#039;,&#039;index&#039;,&#039;infile&#039;,&#039;inner&#039;,&#039;innodb&#039;,&#039;inout&#039;,&#039;insensitive&#039;,&#039;insert&#039;,&#039;int&#039;,&#039;integer&#039;,&#039;interval&#039;,&#039;into&#039;,&#039;io_thread&#039;,&#039;is&#039;,&#039;iterate&#039;,&#039;join&#039;,&#039;key&#039;,&#039;keys&#039;,&#039;kill&#039;,&#039;leading&#039;,&#039;leave&#039;,&#039;left&#039;,&#039;like&#039;,&#039;limit&#039;,&#039;lines&#039;,&#039;load&#039;,&#039;localtime&#039;,&#039;localtimestamp&#039;,&#039;lock&#039;,&#039;long&#039;,&#039;longblob&#039;,&#039;longtext&#039;,&#039;loop&#039;,&#039;low_priority&#039;,&#039;master_server_id&#039;,&#039;match&#039;,&#039;mediumblob&#039;,&#039;mediumint&#039;,&#039;mediumtext&#039;,&#039;middleint&#039;,&#039;minute_microsecond&#039;,&#039;minute_second&#039;,&#039;mod&#039;,&#039;natural&#039;,&#039;not&#039;,&#039;no_write_to_binlog&#039;,&#039;null&#039;,&#039;numeric&#039;,&#039;on&#039;,&#039;optimize&#039;,&#039;option&#039;,&#039;optionally&#039;,&#039;or&#039;,&#039;order&#039;,&#039;out&#039;,&#039;outer&#039;,&#039;outfile&#039;,&#039;precision&#039;,&#039;primary&#039;,&#039;privileges&#039;,&#039;procedure&#039;,&#039;purge&#039;,&#039;read&#039;,&#039;real&#039;,&#039;references&#039;,&#039;regexp&#039;,&#039;rename&#039;,&#039;repeat&#039;,&#039;replace&#039;,&#039;require&#039;,&#039;restrict&#039;,&#039;return&#039;,&#039;revoke&#039;,&#039;right&#039;,&#039;rlike&#039;,&#039;second_microsecond&#039;,&#039;select&#039;,&#039;sensitive&#039;,&#039;separator&#039;,&#039;set&#039;,&#039;show&#039;,&#039;smallint&#039;,&#039;some&#039;,&#039;soname&#039;,&#039;spatial&#039;,&#039;specific&#039;,&#039;sql&#039;,&#039;sqlexception&#039;,&#039;sqlstate&#039;,&#039;sqlwarning&#039;,&#039;sql_big_result&#039;,&#039;sql_calc_found_rows&#039;,&#039;sql_small_result&#039;,&#039;sql_tsi_day&#039;,&#039;sql_tsi_frac_second&#039;,&#039;sql_tsi_hour&#039;,&#039;sql_tsi_minute&#039;,&#039;sql_tsi_month&#039;,&#039;sql_tsi_quarter&#039;,&#039;sql_tsi_second&#039;,&#039;sql_tsi_week&#039;,&#039;sql_tsi_year&#039;,&#039;ssl&#039;,&#039;starting&#039;,&#039;straight_join&#039;,&#039;striped&#039;,&#039;table&#039;,&#039;tables&#039;,&#039;terminated&#039;,&#039;then&#039;,&#039;timestampadd&#039;,&#039;timestampdiff&#039;,&#039;tinyblob&#039;,&#039;tinyint&#039;,&#039;tinytext&#039;,&#039;to&#039;,&#039;trailing&#039;,&#039;true&#039;,&#039;undo&#039;,&#039;union&#039;,&#039;unique&#039;,&#039;unlock&#039;,&#039;unsigned&#039;,&#039;update&#039;,&#039;usage&#039;,&#039;use&#039;,&#039;user_resources&#039;,&#039;using&#039;,&#039;utc_date&#039;,&#039;utc_time&#039;,&#039;utc_timestamp&#039;,&#039;values&#039;,&#039;varbinary&#039;,&#039;varchar&#039;,&#039;varcharacter&#039;,&#039;varying&#039;,&#039;when&#039;,&#039;where&#039;,&#039;while&#039;,&#039;with&#039;,&#039;write&#039;,&#039;xor&#039;,&#039;year_month&#039;,&#039;zerofill&#039;),</p>
+<p>&#039;synonyms&#039;=&gt;array(&#039;decimal&#039;=&gt;&#039;numeric&#039;,&#039;dec&#039;=&gt;&#039;numeric&#039;,&#039;numeric&#039;=&gt;&#039;numeric&#039;,&#039;float&#039;=&gt;&#039;float&#039;,&#039;real&#039;=&gt;&#039;real&#039;,&#039;double&#039;=&gt;&#039;real&#039;,&#039;int&#039;=&gt;&#039;int&#039;,&#039;integer&#039;=&gt;&#039;int&#039;,&#039;interval&#039;=&gt;&#039;interval&#039;,&#039;smallint&#039;=&gt;&#039;smallint&#039;,&#039;timestamp&#039;=&gt;&#039;timestamp&#039;,&#039;bool&#039;=&gt;&#039;bool&#039;,&#039;boolean&#039;=&gt;&#039;bool&#039;,&#039;set&#039;=&gt;&#039;set&#039;,&#039;enum&#039;=&gt;&#039;enum&#039;,&#039;text&#039;=&gt;&#039;text&#039;,&#039;char&#039;=&gt;&#039;char&#039;,&#039;character&#039;=&gt;&#039;char&#039;,&#039;varchar&#039;=&gt;&#039;varchar&#039;,&#039;ascending&#039;=&gt;&#039;asc&#039;,&#039;asc&#039;=&gt;&#039;asc&#039;,&#039;descending&#039;=&gt;&#039;desc&#039;,&#039;desc&#039;=&gt;&#039;desc&#039;,&#039;date&#039;=&gt;&#039;date&#039;,&#039;time&#039;=&gt;&#039;time&#039;),</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

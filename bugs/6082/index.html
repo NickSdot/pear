@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6082</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PHP &#187; <a href="package/PHP_Compat/index.html">PHP_Compat</a> &#187; Bug #6082</h1>
+<p>[patch] file_put_contents with locking support</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #6082</th><td>[patch] file_put_contents with locking support</td></tr>
+<tr><th>Submitted</th><td>2005-11-26 19:21 UTC</td></tr>
+<tr><th>From</th><td>judas_iscariote at imapmail dot org</td></tr>
+<tr><th>Assigned</th><td>aidan</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PHP_Compat/index.html">PHP_Compat</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-26 19:21 UTC] judas_iscariote at imapmail dot org</h3>
+<p>Description:<br>
+------------<br>
+file_put_contents does&#039;t support locking (ie . LOCK_EX)<br>
+suggested code attached...</p>
+<p>Test script:<br>
+---------------<br>
+ndex: file_put_contents.php<br>
+===================================================================<br>
+--- file_put_contents.php       (revisión: 45)<br>
++++ file_put_contents.php       (copia de trabajo)<br>
+@@ -26,6 +26,9 @@<br>
+     define(&#039;FILE_APPEND&#039;, 8);<br>
+ }</p>
+<p>+if (!defined(&#039;LOCK_EX&#039;)) {<br>
++    define (&#039;LOCK_EX&#039;, 2);<br>
++}</p>
+<p>/**<br>
+  * Replace file_put_contents()<br>
+@@ -60,13 +63,15 @@<br>
+         // Check what mode we are using<br>
+         $mode = ($flags &amp; FILE_APPEND) ?<br>
+                     &#039;a&#039; :<br>
+-                    &#039;w&#039;;<br>
++                    &#039;wb&#039;;</p>
+<p>// Check if we&#039;re using the include path<br>
+         $use_inc_path = ($flags &amp; FILE_USE_INCLUDE_PATH) ?<br>
+                     true :<br>
+                     false;</p>
+<p>+        $use_lock = ($flags &amp; LOCK_EX) ? true : false ;<br>
++<br>
+         // Open the file for writing<br>
+         if (($fh = @fopen($filename, $mode, $use_inc_path)) === false) {<br>
+             user_error(&#039;file_put_contents() failed to open stream: Permission denied&#039;,<br>
+@@ -76,6 +81,16 @@</p>
+<p>// Write to the file<br>
+         $bytes = 0;<br>
++<br>
++        if($use_lock == true ) {<br>
++<br>
++            if (!flock($fh, LOCK_EX)) { // do an exclusive lock<br>
++<br>
++                return false;<br>
++            }<br>
++<br>
++        }<br>
++<br>
+         if (($bytes = @fwrite($fh, $content)) === false) {<br>
+             $errormsg = sprintf(&#039;file_put_contents() Failed to write %d bytes to %s&#039;,<br>
+                             $length,<br>
+@@ -84,8 +99,8 @@<br>
+             return false;<br>
+         }</p>
+<p>-        // Close the handle<br>
+-        @fclose($fh);<br>
++        // Close the handle (lock released here too )<br>
++        @fclose($fh);</p>
+<p>// Check all the data was written<br>
+         if ($bytes != $length) {<br>
+@@ -101,4 +116,4 @@<br>
+     }<br>
+ }</p>
+<p>-?&gt;<br>
+\ No newline at end of file<br>
++?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+locking implemented</p>
+<p>Actual result:<br>
+--------------<br>
+locking not implemented</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

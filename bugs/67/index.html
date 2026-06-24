@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #67</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File System &#187; <a href="package/File_Find/index.html">File_Find</a> &#187; Bug #67</h1>
+<p>maptree error: Problem with method call</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-10-05 17:59 UTC</td></tr>
+<tr><th>From</th><td>hetta at spamcop dot net</td></tr>
+<tr><th>Assigned</th><td>techtonik</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/File_Find/index.html">File_Find</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Suse81 linux 2.4.19-4GB #1 i686</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-10-05 17:59 UTC] hetta at spamcop dot net</h3>
+<p>Description:<br>
+------------<br>
+ran a very simple maptree script, but got &quot;problem with method call&quot; on File_Find::_build($dir);</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+include_once &#039;File/Find.php&#039;;<br>
+list ($directories, $files) = File_Find::maptree(&#039;/www/htdocs&#039;);<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+A list of files in the given directory, or a message saying &quot;no files&quot; or &quot;no such directory&quot;.</p>
+<p>Actual result:<br>
+--------------<br>
+Warning: Problem with method call - please report this bug in /usr/share/pear/File/Find.php on line 112</p>
+<p>Warning: array_push(): First argument should be an array in /usr/share/pear/File/Find.php on line 113</p>
+<p>lines 112-113 in File/Find.php:<br>
+            File_Find::_build($dir);<br>
+            array_push($this-&gt;directories, $dir);</p>
+<p>----------</p>
+<p>Changed that to a directory that actually exists - same result.</p>
+<p>----------</p>
+<p>Next I tried a directory with global read rights, and got:<br>
+Warning: Problem with method call - please report this bug in /usr/share/pear/File/Find.php on line 112</p>
+<p>Warning: array_push(): First argument should be an array in /usr/share/pear/File/Find.php on line 258</p>
+<p>... (lots of line 258) ...</p>
+<p>Warning: array_push(): First argument should be an array in /usr/share/pear/File/Find.php on line 258</p>
+<p>Warning: array_push(): First argument should be an array in /usr/share/pear/File/Find.php on line 113</p>
+</section>
+<section>
+<h3>[2003-10-05 18:07 UTC] tuupola at php dot net</h3>
+<p>You cannot call maptree() statically. Instead use something <br>
+like:</p>
+<p>$f = new File_Find();<br>
+$file = $f-&gt;maptree(&#039;/tmp/&#039;);</p>
+</section>
+<section>
+<h3>[2003-10-05 18:15 UTC] hetta at spamcop dot net</h3>
+<p>Ah. Somebody needs to tell Sterling Hughes, of the &quot;PHP Developer&#039;s Cookbook, Second Edition&quot; then. ;)<br>
+http://safari.informit.com/0672323257/ch07lev1sec7</p>
+</section>
+<section>
+<h3>[2005-01-20 21:57 UTC] techtonik at tut dot by</h3>
+<p>Patch to allow maptree be called statically</p>
+<p>--- Find_old.php	2005-01-10 18:33:00.000000000 +0200<br>
++++ Find.php	2005-01-20 23:52:40.000000000 +0200<br>
+@@ -3,7 +3,7 @@<br>
+ // +----------------------------------------------------------------------+<br>
+ // | PHP Version 4                                                        |<br>
+ // +----------------------------------------------------------------------+<br>
+-// | Copyright (c) 1997-2003 The PHP Group                                |<br>
++// | Copyright (c) 1997-2005 The PHP Group                                |<br>
+ // +----------------------------------------------------------------------+<br>
+ // | This source file is subject to version 2.02 of the PHP license,      |<br>
+ // | that is bundled with this package in the file LICENSE, and is        |<br>
+@@ -107,15 +107,22 @@<br>
+      */<br>
+     function &amp;maptree($directory)<br>
+     {<br>
+-        $this-&gt;_dirs = array($directory);<br>
++        /* if called statically */<br>
++        if (!isset($this) || !is_a($this, &quot;File_Find&quot;)) {<br>
++            $obj = &amp;new File_Find();<br>
++            return $obj-&gt;maptree($directory);<br>
++        } else {<br>
+ <br>
+-        while (count($this-&gt;_dirs)) {<br>
+-            $dir = array_pop($this-&gt;_dirs);<br>
+-            File_Find::_build($dir);<br>
+-            array_push($this-&gt;directories, $dir);<br>
+-        }<br>
++            $this-&gt;_dirs = array($directory);<br>
+ <br>
+-        return array($this-&gt;directories, $this-&gt;files);<br>
++            while (count($this-&gt;_dirs)) {<br>
++                $dir = array_pop($this-&gt;_dirs);<br>
++                File_Find::_build($dir);<br>
++                array_push($this-&gt;directories, $dir);<br>
++            }<br>
++<br>
++            return array($this-&gt;directories, $this-&gt;files);<br>
++        }<br>
+     }<br>
+ <br>
+     /**<br>
+@@ -199,7 +206,7 @@<br>
+     {<br>
+ <br>
+         /* if called statically */<br>
+-        if (!isset($this)  || !is_a($this, &quot;File_Find&quot;)) {<br>
++        if (!isset($this) || !is_a($this, &quot;File_Find&quot;)) {<br>
+             $obj = &amp;new File_Find();<br>
+             return $obj-&gt;search($pattern, $directory, $type, $fullpath);<br>
+         } else {</p>
+</section>
+<section>
+<h3>[2005-01-20 22:16 UTC] techtonik at tut dot by</h3>
+<p>Well, here is a better link. <br>
+http://tech.zubr.com/wikipedia/File_Find-0.3.1-patched/</p>
+<p>You better wget -r this page and compare with your working copy. I also modified all tests to run correctly on windows too.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

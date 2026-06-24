@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3767</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #3767</h1>
+<p>no proper support for postgresql schemas</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-03-10 15:35 UTC</td></tr>
+<tr><th>From</th><td>jeroen at terena dot nl</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.2</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-10 15:35 UTC] jeroen at terena dot nl</h3>
+<p>Description:<br>
+------------<br>
+Having a postgresql database with schemas (other than the &quot;public&quot; schema) does not work when using create_tables.php</p>
+<p>The table list fetched by PEAR::DB still doesn&#039;t return the schema along with the table name (see bug #682) even though support for this was addded a while ago in DB version 1.7</p>
+<p>If I echo the table names by adding a small echo statement in Generator.php I see all tablenames in my database, but all without the schemaname prepended..</p>
+<p>So changed a line in Generator.php</p>
+<p>$this-&gt;tables = $__DB-&gt;getListOf(&#039;tables&#039;);</p>
+<p>becomes:</p>
+<p>$this-&gt;tables = $__DB-&gt;getListOf(&#039;schema.tables&#039;);</p>
+<p>This works and now my classes get generated okay and the schema name gets prepended.</p>
+<p>It would be nice if you could set an option whether to automically prepend the schema name as you don&#039;t always want this.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Run create_tables.php on postgresql database with multiple schemas - I won&#039;t paste my whole db strcuture here ;-)</p>
+<p>Expected result:<br>
+----------------<br>
+generated classes as happens when not using any schemas or just using the public schema.</p>
+<p>Actual result:<br>
+--------------<br>
+something along the lines of:</p>
+<p>DB_DataObject_Generator   : 0       : CREATING FOR terena</p>
+<p>[db_error: message=&quot;DB Error: insufficient data supplied&quot; code=-20 mode=return level=notice prefix=&quot;&quot; info=&quot;SELECT c.relname AS &quot;Name&quot; FROM pg_class c, pg_user u WHERE c.relowner = u.usesysid AND c.relkind = &#039;r&#039; AND NOT EXISTS (SELECT 1 FROM pg_views  WHERE viewname = c.relname) AND c.relname !~ &#039;^(pg_|sql_)&#039; UNION SELECT c.relname AS &quot;Name&quot; FROM pg_class c WHERE c.relkind = &#039;r&#039; AND NOT EXISTS (SELECT 1 FROM pg_views  WHERE viewname = c.relname) AND NOT EXISTS (SELECT 1 FROM pg_user  WHERE usesysid = c.relowner) AND c.relname !~ &#039;^pg_&#039; [nativecode=ERROR:  relation &quot;area_events&quot; does not exist]&quot;]</p>
+</section>
+<section>
+<h3>[2005-03-14 11:59 UTC] jeroen at terena dot nl</h3>
+<p>Alan,</p>
+<p>Yes you are correct in thinking that<br>
+tableInfo(&#039;tablename&#039;) returns an error if that table is in a schema other than the public schema. The call should then be tableInfo(&#039;schemaname.tablename&#039;) - this will work fine.</p>
+<p>Schemas were introduced in postgresql version 7.4 IIRC. Note that if you run a version that can use schemas you don&#039;t *have* to use schemas. In that case all objects (tables, views, sequences etc) will apear in the public schema e.g. public.persons, public.accounts etc.</p>
+<p>If you upgrade from a schema-incapable version of PG to one that supports schemas, your tables will be converted from tablename to public.tablename. SQL commands will still work the same because SELECT * FROM mytable will internally resolve to SELECT * FROM public.mytable. Additionally you can create new objects inside a custom schema like myschema.mytable.</p>
+<p>I think what you propose could work, but only if you do it the other way around: First do a getListOf(&#039;schema.tables&#039;) and if that doesn&#039;t return anything try getListOf(&#039;tables&#039;) which will always return all the tables without the schema prefix.</p>
+<p>If you have a schema capable version but you don&#039;t use schemas (everything is in the public schema) getListOf(&#039;schema.tables&#039;) will work fine but it will create classes like Public_Persons and Public_Account which some people will find annoying.. Perhaps there could be an option that removes the schema prefix from the generated classname, although this can lead to problems if you have say Office.persons and Someotherschema.persons.</p>
+</section>
+<section>
+<h3>[2005-08-02 09:13 UTC] darealremco at msn dot com</h3>
+<p>It also borks with tables containing CAPITALS. I&#039;ve traced    <br>
+the problem to $__DB-&gt;tableInfo, it seems to be   <br>
+uncapitalizeing. But I got tired of it and    <br>
+changed the table names to prevent future problems.  <br>
+Version 1.7.15 sorry if this is already fixed in the CVS .</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

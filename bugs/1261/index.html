@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1261</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_HTMLSax/index.html">XML_HTMLSax</a> &#187; Bug #1261</h1>
+<p>Veriosn 2.1.2 result in memory leak</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-22 15:37 UTC</td></tr>
+<tr><th>From</th><td>sonny at sun dot com</td></tr>
+<tr><th>Assigned</th><td>hfuecks</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/XML_HTMLSax/index.html">XML_HTMLSax</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>Solaris 9</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-22 15:37 UTC] sonny at sun dot com</h3>
+<p>Description:<br>
+------------<br>
+Previos bersion what I have used was 1.1, which seems to work.<br>
+But an upgrade to 2.1.2 result in a memory leak.</p>
+<p>[root@lab022 new]# php final.php | m<br>
+/sourcesoftware/php-4.3.2/Zend/zend_execute.c(1996) :  Freeing 0x009A9FC0 (44 bytes), script=final.php<br>
+/sourcesoftware/php-4.3.2/Zend/zend_API.c(562) : Actual location (location was relayed)<br>
+Last leak repeated 1 time<br>
+/sourcesoftware/php-4.3.2/Zend/zend_execute.c(1178) :  Freeing 0x009A9C78 (16 bytes), script=final.php<br>
+/sourcesoftware/php-4.3.2/Zend/zend_hash.c(178) :  Freeing 0x009A96D0 (32 bytes), script=final.php<br>
+Last leak repeated 14 times<br>
+/sourcesoftware/php-4.3.2/Zend/zend_hash.c(262) :  Freeing 0x009A9530 (41 bytes), script=final.php<br>
+Last leak repeated 36 times<br>
+/sourcesoftware/php-4.3.2/main/streams.c(1157) :  Freeing 0x00A19218 (59501 bytes), script=final.php<br>
+/sourcesoftware/php-4.3.2/ext/standard/file.c(437) : Actual location (location was relayed)<br>
+/sourcesoftware/php-4.3.2/Zend/zend_execute.c(489) :  Freeing 0x009A9068 (16 bytes), script=final.php<br>
+Last leak repeated 1 time</p>
+<p>Reproduce code:<br>
+---------------<br>
+Same as in the README File.</p>
+<p>Expected result:<br>
+----------------<br>
+without leak!</p>
+</section>
+<section>
+<h3>[2004-04-22 15:40 UTC] sonny at sun dot com</h3>
+<p>Here is my little testcase.<br>
+The open and close handler is the same like in the Readme file.</p>
+<p>require_once &#039;RALparser.php&#039;;<br>
+require_once &#039;XML/XML_HTMLSax.php&#039;;</p>
+<p>$handler =&amp; new RALparser();<br>
+$parser =&amp; new XML_HTMLSax();</p>
+<p>$parser-&gt;set_object($handler);<br>
+$parser-&gt;set_option(&#039;XML_OPTION_CASE_FOLDING&#039;,false);<br>
+$parser-&gt;set_element_handler(&#039;openHandler&#039;, &#039;closeHandler&#039;);</p>
+<p>$htmlCode = file_get_contents( &#039;out.html&#039;);<br>
+$parser-&gt;parse($htmlCode);</p>
+<p>print_r($handler_return);</p>
+</section>
+<section>
+<h3>[2004-06-03 13:18 UTC] sonny at sun dot com</h3>
+<p>I can&#039;t do an upgrade on an newer version of php which would cause a too long downtime of the server.</p>
+<p>What do you mean with &#039;m&#039; tool?</p>
+</section>
+<section>
+<h3>[2004-06-04 08:00 UTC] sonny at sun dot com</h3>
+<p>I have changed the code in the constructor but it have the same behavior. Maybe it&#039;s one of my codes/scripts which will cause this memory leak. The &#039;m&#039; tool is just &#039;more&#039; not more ;-).</p>
+<p>I have uploaded my scripts where you can take a look on it.<br>
+RALparser.php - http://dj.laxly.de/php/ral/RALparser.phps<br>
+final.php - http://dj.laxly.de/php/ral/final.phps<br>
+out3.html - http://dj.laxly.de/php/ral/out3.html<br>
+complete package: http://dj.laxly.de/php/ral/ral-tar</p>
+<p>Maybe you can reconstruct it with my scripts. Or does i have  an strange php config which cause the memory leaks.</p>
+<p>phpinfo - http://dj.laxly.de/php/ral/phpinfo.php</p>
+</section>
+<section>
+<h3>[2004-06-04 10:58 UTC] sonny at sun dot com</h3>
+<p>No we&#039;re still running on 1.3.26. <br>
+In case of php I don&#039;t wanna use Apache 2.x.<br>
+The Multithreading seems not to work very well with php.</p>
+<p>Bummer not to reproduce this.<br>
+But thanks for you coding hints.</p>
+<p>I&#039;m not very amused about the leak but I it&#039;s does not gone there is nothing I can do. <br>
+Might be in several constelation of funtions because this memory leak I have seen as well with phpDocumentor.</p>
+<p>So I&#039;d like to thank you for your support.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

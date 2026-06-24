@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9151</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Tools and Utilities &#187; <a href="package/PhpDocumentor/index.html">PhpDocumentor</a> &#187; Bug #9151</h1>
+<p>ReflectionException when documenting classes derived from PHP internal classes</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-10-24 15:11 UTC</td></tr>
+<tr><th>From</th><td>netmaster at bison-soft dot de</td></tr>
+<tr><th>Assigned</th><td>ashnazg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PhpDocumentor/index.html">PhpDocumentor</a></td></tr>
+<tr><th>PHP Version</th><td>5_2 CVS-2006-10-24</td></tr>
+<tr><th>OS</th><td>linux 2.4 (RHEL 3)</td></tr>
+<tr><th>Roadmaps</th><td>1.3.2</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-10-24 15:11 UTC] netmaster at bison-soft dot de</h3>
+<p>Description:<br>
+------------<br>
+When trying to document a class derived from the internal class &quot;Exception&quot; v1.3.0 throws following exception:</p>
+<p>Writing ./docs/__filesource/fsource_Rde__RdeBaseException.php.html<br>
+ Procedural Page Elements... Classes...PHP Fatal error:  Uncaught exception &#039;ReflectionException&#039; with message &#039;Cannot determine default value for internal functions&#039; in /usr/lib/php/pear/PhpDocumentor/phpDocumentor/ParserElements.inc:1735<br>
+Stack trace:<br>
+#0 /usr/lib/php/pear/PhpDocumentor/phpDocumentor/ParserElements.inc(1735): ReflectionParameter-&gt;getDefaultValue()<br>
+#1 /usr/lib/php/pear/PhpDocumentor/phpDocumentor/Converter.inc(4720): parserMethod-&gt;getOverrides(Object(HTMLframesConverter))<br>
+#2 /usr/lib/php/pear/PhpDocumentor/phpDocumentor/Converter.inc(4140): Converter-&gt;getFormattedOverrides(Object(parserMethod))<br>
+#3 /usr/lib/php/pear/PhpDocumentor/phpDocumentor/Converters/HTML/frames/HTMLframesConverter.inc(1070): Converter-&gt;convertMethod(Object(parserMethod), Array)<br>
+#4 /usr/lib/php/pear/PhpDocumentor/phpDocumentor/Converter.inc(3970): HTMLframesConverter-&gt;convertMethod(Object(parserMethod))<br>
+#5 /usr/lib/php/pear/PhpDocumentor/phpDocumentor/Converter.inc(1920): Converter-&gt;Convert(Object(parserMethod))<br>
+#6 /usr/lib/php/pear/PhpDocumentor/phpDocumentor/IntermediateParser. in /usr/lib/php/pear/PhpDocumentor/phpDocumentor/ParserElements.inc on line 1735</p>
+</section>
+<section>
+<h3>[2006-10-24 16:01 UTC] netmaster at bison-soft dot de</h3>
+<p>As a quick workaround i&#039;ve added following try/catch arround the offending source line in ParserElements.inc which solves the problem for me (but i can&#039;t guaranty that this leads to expected results in all circumstances):</p>
+<p>try {<br>
+    $value = $param-&gt;isOptional() ? var_export($param-&gt;getDefaultValue(), true) : null;<br>
+} catch (Exception $e) {<br>
+    $value = null;<br>
+}</p>
+</section>
+<section>
+<h3>[2006-12-04 14:36 UTC] patrice dot pillot at asm dot map dot archi dot fr</h3>
+<p>I experienced the same bug here today. The workaround works here too.</p>
+<p>Since I experimented this bug right after upgrading from php 5.1.6 to php 5.2, I strongly suspect it has something to do with this upgrade (debian etch).</p>
+<p>Note also the following lines, just before the stack trace :<br>
+Converting /path/src/myapp/myfwk/lib/BF_Exception.class.phpWARNING: class BF_Exception in package myfwk parent not found in @see parent::__construct()</p>
+<p>Writing phpdocs/__filesource/fsource_myfwk_framework_myappmyfwklibBF_Exception.class.php.html<br>
+WARNING: class BF_Exception in package myfwk parent not found in @see parent::__construct()</p>
+<p>Could it be that PhpDoc is looking for the source file of php base exception class (since class BF_Exception extends Exception) which would undoubtedly be doomed to fail, wouldn&#039;t it ?</p>
+<p>Oh, by the way, I don&#039;t myself use the @see tag (there), it&#039;s coming out from phpdoc internals...</p>
+</section>
+<section>
+<h3>[2006-12-12 20:42 UTC] zippy1981 at gmail dot com</h3>
+<p>Below is the patch for me. I had to deal with exceptions in 3 places. I only catch ReflectionExceptions.</p>
+<p>--- ParserElements.inc.orig     2006-12-12 14:48:32.000000000 -0500<br>
++++ ParserElements.inc  2006-12-12 14:53:58.000000000 -0500<br>
+@@ -1098,7 +1098,11 @@<br>
+                 }<br>
+                 $doc = new parserDocBlock;<br>
+                 foreach ($method-&gt;getParameters() as $param) {<br>
+-                    $value = $param-&gt;isDefaultValueAvailable() ? var_export($param-&gt;getDefaultValue(), true) : null;<br>
++                    try {<br>
++                        $value = $param-&gt;isDefaultValueAvailable() ? var_export($param-&gt;getDefaultValue(), true) : null;<br>
++                    } catch (ReflectionException $e) {<br>
++                        $value = null;<br>
++                    }<br>
+                     if ($param-&gt;isPassedByReference()) {<br>
+                         $var-&gt;addParam(&#039;&amp;$&#039; . $param-&gt;getName(), $value, $param-&gt;isOptional(),<br>
+                             $param-&gt;getClass());<br>
+@@ -1732,7 +1736,11 @@<br>
+                     }<br>
+                     $doc = new parserDocBlock;<br>
+                     foreach ($method-&gt;getParameters() as $param) {<br>
+-                        $value = $param-&gt;isOptional() ? var_export($param-&gt;getDefaultValue(), true) : null;<br>
++                        try {<br>
++                            $value = $param-&gt;isOptional() ? var_export($param-&gt;getDefaultValue(), true) : null;<br>
++                        } catch (ReflectionException $e) {<br>
++                            $value = null;<br>
++                        }<br>
+                         if ($param-&gt;isPassedByReference()) {<br>
+                             $var-&gt;addParam(&#039;&amp;$&#039; . $param-&gt;getName(), $value, $param-&gt;isOptional(),<br>
+                                 $param-&gt;getClass());<br>
+@@ -1852,7 +1860,11 @@<br>
+                         }<br>
+                         $doc = new parserDocBlock;<br>
+                         foreach ($method-&gt;getParameters() as $param) {<br>
+-                            $value = $param-&gt;isOptional() ? var_export($param-&gt;getDefaultValue(), true) : null;<br>
++                            try {<br>
++                                $value = $param-&gt;isOptional() ? var_export($param-&gt;getDefaultValue(), true) : null;<br>
++                            } catch (ReflectionException $e) {<br>
++                                $value = null;<br>
++                            }<br>
+                             if ($param-&gt;isPassedByReference()) {<br>
+                                 $var-&gt;addParam(&#039;&amp;$&#039; . $param-&gt;getName(), $value, $param-&gt;isOptional(),<br>
+                                     $param-&gt;getClass());<br>
+@@ -2275,4 +2287,4 @@<br>
+     }<br>
+ }</p>
+<p>-?&gt;<br>
+\ No newline at end of file<br>
++?&gt;</p>
+</section>
+<section>
+<h3>[2006-12-15 20:55 UTC] ashnazg at php dot net</h3>
+<p>Does this scenario imply that any internal PHP classes that are NEW WITH PHP5 need to somehow be set up as &quot;mock objects&quot; at the beginning of a phpdoc run that recognizes it is running against PHP4?</p>
+<p>Or, should phpdoc be treating ANY missing internal classes (like the base Exception class would be in PHP4) just like any other non-internal class would be treated... with a note in the errors.html file saying &quot;hey dude, you extended the Exception class, but I couldn&#039;t find it&quot;...  ??</p>
+</section>
+<section>
+<h3>[2006-12-20 06:22 UTC] zippy1981 at gmail dot com</h3>
+<p>Greg,</p>
+<p>I am using this with version 1.3.1. I understand how you would not want to break PHP4 compatability. It just never occured to me try/catch was a PHP5 thing.</p>
+<p>I&#039;ll see if can figure ou something php4/5 compatiable.</p>
+</section>
+<section>
+<h3>[2007-01-18 16:35 UTC] ashnazg at php dot net</h3>
+<p>Would a custom wrapper function be an ugly way to handle this?  Something that you could use to wrap a &quot;trouble-maker&quot; function, that would itself figure out if try/catch is available in the PHP environment, and use some other means of accomplishing the try/catch concept if it&#039;s not available?  Then again, if there was an obvious alternative to try/catch, I suppose someone would have already mentioned it...</p>
+<p>I guess I could step back a moment and ask if someone&#039;s already tested this scenario against the stable 5.2 release... ?</p>
+</section>
+<section>
+<h3>[2007-01-18 16:44 UTC] ashnazg at php dot net</h3>
+<p>Could someone hook me up with a test file that triggers this problem?  I&#039;d like to set up a v1.3.1-on-v5.2.0 setup and work on some ideas, but I need a testfile that is known to trigger this error (rather than trying to divine one myself with my Y-shaped stick).</p>
+</section>
+<section>
+<h3>[2007-02-09 12:45 UTC] bigtree at donotspam dot 29a dot nl</h3>
+<p>This will do to reproduce the bug:</p>
+<p>&lt;?php</p>
+<p>class MyException extends Exception<br>
+{<br>
+    public function __construct ()<br>
+    {<br>
+    }<br>
+}</p>
+<p>?&gt;</p>
+<p>Throws the following error (PHP 5.2.1):</p>
+<p>Fatal error: Uncaught exception &#039;ReflectionException&#039; with message &#039;Cannot determine default value for internal functions&#039; in (...)/PhpDocumentor/phpDocumentor/ParserElements.inc:1735</p>
+<p>Without __construct(), no exception gets thrown.</p>
+</section>
+<section>
+<h3>[2007-02-09 13:13 UTC] bigtree at donotspam dot 29a dot nl</h3>
+<p>Replacing line 1735 with:</p>
+<p>$value = ($param-&gt;isOptional() &amp;&amp; !$method-&gt;isInternal()) ? var_export($param-&gt;getDefaultValue(), true) : null;</p>
+<p>Prevents the exception being thrown (without try-catch logic). Maybe log an error &#039;Cannot determine default value for builtin method&#039; when checking for internal parameters?</p>
+</section>
+<section>
+<h3>[2007-02-15 16:54 UTC] ashnazg at php dot net</h3>
+<p>I&#039;ve tested that one-line change to ParserElements.inc against that small test file MyException.class.php, and I do see that running v1.3.1 against PHP v5.2.0 does avoid it from crashing.  The output doc looks fine, cleanly showing that Exception is the parent.</p>
+<p>It runs clean against PHP v5.1.6 and v4.4.4 also.  I&#039;m going to test it now against PhpDoc&#039;s CVS HEAD, documenting the PhpDoc codebase itself, as a large-scale test of the patch.</p>
+</section>
+<section>
+<h3>[2007-02-15 17:15 UTC] ashnazg at php dot net</h3>
+<p>This patch seems to be safe on the CVS Head.</p>
+<p>&quot;netmaster&quot;, &quot;patrice&quot;, and &quot;zippy1981&quot;, are you able to try that one-line patch against the codebases you are each documenting, to see if it solves the problems for each of you cleanly?</p>
+</section>
+<section>
+<h3>[2007-02-15 21:30 UTC] patrice dot pillot at teletopie dot net</h3>
+<p>This one-line fix works here. Thanks a lot !</p>
+</section>
+<section>
+<h3>[2007-02-16 19:49 UTC] ashnazg at php dot net</h3>
+<p>This bug has also been recently reported on Sourceforge (#1656902).  I have attached a patch file there containing bigtree&#039;s one-line fix.</p>
+</section>
+<section>
+<h3>[2007-02-20 14:32 UTC] ashnazg at php dot net</h3>
+<p>Fix ok&#039;d by Greg, committed to CVS.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

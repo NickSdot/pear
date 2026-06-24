@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8758</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Calendar/index.html">Calendar</a> &#187; Bug #8758</h1>
+<p>Week-class displays wrong year</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-09-21 13:35 UTC</td></tr>
+<tr><th>From</th><td>macristo at gmx dot net</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Calendar/index.html">Calendar</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>Debian GNU/Linux Etch</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-09-21 13:35 UTC] macristo at gmx dot net</h3>
+<p>Description:<br>
+------------<br>
+If you instantiate a Calendar_Week with the day set to january 1. 2004 and you call $Week-&gt;thisYear(), you will see that the year returned will be 2003, because the first day of that week falls in 2003.</p>
+<p>Of course, the correct year for week 1 of 2004 would be 2004, not 2003.</p>
+<p>Is there a way to get the correct year for the weeks, from which the first days fall in the previous year.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+require_once &#039;Calendar/Week.php&#039;;<br>
+require_once &#039;Calendar/Decorator/Uri.php&#039;; <br>
+if (!isset($_GET[&#039;year&#039;]) || !isset($_GET[&#039;month&#039;]) || !isset($_GET[&#039;day&#039;])) {	$_GET[&#039;year&#039;] = date(&#039;Y&#039;); 	$_GET[&#039;month&#039;] = date(&#039;n&#039;);	$_GET[&#039;day&#039;] = date(&#039;d&#039;); }<br>
+$Week = new Calendar_Week($_GET[&#039;year&#039;], $_GET[&#039;month&#039;], $_GET[&#039;day&#039;]); <br>
+$Week-&gt;build(); <br>
+$Uri =&amp; new Calendar_Decorator_Uri($Week);<br>
+$Uri-&gt;setFragments(&#039;year&#039;, &#039;month&#039;, &#039;day&#039;);<br>
+?&gt;<br>
+&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01 Transitional//EN&quot; &quot;http://www.w3.org/TR/html4/loose.dtd&quot;&gt;&lt;html&gt;&lt;head&gt;&lt;title&gt;Test&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;table border=&quot;1&quot;&gt;&lt;tr&gt;&lt;td colspan=&quot;7&quot;&gt;Week: &lt;?php echo $Week-&gt;thisWeek(&#039;n_in_year&#039;); ?&gt; of &lt;?php echo $Week-&gt;thisYear(); ?&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td width=80&gt;Monday&lt;/td&gt;&lt;td width=80&gt;Tuesday&lt;/td&gt;&lt;td width=80&gt;Wednesday&lt;/td&gt;&lt;td width=80&gt;Thursday&lt;/td&gt;&lt;td width=80&gt;Friday&lt;/td&gt;&lt;td width=80&gt;Saturday&lt;/td&gt;&lt;td width=80&gt;Sunday&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;<br>
+&lt;?php<br>
+while ($Day = $Week-&gt;fetch()) {<br>
+	echo &quot;&lt;td&gt;&quot; . $Day-&gt;thisYear() . &quot;-&quot; . $Day-&gt;thisMonth() . &quot;-&quot; . $Day-&gt;thisDay() . &quot;&lt;/td&gt;&quot;;<br>
+}<br>
+?&gt;<br>
+&lt;/tr&gt;&lt;/table&gt;&lt;p&gt;<br>
+&lt;?php<br>
+$prev = $_SERVER[&#039;PHP_SELF&#039;] . &quot;?&quot; . $Uri-&gt;prev(&#039;week&#039;);<br>
+$next = $_SERVER[&#039;PHP_SELF&#039;] . &quot;?&quot; . $Uri-&gt;next(&#039;week&#039;);<br>
+echo &quot;&lt;a href=&#039;${prev}&#039;&gt;Previous week&lt;/a&gt;  &quot;; <br>
+echo &quot;&lt;a href=&#039;${_SERVER[&#039;PHP_SELF&#039;]}?year=&quot;.date(&#039;Y&#039;).&quot;&amp;month=&quot;.date(&#039;n&#039;).&quot;&amp;day=&quot;.date(&#039;d&#039;).&quot;&#039;&gt;Current week&lt;/a&gt;  &quot;; <br>
+echo &quot;&lt;a href=&#039;${next}&#039;&gt;Next week&lt;/a&gt;&quot;; <br>
+?&gt;<br>
+&lt;p&gt;Erroneous year:&lt;a href=&quot;&lt;?php echo $_SERVER[&#039;PHP_SELF&#039;]; ?&gt;?year=2003&amp;month=12&amp;day=29&quot;&gt;First week of 2004 displays wrong year!&lt;/a&gt;&lt;/body&gt;&lt;/html&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+The first week of 2004 should display 2004 when calling $Week-&gt;thisYear() when using the parameters: year=2003&amp;month=12&amp;day=29.</p>
+<p>Actual result:<br>
+--------------<br>
+The wrong year for the $Week object is returned, because the first day of the $Week-object is in the previous year.</p>
+</section>
+<section>
+<h3>[2006-10-20 15:42 UTC] macristo at gmx dot net</h3>
+<p>Thanks Lorenzo,</p>
+<p>It seems to work alright now!</p>
+<p>Regards,</p>
+<p>Patrick</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

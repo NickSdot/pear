@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4376</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_Archive/index.html">File_Archive</a> &#187; Bug #4376</h1>
+<p>Zip archive wont add files or even download, zero bytes</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-18 08:51 UTC</td></tr>
+<tr><th>From</th><td>spam at electroteque dot org</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/File_Archive/index.html">File_Archive</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>OSX 10.3.9</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-18 08:51 UTC] spam at electroteque dot org</h3>
+<p>Description:<br>
+------------<br>
+From the examples, and example code sent, I still cant <br>
+get a zip archive generated on the fly and output to the <br>
+browser to be downloaded. I have tried both toOutput and <br>
+toFiles but both return a 0 byte zip file. I tested this <br>
+on the pc and I get no output at all !</p>
+<p>Now it would be nice for something as complicated as <br>
+this package to have more fuller docs or work on first <br>
+go :)</p>
+<p>Reproduce code:<br>
+---------------<br>
+$source = File_Archive::readMulti(array(<br>
+	File_Archive::read(&#039;clientfiles/php/nusoap.php&#039;),<br>
+	File_Archive::readMemory($this-&gt;_generate(), &#039;feedclient.php&#039;)<br>
+	)<br>
+);<br>
+$source-&gt;extract(<br>
+	File_Archive::toArchive(<br>
+		&#039;save.zip&#039;,<br>
+		File_Archive::toOutput()<br>
+	)<br>
+);</p>
+<p>Expected result:<br>
+----------------<br>
+A zip file with both files in it that produces a <br>
+download box in the browser ?</p>
+<p>Actual result:<br>
+--------------<br>
+O byte zip files on the Mac and no output in IE on PC.</p>
+</section>
+<section>
+<h3>[2005-05-18 09:27 UTC] spam at electroteque dot org</h3>
+<p>E_ALL did nothing, the file saved is completely blank. I <br>
+run MAC OSX as its my dev laptop, is there any fink <br>
+binaries i need for it to run properly ? I noticed u <br>
+need some program called file or something ? I suspect <br>
+you have something that is ignored with @ and its not <br>
+picking it up i guess :|</p>
+</section>
+<section>
+<h3>[2005-05-18 10:12 UTC] spam at electroteque dot org</h3>
+<p>Second example worked but when i try and read in any <br>
+file it doesnt like it. Also the second example <br>
+downloaded the feedclient file rather than a zip file.</p>
+</section>
+<section>
+<h3>[2005-05-18 11:15 UTC] spam at electroteque dot org</h3>
+<p>P!$!es?feedclient.phpK??P!$!es?feedclient.phpPK&lt;1</p>
+<p>Was my output</p>
+<p>However this gave me no output, its in the read thingy, <br>
+should i try a full path ?</p>
+<p>$source = File_Archive::read(&#039;some.txt&#039;);<br>
+if (PEAR::isError($source)) {<br>
+    echo $source-&gt;message;<br>
+}<br>
+$error = $source-&gt;extract(<br>
+    File_Archive::toArchive(<br>
+        &#039;save.zip&#039;,<br>
+        File_Archive::toOutput()<br>
+    )<br>
+);<br>
+if (PEAR::isError($error)) {<br>
+    echo $error-&gt;message;<br>
+}</p>
+</section>
+<section>
+<h3>[2005-05-18 11:30 UTC] spam at electroteque dot org</h3>
+<p>Interesting get a load of this, this worked dude. Phew <br>
+I&#039;ll use this workaround for a while as its extended my <br>
+project a little :|</p>
+<p>function _generate() { return &quot;foo&quot;; }</p>
+<p>$string = file_get_contents(&#039;clientfiles/php/<br>
+nusoap.php&#039;);<br>
+$source = File_Archive::readMulti(array(<br>
+	//File_Archive::read(&#039;clientfiles/php/nusoap.php&#039;),<br>
+	File_Archive::readMemory($string, &#039;nusoap.php&#039;),<br>
+	File_Archive::readMemory(_generate(), <br>
+&#039;feedclient.php&#039;)<br>
+	)<br>
+);<br>
+if (PEAR::isError($source)) {<br>
+  echo &quot;Error in read: &quot;.$source-&gt;message;<br>
+  exit(0);<br>
+}<br>
+$error = $source-&gt;extract(<br>
+	File_Archive::toArchive(<br>
+		&#039;save.zip&#039;,<br>
+		File_Archive::toOutput()<br>
+	)<br>
+);<br>
+if (PEAR::isError($error)) {<br>
+  echo &quot;Error in extract: &quot;.$error-&gt;message;<br>
+}</p>
+</section>
+<section>
+<h3>[2005-05-18 11:46 UTC] spam at electroteque dot org</h3>
+<p>I already did that, handle var was NULL :) I suspect <br>
+thats it ? I mine looked exactly like yours.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

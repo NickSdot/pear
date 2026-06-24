@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3153</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #3153</h1>
+<p>an if return always true because PHP5</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-10 18:55 UTC</td></tr>
+<tr><th>From</th><td>sylvain at rugama dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Duplicate</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-10 18:55 UTC] sylvain at rugama dot com</h3>
+<p>Description:<br>
+------------<br>
+the problem come from the pgsql.php file<br>
+I don&#039;t know why exactely, but it seem to be a PHP5 Engine bug or different code execution between PHP4 and PHP5.</p>
+<p>pgsql.php, line 724 :</p>
+<p>if (isset($result-&gt;result)) {<br>
+          /*<br>
+           * Probably received a result object.<br>
+           * Extract the result resource identifier.<br>
+           */<br>
+          $id = $result-&gt;result;<br>
+          $got_string = false;<br>
+      } elseif (is_string($result)) {<br>
+          /*<br>
+           * Probably received a table name.<br>
+           * Create a result resource identifier.<br>
+           */<br>
+          $id = @pg_exec($this-&gt;connection, &quot;SELECT * FROM $result LIMIT 0&quot;);<br>
+          $got_string = true;<br>
+      } else { ...</p>
+<p>i changed to</p>
+<p>if  (is_string($result)) {<br>
+          /*<br>
+           * Probably received a table name.<br>
+           * Create a result resource identifier.<br>
+           */<br>
+          $id = @pg_exec($this-&gt;connection, &quot;SELECT * FROM $result LIMIT 0&quot;);<br>
+          $got_string = true;<br>
+      } elseif (isset($result-&gt;result)) {</p>
+<p>/*<br>
+           * Probably received a result object.<br>
+           * Extract the result resource identifier.<br>
+           */<br>
+          $id = $result-&gt;result;<br>
+          $got_string = false;<br>
+      } else { ...</p>
+<p>the var $result is a string, but isset($result-&gt;result) return (always?) true<br>
+so i just inverse the condition and it&#039;s ok now</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6151</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #6151</h1>
+<p>Need to encode URL correctly in HTMLTable renderer</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #6151</th><td>Need to encode URL correctly in HTMLTable renderer</td></tr>
+<tr><th>Submitted</th><td>2005-12-05 10:41 UTC</td></tr>
+<tr><th>From</th><td>sebastien_mouren at hotmail dot com</td></tr>
+<tr><th>Assigned</th><td>olivierg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux 2.4.29-11</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-12-05 10:41 UTC] sebastien_mouren at hotmail dot com</h3>
+<p>Description:<br>
+------------<br>
+In: HTMLTable.php,v 1.64<br>
+Inside _buildHTMLTableHeader() in the HTMLTable renderer, $url isn&#039; encoded properly according to the spec.<br>
+http_build_query() construct the query but doesn&#039;t URL-encode anything.</p>
+<p>Test script:<br>
+---------------<br>
+Proposed lazy change:</p>
+<p>Add in line 432:<br>
+$url = htmlentities($url, ENT_QUOTES);</p>
+<p>Problem this could break compatibility with earlier PhP and would be better if Unicode encoded.</p>
+<p>Expected result:<br>
+----------------<br>
+Correctly encoded URL:<br>
+/table.php?orderBy=release&amp;direction=ASC&amp;page=1</p>
+<p>Actual result:<br>
+--------------<br>
+Incorrecly encoded URL:<br>
+/table.php?orderBy=release&amp;direction=ASC&amp;page=1</p>
+</section>
+<section>
+<h3>[2006-03-01 22:40 UTC] olivierg at php dot net</h3>
+<p>Sorry, but this is no Structures_DataGrid bug or missing feature.</p>
+<p>In order to customize the GET arguments separator used by http_build_query() you should use the &quot;arg_separator.output&quot; php ini setting, as stated in the PHP manual :</p>
+<p>http://www.php.net/manual/en/function.http-build-query.php</p>
+</section>
+<section>
+<h3>[2006-03-03 19:28 UTC] olivierg at php dot net</h3>
+<p>Okay, sorry.. After discussing about this issue on pear-dev, I&#039;ve implemented this htmlentities() workaround.</p>
+<p>It&#039;s in CVS.</p>
+<p>However I&#039;m not sure what to do with your sentence : &quot;Problem this could break compatibility with earlier PhP and would be better if Unicode encoded.&quot;</p>
+</section>
+<section>
+<h3>[2006-03-03 20:05 UTC] olivierg at php dot net</h3>
+<p>There&#039;s already a new &quot;encoding&quot; option in the HTMLTable driver. That can be passed as the 3rd argument to htmlentities()...</p>
+<p>But : <br>
+1 - shouldn&#039;t we use htmlspecialchars() instead ?<br>
+2 - what about &quot;this could break compatibility with earlier PhP&quot; ?</p>
+<p>Mark ? Andrew ?</p>
+</section>
+<section>
+<h3>[2006-03-07 13:03 UTC] olivierg at php dot net</h3>
+<p>Okay, this bug is fixed in CVS. htmlentities() is called over http_build_query() and the new renderer &#039;encoding&#039; option is taken into account.</p>
+<p>Are you sure that it won&#039;t break for PHP &lt; 4.1 ? The http_build_query() manpage states that the third (charset) parameter support was added in PHP 4.1... Sorry I can&#039;t test that in here.</p>
+<p>I&#039;ve added a dependency on PHP &gt;= 4.1 in package.xml. Tell me what you think about this.</p>
+<p>Links added by formatters are the sole responsibility of the user IMO. Because the formaters have to return something like &quot;&lt;a href=&quot;mylink&quot;&gt;MyLink&lt;/a&gt;&quot;, we certainly can&#039;t run htmlentities()</p>
+<p>The point is : when a user makes a formatter, he/she knows what driver he/she is using, and what kind of precise output he/she wants... I think that changing what formatters return could even be considered intrusive by certain users.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6644</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth/index.html">Auth</a> &#187; Bug #6644</h1>
+<p>LDAP &amp; Active Directory 2003 (LDAP_OPT_REFERRALS)</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-31 17:14 UTC</td></tr>
+<tr><th>From</th><td>marc at practeo dot ch</td></tr>
+<tr><th>Assigned</th><td>aashley</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Auth/index.html">Auth</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.5</td></tr>
+<tr><th>OS</th><td>Linux / Ubuntu</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-31 17:14 UTC] marc at practeo dot ch</h3>
+<p>Description:<br>
+------------<br>
+Hello,</p>
+<p>I coud&#039;nt connect to a Active Directory Windows 2003 Server without setting the LDAP_OPT_REFERRALS to false.</p>
+<p>So please find attached my small patch to correct this.</p>
+<p>Thanks for your package,</p>
+<p>Best regards,</p>
+<p>Marc</p>
+<p>--- LDAP.php.orig       2006-01-31 15:04:35.000000000 +0100<br>
++++ LDAP.php    2006-01-31 17:56:54.000000000 +0100<br>
+@@ -43,6 +43,9 @@<br>
+  *              it will be preferred over host and port<br>
+  * version:     LDAP version to use, ususally 2 (default) or 3,<br>
+  *              must be an integer!<br>
++ * referrals    If set, determines whether the LDAP library automatically follows<br>
++ *              referrals returned by LDAP servers or not.<br>
++ *              Possible values are true (default) or false<br>
+  * binddn:      If set, searching for user will be done after binding<br>
+  *              as this user, if not set the bind will be anonymous.<br>
+  *              This is reported to make the container work with MS<br>
+@@ -108,6 +111,7 @@<br>
+  *       &#039;host&#039; =&gt; &#039;ldap.netsols.de&#039;,<br>
+  *       &#039;port&#039; =&gt; 389,<br>
+  *       &#039;version&#039; =&gt; 3,<br>
++ *       &#039;referrals&#039; =&gt; false,<br>
+  *       &#039;basedn&#039; =&gt; &#039;dc=netsols,dc=de&#039;,<br>
+  *       &#039;binddn&#039; =&gt; &#039;cn=Jan Wagner,cn=Users,dc=netsols,dc=de&#039;,<br>
+  *       &#039;bindpw&#039; =&gt; &#039;password&#039;,<br>
+@@ -217,6 +221,12 @@<br>
+             @ldap_set_option($this-&gt;conn_id, LDAP_OPT_PROTOCOL_VERSION, $this-&gt;options[&#039;version&#039;]);<br>
+         }<br>
+ <br>
++        // switch LDAP referrals<br>
++        if (is_int($this-&gt;options[&#039;referrals&#039;])) {           <br>
++            $this-&gt;_debug(&quot;Switching to LDAP referrals {$this-&gt;options[&#039;referrals&#039;]}&quot;, __LINE__);<br>
++            @ldap_set_option($this-&gt;conn_id, LDAP_OPT_REFERRALS, $this-&gt;options[&#039;referrals&#039;]);<br>
++        }<br>
++<br>
+         // bind with credentials or anonymously<br>
+         if ($this-&gt;options[&#039;binddn&#039;] &amp;&amp; $this-&gt;options[&#039;bindpw&#039;]) {<br>
+             $this-&gt;_debug(&#039;Binding with credentials&#039;, __LINE__);</p>
+</section>
+<section>
+<h3>[2006-02-15 19:40 UTC] marc at practeo dot ch</h3>
+<p>I forget one part : ....</p>
+<p>@@ -309,6 +319,7 @@<br>
+         $this-&gt;options[&#039;host&#039;]        = &#039;localhost&#039;;<br>
+         $this-&gt;options[&#039;port&#039;]        = &#039;389&#039;;<br>
+         $this-&gt;options[&#039;version&#039;]     = 2;<br>
++        $this-&gt;options[&#039;referrals&#039;]   = true;<br>
+         $this-&gt;options[&#039;binddn&#039;]      = &#039;&#039;;<br>
+         $this-&gt;options[&#039;bindpw&#039;]      = &#039;&#039;;<br>
+         $this-&gt;options[&#039;basedn&#039;]      = &#039;&#039;;</p>
+</section>
+<section>
+<h3>[2006-02-21 02:02 UTC] aashley at php dot net</h3>
+<p>Thank you for taking the time to report a problem with the package.<br>
+This problem may have been already fixed by a previous change that<br>
+is in the CVS of the package.  Please log into CVS with:</p>
+<p>cvs -d :pserver:cvsread@cvs.php.net:/repository login</p>
+<p>and check out the CVS repository of this package and upgrade</p>
+<p>cvs -d :pserver:cvsread@cvs.php.net:/repository co pear/Auth<br>
+pear upgrade pear/Auth/package2.xml</p>
+<p>or</p>
+<p>pear upgrade pear/Auth/package.xml</p>
+<p>If you are able to reproduce the bug with the latest CVS,<br>
+please change the status back to &quot;Open&quot;.<br>
+Again, thank you for your continued support of PEAR.</p>
+</section>
+<section>
+<h3>[2006-02-21 02:03 UTC] aashley at php dot net</h3>
+<p>That is your patch has been merged to trunk, could you please test it as I do not have access to an active directory server.</p>
+</section>
+<section>
+<h3>[2006-04-10 13:42 UTC] marc at practeo dot ch</h3>
+<p>Thanks a lot,<br>
+It&#039;s ok in the latest stable revision.</p>
+<p>Kind regards,</p>
+<p>Marc</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

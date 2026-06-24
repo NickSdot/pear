@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6932</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Encryption &#187; <a href="package/Crypt_Blowfish/index.html">Crypt_Blowfish</a> &#187; Bug #6932</h1>
+<p>Decrypted values do not evaluate to original values</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-02-25 02:24 UTC</td></tr>
+<tr><th>From</th><td>cryogen at mac dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Crypt_Blowfish/index.html">Crypt_Blowfish</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Mac OS X</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-25 02:24 UTC] cryogen at mac dot com</h3>
+<p>Description:<br>
+------------<br>
+I am using crypt_blowfish to encrypt a database name  <br>
+and two integer indexes.  I then pass these values in <br>
+the URL to a PHP script which then decrypts the values <br>
+in order to update a user&#039;s record.</p>
+<p>When I send the query to MySQL, I get a syntax error.  <br>
+If I output the query and submit it directly to MySQL it <br>
+works just fine.  If I typecast the decyrpted integer <br>
+values they work.  But I cannot get this to work with <br>
+the string variable???</p>
+<p>Test script:<br>
+---------------<br>
+$bf = new Crypt_Blowfish(K_BLOWFISH);<br>
+$db_name = $bf-&gt;encrypt(&quot;db1&quot;);<br>
+$company_id = $bf-&gt;encrypt(&quot;10&quot;);<br>
+$usernumber = $bf-&gt;encrypt(&quot;24&quot;);</p>
+<p>$bf = new Crypt_Blowfish(K_BLOWFISH);<br>
+$db_name = $bf-&gt;decrypt($db_name);<br>
+$company_id = $bf-&gt;decrypt($company_id);<br>
+$usernumber = $bf-&gt;decrypt($usernumber);</p>
+<p>$query = &quot;UPDATE &quot;.$db_name.&quot;.user &quot;.<br>
+		 &quot;SET opt_out = 1 &quot;.<br>
+		 &quot;WHERE company_id = &quot;.$co_id.<br>
+		 	&quot; AND usernumber = &quot;.$usernumber;</p>
+<p>Expected result:<br>
+----------------<br>
+This produces the query:</p>
+<p>UPDATE db1.user SET opt_out = 1 WHERE company_id = 10 <br>
+AND usernumber = 24</p>
+<p>When I submit this to MySQL using the PHP function <br>
+mysql_query, I get a syntax error #1064 from MySQL.  But <br>
+if I submit this manually (or just hardcode the values <br>
+in the $query variable) to MySQL it works fine.</p>
+<p>In order to get this to work at all I have to hardcode <br>
+the database name in the query and typecast the <br>
+company_id and usernumber values like this:</p>
+<p>$company_id = (int)$bf-&gt;decrypt($company_id);<br>
+$usernumber = (int)$bf-&gt;decrypt($usernumber);</p>
+<p>This only partially solves my problem,  I do not <br>
+understand what is happening to the $db_name value <br>
+&quot;db1&quot;?  It display&#039;s as db1 but MySQL won&#039;t recognize <br>
+it.  If I manually assign the variable ($db_name = <br>
+&quot;db1&quot;) the query works.  Something is happening in the <br>
+encrypt/decrypt process that changes the state or value <br>
+in some way?</p>
+</section>
+<section>
+<h3>[2006-04-26 16:04 UTC] ben at wieck dot com</h3>
+<p>I am having the same issues with decrypted data not being the same as the original data. A little test had some interesting results. Why the heck is the decrypted data being reported as having a length of 16?</p>
+<p>I am not playing with encodings, and I&#039;m assiming Crypt_Blowfish is not either. More food for thought.</p>
+<p>&lt;?php</p>
+<p>require(&#039;Crypt/Blowfish.php&#039;);</p>
+<p>$bf = new Crypt_Blowfish(&#039;monkey&#039;);</p>
+<p>$data = &quot;Hello Ben&quot;;</p>
+<p>$dec = $bf-&gt;decrypt($bf-&gt;encrypt($data));</p>
+<p>print &quot;Original Data: [&quot;.$data.&quot;]\n&quot;<br>
+     .&quot;MD5: &quot;.md5($data).&quot;\n&quot;<br>
+     .&quot;Length: &quot;.strlen($data).&quot;\n&quot;;</p>
+<p>print &quot;Decrypted Data: [&quot;.$dec.&quot;]\n&quot;<br>
+     .&quot;MD5: &quot;.md5($dec).&quot;\n&quot;<br>
+     .&quot;Length: &quot;.strlen($dec).&quot;\n&quot;;</p>
+<p>?&gt;</p>
+<p>#php Crypt_Blowfish_test.php <br>
+Original Data: [Hello Ben]<br>
+MD5: 9391321c6d6922a8ef1f2a213eb540af<br>
+Length: 9<br>
+Decrypted Data: [Hello Ben]<br>
+MD5: 6330c212fbb24b18fdb3d5ab843cafe2<br>
+Length: 16</p>
+<p>#php -v<br>
+PHP 5.0.5 (cli) (built: Jan  3 2006 13:18:41)<br>
+Copyright (c) 1997-2004 The PHP Group<br>
+Zend Engine v2.0.5, Copyright (c) 1998-2004 Zend Technologies</p>
+</section>
+<section>
+<h3>[2006-04-26 16:18 UTC] ben at wieck dot com</h3>
+<p>This should help the original poster. I was thumbing around and saw that mcrypt stuff tends to add null padding on decrypted information. This means a simple trim() should clear things up! Indeed it does!</p>
+<p>-- snippet --<br>
+$dec = trim($dec);<br>
+print &quot;Decrypted Data: [&quot;.$dec.&quot;]\n&quot;<br>
+     .&quot;MD5: &quot;.md5($dec).&quot;\n&quot;<br>
+     .&quot;Length: &quot;.strlen($dec).&quot;\n&quot;;<br>
+-- snippet --</p>
+<p>#php Crypt_Blowfish_test.php <br>
+Original Data: [Hello Ben]<br>
+MD5: 9391321c6d6922a8ef1f2a213eb540af<br>
+Length: 9<br>
+Decrypted Data: [Hello Ben]<br>
+MD5: 9391321c6d6922a8ef1f2a213eb540af<br>
+Length: 9</p>
+<p>Success!</p>
+</section>
+<section>
+<h3>[2006-04-26 16:31 UTC] cryogen at mac dot com</h3>
+<p>Thanks for the tip Ben.  It seems silly to have to perform <br>
+&quot;trim()&quot; and typecast results to get consistent results from <br>
+the Blowfish encryption class.  I would suggest the author <br>
+implement some of the basic checks and conversions to make <br>
+the routines much more user friendly.</p>
+<p>At the very least these facts should be documented in the <br>
+Blowfish documentation so that it is plainly stated that <br>
+null padding occurrs with strings and that numeric values <br>
+will have to be typecast or trimmed as well to make them <br>
+useful.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

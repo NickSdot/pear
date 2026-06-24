@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #533</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #533</h1>
+<p>Suggestion: customFields for creating and updating a user</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-01-07 11:43 UTC</td></tr>
+<tr><th>From</th><td>corwin42 at gmx dot de</td></tr>
+<tr><th>Assigned</th><td>dufuz</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-01-07 11:43 UTC] corwin42 at gmx dot de</h3>
+<p>Description:<br>
+------------<br>
+As there is the possibility to retreive custom colums with the $customFields Array in LiveUser_Admin_Auth_Container_DB::getUsers() it would be very nice to have the same feature for addUser() and updateUser() for inserting or updating this custom fields. So it would be easy to extend the users-table with a real live name of the user and you don&#039;t have to add additional updates to your code.</p>
+</section>
+<section>
+<h3>[2004-03-07 11:54 UTC] simon dot hamilton at ntlworld dot com</h3>
+<p>Here&#039;s a patch that should work for the MDB container.  I also made some colding style tidy ups in some SQL bits.  I have yet to test it but if it works it should be trivial to port the changes to the other containers.</p>
+<p>Here&#039;s the patch:</p>
+<p>--- MDB.php	Sun Mar 07 11:54:06 2004<br>
++++ MDB.php.new.php	Sun Mar 07 11:57:10 2004<br>
+@@ -206,10 +206,11 @@<br>
+      * @param   integer ID of the owning user.<br>
+      * @param   integer ID of the owning group.<br>
+      * @param   mixed   If specificed no new ID will be automatically generated instead<br>
++     * @param   array   Array of custom fields to be added <br>
+      * @return  mixed   Users auth ID on success, DB error if not, false if not initialized<br>
+      */<br>
+     function addUser($handle, $password = &#039;&#039;, $active = true, $owner_user_id = null,<br>
+-        $owner_group_id = null, $authId = null)<br>
++        $owner_group_id = null, $authId = null, $customFields = array())<br>
+     {<br>
+         if (!$this-&gt;init_ok) {<br>
+             return false;<br>
+@@ -237,6 +238,13 @@<br>
+             $col[] = $this-&gt;authTableCols[&#039;owner_group_id&#039;][&#039;name&#039;];<br>
+             $val[] = $this-&gt;dbc-&gt;getValue($this-&gt;authTableCols[&#039;owner_group_id&#039;][&#039;type&#039;], $owner_group_id);<br>
+         }<br>
++        <br>
++        if (sizeof($customFields) &gt; 0) {<br>
++            foreach ($customFields as $k =&gt; $v) {<br>
++                $col[] = $customFields[$k][&#039;name&#039;];<br>
++                $val[] = $this-&gt;dbc-&gt;getValue($customFields[$k][&#039;type&#039;], $v);<br>
++            }<br>
++        }<br>
+ <br>
+         if (is_array($col) &amp;&amp; count($col) &gt; 0) {<br>
+             $col = &#039;,&#039; . implode(&#039;,&#039;, $col);<br>
+@@ -311,10 +319,11 @@<br>
+      * @param   boolean  Sets the user active (1) or not (0) (optional).<br>
+      * @param   integer  ID of the owning user.<br>
+      * @param   integer  ID of the owning group.<br>
++     * @param   array    Array of custom fields to be updated <br>
+      * @return  mixed    True on success, DB error if not.<br>
+      */<br>
+     function updateUser($authId, $handle = &#039;&#039;, $password = &#039;&#039;, $active = null,<br>
+-        $owner_user_id = null, $owner_group_id = null)<br>
++        $owner_user_id = null, $owner_group_id = null, $customFields = array())<br>
+     {<br>
+         if (!$this-&gt;init_ok) {<br>
+             return false;<br>
+@@ -329,7 +338,7 @@<br>
+ <br>
+         if (!empty($handle)) {<br>
+             $updateValues[] =<br>
+-                $this-&gt;authTableCols[&#039;handle&#039;][&#039;name&#039;] . &#039;=&#039; . $this-&gt;dbc-&gt;getValue($this-&gt;authTableCols[&#039;handle&#039;][&#039;type&#039;], $handle);<br>
++                $this-&gt;authTableCols[&#039;handle&#039;][&#039;name&#039;] . &#039; = &#039; . $this-&gt;dbc-&gt;getValue($this-&gt;authTableCols[&#039;handle&#039;][&#039;type&#039;], $handle);<br>
+         }<br>
+         if (!empty($password)) {<br>
+             $updateValues[] =<br>
+@@ -349,6 +358,13 @@<br>
+             $updateValues[] =<br>
+                 $this-&gt;authTableCols[&#039;owner_group_id&#039;] . &#039; = &#039; . $this-&gt;dbc-&gt;getValue($this-&gt;authTableCols[&#039;owner_group_id&#039;][&#039;type&#039;], $owner_group_id);<br>
+         }<br>
++        <br>
++        if (sizeof($customFields) &gt; 0) {<br>
++            foreach ($customFields as $k =&gt; $v) {<br>
++                $updateValues[] =<br>
++                    $customFields[$k] . &#039; = &#039; . $this-&gt;dbc-&gt;getValue($customFields[$k][&#039;type&#039;], $v);<br>
++            }<br>
++        }<br>
+ <br>
+         if (count($updateValues) &gt;= 1) {<br>
+             $query .= implode(&#039;, &#039;, $updateValues);<br>
+@@ -432,7 +448,8 @@<br>
+         $fields = $where = &#039;&#039;;<br>
+ <br>
+         if (isset($this-&gt;authTableCols[&#039;lastlogin&#039;])) {<br>
+-            $customFields[] = $this-&gt;authTableCols[&#039;lastlogin&#039;] . &#039; AS lastlogin&#039;;<br>
++            $customFields[$this-&gt;authTableCols[&#039;lastlogin&#039;] . &#039; AS lastlogin&#039;]<br>
++                = $this-&gt;authTableCols[&#039;lastlogin&#039;][&#039;type&#039;];<br>
+         }<br>
+ <br>
+         if (isset($this-&gt;authTableCols[&#039;is_active&#039;])) {<br>
+@@ -472,16 +489,16 @@<br>
+         }<br>
+ <br>
+         // First: Get all data from auth table.<br>
+-        $query = &quot;<br>
++        $query = &#039;<br>
+             SELECT<br>
+-                {$this-&gt;authTableCols[&#039;user_id&#039;][&#039;name&#039;]}   AS auth_user_id,<br>
+-                {$this-&gt;authTableCols[&#039;handle&#039;][&#039;name&#039;]}    AS handle,<br>
+-                {$this-&gt;authTableCols[&#039;passwd&#039;][&#039;name&#039;]}    AS passwd,<br>
+-                $fields<br>
++            &#039; . $this-&gt;authTableCols[&#039;user_id&#039;][&#039;name&#039;] . &#039; AS auth_user_id,<br>
++            &#039; . $this-&gt;authTableCols[&#039;handle&#039;][&#039;name&#039;]  . &#039; AS handle,<br>
++            &#039; . $this-&gt;authTableCols[&#039;passwd&#039;][&#039;name&#039;]  . &#039; AS passwd,<br>
++            &#039; . $fields . &#039;<br>
+             FROM<br>
+-                {$this-&gt;authTable}<br>
+-            $where<br>
+-            $order&quot;;<br>
++            &#039; . $this-&gt;authTable <br>
++              . $where<br>
++              . $order;<br>
+ <br>
+         $types = array(<br>
+             $this-&gt;authTableCols[&#039;user_id&#039;][&#039;type&#039;],</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

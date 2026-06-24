@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1498</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/XML_RPC/index.html">XML_RPC</a> &#187; Bug #1498</h1>
+<p>documentation out of date in using ssl with xml_rpc, plus ssl patch</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-25 19:49 UTC</td></tr>
+<tr><th>From</th><td>allins at nosc dot mil</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Duplicate</td></tr>
+<tr><th>Package</th><td><a href="package/XML_RPC/index.html">XML_RPC</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-25 19:49 UTC] allins at nosc dot mil</h3>
+<p>Description:<br>
+------------<br>
+send function only accepts 2 params, not an optional 3rd for &#039;http&#039; or &#039;https&#039; as documentation currently states.</p>
+<p>protocol to use is passed back to fsockopen from teh XML_RPC_Client class. to use https, prepend the hostname with &#039;ssl://&#039;. <br>
+example: <br>
+$client = new XML_RPC_Client(&quot;/server.php&quot;,&quot;ssl://127.0.0.1&quot;,443);</p>
+</section>
+<section>
+<h3>[2004-05-26 21:38 UTC] allins at nosc dot mil</h3>
+<p>inclusion of &#039;ssl://&#039; will break Host parameter in the http headers when it&#039;s formed using the $server value directly.<br>
+created a patch to strip &#039;ssl://&#039; from Host parameter if it exists, as well as as add &#039;:port&#039; to align with rfc2616 section 14.23<br>
+diff patch against v1.1.0</p>
+<p>--- RPC.php.base        2004-05-26 08:05:05.685108568 -0700<br>
++++ RPC.php     2004-05-26 08:02:09.826843088 -0700<br>
+@@ -500,7 +500,8 @@</p>
+<p>$op .= $this-&gt;path. &quot; HTTP/1.0\r\n&quot; .<br>
+                &quot;User-Agent: PEAR XML_RPC\r\n&quot; .<br>
+-               &quot;Host: &quot; . $this-&gt;server . &quot;\r\n&quot;;<br>
++               &quot;Host: &quot; . str_replace(&quot;ssl://&quot;,&quot;&quot;,$this-&gt;server) .<br>
++              &quot;:&quot; . $this-&gt;port . &quot;\r\n&quot;;<br>
+         if ($this-&gt;proxy &amp;&amp; $this-&gt;proxy_user != &#039;&#039;) {<br>
+             $op .= &#039;Proxy-Authorization: Basic &#039; .<br>
+                 base64_encode($this-&gt;proxy_user . &#039;:&#039; . $this-&gt;proxy_pass) .</p>
+</section>
+<section>
+<h3>[2004-07-14 20:00 UTC] beheer at pixture-it dot nl</h3>
+<p>I tried the patch. It works, but I get the following error message:</p>
+<p>Warning: fread(): SSL: fatal protocol error in /usr/share/pear/XML/RPC.php on line 665</p>
+<p>any ideas?</p>
+<p>rebo</p>
+</section>
+<section>
+<h3>[2004-07-14 20:08 UTC] allins at nosc dot mil</h3>
+<p>What platform OS? Redhat perchance? there&#039;s a bug involving the ssl error message that I&#039;m hoping will be corrected in next release on RedHat.<br>
+https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=124582</p>
+<p>In meantime, the patch I put together on fedora</p>
+</section>
+<section>
+<h3>[2004-08-25 06:02 UTC] huleboer at linuxno dot com</h3>
+<p>I also get this error. Trying to use xml-rcp over ssl. Applied the patch but still won&#039;t work (get Didn&#039;t receive 200 OK from remote server. (HTTP/1.1 500 Internal Server Error.)).</p>
+<p>Anyway I also get the error. It&#039;s reffering to the line:<br>
+while($data = fread($fp, 32768)) {</p>
+<p>I&#039;m running an old redhat but all web stuff is latest versions compiled by me. I&#039;m using apache 2.x with php 4.x. Let me know if you need more info. I&#039;m kind of hoping this will be fixed fast since I need to get xml-rpc working over ssl (doesn&#039;t look like it&#039;s working at all here?).</p>
+</section>
+<section>
+<h3>[2004-08-25 23:40 UTC] allins at nosc dot mil</h3>
+<p>looks like current updates on redhat RHE3 fixed the problem now. However, on Fedora FC2, the openssl is compiled as shared, breaking the ssl functions in fsockopen now as comments indicate needs to be compiled statically.<br>
+To check, either a: check for &#039;https&#039; in in phpinfo under &#039;Registered PHP Streams&#039; or b: run the following script as a test<br>
+&lt;?<br>
+$fp=fsockopen(&quot;ssl://mail.yahoo.com&quot;,443);<br>
+$out=&quot;GET / HTTP/1.1\r\n&quot;;<br>
+$out .=&quot;Host: mail.yahoo.com\r\n&quot;;<br>
+$out .=&quot;Connection: Close\r\n\r\n&quot;;</p>
+<p>fwrite($fp,$out);</p>
+<p>while (!feof($fp)) {<br>
+   echo fgets($fp,128);<br>
+}<br>
+fclose($fp);<br>
+?&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

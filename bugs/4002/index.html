@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4002</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/Translation2/index.html">Translation2</a> &#187; Bug #4002</h1>
+<p>fallbackLang does not work with gettext container</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-03-30 13:34 UTC</td></tr>
+<tr><th>From</th><td>pear at colin dot guthri dot ie</td></tr>
+<tr><th>Assigned</th><td>mike</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Translation2/index.html">Translation2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-30 13:34 UTC] pear at colin dot guthri dot ie</h3>
+<p>Description:<br>
+------------<br>
+I am using the Translation2   2.0.0beta6 beta module.</p>
+<p>It would appear that I cannot use the fallbackLang decorator (and presumably other empty($str) dependant decorators like ErrorText) as the Gettext container replaces empty strings with their key name to replicate standard get text behaviour. I actually do not want this behaviour at all, so ideally a config option to disable it would be ideal.</p>
+<p>I&#039;ve put together a quick patch that solves the proplem for me which I would love to see in the next beta.</p>
+<p>Thanks.</p>
+<p>## Start ##<br>
+--- Translation2/Container/gettext.php.orig     2005-03-30 14:24:23.000000000 +0100<br>
++++ Translation2/Container/gettext.php  2005-03-30 14:28:51.000000000 +0100<br>
+@@ -120,6 +120,7 @@ class Translation2_Container_gettext ext<br>
+         $this-&gt;options[&#039;file_type&#039;]         = &#039;mo&#039;;<br>
+         $this-&gt;options[&#039;default_lang&#039;]      = &#039;en&#039;;<br>
+         $this-&gt;options[&#039;default_encoding&#039;]  = &#039;iso-8859-1&#039;;<br>
++        $this-&gt;options[&#039;blank_on_missing&#039;]  = false;<br>
+     }</p>
+<p>// }}}<br>
+@@ -262,10 +263,12 @@ class Translation2_Container_gettext ext<br>
+         $page = $this-&gt;getPage($pageID, $langID);</p>
+<p>// return original string if there&#039;s no translation available<br>
+-        if (isset($page[$stringID]) &amp;&amp; strlen($page[$stringID])) {<br>
++        if (!empty($page[$stringID])) {<br>
+             return $page[$stringID];<br>
+-        } else {<br>
++        } else if (false == $this-&gt;options[&#039;blank_on_missing&#039;]) {<br>
+             return $stringID;<br>
++        } else {<br>
++            return &#039;&#039;;<br>
+         }<br>
+     }</p>
+<p>## End ##</p>
+<p>Reproduce code:<br>
+---------------<br>
+Use a gettext container and try and setup fallbackLang</p>
+<p>Expected result:<br>
+----------------<br>
+It should fallback properly.</p>
+<p>Actual result:<br>
+--------------<br>
+If the most preferred language does not have a translation, the key is returned and no fall back is attempted.</p>
+</section>
+<section>
+<h3>[2005-03-30 14:08 UTC] pear at colin dot guthr dot ie</h3>
+<p>I&#039;ve realised that this will only work with .po and File_Gettext.... bumdeal.</p>
+<p>Perhaps I&#039;ll have to use something else...</p>
+</section>
+<section>
+<h3>[2005-03-30 14:33 UTC] pear at colin dot guthr dot ie</h3>
+<p>OK, I&#039;ve put in a few more changes and here is a new patch. If you specify the option that you want empty strings rather than keys it forces non-native mode.</p>
+<p>Also getPage has bugs in which it fails to restore the current Language when the domain is cached or on error.</p>
+<p>Here is a full patch.</p>
+<p>Appologies for wrapped lines but I can&#039;t seem to attach a patch with this version of this bug tracker thing (I&#039;m used to bugzilla personally).</p>
+<p>## START ##<br>
+--- Translation2/Container/gettext.php.orig     2005-03-30 14:24:23.000000000 +0100<br>
++++ Translation2/Container/gettext.php  2005-03-30 15:30:38.000000000 +0100<br>
+@@ -79,7 +79,8 @@ class Translation2_Container_gettext ext<br>
+         $this-&gt;_parseOptions($options);<br>
+         $this-&gt;_native = (<br>
+             function_exists(&#039;gettext&#039;) &amp;&amp;<br>
+-            ($this-&gt;options[&#039;file_type&#039;] != &#039;po&#039;)<br>
++            ($this-&gt;options[&#039;file_type&#039;] != &#039;po&#039;) &amp;&amp;<br>
++            ($this-&gt;options[&#039;blank_on_missing&#039;] == false)<br>
+         );</p>
+<p>$this-&gt;_domains = @parse_ini_file($this-&gt;options[&#039;domains_path_file&#039;]);<br>
+@@ -120,6 +121,7 @@ class Translation2_Container_gettext ext<br>
+         $this-&gt;options[&#039;file_type&#039;]         = &#039;mo&#039;;<br>
+         $this-&gt;options[&#039;default_lang&#039;]      = &#039;en&#039;;<br>
+         $this-&gt;options[&#039;default_encoding&#039;]  = &#039;iso-8859-1&#039;;<br>
++        $this-&gt;options[&#039;blank_on_missing&#039;]  = false;<br>
+     }</p>
+<p>// }}}<br>
+@@ -190,10 +192,12 @@ class Translation2_Container_gettext ext<br>
+         }</p>
+<p>if (isset($this-&gt;cachedDomains[$curLang][$pageID])) {<br>
++            $this-&gt;_switchLang($oldLang);<br>
+             return $this-&gt;cachedDomains[$curLang][$pageID];<br>
+         }</p>
+<p>if (!isset($this-&gt;_domains[$pageID])) {<br>
++            $this-&gt;_switchLang($oldLang);<br>
+             return $this-&gt;raiseError(sprintf(<br>
+                     &#039;The domain &quot;%s&quot; was not specified in the domains INI &#039;.<br>
+                     &#039;file &quot;%s&quot; [%s on line %d]&#039;, $pageID,<br>
+@@ -211,12 +215,14 @@ class Translation2_Container_gettext ext</p>
+<p>if (PEAR::isError($e = $gtFile-&gt;load($file))) {<br>
+             if (is_file($file)) {<br>
++                $this-&gt;_switchLang($oldLang);<br>
+                 return $this-&gt;raiseError(sprintf(<br>
+                         &#039;%s [%s on line %d]&#039;, $e-&gt;getMessage(), __FILE__, __LINE__<br>
+                     ),<br>
+                     TRANSLATION2_ERROR<br>
+                 );<br>
+             }<br>
++            $this-&gt;_switchLang($oldLang);<br>
+             return $this-&gt;raiseError(sprintf(<br>
+                     &#039;Cannot find file &quot;%s&quot; [%s on line %d]&#039;,<br>
+                     $file, __FILE__, __LINE__<br>
+@@ -262,10 +268,12 @@ class Translation2_Container_gettext ext<br>
+         $page = $this-&gt;getPage($pageID, $langID);</p>
+<p>// return original string if there&#039;s no translation available<br>
+-        if (isset($page[$stringID]) &amp;&amp; strlen($page[$stringID])) {<br>
++        if (!empty($page[$stringID])) {<br>
+             return $page[$stringID];<br>
+-        } else {<br>
++        } else if (false == $this-&gt;options[&#039;blank_on_missing&#039;]) {<br>
+             return $stringID;<br>
++        } else {<br>
++            return &#039;&#039;;<br>
+         }<br>
+     }</p>
+<p>## END ##</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

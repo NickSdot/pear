@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4300</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_Diff/index.html">Text_Diff</a> &#187; Bug #4300</h1>
+<p>strange diff result</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-06 23:36 UTC</td></tr>
+<tr><th>From</th><td>franck at exeprod dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Text_Diff/index.html">Text_Diff</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>fedora core 2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-06 23:36 UTC] franck at exeprod dot com</h3>
+<p>Description:<br>
+------------<br>
+First, not sure this is a bug.<br>
+If it&#039;s not, should be great this figure in the documentation or an example.</p>
+<p>apache 2.0 (prefork) + php 4.3.9 as module, without third party funny engine (like eaccelerator :)</p>
+<p>Reproduce code:<br>
+---------------<br>
+$test1 = array(<br>
+&quot;line 1\n&quot;,<br>
+&quot;line 2\n&quot;,<br>
+&quot;line 3\n&quot;,<br>
+&quot;line 4\n&quot;,<br>
+&quot;line 5\n&quot;);</p>
+<p>$test2 = array (<br>
+&quot;line 1\n&quot;,<br>
+&quot;line 2\n&quot;,<br>
+&quot;line modif\n&quot;,<br>
+&quot;new line\n&quot;,<br>
+&quot;line 4\n&quot;,<br>
+&quot;line 5\n&quot;);</p>
+<p>$diff = new Text_Diff( $test1, $test2 );<br>
+$renderer = new Text_Diff_Renderer_inline();<br>
+$out = $renderer-&gt;render($diff);</p>
+<p>Expected result:<br>
+----------------<br>
+line 1<br>
+line 2<br>
+line &lt;del&gt;3&lt;/del&gt;&lt;ins&gt;modif<br>
+new line&lt;/ins&gt;<br>
+line 4<br>
+line 5</p>
+<p>Actual result:<br>
+--------------<br>
+line 1<br>
+line 2<br>
+line &lt;del&gt;3&lt;/del&gt;&lt;ins&gt;modif&lt;/ins&gt;<br>
+&lt;ins&gt;new line&lt;/ins&gt;<br>
+line 4<br>
+line 5</p>
+</section>
+<section>
+<h3>[2005-05-06 23:39 UTC] franck at exeprod dot com</h3>
+<p>Sorry, expect result and actual result are inversed.</p>
+<p>You must understand</p>
+<p>Actual result:<br>
+--------------<br>
+line 1<br>
+line 2<br>
+line &lt;del&gt;3&lt;/del&gt;&lt;ins&gt;modif<br>
+new line&lt;/ins&gt;<br>
+line 4<br>
+line 5</p>
+<p>Expected result:<br>
+----------------<br>
+line 1<br>
+line 2<br>
+line &lt;del&gt;3&lt;/del&gt;&lt;ins&gt;modif&lt;/ins&gt;<br>
+&lt;ins&gt;new line&lt;/ins&gt;<br>
+line 4<br>
+line 5</p>
+</section>
+<section>
+<h3>[2005-05-07 00:20 UTC] franck at exeprod dot com</h3>
+<p>Seem&#039;s change</p>
+<p>/* Non-printing newline marker. */<br>
+$nl = &quot;\0&quot;;</p>
+<p>by</p>
+<p>/* Non-printing newline marker. */<br>
+$nl = &#039;&#039;;</p>
+<p>resolve my problem ... but .. is not normal ?</p>
+<p>Anyway, great job, very usefull PEAR Package.</p>
+</section>
+<section>
+<h3>[2005-05-07 00:22 UTC] franck at exeprod dot com</h3>
+<p>Sorry again (too tired)</p>
+<p>Seem&#039;s changing one line in PEAR/Text/Diff/Renderer/inline.php resolve the problem.</p>
+<p>/* Non-printing newline marker. */<br>
+$nl = &quot;\0&quot;;</p>
+<p>by</p>
+<p>/* Non-printing newline marker. */<br>
+$nl = &#039;&#039;;</p>
+<p>Final notice: i use 0.0.5 version.</p>
+</section>
+<section>
+<h3>[2005-05-07 00:29 UTC] franck at exeprod dot com</h3>
+<p>Problem not yet solved. My eyes are tired ..<br>
+Let&#039;s sleep a little before shouting non sense things lol</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

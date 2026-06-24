@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3562</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Testing &#187; <a href="package/PHPUnit2/index.html">PHPUnit2</a> &#187; Bug #3562</h1>
+<p>PHPUnit does not find test classes to include</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-23 14:31 UTC</td></tr>
+<tr><th>From</th><td>info at e-novative dot de</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/PHPUnit2/index.html">PHPUnit2</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-23 14:31 UTC] info at e-novative dot de</h3>
+<p>Description:<br>
+------------<br>
+I am not sure if this is a bug or if just I&#039;m doing something wrong, but:</p>
+<p>When I run &quot;phpunit xxx&quot; at the command line, I get an error saying that PHPUnit cannot find the class xxx (xxx.php in the current directory, that is) in line 44 of TestSuiteLoader.php. The test class xxx.php is in the working directory, however. When I modify line 44 in the file PHPUnit2/Runner/TestSuiteLoader.php to</p>
+<p>include_once getcwd() . &#039;/&#039; . $suiteClassFile;</p>
+<p>the test classes are loaded correctly. This leads me to suspect that somewhere on the way through PHPUnit, possibly the working directory is changed?</p>
+<p>When I add the working directory to the PHP include path in php.ini, the test classes are found and loaded correctly without the above patch. Of course it is not desirable to add the working directory to the include path every time you want to run unit tests.</p>
+</section>
+<section>
+<h3>[2005-02-25 07:20 UTC] info at e-novative dot de</h3>
+<p>So how about my original problem, which is somewhat different from drewish&#039;s: PHPUnit (2.2.0-beta5) does not find classes in the working directory unless that directory is in PHP&#039;s include path. There is no PEAR naming issue involved here, it&#039;s just that the classes are not found, but when I make the include statement in TestSuiteLoader.php use an absolute path (as described in my original post), the classes are found.</p>
+<p>Am I doing something wrong here or is that an issue with PHPUnit?</p>
+</section>
+<section>
+<h3>[2005-02-25 08:00 UTC] info at e-novative dot de</h3>
+<p>Sebastian,</p>
+<p>thanks for the hint. Adding &#039;./&#039; works (as did adding getcwd()), and adding . to the PHP include path does the same job. We&#039;ll update our WAMP accordingly.</p>
+<p>A small note in the manual (hmmm ... which manual?) might be helpful to those who are equally stupid as I am, or maybe it is even safe to apply your fix to PHPUnit.</p>
+<p>Thanks!</p>
+<p>Steve</p>
+</section>
+<section>
+<h3>[2005-03-06 16:25 UTC] someone at somewhere dot com</h3>
+<p>I had the &quot;could not be found in&quot; error with PHPUnit 2.1.6 and 2.2.0beta6. In my situation it helped when I added -C flag to PHP in the phpunit script as:<br>
+#!/usr/bin/php -C</p>
+<p>That tells PHP not to change it&#039;s current working directory and I can run tests now.</p>
+</section>
+<section>
+<h3>[2005-06-29 20:49 UTC] lukfugl at gmail dot com</h3>
+<p>Similar to the comment &quot;[2005-03-06 16:25 UTC] someone at somewhere dot com&quot;, I added the -C to the shebang in /usr/local/bin/phpunit as a workaround to this problem. In my case, I dug all the way into StandardTestLoader#load and printed out the working directory -- it came out as /usr/local/bin/ instead of the directory from which I had run phpunit. Due to the changed CWD, even having &#039;.&#039; in the php include path didn&#039;t help since &#039;.&#039; referred to /usr/local/bin.</p>
+<p>The recurrence of this bug only working for some users may be due to different php configurations, some of which may have the effect of -C enabled by default, where others (like mine) don&#039;t. Adding the -C flag to phpunit in the distribution should be a suitable fix.</p>
+<p>My version information:</p>
+<p>$ php --version<br>
+PHP 5.0.4 (cgi-fcgi) (built: Apr 26 2005 13:26:11)<br>
+Copyright (c) 1997-2004 The PHP Group<br>
+Zend Engine v2.0.4-dev, Copyright (c) 1998-2004 Zend Technologies</p>
+<p>$ phpunit --version<br>
+Content-type: text/html<br>
+X-Powered-By: PHP/5.0.4</p>
+<p>PHPUnit 2.2.1 by Sebastian Bergmann.</p>
+<p>Jacob Fugal</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

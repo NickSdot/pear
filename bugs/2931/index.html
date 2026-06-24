@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2931</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail/index.html">Mail</a> &#187; Bug #2931</h1>
+<p>_validateQuotedString() is too strict</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-12-09 02:19 UTC</td></tr>
+<tr><th>From</th><td>john at curioussymbols dot com</td></tr>
+<tr><th>Assigned</th><td>chagenbu</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail/index.html">Mail</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.1</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-09 02:19 UTC] john at curioussymbols dot com</h3>
+<p>Description:<br>
+------------<br>
+Sample code below.</p>
+<p>The address string</p>
+<p>$address_string = &#039;&quot;Joe Doe \(from Somewhere\)&quot; &lt;doe@example.com&gt;, postmaster@example.com, root&#039;;</p>
+<p>doesn&#039;t parse correctly, and the following script gives &#039;Something is wrong&#039;</p>
+<p>Script is taken from PHP manual for imap RFC822 parse function, which works correctly with the same code; I have modified it to use the PEAR equivalent.</p>
+<p>I&#039;ve just downloaded the latest version of PEAR and Mail and tested with those.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+require_once(&quot;Mail/RFC822.php&quot;);<br>
+$address_string = &#039;&quot;Joe Doe \(from Somewhere\)&quot; &lt;doe@example.com&gt;, postmaster@example.com, root&#039;;<br>
+//$address_string = &quot;Joe Doe from Somewhere &lt;doe@example.com&gt;, postmaster@example.com, root&quot;;<br>
+echo($address_string.&quot;\n&quot;);<br>
+$address_array  = Mail_RFC822::parseAddressList($address_string, &quot;example.com&quot;);</p>
+<p>if (!is_array($address_array) || count($address_array) &lt; 1) {<br>
+    die(&quot;something is wrong\n&quot;);<br>
+}<br>
+foreach ($address_array as $val) {<br>
+  echo &quot;mailbox : &quot; . $val-&gt;mailbox . &quot;&lt;br /&gt;\n&quot;;<br>
+  echo &quot;host    : &quot; . $val-&gt;host . &quot;&lt;br /&gt;\n&quot;;<br>
+  echo &quot;personal: &quot; . $val-&gt;personal . &quot;&lt;br /&gt;\n&quot;;<br>
+}<br>
+print_r($address_array);<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Something like this (tested it on another server which had IMAP extensions):</p>
+<p>X-Powered-By: PHP/4.0.6<br>
+Content-type: text/html</p>
+<p>mailbox : doe&lt;br /&gt;<br>
+host    : example.com&lt;br /&gt;<br>
+personal: Joe Doe (from Somewhere)&lt;br /&gt;<br>
+adl     : &lt;br /&gt;<br>
+mailbox : postmaster&lt;br /&gt;<br>
+host    : example.com&lt;br /&gt;<br>
+personal: &lt;br /&gt;<br>
+adl     : &lt;br /&gt;<br>
+mailbox : root&lt;br /&gt;<br>
+host    : example.com&lt;br /&gt;<br>
+personal: &lt;br /&gt;<br>
+adl     : &lt;br /&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+john@cruncher2 ~<br>
+$ php test.php<br>
+&quot;Joe Doe \(from Somewhere\)&quot; &lt;doe@example.com&gt;, postmaster@example.com, root<br>
+something is wrong</p>
+</section>
+<section>
+<h3>[2005-02-07 16:13 UTC] john at curioussymbols dot com</h3>
+<p>I wouldn&#039;t put the quotes there myself, but I&#039;m using this function to parse incoming emails, and the incoming emails sometimes have these. It&#039;s an Outlook or Outlook Express thing, I believe.</p>
+<p>I think the intention of the backslashes is to avoid the &#039;from somewhere&#039; being interpreted as a &#039;comment&#039; (see RFC 2822, section 3.2.3,</p>
+<p>http://www.faqs.org/rfcs/rfc2822.html</p>
+<p>I think that basically you&#039;re supposed to have quotes around a name if it has more than one word. So,</p>
+<p>John &lt;john@doe.com&gt;<br>
+&quot;Doe, John&quot; &lt;john@doe.com&gt;</p>
+<p>I&#039;m not sure if the brackets in the following count as a comment or not. I think maybe they do, and that would be why MS escapes them in my original example.</p>
+<p>&quot;Doe (John)&quot; &lt;john@doe.com&gt;</p>
+<p>Note section 4.4 and A.6.1 in RFC 2822. These say that you can also (obsoletely) have</p>
+<p>John Doe &lt;john@doe.com&gt;</p>
+<p>That probably confuses things - but I reckon it probably still happens a bit sometimes from dodgy webmail apps etc.</p>
+<p>JP</p>
+</section>
+<section>
+<h3>[2005-02-07 16:15 UTC] john at curioussymbols dot com</h3>
+<p>Change that:<br>
+&quot;I wouldn&#039;t put the quotes there myself&quot;<br>
+to<br>
+&quot;I wouldn&#039;t put the backslashes there myself&quot;</p>
+<p>but even then, I&#039;m not so sure. I can&#039;t see anything in RFC2822 that says you&#039;re allowed to have a comment inside a quoted-string.</p>
+</section>
+<section>
+<h3>[2005-05-12 21:29 UTC] mic at uts dot cc dot utexas dot edu</h3>
+<p>We are seeing the same problem at our IMP installation. We have changed the test to</p>
+<p>return !preg_match(&#039;/[\x0D\\\\&quot;]/&#039;, preg_replace(&#039;/\\\\./&#039;, &#039;&#039;, $qstring));</p>
+<p>This is a two-stage process expressed as a one liner:</p>
+<p>1) account for valid escaped characters (by the expedient of removing them from consideration using preg_replace())<br>
+2) fail on any remaining illegal (i.e. unescaped) characters, i.e. carriage returns, backslashes, quotes.</p>
+<p>This change has worked so far with our test scripts and with IMP.  I hope it is comprehensive enough to represent a worthwhile fix for this bug.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

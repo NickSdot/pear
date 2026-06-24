@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2552</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #2552</h1>
+<p>query works fine first time only</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-10-18 03:39 UTC</td></tr>
+<tr><th>From</th><td>miguelmattos at via-rs dot net</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.2</td></tr>
+<tr><th>OS</th><td>Debian</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-18 03:39 UTC] miguelmattos at via-rs dot net</h3>
+<p>Description:<br>
+------------<br>
+Testing a simple select (select * from table) against a mssql database server using the sybase driver.<br>
+One script using php sybase native functions, the other, using pear.<br>
+With the pear script, the query returns the expected data, the first time the script is executed. Any further attempt to  execute the script will return nothing, no errors reported.<br>
+After restarting the web server (apache), it will work again (just for the first time).</p>
+<p>The script using php sybase native functions works all the time.</p>
+<p>Appreciate any advice.<br>
+Regards,<br>
+Miguel.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+// The pear::db script</p>
+<p>ini_set(&#039;include_path&#039;, &#039;/usr/share/php&#039;);</p>
+<p>require_once &#039;DB.php&#039;;</p>
+<p>$dsn = array(<br>
+    &#039;phptype&#039;  =&gt; &#039;sybase&#039;,<br>
+    &#039;username&#039; =&gt; &#039;user&#039;,<br>
+    &#039;password&#039; =&gt; &#039;password&#039;,<br>
+    &#039;hostspec&#039; =&gt; &#039;database&#039;,<br>
+    &#039;database&#039; =&gt; &#039;database&#039;<br>
+);</p>
+<p>// freetds has an entry in freetds.conf with the same name <br>
+// of the database, that&#039;s why hostspec =&gt; database.</p>
+<p>require_once(&quot;DB.php&quot;);<br>
+ if (DB::isError($db = DB::connect($dsn)))<br>
+ {<br>
+     die(&quot;&lt;br&gt;&quot; . $db-&gt;getMessage() . &quot;&lt;br&gt;Native: &quot; . $db-&gt;getDebugInfo());<br>
+ }<br>
+    $db-&gt;setFetchMode(DB_FETCHMODE_ASSOC);</p>
+<p>$query = &quot;SELECT * FROM MIDIAS ORDER BY MIDIA&quot;;<br>
+    if (DB::isError($result = $db-&gt;query($query)))<br>
+    {<br>
+        echo &quot;&lt;br&gt;&quot; . $result-&gt;getMessage() . &quot;&lt;br&gt;Native: &quot; .<br>
+$result-&gt;getDebugInfo();<br>
+    }</p>
+<p>print_r($result);<br>
+    while ($row = $result-&gt;fetchRow())<br>
+    {<br>
+        echo &quot;&lt;pre&gt;&quot;;<br>
+        print_r($row);<br>
+        echo &quot;&lt;/pre&gt;&quot;;<br>
+    }<br>
+    $result-&gt;free();</p>
+<p>$db-&gt;disconnect();<br>
+?&gt;</p>
+<p>&lt;?php<br>
+// the script using the sybase native functions...</p>
+<p>$c1 = sybase_pconnect(&quot;192.168.1.3&quot; ,&quot;user&quot; ,&quot;password&quot;,&quot;&quot;);</p>
+<p>sybase_select_db(&quot;database&quot;,$c1);</p>
+<p>$result = sybase_query(&quot;SELECT * FROM MIDIAS &quot;,$c1);</p>
+<p>$data_result = sybase_fetch_array($result);</p>
+<p>print_r($data_result);</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Array with the table data.</p>
+<p>Actual result:<br>
+--------------<br>
+Empty DB_Result Object.</p>
+</section>
+<section>
+<h3>[2004-10-18 04:58 UTC] miguelmattos at via-rs dot net</h3>
+<p>Ok, you are rigth.<br>
+It used to work on php4. <br>
+Using sybase (php) extension on linux to access mssql server.<br>
+The driver is the same for both: freetds.</p>
+<p>Regards,<br>
+Miguel.</p>
+</section>
+<section>
+<h3>[2004-10-19 15:30 UTC] miguelmattos at via-rs dot net</h3>
+<p>Tried it now with ODBC.<br>
+Configured DSN using unixODBC through FreeTDS, isql working ok, php odbc native functions (as in last example working ok too).<br>
+Tried with PEAR, (took me a while to figure out the connection string)... first time works ok, next one, returns nothing. Restart web server, works ok again.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

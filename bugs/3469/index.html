@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3469</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject_FormBuilder/index.html">DB_DataObject_FormBuilder</a> &#187; Bug #3469</h1>
+<p>enum fields don&#039;t show proper value</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-14 18:19 UTC</td></tr>
+<tr><th>From</th><td>andrew dot clark at ucsb dot edu</td></tr>
+<tr><th>Assigned</th><td>justinpatrin</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject_FormBuilder/index.html">DB_DataObject_FormBuilder</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>FreeBSD 4.10</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-14 18:19 UTC] andrew dot clark at ucsb dot edu</h3>
+<p>Description:<br>
+------------<br>
+Refer to bug #3124</p>
+<p>Enum fields, whether frozen or not, do not display their proper value from the database.  The sample code in bug #3124 should reproduce the problem.</p>
+</section>
+<section>
+<h3>[2005-02-15 20:04 UTC] andrew dot clark at ucsb dot edu</h3>
+<p>Sure thing. <br>
+Here&#039;s the DB table:</p>
+<p>CREATE TABLE net_contact (<br>
+  net_contact_id int(16) unsigned NOT NULL auto_increment,<br>
+  net_id int(16) unsigned NOT NULL default &#039;0&#039;,<br>
+  contact_id int(16) unsigned NOT NULL default &#039;0&#039;,<br>
+  role enum(&#039;primary&#039;,&#039;secondary&#039;,&#039;security&#039;,&#039;financial&#039;) NOT NULL default &#039;secondary&#039;,<br>
+  last_modified timestamp(14) NOT NULL,<br>
+  last_verified datetime default NULL,<br>
+  PRIMARY KEY  (net_contact_id),<br>
+  UNIQUE KEY net_id (net_id,contact_id,role)<br>
+) TYPE=MyISAM;</p>
+<p>Here&#039;s the DO code:<br>
+&lt;?php<br>
+/**<br>
+ * Table Definition for net_contact<br>
+ */<br>
+require_once &#039;DB/DataObject.php&#039;;</p>
+<p>class DataObjects_Net_contact extends DB_DataObject <br>
+{</p>
+<p>###START_AUTOCODE<br>
+    /* the code below is auto generated do not remove the above tag */</p>
+<p>var $__table = &#039;net_contact&#039;;                     // table name<br>
+    var $net_contact_id;                          // int(16)  not_null primary_key unsigned<br>
+    var $net_id;                          // int(16)  not_null unsigned<br>
+    var $contact_id;                      // int(16)  not_null  unsigned<br>
+    var $role;                            // string(9)  enum<br>
+    var $last_modified;                   // timestamp(14)  not_null unsigned zerofill timestamp<br>
+    var $last_verified;                   // timestamp(14)  not_null unsigned zerofill</p>
+<p>/* ZE2 compatibility trick*/<br>
+    function __clone() { return $this;}</p>
+<p>/* Static get */<br>
+    function staticGet($k,$v=NULL) { return DB_DataObject::staticGet(&#039;DataObjects_Net_contact&#039;,$k,$v); }</p>
+<p>/* the code above is auto generated do not remove the tag below */<br>
+    ###END_AUTOCODE</p>
+<p>var $fb_enumFields         = array(&#039;role&#039;);</p>
+<p>var $fb_enumOptions        = array(&#039;role&#039; =&gt; <br>
+                array(&#039;primary&#039;, &#039;secondary&#039;, &#039;security&#039;, &#039;financial&#039;)<br>
+        );</p>
+<p>//      var $fb_selectAddEmpty = array(&#039;role&#039;);</p>
+<p>/*<br>
+        * workaround for improper enum option handling<br>
+        * in DataObject FormBuilder <br>
+        */<br>
+        /*<br>
+        function preGenerateForm(&amp;$fb) {<br>
+                $role_options = array(<br>
+                        null =&gt; null,<br>
+                        &#039;primary&#039; =&gt; &#039;primary&#039;, &#039;secondary&#039; =&gt; &#039;secondary&#039;,<br>
+                        &#039;security&#039; =&gt; &#039;security&#039; , &#039;financial&#039; =&gt; &#039;financial&#039;<br>
+                );</p>
+<p>$this-&gt;fb_preDefElements[&#039;role&#039;] = HTML_QuickForm::createElement(<br>
+                        &#039;select&#039;, $fb-&gt;elementNamePrefix .&#039;role&#039; .$fb-&gt;elementNamePostfix,<br>
+                        &#039;Role&#039;, $role_options<br>
+                );<br>
+        }<br>
+        */</p>
+<p>}</p>
+<p>?&gt;</p>
+<p>here&#039;s the implementing code:</p>
+<p>&lt;?php<br>
+require_once &#039;include/config.php&#039;;<br>
+require_once &#039;DB/DataObject/FormBuilder.php&#039;;</p>
+<p>DB_DataObject::debugLevel(0);</p>
+<p>$self =&amp; DB_DataObject::factory(&#039;net_contact&#039;);</p>
+<p>if (PEAR::isError($self)) {<br>
+        die ( $self-&gt;getMessage() );<br>
+}</p>
+<p>$self-&gt;get(7);</p>
+<p>$builder =&amp; DB_DataObject_FormBuilder::create($self);</p>
+<p>$form =&amp; $builder-&gt;getForm();<br>
+$form-&gt;freeze();</p>
+<p>echo $form-&gt;toHtml();</p>
+<p>?&gt;</p>
+<p>If the form is not frozen, the enum field has nothing selected (though it does show the options).  If it is frozen, it always shows the first enum option (primary).</p>
+<p>I notice if I remove my fb_enumOptions code, it seems to work...</p>
+<p>Here&#039;s the relevant row from the db:<br>
++----------------+--------+------------+-----------+----------------+---------------+<br>
+| net_contact_id | net_id | contact_id | role      | last_modified  | last_verified |<br>
++----------------+--------+------------+-----------+----------------+---------------+<br>
+|              7 |    205 |        214 | secondary | 20050126165246 | NULL          |<br>
++----------------+--------+------------+-----------+----------------+---------------+</p>
+</section>
+<section>
+<h3>[2005-02-16 00:34 UTC] andrew dot clark at ucsb dot edu</h3>
+<p>Fix verified.  Thanks!<br>
+Is setting enumOptions now optional, that is, is DB_DataObject_FormBuilder now able to figure out the enum values on its own?</p>
+</section>
+<section>
+<h3>[2005-04-17 00:49 UTC] vtamara at pasosdejesus dot org</h3>
+<p>Good evening in the Lord</p>
+<p>In my humble opinion, this fix reduces functionality.</p>
+<p>In my code I was relying on the difference between<br>
+keys and values in fb_enumOptions, for example with a<br>
+field tipo_ubicaicion of type CHAR(1) I had:<br>
+ <br>
+    var $fb_enumOptions = array(&#039;tipo_ubicacion&#039; =&gt; array(&#039;S&#039; =&gt;<br>
+        &#039;Sin Información&#039;, &#039;R&#039; =&gt; &#039;Rural&#039;,<br>
+        &#039;U&#039; =&gt; &#039;Urbano&#039;, &#039;A&#039; =&gt; &#039;Ambos&#039; ),<br>
+...</p>
+<p>To show human readable messages in the interface while <br>
+maintaining just one letter in the database (I used this<br>
+in several tables).</p>
+<p>Now I have to implement a callback for each table where<br>
+I want this feature:</p>
+<p>class DataObjects_Caso extends DB_DataObject <br>
+{ <br>
+...<br>
+    var $fb_enumOptions = array(&#039;tipo_ubicacion&#039; =&gt; array(&#039;S&#039; =&gt;<br>
+        &#039;Sin Información&#039;, &#039;R&#039; =&gt; &#039;Rural&#039;,<br>
+        &#039;U&#039; =&gt; &#039;Urbano&#039;, &#039;A&#039; =&gt; &#039;Ambos&#039; ),<br>
+...<br>
+    function enumCallback($table, $key) {<br>
+         return $this-&gt;es_enumOptions[$key];<br>
+    }<br>
+...</p>
+<p>function preGenerateForm( &amp;$formbuild ) {<br>
+        $formbuild-&gt;enumOptionsCallback=array($this,<br>
+            &quot;enumCallback&quot;);<br>
+...</p>
+<p>Wasn&#039;t it better to fix the documentation? I think <br>
+that the problem in the bug report could be solved<br>
+also by replacing:</p>
+<p>var $fb_enumOptions        = array(&#039;role&#039; =&gt; <br>
+                array(&#039;primary&#039;, &#039;secondary&#039;, &#039;security&#039;, &#039;financial&#039;)<br>
+        );</p>
+<p>with</p>
+<p>var $fb_enumOptions        = array(&#039;role&#039; =&gt; <br>
+                array(&#039;primary&#039;=&gt;&#039;primary&#039;, &#039;secondary&#039;=&gt;&#039;secondary&#039;, &#039;security&#039;=&gt;&#039;security&#039;, &#039;financial&#039;=&gt;&#039;financial&#039;)<br>
+        );</p>
+<p>Best regards. God illuminate us.<br>
+Vladimir Támara</p>
+</section>
+<section>
+<h3>[2005-04-19 07:25 UTC] michael at baselinesols dot com</h3>
+<p>I tend to agree with vtamara on this one - while for the bulk of cases, you will have a &#039;value&#039; =&gt; &#039;value&#039; mapping for enums, there are certainly cases where you&#039;d want the description to be more verbose (and indeed descriptive) than the value. It would also be useful for supporting databases that don&#039;t have a native ENUM type, where you must emulate it.</p>
+<p>A simple way to keep the current functionality, but still allow for more complex mappings would be to check if the keys of the $options array are sequential and start at 0, ie something like this:</p>
+<p>if (array_keys($options) == range(0, count($options)-1)) ...</p>
+<p>If true, then assume it&#039;s an enum options array of the type array(&#039;option1&#039;, &#039;option2&#039;, &#039;option3&#039;) - if not, then assume it&#039;s of type array(&#039;AM&#039; =&gt; &#039;Morning&#039;, &#039;PM&#039; =&gt; &#039;Afternoon) and use the keys accordingly.</p>
+<p>The only time this won&#039;t work is when you *need* consecutive numeric indices starting at 0, ie:</p>
+<p>array(&#039;0&#039; =&gt; &#039;Low Priority&#039;, &#039;1&#039; =&gt; &#039;Medium Priority&#039;)</p>
+<p>However, if the order isn&#039;t *too* important, then this could be re-expressed as:</p>
+<p>array(&#039;1&#039; =&gt; &#039;Medium Priority&#039;, &#039;0&#039; =&gt; &#039;Low Priority&#039;)</p>
+<p>Arguably the best way would be to have a config variable to specify whether the options array should keep its keys or not, but this would require a little more effort (though not much).</p>
+</section>
+<section>
+<h3>[2005-04-19 07:32 UTC] michael at baselinesols dot com</h3>
+<p>Oh yeah - forgot to add, there&#039;s something that kinda smells bad around lines 1279-1281 of version 1.151 of FormBuilder.php. Currently it looks like this:</p>
+<p>foreach ($options as $option) {<br>
+    $element =&amp; $this-&gt;_createRadioButtons($key, $options);                             }</p>
+<p>It works... but the foreach loop does nothing except waste cycles AFAICS. I think it should just be:</p>
+<p>$element =&amp; $this-&gt;_createRadioButtons($key, $options);</p>
+</section>
+<section>
+<h3>[2005-04-28 23:29 UTC] michael at baselinesols dot com</h3>
+<p>Er... but PHP converts integer strings into integers when used as array keys, ie array(&#039;0&#039;=&gt;&#039;a&#039;) === array(0=&gt;&#039;a&#039;) (see http://www.php.net/manual/en/language.types.array.php), so this approach won&#039;t work. That&#039;s why I had proposed this method:</p>
+<p>if (array_keys($options) == range(0, count($options)-1))</p>
+<p>Then, if you jumble up the keys, even though they&#039;re ints, it will still differentiate. Or you can use something like array(&#039;00&#039;=&gt;&#039;a&#039;, &#039;01&#039;=&gt;&#039;b&#039;), as this representation will not be converted (but you may need to convert them to ints explicitly when processing the form).</p>
+</section>
+<section>
+<h3>[2005-05-18 01:35 UTC] michael at baselinesols dot com</h3>
+<p>Perfect - your fix in 0.15.0 (which I think reverts to the old behaviour) is the right one IMHO :-) Even though it may require a little more coding for some people, I feel it&#039;s the best way to get customised behaviour.</p>
+<p>In PHP 5, you can use $enums = array_combine($enums, $enums) to create an array where the keys are the same as the values - for those that can&#039;t be bothered listing the keys with the values.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

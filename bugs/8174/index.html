@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8174</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_Wiki_Mediawiki/index.html">Text_Wiki_Mediawiki</a> &#187; Bug #8174</h1>
+<p>Visibility of newlines within source</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8174</th><td>Visibility of newlines within source</td></tr>
+<tr><th>Submitted</th><td>2006-07-10 14:23 UTC</td></tr>
+<tr><th>From</th><td>bjs5075 at rit dot edu</td></tr>
+<tr><th>Assigned</th><td>ritzmo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Text_Wiki_Mediawiki/index.html">Text_Wiki_Mediawiki</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Debian etch</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-10 14:23 UTC] bjs5075 at rit dot edu</h3>
+<p>Description:<br>
+------------<br>
+The MediaWiki markup standard specifies that a single newline within the markup source does not affect the layout of the final rendered text (http://meta.wikimedia.org/wiki/Help:Editing).</p>
+<p>The parser in Text_Wiki_MediaWiki does read newlines and the renderers output them. To be consistant with MediaWiki, the parser should ignore newlines in the wiki markup source.</p>
+<p>Test script:<br>
+---------------<br>
+Paragraph one</p>
+<p>Paragraph two<br>
+should stay together</p>
+<p>Paragraph three</p>
+<p>Expected result:<br>
+----------------<br>
+Paragraph one</p>
+<p>Paragraph two should stay together</p>
+<p>Paragraph three</p>
+<p>Actual result:<br>
+--------------<br>
+Paragraph one</p>
+<p>Paragraph two<br>
+should stay together</p>
+<p>Paragraph three</p>
+</section>
+<section>
+<h3>[2006-07-10 15:23 UTC] bjs5075 at rit dot edu</h3>
+<p>The MediaWiki standard specifies inserting &quot;&lt;br&gt;&quot; within page markup to force linebreaks, so the Text_Wiki_MediaWiki newline regex should probably match something like:<br>
+/&lt;br\ *\/?&gt;/</p>
+<p>or even simply force the match to be &quot;&lt;br&gt;&quot;</p>
+</section>
+<section>
+<h3>[2006-07-10 15:51 UTC] ritzmo at php dot net</h3>
+<p>The newline rule really defines a newline and not a linebreak, which is contained in the break-rule.</p>
+<p>I did some testing and would like to be able to give you a better solution, but a hotfix would be to remove the return in Text_Wiki_Render_Xhtml_Newline. Removing the newline rule broke paragraphs for me and this needs some more testing first.</p>
+</section>
+<section>
+<h3>[2006-07-11 02:48 UTC] bjs5075 at rit dot edu</h3>
+<p>I have modified versions of the default/mediawiki parsers for Break/Newline/Paragraph that seem to do the trick together.<br>
+They are quite large to put in a message here, would you prefer that I email them directly?</p>
+</section>
+<section>
+<h3>[2006-07-11 08:19 UTC] ritzmo at php dot net</h3>
+<p>Thank you for taking the time to report a problem with the package.<br>
+This problem may have been already fixed by a previous change that<br>
+is in the CVS of the package.  Please log into CVS with:</p>
+<p>cvs -d :pserver:cvsread@cvs.php.net:/repository login</p>
+<p>and check out the CVS repository of this package and upgrade</p>
+<p>cvs -d :pserver:cvsread@cvs.php.net:/repository co pear/Text_Wiki_Mediawiki<br>
+pear upgrade pear/Text_Wiki_Mediawiki/package2.xml</p>
+<p>or</p>
+<p>pear upgrade pear/Text_Wiki_Mediawiki/package.xml</p>
+<p>If you are able to reproduce the bug with the latest CVS,<br>
+please change the status back to &quot;Open&quot;.<br>
+Again, thank you for your continued support of PEAR.</p>
+</section>
+<section>
+<h3>[2006-07-14 13:05 UTC] bjs5075 at rit dot edu</h3>
+<p>The CVS still does not have Paragraph.php in the Parse/Mediawiki/ direcotry.</p>
+</section>
+<section>
+<h3>[2006-07-14 13:22 UTC] ritzmo at php dot net</h3>
+<p>It&#039;s not about the files in CVS, it&#039;s about working correctly.<br>
+And as the current CVS works for me I asked if it also does for you.<br>
+I did not just copy over your patches, I actualy only used your Break.php.</p>
+</section>
+<section>
+<h3>[2006-07-14 16:27 UTC] bjs5075 at rit dot edu</h3>
+<p>The problem is that the current Newline/Paragraph combination  does *not* ignore single-newlines within the wiki source, while the MediaWiki format specified that it should ignore newlines. The only time a line break should occur is given a &quot;&lt;br&gt;&quot; tag, not for newlines within a paragraph block.<br>
+My Newline/Paragraph removes single newlines and splits paragraphs on blank lines.</p>
+</section>
+<section>
+<h3>[2006-07-14 16:37 UTC] ritzmo at php dot net</h3>
+<p>Could you please provide a test script as your posted example gives me the expected result.</p>
+</section>
+<section>
+<h3>[2006-07-14 16:45 UTC] bjs5075 at rit dot edu</h3>
+<p>I&#039;m sorry about the re-opening, it does work properly now.</p>
+<p>I was juggling CVS/local diffs on two different hosts and I think I got confused about which host had which version.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

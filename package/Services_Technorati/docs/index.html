@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services_Technorati Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/Services_Technorati/index.html">Services_Technorati</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Services_Technorati/docs/index.html#package-webservices-services-technorati-intro">Introduction and Quick Start</a>
+</li></ul>
+</nav>
+<p>A class for interacting with the Technorati API</p>
+<section id="package-webservices-services-technorati-intro">
+<h2>Introduction and Quick Start</h2>
+<h3>Description</h3>
+  <p>Technorati is a blog search engine.
+
+   By indexing blogs and exploring links between them,
+   they provide tools for monitoring online conversations
+   taking place on and between blogs.
+
+   By far the richest source of this information
+   is through their REST-based API,
+   to which this module provides an OO PHP interface.
+
+   Full documentation for Technorati&#039;s API is available on their
+   <a href="http://developers.technorati.com/wiki/TechnoratiApi">developers&#039; wiki</a>.
+
+   To use the API you will need an
+   <a href="http://technorati.com/developers/apikey.html">API key</a>.</p>
+  <p>To protect against future changes to the
+   underlying API it is accessed using a factory method:</p><pre><code>&lt;?php
+$tapi =&amp; Services_Technorati::factory($api_key);
+?&gt;</code></pre>
+  
+
+  <p>The Technorati API limits you to 500 queries
+   per day so those wishing to use it in a high-demand
+   environment will want to employ some caching.
+
+   Services_Technorati provides support for any caching
+   system with a Cache_Lite-like API.
+
+   To use a cache,
+   you will need to create it and then pass it
+   to the class in the factory:</p><pre><code>&lt;?php
+$tapi =&amp; Services_Technorati::factory($api_key, $cache_object);
+?&gt;</code></pre>
+  
+
+  <p>Once you have instantiated the object
+   you can start passing in queries.
+
+   Each call takes the form of methodName(keyParameter, options)
+   where options is an array.</p><table><caption>Query types and their options</caption>
+    
+    
+     <thead>
+      <tr>
+       <th>Query Name</th>
+       <th>Key Parameter</th>
+       <th>Permitted Options</th>
+      </tr>
+
+     </thead>
+
+     <tbody>
+      <tr>
+       <td>cosmos</td>
+       <td>url</td>
+       <td>type, limit, start, current, claim, highlight</td>
+      </tr>
+
+      <tr>
+       <td>search</td>
+       <td>query keywords</td>
+       <td>start, limit, claim</td>
+      </tr>
+
+      <tr>
+       <td>outbound</td>
+       <td>url</td>
+       <td>start</td>
+      </tr>
+
+      <tr>
+       <td>tag</td>
+       <td>tag</td>
+       <td>limit, start, format, excerptsize, topexcerptsize</td>
+      </tr>
+
+      <tr>
+       <td>topTags</td>
+       <td>-</td>
+       <td>limit, start</td>
+      </tr>
+
+      <tr>
+       <td>blogPostTags</td>
+       <td>url</td>
+       <td>limit</td>
+      </tr>
+
+      <tr>
+       <td>getInfo</td>
+       <td>username</td>
+       <td>-</td>
+      </tr>
+
+      <tr>
+       <td>blogInfo</td>
+       <td>url</td>
+       <td>-</td>
+      </tr>
+
+     </tbody></table>
+<p>(NB.
+
+   Support for Technorati&#039;s attention.
+
+   XML services is also included in accordance with the spec,
+   but those services are currently in a state of flux so cannot be relied upon.)</p>
+
+  <p>The value returned from each query will be either
+   an array representing the unserialized XML or a PEAR Error.</p>
+
+  <p><strong>
+    An example return from the blogInfo query (for &#039;jystewart&#039;) is:
+   </strong></p>
+   
+
+   <pre><code>&lt;?php
+Array
+(
+    [version] =&gt; 1.0
+    [document] =&gt; Array
+        (
+            [result] =&gt; Array
+                (
+                    [username] =&gt; jystewart
+                    [firstname] =&gt; James
+                    [lastname] =&gt; Stewart
+                )
+
+            [item] =&gt; Array
+                (
+                    [0] =&gt; Array
+                        (
+                            [weblog] =&gt; Array
+                                (
+                                    [name] =&gt; little more than a placeholder
+                                    [url] =&gt; http://james.anthropiccollective.org
+                                    [rssurl] =&gt; http://james.anthropiccollective.org/index.rdf
+                                    [atomurl] =&gt; http://james.anthropiccollective.org/atom.xml
+                                    [inboundblogs] =&gt; 52
+                                    [inboundlinks] =&gt; 82
+                                    [lastupdate] =&gt; 2005-08-27 09:01:42 GMT
+                                    [rank] =&gt; 7483
+                                    [lat] =&gt; 0
+                                    [lon] =&gt; 0
+                                    [lang] =&gt; 26110
+                                    [foafurl] =&gt; http://jystewart.net/foaf.rdf
+                                )
+
+                        )
+
+                    [1] =&gt; Array
+                        (
+                            [weblog] =&gt; Array
+                                (
+                                    [name] =&gt; something approaching a photo album
+                                    [url] =&gt; http://approach.anthropiccollective.org
+                                    [rssurl] =&gt;
+                                    [atomurl] =&gt;
+                                    [inboundblogs] =&gt; 1
+                                    [inboundlinks] =&gt; 1
+                                    [lastupdate] =&gt; 2004-08-13 17:40:02 GMT
+                                    [rank] =&gt; 240760
+                                    [lat] =&gt; 0
+                                    [lon] =&gt; 0
+                                    [lang] =&gt; 0
+                                )
+
+                        )
+
+                    [2] =&gt; Array
+                        (
+                            [weblog] =&gt; Array
+                                (
+                                    [name] =&gt; grwifi.net : wireless internet (wifi) in grand rapids, michigan
+                                    [url] =&gt; http://grwifi.net
+                                    [rssurl] =&gt;
+                                    [atomurl] =&gt; http://grwifi.net/atom/
+                                    [inboundblogs] =&gt; 9
+                                    [inboundlinks] =&gt; 11
+                                    [lastupdate] =&gt; 2005-04-15 19:44:46 GMT
+                                    [rank] =&gt; 50688
+                                    [lat] =&gt; 0
+                                    [lon] =&gt; 0
+                                    [lang] =&gt; 26110
+                                )
+
+                        )
+
+                    [3] =&gt; Array
+                        (
+                            [weblog] =&gt; Array
+                                (
+                                    [name] =&gt; a work on process
+                                    [url] =&gt; http://jystewart.net/process
+                                    [rssurl] =&gt; http://jystewart.net/process/feed/
+                                    [atomurl] =&gt; http://jystewart.net/process/feed/atom/
+                                    [inboundblogs] =&gt; 3
+                                    [inboundlinks] =&gt; 3
+                                    [lastupdate] =&gt; 2005-08-31 20:44:38 GMT
+                                    [rank] =&gt; 132735
+                                    [lat] =&gt; 0
+                                    [lon] =&gt; 0
+                                    [lang] =&gt; 26110
+                                    [foafurl] =&gt; http://jystewart.net/foaf.rdf
+                                )
+                        )
+                )
+        )
+)
+?&gt;</code></pre>
+  
+
+  <p>Full details of the XML returned by Technorati
+   is included on the
+   <a href="http://developers.technorati.com/wiki/TechnoratiApi">developers&#039; wiki</a></p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

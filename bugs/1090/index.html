@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1090</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/XML_RPC/index.html">XML_RPC</a> &#187; Bug #1090</h1>
+<p>[Patch] Use call_user_func for function call and strpos for prefix match.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-29 16:12 UTC</td></tr>
+<tr><th>From</th><td>matt at piradian dot net</td></tr>
+<tr><th>Assigned</th><td>ssb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_RPC/index.html">XML_RPC</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-29 16:12 UTC] matt at piradian dot net</h3>
+<p>Description:<br>
+------------<br>
+Attached is a patch to make a few small enhancements to the <br>
+XML_RPC_Server class.<br>
+I&#039;ve changed it to use call_user_func instead of eval&#039;ing a string. As well <br>
+as being neater and allowing object methods to be called, this permits <br>
+constructs such as:</p>
+<p>class MyRPCServer extends XML_RPC_Server<br>
+{</p>
+<p>function MyRPCServer()<br>
+    {<br>
+        $this-&gt;XML_RPC_Server(array( &quot;my.method&quot; =&gt; array (&quot;function&quot; <br>
+=&gt; array(&amp;$this, &#039;foo&#039;))));<br>
+    }</p>
+<p>function foo($m)<br>
+    {<br>
+	...<br>
+        //do stuff<br>
+    }<br>
+}<br>
+I&#039;ve added is_callable checks before these functions are called, returned <br>
+error objects if needed.<br>
+I&#039;ve also made simple string prefix matching use strpos instead of ereg, <br>
+for performance.</p>
+<p>? XML_RPC.patch<br>
+Index: Server.php<br>
+==============================================<br>
+=====================<br>
+RCS file: /repository/pear/XML_RPC/Server.php,v<br>
+retrieving revision 1.6<br>
+diff -u -r1.6 Server.php<br>
+--- Server.php	15 Mar 2004 13:58:39 -0000	1.6<br>
++++ Server.php	29 Mar 2004 14:17:38 -0000<br>
+@@ -58,7 +58,7 @@<br>
+ <br>
+     $methName = $m-&gt;getParam(0);<br>
+     $methName = $methName-&gt;scalarval();<br>
+-    if (ereg(&quot;^system\.&quot;, $methName)) {<br>
++    if (strpos($methName, &quot;system.&quot;) === 0) {<br>
+         $dmap = $XML_RPC_Server_dmap;<br>
+         $sysCall = 1;<br>
+     } else {<br>
+@@ -100,7 +100,7 @@<br>
+ <br>
+     $methName = $m-&gt;getParam(0);<br>
+     $methName = $methName-&gt;scalarval();<br>
+-    if (ereg(&quot;^system\.&quot;, $methName)) {<br>
++    if (strpos($methName, &quot;system.&quot;) === 0) {<br>
+         $dmap = $XML_RPC_Server_dmap;<br>
+         $sysCall = 1;<br>
+     } else {<br>
+@@ -261,14 +261,14 @@<br>
+             XML_RPC_Server_debugmsg($plist);<br>
+             // now to deal with the method<br>
+             $methName = $XML_RPC_xh[$parser][&#039;method&#039;];<br>
+-            if (ereg(&quot;^system\.&quot;, $methName)) {<br>
++            if (strpos($methName, &quot;system.&quot;) === 0) {<br>
+                 $dmap = $XML_RPC_Server_dmap;<br>
+                 $sysCall = 1;<br>
+             } else {<br>
+                 $dmap = $this-&gt;dmap;<br>
+                 $sysCall = 0;<br>
+             }<br>
+-            if (isset($dmap[$methName][&#039;function&#039;])) {<br>
++            if (isset($dmap[$methName][&#039;function&#039;]) &amp;&amp; <br>
+is_callable($dmap[$methName][&#039;function&#039;])) {<br>
+                 // dispatch if exists<br>
+                 if (isset($dmap[$methName][&#039;signature&#039;])) {<br>
+                     $sr = $this-&gt;verifySignature($m,<br>
+@@ -277,9 +277,9 @@<br>
+                 if ( (!isset($dmap[$methName][&#039;signature&#039;])) || $sr[0]) {<br>
+                     // if no signature or correct signature<br>
+                     if ($sysCall) {<br>
+-                        eval(&#039;$r=&#039; . $dmap[$methName][&#039;function&#039;] . &#039;($this, <br>
+$m);&#039;);<br>
++                        $r = call_user_func($dmap[$methName][&#039;function&#039;], <br>
+$this, $m);<br>
+                     } else {<br>
+-                        eval(&#039;$r=&#039; . $dmap[$methName][&#039;function&#039;] . &#039;($m);&#039;);<br>
++                        $r = call_user_func($dmap[$methName][&#039;function&#039;], <br>
+$m);<br>
+                     }<br>
+                 } else {<br>
+                     $r = new <br>
+XML_RPC_Response(0, $XML_RPC_err[&quot;incorrect_params&quot;],</p>
+</section>
+<section>
+<h3>[2004-03-29 16:22 UTC] matt at piradian dot net</h3>
+<p>Patch without screwed-up linebreaks:<br>
+http://news.php.net/article.php?<br>
+group=php.pear.dev&amp;article=26853</p>
+</section>
+<section>
+<h3>[2004-05-31 17:49 UTC] pierre at dotgeek dot org</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

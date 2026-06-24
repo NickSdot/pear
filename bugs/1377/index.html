@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1377</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/Pager/index.html">Pager</a> &#187; Bug #1377</h1>
+<p>getPageData() returns no data when $pageID is specified.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-10 23:29 UTC</td></tr>
+<tr><th>From</th><td>ieure at php dot net</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Pager/index.html">Pager</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-10 23:29 UTC] ieure at php dot net</h3>
+<p>Description:<br>
+------------<br>
+Calling getPageData() with a specific pageID to get the data for <br>
+never returns data. <br>
+ <br>
+Examining the function, it&#039;s obvious that the data isn&#039;t generated if <br>
+a pageID is specified. <br>
+ <br>
+Additionally, there is no need for getPageData() to call itself again <br>
+after the _generatePageData() call. <br>
+ <br>
+This patch fixes both issues: <br>
+ <br>
+diff -u -r1.11 Common.php <br>
+--- Common.php  29 Apr 2004 17:27:49 -0000      1.11 <br>
++++ Common.php  10 May 2004 23:35:38 -0000 <br>
+@@ -364,19 +364,16 @@ <br>
+      */ <br>
+     function getPageData($pageID = null) <br>
+     { <br>
+-        if (isset($pageID)) { <br>
+-            if (!empty($this-&gt;_pageData[$pageID])) { <br>
+-                return $this-&gt;_pageData[$pageID]; <br>
+-            } else { <br>
+-                return false; <br>
+-            } <br>
+-        } <br>
++        $pageID = $pageID ? $pageID : $this-&gt;_currentPage; <br>
+ <br>
+         if (!isset($this-&gt;_pageData)) { <br>
+             $this-&gt;_generatePageData(); <br>
+         } <br>
+ <br>
+-        return $this-&gt;getPageData($this-&gt;_currentPage); <br>
++        if (!empty($this-&gt;_pageData[$pageID])) { <br>
++            return $this-&gt;_pageData[$pageID]; <br>
++        } <br>
++        return false; <br>
+     } <br>
+ <br>
+     // }}}</p>
+<p>Reproduce code:<br>
+---------------<br>
+$pager = new Pager();<br>
+...<br>
+$data = $pager-&gt;getPageData(2);</p>
+<p>Expected result:<br>
+----------------<br>
+$data should contain data for page 2.</p>
+<p>Actual result:<br>
+--------------<br>
+$data is boolean false.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

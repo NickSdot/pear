@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #53</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #53</h1>
+<p>cannot use prepared statement where sql contains \&#039; special character</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-10-01 16:16 UTC</td></tr>
+<tr><th>From</th><td>ludovic dot smadja at devoteam dot com</td></tr>
+<tr><th>Assigned</th><td>cox</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>windows NT4.0</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-10-01 16:16 UTC] ludovic dot smadja at devoteam dot com</h3>
+<p>Description:<br>
+------------<br>
+When i use a request with a \&#039; to escape &#039; character and wants to prepare it, I got the error named &quot;insufficient data supplied&quot;</p>
+<p>when I haven&#039;t this special charater, all works.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$sql_search_n_ordre = &quot; select distinct VALEUR_ATTRIBUTS_ARTICLE   from line_items where line_items.nom_attribut = &#039;N° d\&#039;ordre&#039; and  line_items.ID_CASE_LOT=? and date_activation&gt;=?&quot;;</p>
+<p>$params = array($row[&#039;id_case_lot&#039;], $date_activation);<br>
+$sth_n_ordre = $con_gold-&gt;prepare($sql_search_n_ordre);</p>
+<p>print $sql_search_n_ordre.&quot;\n&quot;;<br>
+print_r($params);<br>
+		<br>
+  if(DB::isError($res_n_ordre=$con_gold-&gt;execute($sth_n_ordre, $params)))<br>
+{<br>
+	    print $sql_search_n_ordre.&quot;\n&quot;;<br>
+	    print_r($params);<br>
+                 print &quot;\n&quot;;<br>
+	die(&quot;Erreur de requetage : &quot;.DB::errorMessage($res_n_ordre));<br>
+}</p>
+<p>Actual result:<br>
+--------------<br>
+When I search in sources, the error seems to be on line 405 ( function prepare($query) from db/common.php of pear.</p>
+<p>when I replace this line with mine, this request works !!</p>
+<p>old line : $tokens = split(&quot;[\&amp;\?\!]&quot;, $query);</p>
+<p>my new line : $tokens = split(&quot;[&amp;!?]&quot;, $query);</p>
+<p>is it a wrong way or not ?</p>
+</section>
+<section>
+<h3>[2004-03-30 21:18 UTC] wingetr at cs dot byuh dot edu</h3>
+<p>This version properly handles escaping.  It is a place holder if an even number (including 0) of backslashes proceeds the character.</p>
+<p>function prepare($query)<br>
+{<br>
+  $tokens[0] = &quot;&quot;;<br>
+  $token = 0;<br>
+  $types = array();<br>
+  $qlen = strlen($query);<br>
+  $even = true;<br>
+  for ($i = 0; $i &lt; $qlen; $i++ )<br>
+  {<br>
+    if ( $even )<br>
+    {<br>
+      switch ($query[$i])<br>
+      {<br>
+        case &#039;?&#039;:<br>
+          $types[$token++] = DB_PARAM_SCALAR;<br>
+          $tokens[$token] = &quot;&quot;;<br>
+          break;<br>
+        case &#039;&amp;&#039;:<br>
+          $types[$token++] = DB_PARAM_OPAQUE;<br>
+          $tokens[$token] = &quot;&quot;;<br>
+          break;<br>
+        case &#039;!&#039;:<br>
+          $types[$token++] = DB_PARAM_MISC;<br>
+          $tokens[$token] = &quot;&quot;;<br>
+          break;<br>
+        default:<br>
+          $tokens[$token] .= $query[$i];<br>
+      } // switch<br>
+    } <br>
+    else<br>
+    {<br>
+      $tokens[$token] .= $query[$i];<br>
+    } // if even<br>
+    if ( $query[$i] == &#039;\\&#039; )<br>
+    {<br>
+      $even = ! $even;<br>
+    }<br>
+    else<br>
+    {<br>
+      $even = true;<br>
+    }<br>
+  } // for $i<br>
+		<br>
+  $this-&gt;prepare_tokens[] = &amp;$tokens;<br>
+  end($this-&gt;prepare_tokens);</p>
+<p>$k = key($this-&gt;prepare_tokens);<br>
+  $this-&gt;prepare_types[$k] = $types;<br>
+  $this-&gt;prepared_queries[$k] = &amp;$query;</p>
+<p>return $k;<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

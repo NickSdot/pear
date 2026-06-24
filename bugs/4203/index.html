@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4203</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #4203</h1>
+<p>Update to DB::DataObject 1.7.13 breaks database.ini file generation on postgres</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-04-22 08:18 UTC</td></tr>
+<tr><th>From</th><td>ej dot grace at imperial dot ac dot uk</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-22 08:18 UTC] ej dot grace at imperial dot ac dot uk</h3>
+<p>Description:<br>
+------------<br>
+Updating to the newer version of DB::DataObject breaks the generation of the [database].ini file describing the data objects.</p>
+<p>1) It now no longer correctly identifies the keys of a table</p>
+<p>2) It now prefixes the tables with the schema &quot;public.&quot;. In principle this is not a great problem, it just means renaming things</p>
+<p>Reproduce code:<br>
+---------------<br>
+Using an older version createTables.php would generate the (correct) ini file:</p>
+<p>Create a table using the SQL:</p>
+<p>--- Database schema for ejournal database ----<br>
+DROP TABLE country;<br>
+CREATE TABLE country (<br>
+        id BIGINT DEFAULT nextval(&#039;country_seq&#039;) NOT NULL,<br>
+        code CHAR(2) NOT NULL,<br>
+        name VARCHAR(255)   NOT NULL,<br>
+        UNIQUE (code),<br>
+        PRIMARY KEY ( id )<br>
+);<br>
+DROP SEQUENCE country_seq;<br>
+CREATE SEQUENCE country_seq;</p>
+<p>Create DataObjects.ini like so,<br>
+[DB_DataObject]<br>
+database = pgsql://user:password@host/database<br>
+schema_location = /home/user/DataObjects<br>
+class_location  = /home/user/DataObjects<br>
+require_prefix = /home/user/DataObjects/<br>
+class_prefix = DataObjects_<br>
+debug = 3</p>
+<p>Execute /usr/bin/php /usr/share/pear/DB/DataObject/createTables.php /home/user/DataObjects.ini</p>
+<p>[public.country]<br>
+id = 1<br>
+code = 2<br>
+name = 2</p>
+<p>[public.country__keys]</p>
+<p>Expected result:<br>
+----------------<br>
+I would expect the same behaviour as in earlier versions of DB::DataObject, namely the generation of database.ini containing</p>
+<p>[country]<br>
+id = 129<br>
+code = 130<br>
+name = 130</p>
+<p>[country__keys]<br>
+id = N</p>
+<p>Actual result:<br>
+--------------<br>
+Note, the prefix of the schema (unwanted, but can be lived with), the incorrect identification of id, code and name (they are all required, NOT NULL) and the empty list of keys.</p>
+<p>[public.country]<br>
+id = 1<br>
+code = 2<br>
+name = 2</p>
+<p>[public.country__keys]</p>
+</section>
+<section>
+<h3>[2005-05-04 06:06 UTC] daniel at konczyk dot net</h3>
+<p>right, this is actually very annoying bug!!!<br>
+alan,please fix it in cvs.</p>
+<p>forcing to use chema.tablename is totally useless, when one use default schema which is &#039;public&#039;.</p>
+<p>No, after I recreated the data with generator, I have everything different.</p>
+<p>I searched, why there are no keys in the .ini file anymore and I found, that when you call tableInfo with schema.tablename as a parameter instead of just tablename, then the flag values for each column of that table are empty!</p>
+<p>when you call this function with tablename, the flags are correct.</p>
+<p>so either make this &#039;using schema.tablename&#039; an option with default to false or just remove it as it is not working correctly</p>
+<p>that&#039;s what i did in the Generator.php - commented that line out...</p>
+<p>thanks</p>
+</section>
+<section>
+<h3>[2005-08-20 20:47 UTC] detunizedgravity at yahoo dot fr</h3>
+<p>The problem is still present in DB_DataObject version 1.7.16, just tested on a Debian x86 box. The bug is reproducible with both PHP 4.3.10 and 5.0.4 (not that it matters if I understood well).</p>
+<p>I still find the faulty code in Generator.php (see the &quot;diff&quot; output in Bug #4235), and I am stuck with the same problem as nicosolaris, which makes DataObject useless for me as of now.</p>
+<p>As far as I am concerned, *this bug is everything but &quot;closed&quot;.* Has there been a regression somewhere between 1.7.14 and 1.7.16?</p>
+</section>
+<section>
+<h3>[2005-08-21 08:55 UTC] detunizedgravity at yahoo dot fr</h3>
+<p>I made a little mistake in my previous comment: the version of DB_DataObject I use is 1.7.15, not 1.7.16. It is the latest available stable version according to &quot;pear&quot; on my box.</p>
+</section>
+<section>
+<h3>[2005-09-30 06:32 UTC] rlwixson at thoughtprocess dot net</h3>
+<p>I am also experiencing the pain of this bug.</p>
+<p>(applicable) Installed packages:<br>
+===================<br>
+Package        Version State<br>
+DB             1.7.6   stable<br>
+DB_DataObject  1.7.15  stable<br>
+Date           1.4.3   stable<br>
+PEAR           1.4.1   stable</p>
+<p>postgres 7.4.7 and php4.4.0 from debian.</p>
+<p>$generator = new DB_DataObject_Generator;<br>
+$generator-&gt;generator_strip_schema = 1;<br>
+$generator-&gt;start();</p>
+<p>Running the generator I get an ini file like this...<br>
+----------------------<br>
+[public.orders]<br>
+orderid = 1<br>
+custid = 1<br>
+order_xml = 34<br>
+order_date = 1<br>
+status = 2</p>
+<p>[public.orders__keys]<br>
+----------------------</p>
+<p>With no keys, and the schema name still prefixing the table, although I&#039;m not sure I used generator_strip_schema properly because it is not documented anywhere.</p>
+<p>I am an avid user of PEAR, and DB_DataObject in particular, but usually with MySql, not PgSql.</p>
+<p>What has happened to the reported fixes???</p>
+<p>Please Alan.  Help us out.  If the fix is already done, then please see that it is released.</p>
+<p>Thank you for this excellent package.</p>
+</section>
+<section>
+<h3>[2005-10-02 20:28 UTC] rlwixson at thoughtprocess dot net</h3>
+<p>Thanks Alan.</p>
+<p>I added &#039;generator_strip_schema&#039; =&gt; 1, to the options static property array...</p>
+<p>$do_options = &amp;PEAR::getStaticProperty(&#039;DB_DataObject&#039;,&#039;options&#039;);<br>
+$do_options = array(<br>
+	&#039;database&#039;			=&gt; $strDSN,<br>
+	&#039;schema_location&#039;	=&gt; &#039;./../DataObjects&#039;,<br>
+	&#039;class_location&#039;	=&gt; &#039;./../DataObjects&#039;,<br>
+	&#039;require_prefix&#039;	=&gt; &#039;DataObjects/&#039;,<br>
+	&#039;class_prefix&#039;		=&gt; &#039;DataObjects_&#039;,<br>
+	&#039;generator_strip_schema&#039; =&gt; 1,<br>
+);</p>
+<p>The &#039;public&#039; schema was stripped off of the generated class files, and the keys are now defined in the .ini file. <br>
+For example...</p>
+<p>[vendors]<br>
+vid = 129<br>
+vcode = 2<br>
+vname = 2<br>
+keep = 1</p>
+<p>[vendors__keys]<br>
+vid = K</p>
+<p>So things are looking much better.  I have a few questions.</p>
+<p>1) Is this not what one would consider to be the default expected behavior for using the generator on a pgsql database?  If so, then why not make this the default option for the generator under those conditions?</p>
+<p>2) Is this option &#039;generator_strip_schema&#039; ONLY necessary for generation, and will it have any effects if left in, or removed from, the options array during normal (production) use?</p>
+<p>Also, could the end user documentation &#039;Configuration Options&#039; http://pear.php.net/manual/en/package.database.db-dataobject.intro-configuration.php be updated in order to help other pgsql users of this package?</p>
+<p>Thanks again.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

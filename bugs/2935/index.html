@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2935</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_Menu/index.html">HTML_Menu</a> &#187; Bug #2935</h1>
+<p>combine duplicate code into _prefixUrl method</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #2935</th><td>combine duplicate code into _prefixUrl method</td></tr>
+<tr><th>Submitted</th><td>2004-12-09 16:02 UTC</td></tr>
+<tr><th>From</th><td>aaron dot hawley at uvm dot edu</td></tr>
+<tr><th>Assigned</th><td>avb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_Menu/index.html">HTML_Menu</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>GNU/Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-09 16:02 UTC] aaron dot hawley at uvm dot edu</h3>
+<p>Description:<br>
+------------<br>
+The code that prefixes URLs at each node in the _buildUrlMap and _findNodeType methods, should be consolidated.  The patch below contains a method _prefixUrl.  This makes it easier to create a sub-class which can modify the URL prefixing behavior.</p>
+<p>Reproduce code:<br>
+---------------<br>
+===================================================================<br>
+RCS file: RCS/Menu.php,v<br>
+retrieving revision 1.1<br>
+diff -u -r1.1 Menu.php<br>
+--- Menu.php	2004/12/08 19:29:28	1.1<br>
++++ Menu.php	2004/12/09 15:40:53<br>
+@@ -101,7 +101,7 @@<br>
+    /**<br>
+     * Prefix for menu URLs <br>
+     * @var string<br>
+-    * @see setUrlPrefix()<br>
++    * @see setUrlPrefix(), _prefixUrl()<br>
+     */<br>
+     var $_urlPrefix = &#039;&#039;;<br>
+ <br>
+@@ -279,7 +279,7 @@<br>
+     */<br>
+     function _findNodeType($nodeId, &amp;$nodeUrl, $level)<br>
+     {<br>
+-        $nodeUrl = $this-&gt;_urlPrefix . ((empty($this-&gt;_urlPrefix) || &#039;/&#039; != $nodeUrl{0})? $nodeUrl: substr($nodeUrl, 1));<br>
++        $nodeUrl = $this-&gt;_prefixUrl($nodeUrl);<br>
+         if ($this-&gt;_currentUrl == $nodeUrl) {<br>
+             // menu item that fits to this url - &#039;active&#039; menu item<br>
+             return HTML_MENU_ENTRY_ACTIVE;<br>
+@@ -292,6 +292,11 @@<br>
+         }<br>
+     }<br>
+ <br>
++    function _prefixUrl($nodeUrl)<br>
++    {<br>
++        return $this-&gt;_urlPrefix . ((empty($this-&gt;_urlPrefix) || &#039;/&#039; != $nodeUrl{0}) ? $nodeUrl : substr($nodeUrl, 1));<br>
++    }<br>
++<br>
+    /**<br>
+     * Renders the tree menu (&#039;tree&#039; and &#039;sitemap&#039;)<br>
+     * <br>
+@@ -474,7 +479,7 @@<br>
+     function _buildUrlMap($menu, $path) <br>
+     {<br>
+         foreach ($menu as $nodeId =&gt; $node) {<br>
+-            $url = $this-&gt;_urlPrefix . ((empty($this-&gt;_urlPrefix) || &#039;/&#039; != $node[&#039;url&#039;]{0})? $node[&#039;url&#039;]: substr($node[&#039;url&#039;], 1));<br>
++            $url = $this-&gt;_prefixUrl($node[&#039;url&#039;]);<br>
+             $this-&gt;_urlMap[$url] = $path;<br>
+ <br>
+             if ($url == $this-&gt;_currentUrl) {</p>
+<p>http://www.uvm.edu/~ashawley/php/HTML_Menu.php-prefixUrl.diff-u</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

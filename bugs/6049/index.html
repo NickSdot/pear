@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6049</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Validate &#187; <a href="package/Validate_UK/index.html">Validate_UK</a> &#187; Bug #6049</h1>
+<p>major errors, incomplete test</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-23 14:56 UTC</td></tr>
+<tr><th>From</th><td>arpad at rajeczy dot com</td></tr>
+<tr><th>Assigned</th><td>arpad</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Validate_UK/index.html">Validate_UK</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-23 14:56 UTC] arpad at rajeczy dot com</h3>
+<p>Description:<br>
+------------<br>
+Several of the PCRE patterns are missing the ^$ characters to anchor the pattern to the beginning and end of the input string, so they&#039;re not much use for validation.<br>
+The pattern for the drive() function is also missing the delimiters, which causes the the pattern to always fail, and throws a warning. The phpt test is severely lacking, it didn&#039;t reveal any of these problems.</p>
+<p>The patch below should fix the above. The function to check car registration is also a bit dodgy to say the least, but I don&#039;t really know where to start with that.</p>
+<p>Test script:<br>
+---------------<br>
+Index: Validate/Validate/UK.php<br>
+===================================================================<br>
+RCS file: /repository/pear/Validate/Validate/UK.php,v<br>
+retrieving revision 1.21<br>
+diff -u -r1.21 UK.php<br>
+--- Validate/Validate/UK.php	2 Nov 2005 12:16:17 -0000	1.21<br>
++++ Validate/Validate/UK.php	23 Nov 2005 14:45:42 -0000<br>
+@@ -125,7 +125,7 @@<br>
+         // must be in format nn-nn-nn (must contain dashes)<br>
+         // need to research the range of values - i have assumed 00-00-00 to 99-99-99<br>
+         // but it might be something like 01-01-01 to 50-99-99<br>
+-        $preg = &quot;/[0-9]{2}\-[0-9]{2}\-[0-9]{2}/&quot;;<br>
++        $preg = &quot;/^[0-9]{2}\-[0-9]{2}\-[0-9]{2}$/&quot;;<br>
+         $match = (preg_match($preg, $sc)) ? true : false;<br>
+         return $match;<br>
+     }<br>
+@@ -145,7 +145,7 @@<br>
+         // FIXME *THIS IS PROBABLY WRONG!!! RESEARCH*<br>
+         // There is a modulus 10/11 system that could be implmeneted here, but it&#039;s potentially quite<br>
+         // complex - http://en.wikipedia.org/wiki/Luhn_formula - Ian<br>
+-        $preg = &quot;/[0-9]{6,8}/&quot;;<br>
++        $preg = &quot;/^[0-9]{6,8}$/&quot;;<br>
+         $match = (preg_match($preg, $ac)) ? true : false;<br>
+         return $match;<br>
+     }<br>
+@@ -203,7 +203,7 @@<br>
+     /**<br>
+      *<br>
+      * Validates a UK passport number, EU might be the same<br>
+-     * just checks for 9 digits mine starts 00 and i have included that - might cause problems<br>
++     * just checks for 9 digits<br>
+      *<br>
+      * @access    public<br>
+      * @author    Michael Dransfield &lt;mikeNO@SPAMblueroot.net&gt;<br>
+@@ -214,9 +214,7 @@<br>
+     function passport($pp)<br>
+     {<br>
+         // just checks for 9 digit number<br>
+-        $preg = &quot;/[0-9]{9}/&quot;;<br>
+-        $match = (preg_match($preg, $pp)) ? true : false ;<br>
+-        return $match;<br>
++        return (ctype_digit($pp) &amp;&amp; strlen($pp) == 9);<br>
+     }<br>
+ <br>
+     /**<br>
+@@ -230,7 +228,8 @@<br>
+      */<br>
+     function drive($dl)<br>
+     {<br>
+-        $preg = &quot;[A-Z]{5}[0-9]{6}[A-Z0-9]{5}&quot;;<br>
++        $dl = strtoupper(str_replace(&#039; &#039;, &#039;&#039;, $dl));<br>
++        $preg = &quot;/^[A-Z]{5}[0-9]{6}[A-Z0-9]{5}$/&quot;;<br>
+         $match = (preg_match($preg, $dl)) ? true : false;<br>
+         return $match;<br>
+     }<br>
+Index: Validate/tests/validate_UK.phpt<br>
+===================================================================<br>
+RCS file: /repository/pear/Validate/tests/validate_UK.phpt,v<br>
+retrieving revision 1.2<br>
+diff -u -r1.2 validate_UK.phpt<br>
+--- Validate/tests/validate_UK.phpt	7 May 2005 15:23:21 -0000	1.2<br>
++++ Validate/tests/validate_UK.phpt	23 Nov 2005 14:43:17 -0000<br>
+@@ -67,8 +67,35 @@<br>
+                 &#039;345676&#039;, // NOK<br>
+                 &#039;0-78-56&#039;, // NOK<br>
+                 &#039;21-68-78&#039;, // OK<br>
++                &#039;foo21-68-78&#039;, // NOK<br>
++                &#039;21-68-78bar&#039;, // NOK<br>
+                 &#039;34-234-56&#039;); // NOK<br>
+ <br>
++$telNumbers = array(<br>
++    &#039;02012345678&#039;, // OK<br>
++    &#039;020-1234-5678&#039;, // OK<br>
++    &#039;020 1234 5678&#039;, // OK<br>
++    &#039;000 1234 5678&#039;, // NOK<br>
++    &#039;020 1234 56789&#039;, // OK<br>
++    &#039;020 1234 567&#039;, // NOK<br>
++    &#039;foo020 1234 5678&#039;, // NOK<br>
++    &#039;020 1234 5678bar&#039;, // NOK<br>
++);<br>
++<br>
++$accountNumbers = array(<br>
++    &#039;01234567&#039;, // OK<br>
++    &#039;012345678&#039;, // NOK<br>
++    &#039;foo01234567&#039;, // NOK<br>
++    &#039;01234567bar&#039;, // NOK<br>
++    &#039;foobar&#039;); // NOK<br>
++<br>
++$drivingLicences = array(<br>
++    &#039;ABCDE012345ABCDE&#039;, // OK<br>
++    &#039;ABCDEE012345ABCDE&#039;, // NOK<br>
++    &#039;ABCDE012345ABCD&#039;, // NOK<br>
++    &#039;fooABCDE012345ABCDE&#039;, // NOK<br>
++    &#039;ABCDE012345ABCDEbar&#039;); // NOK<br>
++<br>
+ echo &quot;Test postalCode\n&quot;;<br>
+ foreach ($postalCodes as $postalCode) {<br>
+     echo &quot;{$postalCode}: &quot;.$noYes[Validate_UK::postalCode($postalCode)].&quot;\n&quot;;<br>
+@@ -83,6 +110,21 @@<br>
+ foreach ($sortCodes as $sortCode) {<br>
+     echo &quot;{$sortCode}: &quot;.$noYes[Validate_UK::sortCode($sortCode)].&quot;\n&quot;;<br>
+ }<br>
++<br>
++echo &quot;\nTest tel\n&quot;;<br>
++foreach ($telNumbers as $v) {<br>
++    echo &quot;{$v}: &quot;.$noYes[Validate_UK::tel($v)].&quot;\n&quot;;<br>
++}<br>
++<br>
++echo &quot;\nTest bankAC\n&quot;;<br>
++foreach ($accountNumbers as $v) {<br>
++    echo &quot;{$v}: &quot;.$noYes[Validate_UK::bankAC($v)].&quot;\n&quot;;<br>
++}<br>
++<br>
++echo &quot;\nTest drive\n&quot;;<br>
++foreach ($drivingLicences as $v) {<br>
++    echo &quot;{$v}: &quot;.$noYes[Validate_UK::drive($v)].&quot;\n&quot;;<br>
++}<br>
+ ?&gt;<br>
+ --EXPECT--<br>
+ Test Validate_UK<br>
+@@ -134,4 +176,30 @@<br>
+ 345676: NO<br>
+ 0-78-56: NO<br>
+ 21-68-78: YES<br>
++foo21-68-78: NO<br>
++21-68-78bar: NO<br>
+ 34-234-56: NO<br>
++<br>
++Test tel<br>
++02012345678: YES<br>
++020-1234-5678: YES<br>
++020 1234 5678: YES<br>
++000 1234 5678: NO<br>
++020 1234 56789: YES<br>
++020 1234 567: NO<br>
++foo020 1234 5678: NO<br>
++020 1234 5678bar: NO<br>
++<br>
++Test bankAC<br>
++01234567: YES<br>
++012345678: NO<br>
++foo01234567: NO<br>
++01234567bar: NO<br>
++foobar: NO<br>
++<br>
++Test drive<br>
++ABCDE012345ABCDE: YES<br>
++ABCDEE012345ABCDE: NO<br>
++ABCDE012345ABCD: NO<br>
++fooABCDE012345ABCDE: NO<br>
++ABCDE012345ABCDEbar: NO</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

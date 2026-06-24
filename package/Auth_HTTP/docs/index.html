@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth_HTTP Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth_HTTP/index.html">Auth_HTTP</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Auth_HTTP/docs/index.html#package-authentication-auth-http-intro">Introduction</a>
+</li>
+<li><a href="package/Auth_HTTP/docs/index.html#package-authentication-auth-http-auth-http-auth-http-auth-http">Auth_HTTP::Auth_HTTP()</a>
+</li>
+<li><a href="package/Auth_HTTP/docs/index.html#package-authentication-auth-http-auth-http-example">Auth_HTTP Example</a>
+</li>
+<li><a href="package/Auth_HTTP/docs/index.html#package-authentication-auth-http-auth-http-example2">Auth_HTTP Example 2</a>
+</li>
+<li><a href="package/Auth_HTTP/docs/index.html#package-authentication-auth-http-auth-http-getauth">Auth_HTTP::getAuth()</a>
+</li>
+<li><a href="package/Auth_HTTP/docs/index.html#package-authentication-auth-http-auth-http-getstatus">Auth_HTTP::getStatus()</a>
+</li>
+<li><a href="package/Auth_HTTP/docs/index.html#package-authentication-auth-http-auth-http-start">Auth_HTTP::start()</a>
+</li></ul>
+</nav>
+<p>Provides a framework for user authentication (aka an &quot;User-Login&quot;) based on the HTTP</p>
+<section id="package-authentication-auth-http-intro">
+<h2>Introduction</h2>
+<p>Instead of generating an HTML driven form like 
+   <strong>PEAR::Auth</strong>
+    does, this class sends header commands to the clients which
+   cause them to present a login box like they are e.g. used
+   in Apache&#039;s .htaccess mechanism.</p>
+  <p>Starting with Auth_HTTP 2.1.0, HTTP Digest Authentication (RFC2617) is
+   experimentally supported.</p>
+</section>
+<section id="package-authentication-auth-http-auth-http-auth-http-auth-http">
+<h2>Auth_HTTP::Auth_HTTP()</h2>
+<h3>Synopsis</h3>
+   
+    <p><code>
+     void <strong>Auth_HTTP::Auth_HTTP</strong> ( 
+     string 
+      $storageDriver = &quot;DB&quot;
+      
+       , mixed 
+       $options = &quot;&quot;
+      
+    )</code></p>
+   
+   
+   
+    <h3>Description</h3>
+    <p>Constructor for the authentication system</p>
+      
+   
+    <h3>Parameter</h3>
+    
+      <dl>
+       <dt>
+        string
+        <code>$storageDriver</code>
+       </dt>
+       <dd>
+        <p>name of the storage driver that should be used</p>
+       </dd>      
+      </dl>
+      <dl>  
+       <dt>
+        mixed
+        <code>$options</code>
+       </dt>
+       <dd>
+        <p>a string containing some login information
+         or an array containing a bunch of options for the storage driver</p>      
+       </dd>            
+      </dl>
+      
+    
+      
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+         
+   
+    <h3>Example</h3>
+   <p><strong>Using different DB parameters</strong></p>
+    
+    <pre><code>&lt;?php
+require_once &quot;Auth/HTTP.php&quot;;
+
+$a = new Auth_HTTP(&quot;DB&quot;, &quot;mysql://test:test@localhost/test&quot;);
+
+$a-&gt;start();
+?&gt;</code></pre>
+</section>
+<section id="package-authentication-auth-http-auth-http-example">
+<h2>Auth_HTTP Example</h2>
+<h3>Example</h3>
+ <pre><code>&lt;?php
+
+// example of Auth_HTTP basic implementation 
+
+require_once(&quot;Auth/HTTP.php&quot;);
+
+// setting the database connection options
+$AuthOptions = array(
+&#039;dsn&#039;=&gt;&quot;pgsql://test:test@localhost/testdb&quot;,
+&#039;table&#039;=&gt;&quot;testable&quot;,                            // your table name 
+&#039;usernamecol&#039;=&gt;&quot;username&quot;,            // the table username column
+&#039;passwordcol&#039;=&gt;&quot;password&quot;,            // the table password column
+&#039;cryptType&#039;=&gt;&quot;none&quot;,                // password encryption type in your db
+);
+
+
+$a = new Auth_HTTP(&quot;DB&quot;, $AuthOptions);
+
+$a-&gt;setRealm(&#039;yourrealm&#039;);            // realm name
+$a-&gt;setCancelText(&#039;&lt;h2&gt;Error 401&lt;/h2&gt;&#039;);        // error message if authentication fails
+$a-&gt;start();                    // starting the authentication process
+
+
+if($a-&gt;getAuth())                // checking for autenticated user 
+{
+    echo &quot;Hello $a-&gt;username welcome to my secret page&quot;;
+    
+};
+
+?&gt;</code></pre>
+</section>
+<section id="package-authentication-auth-http-auth-http-example2">
+<h2>Auth_HTTP Example 2</h2>
+<h3>Example</h3>
+ <pre><code>&lt;?php  
+// example of Auth_HTTP implementation with encrypted password and multiple columns fetch
+
+require_once(&quot;Auth/HTTP.php&quot;);
+
+// setting the database connection options
+$AuthOptions = array(
+&#039;dsn&#039;=&gt;&quot;pgsql://test:test@localhost/testdb&quot;,
+&#039;table&#039;=&gt;&quot;testable&quot;,                            // your table name 
+&#039;usernamecol&#039;=&gt;&quot;username&quot;,            // the table username column
+&#039;passwordcol&#039;=&gt;&quot;password&quot;,            // the table password column
+&#039;cryptType&#039;=&gt;&quot;md5&quot;,                // password encryption type in your db
+&#039;db_fields&#039;=&gt;&quot;*&quot;,                // enabling fetch for other db columns
+);
+
+
+$a = new Auth_HTTP(&quot;DB&quot;, $AuthOptions);
+
+$a-&gt;setRealm(&#039;yourrealm&#039;);            // realm name
+$a-&gt;setCancelText(&#039;&lt;h2&gt;Error 401&lt;/h2&gt;&#039;);        // error message if authentication fails
+$a-&gt;start();                    // starting the authentication process
+
+
+if($a-&gt;getAuth())                // checking for autenticated user 
+{
+    echo &quot;Hello $a-&gt;username welcome to my secret page &lt;BR&gt;&quot;;
+    echo &quot;Your details on file are: &lt;BR&gt;&quot;;
+    echo $a-&gt;getAuthData(&#039;userid&#039;);        // retriving other details from the database row
+    echo $a-&gt;getAuthData(&#039;telephone&#039;);      // in this example the user id, telephone number
+    echo $a-&gt;getAuthData(&#039;email&#039;);        // and email address
+};
+?&gt;</code></pre>
+</section>
+<section id="package-authentication-auth-http-auth-http-getauth">
+<h2>Auth_HTTP::getAuth()</h2>
+<h3>Synopsis</h3>
+   
+    <p><code>
+     boolean <strong>Auth_HTTP::getAuth</strong> ( 
+     
+    )</code></p>
+   
+   
+   
+    <h3>Description</h3>
+    <p>Check if the user has been authenticated.</p>
+      
+   
+    <h3>Return value</h3>
+    <p><code>boolean</code> - 
+     If the user has already been authenticated, the function returns
+     <strong>TRUE</strong>. Otherwise it returns <strong>FALSE</strong>.</p>
+           
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-authentication-auth-http-auth-http-getstatus">
+<h2>Auth_HTTP::getStatus()</h2>
+<h3>Synopsis</h3>
+   
+    <p><code>
+     string <strong>Auth_HTTP::getStatus</strong> ( 
+          
+    )</code></p>
+   
+   
+   
+    <h3>Description</h3>
+    <p>This function returns the current status of PEAR::Auth. The return
+     values are constants that are defined by PEAR Auth.</p>
+      
+   
+    <h3>Return value</h3>
+    <p><code>string</code> - possible values are
+     <strong>AUTH_IDLED</strong>, <strong>AUTH_EXPIRED</strong>,
+     <strong>AUTH_EXPIRED</strong></p>
+         
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+
+            
+   
+    <h3>See</h3>
+    <p><a href="package/Auth/docs/index.html#package-authentication-auth-constants">
+      PEAR Auth constants overview</a></p>
+</section>
+<section id="package-authentication-auth-http-auth-http-start">
+<h2>Auth_HTTP::start()</h2>
+<h3>Synopsis</h3>
+    
+    <p><code>
+     void <strong>Auth_HTTP::start</strong> ( 
+     
+    )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Start the authentication process.</p>
+      
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

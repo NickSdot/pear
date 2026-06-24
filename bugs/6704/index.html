@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6704</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #6704</h1>
+<p>function call in SOAP Header stops Processing</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-02-06 11:20 UTC</td></tr>
+<tr><th>From</th><td>programmieren at compusmile dot net</td></tr>
+<tr><th>Assigned</th><td>yunosh</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>Debian Sarge testing</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-06 11:20 UTC] programmieren at compusmile dot net</h3>
+<p>Description:<br>
+------------<br>
+If you have a method call in a SOAP-Header (e.g. for Session Management), the processing of the request is stopped and a HTTP 200 OK Response with no content is returned.</p>
+<p>The problem is related to PHP5&#039;s passing of arguments and references. A temporary variable needs to be used because PHP5 is incapable of passing anonymous variables by reference.</p>
+<p>Test script:<br>
+---------------<br>
+reproduce BUG:<br>
+$soapProxy-&gt;addHeader(new SOAP_Header(&#039;{urn:example}checkSession&#039;,&#039;string&#039;,$strSessionID,1,&#039;http://schemas.xmlsoap.org/soap/actor/next&#039;));<br>
+$result = $soapProxy-&gt;foo();</p>
+<p>FIX: in Server.php change line 401 from:</p>
+<p>$header_results[] = array_shift($this-&gt;buildResult($hr, $this-&gt;return_type, $header_method, $header_val-&gt;namespace));</p>
+<p>to</p>
+<p>$tmp = $this-&gt;buildResult($hr, $this-&gt;return_type, $header_method, $header_val-&gt;namespace);<br>
+$header_results[] = array_shift($tmp);</p>
+<p>Actual result:<br>
+--------------<br>
+HTTP/1.0 200 OK<br>
+Date: Mon, 06 Feb 2006 11:15:29 GMT<br>
+Server: Apache<br>
+Connection: close<br>
+Content-Type: text/html</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

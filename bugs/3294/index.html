@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3294</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #3294</h1>
+<p>Better data type support.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3294</th><td>Better data type support.</td></tr>
+<tr><th>Submitted</th><td>2005-01-25 21:07 UTC</td></tr>
+<tr><th>From</th><td>rolf at winmutt dot com</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>any</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-25 21:07 UTC] rolf at winmutt dot com</h3>
+<p>Description:<br>
+------------<br>
+I would be nice if data such as length of varchar and default    values would be accessable :</p>
+<p>x VARCHAR(32) DEFAULTS &#039;hello moto&#039;;</p>
+<p>Particularly so maxlength and other validation could be handled at the DB::DataObject::FormBuilder level.</p>
+</section>
+<section>
+<h3>[2005-01-26 15:28 UTC] rolf at winmutt dot com</h3>
+<p>Also in DB::DataObject::Generator, TEXT is treated as a STR not TXT : I&#039;ve changed as follows :</p>
+<p>case &#039;TEXT&#039;:<br>
+                case &#039;MEDIUMTEXT&#039;:<br>
+                case &#039;LONGTEXT&#039;:<br>
+			$type = DB_DATAOBJECT_TXT;<br>
+                    break;</p>
+</section>
+<section>
+<h3>[2005-01-26 18:14 UTC] rolf at winmutt dot com</h3>
+<p>There is obviously no support for TXT in DO, I am <br>
+currently working on providing diff&#039;s to resolve the TXT <br>
+issue. I also have a suggestion with max length, storing <br>
+it in the table do class vs schema ini.</p>
+</section>
+<section>
+<h3>[2005-01-28 01:22 UTC] rolf at winmutt dot com</h3>
+<p>I have made some other additional changes in DB_DO for <br>
+proper support of TXT. I will be more than happy to submit <br>
+diffs if you want me to.</p>
+</section>
+<section>
+<h3>[2005-01-31 02:11 UTC] rolf at winmutt dot com</h3>
+<p>Here is a diff from DB::DO to support this : <br>
+ <br>
+winmutt@winmutt$ diff <br>
+DataObject.php /usr/local/share/pear/DB/DataObject.php <br>
+216c216 <br>
+&lt;     var $_DB_DataObject_version = &quot;@version@&quot;; <br>
+--- <br>
+&gt;     var $_DB_DataObject_version = &quot;1.7.2&quot;; <br>
+937c937 <br>
+&lt;             if ($v &amp; DB_DATAOBJECT_STR) { <br>
+--- <br>
+&gt;             if (($v &amp; DB_DATAOBJECT_STR) || ($v &amp; <br>
+DB_DATAOBJECT_TXT)) { <br>
+1129c1129 <br>
+&lt;             if ($v &amp; DB_DATAOBJECT_STR) { <br>
+--- <br>
+&gt;             if (($v &amp; DB_DATAOBJECT_STR) || ($v &amp; <br>
+DB_DATAOBJECT_TXT)) { <br>
+2169c2169 <br>
+&lt;             if ($v &amp; DB_DATAOBJECT_STR) { <br>
+--- <br>
+&gt;             if (($v &amp; DB_DATAOBJECT_STR) || ($v &amp; <br>
+DB_DATAOBJECT_TXT)) { <br>
+2833c2833 <br>
+&lt;             if ($v &amp; DB_DATAOBJECT_STR) { <br>
+--- <br>
+&gt;             if (($v &amp; DB_DATAOBJECT_STR) || ($v &amp; <br>
+DB_DATAOBJECT_TXT)) { <br>
+3033c3033 <br>
+&lt;                 case  ($val &amp; DB_DATAOBJECT_STR): <br>
+--- <br>
+&gt;                 case  (($val &amp; DB_DATAOBJECT_STR) || <br>
+($val &amp; DB_DATAOBJECT_TXT)): <br>
+3270c3270 <br>
+&lt;             case ($cols[$col] &amp; DB_DATAOBJECT_STR): <br>
+--- <br>
+&gt;             case (($cols[$col] &amp; DB_DATAOBJECT_STR) || <br>
+($cols[$col] &amp; DB_DATAOBJECT_TXT)):</p>
+</section>
+<section>
+<h3>[2005-01-31 19:07 UTC] rolf at winmutt dot com</h3>
+<p>That is a great idea. Not to familiar with the code, so i <br>
+just hacked in my own stuff. Can we change createTables <br>
+handle test this way?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

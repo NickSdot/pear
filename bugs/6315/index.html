@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6315</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #6315</h1>
+<p>SQL comments before query confuse isManip()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-12-21 16:20 UTC</td></tr>
+<tr><th>From</th><td>pear-bugs-2005 at ryandesign dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>N/A</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-12-21 16:20 UTC] pear-bugs-2005 at ryandesign dot com</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m using DB 1.7.6. Its isManip() functions tells you if the <br>
+query manipulates data, by checking whether the first word <br>
+is INSERT, UPDATE, and so forth, skipping any preceding <br>
+whitespace.</p>
+<p>In our project, we installed a wrapper such that for every <br>
+SQL query, a comment gets prepended with the formatted <br>
+contents of debug_backtrace(). The idea is that when a query <br>
+shows up in for example the slow query log, the backtrace in <br>
+the comment will show us exactly where the query is in the <br>
+code and why we got there.</p>
+<p>It&#039;s easy to see that when we prepend these comments, the <br>
+isManip() function doesn&#039;t work.</p>
+<p>The fix, which is attached, is to first remove comments from <br>
+the query before checking for one of the special statement <br>
+types.</p>
+<p>Test script:<br>
+---------------<br>
+--- DB.bak.php  2005-12-21 16:12:21.000000000 +0100<br>
++++ DB.php      2005-12-21 16:36:48.000000000 +0100<br>
+@@ -628,6 +628,7 @@<br>
+                 . &#039;LOAD DATA|SELECT .* INTO|COPY|&#039;<br>
+                 . &#039;ALTER|GRANT|REVOKE|&#039;<br>
+                 . &#039;LOCK|UNLOCK&#039;;<br>
++        $query = preg_replace(array(&#039;%/\*.*\*/%s&#039;, &#039;%(?&lt;=\s|^)--.*%&#039;), &#039;&#039;, $query);<br>
+         if (preg_match(&#039;/^\s*&quot;?(&#039; . $manips . &#039;)\s+/i&#039;, $query)) {<br>
+             return true;<br>
+         }</p>
+</section>
+<section>
+<h3>[2005-12-22 11:48 UTC] pear-bugs-2005 at ryandesign dot com</h3>
+<p>I don&#039;t think I follow... Are you saying that DB is <br>
+obsolete? End-of-life? Won&#039;t be updated anymore? That would <br>
+come as a considerable surprise to me. The package&#039;s main <br>
+page certainly doesn&#039;t mention it.</p>
+<p>When you say &quot;It can&#039;t be fixed in a completely reliable <br>
+way&quot; are you talking about this specific bug or the various <br>
+other reported isManip() bugs? I&#039;m not concerned with other <br>
+bugs right now, just this one: that it doesn&#039;t handle SQL <br>
+comments before the query, which we want to use. As far as I <br>
+am able to determine, my patch fixes that completely and <br>
+safely. Or have you found a recipe where my patch doesn&#039;t do <br>
+the right thing? If not, I don&#039;t see why the patch shouldn&#039;t <br>
+be applied.</p>
+</section>
+<section>
+<h3>[2005-12-22 12:02 UTC] pear-bugs-2005 at ryandesign dot com</h3>
+<p>I maintain that my patch does fix this specific issue in a <br>
+reliable way. I also can&#039;t see how anyone would rely on <br>
+isManip() returning false for queries that do manipulate data <br>
+but which begin with comments. Do you have a specific example <br>
+of an SQL query or application which is adversely affected by <br>
+my patch? If so, I&#039;d like to know about it so that I can <br>
+either improve my solution or at least understand why it <br>
+cannot be improved. Thanks.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

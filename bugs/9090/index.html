@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9090</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Bug #9090</h1>
+<p>MySQL: Insert into a table with an identifying relationship</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-10-19 06:32 UTC</td></tr>
+<tr><th>From</th><td>pas at pas dot net dot nospam dot au</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td>Documentation</td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-10-19 06:32 UTC] pas at pas dot net dot nospam dot au</h3>
+<p>Description:<br>
+------------<br>
+Lets say I have 2 tables, tb_user and tb_user_settings. Both have a primary key called &#039;user_id&#039;. tb_user is the main table, and tb_user_settings is using tb_user&#039;s primary key as its own. Only tb_user.user_id is auto-incrementing, while tb_user_settings.user_id is manually inserted.</p>
+<p>When generating the configuration .ini file, the following occurs in MySQL:<br>
+----<br>
+[tb_user]<br>
+user_id = 129</p>
+<p>[tb_user__keys]<br>
+user_id = N</p>
+<p>[tb_user_settings]</p>
+<p>[tb_user_settings__keys]<br>
+user_id = K<br>
+----</p>
+<p>When I call $dataobject-&gt;insert() on tb_user, the insert works fine.</p>
+<p>When I call $dataobject-&gt;insert() on tb_user_settings, I get the following error message:<br>
+----<br>
+ERROR: [db_error: message=&quot;DB Error: insufficient permissions&quot; code=-26 mode=return level=notice prefix=&quot;&quot; info=&quot;CREATE TABLE tb_user_settings_seq (id INTEGER UNSIGNED AUTO_INCREMENT NOT NULL, PRIMARY KEY(id)) [nativecode=1142 ** CREATE command denied to user &#039;user&#039;@&#039;localhost&#039; for table &#039;tb_user_settings_seq&#039;]&quot;]<br>
+----</p>
+<p>Changing the .ini file so to:<br>
+----<br>
+[tb_user_settings__keys]<br>
+user_id = N<br>
+----<br>
+solves the problem. I have had a look in generate.php and the solution could get ugly.</p>
+<p>Test script:<br>
+---------------<br>
+CREATE TABLE tb_user (<br>
+        user_id Bigint UNSIGNED NOT NULL AUTO_INCREMENT,<br>
+        PRIMARY KEY (user_id)<br>
+) ENGINE = MyISAM;</p>
+<p>CREATE TABLE tb_user_settings (<br>
+        user_id Bigint UNSIGNED NOT NULL,<br>
+        PRIMARY KEY (user_id)<br>
+) ENGINE = MyISAM;</p>
+</section>
+<section>
+<h3>[2006-10-19 06:34 UTC] pas at pas dot net dot nospam dot au</h3>
+<p>The .ini file should be:<br>
+[tb_user]<br>
+user_id = 129</p>
+<p>[tb_user__keys]<br>
+user_id = N</p>
+<p>[tb_user_settings]<br>
+user_id = 129</p>
+<p>[tb_user_settings__keys]<br>
+user_id = K</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

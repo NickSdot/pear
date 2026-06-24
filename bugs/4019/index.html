@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4019</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #4019</h1>
+<p>Redeclaration of members with a different case</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-03-31 16:53 UTC</td></tr>
+<tr><th>From</th><td>thierry dot daguin at cram-bretagne dot fr</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>W2K</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-31 16:53 UTC] thierry dot daguin at cram-bretagne dot fr</h3>
+<p>Description:<br>
+------------<br>
+PEAR::DB_Dataobjects 1.7.10<br>
+Database type : OCI8</p>
+<p>The class is defined with members in capital letter.<br>
+After a find(), members are duplicated in small letter and contain the data.<br>
+The data should be in members in capital letter and no small letter members shoud be added.</p>
+<p>Reproduce code:<br>
+---------------<br>
+My class :<br>
+class DataObjects_BG extends DB_DataObject <br>
+{<br>
+    ###START_AUTOCODE<br>
+    /* the code below is auto generated do not remove the above tag */</p>
+<p>public $__table = &#039;BG&#039;;                  //table name<br>
+    public $NUM;                             // NUMBER(22)  <br>
+    public $DT;                              // DATE(7)</p>
+<p>/* Static get */<br>
+...<br>
+}</p>
+<p>My code:<br>
+$bg = new DataObjects_BG;<br>
+$bg-&gt;NUM = &#039;1&#039;;<br>
+$number_of_rows = $bg-&gt;find(true);</p>
+<p>print_r($bg);</p>
+<p>Expected result:<br>
+----------------<br>
+DataObjects_BG Object ( [__table] =&gt; BG [NUM] =&gt; 1 [DT] =&gt; 14/06/03 [_DB_DataObject_version] =&gt; @version@ [N] =&gt; 1 [_database_dsn] =&gt; [_database_dsn_md5] =&gt; 500c396c73690c616c77d6a89d55f7b5 [_database] =&gt; dsred1 [_DB_resultid] =&gt; 1 [_link_loaded] =&gt; [_join] =&gt; [_lastError] =&gt; [_query] =&gt; Array ( [condition] =&gt; [group_by] =&gt; [order_by] =&gt; [having] =&gt; [limit_start] =&gt; [limit_count] =&gt; [data_select] =&gt; * ) )</p>
+<p>Actual result:<br>
+--------------<br>
+DataObjects_BG Object ( [__table] =&gt; BG [NUM] =&gt; 1 [DT] =&gt; [_DB_DataObject_version] =&gt; @version@ [N] =&gt; 1 [_database_dsn] =&gt; [_database_dsn_md5] =&gt; 500c396c73690c616c77d6a89d55f7b5 [_database] =&gt; dsred1 [_DB_resultid] =&gt; 1 [_link_loaded] =&gt; [_join] =&gt; [_lastError] =&gt; [num] =&gt; 1 [dt] =&gt; 14/06/03 [_query] =&gt; Array ( [condition] =&gt; [group_by] =&gt; [order_by] =&gt; [having] =&gt; [limit_start] =&gt; [limit_count] =&gt; [data_select] =&gt; * ) )</p>
+</section>
+<section>
+<h3>[2005-04-04 12:09 UTC] thierry dot daguin at cram-bretagne dot fr</h3>
+<p>Hello Alan,</p>
+<p>I assume you&#039;re talking of portability option that must be set to 15 when using with oracle.<br>
+That&#039;s what i did when creating table object and when using it but it doesn&#039;t work.</p>
+<p>It seems that this option is not used :<br>
+- not read from ini file in createTables.php<br>
+- not set on database connection in dataobject.php (line 2039). If i add this line ($db_options[&#039;portability&#039;] = 15;), members are well generated with lowercase.</p>
+<p>Regards.</p>
+</section>
+<section>
+<h3>[2005-04-15 14:52 UTC] thierry dot daguin at cram-bretagne dot fr</h3>
+<p>I think i have found what was wrong.<br>
+I replaced in createTables.php the lines 41 and 42 : <br>
+$options = &amp;PEAR::getStaticProperty(&#039;DB_DataObject&#039;,&#039;options&#039;);<br>
+$options = $config[&#039;DB_DataObject&#039;];</p>
+<p>with</p>
+<p>foreach($config as $class=&gt;$values) {<br>
+    $options = &amp;PEAR::getStaticProperty($class,&#039;options&#039;);<br>
+    $options = $values;<br>
+}</p>
+<p>Could you verify this ? <br>
+Thanks</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3970</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_Bittorrent/index.html">File_Bittorrent</a> &#187; Bug #3970</h1>
+<p>Problems with decoding</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-03-27 14:30 UTC</td></tr>
+<tr><th>From</th><td>gaggge at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>tacker</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/File_Bittorrent/index.html">File_Bittorrent</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-27 14:30 UTC] gaggge at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m having some problems with decoding a torrent and generating an info_hash.<br>
+(You can get the info_hash like this: pack(&quot;H*&quot;, sha1($info)) where $info is the bencoded info key)<br>
+First i decode a torrent to $torrent, then encode $torrent[&#039;info&#039;], now the &#039;length&#039; key should be an integer, but it&#039;s a string, however that&#039;s not a problem, can be fixed easily with settype().</p>
+<p>A bigger problem is that the length of &#039;pieces&#039; always is incorrect.</p>
+<p>Maybe you could do an info_hash function?</p>
+<p>Again, pack(&quot;H*&quot;, sha1($torrent[&#039;info&#039;])) to get the info_hash</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+require(&quot;decode.php&quot;);<br>
+require(&quot;encode.php&quot;);<br>
+$bdecode = new File_Bittorrent_Decode;<br>
+$bencode = new File_Bittorrent_Encode;</p>
+<p>$torrent = $bdecode-&gt;decodeFile(&quot;file.torrent&quot;);<br>
+$info = $bencode-&gt;encode($torrent[&#039;info&#039;]);<br>
+$infohash = pack(&quot;H*&quot;, sha1($info));<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+&#039;length&#039; in &#039;files&#039; should be int, is string<br>
+strlen of &#039;pieces&#039; is incorrect</p>
+</section>
+<section>
+<h3>[2005-03-27 14:33 UTC] gaggge at gmail dot com</h3>
+<p>A little note: &#039;piece length&#039; should be an int too.</p>
+</section>
+<section>
+<h3>[2005-03-27 17:13 UTC] gaggge at gmail dot com</h3>
+<p>I think the problem is that strlen doesn&#039;t work correct on the pieces stuff, I&#039;ve made a working but pretty nasty function for getting the info_hash, I&#039;m not sure if it works all the time, it depends on the number of e&#039;s at the end of the torrent.</p>
+<p>&lt;?php<br>
+$filesrc = @file_get_contents(&quot;file.torrent&quot;);<br>
+$start = @strpos($filesrc, &#039;d5:files&#039;);<br>
+$match = @substr($filesrc, $start, (@strlen($filesrc)-$start-1));<br>
+$file_info[&#039;info_hash&#039;] = @urlencode(@pack(&quot;H*&quot;, sha1($match)));<br>
+?&gt;</p>
+<p>It generates the hash for the text between d5:files and the second last e in the torrent.</p>
+<p>4:info -&gt; d5:files ... e &lt;- e</p>
+<p>Try doing a strlen on the info key and you&#039;ll see that it probably returns a different value than what&#039;s in the torrent.</p>
+<p>Hope you manage to get this working, i&#039;ll try myself to do a 100% working solution.</p>
+<p>Sorry for my bad english :-)</p>
+</section>
+<section>
+<h3>[2005-03-27 22:14 UTC] gaggge at gmail dot com</h3>
+<p>Maybe I should add some stuff, don&#039;t query a tracker with a info_hash in the query string through your browser if that&#039;s what you&#039;ve been trying, won&#039;t work for me.<br>
+Build a torrent, BitComet works fine, and set the announce url to whatever.php.<br>
+Add file_put_contents(print_r($_GET, true)); (or something like that) to whatever.php.<br>
+(Will get bad data from tracker, don&#039;t mind that)<br>
+Check if you can get the same info_hash with your script as your client sends to the announce url.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

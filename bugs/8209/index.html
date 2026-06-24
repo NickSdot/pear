@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8209</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #8209</h1>
+<p>Upgrade from 1.8.3 to 1.8.4 breaks joins</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Doc Bug #8209</th><td>Upgrade from 1.8.3 to 1.8.4 breaks joins</td></tr>
+<tr><th>Submitted</th><td>2006-07-13 14:29 UTC</td></tr>
+<tr><th>From</th><td>leonard at locomo dot nl</td></tr>
+<tr><th>Assigned</th><td>saltybeagle</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-13 14:29 UTC] leonard at locomo dot nl</h3>
+<p>Description:<br>
+------------<br>
+Upgrading DB_DataObject form 1.8.2 to 1.8.4 breaks the few joins that I use in my app.</p>
+<p>Certain queries return no results. Downgrading to 1.8.2 restores functionality.</p>
+</section>
+<section>
+<h3>[2006-07-17 10:35 UTC] leonard at locomo dot nl</h3>
+<p>$ cat Country.php<br>
+&lt;?php<br>
+/**<br>
+ * Table Definition for country<br>
+ */<br>
+require_once &#039;DB/DataObject.php&#039;;</p>
+<p>class DataObject_Country extends DB_DataObject<br>
+{<br>
+    ###START_AUTOCODE<br>
+    /* the code below is auto generated do not remove the above tag */</p>
+<p>var $__table = &#039;country&#039;;                         // table name<br>
+    var $ID;                              // int(11)  not_null primary_key<br>
+    var $name;                            // string(20)  not_null unique_key</p>
+<p>/* ZE2 compatibility trick*/<br>
+    function __clone() { return $this;}</p>
+<p>/* Static get */<br>
+    function staticGet($k,$v=NULL) { return DB_DataObject::staticGet(&#039;DataObject_Country&#039;,$k,$v); }</p>
+<p>/* the code above is auto generated do not remove the tag below */<br>
+    ###END_AUTOCODE<br>
+}</p>
+<p>$ cat User.php<br>
+&lt;?php<br>
+/**<br>
+ * Table Definition for user<br>
+ */<br>
+require_once &#039;DB/DataObject.php&#039;;</p>
+<p>class DataObject_User extends DB_DataObject<br>
+{<br>
+    ###START_AUTOCODE<br>
+    /* the code below is auto generated do not remove the above tag */</p>
+<p>var $__table = &#039;user&#039;;                            // table name<br>
+    var $ID;                              // int(11)  not_null primary_key auto_increment<br>
+    var $name;                            // string(10)  not_null<br>
+    var $countryID;                       // int(11)  not_null</p>
+<p>/* ZE2 compatibility trick*/<br>
+    function __clone() { return $this;}</p>
+<p>/* Static get */<br>
+    function staticGet($k,$v=NULL) { return DB_DataObject::staticGet(&#039;DataObject_User&#039;,$k,$v); }</p>
+<p>/* the code above is auto generated do not remove the tag below */<br>
+    ###END_AUTOCODE<br>
+}</p>
+<p>SELECT * FROM `country`;<br>
+1  	Nederland<br>
+2 	Duitsland</p>
+<p>SELECT * FROM `user`;<br>
+1  	Leonard  	1<br>
+2 	Hans 	2</p>
+<p>$ cat leonardjo-test.links.ini<br>
+[user]<br>
+countryID = country:ID</p>
+<p>$ cat testjoin.php<br>
+&lt;?php<br>
+    require_once(&#039;DataObjects/User.php&#039;);<br>
+    require_once(&#039;DataObjects/Country.php&#039;);</p>
+<p>$options =&amp; PEAR::getStaticProperty(&#039;DB_DataObject&#039;, &#039;options&#039;);<br>
+    $options = parse_ini_file(&#039;../private-config/leonardjo-test.db.ini&#039;);</p>
+<p>$user = new DataObject_User;<br>
+    $country = new DataObject_Country;</p>
+<p>$user-&gt;find();</p>
+<p>while ($user-&gt;fetch()) {<br>
+        echo $user-&gt;name . &#039; &#039; . $user-&gt;countryID . &quot;&lt;br&gt;\n&quot;;<br>
+    }</p>
+<p>$user-&gt;free();<br>
+    echo &quot;---&lt;br&gt;\n&quot;;</p>
+<p>$user = new DataObject_User;<br>
+    $user-&gt;selectAs();<br>
+    $user-&gt;joinAdd($country);<br>
+    $user-&gt;selectAs($country, &#039;country_%s&#039;);<br>
+    $user-&gt;find();</p>
+<p>while ($user-&gt;fetch()) {<br>
+        echo $user-&gt;name . &#039; &#039; . $user-&gt;countryID . &quot;&lt;br&gt;\n&quot;;<br>
+        echo $user-&gt;name . &#039; &#039; . $user-&gt;country_name . &quot;&lt;br&gt;\n&quot;;<br>
+    }<br>
+?&gt;</p>
+<p>Output 1.8.2:<br>
+Leonard 1<br>
+Hans 2<br>
+---<br>
+Leonard 1<br>
+Leonard Nederland<br>
+Hans 2<br>
+Hans Duitsland</p>
+<p>Output 1.8.4:<br>
+Leonard 1<br>
+Hans 2<br>
+---</p>
+</section>
+<section>
+<h3>[2006-07-17 10:57 UTC] leonard at locomo dot nl</h3>
+<p>Issue also exists with PHP-4.3.9, not just 4.3.2. Changing PHP-version.</p>
+<p>Issue doesn&#039;t exist with DB_DataObject-1.8.3, so indeed this regression happened in 1.8.4. Changing subject.</p>
+</section>
+<section>
+<h3>[2006-07-18 08:01 UTC] leonard at locomo dot nl</h3>
+<p>It appears the new code stumbles over the fact that there is a hyphen in the DB name.</p>
+<p>Pasting relevant section. Quoting these parameters fixes the query.</p>
+<p>dataobjects_user: QUERY: SELECT user.ID as ID , user.name as name , user.countryID as countryID<br>
+, country.ID as country_ID , country.name as country_name</p>
+<p>FROM user</p>
+<p>INNER JOIN locomo-test.country ON locomo-test.country.ID=user.countryID</p>
+<p>dataobjects_user: Query Error: [db_error: message=&quot;DB Error: syntax error&quot; code=-2 mode=return level=notice prefix=&quot;&quot; info=&quot;SELECT user.ID as ID , user.name as name , user.countryID as countryID<br>
+, country.ID as country_ID , country.name as country_name</p>
+<p>FROM user</p>
+<p>INNER JOIN locomo-test.country ON locomo-test.country.ID=user.countryID</p>
+<p>[nativecode=1064 ** You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near &#039;-test.country ON locomo-test.country.ID=user.countryID&#039; at line 6]&quot;]</p>
+</section>
+<section>
+<h3>[2006-07-18 08:12 UTC] leonard at locomo dot nl</h3>
+<p>I see 1.8.3 omits the DB name:</p>
+<p>dataobject_user: QUERY: SELECT user.ID as ID , user.name as name , user.countryID as countryID<br>
+, country.ID as country_ID , country.name as country_name</p>
+<p>FROM user</p>
+<p>INNER JOIN country ON .country.ID=user.countryID</p>
+</section>
+<section>
+<h3>[2006-07-18 08:40 UTC] leonard at locomo dot nl</h3>
+<p>Sorry, but nope, I will not.</p>
+<p>The issue is clear: In 1.8.4 the DB name was added to the join query. The query breaks because my DB names use dashes. I know I should fix this but there are quite a few of them.</p>
+<p>If the CVS version still puts the DB name in the query and does not quote that name the issue still exists. Whether you<br>
+call this a user bug or not a solution should be clear (quoting names or making (/documenting) it illegal to .</p>
+</section>
+<section>
+<h3>[2006-07-18 08:42 UTC] leonard at locomo dot nl</h3>
+<p>Duh. Inadvertent click on submit.</p>
+<p>I was saying:</p>
+<p>Whether you call this a user bug or not a solution should be clear (quoting names or making it illegal to use databases with hyphens in their name, or at least document usage of hyphens in names will break queries).</p>
+</section>
+<section>
+<h3>[2006-07-18 09:02 UTC] leonard at locomo dot nl</h3>
+<p>Setting quote_identifiers to 1 fixes the issue for 1.8.4.</p>
+<p>However, it breaks 1.8.3:</p>
+<p>dataobject_user: QUERY: SELECT `user`.`ID` as `ID` , `user`.`name` as `name` , `user`.`countryID` as `countryID`<br>
+, `country`.`ID` as `country_ID` , `country`.`name` as `country_name`</p>
+<p>FROM `user`<br>
+INNER JOIN `country` ON ``.`country`.`ID`=`user`.`countryID`</p>
+<p>dataobject_user: Query Error: [db_error: message=&quot;DB Error: unknown error&quot; code=-1 mode=return level=notice prefix=&quot;&quot; info=&quot;SELECT `user`.`ID` as `ID` , `user`.`name` as `name` , `user`.`countryID` as `countryID`<br>
+, `country`.`ID` as `country_ID` , `country`.`name` as `country_name`</p>
+<p>FROM `user`<br>
+INNER JOIN `country` ON ``.`country`.`ID`=`user`.`countryID`</p>
+<p>[nativecode=1109 ** Unknown table &#039;country&#039; in on clause]&quot;]</p>
+<p>So if the new code still adds a dot before the &quot;ON table&quot; name and the white space before the dot still gets quoted when quote_identifiers is set to 1 you still have an issue.</p>
+<p>With the provided sample code you should be able to test this yourself. Make sure the DB name contains a hyphen to test all cases.</p>
+</section>
+<section>
+<h3>[2006-07-18 09:26 UTC] leonard at locomo dot nl</h3>
+<p>Yes, but in 1.8.3 that empty prefix gets quoted (as you can see in my previous example), which causes an error.</p>
+<p>So if you now conditionally add an empty prefix when a single DB is being used you&#039;ve reintroduced that bug from 1.8.3 that happens when quote_identifiers is set. Try it. (Doesn&#039;t matter if the DB has hyphens in this case.)</p>
+</section>
+<section>
+<h3>[2006-07-18 14:05 UTC] leonard at locomo dot nl</h3>
+<p>Well, you could either compare the code or run a test using my example...</p>
+<p>I&#039;m not going to investigate how to get CVS access, but if you can provide me a tarbal from CVS I can test this for you if you are unwilling to run the test yourself.</p>
+</section>
+<section>
+<h3>[2006-07-18 14:25 UTC] leonard at locomo dot nl</h3>
+<p>I think the relevant code in DataObject.php 1.8.4 is:</p>
+<p>// prefix database (quoted if neccessary..)<br>
+            $objTable = ($quoteIdentifiers<br>
+                         ? $DB-&gt;quoteIdentifier($obj-&gt;_database)<br>
+                         : $obj-&gt;_database)<br>
+                    . &#039;.&#039; . $objTable;</p>
+<p>There&#039;s no test here to not quote $obj-&gt;_database if it is an empty string. You should be able to tell whether that has changed in CVS<br>
+.</p>
+</section>
+<section>
+<h3>[2006-07-20 09:37 UTC] leonard at locomo dot nl</h3>
+<p>Ok. It appears the database name is not added at all, and no empty quotes either. Good. Thanks.</p>
+<p>There probably still is an issue when using different dbs with hyphens in their names and not setting quote_identifiers to 1, but that is more of a user / documentation issue.</p>
+<p>Maybe something like:<br>
+&quot;Set quote_identifiers = 1 in db.ini if any of your table names uses hyphens. Or rather, don&#039;t use hyphens in identifiers.&quot;<br>
+could be added to the introduction? This keeps biting me, and probably one or two others.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

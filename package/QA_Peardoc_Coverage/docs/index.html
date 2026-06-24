@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA_Peardoc_Coverage Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; QA Tools &#187; <a href="package/QA_Peardoc_Coverage/index.html">QA_Peardoc_Coverage</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/QA_Peardoc_Coverage/docs/index.html#package-qa-qa-peardoc-coverage-intro">Introduction</a>
+</li>
+<li><a href="package/QA_Peardoc_Coverage/docs/index.html#package-qa-qa-peardoc-coverage-howitworks">How it works</a>
+</li>
+<li><a href="package/QA_Peardoc_Coverage/docs/index.html#package-qa-qa-peardoc-coverage-generating">Generating coverage analysis</a>
+</li></ul>
+</nav>
+<p>Documentation coverage analysis for the PEAR packages documentation. Daily updated pear documentation stats can be found at pear.cweiske.de/coverage/.</p>
+<section id="package-qa-qa-peardoc-coverage-intro">
+<h2>Introduction</h2>
+<h3>About QA_Peardoc_Coverage</h3>
+
+  
+  <p>A great library is almost useless without documentation.
+   PEAR has over 300 packages, automatically generated API
+   documentation and a manual. The PEAR manual (the one you are
+   reading) shall provide an overview on the packages and
+   instructions about how to use them, and give an understanding
+   about the classes in a package, and their methods. Further
+   information about them can looked up in the API docs.</p>
+  <p>With the amount of packages PEAR provides, it&#039;s hard to
+   keep track of the state of documentation of the packages
+   - a tool to track this was needed.
+   <strong>QA_Peardoc_Coverage</strong> is its incarnation.</p>
+  <p><strong>QA_Peardoc_Coverage</strong> uses a SVN checkout of
+   PEAR and PEARDOC to find out which packages are documented, which
+   classes and method are mentioned in the docs, and which developers
+   do a good job in documenting their code.</p>
+</section>
+<section id="package-qa-qa-peardoc-coverage-howitworks">
+<h2>How it works</h2>
+<h3>How it works</h3>
+
+  
+  <p>The documentation analysis report generation is split into
+   two processes:</p><ol>
+    <li>Collect data and save it</li>
+    <li>Generate different reports from saved data</li>
+   </ol><p>This was chosen because the data collection step takes
+   a long time (~ 1 minute), but it&#039;s needed for every single report.
+   So if you want to generate the simple doc coverage, and the extended
+   one, you need the same base data - you just display it in a different
+   way.</p>
+  <p><strong>generateCoverage()</strong> in
+   <strong>QA_Peardoc_Coverage</strong> generates and returns
+   the array with the computed coverage data.
+   It can be serialized and saved, since all the <em>Renderer</em>
+   classes use it as input.</p>
+  <p>Classes implementing the <strong>QA_Peardoc_Coverage_Renderer</strong>
+   interface provide a <strong>render()</strong> method that takes
+   the data returned by <strong>generateCoverage()</strong> and return
+   the analysis, most times a string containing HTML code.</p>
+</section>
+<section id="package-qa-qa-peardoc-coverage-generating">
+<h2>Generating coverage analysis</h2>
+<h3>Generating coverage analysis data</h3>
+
+  
+
+  <ol>
+   <li>
+    
+     Make sure you have a fresh checkout of <code>pear</code>
+     and <code>peardoc</code> directories from
+     <a href="http://cvs.php.net">cvs.php.net</a>.
+    
+   </li>
+   <li>
+    
+     Configure <code>peardoc</code> to generate the
+     <code>manual.xml</code> in there (
+     <strong>autoconf</strong>, <strong>./configure</strong>).
+    
+   </li>
+   <li>
+    
+     Call <code>genData.php</code> with the path to
+     peardoc&#039;s <code>manual.xml</code> as first, and
+     path to the pear cvs directory as second parameter.
+    
+   </li>
+   <li>
+    
+     A file called <code>doc.dat</code> will be generated
+     in the current working directory.
+    
+   </li>
+  </ol>
+ 
+
+ <h3>Generating HTML reports</h3>
+
+  
+  <p>Once the coverage data is generated and serialized, you can
+   generate some HTML reports. For this, the packages provides
+   four <em>Renderer</em> classes that all implement
+   the <strong>QA_Peardoc_Coverage_Renderer</strong> interface:</p><ul>
+    <li>
+     
+      <strong>QA_Peardoc_Coverage_Renderer_DeveloperList</strong> lists all
+      developers with the number of packages they have, the number of undocumented
+      packages and lists the undocumented ones. The list is sorted by percentage
+      of documented packages.
+     
+    </li>
+
+    <li>
+     
+      <strong>QA_Peardoc_Coverage_Renderer_SimplePackageList</strong>
+      lists all categories in PEAR, the packages in them and shows
+      which of them have docs and which not. A final summary with the total
+      number of existing and documented packages, and a percentage number is
+      also given.
+     
+    </li>
+
+    <li>
+     
+      <strong>QA_Peardoc_Coverage_Renderer_ExtendetPackageList</strong>
+      is similar to the simple list, but also shows the package&#039;s classes,
+      their documentation state and their methods and their doc state. This
+      list can be used to check which methods aren&#039;t yet covered by
+      your documentation.
+     
+    </li>
+
+    <li>
+     
+      <strong>QA_Peardoc_Coverage_Renderer_MissingDocsPerDeveloper</strong>
+      generates an array of developer email =&gt; array(package names) assignments
+      that can be used as base data to send reminder emails.
+     
+    </li>
+   </ul>
+  
+  <p>All the renderers have a <code>examples/gen*.php</code> file that
+   uses the <code>doc.dat</code> file written by
+   <code>examples/genData.php</code>. They echo the html to the console,
+   so you should redirect it into a file.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

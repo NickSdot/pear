@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8642</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #8642</h1>
+<p>postgres and some characters fails</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-09-06 09:07 UTC</td></tr>
+<tr><th>From</th><td>ruben at rentalia dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>5_2 CVS-2006-09-06</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-09-06 09:07 UTC] ruben at rentalia dot com</h3>
+<p>Description:<br>
+------------<br>
+Postgres version 8.1.4<br>
+Tried with PHP 5.1.4 and php5.2-200607110830</p>
+<p>Postgres has a row that contais, for example,</p>
+<p>.. text “pé” text ...</p>
+<p>You can try to get that row using Pear DB , and I recieve a &quot;Unkown Error (Pear DB error object)&quot; due  “ and  ” character.</p>
+<p>Catching the error with errorhandler funcion I get the following information</p>
+<p>pg_query() [&lt;a href=&#039;function.pg-query&#039;&gt;function.pg-query&lt;/a&gt;]: Query failed: ERROR:  character 0xe2809c of encoding &quot;UTF8&quot; has no equivalent in &quot;LATIN9&quot;</p>
+<p>I think that is a Pear DB problem because with coldfusion (and coldfusion driver) it works.</p>
+<p>Thats strange. With postgres 8.1.3 works, postgres 8.1.4 crash.</p>
+<p>By other way, coldfusion works with both versions of postgres, and I think is a pear problem.</p>
+<p>Test script:<br>
+---------------<br>
+Just connect to the database and perform a select of that row. <br>
+I just configure:</p>
+<p>$options = array(<br>
+    &#039;persistent&#039;  =&gt; TRUE,<br>
+    &#039;debug&#039;       =&gt; 2,<br>
+);</p>
+<p>$db =&amp; DB::connect(DSN, $options);<br>
+if (DB::isError($db)) {<br>
+    die($db-&gt;getMessage());<br>
+}</p>
+<p>$db-&gt;query( &quot;set client_encoding to &#039;iso8859-15&#039;&quot; );</p>
+<p>Expected result:<br>
+----------------<br>
+I should not have an error. Maybe I should get strange characters, but not an error.</p>
+<p>Actual result:<br>
+--------------<br>
+Error shown above</p>
+</section>
+<section>
+<h3>[2006-09-07 06:30 UTC] ruben at rentalia dot com</h3>
+<p>If I execute it on &quot;PostgreSQL command line prompt&quot; it works. SQL executes fine, and I get the rows. Working with that results I found the characters where was the problem.</p>
+</section>
+<section>
+<h3>[2006-09-07 06:32 UTC] ruben at rentalia dot com</h3>
+<p>Anyway, why is trying to convert from UTF-8 to LATIN9?</p>
+</section>
+<section>
+<h3>[2006-09-08 06:14 UTC] ruben at rentalia dot com</h3>
+<p>I ll check pg_set_client_encoding for details.</p>
+<p>I am sorry I cannot try more test on the platform because I had to fix it asap. I installed again postgres 8.1.3</p>
+<p>If I have some time I will install everything on any computer and I ll try pg_query() test.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

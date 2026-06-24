@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #443</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #443</h1>
+<p>Bug in MAIL_mime::addAttachment()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-12-17 02:31 UTC</td></tr>
+<tr><th>From</th><td>nsr_xh at yahoo dot com dot cn</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>win2000 &amp; linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-12-17 02:31 UTC] nsr_xh at yahoo dot com dot cn</h3>
+<p>Description:<br>
+------------<br>
+I add a file with a long chinese name. Add I encode it to mime format: it like this:<br>
+$filename = &quot;<br>
+=?gb2312?B?udjT2rPZtb2hotTnzcu6zc60y6K/qLXEx+m/9s2zvMax7aOoMjAwMw==?=<br>
+ =?gb2312?B?xOoxMdTCMTHI1dbBMTHUwjIyyNWjqS54bHM=?=&quot;</p>
+<p>And I add this to my mime mail like this:<br>
+$o_mime-&gt;addAttachment($file, $contenttype, $filename, true, &quot;base64&quot;);</p>
+<p>But I found that MAIL_mime deal whit the filename using basename():<br>
+$filename = basename($filename);</p>
+<p>Because my $filename contains &quot;/&quot;, so at last, my attachment is like this:</p>
+<p>Content-Type: text/plain<br>
+Content-Transfer-Encoding: base64<br>
+Content-Disposition: attachment; filename=&quot;9s2zvMax7aOoMjAwMw==?=<br>
+ =?GB2312?B?xOoxMdTCMTHI1dbBMTHUwjIyyNWjqS54bHM=?=&quot;</p>
+<p>and can not be decoded:)</p>
+</section>
+<section>
+<h3>[2004-02-15 13:42 UTC] neufeind at php dot net</h3>
+<p>Where do the slashes come from? Do they result from any conversion-function? I mean, are they part of the name (and needed for chinese names) or do they result from a conversion from a conversion from a different character encoding? Normally slashes (on Unix/Linux-systems) and backslashes (on Windows-systems) should not be used since they are &quot;special characters&quot;. But possibly the chinese name just needs to be decoded properly before doing a &quot;basename()&quot;?</p>
+<p>Most of us are not familiar with chinese at all. So we&#039;d appreciate your feedback on how to possibly solve this issue.</p>
+</section>
+<section>
+<h3>[2004-02-18 00:44 UTC] nsr_xh at yahoo dot com dot cn</h3>
+<p>Thanks for your reply.</p>
+<p>Because I use Chinese to send an email, the attach filename should be encoded to mime&#039;s encoded-words described in  RFC2047.</p>
+<p>I use base64 to encode the Chinese filename, but the result contains slashes.</p>
+<p>It will be ok if I use quotedprintable as my encoding.</p>
+</section>
+<section>
+<h3>[2004-02-25 18:42 UTC] gschlossnagle at php dot net</h3>
+<p>RFC 2183, which specifies the nature and structure of the Content-Disposition header does not mandate that it&#039;s attributes be base64 encoded.  Since / is a valid base64 character, and since it creates ambiguity when used in names which may or may not be encoded, base64 encoding your filenames seems like a bad design choice.</p>
+<p>Here&#039;s the relevant snippet from 2183 that says what you&#039;re doing is non-compliant btw:<br>
+ Current [RFC 2045] grammar restricts parameter values (and hence<br>
+   Content-Disposition filenames) to US-ASCII.  We recognize the great desirability of allowing arbitrary character sets in filenames, but it is beyond the scope of this document to define the necessary mechanisms.  We expect that the basic [RFC 1521] `value&#039; specification will someday be amended to allow use of non-US-ASCII characters, at which time the same mechanism should be used in the Content-Disposition filename parameter.</p>
+</section>
+<section>
+<h3>[2004-07-02 07:42 UTC] d-sano at cybozu dot co dot jp</h3>
+<p>I was faced the same problem when using JIS encoded<br>
+filename.<br>
+I think that $name should be the file&#039;s name not the file&#039;s path, so basename() should be applied only to $file when $isfilename is TRUE.<br>
+Here is the patch style diff which I used.<br>
+I would like to apply this patch to original source too.</p>
+<p>Index: mime.php<br>
+===================================================================<br>
+RCS file: /home/cvsroot/Framework/pear/pear-20040624/Mail/mime.php,v<br>
+retrieving revision 1.1.1.1<br>
+diff -c -r1.1.1.1 mime.php<br>
+*** mime.php	24 Jun 2004 01:24:59 -0000	1.1.1.1<br>
+--- mime.php	2 Jul 2004 05:01:08 -0000<br>
+***************<br>
+*** 196,202 ****<br>
+      function addHTMLImage($file, $c_type=&#039;application/octet-stream&#039;, $name = &#039;&#039;, $isfilename = true)<br>
+      {<br>
+          $filedata = ($isfilename === true) ? $this-&gt;_file2str($file) : $file;<br>
+!         $filename = ($isfilename === true) ? basename($file) : basename($name);<br>
+          if (PEAR::isError($filedata)) {<br>
+              return $filedata;<br>
+          }<br>
+--- 196,207 ----<br>
+      function addHTMLImage($file, $c_type=&#039;application/octet-stream&#039;, $name = &#039;&#039;, $isfilename = true)<br>
+      {<br>
+          $filedata = ($isfilename === true) ? $this-&gt;_file2str($file) : $file;<br>
+!         if ($isfilename === true) {<br>
+!             // Force the name the user supplied, otherwise use $file<br>
+!             $filename = (!empty($name)) ? $name : basename($file);<br>
+!         } else {<br>
+!             $filename = $name;<br>
+!         }<br>
+          if (PEAR::isError($filedata)) {<br>
+              return $filedata;<br>
+          }<br>
+***************<br>
+*** 224,237 ****<br>
+          $filedata = ($isfilename === true) ? $this-&gt;_file2str($file) : $file;<br>
+          if ($isfilename === true) {<br>
+              // Force the name the user supplied, otherwise use $file<br>
+!             $filename = (!empty($name)) ? $name : $file;<br>
+          } else {<br>
+              $filename = $name;<br>
+          }<br>
+          if (empty($filename)) {<br>
+              return PEAR::raiseError(&#039;The supplied filename for the attachment can\&#039;t be empty&#039;);<br>
+          }<br>
+-         $filename = basename($filename);<br>
+          if (PEAR::isError($filedata)) {<br>
+              return $filedata;<br>
+          }<br>
+--- 229,241 ----<br>
+          $filedata = ($isfilename === true) ? $this-&gt;_file2str($file) : $file;<br>
+          if ($isfilename === true) {<br>
+              // Force the name the user supplied, otherwise use $file<br>
+!             $filename = (!empty($name)) ? $name : basename($file);<br>
+          } else {<br>
+              $filename = $name;<br>
+          }<br>
+          if (empty($filename)) {<br>
+              return PEAR::raiseError(&#039;The supplied filename for the attachment can\&#039;t be empty&#039;);<br>
+          }<br>
+          if (PEAR::isError($filedata)) {<br>
+              return $filedata;<br>
+          }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

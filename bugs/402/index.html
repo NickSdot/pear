@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #402</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #402</h1>
+<p>Problem with LiveUser_Admin_Perm_Container_DB_Complex::getGroups()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-12-11 00:04 UTC</td></tr>
+<tr><th>From</th><td>kipaten21 at hotmail dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>ANY</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-12-11 00:04 UTC] kipaten21 at hotmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I think there might be a problem with the way LiveUser_Admin_Perm_Container_DB_Complex::getGroups() retrieves subgroups.</p>
+<p>First off, I noticed this when the returned array from getGroups() appeared to be missing information.</p>
+<p>To test this, I created two groups, Users and Administrators.</p>
+<p>The group_id of Administrators is 1.<br>
+The group_id of Users is 2.</p>
+<p>In LIVEUSER_GROUP_SUBGROUPS, I gave one row, where group_id=1 and subgroup_id=2.</p>
+<p>The returned array from getGroups() is missing the actual subgroup, and appears to loop again.</p>
+<p>Array<br>
+(<br>
+    [1] =&gt; Array<br>
+        (<br>
+            [group_id] =&gt; 1<br>
+            [owner_user_id] =&gt; <br>
+            [owner_group_id] =&gt; <br>
+            [name] =&gt; Administrators<br>
+            [comments] =&gt; <br>
+            [is_active] =&gt; Y<br>
+            [subgroups] =&gt; Array<br>
+                (<br>
+                    [2] =&gt; Array<br>
+                        (<br>
+                            [subgroups] =&gt; Array<br>
+                                (<br>
+                                )</p>
+<p>)</p>
+<p>)</p>
+<p>)</p>
+<p>)</p>
+<p>Can anyone confirm this?</p>
+<p>It looks like the code tries to get all the groups, then determine which are subgroups and then retrieve the parents....it looks like it does the whole process backwards.  I&#039;m having trouble even understanding what the code is trying to do.</p>
+<p>Is this working for anyone?</p>
+</section>
+<section>
+<h3>[2003-12-11 00:10 UTC] kipaten21 at hotmail dot com</h3>
+<p>A further look at the code...</p>
+<p>function getGroups($options = null, $parentgroup = null)<br>
+{<br>
+    static $groups;<br>
+    static $subgroups;<br>
+    $result = array();</p>
+<p>if ($parentgroup === null) {<br>
+        &lt;snip&gt;<br>
+    } else {<br>
+        if (is_array($subgroups)) {<br>
+            //when getGroups is called recursively with a           <br>
+            //$parentgroup set, the block to be entered <br>
+            //depends on $subgroups being an array.<br>
+            //$subgroups isn&#039;t even populated or declared<br>
+            //as an array unless $parentgroup === null.<br>
+            &lt;snip&gt;<br>
+        };<br>
+    }<br>
+}</p>
+</section>
+<section>
+<h3>[2003-12-11 16:35 UTC] alex at burgiss dot com</h3>
+<p>This sounds like the problem I was noticing for a while now (for at least the last 2 LiveUser version releases)<br>
+I brought it up on the mailing list, but never knew about this bug database until recently so.. I&#039;m just confirming that I have the same problem..</p>
+<p>Using GetGroups, the subgroups array doesn&#039;t return the subgroups properly.. it is just blank.. which was incorrect when i was testing it with example subgroups..</p>
+</section>
+<section>
+<h3>[2003-12-11 19:37 UTC] kipaten21 at hotmail dot com</h3>
+<p>I modified the getGroups() method to work properly.  A minor change was made to the prototype.  $parentname is no longer used and was changed to boolean $hierarchy.</p>
+<p>Here is the returned result....</p>
+<p>Array<br>
+(<br>
+    [2] =&gt; Array<br>
+        (<br>
+            [group_id] =&gt; 2<br>
+            [owner_user_id] =&gt; 1<br>
+            [owner_group_id] =&gt; 1<br>
+            [name] =&gt; Users<br>
+            [comments] =&gt; <br>
+            [is_active] =&gt; Y<br>
+        )</p>
+<p>[1] =&gt; Array<br>
+        (<br>
+            [group_id] =&gt; 1<br>
+            [owner_user_id] =&gt; <br>
+            [owner_group_id] =&gt; <br>
+            [name] =&gt; Administrators<br>
+            [comments] =&gt; <br>
+            [is_active] =&gt; Y<br>
+            [subgroups] =&gt; Array<br>
+                (<br>
+                    [2] =&gt; Array<br>
+                        (<br>
+                            [group_id] =&gt; 2<br>
+                            [owner_user_id] =&gt; 1<br>
+                            [owner_group_id] =&gt; 1<br>
+                            [name] =&gt; Users<br>
+                            [comments] =&gt; <br>
+                            [is_active] =&gt; Y<br>
+                        )</p>
+<p>)</p>
+<p>)</p>
+<p>)</p>
+<p>If $hierarchy is true, then the result would look like this...</p>
+<p>Array<br>
+(<br>
+    [1] =&gt; Array<br>
+        (<br>
+            [group_id] =&gt; 1<br>
+            [owner_user_id] =&gt; <br>
+            [owner_group_id] =&gt; <br>
+            [name] =&gt; Administrators<br>
+            [comments] =&gt; <br>
+            [is_active] =&gt; Y<br>
+            [subgroups] =&gt; Array<br>
+                (<br>
+                    [2] =&gt; Array<br>
+                        (<br>
+                            [group_id] =&gt; 2<br>
+                            [owner_user_id] =&gt; 1<br>
+                            [owner_group_id] =&gt; 1<br>
+                            [name] =&gt; Users<br>
+                            [comments] =&gt; <br>
+                            [is_active] =&gt; Y<br>
+                        )</p>
+<p>)</p>
+<p>)</p>
+<p>)</p>
+<p>The hierarchy makes it nice if you want to build a tree view of your groups.</p>
+<p>Now for the code...</p>
+<p>function getGroups($options = null, $hierarchy = false)<br>
+    {<br>
+        static $groups;<br>
+        static $subgroups;<br>
+        $result = array();</p>
+<p>$query = &#039;SELECT<br>
+                      groups.group_id           AS group_id,<br>
+                      groups.owner_perm_user_id AS owner_user_id,<br>
+                      groups.owner_group_id     AS owner_group_id,<br>
+                      translations.name         AS name,<br>
+                      translations.comments     AS comments,<br>
+                      groups.is_active          AS is_active<br>
+                 FROM&#039;;</p>
+<p>if (isset($options[&#039;where_user_id&#039;])<br>
+                &amp;&amp; is_numeric($options[&#039;where_user_id&#039;])) {<br>
+            $query .= &#039; &#039; . $this-&gt;prefix . &#039;groupusers groupusers,&#039;;<br>
+        }</p>
+<p>$query .= &#039; &#039; . $this-&gt;prefix . &#039;groups groups,<br>
+                  &#039; . $this-&gt;prefix . &#039;translations translations<br>
+                WHERE&#039;;</p>
+<p>if (isset($options[&#039;where_user_id&#039;])<br>
+                &amp;&amp; is_numeric($options[&#039;where_user_id&#039;])) {<br>
+            $query .= &#039; groupusers.perm_user_id = &#039; . (int)$options[&#039;where_user_id&#039;] . &#039; AND<br>
+                      groupusers.group_id = groups.group_id AND&#039;;<br>
+        }</p>
+<p>if (isset($options[&#039;where_group_id&#039;])<br>
+                 &amp;&amp; is_numeric($options[&#039;where_group_id&#039;])) {<br>
+            $query .= &#039; groups.group_id = &#039; . (int)$options[&#039;where_group_id&#039;] . &#039; AND&#039;;<br>
+        }</p>
+<p>if (isset($options[&#039;where_owner_user_id&#039;])<br>
+                &amp;&amp; is_numeric($options[&#039;where_owner_user_id&#039;])) {<br>
+            $query .= &#039; groups.owner_user_id = &#039; . (int)$options[&#039;where_owner_user_id&#039;] . &#039; AND&#039;;<br>
+        }</p>
+<p>if (isset($options[&#039;where_owner_group_id&#039;])<br>
+                &amp;&amp; is_numeric($options[&#039;where_owner_group_id&#039;])) {<br>
+            $query .= &#039; groups.owner_group_id = &#039; . (int)$options[&#039;where_owner_group_id&#039;] . &#039; AND&#039;;<br>
+        }</p>
+<p>if (isset($options[&#039;where_is_active&#039;])<br>
+                &amp;&amp; is_string($options[&#039;where_is_active&#039;])) {<br>
+            $query .= &#039; groups.is_active = &#039; . $options[&#039;where_is_active&#039;] . &#039; AND&#039;;<br>
+        }</p>
+<p>$query .= &#039; translations.section_id = groups.group_id AND<br>
+                    translations.section_type = &#039; . LIVEUSER_SECTION_GROUP . &#039; AND<br>
+                    translations.language_id = &#039; . (int)$this-&gt;_langs[$this-&gt;getCurrentLanguage()];</p>
+<p>$groups = $this-&gt;dbc-&gt;getAll($query, null, DB_FETCHMODE_ASSOC);</p>
+<p>if (DB::isError($groups)) {<br>
+            return $groups;<br>
+        }</p>
+<p>$_groups = array();<br>
+        if (is_array($groups)) {<br>
+            foreach($groups as $key =&gt; $value) {<br>
+                if (isset($options[&#039;with_rights&#039;])) {<br>
+                    $_options = $options;<br>
+                    $_options[&#039;where_group_id&#039;] = $value[&#039;group_id&#039;];<br>
+                    $value[&#039;rights&#039;] = $this-&gt;getRights($_options);<br>
+                }<br>
+                $_groups[$value[&#039;group_id&#039;]] = $value;<br>
+            }<br>
+        }</p>
+<p>$query = &#039;SELECT<br>
+                      subgroups.group_id as group_id,<br>
+                      subgroups.subgroup_id as subgroup_id<br>
+                  FROM<br>
+                      &#039; . $this-&gt;prefix . &#039;group_subgroups subgroups&#039;;</p>
+<p>$subgroups = $this-&gt;dbc-&gt;getAll($query, null, DB_FETCHMODE_ASSOC);</p>
+<p>if (DB::isError($subgroups)) {<br>
+            return $subgroups;<br>
+        }</p>
+<p>foreach($subgroups as $subgroup) {<br>
+            if ($_groups[$subgroup[&#039;group_id&#039;]]) {<br>
+                $result = $this-&gt;getGroups(array(&#039;where_group_id&#039; =&gt; $subgroup[&#039;subgroup_id&#039;]));<br>
+                $_groups[$subgroup[&#039;group_id&#039;]][&#039;subgroups&#039;][$subgroup[&#039;subgroup_id&#039;]] = $result[$subgroup[&#039;subgroup_id&#039;]];</p>
+<p>if ($hierarchy)<br>
+                    unset($_groups[$subgroup[&#039;subgroup_id&#039;]]);<br>
+            }<br>
+        }</p>
+<p>return $_groups;<br>
+    }<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

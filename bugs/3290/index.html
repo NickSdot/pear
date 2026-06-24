@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3290</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_QueryTool/index.html">DB_QueryTool</a> &#187; Bug #3290</h1>
+<p>DB_QueryTool_Query::getCount() method return zero when using an offset</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-25 06:20 UTC</td></tr>
+<tr><th>From</th><td>kubo at isite dot co dot jp</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_QueryTool/index.html">DB_QueryTool</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>All</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-25 06:20 UTC] kubo at isite dot co dot jp</h3>
+<p>Description:<br>
+------------<br>
+DB_QueryTool_Query::getCount() method return zero when using offset.<br>
+At least MySQL and PostgreSQL return empty set using the query as follows.</p>
+<p>MySQL:<br>
+SELECT<br>
+  COUNT(*)<br>
+FROM<br>
+  person<br>
+LIMIT 25, 25<br>
+;</p>
+<p>PostgreSQL:<br>
+SELECT<br>
+  COUNT(*)<br>
+FROM<br>
+  person<br>
+LIMIT 25<br>
+OFFSET 25<br>
+;</p>
+<p>However if the offset is 0, MySQL and PostgreSQL return correct count of the query.</p>
+<p>MySQL:<br>
+SELECT<br>
+  COUNT(*)<br>
+FROM<br>
+  person<br>
+LIMIT 0, 25<br>
+;</p>
+<p>PostgreSQL:<br>
+SELECT<br>
+  COUNT(*)<br>
+FROM<br>
+  person<br>
+LIMIT 25<br>
+OFFSET 0<br>
+;</p>
+<p>I hope that getCount() method always return correct count regardless of offset value.</p>
+<p>Reproduce code:<br>
+---------------<br>
+I wrote ad hoc patches.</p>
+<p>o DB_QueryTool<br>
+http://iteman.typepad.jp/blog/files/DB_QueryTool-0.11.1-isCalledViaGetCount.patch</p>
+<p>o MDB_QueryTool<br>
+http://iteman.typepad.jp/blog/files/MDB_QueryTool-0.11.1-isCalledViaGetCount.patch</p>
+</section>
+<section>
+<h3>[2005-01-27 02:06 UTC] kubo at isite dot co dot jp</h3>
+<p>OK, the reproducing script is here.</p>
+<p>----------------------------------------------------------------------<br>
+&lt;?php<br>
+/* Example Table Definition for MySQL<br>
+ <br>
+DROP TABLE IF EXISTS person;</p>
+<p>CREATE TABLE person (<br>
+  person_id int(11) NOT NULL DEFAULT &#039;0&#039; auto_increment,<br>
+  last_name varchar(255) NOT NULL,<br>
+  first_name varchar(255) NOT NULL,<br>
+  rdate datetime NOT NULL,<br>
+  mdate timestamp NOT NULL,<br>
+  PRIMARY KEY(person_id)<br>
+);</p>
+<p>INSERT INTO person (last_name, first_name, rdate) VALUES (&#039;Last Name 1&#039;, &#039;First Name 1&#039;, CURRENT_TIMESTAMP);<br>
+INSERT INTO person (last_name, first_name, rdate) VALUES (&#039;Last Name 2&#039;, &#039;First Name 2&#039;, CURRENT_TIMESTAMP);<br>
+INSERT INTO person (last_name, first_name, rdate) VALUES (&#039;Last Name 3&#039;, &#039;First Name 3&#039;, CURRENT_TIMESTAMP);<br>
+INSERT INTO person (last_name, first_name, rdate) VALUES (&#039;Last Name 4&#039;, &#039;First Name 4&#039;, CURRENT_TIMESTAMP);<br>
+INSERT INTO person (last_name, first_name, rdate) VALUES (&#039;Last Name 5&#039;, &#039;First Name 5&#039;, CURRENT_TIMESTAMP);<br>
+INSERT INTO person (last_name, first_name, rdate) VALUES (&#039;Last Name 6&#039;, &#039;First Name 6&#039;, CURRENT_TIMESTAMP);<br>
+INSERT INTO person (last_name, first_name, rdate) VALUES (&#039;Last Name 7&#039;, &#039;First Name 7&#039;, CURRENT_TIMESTAMP);<br>
+INSERT INTO person (last_name, first_name, rdate) VALUES (&#039;Last Name 8&#039;, &#039;First Name 8&#039;, CURRENT_TIMESTAMP);<br>
+INSERT INTO person (last_name, first_name, rdate) VALUES (&#039;Last Name 9&#039;, &#039;First Name 9&#039;, CURRENT_TIMESTAMP);<br>
+INSERT INTO person (last_name, first_name, rdate) VALUES (&#039;Last Name 10&#039;, &#039;First Name 10&#039;, CURRENT_TIMESTAMP);<br>
+*/</p>
+<p>require_once(&#039;MDB.php&#039;);<br>
+require_once(&#039;MDB/QueryTool.php&#039;);<br>
+$dbh = &amp;MDB::singleton(array(&#039;phptype&#039;  =&gt; &#039;mysql&#039;,<br>
+                             &#039;username&#039; =&gt; &#039;hoge&#039;,<br>
+                             &#039;password&#039; =&gt; &#039;hoge&#039;,<br>
+                             &#039;hostspec&#039; =&gt; &#039;hoge&#039;,<br>
+                             &#039;database&#039; =&gt; &#039;hoge&#039;),<br>
+                       array(&#039;persistent&#039; =&gt; true,<br>
+                             &#039;autofree&#039;   =&gt; true,<br>
+                             &#039;debug&#039;      =&gt; false)<br>
+                       );<br>
+$queryTool = &amp;new MDB_QueryTool();<br>
+$queryTool-&gt;setDbInstance($dbh);<br>
+$queryTool-&gt;setTable(&#039;person&#039;);</p>
+<p>$queryTool-&gt;setSelect(&#039;<br>
+  person_id,<br>
+  last_name,<br>
+  first_name,<br>
+  UNIX_TIMESTAMP(rdate) AS rdate,<br>
+  UNIX_TIMESTAMP(mdate) AS mdate<br>
+&#039;);</p>
+<p>$queryTool-&gt;setLimit(0, 5);<br>
+$list = $queryTool-&gt;getAll();<br>
+$count = $queryTool-&gt;getCount();</p>
+<p>print &quot;A: Expected count is 10.\n&quot;;<br>
+print &#039;Actual count is &#039; . $queryTool-&gt;getCount() . &quot;.\n&quot;;<br>
+var_dump($list);</p>
+<p>$queryTool-&gt;reset();<br>
+$queryTool-&gt;setSelect(&#039;<br>
+  person_id,<br>
+  last_name,<br>
+  first_name,<br>
+  UNIX_TIMESTAMP(rdate) AS rdate,<br>
+  UNIX_TIMESTAMP(mdate) AS mdate<br>
+&#039;);</p>
+<p>$queryTool-&gt;setLimit(5, 5);<br>
+$list = $queryTool-&gt;getAll();</p>
+<p>print &quot;B: Expected count is 10.\n&quot;;<br>
+print &#039;Actual count is &#039; . $queryTool-&gt;getCount() . &quot;.\n&quot;;<br>
+var_dump($list);<br>
+?&gt;</p>
+<p>----------------------------------------------------------------------<br>
+original version output is:</p>
+<p>A: Expected count is 10.<br>
+Actual count is 10.<br>
+array(5) {<br>
+  [0]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;1&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 1&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 1&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [1]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;2&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 2&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 2&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [2]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;3&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 3&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 3&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [3]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;4&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 4&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 4&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [4]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;5&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 5&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 5&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+}<br>
+B: Expected count is 10.<br>
+Actual count is 0.<br>
+array(5) {<br>
+  [0]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;6&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 6&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 6&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [1]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;7&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 7&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 7&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [2]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;8&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 8&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 8&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [3]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;9&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 9&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 9&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [4]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(2) &quot;10&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(12) &quot;Last Name 10&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(13) &quot;First Name 10&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+}</p>
+<p>----------------------------------------------------------------------<br>
+A: Expected count is 10.<br>
+Actual count is 10.<br>
+array(5) {<br>
+  [0]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;1&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 1&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 1&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [1]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;2&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 2&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 2&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [2]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;3&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 3&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 3&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [3]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;4&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 4&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 4&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [4]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;5&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 5&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 5&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+}<br>
+B: Expected count is 10.<br>
+Actual count is 10.<br>
+array(5) {<br>
+  [0]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;6&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 6&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 6&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [1]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;7&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 7&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 7&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [2]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;8&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 8&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 8&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [3]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(1) &quot;9&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(11) &quot;Last Name 9&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(12) &quot;First Name 9&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+  [4]=&gt;<br>
+  array(5) {<br>
+    [&quot;person_id&quot;]=&gt;<br>
+    string(2) &quot;10&quot;<br>
+    [&quot;last_name&quot;]=&gt;<br>
+    string(12) &quot;Last Name 10&quot;<br>
+    [&quot;first_name&quot;]=&gt;<br>
+    string(13) &quot;First Name 10&quot;<br>
+    [&quot;rdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+    [&quot;mdate&quot;]=&gt;<br>
+    string(10) &quot;1106790464&quot;<br>
+  }<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

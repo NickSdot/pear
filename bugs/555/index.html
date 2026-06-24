@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #555</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_Tree/index.html">XML_Tree</a> &#187; Bug #555</h1>
+<p>getElementsByTagName uses non-existent property &#039;children&#039;</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-01-11 19:11 UTC</td></tr>
+<tr><th>From</th><td>martinthomas1 at comcast dot net</td></tr>
+<tr><th>Assigned</th><td>davey</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_Tree/index.html">XML_Tree</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-01-11 19:11 UTC] martinthomas1 at comcast dot net</h3>
+<p>Description:<br>
+------------<br>
+The XML_Tree method getElementsByTagName attempts to use a<br>
+non-existent property children.<br>
+This property exists in XML_Tree_Node, not in XML_Tree.<br>
+PHP stops with the following error message:<br>
+&lt;b&gt;Notice&lt;/b&gt;:  Undefined property:  children in &lt;b&gt;/vault/www/pear/lib/XML/Tree.php&lt;/b&gt; on line &lt;b&gt;459&lt;/b&gt;&lt;br /&gt;</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+$tree = &amp;new XML_Tree();<br>
+$root= &amp; $tree-&gt;addRoot(&#039;testdata&#039;);<br>
+$tree-&gt;insertChild(&#039;testdata&#039;,&#039;0&#039;,&#039;flywx&#039;, &#039;fly&#039;, array(&#039;wx2version&#039;=&gt;1));</p>
+<p>print_r($tree-&gt;getElementsByTagName(&#039;flywx&#039;));<br>
+?&gt;</p>
+</section>
+<section>
+<h3>[2004-01-12 04:09 UTC] martinthomas1 at comcast dot net</h3>
+<p>If the function is examine children nodes (i.e. not all descendants) then the following works:</p>
+<p>function &amp;getElementsByTagName($tagName)<br>
+    {<br>
+        $thisroot = $this-&gt;getroot();</p>
+<p>if (empty($tagName)) {<br>
+            return $this-&gt;raiseError(&#039;Empty tag name&#039;);<br>
+        }<br>
+        if (sizeof($thisroot-&gt;children)==0) {<br>
+            return null;<br>
+        }<br>
+        $result = array();<br>
+        foreach ($thisroot-&gt;children as $child) {<br>
+            if ($child-&gt;name == $tagName) {<br>
+                $result[] = $child;<br>
+            }<br>
+        }<br>
+        return $result;<br>
+    }</p>
+</section>
+<section>
+<h3>[2004-05-15 18:46 UTC] M dot d dot m dot duijvestijn at hro dot nl</h3>
+<p>Maybe the GetElementsByTagName-function should be placed in the xml/node.php file in stead of the tree.php file?<br>
+I tried it that way, and then it works. The property &quot;children&quot; is inside that file as well, so it is not unlogical.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

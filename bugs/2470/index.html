@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2470</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #2470</h1>
+<p>bug with maxfilesize function</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-10-06 15:57 UTC</td></tr>
+<tr><th>From</th><td>webrodboulot at hotmail dot com</td></tr>
+<tr><th>Status</th><td>Duplicate</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Windows XP and Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-10-06 15:57 UTC] webrodboulot at hotmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Consider this:<br>
+- you add a rule to not exceed 50Ko when uploading a file<br>
+- you use the setMaxFileSize function to not exceed 50Ko</p>
+<p>You upload a file bigger than 50Ko.<br>
+The file is not uploaded and the $files-&gt;isUploadedFile() return false because of the size of the file.<br>
+This is OK.<br>
+But the error msg associated to the rule is not displayed beside the file field.<br>
+You need to manually get the error number and display an error message on the top of the form.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$form = new HTML_QuickForm(&#039;frm&#039;, &#039;post&#039;);<br>
+$files =&amp; $form-&gt;addElement(&#039;file&#039;, &#039;newPhoto&#039;, &quot;Photo&quot;);</p>
+<p>$form-&gt;addRule(&#039;newPhoto&#039;, &#039;File too big(max 50Ko) &#039;, &#039;maxfilesize&#039;, 50000);</p>
+<p>$form-&gt;setMaxFileSize(50000);<br>
+$buttons[] = &amp;HTML_QuickForm::createElement(&#039;submit&#039;, &#039;btnSubmit&#039;, &#039;Save&#039;);<br>
+$form-&gt;addGroup($buttons, null, null, &#039; &#039;);</p>
+<p>if ($form-&gt;validate()){		<br>
+  if ($files-&gt;isUploadedFile()){<br>
+        //ok<br>
+  }<br>
+  else {//ko}<br>
+}<br>
+$form-&gt;display()</p>
+<p>Expected result:<br>
+----------------<br>
+The error message:<br>
+too big(max 50Ko)<br>
+should be displayed beside the field &quot;newPhoto&quot; as expected!</p>
+<p>$form-&gt;validate()) should return FALSE because the rule fails.</p>
+<p>Actual result:<br>
+--------------<br>
+No error message is displayed.<br>
+$form-&gt;validate() return TRUE</p>
+<p>files-&gt;isUploadedFile() returns FALSE, thiks is OK, but it&#039;s too late!</p>
+</section>
+<section>
+<h3>[2004-10-06 16:17 UTC] webrodboulot at hotmail dot com</h3>
+<p>the workaround I have found:<br>
+You set the MaxFileSize function with a VERY VERY BIG number:<br>
+$form-&gt;setMaxFileSize(5000000000);</p>
+<p>This way, if the file is:<br>
+- smaller than 50Ko, everything is OK, the file is uploaded<br>
+- bigger than 50Ko and smaller than 5000000000Ko, the file is not uploaded and the error message is displayed (GOOD)<br>
+- bigger than 5000000000Ko, the file is not uploaded but no error message (this is the bug again).</p>
+<p>As nobody is supposed to upload a file bigger than 5000000000Ko, this is a good workaround.<br>
+BUT, the main issue is that the file IS always uploaded in the TEMP folder (server side) before the file is rejected or not and the error message is displayed.<br>
+So if a malicious person try to upload a big big file, your server can have some problems!!</p>
+<p>Another thing, Quickform version is:<br>
+QuickForm.php,v 1.139 2004/03/20 11:23:10 avb Exp</p>
+</section>
+<section>
+<h3>[2004-10-07 07:30 UTC] webrodboulot at hotmail dot com</h3>
+<p>Here is how to fix the bug!<br>
+This is due to a wrong code in the _ruleCheckMaxFileSize.<br>
+Replace true by false within this function:<br>
+    function _ruleCheckMaxFileSize($elementValue, $maxSize)<br>
+    {<br>
+        if (!HTML_QuickForm_file::_ruleIsUploadedFile($elementValue)) {<br>
+            return true;<br>
+        }<br>
+        return ($maxSize &gt;= @filesize($elementValue[&#039;tmp_name&#039;]));<br>
+    }</p>
+<p>with:<br>
+    function _ruleCheckMaxFileSize($elementValue, $maxSize)<br>
+    {<br>
+        if (!HTML_QuickForm_file::_ruleIsUploadedFile($elementValue)) {<br>
+            return false;<br>
+        }<br>
+        return ($maxSize &gt;= @filesize($elementValue[&#039;tmp_name&#039;]));<br>
+    }</p>
+<p>If the file has not been uploaded, it should return false, if the file has been uploaded it sould test if the file is bigger than the max_file_size.<br>
+I tested it and it works fine.</p>
+<p>Here is the scenario:<br>
+- you add a rule to not exceed 50Ko when uploading a file<br>
+- you use the setMaxFileSize function to not exceed 50Ko</p>
+<p>Now you test it.If the file is:<br>
+- smaller than 50Ko, everything is OK, the file is uploaded<br>
+- bigger than 50Ko the file is not<br>
+uploaded and the error message is displayed (GOOD)!!!!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

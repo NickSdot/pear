@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream_Var Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Streams &#187; <a href="package/Stream_Var/index.html">Stream_Var</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Stream_Var/docs/index.html#package-streams-stream-var-intro">Introduction</a>
+</li>
+<li><a href="package/Stream_Var/docs/index.html#package-streams-stream-var-example">Example</a>
+</li></ul>
+</nav>
+<p>Allows stream based access to variables.</p>
+<section id="package-streams-stream-var-intro">
+<h2>Introduction</h2>
+<h3>Introduction to Stream_Var</h3>
+
+   
+   <p>Stream_Var supplies a class that can be used as a wrapper
+	for PHP&#039;s stream functions. This allows you to access variables
+	with <strong>fopen()</strong>, <strong>fclose()</strong>,
+	<strong>fwrite()</strong>, <strong>fread()</strong>,
+	<strong>opendir()</strong> and all other filesystem functions.</p>
+   <p>You may use <strong>stream_wrapper_register()</strong> to register
+	Stream_Var as a wrapper.</p>
+   <p>Scalar variables (strings, integers, floats) are treated as files,
+	while arrays represent directories.</p>
+   <p>Please see the <a href="http://www.php.net/manual/en/ref.stream.php">PHP Manual</a>
+	or the <a href="package/Stream_Var/docs/index.html#package-streams-stream-var-example">example</a>
+	for more information on how to register streams.</p>
+  
+  <h3>Usage scenario</h3>
+
+   
+   <p>Stream_Var could be used in various scenarios. Imagine you are using a class
+	that reads data from a file but you are creating the data on-the-fly and do
+	not want to save the data before it can be processed by the class.</p>
+   <p>This is where Stream_Var can be used. Just register it as a wrapper
+	for <strong>fopen()</strong> and pass <code>var://GLOBAL/yourVar</code>
+	as a parameter to the class.</p>
+   <p>It will read from the variable as if it was a file.</p>
+</section>
+<section id="package-streams-stream-var-example">
+<h2>Example</h2>
+<h3>Registering the wrapper</h3>
+
+  
+  <p>The following example shows you how to register
+	Stream_Var as a wrapper for the stream functions.</p>
+  <p><strong>Registering Stream_Var</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &quot;Stream/Var.php&quot;;
+stream_wrapper_register( &quot;var&quot;, &quot;Stream_Var&quot; );
+?&gt;</code></pre>
+  
+ 
+
+ <h3>Accessing scalar variables</h3>
+
+  
+  <p>The following example show you how to 
+	access scalar variables with <strong>fopen()</strong>,
+	<strong>fread()</strong>, <strong>frwite()</strong>
+	and <strong>fclose()</strong>.</p>
+  <p><strong>Accessing scalar variables</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &quot;Stream/Var.php&quot;;
+stream_wrapper_register( &quot;var&quot;, &quot;Stream_Var&quot; );
+$foo = &quot;I really like tomatoes.&quot;;
+
+echo &quot;Content of foo: $foo&lt;br /&gt;&quot;;
+
+$fp = fopen(&#039;var://GLOBALS/foo&#039;,&#039;r+&#039;);
+
+$data = fread($fp, 9);
+echo &quot;Read from stream: $data&lt;br /&gt;&quot;;
+
+fwrite($fp,&quot;hate&quot;);
+   
+fclose($fp);
+
+echo &quot;Content of foo: $foo&lt;br /&gt;&quot;;
+?&gt;</code></pre>
+  
+ 
+
+ <h3>Accessing an array</h3>
+
+  
+  <p>The following example shows how to use
+	<strong>opendir()</strong> to access an array.</p>
+  <p><strong>Accessing an array</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &quot;Stream/Var.php&quot;;
+stream_wrapper_register( &quot;var&quot;, &quot;Stream_Var&quot; );
+$dirname = &#039;var://_SERVER&#039;;
+$dir = opendir($dirname);
+echo    &quot;&lt;strong&gt;opening directory &#039;$dirname&#039;&lt;/strong&gt;&lt;br&gt;&lt;br&gt;&quot;;
+
+while ($entry = readdir($dir)) {
+    echo &quot;opening file $dirname/$entry&lt;br /&gt;&quot;;
+    if (!$fp = @fopen($dirname.&quot;/&quot;.$entry,&quot;r&quot;)) {
+        echo &quot;seems to be a directory&lt;br /&gt;&lt;br /&gt;&quot;;
+        continue;
+    }
+       
+    echo &quot;reading from $entry&lt;br /&gt;&quot;;
+    while (!feof($fp)) {
+        echo fread($fp, 16);
+    }
+    fclose($fp);
+    echo    &quot;&lt;br /&gt;&lt;br /&gt;&quot;;
+}
+closedir($dir);
+?&gt;</code></pre>
+  
+ 
+
+ <h3>More examples</h3>
+
+  
+  <p>If you want to take a look at some more examples,
+	just install the package and they will be installed
+	in the docs directory.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

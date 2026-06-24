@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #788</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #788</h1>
+<p>HTML &amp; TEXT mail components not recognized in Apple&#039;s Mail program</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-02-18 21:13 UTC</td></tr>
+<tr><th>From</th><td>cryogen at mac dot com</td></tr>
+<tr><th>Assigned</th><td>sean</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Mac OSX 10.3.2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-02-18 21:13 UTC] cryogen at mac dot com</h3>
+<p>Description:<br>
+------------<br>
+I am creating and sending both text and HTML versions of a short <br>
+welcome email to newly registered users.  The emails come across fine <br>
+when I browse them in Microsoft Entourage (same as Outlook for <br>
+Windows).  But when I view the same message in Apple&#039;s latest Mail <br>
+program, I see both the text and HTML versions in the same email in raw <br>
+unrendered (for the HTML) text: see below for copy of the email raw <br>
+code.  I have pasted a portion of the code I am using to generate the <br>
+HTML version of the email below.  Note the text version (stored in $text) <br>
+is exactly the same without the HTML tags.</p>
+<p>Reproduce code:<br>
+---------------<br>
+	// Build the HTML version of the email<br>
+	$html = file_get_contents(&quot;contact_new_email.html&quot;);<br>
+	$html = str_replace(&quot;{stylesheet}&quot;,$stylesheet_url,$html);<br>
+	$html = str_replace(&quot;{con_f_name}&quot;,$qd[&#039;con_f_name&#039;],$html);<br>
+	$html = str_replace(&quot;{directory_name}&quot;,$qd[&#039;directory_name&#039;],$html);<br>
+	$html = str_replace(&quot;{p_word}&quot;,$qd[&#039;p_word&#039;],$html);<br>
+	$html = str_replace(&quot;{login_link}&quot;,$login_link_html,$html);</p>
+<p>$crlf = &quot;\r\n&quot;;<br>
+	<br>
+	$hdrs = array(&quot;From&quot;=&gt;&quot;name &lt;{$Gdefault_email_from}&gt;&quot;, &quot;Subject&quot;=&gt;&quot;Welcome and Thanks&quot;);<br>
+	<br>
+	$mime = new Mail_mime($crlf);<br>
+	<br>
+	$mime-&gt;setTXTBody($text);<br>
+	$mime-&gt;setHTMLBody($html);<br>
+	<br>
+	$body = $mime-&gt;get();<br>
+	$hdrs = $mime-&gt;headers($hdrs);<br>
+	<br>
+	$mail =&amp; Mail::factory(&quot;mail&quot;);<br>
+	$mail-&gt;send(&quot;{$qd[&#039;con_f_name&#039;]} {$qd[&#039;con_l_name&#039;]} &lt;{$qd[&#039;con_email&#039;]}&gt;&quot;, $hdrs, $body);</p>
+<p>Expected result:<br>
+----------------<br>
+I expected to see only the HTML version for my HTML capable email <br>
+program.  I receive many HTML-based emails a day and they have <br>
+always come through just fine.</p>
+<p>Actual result:<br>
+--------------<br>
+In looking at the RAW email body from the failed email, I see the <br>
+following header for the text part:</p>
+<p>--=_c5c318bf383d66ef921df4e521a35cfe<br>
+Content-Type: text/plain; charset=&quot;ISO-8859-1&quot;<br>
+Content-Transfer-Encoding: 7bit</p>
+<p>and the following header in front of the second half of the email (html <br>
+section):</p>
+<p>--=_c5c318bf383d66ef921df4e521a35cfe<br>
+Content-Type: text/html; charset=&quot;ISO-8859-1&quot;<br>
+Content-Transfer-Encoding: quoted-printable</p>
+<p>I have noticed in the emails I receive successfully that I see the <br>
+following header at the top:</p>
+<p>MIME-Version: 1.0<br>
+Content-Type: multipart/alternative;<br>
+	boundary=&quot;----=_NextPart_000_0012_B903734E.404771FE&quot;</p>
+<p>Followed by:</p>
+<p>------=_NextPart_000_0012_B903734E.404771FE<br>
+Content-Type: text/plain<br>
+Content-Transfer-Encoding: 8bit</p>
+<p>Followed by the HTML section:</p>
+<p>------=_NextPart_000_0012_B903734E.404771FE<br>
+Content-Type: text/html;<br>
+	charset=&quot;iso-8859-1&quot;<br>
+Content-Transfer-Encoding: quoted-printable</p>
+<p>It seems like maybe the PEAR class should generate the multipart <br>
+header first so the email is recognized as a milti-part email.</p>
+</section>
+<section>
+<h3>[2004-02-18 21:15 UTC] cryogen at mac dot com</h3>
+<p>Correcting some bug information</p>
+</section>
+<section>
+<h3>[2004-02-25 18:22 UTC] gschlossnagle at php dot net</h3>
+<p>what is the result of this line:</p>
+<p>$hdrs = $mime-&gt;headers($hdrs);</p>
+</section>
+<section>
+<h3>[2004-03-10 22:46 UTC] blake at mediafence dot com</h3>
+<p>I was just about to post a new bug on this.  I have the same problem using Outlook 2002 as a reader.</p>
+<p>I have fixed my version of Mail_Mime if anyone wants a patch.  I just don&#039;t know how to get the patch to the right person.</p>
+<p>Blake schwendiman</p>
+</section>
+<section>
+<h3>[2004-09-09 17:54 UTC] paul at silksystems dot com</h3>
+<p>Im also encountering this using outlook express 6</p>
+<p>-however only from some php servers.</p>
+<p>email is readable when generated on server A - email is not readable when generated on server B  (both using same code)</p>
+<p>there are minor diferences between the servers, but nothing that *should* affect this.</p>
+</section>
+<section>
+<h3>[2004-12-13 18:10 UTC] cryogen at mac dot com</h3>
+<p>Good points and sorry for the lack of details.  I am <br>
+going to start fresh with another project that requires <br>
+PEAR MAIL classes, so will retire this bug in favor of a <br>
+fresh one (if I still have problems) when I begin <br>
+implementing the new system.</p>
+</section>
+<section>
+<h3>[2005-03-01 21:38 UTC] sales dot web at webmultimediadesigner dot com</h3>
+<p>Hi All,</p>
+<p>I am facing the same problem with Outlook Express with the eclosed script. The script is working fine in any webmail like (Yahoo). But it&#039;s showing the HTML code in the Outlook 2002.</p>
+<p>I have uploaded the same code to http://www.webmultimediadesigner.com/code.txt</p>
+<p>Please help me what to do!</p>
+<p>With Regards,</p>
+<p>Nick<br>
+http://www.webmultimediadesigner.com/</p>
+<p>--------------------------</p>
+<p>&lt;?php <br>
+# You can use this script to submit your forms or to receive orders by email.<br>
+$MailToAddress = &quot;abc@yourdomain.com&quot;; // your email address<br>
+$redirectURL = &quot;http://www.webmultimediadesigner.com/&quot;; // the URL of the thank you page.</p>
+<p># optional settings<br>
+$MailSubject = &quot;Web Multimedia Designer&quot;; // the subject of the email<br>
+$MailToCC = &quot;&quot;; // CC (carbon copy) also send the email to this address (leave empty if you don&#039;t use it)<br>
+# in the $MailToCC field you can have more then one e-mail address like &quot;a@yoursite.com, b@yoursite.com, c@yoursite.com&quot;</p>
+<p># If you are asking for a name and an email address in your form, you can name the input fields &quot;name&quot; and &quot;email&quot;.<br>
+# If you do this, the message will apear to come from that email address and you can simply click the reply button to answer it.</p>
+<p># If you have a multiple selection box or multiple checkboxes, you MUST name the multiple list box or checkbox as &quot;name[]&quot; instead of just &quot;name&quot; <br>
+# you must also add &quot;multiple&quot; at the end of the tag like this: &lt;select name=&quot;myselectname[]&quot; multiple&gt; <br>
+# you have to do the same with checkboxes</p>
+<p># This script was written by George A. &amp; Calin S. from Web4Future.com<br>
+# There are no copyrights in the sent emails.</p>
+<p># SPAMASSASSIN RATING: 0.4</p>
+<p># DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING ===================================================<br>
+# ver. 1.6.2<br>
+if (preg_match (&quot;/&quot;.$_SERVER[&quot;SERVER_NAME&quot;].&quot;/i&quot;, $_SERVER[&quot;HTTP_REFERER&quot;])) {<br>
+$w4fMessage = &quot;&lt;!DOCTYPE HTML PUBLIC \&quot;-//W3C//DTD HTML 4.01 Transitional//EN\&quot; \&quot;http://www.w3.org/TR/html4/loose.dtd\&quot;&gt;&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=\&quot;Content-Type\&quot; content=\&quot;text/html; charset=iso-8859-1\&quot;&gt;&lt;/head&gt;&lt;body&gt;&quot;;<br>
+if (count($_GET) &gt;0) {<br>
+	reset($_GET);<br>
+	while(list($key, $val) = each($_GET)) {<br>
+		$GLOBALS[$key] = $val;<br>
+		if (is_array($val)) { <br>
+			$w4fMessage .= &quot;&lt;b&gt;$key:&lt;/b&gt; &quot;;<br>
+			foreach ($val as $vala) { <br>
+				$vala =stripslashes($vala);<br>
+				$w4fMessage .= &quot;$vala, &quot;;<br>
+			} <br>
+			$w4fMessage .= &quot;&lt;br&gt;&quot;;<br>
+		} 	<br>
+		else {<br>
+			$val = stripslashes($val);<br>
+			if (($key == &quot;Submit&quot;) || ($key == &quot;submit&quot;)) { } 	<br>
+			else { 	if ($val == &quot;&quot;) { $w4fMessage .= &quot;$key: - &lt;br&gt;&quot;; }<br>
+					else { $w4fMessage .= &quot;&lt;b&gt;$key:&lt;/b&gt; $val&lt;br&gt;&quot;; }<br>
+			}<br>
+		}<br>
+	} // end while<br>
+}//end if<br>
+else {<br>
+	reset($_POST);<br>
+	while(list($key, $val) = each($_POST)) {<br>
+		$GLOBALS[$key] = $val;<br>
+		if (is_array($val)) { <br>
+			$w4fMessage .= &quot;&lt;b&gt;$key:&lt;/b&gt; &quot;;<br>
+			foreach ($val as $vala) { <br>
+				$vala =stripslashes($vala);<br>
+				$w4fMessage .= &quot;$vala, &quot;;<br>
+			} <br>
+			$w4fMessage .= &quot;&lt;br&gt;&quot;;<br>
+		} 	<br>
+		else {<br>
+			$val = stripslashes($val);<br>
+			if (($key == &quot;Submit&quot;) || ($key == &quot;submit&quot;)) { } 	<br>
+			else { 	if ($val == &quot;&quot;) { $w4fMessage .= &quot;$key: - &lt;br&gt;&quot;; }<br>
+					else { $w4fMessage .= &quot;&lt;b&gt;$key:&lt;/b&gt; $val&lt;br&gt;&quot;; }<br>
+			}<br>
+		}<br>
+	} // end while<br>
+	}//end else<br>
+$w4fMessage = &quot;&lt;font face=verdana size=2&gt;&quot;.$w4fMessage.&quot;&lt;/font&gt;&lt;/body&gt;&lt;/html&gt;&quot;;<br>
+if (!$email) {$email = &quot;server@site.com&quot;;}<br>
+if (!mail($MailToAddress, $MailSubject, $w4fMessage, &quot;From: $name &lt;$email&gt;\r\nReply-To: $name &lt;$email&gt;\r\nMessage-ID: &lt;&quot;. md5(rand().&quot;&quot;.time()) .&quot;@&quot;. ereg_replace(&quot;www.&quot;,&quot;&quot;,$_SERVER[&quot;SERVER_NAME&quot;]) .&quot;&gt;\r\nMIME-Version: 1.0\r\nX-Priority: 3\r\nX-Mailer: PHP/&quot; . phpversion().&quot;\r\nX-MimeOLE: Produced By Web4Future Easiest Form2Mail v1.5\r\nBCc: $MailToCC\r\nContent-Type: text/html; charset=ISO-8859-1\r\nContent-Transfer-Encoding: 8bit\r\n&quot;)) { echo &quot;Error sending e-mail!&quot;;}<br>
+else { header(&quot;Location: &quot;.$redirectURL); }<br>
+} else { echo &quot;&lt;center&gt;&lt;font face=verdana size=3 color=red&gt;&lt;b&gt;ILLEGAL EXECUTION DETECTED!&lt;/b&gt;&lt;/font&gt;&lt;/center&gt;&quot;;}<br>
+?&gt;</p>
+</section>
+<section>
+<h3>[2005-09-07 15:39 UTC] ben at wieck dot com</h3>
+<p>I am also encountering this problem. I do no see that there was a fix for it.</p>
+<p>I am using Mail_Mime 1.3.1 and Mail 1.1.8 with the following code:</p>
+<p>$mime = new Mail_Mime();<br>
+            $mime-&gt;setTxtBody($plain);<br>
+            $mime-&gt;setHtmlBody($html);<br>
+            $body = $mime-&gt;get();<br>
+        <br>
+            $hdrs = $mime-&gt;headers($headers);<br>
+            $mail = &amp;Mail::factory(&#039;mail&#039;);<br>
+            $mail-&gt;send($to, $hdrs, $body);</p>
+<p>Running PHP 5.0.4 configured with: <br>
+Configure Command =&gt;  &#039;./configure&#039; &#039;--prefix=/usr/include&#039; &#039;--with-config-file-path=/etc/php5&#039; &#039;--with-zlib-dir=/opt/local&#039; &#039;--with-jpeg-dir=/opt/local&#039; &#039;--with-tiff-dir=/opt/local&#039; &#039;--with-png-dir=/opt/local&#039; &#039;--with-gd&#039; &#039;--with-mysql=/usr/include/mysql&#039; &#039;--with-xml&#039; &#039;--with-libxml-dir=/opt/local&#039; &#039;--with-apxs&#039; &#039;--with-sqlite&#039; &#039;--disable-short-tags&#039; &#039;--with-openssl&#039; &#039;--with-openssl-dir=/opt/local/include/openssl&#039; &#039;--enable-calendar&#039; &#039;--enable-ftp&#039; &#039;--with-gettext=/opt/local&#039; &#039;--with-mcrypt=/opt/local&#039; &#039;--with-mhash=/opt/local&#039; &#039;--with-embedded-mysqli&#039; &#039;--enable-pcntl&#039; &#039;--enable-soap&#039; &#039;--enable-sockets&#039; &#039;--with-pear&#039; &#039;--enable-sigchild&#039;</p>
+</section>
+<section>
+<h3>[2005-09-07 15:59 UTC] ben at wieck dot com</h3>
+<p>Solution! Apple&#039;s Mail appreciates &quot;\n&quot; as the line feed character. I was under the impression this was the default for Mail_Mime. After adding &quot;\n&quot; to Mail_Mime&#039;s constructor</p>
+<p>- $mime = new Mail_Mime();<br>
++ $mime = new Mail_Mime(&quot;\n&quot;);</p>
+<p>Apple Mail worked!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

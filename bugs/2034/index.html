@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2034</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_NestedSet/index.html">DB_NestedSet</a> &#187; Bug #2034</h1>
+<p>getAllNodes with secondarySort=&#039;name&#039;) and setsortMode=&#039;NESE_SORT_PREORDER&#039; do</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-07-31 12:40 UTC</td></tr>
+<tr><th>From</th><td>stiwi at lukasonline dot com</td></tr>
+<tr><th>Assigned</th><td>datenpunk</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_NestedSet/index.html">DB_NestedSet</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-31 12:40 UTC] stiwi at lukasonline dot com</h3>
+<p>Description:<br>
+------------<br>
+If I read my whole Tree with getAllNodes(true) and setSortMode(NESE_SORT_PREORDER) I&#039;ll get the following:</p>
+<p>-Skireisen<br>
+--Schweiz<br>
+---Grindelwald<br>
+--Österreich<br>
+---Arlberg<br>
+---Saalbach<br>
+---Obertauern<br>
+--Italien<br>
+---Meransen</p>
+<p>Wich is the expected result.</p>
+<p>Now if I&#039;m adding a &quot;&#039;secondarySort&#039;=&gt;&#039;name&#039;&quot; to the attribute-array, to get the sibblings in alphabetic order I&#039;ll get this:</p>
+<p>-Skireisen<br>
+--Österreich<br>
+--Schweiz<br>
+---Arlberg<br>
+---Grindelwald<br>
+---Meransen<br>
+---Obertauern<br>
+---Saalbach<br>
+--Italien</p>
+<p>Wich is not the result I expect! I&#039;m using 1.35beta</p>
+</section>
+<section>
+<h3>[2004-07-31 19:19 UTC] dk at webcluster dot at</h3>
+<p>Please add a sql dump of this tree and a short code snipplet to help me debug this issue.</p>
+<p>Thanks for your help</p>
+<p>Daniel Khan</p>
+</section>
+<section>
+<h3>[2004-07-31 21:01 UTC] stiwi at lukasonline dot com</h3>
+<p>Ok, here&#039;s the dump and the testcode</p>
+<p>CREATE TABLE `categories` (<br>
+  `id` int(10) unsigned NOT NULL default &#039;0&#039;,<br>
+  `root_id` int(10) unsigned NOT NULL default &#039;0&#039;,<br>
+  `parent_id` int(10) unsigned NOT NULL default &#039;0&#039;,<br>
+  `order_num` tinyint(4) unsigned NOT NULL default &#039;0&#039;,<br>
+  `level` int(10) unsigned NOT NULL default &#039;0&#039;,<br>
+  `left_id` int(10) unsigned NOT NULL default &#039;0&#039;,<br>
+  `right_id` int(10) unsigned NOT NULL default &#039;0&#039;,<br>
+  `name` varchar(60) NOT NULL default &#039;&#039;,<br>
+  PRIMARY KEY  (`id`),<br>
+  KEY `right` (`right_id`),<br>
+  KEY `left` (`left_id`),<br>
+  KEY `order` (`order_num`),<br>
+  KEY `level` (`level`),<br>
+  KEY `right_left` (`id`,`root_id`,`left_id`,`right_id`),<br>
+  KEY `parent_root` (`root_id`)<br>
+) TYPE=MyISAM;</p>
+<p>INSERT INTO `categories` VALUES (1, 1, 0, 1, 1, 1, 18, &#039;Skireisen&#039;);<br>
+INSERT INTO `categories` VALUES (2, 1, 1, 1, 2, 2, 5, &#039;Schweiz&#039;);<br>
+INSERT INTO `categories` VALUES (3, 1, 1, 3, 2, 14, 17, &#039;Italien&#039;);<br>
+INSERT INTO `categories` VALUES (4, 1, 1, 2, 2, 6, 13, &#039;Österreich&#039;);<br>
+INSERT INTO `categories` VALUES (5, 1, 3, 1, 3, 15, 16, &#039;Meransen&#039;);<br>
+INSERT INTO `categories` VALUES (6, 1, 4, 1, 3, 7, 8, &#039;Arlberg&#039;);<br>
+INSERT INTO `categories` VALUES (7, 1, 2, 1, 3, 3, 4, &#039;Grindelwald&#039;);<br>
+INSERT INTO `categories` VALUES (8, 1, 4, 2, 3, 9, 10, &#039;Saalbach&#039;);<br>
+INSERT INTO `categories` VALUES (9, 1, 4, 3, 3, 11, 12, &#039;Obertauern&#039;);</p>
+<p>&lt;?php</p>
+<p>require_once(&#039;DB/NestedSet.php&#039;);<br>
+require_once(&#039;DB/NestedSet/DB.php&#039;);</p>
+<p>$dsn = &quot;mysql://root:pass@localhost/dbname&quot;;</p>
+<p>$params = array(<br>
+    &#039;id&#039;          =&gt; &#039;id&#039;,<br>
+    &#039;root_id&#039;     =&gt; &#039;rootid&#039;,<br>
+    &#039;parent_id&#039;   =&gt; &#039;parent&#039;,<br>
+    &#039;left_id&#039;     =&gt; &#039;l&#039;,<br>
+    &#039;right_id&#039;    =&gt; &#039;r&#039;,<br>
+    &#039;order_num&#039;   =&gt; &#039;norder&#039;,<br>
+    &#039;level&#039;       =&gt; &#039;level&#039;,<br>
+    &#039;name&#039;        =&gt; &#039;name&#039;<br>
+);</p>
+<p>$tree = new DB_NestedSet_DB($dsn, $params);</p>
+<p>$tree-&gt;setAttr(array(&#039;node_table&#039; =&gt; &#039;categories&#039;,   &#039;lock_table&#039; =&gt; &#039;table_locks&#039;, &#039;secondarySort&#039; =&gt; &#039;name&#039;));</p>
+<p>$tree-&gt;setSortMode(NESE_SORT_PREORDER);</p>
+<p>$nodes = $tree-&gt;getAllNodes(true);</p>
+<p>echo &#039;&lt;pre&gt;&#039;;<br>
+foreach($nodes as $key =&gt; $value){<br>
+  unset($line);<br>
+  for($i = 0; $i&lt; $value[&#039;level&#039;]; $i++){<br>
+    $line .= &#039;-&#039;;<br>
+  }<br>
+  echo $l.$value[&#039;name&#039;].&#039;&lt;br&gt;&#039;;<br>
+}<br>
+echo &#039;&lt;/pre&gt;&#039;;<br>
+?&gt;</p>
+</section>
+<section>
+<h3>[2004-07-31 21:08 UTC] stiwi at lukasonline dot com</h3>
+<p>Oops</p>
+<p>echo $l.$value[&#039;name&#039;].&#039;&lt;br&gt;&#039;;</p>
+<p>should be</p>
+<p>echo $line.$value[&#039;name&#039;].&#039;&lt;br&gt;&#039;;</p>
+</section>
+<section>
+<h3>[2004-08-03 22:41 UTC] dk at webcluster dot at</h3>
+<p>This bug should now be fixed in CVS.<br>
+Please have a look if it works for you.</p>
+<p>Please consider using output drivers if you want to output the tree for a navigation anything like that. Because although it works now this way of sorting a Nested Set is pretty ugly (recursion).<br>
+If you want to output the tree with JavaScript or something like that you might again have to traverse the tree to get it into the desired format. If this is the case the sorting should be done while doing this conversion do avoid traversing the tree 2 times.<br>
+However - please try the CVS version :)</p>
+<p>Thanks for making PEAR better!</p>
+<p>-- <br>
+Daniel Khan</p>
+</section>
+<section>
+<h3>[2004-08-04 01:11 UTC] stiwi at lukasonline dot com</h3>
+<p>Hi Daniel,</p>
+<p>the CVS version works perfect for me now!</p>
+<p>Thanks for your effort</p>
+<p>Stiwi</p>
+<p>PS: I&#039;m using this kind of parsing the tree only in my admin-frontend for the tree-content. For the enduser tree-navigation I&#039;ll use the treeMenu-driver either.</p>
+</section>
+<section>
+<h3>[2004-08-04 12:58 UTC] dk at webcluster dot at</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+<section>
+<h3>[2004-08-08 21:59 UTC] stiwi at lukasonline dot com</h3>
+<p>Hi David,</p>
+<p>there&#039;s a little bug in the current CVS-version of NestedSet.php. In line 797 you need to check if $nodeSet is an array with a count &gt; 0 before you call _secSort(), otherwise a call of getSubBranch() will throw an error if the used node has no subbranch.</p>
+<p>Stiwi</p>
+</section>
+<section>
+<h3>[2004-08-10 21:50 UTC] dk at webcluster dot at</h3>
+<p>Thank you for your bug report. This issue has been fixed<br>
+in the latest released version of the package, which you can download at<br>
+http://pear.php.net/get/DB_NestedSet</p>
+<p>Thanks a lot for pointing that out!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1087</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB/index.html">MDB</a> &#187; Bug #1087</h1>
+<p>query limits in INSERT queries</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-28 12:38 UTC</td></tr>
+<tr><th>From</th><td>alexei at saveliev dot org</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB/index.html">MDB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-28 12:38 UTC] alexei at saveliev dot org</h3>
+<p>Description:<br>
+------------<br>
+MDB has wrong query generation in some circumstances</p>
+<p>It seems that $this-&gt;selected_row_limit adds limit to query.</p>
+<p>Reproduce code:<br>
+---------------<br>
+I&#039;ve got it with following sequence of actions:</p>
+<p>$langs=$db-&gt;getAll(&#039;SELECT ID,name FROM &#039;.TABLE_PREFIX.&#039;langs_avail ORDER BY ID&#039;);</p>
+<p>//....</p>
+<p>$sql=&#039;INSERT INTO &#039;.TABLE_PREFIX.&#039;i18n(ID,pageID&#039;.$fld.&#039;) VALUES (?,?&#039;.$val.&#039;)&#039;;<br>
+$sti=$db-&gt;prepareQuery($sql);<br>
+$res=$db-&gt;execute($sti,NULL,$data_ord);</p>
+<p>Expected result:<br>
+----------------<br>
+INSERT INTO webshop_i18n(ID,pageID,en,ru) VALUES (&#039;test&#039;,&#039;main&#039;,&#039;main&#039;,&#039;&#039;) on server input</p>
+<p>Actual result:<br>
+--------------<br>
+INSERT INTO webshop_i18n(ID,pageID,en,ru) VALUES (&#039;test&#039;,&#039;main&#039;,&#039;main&#039;,&#039;&#039;) LIMIT 1</p>
+<p>My query does not have any LIMIT for sure.</p>
+</section>
+<section>
+<h3>[2004-03-28 18:27 UTC] alexei at saveliev dot org</h3>
+<p>I don&#039;t have any LIMIT in code.</p>
+<p>Here are mysql logs for different code:</p>
+<p>$sql=&#039;INSERT INTO &#039;.TABLE_PREFIX.&#039;i18n(ID,pageID&#039;.$fld.&#039;) VALUES (?,?&#039;.$val.&#039;)&#039;;<br>
+$sti=$db-&gt;prepareQuery($sql);<br>
+$res=$db-&gt;execute($sti,NULL,$data_ord);</p>
+<p>/usr/local/mysql/libexec/mysqld, Version: 4.0.15a-log, started with:<br>
+Tcp port: 3306  Unix socket: /tmp/mysql.sock<br>
+Time                 Id Command    Argument<br>
+040328 22:16:00       2 Connect     root@localhost on<br>
+                      2 Query       SELECT VERSION()<br>
+                      2 Init DB     webshop<br>
+                      2 Query       SELECT ID,name FROM webshop_langs_avail ORDER BY ID<br>
+                      2 Init DB     webshop<br>
+                      2 Query       INSERT INTO webshop_i18n(ID,pageID,en,ru) VALUES (&#039;test&#039;,&#039;test&#039;,&#039;test&#039;,&#039;&#039;) LIMIT 1<br>
+                      2 Quit<br>
+											<br>
+$db-&gt;selected_row_limit=0;<br>
+$sql=&#039;INSERT INTO &#039;.TABLE_PREFIX.&#039;i18n(ID,pageID&#039;.$fld.&#039;) VALUES (?,?&#039;.$val.&#039;)&#039;;<br>
+$sti=$db-&gt;prepareQuery($sql);<br>
+$res=$db-&gt;execute($sti,NULL,$data_ord);</p>
+<p>040328 22:18:56       6 Connect     root@localhost on<br>
+                      6 Query       SELECT VERSION()<br>
+                      6 Init DB     webshop<br>
+                      6 Query       SELECT ID,name FROM webshop_langs_avail ORDER BY ID<br>
+                      6 Init DB     webshop<br>
+                      6 Query       INSERT INTO webshop_i18n(ID,pageID,en,ru) VALUES (&#039;test2&#039;,&#039;test2&#039;,&#039;test2&#039;,&#039;&#039;)<br>
+                      6 Quit</p>
+</section>
+<section>
+<h3>[2004-03-28 18:35 UTC] alexei at saveliev dot org</h3>
+<p>I use mysql driver</p>
+</section>
+<section>
+<h3>[2004-03-28 19:59 UTC] alexei at saveliev dot org</h3>
+<p>Sorry, I do have one statement that limits query. For some reason MySQL did not dump it to log.</p>
+<p>I have getOne method call before prepareQuery (thanks to xdebug extension)</p>
+<p>5 =&gt; <br>
+    array<br>
+      &#039;function&#039; =&gt; &#039;checkmsgid&#039;<br>
+      &#039;file&#039; =&gt; &#039;/usr/local/lib/php/HTML/QuickForm/Rule/Callback.php&#039;<br>
+      &#039;line&#039; =&gt; 73<br>
+      &#039;params&#039; =&gt; <br>
+        array<br>
+  6 =&gt; <br>
+    array<br>
+      &#039;function&#039; =&gt; &#039;getone&#039;<br>
+      &#039;class&#039; =&gt; &#039;mdb_mysql&#039;<br>
+      &#039;file&#039; =&gt; &#039;/.prj/.shop/admin/i18n/msg_edit.php&#039;<br>
+      &#039;line&#039; =&gt; 76<br>
+      &#039;params&#039; =&gt; <br>
+        array<br>
+  7 =&gt; <br>
+    array<br>
+      &#039;function&#039; =&gt; &#039;setselectedrowrange&#039;<br>
+      &#039;class&#039; =&gt; &#039;mdb_mysql&#039;<br>
+      &#039;file&#039; =&gt; &#039;/usr/local/lib/php/MDB/Common.php&#039;<br>
+      &#039;line&#039; =&gt; 3942<br>
+      &#039;params&#039; =&gt; <br>
+        array</p>
+<p>It seems that non zero $this-&gt;selected_row_limit is used for all subsequent queries.</p>
+</section>
+<section>
+<h3>[2004-03-28 21:16 UTC] alexei at saveliev dot org</h3>
+<p>getOne and others have two ways to execute queries - query() and executeQuery(). $this-&gt;selected_row_limit is reset in query() all time but executeQuery() may raise error without actual calling of query() and return. this leaves  $this-&gt;selected_row_limit untouched. That was my case. I have courage to confirm that it was my error caused misbehavior of MDB.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

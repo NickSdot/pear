@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9268</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_DNS/index.html">Net_DNS</a> &#187; Bug #9268</h1>
+<p>send_tcp method doesn&#039;t receive all packets</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-08 13:26 UTC</td></tr>
+<tr><th>From</th><td>pieter at prezent dot nl</td></tr>
+<tr><th>Assigned</th><td>fa</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_DNS/index.html">Net_DNS</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-08 13:26 UTC] pieter at prezent dot nl</h3>
+<p>Description:<br>
+------------<br>
+In the method send_tcp, two freads are used to read in the data. If the response of the DNS server is bigger than two packets (for example for zone transfers of large zones), not everything is read, which results in an error. This is because fread() stops reading when a new packet is received, see php manual.</p>
+<p>This is a patch:</p>
+<p>--- DNS/Resolver.php.orig       2006-11-08 14:01:13.000000000 +0100<br>
++++ DNS/Resolver.php    2006-11-08 14:15:25.000000000 +0100<br>
+@@ -787,7 +787,10 @@<br>
+             if (!$len) {<br>
+                 continue;<br>
+             }<br>
+-            $buf = fread($sock, $len);<br>
++            $buf = &#039;&#039;;<br>
++            while (!feof($sock) &amp;&amp; (strlen($buf) &lt; $len) ) {<br>
++                $buf .= fread($sock, $len-strlen($buf));<br>
++            }<br>
+             $actual = strlen($buf);<br>
+             $this-&gt;answerfrom = $ns;<br>
+             $this-&gt;answersize = $len;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

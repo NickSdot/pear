@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3960</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_Download/index.html">HTTP_Download</a> &#187; Bug #3960</h1>
+<p>Allow zlib.output_compression in php.ini</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #3960</th><td>Allow zlib.output_compression in php.ini</td></tr>
+<tr><th>Submitted</th><td>2005-03-25 16:07 UTC</td></tr>
+<tr><th>From</th><td>brian at onlineinfo dot net</td></tr>
+<tr><th>Assigned</th><td>mike</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_Download/index.html">HTTP_Download</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-25 16:07 UTC] brian at onlineinfo dot net</h3>
+<p>Description:<br>
+------------<br>
+I was using HTTP_Download 0.5.1 and it was working fine with zlib.output_compression set in php.ini.  After upgrade to 1.0.0 scripts get stuck in an endless loop because of the following condition: set_time_limit(0) is called and ob_get_level() seems to always returns 1 with zlib.output_compression enabled.  It would be very nice to be able to use the latest-and-greatest version without having to modify the server configuration.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Here is a patch that is makes it work.  I have tested this patch with Firefox/linux, Konqueror/linux, and Internet Explorer 6/windows 2000.</p>
+<p>--- /usr/local/lib/php/HTTP/Download.php        2005-03-25 09:55:28.000000000 -0500<br>
++++ pear/HTTP/Download.php      2005-03-25 10:49:32.000000000 -0500<br>
+@@ -651,9 +651,7 @@<br>
+             unset($this-&gt;headers[&#039;Last-Modified&#039;]);<br>
+         }</p>
+<p>-        while (ob_get_level()) {<br>
+-            ob_end_clean();<br>
+-        }<br>
++               while (@ob_end_clean());</p>
+<p>if ($this-&gt;gzip) {<br>
+             @ob_start(&#039;ob_gzhandler&#039;);<br>
+@@ -668,7 +666,12 @@<br>
+             $this-&gt;HTTP-&gt;sendStatusCode(200);<br>
+             $chunks = array(array(0, $this-&gt;size));<br>
+             if (!$this-&gt;gzip) {<br>
+-                $this-&gt;headers[&#039;Content-Length&#039;] = $this-&gt;size;<br>
++                               // if only using default output handler set the<br>
++                               // Content-Length header.  Otherwise assume the<br>
++                               // output handler will set the Content-Length header<br>
++                               if (!array_key_exists(1, ob_list_handlers())) {<br>
++                       $this-&gt;headers[&#039;Content-Length&#039;] = $this-&gt;size;<br>
++                               }<br>
+             }<br>
+         }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

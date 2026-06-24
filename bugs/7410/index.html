@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7410</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Caching &#187; <a href="package/Cache_Lite/index.html">Cache_Lite</a> &#187; Bug #7410</h1>
+<p>Performance enhancement with fpassthru()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #7410</th><td>Performance enhancement with fpassthru()</td></tr>
+<tr><th>Submitted</th><td>2006-04-17 15:26 UTC</td></tr>
+<tr><th>From</th><td>fnjordy at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>fab</td></tr>
+<tr><th>Status</th><td>Suspended</td></tr>
+<tr><th>Package</th><td><a href="package/Cache_Lite/index.html">Cache_Lite</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Linux/Debian</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-17 15:26 UTC] fnjordy at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Currently the cache contents are read into a PHP variable and output, but if you use fpassthru() PHP can send the contents of the cache, after optionally reading the hash signature, direct to the output buffer.</p>
+<p>Some benchmarking results show fpassthru() is marginally slower for small cache sizes - presumably because of various system buffers helping out full cache reads, but for large caches, such as images, fpassthru() is signifcantly faster, a 400% speed improvement on a 2MB cache entry.</p>
+<p>--- Lite.php?rev=1.42   2006-04-17 23:21:49.000000000 +0800<br>
++++ /usr/share/php/Cache/Lite.php       2006-04-15 23:44:43.000000000 +0800<br>
+@@ -311,7 +311,7 @@<br>
+     * @return string data of the cache (else : false)<br>
+     * @access public<br>
+     */<br>
+-    function get($id, $group = &#039;default&#039;, $doNotTestCacheValidity = false)<br>
++    function get($id, $group = &#039;default&#039;, $doNotTestCacheValidity = false, $passthru = false)<br>
+     {<br>
+         $this-&gt;_id = $id;<br>
+         $this-&gt;_group = $group;<br>
+@@ -333,11 +333,11 @@<br>
+             }<br>
+             if (($doNotTestCacheValidity) || (is_null($this-&gt;_refreshTime))) {<br>
+                 if (file_exists($this-&gt;_file)) {<br>
+-                    $data = $this-&gt;_read();<br>
++                    $data = $this-&gt;_read($passthru);<br>
+                 }<br>
+             } else {<br>
+                 if ((file_exists($this-&gt;_file)) &amp;&amp; (@filemtime($this-&gt;_file) &gt; $this-&gt;_refreshTime)) {<br>
+-                    $data = $this-&gt;_read();<br>
++                    $data = $this-&gt;_read($passthru);<br>
+                 }<br>
+             }<br>
+             if (($data) and ($this-&gt;_memoryCaching)) {<br>
+@@ -703,7 +703,7 @@<br>
+     * @return string content of the cache file (else : false or a PEAR_Error object)<br>
+     * @access private<br>
+     */<br>
+-    function _read()<br>
++    function _read($passthru)<br>
+     {<br>
+         $fp = @fopen($this-&gt;_file, &quot;rb&quot;);<br>
+         if ($this-&gt;_fileLocking) @flock($fp, LOCK_SH);<br>
+@@ -716,7 +716,12 @@<br>
+                 $length = $length - 32;<br>
+             }<br>
+             if ($length) {<br>
+-                $data = @fread($fp, $length);<br>
++               if ($passthru) {<br>
++                       echo @fpassthru($fp);<br>
++                       $data = &#039;&#039;;<br>
++               } else {<br>
++                       $data = @fread($fp, $length);<br>
++               }<br>
+             } else {<br>
+                 $data = &#039;&#039;;<br>
+             }<br>
+--- Output.php?rev=1.4  2006-04-17 23:22:06.000000000 +0800<br>
++++ /usr/share/php/Cache/Lite/Output.php        2006-04-15 23:40:12.000000000 +0800<br>
+@@ -43,9 +43,8 @@<br>
+     */<br>
+     function start($id, $group = &#039;default&#039;, $doNotTestCacheValidity = false)<br>
+     {<br>
+-        $data = $this-&gt;get($id, $group, $doNotTestCacheValidity);<br>
++        $data = $this-&gt;get($id, $group, $doNotTestCacheValidity, true);<br>
+         if ($data !== false) {<br>
+-            echo($data);<br>
+             return true;<br>
+         }<br>
+         ob_start();</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+/* vim:ts=4:sts=4:sw=2:noai:noexpandtab<br>
+ */</p>
+<p>require_once &#039;Cache/Lite/Output.php&#039;;<br>
+//require_once &#039;t/Cache_Lite-1.5.2/Lite/Output.php&#039;;</p>
+<p>$options = array(<br>
+        &#039;cacheDir&#039;                      =&gt;&#039;/tmp/&#039;,<br>
+        &#039;lifeTime&#039;                      =&gt; 360000,<br>
+        &#039;fileLocking&#039;                   =&gt; true,        // local access<br>
+        &#039;automaticCleaningFactor&#039;       =&gt; 12,          // 12 pictures per page, so max one clean per page<br>
+        &#039;writeControl&#039;                  =&gt; false,       // not using nfs<br>
+        &#039;readControl&#039;                   =&gt; false,       // disable hashing (slow)<br>
+        &#039;fileNameProtection&#039;            =&gt; false,       // we are using sane id&#039;s<br>
+    );</p>
+<p>function test() {<br>
+        global $options;</p>
+<p>$cache = new Cache_Lite_Output($options);<br>
+        if ($cache-&gt;start(&#039;test_cache&#039;)) return;<br>
+        readfile(&#039;test_2359927.jpg&#039;);<br>
+//      readfile(&#039;test_10844.jpg&#039;);<br>
+//      readfile(&#039;test_1978.gif&#039;);<br>
+        if ($cache) $cache-&gt;end();<br>
+}</p>
+<p>$it = 1000;<br>
+error_log(&quot;start $it run\n&quot;, 3, &quot;/tmp/phplog&quot;);<br>
+$total = 0;<br>
+for ($i = 0; $i &lt; $it; $i++) {<br>
+error_log(&quot;start\n&quot;, 3, &quot;/tmp/phplog&quot;);<br>
+$t = explode(&#039; &#039;,microtime());<br>
+$time = $t[0]+$t[1];<br>
+test();<br>
+$t = explode(&#039; &#039;,microtime());<br>
+$seconds = sprintf(&#039;%f&#039;,($t[0]+$t[1]-$time));<br>
+error_log(&quot;finish: $seconds seconds\n&quot;, 3, &quot;/tmp/phplog&quot;);<br>
+$total += $seconds;<br>
+}<br>
+error_log(&quot;finish $it run: $total seconds\n&quot;, 3, &quot;/tmp/phplog&quot;);<br>
+?&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+1978 bytes<br>
+----------</p>
+<p>read:</p>
+<p>finish 1000 run: 0.177495 seconds</p>
+<p>fpassthru:</p>
+<p>finish 1000 run: 0.194931 seconds</p>
+<p>10844 bytes<br>
+-----------</p>
+<p>read:</p>
+<p>finish 1000 run: 0.189948 seconds</p>
+<p>fpassthru:</p>
+<p>finish 1000 run: 0.203439 seconds</p>
+<p>2359927 bytes<br>
+-------------</p>
+<p>read:</p>
+<p>finish 1000 run: 6.004331 seconds</p>
+<p>fpassthru:</p>
+<p>finish 1000 run: 1.546889 seconds</p>
+</section>
+<section>
+<h3>[2006-04-21 17:22 UTC] fab at php dot net</h3>
+<p>It&#039;s a really good test. Feel free to commit it into CVS.</p>
+</section>
+<section>
+<h3>[2006-05-28 12:35 UTC] fab at php dot net</h3>
+<p>Hum... I played with the patch before commiting it to CVS and I found a problem :</p>
+<p>it&#039;s incompatible with &quot;readControl&quot; so it has to be an optional way of working (option &quot;fpassthru&quot; in constructor, big warnings in documentation...)</p>
+<p>I don&#039;t think any more this patch is a good idea.</p>
+<p>Any thoughts ?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

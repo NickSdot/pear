@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2214</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #2214</h1>
+<p>LiveUser_Admin_Perm_Container_DB_Simple::removeUser() violates constraints</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-08-25 13:31 UTC</td></tr>
+<tr><th>From</th><td>mflaherty at clearmessage dot com</td></tr>
+<tr><th>Assigned</th><td>dufuz</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-25 13:31 UTC] mflaherty at clearmessage dot com</h3>
+<p>Description:<br>
+------------<br>
+LiveUser_Admin_Perm_Container_DB_Simple::removeUser() attempts to delete the parent liveuser_perm_users record before deleting its dependents. Naturally where constraints exists this will fail. Apply this patch to LiveUser/Admin/Perm/Container/DB_Simple.php</p>
+<p>Reproduce code:<br>
+---------------<br>
+*** DB_Simple.php.orig  Wed Aug 25 14:25:15 2004<br>
+--- DB_Simple.php       Wed Aug 25 14:26:10 2004<br>
+***************<br>
+*** 1086,1104 ****<br>
+              return false;<br>
+          }</p>
+<p>-         // Delete user from perm table (Perm/DB)<br>
+-         $query = &#039;<br>
+-             DELETE FROM<br>
+-                 &#039; . $this-&gt;prefix . &#039;perm_users<br>
+-             WHERE<br>
+-                 perm_user_id = &#039; . $permId;<br>
+-<br>
+-         $result = $this-&gt;dbc-&gt;query($query);<br>
+-<br>
+-         if (DB::isError($result)) {<br>
+-             return $result;<br>
+-         }<br>
+-<br>
+          // Delete group assignments<br>
+          $query = &#039;DELETE FROM<br>
+                    &#039; . $this-&gt;prefix . &#039;groupusers<br>
+--- 1086,1091 ----<br>
+***************<br>
+*** 1130,1135 ****<br>
+--- 1117,1135 ----<br>
+              return $result;<br>
+          };</p>
+<p>+         // Delete user from perm table (Perm/DB)<br>
++         $query = &#039;<br>
++             DELETE FROM<br>
++                 &#039; . $this-&gt;prefix . &#039;perm_users<br>
++             WHERE<br>
++                 perm_user_id = &#039; . $permId;<br>
++<br>
++         $result = $this-&gt;dbc-&gt;query($query);<br>
++<br>
++         if (DB::isError($result)) {<br>
++             return $result;<br>
++         }<br>
++<br>
+          return true;<br>
+      }</p>
+</section>
+<section>
+<h3>[2004-08-27 14:57 UTC] mflaherty at clearmessage dot com</h3>
+<p>Yeah, I know that out of the box this wouldn&#039;t be a problem because there are no foreign key constraints in the schema (which creates MyISAM tables anyhow), but I don&#039;t like to have databases that ignore referential integrity so I&#039;ve preferred to create the foreign keys. As such it is helpful for the deletes to be in the correct order. Thank you.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

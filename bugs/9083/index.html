@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9083</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Server/index.html">Net_Server</a> &#187; Bug #9083</h1>
+<p>multiprocess not working</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-10-18 21:41 UTC</td></tr>
+<tr><th>From</th><td>pear at synace dot com</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Server/index.html">Net_Server</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-10-18 21:41 UTC] pear at synace dot com</h3>
+<p>Description:<br>
+------------<br>
+patch below</p>
+<p>Test script:<br>
+---------------<br>
+22c22,23<br>
+&lt; class Net_Server_Multiprocess extends Net_Server_Driver {<br>
+---<br>
+&gt; class Net_Server_Driver_Multiprocess extends Net_Server_Driver {<br>
+&gt;     var $_name = &#039;multiprocess&#039;;<br>
+33a35,45<br>
+&gt;      * set the unique process name<br>
+&gt;      *<br>
+&gt;      * @access public<br>
+&gt;      * @param int $name<br>
+&gt;      */<br>
+&gt;     function setName($name)<br>
+&gt;     {<br>
+&gt;         $this-&gt;_name = $name;<br>
+&gt;     }<br>
+&gt; <br>
+&gt;     /**<br>
+138c150<br>
+&lt;             $this-&gt;_threadPool[$i] = &amp; new Net_Server_Thread_Processor($i, $this);<br>
+---<br>
+&gt;             $this-&gt;_threadPool[$i] = &amp; new Net_Server_Driver_Multiprocess_Processor ($i, $this);<br>
+144c156<br>
+&lt;         $this-&gt;_mpmObj = &amp; new MPM($this-&gt;_threadPool, $this);<br>
+---<br>
+&gt;         $this-&gt;_mpmObj = &amp; new Net_Server_Driver_Multiprocess_MPM($this-&gt;_threadPool, $this);<br>
+150,152c162,163<br>
+&lt;         $consoleClassName = $this-&gt;_console;<br>
+&lt;         if (!@include_once (&#039;Net/Server/Driver/Multiprocess/&#039;.$consoleClassName.&#039;.php&#039;)) {<br>
+&lt;             die (&#039;Unknown console &#039; . $consoleClassName);<br>
+---<br>
+&gt;         if (!@include_once (&#039;Net/Server/Driver/Multiprocess/&#039;.$this-&gt;_console.&#039;.php&#039;)) {<br>
+&gt;             die (&#039;Unknown console &#039; . $this-&gt;_console);<br>
+154c165,166<br>
+&lt;         $this-&gt;_consoleObj = &amp; new $consoleClassName($this);<br>
+---<br>
+&gt;         $consoleClassName = &#039;Net_Server_Driver_Multiprocess_&#039;.$this-&gt;_console;<br>
+&gt;         $this-&gt;_consoleObj = &amp; new $consoleClassName($this, &#039;&#039;);<br>
+277,288c289,304<br>
+&lt;         if (method_exists($this-&gt;callbackObj, &quot;onShutdown&quot;)) {<br>
+&lt;             $this-&gt;callbackObj-&gt;onShutdown();<br>
+&lt;         }<br>
+&lt;         // this always should return true, we use PHP_FORK_RETURN_METHOD because<br>
+&lt;         // we want to wait until all processes are really stopped...<br>
+&lt;         if ($this-&gt;_mpmObj-&gt;stopAllProcesses(array(&#039;&#039;), PHP_FORK_RETURN_METHOD)) {<br>
+&lt;             print &quot;Stopping &quot; . $this-&gt;_mpmObj-&gt;getName() . &quot;\n&quot;;<br>
+&lt;             $this-&gt;_mpmObj-&gt;stop();<br>
+&lt; <br>
+&lt;             print &quot;Exiting from console...\n&quot;;<br>
+&lt;         } else {<br>
+&lt;             print &quot;Error stopping mpm\n&quot;;<br>
+---<br>
+&gt;         if ($this-&gt;_mpmObj &amp;&amp; $this-&gt;_consoleObj) {<br>
+&gt;             if (method_exists($this-&gt;callbackObj, &quot;onShutdown&quot;)) {<br>
+&gt;                 $this-&gt;callbackObj-&gt;onShutdown();<br>
+&gt;             }<br>
+&gt;             // this always should return true, we use PHP_FORK_RETURN_METHOD because<br>
+&gt;             // we want to wait until all processes are really stopped...<br>
+&gt;             if ($this-&gt;_mpmObj-&gt;stopAllProcesses(array(&#039;&#039;), PHP_FORK_RETURN_METHOD)) {<br>
+&gt;                 print &quot;Stopping &quot; . $this-&gt;_mpmObj-&gt;getName() . &quot;\n&quot;;<br>
+&gt;                 $this-&gt;_mpmObj-&gt;stop();<br>
+&gt; <br>
+&gt;                 print &quot;Exiting from console...\n&quot;;<br>
+&gt;             } else {<br>
+&gt;                 print &quot;Error stopping mpm\n&quot;;<br>
+&gt;             }<br>
+&gt;             $this-&gt;closeConnection();<br>
+&gt;             $this-&gt;_consoleObj-&gt;stop();<br>
+290,291d305<br>
+&lt;         $this-&gt;closeConnection();<br>
+&lt;         $this-&gt;_consoleObj-&gt;stop();</p>
+</section>
+<section>
+<h3>[2006-10-18 22:05 UTC] pear at synace dot com</h3>
+<p>note that this still doesn&#039;t work entirely.. just getting there.. doesn&#039;t keep the MPM up unless pear constructor is disabled... dunno why.</p>
+<p>doesn&#039;t properly shutdown..</p>
+<p>i&#039;m using fork in the meantime</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

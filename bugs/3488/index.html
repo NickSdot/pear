@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3488</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #3488</h1>
+<p>Header delimiters don&#039;t survive in sessions</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-16 07:11 UTC</td></tr>
+<tr><th>From</th><td>steve at signify dot co dot nz</td></tr>
+<tr><th>Assigned</th><td>sean</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>Debian GNU/Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-16 07:11 UTC] steve at signify dot co dot nz</h3>
+<p>Description:<br>
+------------<br>
+If a Mail_mime object is stored in a session, the constants MAIL_MIME_CRLF (and MAIL_MIMEPART_CRLF) may not be defined when the object is retrieved.</p>
+<p>This results in the mail header separator defaulting to &quot;\r\n&quot;.</p>
+<p>A workaround is to insert the following line before you do anything with the Mail_mime object:</p>
+<p>new Mail_mime(&quot;\n&quot;);</p>
+<p>Which defines the MAIL_MIME_CRLF constant.</p>
+<p>Reproduce code:<br>
+---------------<br>
+(file1.php)<br>
+session_start();<br>
+$mm = new Mail_mime(&quot;\n&quot;);<br>
+$mm-&gt;setHTMLBody(&#039;&lt;html&gt;&lt;/html&gt;&#039;);<br>
+$mm-&gt;setTxtBody(&#039;Blah blah&#039;);<br>
+$_SESSION[&#039;mm&#039;] = $mm;</p>
+<p>(file2.php)<br>
+session_start();<br>
+$mm = $_SESSION[&#039;mm&#039;];<br>
+$mm-&gt;get();<br>
+$x = $mm-&gt;headers();</p>
+<p>Expected result:<br>
+----------------<br>
+$x[&#039;Content-Type&#039;] should be split across two lines. The first line should end with just a &quot;\n&quot;.</p>
+<p>Actual result:<br>
+--------------<br>
+The first line of $x[&#039;Content-Type&#039;] will end with &quot;\r\n&quot;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

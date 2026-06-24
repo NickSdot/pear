@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1288</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_SMTP/index.html">Net_SMTP</a> &#187; Bug #1288</h1>
+<p>Feature request: VERP style deliveries</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-26 18:02 UTC</td></tr>
+<tr><th>From</th><td>tuupola at php dot net</td></tr>
+<tr><th>Assigned</th><td>chagenbu</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_SMTP/index.html">Net_SMTP</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-26 18:02 UTC] tuupola at php dot net</h3>
+<p>Description:<br>
+------------<br>
+As requested on #pear I post this feature request on here too. The patch below enables optional VERP style deliveries with default delimiters or with delimiters defined by yourself.<br>
+ <br>
+The additional parameters to mailFrom() are passed as an array to leave room for possible future implementations of other arguments such as SIZE or SECURITY to MAIL FROM: command.</p>
+<p>There is also another feature request for VERP as a patch to Mail_smtp driver.</p>
+<p>--- SMTP.php    2004-04-26 20:48:32.260000000 +0300<br>
++++ SMTP.php.new        2004-04-26 20:48:25.690005000 +0300<br>
+@@ -659,14 +659,33 @@<br>
+      *<br>
+      * @param string The sender (reverse path) to set.<br>
+      *<br>
++     * @param array optional arguments. Currenly supported:<br>
++     *        verp   boolean or string. If true or string<br>
++     *               verp is enabled. If string the characters<br>
++     *               are considered verp separators.<br>
++     *    <br>
+      * @return mixed Returns a PEAR_Error with an error message on any<br>
+      *               kind of failure, or true on success.<br>
+      * @access public<br>
+      * @since  1.0<br>
+      */<br>
+-    function mailFrom($sender)<br>
++    function mailFrom($sender, $args=array())<br>
+     {<br>
+-        if (PEAR::isError($error = $this-&gt;_put(&#039;MAIL&#039;, &quot;FROM:&lt;$sender&gt;&quot;))) {<br>
++<br>
++        $argstr = &#039;&#039;;<br>
++<br>
++        if (isset($args[&#039;verp&#039;])) {<br>
++            /* XVERP */<br>
++            if ($args[&#039;verp&#039;] === true) {<br>
++                $argstr .=&#039; XVERP&#039;;<br>
++<br>
++            /* XVERP=something */<br>
++            } else if (trim($args[&#039;verp&#039;])){<br>
++                $argstr .=&#039; XVERP=&#039; . $args[&#039;verp&#039;];<br>
++            }<br>
++        }<br>
++<br>
++        if (PEAR::isError($error = $this-&gt;_put(&#039;MAIL&#039;, &quot;FROM:&lt;$sender&gt;$argstr&quot;))) {<br>
+             return $error;<br>
+         }<br>
+         if (PEAR::isError($error = $this-&gt;_parseResponse(250))) {</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5024</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_Archive/index.html">File_Archive</a> &#187; Bug #5024</h1>
+<p>Weird behavior with dynamic zip file containing multiple files.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-08 13:56 UTC</td></tr>
+<tr><th>From</th><td>rsg at ll dot mit dot edu</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/File_Archive/index.html">File_Archive</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Gentoo Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-08 13:56 UTC] rsg at ll dot mit dot edu</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>I am attempting to implemented a dynamically created Zip file containing a number of files; the zip is to be sent automatically as a download.  I started with the tutorial for &quot;Dynamically Created&quot;, and added the output writer:</p>
+<p>&lt;?php<br>
+require_once &quot;File/Archive.php&quot;;</p>
+<p>$dest = File_Archive::toArchive(&quot;foo.zip&quot;, File_Archive::toOutput());<br>
+$dest-&gt;newFile(&quot;even.txt&quot;);<br>
+for($i=0; $i&lt;100; $i++)<br>
+    $dest-&gt;writeData((2*$i).&quot;\n&quot;);<br>
+$dest-&gt;newFile(&quot;odd.txt&quot;);<br>
+for($i=0; $i&lt;100; $i++)<br>
+    $dest-&gt;writeData((2*$i+1).&quot;\n&quot;);<br>
+$dest-&gt;close();</p>
+<p>?&gt;</p>
+<p>This worked just fine. However, when I use the exact same method in my app, I get an apparently fine archive.  I can indeed extract the last file in it, but if I try to extract or view the others, I get the following message from WinZip:<br>
+ &quot;Extracting to &quot;C:\Documents and Settings\rov9297\Local Settings\Temp\&quot;<br>
+Use Path: no   Overlay Files: yes<br>
+warning [C:\Documents and Settings\rov9297\Local Settings\Temp\-tmp-foo-13.zip]:  extra 37594 bytes at beginning or within Zip file (attempting to process anyway)<br>
+Error in file #1:  bad Zip file offset (Error local header signature not found):  0<br>
+(attempting to re-compensate)<br>
+Error in file #1:  bad Zip file offset (Error local header signature not found):  0&quot;</p>
+<p>The number (37594) is odd for two reasons:  First, the two files are about 3k and 4k bytes long, and second, it is always 37594, regardless of how many files are in the archive, or how big they are.</p>
+<p>Any ideas?  Oh, I have 1.5.2 of File_Archive, on PHP 4.3.10, running on Gentoo Linux...<br>
+Thanks!<br>
+-Bob</p>
+</section>
+<section>
+<h3>[2005-08-08 14:26 UTC] rsg at ll dot mit dot edu</h3>
+<p>Okay, it seems I have narrowed down the problem, but I can&#039;t understand it still.  The following is the line that is suspect:</p>
+<p>$dzip = File_Archive::toArchive(&quot;/tmp/fool.zip&quot;, File_Archive::toOutput());</p>
+<p>The result of an example with two files (about 3K and 4K in size) is a 42K file that consists of 37594 bytes of garbage, followed by the first real file, followed by the second file; only the second file is accessible, however.  If I change the &quot;toOutput()&quot; to &quot;toFiles()&quot;, the zip file created is the proper size, and both files are read properly.  However, the zip file is still on the server.  Don&#039;t know what&#039;s going on, but is my call somehow bad?</p>
+</section>
+<section>
+<h3>[2005-08-16 14:20 UTC] rsg at ll dot mit dot edu</h3>
+<p>Hi Vincent,</p>
+<p>Yeah, your test code works fine for me - in fact, that is exactly how I started it!</p>
+<p>More experimenting shows some funny things, but nothing I can find to help pin down a concrete example that can reproduce it.  It seems sometimes there will be only one good file, sometimes the last two, etc.  On the one hand, I can&#039;t find any problems with my code, but on the other, I can&#039;t prove it isn&#039;t my code!  Given that I can&#039;t prove it a bug, and I have an acceptable work-around (generate the file on the server, which works, then serve the resulting .zip file), I think it is okay to close this as Bogus, if you would like.  I don&#039;t want to waste any more of your time on something even I&#039;m not convinced is a bug...</p>
+</section>
+<section>
+<h3>[2005-08-16 14:22 UTC] rsg at ll dot mit dot edu</h3>
+<p>Can&#039;t prove it, so close it as bogus.  Still, being in the bug-base, hopefully if others hit the same issue, this might prove helpful.  If not, and it is truly Bogus, then my apologies...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

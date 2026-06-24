@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event_Dispatcher Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Event &#187; <a href="package/Event_Dispatcher/index.html">Event_Dispatcher</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-intro">Introduction</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-example">Examples</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-dispatcher-getinstance">Event_Dispatcher::getInstance</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-dispatcher-getname">Event_Dispatcher::getName</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-dispatcher-addobserver">Event_Dispatcher::addObserver</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-dispatcher-removeobserver">Event_Dispatcher::removeObserver</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-dispatcher-setnotificationclass">Event_Dispatcher::setNotificationClass</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-dispatcher-post">Event_Dispatcher::post</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-dispatcher-addnesteddispatcher">Event_Dispatcher::addNestedDispatcher</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-dispatcher-removenesteddispatcher">Event_Dispatcher::removeNestedDispatcher</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-notification">Event_Notification</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-notification-event-notification">Event_Notification::Event_Notification</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-notification-getnotificationname">Event_Notification::getNotificationName</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-notification-getnotificationobject">Event_Notification::getNotificationObject</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-notification-getnotificationinfo">Event_Notification::getNotificationInfo</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-notification-getnotificationcount">Event_Notification::getNotificationCount</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-notification-cancelnotification">Event_Notification::cancelNotification</a>
+</li>
+<li><a href="package/Event_Dispatcher/docs/index.html#package-event-event-dispatcher-event-notification-isnotificationcancelled">Event_Notification::isNotificationCancelled</a>
+</li></ul>
+</nav>
+<p>Dispatch notifications using PHP callbacks</p>
+<section id="package-event-event-dispatcher-intro">
+<h2>Introduction</h2>
+<h3>Introduction to Event_Dispatcher</h3>
+
+   
+   <p>Event_Dispatcher acts as a notification dispatch table.
+    It is used to notify other objects of interesting things.
+    This information is encapsulated in Event_Notification objects.</p>
+   <p>Client objects register themselves with the Event_Dispatcher as observers of
+    specific notifications posted by other objects. When an event occurs,
+    an object posts an appropriate notification to the Event_Dispatcher.
+    The Event_Dispatcher dispatches a message to each registered
+    observer, passing the notification as the sole argument.</p>
+   <p>Event_Dispatchers allows you to use event bubbling similar to JavaScript&#039;s
+    event management. If an event is not handled by the dispatcher that triggered
+    the event, it may bubble up to the next dispatcher.</p>
+</section>
+<section id="package-event-event-dispatcher-example">
+<h2>Examples</h2>
+<h3>Examples usage of Event_Dispatcher</h3>
+
+  
+  <p>The following examples show you how to use Event_Dispatcher to
+    create more flexible applications.</p>
+  <p><strong>Basic example</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &#039;Event/Dispatcher.php&#039;;
+    
+/**
+ * Dummy class that simulated authentication
+ */
+class Auth
+{
+    var $_dispatcher = null;
+    var $_user;
+    
+    function Auth(&amp;$dispatcher)
+    {
+         $this-&gt;_dispatcher = &amp;$dispatcher;
+    }
+    
+    function login($username, $password)
+    {
+        // Your code that authenticates goes here
+        // ....
+        // imagine $this-&gt;_user contains a User object
+        
+        $this-&gt;_dispatcher-&gt;post($this-&gt;_user, &#039;onLogin&#039;);
+    }
+}
+
+function logAuth(&amp;$notification)
+{
+    $user = &amp;$notification-&gt;getNotificationObject();
+    $username = $user-&gt;getUsername();
+    
+    // write logfile
+    error_log(&quot;$username logged in.&quot;, 3, &#039;/tmp/auth.log&#039;);
+}
+
+$dispatcher = &amp;Event_Dispatcher::getInstance();
+
+// catch all onLogin events to write a logfile
+$dispatcher-&gt;addObserver(&#039;logAuth&#039;, &#039;onLogin&#039;);
+
+$auth = &amp;new Auth($dispatcher);
+
+// simulate login
+$auth-&gt;login($_GET[&#039;user&#039;], $_GET[&#039;pass&#039;]);
+?&gt;</code></pre>
+   <p>In this example, <strong>Event_Dispatcher</strong> is used to
+    allow observers to hook into the authentication process. Whenever a 
+    user authenticates, a notification <em>onLogin</em> is
+    sent.</p>
+   <p>This can be used to write logfiles or block the application for
+    other users.</p>
+  
+
+  <p><strong>Cancelling notifications</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &#039;Event/Dispatcher.php&#039;;
+    
+/**
+ * Dummy class that simulated authentication
+ */
+class Auth
+{
+    var $_dispatcher = null;
+    var $_user;
+    
+    function Auth(&amp;$dispatcher)
+    {
+         $this-&gt;_dispatcher = &amp;$dispatcher;
+    }
+    
+    function login($username, $password)
+    {
+        // Your code that authenticates goes here
+        // ....
+        // imagine $this-&gt;_user contains a User object
+        
+        $notification = $this-&gt;_dispatcher-&gt;post($this-&gt;_user, &#039;onLogin&#039;);
+        
+        if ($notification-&gt;isNotificationCancelled()) {
+            echo &quot;You are not allowed to login&quot;;
+            $this-&gt;_user-&gt;logout();
+        }
+    }
+}
+
+function logAuth(&amp;$notification)
+{
+    $user = &amp;$notification-&gt;getNotificationObject();
+    $username = $user-&gt;getUsername();
+    
+    // If a special user authenticated, cancel
+    // the notification
+    if ($username === &#039;foo&#039;) {
+        $notification-&gt;cancelNotification();
+    } else {
+        // write logfile
+        error_log(&quot;$username logged in.&quot;, 3, &#039;/tmp/auth.log&#039;);
+    }
+}
+
+$dispatcher = &amp;Event_Dispatcher::getInstance();
+
+// catch all onLogin events to write a logfile
+$dispatcher-&gt;addObserver(&#039;logAuth&#039;, &#039;onLogin&#039;);
+
+$auth = &amp;new Auth($dispatcher);
+
+// simulate login
+$auth-&gt;login($_GET[&#039;user&#039;], $_GET[&#039;pass&#039;]);
+?&gt;</code></pre>
+   <p>In this case, the <strong>cancelNotification()</strong> method is
+    used to cancel the notification if a certain user tries to
+    authenticate.</p>
+   <p>The login method has been changed as well to check whether the notification
+    has been cancelled and to take the necessary steps.</p>
+   <p>This allows you to add some flexible rules to your authentication system.</p>
+</section>
+<section id="package-event-event-dispatcher-event-dispatcher-getinstance">
+<h2>Event_Dispatcher::getInstance</h2>
+<h3>Synopsis</h3>
+    
+      
+      require_once &#039;Event/Dispatcher.php&#039;;
+     
+     <p><code>
+      object Event_Dispatcher <strong>Event_Dispatcher::getInstance</strong> ( 
+      string $name = &#039;__default&#039;
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Create a new Event_Dispatcher object.</p>
+     <p>As Event_Dispatcher uses the singleton pattern, you must not use the new operator
+      to create a new instance of Event_Dispatcher, but use <strong>getInstance()</strong>
+      instead.</p>
+     <p>If you need more than one instance of Event_Dispatcher, pass different names to the
+      method.</p>
+    
+   
+    <h3>Parameter</h3>
+    <ul>
+     <li>
+      
+       string <code>$name = &#039;__default&#039;</code>
+      
+     </li>
+    </ul>
+    
+   
+   
+    <h3>Return value</h3>
+    <p><em>object Event_Dispatcher</em> Event_Dispatcher instance</p>
+   
+   
+    <h3>Note</h3>
+    <p>This function should be called
+statically.</p>
+</section>
+<section id="package-event-event-dispatcher-event-dispatcher-getname">
+<h2>Event_Dispatcher::getName</h2>
+<h3>Synopsis</h3>
+    
+      
+      require_once &#039;Event/Dispatcher.php&#039;;
+     
+     <p><code>
+      string <strong>Event_Dispatcher::getName</strong> ( 
+      
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Get the name of the dispatcher.</p>
+     <p>The name of the dispatcher is used as a unique identifier. This is important
+      for the methods <strong>getInstance()</strong> and <strong>removeNestedDispatcher()</strong>.</p>
+    
+   
+    <h3>Return value</h3>
+    <p><em>string</em> name of the dispatcher</p>
+   
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-event-event-dispatcher-event-dispatcher-addobserver">
+<h2>Event_Dispatcher::addObserver</h2>
+<h3>Synopsis</h3>
+    
+      
+      require_once &#039;Event/Dispatcher.php&#039;;
+     
+     <p><code>
+      void <strong>Event_Dispatcher::addObserver</strong> ( 
+      mixed $callback
+       , string $nName = EVENT_DISPATCHER_GLOBAL
+       , string $class = &#039;&#039;
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Adds a new observer to the dispatcher.</p>
+     <p>Observers are PHP callbacks. That means you may either pass a function name as a string or
+      an array containing an object or class and a method to call.</p>
+     <p>The callback is used as a signature for the observer, which allows you to remove it
+      by passing the exact same parameters to <strong>removeObserver()</strong>.</p>
+    
+   
+    <h3>Parameter</h3>
+    <ul>
+     <li>
+      
+       mixed <code>$callback</code>
+      
+      
+       Callback to notity, may either be a string containing the name of a global function
+       or an array containing class or object and the name of the method to call.
+      
+     </li>
+     <li>
+      
+       string <code>$nName = EVENT_DISPATCHER_GLOBAL</code>
+      
+      
+       Acts as a filter: notify the observer only if the notification name matches the name
+       passed in this parameter. Use <strong>EVENT_DISPATCHER_GLOBAL</strong> if the
+       observer should be notified regardles of the notification name.
+      
+     </li>
+     <li>
+      
+       string <code>$class = &#039;&#039;</code>
+      
+      
+       Acts as a filter: notify the observer only if the sender of the notification matches
+       the class passed in this parameter.
+      
+     </li>
+    </ul>
+    
+   
+   
+    <h3>Return value</h3>
+    <p><em>void</em></p>
+   
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-event-event-dispatcher-event-dispatcher-removeobserver">
+<h2>Event_Dispatcher::removeObserver</h2>
+<h3>Synopsis</h3>
+    
+      
+      require_once &#039;Event/Dispatcher.php&#039;;
+     
+     <p><code>
+      bool <strong>Event_Dispatcher::removeObserver</strong> ( 
+      mixed $callback
+       , string $nName = EVENT_DISPATCHER_GLOBAL
+       , string $class = &#039;&#039;
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Remove an observer from dispatcher.</p>
+     <p>To remove an observer, specify the same parameters as used in the call to
+      <strong>addObserver()</strong>.</p>
+    
+   
+    <h3>Parameter</h3>
+    <ul>
+     <li>
+      
+       mixed <code>$callback</code>
+      
+      
+       Callback to notity, may either be a string containing the name of a global function
+       or an array containing class or object and the name of the method to call.
+      
+     </li>
+     <li>
+      
+       string <code>$nName = EVENT_DISPATCHER_GLOBAL</code>
+      
+      
+       Acts as a filter: notify the observer only if the notification name matches the name
+       passed in this parameter. Use <strong>EVENT_DISPATCHER_GLOBAL</strong> if the
+       observer should be notified regardles of the notification name.
+      
+     </li>
+     <li>
+      
+       string <code>$class = &#039;&#039;</code>
+      
+      
+       Acts as a filter: notify the observer only if the sender of the notification matches
+       the class passed in this parameter.
+      
+     </li>
+    </ul>
+    
+   
+   
+    <h3>Return value</h3>
+    <p><em>bool</em> <strong>TRUE</strong> if the observer could be removed, <strong>FALSE</strong> otherwise</p>
+   
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-event-event-dispatcher-event-dispatcher-setnotificationclass">
+<h2>Event_Dispatcher::setNotificationClass</h2>
+<h3>Synopsis</h3>
+    
+      
+      require_once &#039;Event/Dispatcher.php&#039;;
+     
+     <p><code>
+      bool <strong>Event_Dispatcher::setNotificationClass</strong> ( 
+      string $class
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Set the name of the class that will be used as a notification object when
+      <strong>post()</strong> is called.</p>
+     <p>You may call this method on an object to change it for a single dispatcher or statically,
+      to set the default for all dispatchers that will be created.</p>
+    
+   
+    <h3>Parameter</h3>
+    <ul>
+     <li>
+      
+       string <code>$class</code>
+      
+      
+       Name of the class that is used as a notification container when the
+       <strong>post()</strong> method is called. Make sure the class is loaded
+       before using it as notification class.
+      
+     </li>
+    </ul>
+    
+   
+   
+    <h3>Return value</h3>
+    <p>This method always returns true.</p>
+   
+   
+    <h3>Note</h3>
+    <p>This function can be called
+statically.</p>
+</section>
+<section id="package-event-event-dispatcher-event-dispatcher-post">
+<h2>Event_Dispatcher::post</h2>
+<h3>Synopsis</h3>
+    
+      
+      require_once &#039;Event/Dispatcher.php&#039;;
+     
+     <p><code>
+      object Event_Notification <strong>Event_Dispatcher::post</strong> ( 
+      object &amp;$object
+       , string $nName
+       , mixed $info = array()
+       , bool $pending
+        = true
+      
+       , bool $bubble
+        = true
+      
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Post a new notification to all observers.</p>
+    
+   
+    <h3>Parameter</h3>
+    <ul>
+     <li>
+      
+       object <code>&amp;$object</code>
+      
+      
+       Reference to the object that posts the notification (the sender). May be used
+       to filter notifications in the callbacks.
+      
+     </li>
+     <li>
+      
+       string <code>$nName</code>
+      
+      
+       Name of the notification.
+      
+     </li>
+     <li>
+      
+       mixed <code>$info = array()</code>
+      
+      
+       Additional information about the notification.
+      
+     </li>
+     <li>
+      
+       bool <code>$pending</code>
+        = true
+      
+      
+       Notifications are by default added to a pending notification list.
+       This way, if an observer is not registered by the time they are posted, it will
+       still be notified when it is added as an observer.
+      
+      
+       This behaviour can be turned off in order to make sure that only the registered
+       observers will be notified.
+      
+     </li>
+     <li>
+      
+       bool <code>$bubble</code>
+        = true
+      
+      
+       Notifications are by default added broadcasted to any nested dispatchers
+       that have been added using <strong>addNestedDispatcher()</strong>.
+      
+      
+       This behaviour can be turned off in order to make sure that only the observers
+       added the posting dispatcher will be notified. This allows you to differentiate
+       between global and local notifications.
+      
+     </li>
+    </ul>
+    
+   
+   
+    <h3>Return value</h3>
+    <p><em>object Event_Notification</em> The notification object.</p>
+   
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-event-event-dispatcher-event-dispatcher-addnesteddispatcher">
+<h2>Event_Dispatcher::addNestedDispatcher</h2>
+<h3>Synopsis</h3>
+    
+      
+      require_once &#039;Event/Dispatcher.php&#039;;
+     
+     <p><code>
+      void <strong>Event_Dispatcher::addNestedDispatcher</strong> ( 
+      object Event_Dispatcher &amp;$dispatcher
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Adds a nested dispatcher to the dispatcher.</p>
+     <p>Nested dispatchers allow you to create event bubbling like it is implemented in
+      Javascript. After an event has been posted to all observers of the dispatcher, it
+      will be broadcasted to all nested dispatchers.</p>
+     <p>If you have one dispatcher that dispatches events of a component in your framework
+      and one dispatcher that dispatches global events that are triggered by the framework itself
+      it could make sense that you nest these dispatchers, so that events posted by the component
+      dispatcher will also be broadcasted to the global dispatcher.</p>
+    
+   
+    <h3>Parameter</h3>
+    <ul>
+     <li>
+      
+       object Event_Dispatcher <code>&amp;$dispatcher</code>
+      
+      
+       Dispatcher that should be added as a nested dispatcher to the current dispatcher.
+      
+     </li>
+    </ul>
+    
+   
+   
+    <h3>Return value</h3>
+    <p><em>void</em></p>
+   
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-event-event-dispatcher-event-dispatcher-removenesteddispatcher">
+<h2>Event_Dispatcher::removeNestedDispatcher</h2>
+<h3>Synopsis</h3>
+    
+      
+      require_once &#039;Event/Dispatcher.php&#039;;
+     
+     <p><code>
+      boolean <strong>Event_Dispatcher::removeNestedDispatcher</strong> ( 
+      object Event_Dispatcher &amp;$dispatcher
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Removes a nested dispatcher from the dispatcher.</p>
+     <p>To remove a dispatcher from the list of nested dispatcher, just pass the same
+      object to <strong>removeNestedDispatcher()</strong>.</p>
+    
+   
+    <h3>Parameter</h3>
+    <ul>
+     <li>
+      
+       object Event_Dispatcher <code>&amp;$dispatcher</code>
+      
+      
+       Dispatcher that should be removed from the list of nested dispatchers.
+      
+     </li>
+    </ul>
+    
+   
+   
+    <h3>Return value</h3>
+    <p><em>boolean</em> <strong>TRUE</strong> if the dispatcher could be removed, <strong>FALSE</strong> otherwise.</p>
+   
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-event-event-dispatcher-event-notification">
+<h2>Event_Notification</h2>
+<h3>Description</h3>
+  <p>The <strong>Event_Notification</strong> class acts as a container
+   for event information. It provides some setters and getters to access
+   the contained information.</p>
+  <p>If you need to store additional information about the events or provide 
+   additional features, you may change the class that is used by
+   <strong>Event_Dispatcher</strong>, but it is recommended to extend
+   <strong>Event_Notification</strong>.</p>
+</section>
+<section id="package-event-event-dispatcher-event-notification-event-notification">
+<h2>Event_Notification::Event_Notification</h2>
+<h3>Synopsis</h3>
+    
+      
+      require_once &#039;Event/Notification.php&#039;;
+     
+     <p><code>
+      object Event_Notification <strong>Event_Notification::Event_Notifcation</strong> ( 
+      object &amp;$object
+       , string $nName
+       , mixed $info = array()
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Constructor of the Event_Notification class.</p>
+     <p>In most cases, you will not need to create the notification objects yourself,
+      as this is done automatically by the <strong>Event_Dispatcher::post()</strong>
+      method..</p>
+    
+   
+    <h3>Parameter</h3>
+    <ul>
+     <li>
+      
+       object <code>&amp;$object</code>
+      
+      
+       Reference to the object that posts the notification (the sender). May be used
+       to filter notifications in the callbacks.
+      
+     </li>
+     <li>
+      
+       string <code>$nName</code>
+      
+      
+       Name of the notification.
+      
+     </li>
+     <li>
+      
+       mixed <code>$info = array()</code>
+      
+      
+       Additional information about the notification.
+      
+     </li>
+    </ul>
+    
+   
+   
+    <h3>Return value</h3>
+    <p><em>string</em> name of the notification</p>
+   
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-event-event-dispatcher-event-notification-getnotificationname">
+<h2>Event_Notification::getNotificationName</h2>
+<h3>Synopsis</h3>
+    
+      
+      require_once &#039;Event/Notification.php&#039;;
+     
+     <p><code>
+      string <strong>Event_Notification::getNotificationName</strong> ( 
+      
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Get the name of the notification.</p>
+    
+   
+    <h3>Return value</h3>
+    <p><em>string</em> name of the notification</p>
+   
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-event-event-dispatcher-event-notification-getnotificationobject">
+<h2>Event_Notification::getNotificationObject</h2>
+<h3>Synopsis</h3>
+    
+      
+      require_once &#039;Event/Notification.php&#039;;
+     
+     <p><code>
+      object <strong>&amp;Event_Notification::getNotificationObject</strong> ( 
+      
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Get a reference to the object that sent the notification.</p>
+    
+   
+    <h3>Return value</h3>
+    <p><em>object</em> sender of the notification</p>
+   
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-event-event-dispatcher-event-notification-getnotificationinfo">
+<h2>Event_Notification::getNotificationInfo</h2>
+<h3>Synopsis</h3>
+    
+      
+      require_once &#039;Event/Notification.php&#039;;
+     
+     <p><code>
+      mixed <strong>Event_Notification::getNotificationInfo</strong> ( 
+      
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Get additional information that has been stored in the notification.</p>
+    
+   
+    <h3>Return value</h3>
+    <p><em>mixed</em> additional information.</p>
+   
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-event-event-dispatcher-event-notification-getnotificationcount">
+<h2>Event_Notification::getNotificationCount</h2>
+<h3>Synopsis</h3>
+    
+      
+      require_once &#039;Event/Notification.php&#039;;
+     
+     <p><code>
+      int <strong>Event_Notification::getNotificationCount</strong> ( 
+      
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Retrieves the amount of observers that have been notified by the notification.</p>
+    
+   
+    <h3>Return value</h3>
+    <p><em>int</em> number of observers notified.</p>
+   
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-event-event-dispatcher-event-notification-cancelnotification">
+<h2>Event_Notification::cancelNotification</h2>
+<h3>Synopsis</h3>
+    
+      
+      require_once &#039;Event/Notification.php&#039;;
+     
+     <p><code>
+      void <strong>Event_Notification::cancelNotification</strong> ( 
+      
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Cancels the notification.</p>
+     <p>If a notification is cancelled, no more observers will be notified
+      by this notification.</p>
+    
+   
+    <h3>Return value</h3>
+    <p><em>void</em></p>
+   
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-event-event-dispatcher-event-notification-isnotificationcancelled">
+<h2>Event_Notification::isNotificationCancelled</h2>
+<h3>Synopsis</h3>
+    
+      
+      require_once &#039;Event/Notification.php&#039;;
+     
+     <p><code>
+      bool <strong>Event_Notification::isNotificationCancelled</strong> ( 
+      
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Checks, whether the notification has been cancelled.</p>
+    
+   
+    <h3>Return value</h3>
+    <p><em>bool</em> <strong>TRUE</strong> if the notification has been cancelled, <strong>FALSE</strong> otherwise.</p>
+   
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

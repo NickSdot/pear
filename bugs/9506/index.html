@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9506</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/Services_Pingback/index.html">Services_Pingback</a> &#187; Bug #9506</h1>
+<p>Use HTTP_Request to know if an URI is valid</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-30 03:42 UTC</td></tr>
+<tr><th>From</th><td>pfischer at php dot net</td></tr>
+<tr><th>Assigned</th><td>firman</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Services_Pingback/index.html">Services_Pingback</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-30 03:42 UTC] pfischer at php dot net</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>First of all, thanks for your package, we are using it @ Jaws Project for supporting pingback.</p>
+<p>The reason of this &#039;bug report&#039; is to let you know a little bug I found. Currently you validate an URI by calling fopen which is *OK*, however fopen has some limitations with some URLs (like those that use query strings or path info: index.php/foo/bar).</p>
+<p>And example of this happens when the discover/source/target URIs are very similar to http://www.example.com/index.php/foo/bar (using PATH_INFO). With the current release it will return false which is not correct cause maybe the sourceURI/targetURI uses PATH_INFO (like WP/Jaws/others).</p>
+<p>So, the most *reasonable* way to fix this is to do the same that RPC (and some parts of Pingback) does: use fsockopen/HTTP_Request which does:</p>
+<p>1. Open a socket (fsockopen)<br>
+ 2. Get headers<br>
+ 3. If responseCode == 200 then the URI is valid.</p>
+<p>I&#039;m sending a patch for this (already tested with some WP/Jaws posts).</p>
+<p>Thanks for the package!</p>
+<p>Test script:<br>
+---------------<br>
+    function isURIExist($uri)<br>
+    {<br>
+        $params = array(<br>
+                        &#039;timeout&#039;           =&gt; 3,<br>
+                        &#039;allowRedirects&#039;    =&gt; true, <br>
+                        &#039;maxRedirects&#039;      =&gt; 2,<br>
+                        );</p>
+<p>$req = new HTTP_Request($uri, $params);</p>
+<p>$req-&gt;sendRequest();<br>
+        if (PEAR::isError($req)) {<br>
+            return false;<br>
+        }</p>
+<p>if ($req-&gt;getResponseCode() == 200) {<br>
+            return true;<br>
+        }<br>
+        return false;       <br>
+    }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

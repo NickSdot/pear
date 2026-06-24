@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6417</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #6417</h1>
+<p>Incorrect getRight result with field param `right_level`</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-05 11:40 UTC</td></tr>
+<tr><th>From</th><td>michiel at dinnersite dot nl</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.0</td></tr>
+<tr><th>OS</th><td>Linux mandrake 9.0</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-05 11:40 UTC] michiel at dinnersite dot nl</h3>
+<p>Description:<br>
+------------<br>
+SELECT liveuser_rights.right_id AS right_id, liveuser_userrights.right_level AS right_level, liveuser_rights.area_id AS area_id, liveuser_rights.right_define_name AS right_define_name, liveuser_rights.has_implied AS has_implied FROM liveuser_rights, liveuser_userrights WHERE liveuser_rights.right_id IN (&#039;11&#039;) AND liveuser_rights.right_id = liveuser_userrights.right_id</p>
+<p>Array<br>
+(<br>
+    [filters] =&gt; Array<br>
+        (<br>
+            [perm_user_id] =&gt; 8<br>
+        )</p>
+<p>[inherited] =&gt; 1<br>
+    [implied] =&gt; 1<br>
+    [rekey] =&gt; 1<br>
+    [fields] =&gt; Array<br>
+        (<br>
+            [0] =&gt; right_id<br>
+            [1] =&gt; right_level<br>
+            [2] =&gt; area_id<br>
+            [3] =&gt; right_define_name<br>
+            [4] =&gt; has_implied<br>
+        )</p>
+<p>[select] =&gt; all<br>
+)</p>
+<p>The situation:</p>
+<p>We have a group and a user. The user is part of the group.</p>
+<p>The group has the Right `WRITE` assigned. The `READ` right is implied by the `WRITE` right.</p>
+<p>The user inherits the right because of it&#039;s membership to this group. The user has the READ right because it&#039;s implied by the WRITE right.</p>
+<p>The problem:</p>
+<p>I want to retrieve all the rights of this user. This works fine, except for one problem. If I retrieve the right through the getRights function with the following params:</p>
+<p>Array<br>
+(<br>
+    [filters] =&gt; Array<br>
+        (<br>
+            [perm_user_id] =&gt; 8<br>
+        )</p>
+<p>[inherited] =&gt; 1<br>
+    [implied] =&gt; 1<br>
+    [rekey] =&gt; 1<br>
+)</p>
+<p>I get a proper result. All the rights are there. However, I need the right_level included in the result, so I defined the <br>
+fields list. Now my params array looks like this:</p>
+<p>Array<br>
+(<br>
+    [filters] =&gt; Array<br>
+        (<br>
+            [perm_user_id] =&gt; 8<br>
+        )</p>
+<p>[inherited] =&gt; 1<br>
+    [implied] =&gt; 1<br>
+    [rekey] =&gt; 1<br>
+    [fields] =&gt; Array<br>
+        (<br>
+            [0] =&gt; right_id<br>
+            [1] =&gt; area_id<br>
+            [2] =&gt; right_level<br>
+            [3] =&gt; right_define_name<br>
+            [4] =&gt; has_implied<br>
+        )<br>
+)</p>
+<p>Just to clarify: I get NO errors from the LUA-&gt;getErrors() with these params.</p>
+<p>The result I get is as follow:</p>
+<p>Array<br>
+(<br>
+    [1] =&gt; Array<br>
+        (<br>
+            [area_id] =&gt; 1<br>
+            [right_define_name] =&gt; WRITE<br>
+            [has_implied] =&gt; 1<br>
+            [_type] =&gt; inherited<br>
+        )<br>
+)</p>
+<p>while I expected:</p>
+<p>Array<br>
+(<br>
+    [1] =&gt; Array<br>
+        (<br>
+            [area_id] =&gt; 1<br>
+            [right_define_name] =&gt; WRITE<br>
+            [has_implied] =&gt; 1<br>
+            [_type] =&gt; inherited<br>
+        )<br>
+    [2] =&gt; Array<br>
+        (<br>
+            [area_id] =&gt; 1<br>
+            [right_define_name] =&gt; READ<br>
+            [has_implied] =&gt; <br>
+            [_type] =&gt; implied<br>
+        )<br>
+)</p>
+<p>The problem: All the granted and inherited rights are correctly fetched. The implied rights are not fetched.</p>
+<p>The problem is with the custom field `right_level` I included. If I remove this right everything works fine. I do need this field though for granting and revoking rights.</p>
+<p>The query generated for the getImpliedRights getRight call is as follows:</p>
+<p>SELECT liveuser_rights.right_id AS right_id, liveuser_userrights.right_level AS right_level, liveuser_rights.area_id AS area_id, liveuser_rights.right_define_name AS right_define_name, liveuser_rights.has_implied AS has_implied FROM liveuser_rights, liveuser_userrights WHERE liveuser_rights.right_id IN (&#039;11&#039;) AND liveuser_rights.right_id = liveuser_userrights.right_id</p>
+<p>The problem here is the last where restriction `liveuser_rights.right_id = liveuser_userrights.right_id`, this relation doesn&#039;t exist because the right is inherited instead of granted (ie: the right_id doesn&#039;t exist in the userrights table but in the grouprights table).</p>
+<p>With the right_level field removed the query is as follows:</p>
+<p>SELECT right_id AS right_id, area_id AS area_id, right_define_name AS right_define_name, has_implied AS has_implied FROM liveuser_rights WHERE right_id IN (&#039;11&#039;)</p>
+<p>This query does give a proper result. The query problem is that it only checks on the userrights table but not on the grouprights table.</p>
+<p>A small note:</p>
+<p>The rights mentioned above are fictional. My right/user structure is identical though.</p>
+</section>
+<section>
+<h3>[2006-01-05 11:47 UTC] michiel at dinnersite dot nl</h3>
+<p>The first query is an accidental copy-paste, sorry about that.</p>
+</section>
+<section>
+<h3>[2006-01-05 18:31 UTC] michiel at dinnersite dot nl</h3>
+<p>I emailed the dump to you.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

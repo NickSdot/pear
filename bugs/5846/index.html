@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5846</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth/index.html">Auth</a> &#187; Bug #5846</h1>
+<p>Auth_Container_File broken when using Auth_HTTP</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-02 02:21 UTC</td></tr>
+<tr><th>From</th><td>ahayes at wcg dot net dot au</td></tr>
+<tr><th>Assigned</th><td>aashley</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Auth/index.html">Auth</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Fedora Core 3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-02 02:21 UTC] ahayes at wcg dot net dot au</h3>
+<p>Description:<br>
+------------<br>
+There seems to be a problem when using Auth_Container_File as a storage container with Auth_HTTP.</p>
+<p>This is because Auth_HTTP expects to recieve an array of options, which will then create an instance of Auth_Container_File with that array of options, however Auth_Container_File has been created to recieve a string for the file name.</p>
+<p>For instance, the Auth_Container_DB object recieves an array [1]</p>
+<p>However, the Auth_Container_File treats its input as a string [2]</p>
+<p>As far as I am aware this means it is not possible to use the HTTP_Auth package with the file storage container, however I could be wrong, in which case it would be nice to have an example in the documentation.</p>
+<p>My solution to fix the problem is as in [3] and you would call it as in [4]</p>
+<p>---------------------------------</p>
+<p>[1] Auth/Container/DB.php line 67</p>
+<p>function Auth_Container_DB($dsn) {<br>
+    $this-&gt;_setDefaults();</p>
+<p>if (is_array($dsn)) {<br>
+        $this-&gt;_parseOptions($dsn);</p>
+<p>if (empty($this-&gt;options[&#039;dsn&#039;])) {<br>
+            PEAR::raiseError(&#039;No connection parameters specified!&#039;);<br>
+        }<br>
+    } else {<br>
+        $this-&gt;options[&#039;dsn&#039;] = $dsn;<br>
+    }<br>
+}</p>
+<p>---------------------------------</p>
+<p>[2] Auth/Container/File.php line 55</p>
+<p>function Auth_Container_File($file)<br>
+{<br>
+    $this-&gt;pwfile = $file;<br>
+}</p>
+<p>---------------------------------</p>
+<p>[3] Auth/Container/File.php line 55</p>
+<p>function Auth_Container_File($file)<br>
+{<br>
+    if(is_array($file)) {<br>
+        $this-&gt;pwfile = $file[&#039;file&#039;];<br>
+    } else {<br>
+        $this-&gt;pwfile = $file;<br>
+    }<br>
+}</p>
+<p>---------------------------------</p>
+<p>[4] test-mod.php</p>
+<p>&lt;?php  <br>
+// example of Auth_HTTP implementation with encrypted password and multiple columns fetch</p>
+<p>require_once(&quot;Auth/HTTP.php&quot;);</p>
+<p>// setting the database connection options<br>
+$AuthOptions = array(<br>
+	&#039;file&#039; =&gt; &#039;./auth.passwd&#039;<br>
+);</p>
+<p>$a = new Auth_HTTP(&quot;File&quot;, $AuthOptions);</p>
+<p>$a-&gt;setRealm(&#039;Blah&#039;);            // realm name<br>
+$a-&gt;setCancelText(&#039;&lt;h2&gt;Error 401&lt;/h2&gt;&#039;);        // error message if authentication fails<br>
+$a-&gt;start();                    // starting the authentication process</p>
+<p>if($a-&gt;getAuth())                // checking for autenticated user <br>
+{<br>
+    echo &quot;Hello $a-&gt;username welcome to my secret page&quot;;<br>
+};</p>
+<p>?&gt;</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php  <br>
+// example of Auth_HTTP implementation with encrypted password and multiple columns fetch</p>
+<p>require_once(&quot;Auth/HTTP.php&quot;);</p>
+<p>// setting the database connection options<br>
+$AuthOptions = &#039;./auth.passwd&#039;;</p>
+<p>$a = new Auth_HTTP(&quot;File&quot;, $AuthOptions);</p>
+<p>$a-&gt;setRealm(&#039;yourrealm&#039;);            // realm name<br>
+$a-&gt;setCancelText(&#039;&lt;h2&gt;Error 401&lt;/h2&gt;&#039;);        // error message if authentication fails<br>
+$a-&gt;start();                    // starting the authentication process</p>
+<p>if($a-&gt;getAuth())                // checking for autenticated user <br>
+{<br>
+    echo &quot;Hello $a-&gt;username welcome to my secret page&quot;;</p>
+<p>};</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Hello user welcome to my secret page</p>
+<p>Actual result:<br>
+--------------<br>
+&quot;Error 401&quot;</p>
+<p>Does not auth, as it will not find the file name.</p>
+</section>
+<section>
+<h3>[2006-02-21 05:03 UTC] aashley at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

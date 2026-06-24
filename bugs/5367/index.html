@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5367</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Configuration &#187; <a href="package/Config/index.html">Config</a> &#187; Bug #5367</h1>
+<p>XML Rootnode Attributes aren&#039;t exported</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-09-12 12:18 UTC</td></tr>
+<tr><th>From</th><td>stephan at wentz dot it</td></tr>
+<tr><th>Assigned</th><td>mansion</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Config/index.html">Config</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-09-12 12:18 UTC] stephan at wentz dot it</h3>
+<p>Description:<br>
+------------<br>
+Exporting this array</p>
+<p>Array<br>
+  (<br>
+    [@] =&gt; Array<br>
+      (<br>
+        [revision] =&gt; 15<br>
+      )<br>
+    [content_str] =&gt; [headline]<br>
+    [align] =&gt; right<br>
+    [size] =&gt; medium<br>
+    [color] =&gt; FF3333<br>
+  )</p>
+<p>to XML with Config 1.10.4 doesn&#039;t add the revision-attribute to the rootnode.</p>
+<p>This can be achieved easily, replace line 198</p>
+<p>$string .= &#039;&lt;&#039;.$this-&gt;options[&#039;name&#039;].&#039;&gt;&#039;.$this-&gt;options[&#039;linebreak&#039;];</p>
+<p>with</p>
+<p>$string .= &#039;&lt;&#039;.$this-&gt;options[&#039;name&#039;];<br>
+  $string .= ($this-&gt;options[&#039;useAttr&#039;]) ? XML_Util::attributesToString($obj-&gt;attributes) : &#039;&#039;;<br>
+  $string .= &#039;&gt;&#039;.$this-&gt;options[&#039;linebreak&#039;];</p>
+<p>and it will add the attributes to the rootnode.</p>
+<p>Test script:<br>
+---------------<br>
+$data = array(<br>
+  &#039;@&#039; =&gt; array(<br>
+    &#039;revision&#039; =&gt; 15<br>
+  ),<br>
+  &#039;content_str&#039; =&gt; &#039;[headline]&#039;<br>
+);</p>
+<p>$conf = new Config;<br>
+$root =&amp; $conf-&gt;parseConfig($data, &#039;PHPArray&#039;, array(&#039;name&#039;=&gt;&#039;data&#039;));<br>
+print_r($root-&gt;toString(&#039;XML&#039;, array(&#039;name&#039;=&gt;&#039;data&#039;, &#039;useCData&#039;=&gt;true)));</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;ISO-8859-1&quot; ?&gt; <br>
+&lt;data revision=&quot;15&quot;&gt;<br>
+ &lt;content_str&gt;<br>
+  &lt;![CDATA[ [headline] ]]&gt; <br>
+ &lt;/content_str&gt;<br>
+&lt;/data&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;ISO-8859-1&quot; ?&gt; <br>
+&lt;data&gt;<br>
+ &lt;content_str&gt;<br>
+  &lt;![CDATA[ [headline] ]]&gt; <br>
+ &lt;/content_str&gt;<br>
+&lt;/data&gt;</p>
+</section>
+<section>
+<h3>[2005-11-08 17:42 UTC] mansion at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

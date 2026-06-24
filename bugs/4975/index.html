@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4975</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_LDAP/index.html">Net_LDAP</a> &#187; Bug #4975</h1>
+<p>Net_LDAP::connect always throws an exception</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-02 21:02 UTC</td></tr>
+<tr><th>From</th><td>christoph dot rauch at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>delatbabel</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_LDAP/index.html">Net_LDAP</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-02 21:02 UTC] christoph dot rauch at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Due to an bug in line 209 in Net_LDAP 1.19.2.10, raiseError always gets called with an exception if the bind fails because of invalid credentials.</p>
+<p>The new line 209 should be like this or similar</p>
+<p>return $this-&gt;raiseError(&quot;Bind failed &quot; . ldap_error($this-&gt;_link) );</p>
+<p>The ldap_errno has nothing to do with the PEAR error cases.</p>
+<p>I looked in 1.19.2.11 and this bug has not been fixed yet.</p>
+</section>
+<section>
+<h3>[2006-02-06 15:16 UTC] scott at crisscott dot com</h3>
+<p>I think the real problem here is that the Net_LDAP_Error constructor is missing a message argument which means that when PEAR trys to create the error class, the error code is treated as the error mode.</p>
+<p>Net_LDAP_Error constructor:<br>
+function Net_LDAP_Error($code = NET_LDAP_ERROR, $mode = PEAR_ERROR_RETURN, $level = E_USER_NOTICE, $debuginfo = null)</p>
+<p>PEAR_Error constructor:<br>
+function PEAR_Error($message = &#039;unknown error&#039;, $code = null, $mode = null, $options = null, $userinfo = null)</p>
+<p>Notice the missing message argument. When the error class is instantiated, a message is always passed becuase the skipmsg argument (the last argument to raiseError) is never set to true. This message throws the arguments off by one and the error mode on a failed bind becomes 49 instead of 1.</p>
+</section>
+<section>
+<h3>[2006-02-06 15:23 UTC] scott at crisscott dot com</h3>
+<p>Possible patch for error message issue:</p>
+<p>function Net_LDAP_Error(...)<br>
+{<br>
+    if (is_string($code)) {<br>
+        // A message was given. Drop it and call this<br>
+        // method again.<br>
+        $args = func_get_args();<br>
+        array_shift($args);<br>
+        return call_user_func_array(array(&#039;Net_LDAP_Error&#039;, &#039;Net_LDAP_Error&#039;), $args);<br>
+    }</p>
+<p>// ...<br>
+}</p>
+</section>
+<section>
+<h3>[2006-02-24 01:13 UTC] delatbabel at php dot net</h3>
+<p>Writing test case for this with PHPUnit.</p>
+</section>
+<section>
+<h3>[2006-02-24 01:47 UTC] delatbabel at php dot net</h3>
+<p>This should be fixed by adding the extra parameter back to the Net_LDAP_Error constructor -- this works in my local copy and will be committed back to CVS on the next run.</p>
+</section>
+<section>
+<h3>[2006-02-24 03:41 UTC] delatbabel at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

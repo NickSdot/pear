@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9351</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Version Control &#187; <a href="package/VersionControl_SVN/index.html">VersionControl_SVN</a> &#187; Bug #9351</h1>
+<p>log does not accept the &#039;limit&#039; switch</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-16 11:31 UTC</td></tr>
+<tr><th>From</th><td>kikcho at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>clay</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/VersionControl_SVN/index.html">VersionControl_SVN</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Any</td></tr>
+<tr><th>Roadmaps</th><td>0.3.1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-16 11:31 UTC] kikcho at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+The log svn command will not accept a limit argument.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?</p>
+<p>require_once(&#039;VersionControl/SVN.php&#039;);</p>
+<p>$switches = array(		&#039;username&#039;		=&gt;	&#039;&#039;,<br>
+											&#039;password&#039;		=&gt;	&#039;&#039;,<br>
+											&#039;limit&#039;				=&gt;	&#039;1&#039;<br>
+									);<br>
+$options = array(			&#039;fetchmode&#039;		=&gt;	VERSIONCONTROL_SVN_FETCHMODE_ASSOC);</p>
+<p>$svn = VersionControl_SVN::factory(&#039;log&#039;, $options);<br>
+$result = $svn-&gt;run(array(&#039;svn://example.com/repos&#039;), $switches);</p>
+<p>echo &quot;&lt;pre&gt;&quot;;<br>
+var_dump($svn-&gt;_prepped_cmd);<br>
+var_dump($result);</p>
+<p>?&gt;</p>
+<p>Here is a patch to fix this behavior:</p>
+<p>--- Log.php.orig        2006-11-16 11:33:26.000000000 +0000<br>
++++ Log.php.new 2006-11-16 11:33:02.000000000 +0000<br>
+@@ -159,7 +159,8 @@<br>
+                                 &#039;non-interactive&#039;,<br>
+                                 &#039;non_interactive&#039;,<br>
+                                 &#039;config-dir&#039;,<br>
+-                                &#039;config_dir&#039;<br>
++                                &#039;config_dir&#039;,<br>
++                                &#039;limit&#039;<br>
+                                 );</p>
+<p>@@ -224,6 +225,7 @@<br>
+                     case &#039;username&#039;:<br>
+                     case &#039;password&#039;:<br>
+                     case &#039;config-dir&#039;:<br>
++                    case &#039;limit&#039;:<br>
+                         $_switches .= &quot;--$switch $val &quot;;<br>
+                         break;<br>
+                     case &#039;r&#039;:</p>
+<p>Expected result:<br>
+----------------<br>
+You should only get a single log entry.</p>
+<p>Actual result:<br>
+--------------<br>
+You see ALL log entries</p>
+</section>
+<section>
+<h3>[2006-11-16 11:33 UTC] kikcho at gmail dot com</h3>
+<p>Sorry about the bad-looking test script, my first post here.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

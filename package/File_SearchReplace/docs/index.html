@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File_SearchReplace Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File System &#187; <a href="package/File_SearchReplace/index.html">File_SearchReplace</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-intro">Introduction</a>
+</li>
+<li><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-file-searchreplace">File_SearchReplace::File_SearchReplace()</a>
+</li>
+<li><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-getnumoccurences">File_SearchReplace::getNumOccurences()</a>
+</li>
+<li><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-dosearch">File_SearchReplace::doSearch()</a>
+</li>
+<li><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-setdirectories">File_SearchReplace::setDirectories()</a>
+</li>
+<li><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-setfiles">File_SearchReplace::setFiles()</a>
+</li>
+<li><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-setfind">File_SearchReplace::setFind()</a>
+</li>
+<li><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-setincludesubdir">File_SearchReplace::setIncludeSubdir()</a>
+</li>
+<li><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-setreplace">File_SearchReplace::setReplace()</a>
+</li>
+<li><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-setsearchfunction">File_SearchReplace::setSearchFunction()</a>
+</li></ul>
+</nav>
+<p>Provides an API for replacing text in files</p>
+<section id="package-filesystem-file-searchreplace-intro">
+<h2>Introduction</h2>
+<h3>Using</h3>
+
+   
+   <p>With <strong>SearchReplace</strong>, you can replace
+    a text in as many as desired files by another.</p>
+   <p><strong>Typical usage</strong></p>
+    
+     <pre><code>&lt;?php
+include &#039;File/SearchReplace.php&#039; ;
+$files = array( &quot;test1.txt&quot;,
+                &quot;test2.txt&quot;,
+                &quot;test3.txt&quot; ) ;
+$ignoreline = array( &quot;#&quot;, &quot;:&quot;) ;
+$snr = new File_SearchReplace( &quot;Yes&quot;, &quot;No&quot;, $files, &quot;/mail/&quot;, false,
+                            $ignoreline) ;
+$snr -&gt; doSearch() ;
+?&gt;</code></pre>
+   
+   <p>The example replaces all occurences of <code>&quot;Yes&quot;</code> with
+    <code>&quot;No&quot;</code> in the given $files and in all files in the
+    directory <code>&quot;/mail/&quot;</code>. If a line in a file starts
+    with one of the chars in <code>$ignoreline</code>, possible
+    matches will be ignored.</p>
+   <p>You can do a new search without creating a new instance of the class.</p>
+   <p><strong>Do a new search</strong></p>
+    
+     <pre><code>&lt;?php
+...
+// string to search
+$snr -&gt; setFind( &quot;Er&quot;) ;
+// string to find
+$snr -&gt; setReplace( &quot;Sie&quot;) ;
+// look in this files
+$snr -&gt; setFiles( $files) ;
+// look in this directories
+$snr -&gt; setDirectories( array( &quot;/neue_briefe/&quot;)) ;
+// look in the subdirectories too
+$snr -&gt; setIncludeSubdir( true) ;
+// ignore lines in the files starting with this chars
+$snr -&gt; setIgnoreLines( array( &quot;::&quot;, &quot;#&quot;)) ;
+// restart search&#039;n&#039;replace
+$snr -&gt; doSearch() ;
+?&gt;</code></pre>
+   
+  
+
+  <h3>Types of search functions</h3>
+
+   
+   <p><strong>File_SearchReplace</strong> supports different
+    kinds of search functions. The type directly influence the format
+    of the required <code>$find</code>-parameter</p><ul>
+        <li>
+            <code>normal</code> - default, the
+            only type supporting the 
+            <code>$IgnoreLines</code>-parameter
+        </li>
+        <li>
+            <code>quick</code>
+             - use <strong>str_replace()</strong>
+        </li>
+        <li>
+            <code>preg</code>
+             - use <strong>preg_replace()</strong>
+        </li>
+        <li>
+            <code>ereg</code>
+             - use <strong>ereg_replace()</strong>
+        </li>
+    </ul><p>To set the type, call <a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-setsearchfunction">
+    <strong>setSearchFunction()</strong></a> before <a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-dosearch">
+    <strong>doSearch()</strong></a>.</p>
+</section>
+<section id="package-filesystem-file-searchreplace-file-searchreplace">
+<h2>File_SearchReplace::File_SearchReplace()</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/SearchReplace.php&#039;;
+     
+    <p><code>
+     void
+     <strong>File_SearchReplace::File_SearchReplace</strong> ( 
+     
+      mixed $find
+     
+      , 
+      mixed $replace
+     
+      , 
+      string $files
+     
+      , 
+      mixed $directories = &#039;&#039;
+     
+      , 
+      boolean
+      $include_subdir
+       = true
+     
+      , 
+      array $ignore_lines = array()
+     
+    )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Constructor</p>
+   
+   
+    <h3>Parameter</h3>
+    <ul>
+     <li>
+      
+       <code>mixed $find</code> - the string/regex or array
+       of strings/regexes to find
+      
+     </li>
+     <li>
+      
+       <code>mixed $replace</code> - the string/regex or
+       array of strings/regexes to replace $find
+      
+     </li>
+     <li>
+      
+       <code>array $files</code> - the file(s) to perform
+       this operation on.
+      
+     </li>
+     <li>
+      
+       <code>array $directories</code> - the directories
+       to perform this operation on.
+      
+     </li>
+     <li>
+      
+       <code>boolean $include_subdir</code> - if performing on
+       directories, whether to traverse subdirectories.
+      
+     </li>
+     <li>
+      
+       <code>array $ignore_lines</code> - ignore lines beginning
+       with any of the strings in this array. This feature only
+       works with the &quot;normal&quot; search.
+      
+     </li>
+    </ul>
+    
+   
+   
+    <h3>Note</h3>
+    <p>This function can be called
+statically.</p>
+</section>
+<section id="package-filesystem-file-searchreplace-getnumoccurences">
+<h2>File_SearchReplace::getNumOccurences()</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/SearchReplace.php&#039;;
+          
+    <p><code>
+     integer
+     <strong>File_SearchReplace::getNumOccurences</strong> ( 
+     
+     
+    )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Returns the number of replaced strings after a 
+     <a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-dosearch">
+      <strong>File_SearchReplace::doSearch()</strong></a> call.</p>
+      
+   
+    <h3>Return value</h3>
+    <p><code>integer</code> - the number of occurences</p>
+                  
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-filesystem-file-searchreplace-dosearch">
+<h2>File_SearchReplace::doSearch()</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/SearchReplace.php&#039;;
+          
+    <p><code>
+     void
+      <strong>File_SearchReplace::doSearch</strong> ( 
+     
+     
+    )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Starts searching for the patterns and replaces them, if found.</p>
+      
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-filesystem-file-searchreplace-setdirectories">
+<h2>File_SearchReplace::setDirectories()</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/SearchReplace.php&#039;;
+          
+    <p><code>
+     void
+      <strong>File_SearchReplace::setDirectories</strong> ( 
+      
+       array $directories
+      
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Set the directories where the files to scan reside.</p>
+      
+   
+    <h3>Parameter</h3>
+    <ul>
+      <li>
+       
+        <code>string $directories</code> - 
+        the directories to perform
+       
+      </li>
+     </ul>     
+    
+         
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+               
+   
+    <h3>See</h3>
+    <p><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-file-searchreplace">
+      <strong>File_SearachReplace constructor()</strong></a></p>
+</section>
+<section id="package-filesystem-file-searchreplace-setfiles">
+<h2>File_SearchReplace::setFiles()</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/SearchReplace.php&#039;;
+          
+     <p><code>
+      void
+      <strong>File_SearchReplace::setFiles</strong> ( 
+      
+       array $files
+      
+     )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Set the files to scan.</p>
+      
+   
+    <h3>Parameter</h3>
+    <ul>
+      <li>
+       
+        <code>array $files</code> - the file(s) to scan
+       
+      </li>
+     </ul>     
+    
+         
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+               
+   
+    <h3>See</h3>
+    <p><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-file-searchreplace">
+      <strong>File_SearachReplace constructor()</strong></a></p>
+</section>
+<section id="package-filesystem-file-searchreplace-setfind">
+<h2>File_SearchReplace::setFind()</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/SearchReplace.php&#039;;
+          
+    <p><code>
+     void
+     <strong>File_SearchReplace::setFind</strong> ( 
+     
+        mixed $find
+     
+    )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Set the pattern for the string to find.</p>
+      
+   
+    <h3>Parameter</h3>
+    <ul>
+      <li>
+       
+        <code>mixed $find</code> - the string/regex or arrays of them to find
+       
+      </li>
+     </ul>     
+    
+         
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+               
+   
+    <h3>See</h3>
+    <p><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-file-searchreplace">
+      <strong>File_SearchReplace constructor()</strong></a></p>
+</section>
+<section id="package-filesystem-file-searchreplace-setincludesubdir">
+<h2>File_SearchReplace::setIncludeSubdir()</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/SearchReplace.php&#039;;
+          
+    <p><code>
+     void
+     <strong>File_SearchReplace::setIncludeSubdir</strong> ( 
+     
+        integer $include_subdir
+     
+    )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Enable or disable look up in sub directories for files to scan.</p>
+      
+   
+    <h3>Parameter</h3>
+    <ul>
+      <li>
+       
+        <code>boolean $inlude_subdir</code> - Whether to traverse
+        subdirectories or not.
+       
+      </li>
+     </ul>     
+    
+         
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+               
+   
+    <h3>See</h3>
+    <p><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-file-searchreplace">
+      <strong>File_SearachReplace constructor()</strong></a></p>
+</section>
+<section id="package-filesystem-file-searchreplace-setreplace">
+<h2>File_SearchReplace::setReplace()</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/SearchReplace.php&#039;;
+          
+    <p><code>
+     void
+     <strong>File_SearchReplace::setReplace</strong> ( 
+     
+        mixed $replace
+     
+    )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Set the replacment string.</p>
+      
+   
+    <h3>Parameter</h3>
+    <ul>
+      <li>
+       
+        <code>mixed $replace</code> - the string/regex or arrays of them
+        to replace found string/regex with.
+       
+      </li>
+     </ul>     
+    
+         
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+               
+   
+    <h3>See</h3>
+    <p><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-file-searchreplace">
+      <strong>File_SearchReplace constructor()</strong></a></p>
+</section>
+<section id="package-filesystem-file-searchreplace-setsearchfunction">
+<h2>File_SearchReplace::setSearchFunction()</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/SearchReplace.php&#039;;
+          
+    <p><code>
+     void
+     <strong>File_SearchReplace::setSearchFunction</strong> ( 
+     
+        array $search_function
+     
+    )</code></p>
+    
+   
+   
+    <h3>Description</h3>
+    <p>Function to determine which search function is used.</p>
+      
+   
+    <h3>Parameter</h3>
+    <ul>
+      <li>
+       
+       <code>$search_function</code> -  The search function that
+       should be used. Possible values: <code>&quot;normal&quot;</code>,
+       <code>&quot;quick&quot;</code>, <code>&quot;preg&quot;</code>,
+       <code>&quot;ereg&quot;</code>
+       
+      </li>
+     </ul>     
+    
+         
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+               
+   
+    <h3>See</h3>
+    <p><a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-file-searchreplace">
+      <strong>File_SearachReplace constructor()</strong></a>
+     ,<a href="package/File_SearchReplace/docs/index.html#package-filesystem-file-searchreplace-intro">&quot;Types of search
+       functions&quot;</a></p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

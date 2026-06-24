@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5838</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #5838</h1>
+<p>Reversion of: Bug #3601</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5838</th><td>Reversion of: Bug #3601</td></tr>
+<tr><th>Submitted</th><td>2005-11-01 02:00 UTC</td></tr>
+<tr><th>From</th><td>abriening at comcast dot net</td></tr>
+<tr><th>Assigned</th><td>olivierg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.1</td></tr>
+<tr><th>OS</th><td>WIN/MAC/LINUX</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-01 02:00 UTC] abriening at comcast dot net</h3>
+<p>Description:<br>
+------------<br>
+&quot;Bug #3601 htmlentities needed for data&quot;. If an application is going to store structured information such as html, it will probably make these changes on insert or on update not on retrieval, therefore the output of Structures_Datagrid should not use htmlentities()(unless specified in the formatter). An attempt to add links or html into the datagrid will require adding a dummy formatter that simply returns the content just to bypass htmlentities(). This doesn&#039;t seem very logical or efficient.</p>
+</section>
+<section>
+<h3>[2005-11-03 22:17 UTC] olivierg at php dot net</h3>
+<p>Storing formated data as html in a database is not a good practice from my point of view. The database is where unformatted information is supposed to be stored, then some application is responsible for formatting it in html, pdf, xml, whatever...</p>
+<p>For some CMS or Forum applications it may make sense, but I still consider that it is a bad practice, as it mixes information and formatting, which are two different things.</p>
+<p>That&#039;s why I consider that SDG&#039;s default behaviour is ok.</p>
+<p>Please note that the rendering layer of SDG is about to be rewritten (see bug #5859), and that it should be easier to modify such default behaviour in the future.</p>
+<p>Anyway, I agree that it must be possible to disable this behaviour for some specific needs.</p>
+</section>
+<section>
+<h3>[2005-11-04 05:33 UTC] abriening at comcast dot net</h3>
+<p>I don&#039;t want to get into an argument over separation.</p>
+<p>&quot;My aversion to a rule-of-thumb separating style from content comes partly from a belief that some style is content. Not style to attract attention, but style to inform.&quot;</p>
+<p>&quot;It’s style that cannot be dissected from content without bleeding away informative power.&quot;</p>
+<p>http://www.alistapart.com/articles/separation/</p>
+<p>I don&#039;t like this addition of htmlentites() because it is making an assumption of what I am asking it to do. I am asking it to ouput data from the database to a tabular structure, nothing more. The fact that in order to simply display information &quot;as-is&quot; requires a dummy formatter function (or extend the render class as in bug #5859) should be a flag that this is not the proper default.</p>
+</section>
+<section>
+<h3>[2005-11-08 18:47 UTC] olivierg at php dot net</h3>
+<p>I see your point, and am not a separation extremist myself.</p>
+<p>Now, let&#039;s try to forget theoretical considerations for one sec. Isn&#039;t the current deault behaviour the right one for most users ? (I do believe that it is). Isn&#039;t the solution simply to add a way to _disable_ html entities conversion ? For example : HTMLTable::setEntitiesConversion($status)</p>
+<p>Can you tell me what you were precisely trying to do when this behaviour disturbed you ?</p>
+</section>
+<section>
+<h3>[2005-11-17 22:34 UTC] daniel at assertio dot es</h3>
+<p>I have the same problem. I think it would be nice to be able to tell the renderer not to execute htmlentities on the cells. For now, I guess we should go for the &quot;dirty&quot; way of extending the HTML_Table renderer to disable this behaviour.</p>
+</section>
+<section>
+<h3>[2005-12-29 05:10 UTC] funkatron at gmail dot com</h3>
+<p>I also would like to see a way to turn off the htmlentities() application, either on a full table basis or a colum/cell basis.  I absolutely agree that the current behavior is the proper behavior in most cases for most users; I just happen to be a user who wrote his own framework that allows for application of callback funcs to modify cell contents (to, say, show an image instead of just the URL, or make an active link).  Without a &quot;disable htmlentites&quot; option, I&#039;ll need to rewrite a fair bit of code to re-map callbacks through the column formatter system (which I maybe should have done at the first place, looking back), or extend the renderer (which seems kind of silly to modify a single line of code).</p>
+</section>
+<section>
+<h3>[2005-12-29 21:47 UTC] abriening at comcast dot net</h3>
+<p>my only point here is that the default behavior should be to output without using htmlentities().</p>
+<p>I think the idea of storing xhtml / xml or other markups in the database used to be bad practice. But things have changed. Everything is written in xhtml/xml; help files, content for the web, content for applications, lots of software apps use some form of markup in their files, such as pdf ai psd. Not just web-pages use markup. PDA&#039;s, phones, Tivo, children&#039;s handheld games, all use xml/xhtml or some sort of markup. I am not talking about  just weblog apps and phpForums, EVERYTHING uses markup now. We even have intrepid soldiers of markup use xhtml/css to print books (http://www.alistapart.com/articles/boom).</p>
+<p>There are so many tools available that can easily handle / manipulate xml that there is no reason not to store xml/xhtml in the databse for those inseparable pieces of structure. And when a tag is deprecated these tools are going to be there to update our db&#039;s easily.</p>
+<p>So the real question is how do you propose we store links in our content, how do we store paragraphs, headings, line breaks, lists? is &quot;\n&quot; really any different than &quot;&lt;br&gt;&quot;.</p>
+<p>txt is out xml is in.</p>
+</section>
+<section>
+<h3>[2006-02-01 22:26 UTC] olivierg at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>The HTMLTable renderer has new option : &quot;convertEntities&quot;. It is turned on by default, but you can disable it to avoid special html caracters conversion.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

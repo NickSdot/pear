@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8729</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Archive_Zip/index.html">Archive_Zip</a> &#187; Bug #8729</h1>
+<p>&quot;.&quot; entries not being properly excluded</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-09-19 01:25 UTC</td></tr>
+<tr><th>From</th><td>tim at skypanther dot com</td></tr>
+<tr><th>Status</th><td>Suspended</td></tr>
+<tr><th>Package</th><td><a href="package/Archive_Zip/index.html">Archive_Zip</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.2</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-09-19 01:25 UTC] tim at skypanther dot com</h3>
+<p>Description:<br>
+------------<br>
+It seems that the zip class was trying to include the &#039;.&#039; entry. I was getting output like this:</p>
+<p>Warning: is_file(): Stat failed for<br>
+files/./././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././. <br>
+in /home/username/public_html/scripts/core/Zip.php on line 1216</p>
+<p>Test script:<br>
+---------------<br>
+Lines starting at approx 1208 are:<br>
+=========================================================<br>
+// ----- Read the directory for files and sub-directories<br>
+$p_hdir = opendir($p_filename);<br>
+$p_hitem = readdir($p_hdir); // &#039;.&#039; directory<br>
+$p_hitem = readdir($p_hdir); // &#039;..&#039; directory</p>
+<p>while ($p_hitem = readdir($p_hdir))<br>
+{<br>
+=========================================================</p>
+<p>This code should be changed to:</p>
+<p>I added the following following the opening brace of the while block:</p>
+<p>=========================================================<br>
+// ----- Read the directory for files and sub-directories<br>
+$p_hdir = opendir($p_filename);<br>
+// $p_hitem = readdir($p_hdir); // &#039;.&#039; directory<br>
+// $p_hitem = readdir($p_hdir); // &#039;..&#039; directory</p>
+<p>while ($p_hitem = readdir($p_hdir))<br>
+{<br>
+  if ($p_hitem == &quot;.&quot; || $p_hitem == &quot;..&quot;) continue;<br>
+=========================================================</p>
+</section>
+<section>
+<h3>[2006-09-19 01:27 UTC] tim at skypanther dot com</h3>
+<p>Ignore the &quot;I added the following following the opening brace of the while block:&quot; line. I started entering this one way, changed my mind and forgot to delete it.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

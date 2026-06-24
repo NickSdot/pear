@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1994</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #1994</h1>
+<p>Form tag not correctly created in Default Renderer</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-07-27 13:30 UTC</td></tr>
+<tr><th>From</th><td>chris dot read at gmail dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0</td></tr>
+<tr><th>OS</th><td>Irelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-27 13:30 UTC] chris dot read at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+The form tag created by Default renderer is not correctly created and you end up with a non-functioning form. May affect other renderers as well.</p>
+<p>Attached a unified diff of Default.php that fixes the problem.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$form = new HTML_QuickForm(&#039;formtest&#039;, &#039;get&#039;);<br>
+$form-&gt;display();</p>
+<p>---- Patch ----</p>
+<p>--- Default.php 2004-06-15 11:40:15.000000000 +0100<br>
++++ /usr/local/lib/php/HTML/QuickForm/Renderer/Default.php      2004-07-27 14:22:45.460960000 +0100<br>
+@@ -185,7 +185,14 @@<br>
+             $this-&gt;_html .= str_replace(&#039;{requiredNote}&#039;, $form-&gt;getRequiredNote(), $this-&gt;_requiredNoteTemplate);<br>
+         }<br>
+         // add form attributes and content<br>
+-        $html = str_replace(&#039;{attributes}&#039;, $form-&gt;getAttributes(true), $this-&gt;_formTemplate);<br>
++       $attr_string = &#039;&#039;;<br>
++       $attr_array = $form-&gt;getAttributes(true);<br>
++       foreach (array_keys($attr_array) as $attr_key)<br>
++       {<br>
++               $attr_string .= &#039; &#039; . $attr_key . &#039;=&quot;&#039; . $attr_array[$attr_key] . &#039;&quot;&#039;;<br>
++       }<br>
++       $html = str_replace(&#039;{attributes}&#039;, $attr_string, $this-&gt;_formTemplate);<br>
++<br>
+         if (strpos($this-&gt;_formTemplate, &#039;{hidden}&#039;)) {<br>
+             $html = str_replace(&#039;{hidden}&#039;, $this-&gt;_hiddenHtml, $html);<br>
+         } else {</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;form action=&quot;/phones/formtest.php&quot; method=&quot;get&quot; name=&quot;formtest&quot; id=&quot;formtest&quot;&gt;<br>
+&lt;div&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;formArray&gt;<br>
+&lt;div&gt;</p>
+</section>
+<section>
+<h3>[2004-07-27 13:31 UTC] chris dot read at gmail dot com</h3>
+<p>Cleared up the summary to make more sense</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

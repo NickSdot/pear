@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7839</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_Diff/index.html">Text_Diff</a> &#187; Bug #7839</h1>
+<p>wrong output by render function of Renderer.php</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-06-08 17:19 UTC</td></tr>
+<tr><th>From</th><td>viraj dot kanwade at yahoo dot com</td></tr>
+<tr><th>Assigned</th><td>chagenbu</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Text_Diff/index.html">Text_Diff</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.1</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-08 17:19 UTC] viraj dot kanwade at yahoo dot com</h3>
+<p>Description:<br>
+------------<br>
+I am using Renderer.php for generating a output similar to a diff (GNU diffutils 2.8.4).The getDiff() function returns correct diff arrays. But the diff displayed by render() function is wrong. I have changed the render function to generate the correct output. Also a few changes to _lines, _added, _deleted and _changed for formatting. Where and how can I submit my code for review?</p>
+<p>Test script:<br>
+---------------<br>
+1.txt<br>
+This is line 1.<br>
+This is line 2.<br>
+This is line 3.<br>
+This is line 4.<br>
+This is line 5.<br>
+This is line 6.<br>
+This is line 7.<br>
+This is line 8.<br>
+This is line 9.</p>
+<p>==========================================<br>
+2.txt<br>
+This is line 1.<br>
+This was line 2.<br>
+This is line 3.<br>
+This is line 5.<br>
+This was line 6.<br>
+This was line 7.<br>
+This was line 8.<br>
+This is line 9.<br>
+This is line 10.</p>
+<p>Expected result:<br>
+----------------<br>
+2c2<br>
+&lt; This is line 2.<br>
+---<br>
+&gt; This was line 2.<br>
+4d3<br>
+&lt; This is line 4.<br>
+6,8c5,7<br>
+&lt; This is line 6.<br>
+&lt; This is line 7.<br>
+&lt; This is line 8.<br>
+---<br>
+&gt; This was line 6.<br>
+&gt; This was line 7.<br>
+&gt; This was line 8.<br>
+9a9<br>
+&gt; This is line 10.</p>
+<p>Actual result:<br>
+--------------<br>
+2c2 This was line 2. 4d4 This was line 6. &gt;This was line 7. &gt;This was line 8. 10a9 &gt;This is line 10.</p>
+</section>
+<section>
+<h3>[2006-06-08 17:23 UTC] chagenbu at php dot net</h3>
+<p>Best would be if you could post a link to a unified diff here, but put the text file elsewhere; if that&#039;s not possible, paste the diff into the ticket.</p>
+</section>
+<section>
+<h3>[2006-06-08 17:33 UTC] viraj dot kanwade at yahoo dot com</h3>
+<p>I dont have some place to upload the file or the diff. I will paste the functions here. Kindly adjust.</p>
+<p>function render($diff)<br>
+{<br>
+  $output = &quot;&quot;;<br>
+  $diffs = $diff-&gt;getDiff();<br>
+  $x0 = 0;$y0 = 0;$x1 = 0;$y1 = 0;<br>
+  foreach ($diffs as $i =&gt; $edit) {<br>
+    switch (strtolower(get_class($edit))) {<br>
+      case &#039;text_diff_op_copy&#039;:<br>
+	$x0 += count($edit-&gt;orig);<br>
+	$x1 += count($edit-&gt;orig);<br>
+      break;<br>
+      case &#039;text_diff_op_add&#039;:<br>
+	$y1 = count($edit-&gt;final);<br>
+	$output .= $this-&gt;_blockHeader($x0,0,$x1+1,$y1);<br>
+        $output .= $this-&gt;_added($edit-&gt;final);<br>
+	$x1 += $y1;<br>
+      break;<br>
+      case &#039;text_diff_op_delete&#039;:<br>
+	$y0 = count($edit-&gt;orig);<br>
+	$output .= $this-&gt;_blockHeader($x0+1,$y0,$x1,0);<br>
+        $output .= $this-&gt;_deleted($edit-&gt;orig);<br>
+	$x0 += $y0;<br>
+      break;<br>
+      case &#039;text_diff_op_change&#039;:<br>
+	$y0 = count($edit-&gt;orig);<br>
+	$y1 = count($edit-&gt;final);<br>
+	$output .= $this-&gt;_blockHeader($x0+1,$y0,$x1+1,$y1);<br>
+	$output .=$this-&gt;_changed($edit-&gt;orig,$edit-&gt;final);<br>
+	$x0 += $y0;<br>
+	$x1 += $y1;<br>
+      break;<br>
+    }<br>
+  }<br>
+  return &quot;$output&quot;;<br>
+}</p>
+<p>function _lines($lines, $prefix = &#039; &#039;)<br>
+{<br>
+  return $prefix . implode(&quot;&lt;br&gt;$prefix&quot;, $lines) . &quot;&lt;br&gt;&quot;;<br>
+}</p>
+<p>function _added($lines)<br>
+{<br>
+  return $this-&gt;_lines($lines, &#039;&gt; &#039;);<br>
+}</p>
+<p>function _deleted($lines)<br>
+{<br>
+  return $this-&gt;_lines($lines, &#039;&lt; &#039;);<br>
+}</p>
+<p>function _changed($orig, $final)<br>
+{<br>
+ return $this-&gt;_deleted($orig).&quot;---&lt;br&gt;&quot;.$this-&gt;_added($final);<br>
+}</p>
+</section>
+<section>
+<h3>[2006-06-08 17:48 UTC] chagenbu at php dot net</h3>
+<p>If you can post a diff instead this will get looked at a lot sooner. Otherwise, we&#039;ll get to it when we can.</p>
+<p>Thanks.</p>
+</section>
+<section>
+<h3>[2006-06-09 04:35 UTC] viraj dot kanwade at yahoo dot com</h3>
+<p>Sorry, but I could not understand the logic in your render function. So I wrote a new function. <br>
+Also when the output is rendered, the newline doesnt get print. So when the output is to be rendered use <br>
+echo nl2br($renderer-&gt;render($diff));<br>
+instead of <br>
+echo $renderer-&gt;render($diff);</p>
+<p>67,68c67,75<br>
+&lt;      function render($diff)<br>
+&lt;      {<br>
+---<br>
+&gt;     function render($diff)<br>
+&gt;     {<br>
+&gt;         $xi = $yi = 1;<br>
+&gt;         $block = false;<br>
+&gt;         $context = array();<br>
+&gt; <br>
+&gt;         $nlead = $this-&gt;_leading_context_lines;<br>
+&gt;         $ntrail = $this-&gt;_trailing_context_lines;<br>
+&gt; <br>
+71a79,108<br>
+&gt;         foreach ($diffs as $i =&gt; $edit) {<br>
+&gt;             if (is_a($edit, &#039;Text_Diff_Op_copy&#039;)) {<br>
+&gt;                 if (is_array($block)) {<br>
+&gt;                     $keep = $i == count($diffs) - 1 ? $ntrail : $nlead + $ntrail;<br>
+&gt;                     if (count($edit-&gt;orig) &lt;= $keep) {<br>
+&gt;                         $block[] = $edit;<br>
+&gt;                     } else {<br>
+&gt;                         if ($ntrail) {<br>
+&gt;                             $context = array_slice($edit-&gt;orig, 0, $ntrail);<br>
+&gt;                             $block[] = &amp;new Text_Diff_Op_copy($context);<br>
+&gt;                         }<br>
+&gt;                         $output .= $this-&gt;_block($x0, $ntrail + $xi - $x0,<br>
+&gt;                                                  $y0, $ntrail + $yi - $y0,<br>
+&gt;                                                  $block);<br>
+&gt;                         $block = false;<br>
+&gt;                     }<br>
+&gt;                 }<br>
+&gt;                 $context = $edit-&gt;orig;<br>
+&gt;             } else {<br>
+&gt;                 if (!is_array($block)) {<br>
+&gt;                     $context = array_slice($context, count($context) - $nlead);<br>
+&gt;                     $x0 = $xi - count($context);<br>
+&gt;                     $y0 = $yi - count($context);<br>
+&gt;                     $block = array();<br>
+&gt;                     if ($context) {<br>
+&gt;                         $block[] = &amp;new Text_Diff_Op_copy($context);<br>
+&gt;                     }<br>
+&gt;                 }<br>
+&gt;                 $block[] = $edit;<br>
+&gt;             }<br>
+73,89c110,116<br>
+&lt; 	$x0 = 0;<br>
+&lt; 	$y0 = 0;<br>
+&lt; 	$x1 = 0;<br>
+&lt; 	$y1 = 0;<br>
+&lt; 	foreach ($diffs as $i =&gt; $edit) {<br>
+&lt;             switch (strtolower(get_class($edit))) {<br>
+&lt;               case &#039;text_diff_op_copy&#039;:<br>
+&lt; 		$x0 += count($edit-&gt;orig);<br>
+&lt; 		$x1 += count($edit-&gt;orig);<br>
+&lt;               break;<br>
+&lt; <br>
+&lt;               case &#039;text_diff_op_add&#039;:<br>
+&lt; 		$y1 = count($edit-&gt;final);<br>
+&lt; 		$output .= $this-&gt;_startBlock($this-&gt;_blockHeader($x0,0,$x1+1,$y1));<br>
+&lt;                 $output .= $this-&gt;_added($edit-&gt;final);<br>
+&lt; 		$x1 += $y1;<br>
+&lt;               break;<br>
+---<br>
+&gt;             if ($edit-&gt;orig) {<br>
+&gt;                 $xi += count($edit-&gt;orig);<br>
+&gt;             }<br>
+&gt;             if ($edit-&gt;final) {<br>
+&gt;                 $yi += count($edit-&gt;final);<br>
+&gt;             }<br>
+&gt;         }<br>
+91,96c118,122<br>
+&lt;               case &#039;text_diff_op_delete&#039;:<br>
+&lt; 		$y0 = count($edit-&gt;orig);<br>
+&lt; 		$output .= $this-&gt;_startBlock($this-&gt;_blockHeader($x0+1,$y0,$x1,0));<br>
+&lt;                 $output .= $this-&gt;_deleted($edit-&gt;orig);<br>
+&lt; 		$x0 += $y0;<br>
+&lt;               break;<br>
+---<br>
+&gt;         if (is_array($block)) {<br>
+&gt;             $output .= $this-&gt;_block($x0, $xi - $x0,<br>
+&gt;                                      $y0, $yi - $y0,<br>
+&gt;                                      $block);<br>
+&gt;         }<br>
+98,108c124<br>
+&lt;               case &#039;text_diff_op_change&#039;:<br>
+&lt; 		$y0 = count($edit-&gt;orig);<br>
+&lt; 		$y1 = count($edit-&gt;final);<br>
+&lt; 		$output .= $this-&gt;_startBlock($this-&gt;_blockHeader($x0+1,$y0,$x1+1,$y1));<br>
+&lt; 		$output .= $this-&gt;_changed($edit-&gt;orig, $edit-&gt;final);<br>
+&lt; 		$x0 += $y0;<br>
+&lt; 		$x1 += $y1;<br>
+&lt;               break;<br>
+&lt;             }<br>
+&lt; 	}<br>
+&lt; 	return $output . $this-&gt;_endDiff();<br>
+---<br>
+&gt;         return $output . $this-&gt;_endDiff();<br>
+182c198<br>
+&lt;         return $this-&gt;_lines($lines, &#039;&gt; &#039;);<br>
+---<br>
+&gt;         return $this-&gt;_lines($lines, &#039;&gt;&#039;);<br>
+187c203<br>
+&lt;         return $this-&gt;_lines($lines, &#039;&lt; &#039;);<br>
+---<br>
+&gt;         return $this-&gt;_lines($lines, &#039;&lt;&#039;);</p>
+</section>
+<section>
+<h3>[2006-07-01 11:08 UTC] viraj dot kanwade at yahoo dot com</h3>
+<p>hey i forgot to add htmlspecialchars to the code.<br>
+The line to be printed also needs to be passed through htmlspecialchars.</p>
+</section>
+<section>
+<h3>[2006-07-01 11:16 UTC] viraj dot kanwade at yahoo dot com</h3>
+<p>What happened about my code changes? Did you not find it suitable?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3413</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #3413</h1>
+<p>Pear DB/ibase.php crash with SIGSEGV after query</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-09 13:01 UTC</td></tr>
+<tr><th>From</th><td>or at miton dot cz</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux RHEL 3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-09 13:01 UTC] or at miton dot cz</h3>
+<p>Description:<br>
+------------<br>
+Hi</p>
+<p>I have problem with using pear/DB.php for ibase. I have latest stable pear, php-3.4.10 compiled with ibase, firebird-1.5.<br>
+After query php ends with SIGSEGV.</p>
+<p>I&#039;ve made dirty workaround in ibase.php with array_pop. Problem is with NULL on the end of array.</p>
+<p>function connect($dsninfo, $persistent = false)<br>
+    {<br>
+        if (!DB::assertExtension(&#039;interbase&#039;)) {<br>
+            return $this-&gt;raiseError(DB_ERROR_EXTENSION_NOT_FOUND);<br>
+        }<br>
+        $this-&gt;dsn = $dsninfo;<br>
+        $dbhost = $dsninfo[&#039;hostspec&#039;] ?<br>
+                  ($dsninfo[&#039;hostspec&#039;] . &#039;:&#039; . $dsninfo[&#039;database&#039;]) :<br>
+                  $dsninfo[&#039;database&#039;];</p>
+<p>$connect_function = $persistent ? &#039;ibase_pconnect&#039; : &#039;ibase_connect&#039;;</p>
+<p>$params = array();<br>
+        $params[] = $dbhost;<br>
+        $params[] = $dsninfo[&#039;username&#039;] ? $dsninfo[&#039;username&#039;] : null;<br>
+        $params[] = $dsninfo[&#039;password&#039;] ? $dsninfo[&#039;password&#039;] : null;<br>
+        $params[] = isset($dsninfo[&#039;charset&#039;]) ? $dsninfo[&#039;charset&#039;] : null;<br>
+        $params[] = isset($dsninfo[&#039;buffers&#039;]) ? $dsninfo[&#039;buffers&#039;] : null;<br>
+        $params[] = isset($dsninfo[&#039;dialect&#039;]) ? $dsninfo[&#039;dialect&#039;] : null;<br>
+        $params[] = isset($dsninfo[&#039;role&#039;])    ? $dsninfo[&#039;role&#039;] : null;</p>
+<p>// or@miton.cz workaround<br>
+        array_pop($params);<br>
+        array_pop($params);<br>
+        array_pop($params);<br>
+        array_pop($params);</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+include(&#039;DB.php&#039;);<br>
+$db = DB::connect(&quot;ibase://SYSDBA:masterkey@localhost/var/lib/firebird/employee.fdb&quot;);<br>
+print_r($db);<br>
+$db-&gt;query(&#039;SELECT * FROM employee&#039;);</p>
+<p>?&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+[root@jaja2 dalen]# php er.php<br>
+Content-type: text/html<br>
+X-Powered-By: PHP/4.3.10</p>
+<p>db_ibase Object<br>
+(<br>
+    [connection] =&gt; Resource id #6<br>
+    [phptype] =&gt; ibase<br>
+    [dbsyntax] =&gt; ibase<br>
+    [autocommit] =&gt; 1<br>
+    [manip_query] =&gt; Array<br>
+        (<br>
+        )</p>
+<p>[_debug] =&gt;<br>
+    [_default_error_mode] =&gt;<br>
+    [_default_error_options] =&gt;<br>
+    [_default_error_handler] =&gt;<br>
+    [_error_class] =&gt; DB_Error<br>
+    [_expected_errors] =&gt; Array<br>
+        (<br>
+        )</p>
+<p>[features] =&gt; Array<br>
+        (<br>
+            [prepare] =&gt; 1<br>
+            [pconnect] =&gt; 1<br>
+            [transactions] =&gt; 1<br>
+            [limit] =&gt;<br>
+        )</p>
+<p>[errorcode_map] =&gt; Array<br>
+        (<br>
+            [-104] =&gt; -2<br>
+            [-150] =&gt; -26<br>
+            [-151] =&gt; -26<br>
+            [-155] =&gt; -18<br>
+            [88] =&gt; -18<br>
+            [-157] =&gt; -19<br>
+            [-158] =&gt; -22<br>
+            [-170] =&gt; -7<br>
+            [-171] =&gt; -7<br>
+            [-172] =&gt; -8<br>
+            [-204] =&gt; -8<br>
+            [-205] =&gt; -19<br>
+            [-206] =&gt; -19<br>
+            [-208] =&gt; -8<br>
+            [-219] =&gt; -18<br>
+            [-297] =&gt; -3<br>
+            [-530] =&gt; -3<br>
+            [-607] =&gt; -18<br>
+            [-803] =&gt; -3<br>
+            [-551] =&gt; -26<br>
+            [-552] =&gt; -26<br>
+            [-922] =&gt; -27<br>
+            [-923] =&gt; -24<br>
+            [-924] =&gt; -24<br>
+        )</p>
+<p>[prepare_tokens] =&gt;<br>
+    [prepare_types] =&gt;<br>
+    [prepared_queries] =&gt;<br>
+    [prepare_maxstmt] =&gt; 0<br>
+    [last_query] =&gt;<br>
+    [fetchmode] =&gt; 1<br>
+    [fetchmode_object_class] =&gt; stdClass<br>
+    [options] =&gt; Array<br>
+        (<br>
+            [persistent] =&gt;<br>
+            [ssl] =&gt;<br>
+            [debug] =&gt; 0<br>
+            [seqname_format] =&gt; %s_seq<br>
+            [autofree] =&gt;<br>
+            [portability] =&gt; 0<br>
+            [optimize] =&gt; performance<br>
+        )</p>
+<p>[dbh] =&gt;<br>
+    [dsn] =&gt; Array<br>
+        (<br>
+            [phptype] =&gt; ibase<br>
+            [dbsyntax] =&gt; ibase<br>
+            [username] =&gt; SYSDBA<br>
+            [password] =&gt; masterkey<br>
+            [protocol] =&gt; tcp<br>
+            [hostspec] =&gt; localhost<br>
+            [port] =&gt;<br>
+            [socket] =&gt;<br>
+            [database] =&gt; var/lib/firebird/employee.fdb<br>
+        )</p>
+<p>)<br>
+(SIGSEGV)</p>
+</section>
+<section>
+<h3>[2005-02-09 13:10 UTC] smith at backendmedia dot com</h3>
+<p>From what I have heard from Lorenzo working on the ibase MDB drivers it seems like the PHP4 version of the ibase extension is still quite a mess and real stability can only be attained by using PHP5.</p>
+<p>So it might make sense to either provide a cut down version for PHP4, or end up adding some PHP4/PHP5 conditional code.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

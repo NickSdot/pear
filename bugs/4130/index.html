@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4130</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #4130</h1>
+<p>?</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-04-12 20:45 UTC</td></tr>
+<tr><th>From</th><td>rachelw at cybrzn dot com</td></tr>
+<tr><th>Assigned</th><td>pajoye</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-12 20:45 UTC] rachelw at cybrzn dot com</h3>
+<p>Description:<br>
+------------<br>
+Was using the getWeeksInMonth() function found in Date.php.  I noticed the actual function is implemented in Date/Calc.php (Date_Calc class) in the weeksInMonth() method.</p>
+<p>Date package version 1.4.3<br>
+Date/Calc.php: version 1.2.6<br>
+Date.php: version 1.2.8</p>
+<p>configure line:<br>
+&#039;./configure&#039; &#039;--prefix=/usr&#039; &#039;--with-config-file-path=/etc&#039; &#039;--with-apxs2&#039; &#039;--with-openssl=/usr/local/ssl&#039; &#039;--with-zlib&#039; &#039;--with-bz2&#039; &#039;--with-cpdflib&#039; &#039;--with-curl&#039; &#039;--enable-dba&#039; &#039;--with-db4&#039; &#039;--with-gd&#039; &#039;--with-jpeg-dir=/usr&#039; &#039;--with-png-dir=/usr&#039; &#039;--with-zlib-dir=/usr&#039; &#039;--with-xpm-dir=/usr&#039; &#039;--with-ttf&#039; &#039;--with-freetype-dir=/usr&#039; &#039;--with-gd-native-ttf&#039; &#039;--with-gettext&#039; &#039;--with-imap=../imap-2004&#039; &#039;--with-mcrypt&#039; &#039;--with-mysql&#039; &#039;--with-ncurses&#039; &#039;--with-unixODBC&#039; &#039;--with-snmp&#039; &#039;--with-openssl-dir=/usr/local/ssl&#039; &#039;--with-imap-ssl=/usr/local/ssl&#039; &#039;--enable-ftp&#039; &#039;--with-pspell&#039;</p>
+<p>I am writing a dynamically generated calendar, and for the month of May 2005, it returned 6 for the number of weeks in that month, instead of the correct response of 5.  Some other months where it returns 6 weeks when it should return 5 include:</p>
+<p>August 2004<br>
+January 2006<br>
+October 2006<br>
+April 2007<br>
+July 2007</p>
+<p>Upon inspecting any similarities between these months, I noticed that the 1st of the month is on Sunday with all of these.  Perhaps that might point you in the right direction.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$year = $_GET[&quot;year&quot;];<br>
+$month = $_GET[&quot;month&quot;];<br>
+	<br>
+$first_month = new Date($year.&quot;-&quot;.$month.&quot;-01&quot;);<br>
+$days_month = $first_month-&gt;getDaysInMonth();<br>
+$weeks_month = $first_month-&gt;getWeeksInMonth();</p>
+<p>echo $weeks_month; //expect 5 but it returns 6</p>
+<p>Expected result:<br>
+----------------<br>
+again, for these months (just a sampling):</p>
+<p>August 2004<br>
+May 2005<br>
+January 2006<br>
+October 2006<br>
+April 2007<br>
+July 2007</p>
+<p>I expect to get a result of 5 (weeks) vs. 6.</p>
+<p>Actual result:<br>
+--------------<br>
+Actual result is 6 (instead of 5).</p>
+</section>
+<section>
+<h3>[2005-04-13 06:44 UTC] pierre at dotgeek dot org</h3>
+<p>Sorry, but your problem does not imply a bug in PEAR itself.  For a<br>
+list of more appropriate places to ask for help using PEAR, please<br>
+visit http://pear.php.net/support/ as this bug system is not the<br>
+appropriate forum for asking support questions.</p>
+<p>Thank you for your interest in PEAR.</p>
+<p>It&#039;s not the ISO definition of a week that is used here.</p>
+<p>That means you will get 6 for 05/2005.</p>
+<p>ISO defines the 1st week of a month as the one having a tuesday, using it, you will get 5. This behavior will not change in the Date 1.4 series (BC issues).</p>
+<p>--Pierre</p>
+</section>
+<section>
+<h3>[2005-04-13 14:17 UTC] rachelw at cybrzn dot com</h3>
+<p>So why isn&#039;t the ISO definition used here?  Isn&#039;t that what most people think of when they think of how many weeks are in a month?  Furthermore, what exactly IS the definition that is being used?  How in the world do you get 6 weeks out of a month like May 2005?</p>
+</section>
+<section>
+<h3>[2005-04-13 14:21 UTC] rachelw at cybrzn dot com</h3>
+<p>Well in the calendar application I&#039;m writing, I need to know how many weeks in a month, based upon whether or not there is even ONE day in that week because it is used to determine how many rows in an HTML table.  I guess I will have to write my own function for that (at least one function isn&#039;t too bad considering all the other nice functions I can use from the Date package).</p>
+</section>
+<section>
+<h3>[2005-04-13 19:23 UTC] rachelw at cybrzn dot com</h3>
+<p>One last thing - the following is the PHP comments for the function weeksInMonth(), found in the Date_Calc class.  If this was your intention, then it doesn&#039;t work properly, because it does not return the correct number of ROWS (i.e. HTML &lt;tr&gt; tags) for outputting a calendar.  Any month which begins on a Sunday, and which has 5 weeks (rows), returns 6 instead.</p>
+<p>/**      <br>
+* Returns the number of rows on a calendar month <br>
+*<br>
+* Useful for determining the number of rows when displaying a typical month calendar.</p>
+<p>function weeksInMonth($month = 0, $year = 0)<br>
+...</p>
+</section>
+<section>
+<h3>[2005-04-13 19:28 UTC] pierre at dotgeek dot org</h3>
+<p>Forget to mention that there will be a getIsoWeeksInMonth() or something similar :). No date yet, but move to verified.</p>
+<p>--Pierre</p>
+</section>
+<section>
+<h3>[2005-04-13 22:02 UTC] rachelw at cybrzn dot com</h3>
+<p>It&#039;s a quick fix, and perhaps a bit crude, but it worked for me.  Hopefully it will help anyone else in a similar situation (please let me know if I should also post this somewhere else):</p>
+<p>require_once(&quot;Date/Calc.php&quot;);</p>
+<p>$days_of_week = array(&quot;Sunday&quot;,&quot;Monday&quot;,&quot;Tuesday&quot;,&quot;Wednesday&quot;,&quot;Thursday&quot;,&quot;Friday&quot;,&quot;Saturday&quot;);<br>
+$num_days_week = 7;</p>
+<p>function weeksInMonth ($month,$year) {<br>
+	//get the numerical value (0-6) of the first day of the month<br>
+	$firstDay = Date_Calc::dayOfWeek(01,$month,$year); <br>
+	<br>
+	//now subtract that value with the # of days in a week, to get the # of days in the first week<br>
+	$numDaysInFirstWeek = $num_days_week - $firstDay;<br>
+	<br>
+	//get the # of days in this month<br>
+	$daysInMonth = Date_Calc::daysInMonth($month,$year);<br>
+	<br>
+	//get the numerical value (0-6) of the last day of the month<br>
+	$lastDay = Date_Calc::dayOfWeek($daysInMonth,$month,$year);<br>
+	<br>
+	//add 1 to that value to get the # of days in the last week<br>
+	$numDaysInLastWeek = $lastDay+1;<br>
+	<br>
+	//subtract the # of days in first and last weeks with the # of days in month to get remaining days<br>
+	$numDaysInOtherWeeks = $daysInMonth - $numDaysInFirstWeek - $numDaysInLastWeek;<br>
+	<br>
+	//divide the remaining days by # of days in a week, and add the first &amp; last week to get total weeks<br>
+	return ($numDaysInOtherWeeks / $num_days_week) + 2;<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

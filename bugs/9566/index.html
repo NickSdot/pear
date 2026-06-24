@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9566</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #9566</h1>
+<p>Get defined columns</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #9566</th><td>Get defined columns</td></tr>
+<tr><th>Submitted</th><td>2006-12-07 05:25 UTC</td></tr>
+<tr><th>From</th><td>daniel at assertio dot es</td></tr>
+<tr><th>Assigned</th><td>olivierg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Win XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-12-07 05:25 UTC] daniel at assertio dot es</h3>
+<p>Description:<br>
+------------<br>
+Hello,</p>
+<p>In order to customize the datagrid output, I need to access the defined column set but I cannot find the proper method in DataGrid or in the concrete renderer container (HTML_Table). I need the full column set, not only the DataSource&#039;s, so I guess using DataSouce::getColumns is not useful. Besides, I see property columnSet access is marked as private.</p>
+<p>Thanks for taking the time to read this, best wishes<br>
+ - Dani</p>
+</section>
+<section>
+<h3>[2006-12-07 20:01 UTC] olivierg at php dot net</h3>
+<p>Hi Daniel,</p>
+<p>Can&#039;t you do what you need with the getColumnByField() method?</p>
+</section>
+<section>
+<h3>[2006-12-08 04:46 UTC] daniel at assertio dot es</h3>
+<p>I try to explain what I want to archieve, it may make my need clearer:<br>
+Initially I have a datagrid resembling a DB table with some custom-formatted columns (for example<br>
+Edit | Delete | Order # | Description | Quantity | Ammount.<br>
+No problem.<br>
+Then I need to add a Totals row: My idea was to integrate that totals row in the datagrid, but for the totals I only need to sum the Quantity and Ammount cols. Then what I want is to use the HTML_Table object to merge the initial descriptive columns into a single column reading &quot;TOTAL&quot;, and render the summed columns behind the corresponding column. <br>
+In order to do that, I thought of looping the columnSet defined in the DataGrid object to retrieve the position of each column and then calculate the colspan.<br>
+(BTW, in my opinion the idea of separating fetched columns from rendered columns (Bug #7710) would be very handy and help make DG structure clearer.)<br>
+TIA<br>
+ - Dani</p>
+</section>
+<section>
+<h3>[2006-12-08 08:43 UTC] daniel at assertio dot es</h3>
+<p>Actually, I&#039;m adding a row. Since it&#039;s a bit tiring to try to explain it, you can find a snapshot of what&#039;s my goal at http://www.quintopino.com/misc/customRow.png (in fact, I made that customization accessing directly the DataGrid-&gt;columnSet &quot;private&quot; property). I hope that&#039;s more explicit.</p>
+<p>DataSource is an array, and the table is rendered using DataGrid-&gt;getOutput(). I don&#039;t use DataGrid-&gt;fill().</p>
+<p>TIA<br>
+ - Dani</p>
+</section>
+<section>
+<h3>[2006-12-08 10:30 UTC] olivierg at php dot net</h3>
+<p>Mark, bug #7710 does not forbid retrieving informations from the columns that were manually created by the user (== &quot;not obtained from the datasource&quot;, if I understand correctly).</p>
+<p>Daniel, I second Mark about using fill(). That should be quite handy in your case.</p>
+<p>Concerning your specific problem, it&#039;s a little complex, and there certainly are many ways to solve it. However, if you think that a generic SDG::getColumns() method would help you, I see no objection for it and might add it. Should we simply go this path ?</p>
+</section>
+<section>
+<h3>[2006-12-08 12:18 UTC] olivierg at php dot net</h3>
+<p>Okay, I&#039;ve added Structures_DataGrid::getColumns() in CVS. However, due to a small bug related to the new streaming future we are developing, you need to call this method after rendering.</p>
+<p>If you call it after bind() but before rendering you might observe unexpected results. But this should be fixed in the next release.</p>
+<p>If there&#039;s no objection I propose we close this bug.</p>
+</section>
+<section>
+<h3>[2006-12-08 16:59 UTC] olivierg at php dot net</h3>
+<p>Okay, so I just fixed this small bug: you can use getColumns() after binding and before rendering. It should work fine from now. It&#039;s all in CVS. I close this bug.</p>
+<p>Thanks for your report</p>
+</section>
+<section>
+<h3>[2006-12-09 04:37 UTC] daniel at assertio dot es</h3>
+<p>I take note of using fill() for customizations, that definitely seems the way to go. <br>
+I do appreciate your prompt support and action. Thank you!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

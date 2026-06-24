@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5192</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Logging &#187; <a href="package/Log/index.html">Log</a> &#187; Bug #5192</h1>
+<p>Method getIdent returns nothing for Composite Log</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-24 00:24 UTC</td></tr>
+<tr><th>From</th><td>rex at seas dot ucla dot edu</td></tr>
+<tr><th>Assigned</th><td>jon</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Log/index.html">Log</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0</td></tr>
+<tr><th>OS</th><td>Solaris</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-24 00:24 UTC] rex at seas dot ucla dot edu</h3>
+<p>Description:<br>
+------------<br>
+When using a Composite Log object, I am unable to get a result for the getIdent method. I am successfully able to call the setIdent method, because the string entered appears in the log  output.</p>
+<p>I took at look at /pear/Log/Log/composite.php and noticed that  the method setIdent was changed to handle the composite of logging objects, but getIdent was never redefined.</p>
+<p>Can something like this patch be inserted into the code?</p>
+<p>/**      <br>
+ * Gets the identification string of this composite object<br>
+ * from one of the children<br>
+ *      <br>
+ * @access public      <br>
+ * @since  Log &lt;new_version&gt;      <br>
+ */     <br>
+function getIdent()     <br>
+{         <br>
+    foreach ($this-&gt;_children as $id =&gt; $child) {               <br>
+        return $this-&gt;_children[$id]-&gt;getIdent($ident);         <br>
+    }     <br>
+}</p>
+<p>Test script:<br>
+---------------<br>
+// set up PEAR:Log<br>
+$console =&amp; Log::singleton(&#039;console&#039;, &#039;&#039;, &#039;&#039;, null, PEAR_LOG_NOTICE);<br>
+$file    =&amp; Log::singleton(&#039;file&#039;, &#039;test.log&#039;, &#039;&#039;, null, PEAR_LOG_DEBUG);<br>
+$logger  =&amp; Log::singleton(&#039;composite&#039;);<br>
+$logger-&gt;addChild($console);<br>
+$logger-&gt;addChild($file);</p>
+<p>$logger-&gt;setIdent(&#039;TEST&#039;);<br>
+$ident = $logger-&gt;getIdent();<br>
+echo $ident;</p>
+<p>Expected result:<br>
+----------------<br>
+TEST</p>
+<p>Actual result:<br>
+--------------<br>
+Nothing, empty string.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

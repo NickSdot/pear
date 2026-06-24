@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8531</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_oci8/index.html">MDB2_Driver_oci8</a> &#187; Bug #8531</h1>
+<p>tableInfo() fails due to lob locator index</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-08-22 10:51 UTC</td></tr>
+<tr><th>From</th><td>dv at allyoucanthink dot de</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_oci8/index.html">MDB2_Driver_oci8</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-22 10:51 UTC] dv at allyoucanthink dot de</h3>
+<p>Description:<br>
+------------<br>
+call of tableInfo() on tables containing some LOB fields fails on getTableIndexDefinition() for lob locator index. Oracle creates automatically lob locator index starting with SYS_IL*** for every LOB field but there&#039;s no records for this index in user_ind_columns.</p>
+</section>
+<section>
+<h3>[2006-08-22 11:09 UTC] dv at allyoucanthink dot de</h3>
+<p>well... adding following lines at the begin of MDB2_Driver_Reverse_oci8::getTableIndexDefinition() solves this problem in my particular case.</p>
+<p>if(substr(strtoupper($index_name),0, 6) == &#039;SYS_IL&#039;) {<br>
+            return null;<br>
+        }</p>
+</section>
+<section>
+<h3>[2006-08-22 11:52 UTC] dv at allyoucanthink dot de</h3>
+<p>It seems like any system generated index has a flag in user_indexes: user_indexes.generated = &#039;Y&#039;.<br>
+So the changing the query in MDB2_Driver_Manager_oci8::listTableIndexes() as bellow solves <br>
+the problem more elegant. AFAIK all table names in this view are upper case<br>
+        <br>
+        $query = &#039;SELECT index_name name FROM user_indexes&#039;;<br>
+        $query.= &#039; WHERE table_name=&#039;.strtoupper($table);<br>
+        $query.= &#039; AND generated=&#039; .$db-&gt;quote(&#039;N&#039;, &#039;text&#039;);</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

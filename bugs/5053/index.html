@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5053</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Testing &#187; <a href="package/PHPUnit2/index.html">PHPUnit2</a> &#187; Bug #5053</h1>
+<p>PHPUnit2 problems with global variables</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-10 08:19 UTC</td></tr>
+<tr><th>From</th><td>paul at paulbutcher dot com</td></tr>
+<tr><th>Assigned</th><td>sebastian</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PHPUnit2/index.html">PHPUnit2</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-10 08:19 UTC] paul at paulbutcher dot com</h3>
+<p>Description:<br>
+------------<br>
+PHPUnit2 tests don&#039;t seem to be able to access global variables if they are run using the &quot;phpunit.bat&quot; script. They work as expected if called from a script via PHPUnit2_TextUI_TestRunner::run, however.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+$testvariable = &quot;the quick brown fox jumped over the lazy dog&quot;;</p>
+<p>class FooBar extends PHPUnit2_Framework_TestCase<br>
+{<br>
+    public function testOne()<br>
+    {<br>
+        global $testvariable;<br>
+        self::assertEquals($testvariable,<br>
+            &quot;the quick brown fox jumped over the lazy dog&quot;);<br>
+    }<br>
+}<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+I would expect that this test would pass. It does if it&#039;s called from the following script:</p>
+<p>&lt;?php<br>
+define(&#039;PHPUnit2_MAIN_METHOD&#039;, &#039;false&#039;);<br>
+require_once &#039;PHPUnit2/TextUI/TestRunner.php&#039;;</p>
+<p>require_once &#039;foobar.php&#039;;</p>
+<p>PHPUnit2_TextUI_TestRunner::run(new ReflectionClass(&#039;FooBar&#039;));<br>
+?&gt;</p>
+<p>C:\phptest&gt;php foobar_runner.php<br>
+PHPUnit 2.2.1 by Sebastian Bergmann.</p>
+<p>.</p>
+<p>Time: 0.004537</p>
+<p>OK (1 test)</p>
+<p>Actual result:<br>
+--------------<br>
+C:\phptest&gt;phpunit foobar<br>
+PHPUnit 2.2.1 by Sebastian Bergmann.</p>
+<p>F</p>
+<p>Time: 0.007778<br>
+There was 1 failure:<br>
+1) testOne(FooBar)<br>
+expected same: &lt;&gt; was not: &lt;the quick brown fox jumped over the lazy dog&gt;</p>
+<p>FAILURES!!!<br>
+Tests run: 1, Failures: 1, Errors: 0, Incomplete Tests: 0.</p>
+</section>
+<section>
+<h3>[2005-09-30 10:30 UTC] sebastian at php dot net</h3>
+<p>This is not a problem with PHPUnit2 itself, but with PHP: http://bugs.php.net/bug.php?id=34689.</p>
+</section>
+<section>
+<h3>[2005-09-30 10:46 UTC] sebastian at php dot net</h3>
+<p>Okay, this is not a PHP bug after all but expected behaviour.</p>
+<p>The sourcefile that contains the test case class (and the declaration of the global variable) is loaded using include_once inside a method, thus any global variables in the included sourcefile become local ones to the PHPUnit method.</p>
+<p>If you need to work with global variables declared in your test case class&#039; sourcefile, use $GLOBAL[&#039;foo&#039;] instead of $foo.</p>
+<p>Hope this helps,<br>
+Sebastian</p>
+</section>
+<section>
+<h3>[2005-09-30 14:20 UTC] paul at paulbutcher dot com</h3>
+<p>OK - I understand the problem. I still believe that it&#039;s a bug in PHPUnit though. Having to refer to global variables in test code in the manner that you suggest is (just) acceptable. But what if the code that&#039;s under test refers to global variables? It&#039;s unreasonable to expect that the code under test will have to change, surely?</p>
+<p>Here&#039;s an example - say that I want to write a test to verify that the following code works as expected:</p>
+<p>Foo.php -------------------------------<br>
+&lt;?php<br>
+$interesting_string = &quot;the quick brown fox jumped over the lazy dog&quot;;</p>
+<p>class Foo<br>
+{<br>
+    public function getInterestingString()<br>
+    {<br>
+        global $interesting_string;<br>
+        return $interesting_string;<br>
+    }<br>
+}<br>
+?&gt;<br>
+---------------------------------------</p>
+<p>Here&#039;s a PHPUnit2 test class for the above:</p>
+<p>FooTest -------------------------------<br>
+&lt;?php<br>
+require_once(&quot;Foo.php&quot;);</p>
+<p>class FooTest extends PHPUnit2_Framework_TestCase<br>
+{<br>
+    public function testOne()<br>
+    {<br>
+        $foo = new Foo();<br>
+        self::assertEquals($foo-&gt;getInterestingString(),<br>
+            &quot;the quick brown fox jumped over the lazy dog&quot;);<br>
+    }<br>
+}<br>
+?&gt;<br>
+---------------------------------------</p>
+<p>This fails with the following:</p>
+<p>---------------------------------------<br>
+&gt;phpunit footest<br>
+PHPUnit 2.2.1 by Sebastian Bergmann.</p>
+<p>F</p>
+<p>Time: 0.006042<br>
+There was 1 failure:<br>
+1) testOne(FooTest)<br>
+expected same: &lt;&gt; was not: &lt;the quick brown fox jumped over the lazy dog&gt;</p>
+<p>FAILURES!!!<br>
+Tests run: 1, Failures: 1, Errors: 0, Incomplete Tests: 0.<br>
+---------------------------------------</p>
+<p>Again, if I run it from a script instead of from the phpunit shell script, it works fine:</p>
+<p>---------------------------------------<br>
+&gt;php AllTests.php<br>
+PHPUnit 2.2.1 by Sebastian Bergmann.</p>
+<p>.</p>
+<p>Time: 0.007130</p>
+<p>OK (1 test)<br>
+---------------------------------------</p>
+</section>
+<section>
+<h3>[2005-10-07 08:20 UTC] sebastian at php dot net</h3>
+<p>Will fix as asoon as I have the means to do so, see http://bugs.xdebug.org/bug_view_page.php?bug_id=0000153 for details.</p>
+</section>
+<section>
+<h3>[2005-12-30 16:08 UTC] sebastian at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>Thanks to Derick Rethans, who implemented xdebug_get_declared_vars() today, I could finally fix this issue.</p>
+</section>
+<section>
+<h3>[2006-04-06 21:36 UTC] snoyes at gmail dot com</h3>
+<p>Error persists in 2.3.5 - tried with both $GLOBALS and the global keyword.</p>
+<p>BugReport.php<br>
+-------------<br>
+&lt;?php<br>
+$globalVar = &quot;globalValue&quot;;</p>
+<p>function myFunction() {<br>
+    return $GLOBALS[&#039;globalVar&#039;];<br>
+}<br>
+?&gt;</p>
+<p>BugReportTest.php<br>
+-----------------<br>
+&lt;?php<br>
+require_once(&#039;PHPUnit2/Framework/TestCase.php&#039;);<br>
+require(&quot;BugReport.php&quot;);</p>
+<p>class BugReportTest extends PHPUnit2_Framework_TestCase {<br>
+    public function testGlobalVariable() {<br>
+        $this-&gt;assertEquals(&quot;globalValue&quot;, myFunction());<br>
+    }<br>
+}<br>
+?&gt;</p>
+<p>Output<br>
+-------<br>
+There was 1 failure:<br>
+1) testGlobalVariable(BugReportTest)<br>
+expected same: &lt;globalValue&gt; was not: &lt;&gt;<br>
+/home/snoyes/UnitTests/BugReportTest.php:10</p>
+</section>
+<section>
+<h3>[2006-04-07 04:25 UTC] sebastian at php dot net</h3>
+<p>The bug has been fixed for PHPUnit 3.0.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

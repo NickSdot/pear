@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2939</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_Parser/index.html">XML_Parser</a> &#187; Bug #2939</h1>
+<p>bug in error routine leads to segmentation fault</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-12-10 02:36 UTC</td></tr>
+<tr><th>From</th><td>php at macfreek dot nl</td></tr>
+<tr><th>Assigned</th><td>schst</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_Parser/index.html">XML_Parser</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>Mac OS 10.3.6</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-10 02:36 UTC] php at macfreek dot nl</h3>
+<p>Description:<br>
+------------<br>
+I created a subclass of XML_Parser. As soon as I trigger <br>
+an error, by calling &quot;raiseError()&quot;, which is a function <br>
+in XML_Parser, my script crashes with either &quot;Bus Error&quot; <br>
+or &quot;Segmentation Fault&quot;.</p>
+<p>The cause seems to be that the raiseError() function in <br>
+XML/Parser.php (in the XML_Parser class) does first call <br>
+$this-&gt;free(), but does not abort execution. As soon as <br>
+the script continues, errors happen.</p>
+<p>Can&#039;t create something &lt;20 lines that crashes. Sorry. <br>
+However, this code below calls the raiseError routine <br>
+twice, while I expect once plus an abort (I checked that <br>
+by adding an echo line to raiseError())..</p>
+<p>Reproduce code:<br>
+---------------<br>
+#!/usr/bin/php<br>
+&lt;?php</p>
+<p>require_once &#039;XML/Parser.php&#039;;<br>
+ <br>
+$parser = new XML_Parser();<br>
+$parser-&gt;raiseError(&quot;oops&quot;);<br>
+$parser-&gt;setInputString(&quot;&lt;hi&gt;&quot;);<br>
+$parser-&gt;parse();</p>
+<p>?&gt;</p>
+</section>
+<section>
+<h3>[2004-12-17 00:58 UTC] php at macfreek dot nl</h3>
+<p>I&#039;ve put two php files with reproducable crashes online. <br>
+First, my fully functional &quot;XML_Parser_PropertyList&quot; <br>
+class, which was designed to parse PLIST files (a <br>
+specific type of XML file used on Mac OS X to store <br>
+preferences and other information). This class can be <br>
+found in the &quot;XML_Parser_crash_complex.php&quot; file.<br>
+Secondly is a simpler XML_Parser_CrashTest class, which <br>
+is simular to the XML_Parser_Simple class, but raises an <br>
+exception when it encounters a &quot;&lt;whatever&gt;&quot; XML element. <br>
+This class can be found in the <br>
+&quot;XML_Parser_crash_simple.php&quot; file.</p>
+<p>You can find the files in a tgz file, along with sample <br>
+XML file and output of the versions I&#039;ve installed, at <br>
+the following URL. This is a quick way how you can get <br>
+the errors:</p>
+<p>~$ wget -q http://aphrodite.asd.jaze.net/~freek/pear-<br>
+xml-parser-crash.tgz<br>
+~$ tar xzf pear-xml-parser-crash.tgz <br>
+~$ cd &quot;Pear XML Parser crash&quot;/<br>
+~/Pear XML Parser crash$ ./XML_Parser_crash_simple.php<br>
+[...]<br>
+    &lt;WHATEVER&gt;<br>
+Oh no! A hideous &lt;whatever&gt; element was detected. Quick! <br>
+Raise an exception!<br>
+      <br>
+    &lt;/WHATEVER&gt;<br>
+    &lt;KEY&gt;<br>
+Bus error</p>
+<p>~/Pear XML Parser crash$ ./XML_Parser_crash_complex.php <br>
+*** malloc[800]: error for object 0x463380: Incorrect <br>
+checksum for freed object - object was probably modified <br>
+after being freed; break at szone_error<br>
+Segmentation fault</p>
+<p>PS: Though I can testify this is harmless code, it is <br>
+always a good idea to be cautious when running unknown <br>
+code. If you run it in a chroot, just remember it needs <br>
+the XML_Parser.php PEAR file.</p>
+</section>
+<section>
+<h3>[2004-12-17 01:01 UTC] php at macfreek dot nl</h3>
+<p>Oh yeah, remember to read the comment for the <br>
+XML_Parser_CrashTest class. I have the strange habit of <br>
+writing extensive comments.</p>
+<p>And happy holidays of course!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

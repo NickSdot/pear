@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1127</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #1127</h1>
+<p>setFrom is slow</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-04 13:04 UTC</td></tr>
+<tr><th>From</th><td>contact at mann dot fr</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Linux (Debian i586)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-04 13:04 UTC] contact at mann dot fr</h3>
+<p>Description:<br>
+------------<br>
+I have a DB_DataObject with 40 fields.<br>
+One of the fields  is 2.1 kb.  The rest are less than 64 bytes.<br>
+I&#039;m on MySQL.<br>
+The setFrom operation takes 0.3 secondes.<br>
+That seems too long.</p>
+</section>
+<section>
+<h3>[2004-04-04 13:44 UTC] contact at mann dot fr</h3>
+<p>For info, some XDebug profiling before your modif :</p>
+<p>Function Summary Profile (sorted by total execution time)<br>
+Total Time Taken	Avg. Time Taken	Number of Calls	Function Name<br>
+0.2986131078	0.2986131078	1	*rapport-&gt;fromvalue<br>
+0.1936949780	0.1936949780	1	{require_once}<br>
+0.0478929237	0.0478929237	1	{require_once}<br>
+0.0243859726	0.0121929863	2	getenv<br>
+0.0116300983	0.0116300983	1	*rapport-&gt;fromvalue<br>
+0.0114809071	0.0114809071	1	*rapport-&gt;fromvalue<br>
+0.0035789023	0.0035789023	1	*rapport-&gt;fromvalue<br>
+0.0022819003	0.0022819003	1	*rapport-&gt;fromvalue<br>
+0.0019271062	0.0019271062	1	*date-&gt;date<br>
+0.0015540507	0.0015540507	1	*date_timezone::getdefault<br>
+0.0009914055	0.0000064377	154	sprintf<br>
+0.0006580382	0.0006580382	1	*date-&gt;date<br>
+0.0006281029	0.0006281029	1	*date-&gt;date<br>
+0.0005649886	0.0005649886	1	*rapport-&gt;fromvalue<br>
+0.0005619957	0.0005619957	1	*rapport-&gt;fromvalue<br>
+0.0005459536	0.0005459536	1	*date-&gt;format<br>
+0.0005379267	0.0005379267	1	*rapport-&gt;fromvalue</p>
+<p>Since &quot; $from &quot; is an array, I don&#039;t see how coping/referencing would change things.  Array&#039;s are funny about references, but I&#039;ll try.</p>
+<p>I&#039;m having fun with the table/fromValue stuff, unless you really think pass/by/ref changes something.</p>
+</section>
+<section>
+<h3>[2004-04-04 13:49 UTC] contact at mann dot fr</h3>
+<p>Function Summary Profile (sorted by total execution time)<br>
+Total Time Taken	Avg. Time Taken	Number of Calls	Function Name<br>
+0.3049260229	0.3049260229	1	*rapport-&gt;fromvalue<br>
+0.2599940879	0.2599940879	1	{require_once}<br>
+0.0531181025	0.0531181025	1	*rapport-&gt;fromvalue<br>
+0.0528690729	0.0528690729	1	*rapport-&gt;table<br>
+0.0525910058	0.0525910058	1	*rapport-&gt;databasestructure<br>
+0.0183258877	0.0183258877	1	{require_once}<br>
+0.0023079126	0.0023079126	1	*rapport-&gt;fromvalue<br>
+0.0022900694	0.0022900694	1	*rapport-&gt;fromvalue<br>
+0.0018499658	0.0018499658	1	*rapport-&gt;fromvalue<br>
+0.0016209672	0.0016209672	1	*rapport-&gt;fromvalue<br>
+0.0016194787	0.0000145899	111	strtolower<br>
+0.0013909445	0.0013909445	1	*rapport-&gt;table<br>
+0.0010421646	0.0000067673	154	sprintf<br>
+0.0006978882	0.0006978882	1	*rapport-&gt;fromvalue<br>
+0.0006729774	0.0006729774	1	*date-&gt;date<br>
+0.0006688950	0.0006688950	1	*date-&gt;date<br>
+0.0006590280	0.0006590280	1	*date-&gt;date</p>
+</section>
+<section>
+<h3>[2004-04-04 14:08 UTC] contact at mann dot fr</h3>
+<p>DATE SEEMS TO BE THE CULPRIT</p>
+<p>FROM VALUE affichage, 6, 2000-01-01<br>
+Time at -&gt;table (col and stuff) in fromValue<br>
+&#039;fromValue  0.000571966171265&#039;<br>
+Time at return after fromValue is done<br>
+&#039;affichage : 0.277346849442&#039;</p>
+</section>
+<section>
+<h3>[2004-04-04 14:38 UTC] contact at mann dot fr</h3>
+<p>Yup APC takes care of that nicely.</p>
+<p>&#039;etat : 0.000288963317871&#039;<br>
+&#039;affichage : 0.000288963317871&#039;<br>
+&#039;relectures : 0.000288009643555&#039;</p>
+<p>Note that these times are without XDebug, but they demonstrate the usefulness of APC.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

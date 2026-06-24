@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3049</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #3049</h1>
+<p>Can not set default selected date/time values for HTML_QuickForm_Date element</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-12-29 05:28 UTC</td></tr>
+<tr><th>From</th><td>musicalpath at yahoo dot com</td></tr>
+<tr><th>Assigned</th><td>avb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Windows XP SP2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-29 05:28 UTC] musicalpath at yahoo dot com</h3>
+<p>Description:<br>
+------------<br>
+There are actually 2 bug fixes here.</p>
+<p>I am using the date element from HTML_QuickForm.  Calling the getElements() function on my newly created element returns null instead of an array of elements.</p>
+<p>After the fix below to getElements(), the setSelected() function for select elements incorrectly inserts the selected attribute.  See code below.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Code that causes bug:</p>
+<p>$now = getdate();</p>
+<p>$dateoptions = array(<br>
+    &#039;format&#039; =&gt; &#039;F / d / Y&#039;,<br>
+    &#039;minYear&#039; =&gt; &#039;2005&#039;,<br>
+    &#039;maxYear&#039; =&gt; &#039;1900&#039; );</p>
+<p>$min_date =&amp; $form-&gt;addElement( &#039;date&#039;, &#039;date_min&#039;, &#039;Min Date:&#039;, $dateoptions );<br>
+  $elements =&amp; $min_date-&gt;getElements();<br>
+  $elMonth =&amp; $elements[0];<br>
+  $elMonth-&gt;setSelected( $now[&#039;mon&#039;] );<br>
+  var_dump( $elements );</p>
+<p>Here&#039;s the patch for file group.php:</p>
+<p>/**<br>
+     * Gets the grouped elements<br>
+     *<br>
+     * @since     2.4<br>
+     * @access    public<br>
+     * @return    array<br>
+     */<br>
+    function &amp;getElements()<br>
+    {<br>
+        /* Add the following 3 lines */<br>
+        if (empty($this-&gt;_elements)) {<br>
+            $this-&gt;_createElements();<br>
+        }<br>
+        return $this-&gt;_elements;<br>
+    } // end func getElements</p>
+<p>For select.php, function toHtml():</p>
+<p>foreach ($this-&gt;_options as $option) {<br>
+                if (is_array($this-&gt;_values) &amp;&amp; in_array((string)$option[&#039;attr&#039;][&#039;value&#039;], $this-&gt;_values)) {<br>
+                    $this-&gt;_updateAttrArray($option[&#039;attr&#039;], array(&#039;selected&#039; =&gt; &#039;selected&#039;));<br>
+                }<br>
+                $strHtml .= $tabs . &quot;\t&lt;option&quot; . $this-&gt;_getAttrString($option[&#039;attr&#039;]) . &#039;&gt;&#039; .<br>
+                            $option[&#039;text&#039;] . &quot;&lt;/option&gt;\n&quot;;</p>
+<p>/* add this line in the function toHtml() (Yes, this is clearly a kludge) */<br>
+                $strHtml = preg_replace( &quot;/=\&quot;selected\&quot;/&quot;, &quot;&quot;, $strHtml );<br>
+            }</p>
+<p>Expected result:<br>
+----------------<br>
+For getElements()</p>
+<p>array<br>
+  0 =&gt; <br>
+    object(html_quickform_select)<br>
+      var &#039;_attributes&#039; =&gt; <br>
+        array<br>
+          &#039;name&#039; =&gt; &#039;F&#039;<br>
+      var &#039;_tabOffset&#039; =&gt; 0<br>
+      var &#039;_tab&#039; =&gt; &#039;	&#039;<br>
+      var &#039;_lineEnd&#039; =&gt; &#039;<br>
+&#039;<br>
+      var &#039;_comment&#039; =&gt; &#039;&#039;<br>
+      var &#039;_label&#039; =&gt; &#039;&#039;</p>
+<p>...The rest of the dump...</p>
+<p>For toHtml()</p>
+<p>should output:<br>
+&lt;option value=&quot;12&quot; selected&gt;December&lt;/option&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+For getElements():</p>
+<p>array<br>
+  empty</p>
+<p>For toHtml()</p>
+<p>actual output:<br>
+&lt;option value=&quot;12&quot; selected=&quot;selected&quot;&gt;December&lt;/option&gt;</p>
+</section>
+<section>
+<h3>[2004-12-29 05:42 UTC] musicalpath at yahoo dot com</h3>
+<p>Here&#039;s a cleaner example of code that causes the problem.</p>
+<p>$dateoptions = array(<br>
+    &#039;format&#039; =&gt; &#039;F / d / Y&#039;,<br>
+    &#039;minYear&#039; =&gt; &#039;2005&#039;,<br>
+    &#039;maxYear&#039; =&gt; &#039;1900&#039; );</p>
+<p>$min_date =&amp; $form-&gt;addElement( &#039;date&#039;, &#039;date_min&#039;, &#039;Min Date:&#039;, $dateoptions );<br>
+  $elements =&amp; $min_date-&gt;getElements();<br>
+  $elements[0]-&gt;setSelected( date(&#039;m&#039;) );<br>
+  $elements[1]-&gt;setSelected( date(&#039;d&#039;) );<br>
+  $elements[2]-&gt;setSelected( date(&#039;Y&#039;) );</p>
+</section>
+<section>
+<h3>[2005-01-07 21:02 UTC] musicalpath at yahoo dot com</h3>
+<p>That is definitely a cleaner way to set the defaults (and it does work).  But it has shown another possible bug.</p>
+<p>I&#039;ve got text input, multi-selection boxes, and radio buttons on this form.  When I use setDefaults as you describe, the radio buttons that i&#039;ve checked are unchecked.  The order I&#039;m doing things is:</p>
+<p>create form<br>
+add radio (name1, on)<br>
+set radio checked<br>
+add radio (name1, off)<br>
+add date selection<br>
+add multi-selection boxes<br>
+set defaults for date selection</p>
+<p>Is setDefaults() supposed to clear old default values?  If so, selected values in multi-selection boxes are not getting cleared.  I&#039;m currently clearing them with the code:</p>
+<p>selectionBoxElement-&gt;_values = null;</p>
+<p>As for the second bug, I see your point.  I&#039;ll look into it more deeply.  My DOCTYPE is currently:</p>
+<p>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.01//EN&quot;<br>
+   &quot;http://www.w3.org/TR/html4/strict.dtd&quot;&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

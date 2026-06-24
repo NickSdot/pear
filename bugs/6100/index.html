@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6100</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_Wiki_BBCode/index.html">Text_Wiki_BBCode</a> &#187; Bug #6100</h1>
+<p>relative urls don&#039;t work right.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-28 23:36 UTC</td></tr>
+<tr><th>From</th><td>me at ben-xo dot com</td></tr>
+<tr><th>Assigned</th><td>firman</td></tr>
+<tr><th>Status</th><td>Verified</td></tr>
+<tr><th>Package</th><td><a href="package/Text_Wiki_BBCode/index.html">Text_Wiki_BBCode</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.0</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-28 23:36 UTC] me at ben-xo dot com</h3>
+<p>Description:<br>
+------------<br>
+Text_Wiki 1.0.3 and Text_Wiki_BBCode 0.0.2</p>
+<p>So i figured out how to turn on relative_urls in Url.php (not the easiest thing to figure out because the doc is currently incomplete; - but i worked it out).</p>
+<p>Anyway. It doesn&#039;t do what i expect.</p>
+<p>Looking at the way the regex has been set up, it&#039;s completely different from the patch I submitted. Fair enough, as i don&#039;t know all the criteria and decision that went into the editing that you did, but still - it doesn&#039;t work right (:</p>
+<p>Test script:<br>
+---------------<br>
+[url=/contact]Use this form please.[/url]<br>
+[url]/contact[/url]</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;a href=&quot;/contact&quot;&gt;Use this form please&lt;/a&gt;<br>
+&lt;a href=&quot;/contact&quot;&gt;/contact&lt;/a&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;a href=&quot;/contact&quot;&gt;/contact&lt;/a&gt;<br>
+&lt;a href=&quot;http:///contact&quot;&gt;/contact&lt;/a&gt;</p>
+</section>
+<section>
+<h3>[2005-11-29 01:42 UTC] me at ben-xo dot com</h3>
+<p>Wait. I fixed it.</p>
+<p>diff -ur Text_Wiki_BBCode-0.0.2/Text/Wiki/Parse/BBCode/Url.php Text_Wiki_BBCode-0.0.2-benxo/Text/Wiki/Parse/BBCode/Url.php<br>
+--- Text_Wiki_BBCode-0.0.2/Text/Wiki/Parse/BBCode/Url.php       2005-11-06 06:59:02.000000000 +0000<br>
++++ Text_Wiki_BBCode-0.0.2-benxo/Text/Wiki/Parse/BBCode/Url.php 2005-11-29 01:41:57.000000000 +0000<br>
+@@ -52,7 +52,7 @@<br>
+         &#039;refused&#039; =&gt; array(&#039;script&#039;, &#039;about&#039;, &#039;applet&#039;, &#039;activex&#039;, &#039;chrome&#039;),<br>
+         &#039;prefixes&#039; =&gt; array(&#039;www&#039;, &#039;ftp&#039;),<br>
+         &#039;host_regexp&#039; =&gt; &#039;(?:[^.\s/&quot;\&#039;&lt;\\\#delim#\ca-\cz]+\.)*[a-z](?:[-a-z0-9]*[a-z0-9])?\.?&#039;,<br>
+-        &#039;path_regexp&#039; =&gt; &#039;(?:/[^][\&#039;\s&quot;&lt;\\\#delim#\ca-\cz]*)?&#039;,<br>
++        &#039;path_regexp&#039; =&gt; &#039;(?:(/)[^][\&#039;\s&quot;&lt;\\\#delim#\ca-\cz]*)?&#039;,<br>
+         &#039;user_regexp&#039; =&gt; &#039;[^]()&lt;&gt;[:;@\,.&quot;\s\\\#delim#\ca-\cz]+(?:\.[^]()&lt;&gt;[:;@\,.&quot;\s\\\#delim#\ca-\cz]+)*&#039;,<br>
+         &#039;inline_enable&#039; =&gt; true,<br>
+         &#039;relative_enable&#039; =&gt; false</p>
+</section>
+<section>
+<h3>[2005-11-29 01:46 UTC] me at ben-xo dot com</h3>
+<p>That&#039;s a bit messy but ...</p>
+<p>&#039;(?:/[^][\&#039;\s&quot;&lt;\\\#delim#\ca-\cz]*)?&#039;,</p>
+<p>becomes</p>
+<p>&#039;(?:(/)[^][\&#039;\s&quot;&lt;\\\#delim#\ca-\cz]*)?&#039;,</p>
+<p>that&#039;s the only change.</p>
+<p>capturing the (/) has the same effect in the decision login as if it had captured a URL protocol; it bases whether or not it&#039;s a URL with a URL link or a URL with a text description link on the number/content of captured subexps.</p>
+</section>
+<section>
+<h3>[2005-11-29 06:00 UTC] me at ben-xo dot com</h3>
+<p>Disregard my last patch, it breaks other things!</p>
+<p>Here is a new one... i have tested with as many examples as i could think of, but i may not have tested it fully</p>
+<p>--- Text_Wiki_BBCode-0.0.2/Text/Wiki/Parse/BBCode/Url.php       2005-11-06 06:59:02.000000000 +0000<br>
++++ Text_Wiki_BBCode-0.0.2-benxo/Text/Wiki/Parse/BBCode/Url.php 2005-11-29 05:36:01.000000000 +0000<br>
+@@ -52,7 +52,7 @@<br>
+         &#039;refused&#039; =&gt; array(&#039;script&#039;, &#039;about&#039;, &#039;applet&#039;, &#039;activex&#039;, &#039;chrome&#039;),<br>
+         &#039;prefixes&#039; =&gt; array(&#039;www&#039;, &#039;ftp&#039;),<br>
+         &#039;host_regexp&#039; =&gt; &#039;(?:[^.\s/&quot;\&#039;&lt;\\\#delim#\ca-\cz]+\.)*[a-z](?:[-a-z0-9]*[a-z0-9])?\.?&#039;,<br>
+-        &#039;path_regexp&#039; =&gt; &#039;(?:/[^][\&#039;\s&quot;&lt;\\\#delim#\ca-\cz]*)?&#039;,<br>
++        &#039;path_regexp&#039; =&gt; &#039;(?:/()[^][\&#039;\s&quot;&lt;\\\#delim#\ca-\cz]*)?&#039;,<br>
+         &#039;user_regexp&#039; =&gt; &#039;[^]()&lt;&gt;[:;@\,.&quot;\s\\\#delim#\ca-\cz]+(?:\.[^]()&lt;&gt;[:;@\,.&quot;\s\\\#delim#\ca-\cz]+)*&#039;,<br>
+         &#039;inline_enable&#039; =&gt; true,<br>
+         &#039;relative_enable&#039; =&gt; false<br>
+@@ -156,7 +156,7 @@<br>
+                 $pre = $matches[1];<br>
+                 if (!$matches[2]) {<br>
+                     $matches[2] = &#039;mailto:&#039; . $matches[3];<br>
+-                    $matches[4] = $matches[3];<br>
++                    $matches[5] = $matches[3];<br>
+                 }<br>
+             }<br>
+         }<br>
+@@ -164,7 +164,7 @@<br>
+         $options = array(<br>
+             &#039;type&#039; =&gt; $type,<br>
+             &#039;href&#039; =&gt; (isset($matches[3]) ? &#039;&#039; : &#039;http://&#039;) . $matches[2],<br>
+-            &#039;text&#039; =&gt; isset($matches[4]) ? $matches[4] : $matches[2]<br>
++            &#039;text&#039; =&gt; isset($matches[5]) ? $matches[5] : (!empty($matches[4]) ? $matches[4] : $matches[2])<br>
+         );<br>
+ <br>
+         // tokenize</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

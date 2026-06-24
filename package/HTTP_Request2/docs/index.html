@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTP_Request2 Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_Request2/index.html">HTTP_Request2</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-intro">Introduction</a>
+</li>
+<li><a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-config">Configuration</a>
+</li>
+<li><a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-request">HTTP_Request2</a>
+</li>
+<li><a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-adapters">Adapters</a>
+</li>
+<li><a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-response">HTTP_Request2_Response</a>
+</li>
+<li><a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-observers">Observers</a>
+</li>
+<li><a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-exceptions">Exceptions</a>
+</li></ul>
+</nav>
+<p>PHP5 rewrite of HTTP_Request package (with some features from HTTP_Client). Provides cleaner API and pluggable Adapters: Socket adapter, based on old HTTP_Request code, Curl adapter, wraps around PHP&#039;s cURL extension, Mock adapter, useful for testing packages dependent on HTTP_Request2. Supports POST requests with data and file uploads, basic and digest authentication, cookies, managing cookies across requests, proxies, gzip and deflate encodings, redirects, monitoring the request progress with Observers...</p>
+<section id="package-http-http-request2-intro">
+<h2>Introduction</h2>
+<h3>Package Overview</h3>
+
+  <p><strong>HTTP_Request2</strong> package provides an easy way for PHP
+   applications to perform HTTP requests. It supports a large subset of Hypertext
+   Transfer Protocol features, and can be used for the following:</p><ul>
+    <li>
+     Working with web services (numerous PEAR packages in Web Services category
+     are using <strong>HTTP_Request2</strong> under the hood);
+    </li>
+    <li>
+     Checking the validity of web links;
+    </li>
+    <li>
+     Grabbing and parsing remote web pages;
+    </li>
+    <li>
+     Automated form submission.
+    </li>
+   </ul>
+  
+ 
+ 
+  <h3>Basic Usage Example</h3>
+
+   <p>Performing a request with <strong>HTTP_Request2</strong> consists of the following steps</p><ul>
+     <li>
+      Creating, <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-config">configuring</a> and <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-request">populating</a> an instance of
+      <strong>HTTP_Request2</strong> class. At the very least you should set request URL and
+      maybe proxy parameters (if you are using proxy).
+     </li>
+     <li>
+      Calling <strong><a href="package/HTTP_Request2/docs/index.html">send</a></strong> method of that instance. This
+      will pass control to <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-adapters">an Adapter</a> that will send
+      the request and read remote server&#039;s response. Request&#039;s progress may be monitored by
+      <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-observers">Observers</a>.
+     </li>
+     <li>
+      Processing the returned instance of <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-response"><strong>HTTP_Request2_Response</strong></a>.
+      An instance of <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-exceptions"><strong>HTTP_Request2_Exception</strong></a>
+      can also be thrown by <strong>send()</strong> if response could not be received (completely
+      or at all) or parsed. 
+     </li>
+    </ul>
+   
+  
+   
+    <p><strong>
+     Fetches and displays PEAR website homepage
+    </strong></p>
+   
+   <pre><code>&lt;?php
+require_once &#039;HTTP/Request2.php&#039;;
+
+$request = new HTTP_Request2(&#039;http://pear.php.net/&#039;, HTTP_Request2::METHOD_GET);
+try {
+    $response = $request-&gt;send();
+    if (200 == $response-&gt;getStatus()) {
+        echo $response-&gt;getBody();
+    } else {
+        echo &#039;Unexpected HTTP status: &#039; . $response-&gt;getStatus() . &#039; &#039; .
+             $response-&gt;getReasonPhrase();
+    }
+} catch (HTTP_Request2_Exception $e) {
+    echo &#039;Error: &#039; . $e-&gt;getMessage();
+}
+?&gt;</code></pre>
+</section>
+<section id="package-http-http-request2-config">
+<h2>Configuration</h2>
+<h3>List of Configuration Parameters</h3>
+
+  <p><strong>HTTP_Request2</strong> <a href="package/HTTP_Request2/docs/index.html">constructor</a> and <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::setConfig()</a> method accept the
+   following configuration parameters. You can also use <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::getConfig()</a> to get the values of these parameters. Note that using
+   an unknown parameter name will result in an exception.</p><table><caption>Common parameters</caption>
+    
+     <thead>
+      <tr>
+       <th>Parameter name</th>
+       <th>Description</th>
+       <th>Expected type</th>
+       <th>Default value</th>
+      </tr>
+
+     </thead>
+
+     <tbody>
+      <tr>
+       <td><code>adapter</code></td>
+       <td>Adapter to use, may also be set by <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::setAdapter()</a> method. (See: <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-adapters">Adapters</a>)</td>
+       <td>string|object</td>
+       <td><code>&#039;HTTP_Request2_Adapter_Socket&#039;</code></td>
+      </tr>
+
+      <tr>
+       <td><code>connect_timeout</code></td>
+       <td>Connection timeout in seconds. Exception will be thrown if connecting to remote host
+        takes more than this number of seconds.</td>
+       <td>integer</td>
+       <td><code>10</code></td>
+      </tr>
+
+      <tr>
+       <td><code>timeout</code></td>
+       <td>Total number of seconds a request can take. Use <code>0</code> for no limit,
+        should be greater than <code>connect_timeout</code> if set. Exception will be thrown
+        if execution of <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::send()</a>
+        takes more than this number of seconds.</td>
+       <td>integer</td>
+       <td><code>0</code></td>
+      </tr>
+
+      <tr>
+       <td><code>use_brackets</code></td>
+       <td>Whether to append [] to array variable names. This is useful when performing a request
+       to a remote PHP page which expects array parameters to have brackets, should be turned off in
+       the other cases.</td>
+       <td>boolean</td>
+       <td><strong>TRUE</strong></td>
+      </tr>
+
+      <tr>
+       <td><code>protocol_version</code></td>
+       <td>HTTP protocol version to use, <code>&#039;1.0&#039;</code> or <code>&#039;1.1&#039;</code></td>
+       <td>string</td>
+       <td><code>&#039;1.1&#039;</code></td>
+      </tr>
+
+      <tr>
+       <td><code>buffer_size</code></td>
+       <td>Buffer size to use for reading and writing. Leave this at the default unless you know
+        what you are doing.</td>
+       <td>integer</td>
+       <td><code>16384</code></td>
+      </tr>
+
+      <tr>
+       <td><code>store_body</code></td>
+       <td>Whether to store response body in response object. Set to false if receiving a huge
+        response and using an Observer to save it. (See: <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-observers">Observers</a>)
+       </td>
+       <td>boolean</td>
+       <td><strong>TRUE</strong></td>
+      </tr>
+
+      <tr>
+       <td><code>digest_compat_ie</code></td>
+       <td>Whether to imitate behaviour of MSIE 5 and 6 in using URL without query string in digest
+        authentication</td>
+       <td>boolean</td>
+       <td><strong>FALSE</strong></td>
+      </tr>
+
+      <tr>
+       <td><code>local_ip</code></td>
+       <td>Specifies the IP address that will be used for accessing the network, if the computer
+        running <strong>HTTP_Request2</strong> has more than one 
+        (since <em>2.2.0</em>)</td>
+       <td>string</td>
+       <td><strong>NULL</strong></td>
+      </tr>
+
+     </tbody></table>
+
+
+   <table><caption>Redirect parameters</caption>
+    
+     <thead>
+      <tr>
+       <th>Parameter name</th>
+       <th>Description</th>
+       <th>Expected type</th>
+       <th>Default value</th>
+      </tr>
+
+     </thead>
+
+     <tbody>
+      <tr>
+       <td><code>follow_redirects</code></td>
+       <td>Whether to automatically follow HTTP redirects in server response</td>
+       <td>boolean</td>
+       <td><strong>FALSE</strong></td>
+      </tr>
+
+      <tr>
+       <td><code>max_redirects</code></td>
+       <td>Maximum number of redirects to follow</td>
+       <td>integer</td>
+       <td><code>5</code></td>
+      </tr>
+
+      <tr>
+       <td><code>strict_redirects</code></td>
+       <td>Whether to keep request method on redirects via status 301 and
+        302 (<strong>TRUE</strong>, needed for compatibility with <a href="http://www.faqs.org/rfcs/rfc2616">RFC 2616</a>) or switch to <code>GET</code>
+        (<strong>FALSE</strong>, needed for compatibility with most browsers). <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-adapters">Issues with Curl Adapter</a></td>
+       <td>boolean</td>
+       <td><strong>FALSE</strong></td>
+      </tr>
+
+     </tbody></table>
+
+
+   <table><caption>Proxy parameters</caption>
+    
+     <thead>
+      <tr>
+       <th>Parameter name</th>
+       <th>Description</th>
+       <th>Expected type</th>
+       <th>Default value</th>
+      </tr>
+
+     </thead>
+
+     <tbody>
+      <tr>
+       <td><code>proxy</code></td>
+       <td>Proxy configuration given as an URL, e.g.
+        <code>&#039;socks5://localhost:1080&#039;</code>, URL is parsed and separate parameters
+        described below are set (since <em>2.1.0</em>)</td>
+       <td>string</td>
+       <td>N/A</td>
+      </tr>
+
+      <tr>
+       <td><code>proxy_type</code></td>
+       <td>Proxy type, either <code>&#039;http&#039;</code> or <code>&#039;socks5&#039;</code> (since
+        <em>2.1.0</em>)</td>
+       <td>string</td>
+       <td><code>&#039;http&#039;</code></td>
+      </tr>
+
+      <tr>
+       <td><code>proxy_host</code></td>
+       <td>Proxy server host</td>
+       <td>string</td>
+       <td><code>&#039;&#039;</code></td>
+      </tr>
+
+      <tr>
+       <td><code>proxy_port</code></td>
+       <td>Proxy server port</td>
+       <td>integer</td>
+       <td><code>&#039;&#039;</code></td>
+      </tr>
+
+      <tr>
+       <td><code>proxy_user</code></td>
+       <td>User name for proxy authentication</td>
+       <td>string</td>
+       <td><code>&#039;&#039;</code></td>
+      </tr>
+
+      <tr>
+       <td><code>proxy_password</code></td>
+       <td>Password for proxy authentication</td>
+       <td>string</td>
+       <td><code>&#039;&#039;</code></td>
+      </tr>
+
+      <tr>
+       <td><code>proxy_auth_scheme</code></td>
+       <td>Proxy authentication scheme, one of <strong>HTTP_Request2::AUTH_*</strong> constants</td>
+       <td>string</td>
+       <td><strong>HTTP_Request2::AUTH_BASIC</strong></td>
+      </tr>
+
+     </tbody></table>
+
+
+   <table><caption>SSL parameters</caption>
+    
+     <thead>
+      <tr>
+       <th>Parameter name</th>
+       <th>Description</th>
+       <th>Expected type</th>
+       <th>Default value</th>
+      </tr>
+
+     </thead>
+
+     <tbody>
+      <tr>
+       <td><code>ssl_verify_peer</code></td>
+       <td>Whether to verify peer&#039;s SSL certificate. Note that this is on by default, to follow
+        the behaviour of modern browsers and current cURL version.
+        <blockquote>
+         Peer verification <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-config">is likely to fail</a>
+         if you don&#039;t explicitly provide <code>ssl_cafile</code> and/or <code>ssl_capath</code>,
+         especially with <strong>Socket</strong> adapter.
+        </blockquote>
+
+       </td>
+       <td>boolean</td>
+       <td><strong>TRUE</strong></td>
+      </tr>
+
+      <tr>
+       <td><code>ssl_verify_host</code></td>
+       <td>Whether to check that Common Name in SSL certificate matches host name. <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-adapters">Issues with Socket Adapter.</a></td>
+       <td>boolean</td>
+       <td><strong>TRUE</strong></td>
+      </tr>
+
+      <tr>
+       <td><code>ssl_cafile</code></td>
+       <td>Certificate Authority file to verify the peer with (use when
+        <code>ssl_verify_peer</code> is <strong>TRUE</strong>)
+        <blockquote>
+         You can use e.g. <a href="http://curl.haxx.se/docs/caextract.html">cURL&#039;s CA Extract tool</a> to get such a file. 
+        </blockquote>
+
+       </td>
+       <td>string</td>
+       <td><strong>NULL</strong></td>
+      </tr>
+
+      <tr>
+       <td><code>ssl_capath</code></td>
+       <td>Directory holding multiple Certificate Authority files</td>
+       <td>string</td>
+       <td><strong>NULL</strong></td>
+      </tr>
+
+      <tr>
+       <td><code>ssl_local_cert</code></td>
+       <td>Name of a file containing local certificate</td>
+       <td>string</td>
+       <td><strong>NULL</strong></td>
+      </tr>
+
+      <tr>
+       <td><code>ssl_passphrase</code></td>
+       <td>Passphrase with which local certificate was encoded</td>
+       <td>string</td>
+       <td><strong>NULL</strong></td>
+      </tr>
+
+     </tbody></table>
+
+
+  
+ 
+ 
+ 
+  <h3>Proxy Configuration</h3>
+
+  <p>While most of the configuration parameters have sane default values and generally can be left
+   alone, you&#039;ll definitely need to configure proxy you are using to access websites.</p>
+  
+   <p><strong>Proxy configuration example</strong></p>
+   <pre><code>&lt;?php
+require_once &#039;HTTP/Request2.php&#039;;
+
+$request = new HTTP_Request2();
+$request-&gt;setConfig(array(
+    &#039;proxy_host&#039;        =&gt; &#039;proxy.example.com&#039;,
+    &#039;proxy_port&#039;        =&gt; 3128,
+    &#039;proxy_user&#039;        =&gt; &#039;luser&#039;,
+    &#039;proxy_password&#039;    =&gt; &#039;sekret&#039;,
+    &#039;proxy_auth_scheme&#039; =&gt; HTTP_Request2::AUTH_DIGEST
+));
+
+// Now you can perform requests
+?&gt;</code></pre>
+  
+ 
+
+ 
+  <h3>SSL peer verification issues</h3>
+
+  <p>For SSL peer verification to work, OpenSSL library (used under the hood by both Curl and
+   Socket adapter) needs <a href="http://en.wikipedia.org/wiki/Certificate_authority">certificate authority</a> files. However it does
+   not include any such files itself, expecting OS distributions compiling OpenSSL library
+   to provide proper default locations.</p>
+  <p>Unfortunately OpenSSL extension of PHP below version 5.6 <em>does not</em>
+   try to use the distribution-default values for CA file / CA path when explicit ones
+   are not provided. Curl extension, however, does use these defaults, so you can sometimes
+   be able to use <code>&#039;verify_peer&#039;</code> without setting <code>&#039;ssl_cafile&#039;</code>
+   for Curl adapter, but not for Socket one (see e.g. bug #18480 and bug #19351).</p>
+  <p>For versions of PHP below 5.6 the only solution is to provide <code>&#039;ssl_cafile&#039;</code> 
+   and / or <code>&#039;ssl_capath&#039;</code> for every request if using 
+   <strong>Socket</strong> adapter. <strong>Curl</strong> adapter will or
+   will not be able to use the defaults depending on distribution, additionally you can set
+   <code>curl.cainfo</code> parameter in <code>php.ini</code> on PHP 5.3.7+ 
+   (it contains the default value for <strong>CURLOPT_CAINFO</strong> setting to which 
+   <code>&#039;ssl_cafile&#039;</code> setting is mapped).</p>
+  <p>PHP version 5.6 will <em>finally</em> <a href="https://wiki.php.net/rfc/tls-peer-verification">enable peer verification by default</a>
+   for <code>&#039;ssl&#039;</code> stream wrapper, so it will also provide more possibilities for 
+   using default values:</p><ul>
+    <li>
+     PHP will use defaults compiled into the OpenSSL library by distribution.
+    </li>
+    <li>
+     <code>openssl.cafile</code> and <code>openssl.capath</code> settings in 
+     <code>php.ini</code> will provide default values for <code>&#039;cafile&#039;</code>
+     and <code>&#039;capath&#039;</code> SSL stream context options (<code>&#039;ssl_cafile&#039;</code>
+     and <code>&#039;ssl_capath&#039;</code> settings map to these in <strong>Socket</strong> adapter).
+    </li>
+   </ul>
+</section>
+<section id="package-http-http-request2-request">
+<h2>HTTP_Request2</h2>
+<h3>Request URL and <code>GET</code> Parameters</h3>
+
+  <p>Request URL can be set in <strong>HTTP_Request2</strong> <a href="package/HTTP_Request2/docs/index.html">constructor</a> or via <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::setUrl()</a> method. Both of these accept
+   either a string or an instance of <a href="package/Net_URL2/index.html">Net_URL2</a>.
+   URL is stored internally as an instance of <strong>Net_URL2</strong> that can be accessed
+   via <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::getUrl()</a>.</p>
+  <p><code>GET</code> request parameters can be added to URL via <a href="package/Net_URL2/index.html">Net_URL2::setQueryVariable()</a> and <a href="package/Net_URL2/index.html">Net_URL2::setQueryVariables()</a>:</p>
+    <p><strong>Setting <code>GET</code> parameters</strong></p>
+    <pre><code>&lt;?php
+// Explicitly set request method and use_brackets
+$request = new HTTP_Request2(&#039;http://pear.php.net/bugs/search.php&#039;,
+                             HTTP_Request2::METHOD_GET, array(&#039;use_brackets&#039; =&gt; true));
+$url = $request-&gt;getUrl();
+$url-&gt;setQueryVariables(array(
+    &#039;package_name&#039; =&gt; array(&#039;HTTP_Request2&#039;, &#039;Net_URL2&#039;),
+    &#039;status&#039;       =&gt; &#039;Open&#039;
+));
+$url-&gt;setQueryVariable(&#039;cmd&#039;, &#039;display&#039;);
+
+// This will output a page with open bugs for Net_URL2 and HTTP_Request2
+echo $request-&gt;send()-&gt;getBody();
+?&gt;</code></pre>
+   
+  
+ 
+
+ 
+  <h3>HTTP Authentication</h3>
+
+  <p><strong>HTTP_Request2</strong> supports both Basic and Digest authentication schemes
+   defined in <a href="http://www.faqs.org/rfcs/rfc2617">RFC
+   2617</a>. Authentication credentials can be set via <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::setAuth()</a> method or given in the
+   request URL (but in the latter case authentication scheme will default to Basic).</p>
+    <p><strong>Setting authentication credentials</strong></p>
+    <pre><code>&lt;?php
+// This will set credentials for basic auth
+$request = new HTTP_Request2(&#039;http://user:password@www.example.com/secret/&#039;);
+
+// This will set credentials for Digest auth
+$request-&gt;setAuth(&#039;user&#039;, &#039;password&#039;, HTTP_Request2::AUTH_DIGEST);
+?&gt;</code></pre>
+   
+  
+  <p>There is currently <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-adapters">an issue with Digest
+   authentication support in Curl Adapter</a> due to an underlying PHP cURL extension problem.</p>
+ 
+ 
+ 
+  <h3>Request Headers</h3>
+
+  <p>Additional request headers can be set via <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::setHeader()</a> method. It also allows
+   removing previosly set headers</p>
+    <p><strong>Setting request headers</strong></p>
+    <pre><code>&lt;?php
+// setting one header
+$request-&gt;setHeader(&#039;Accept-Charset&#039;, &#039;utf-25&#039;);
+
+// setting several headers in one go
+$request-&gt;setHeader(array(
+    &#039;Connection&#039; =&gt; &#039;close&#039;,
+    &#039;Referer&#039;    =&gt; &#039;http://localhost/&#039;
+));
+
+// removing a header
+$request-&gt;setHeader(&#039;User-Agent&#039;, null);
+?&gt;</code></pre>
+   
+  
+ 
+
+ 
+  
+   <h3>Cookies</h3>
+
+  
+  <p>Cookies can be added to the request via <strong>setHeader()</strong> method, but a specialized <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::addCookie()</a> method is also provided</p>
+    <p><strong>Adding cookies to the request</strong></p>
+    <pre><code>&lt;?php
+$request-&gt;addCookie(&#039;CUSTOMER&#039;, &#039;WILE_E_COYOTE&#039;);
+$request-&gt;addCookie(&#039;PART_NUMBER&#039;, &#039;ROCKET_LAUNCHER_0001&#039;);
+?&gt;</code></pre>
+   
+  
+  
+   
+    <h3>Using cookie jar to manage cookies across requests</h3>
+
+   
+   <p>Since release 2.0.0beta1 the package contains <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_CookieJar</a> class that can be used manage cookies across requests.
+    You can enable this functionality by passing either an existing instance of
+    <strong>HTTP_Request2_CookieJar</strong> or <strong>TRUE</strong> to create a new instance to
+    <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::setCookieJar()</a> method.
+    Cookie Jar can be later accessed by <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::getCookieJar()</a>.</p>
+   <p>Cookie jar will automatically store cookies set in HTTP response and pass them to requests
+    with URLs matching cookie parameters. You can also manually add cookies to jar by using
+    <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_CookieJar::store()</a> method.</p>
+   <p>By default <a href="http://publicsuffix.org/">Public
+    Suffix List</a> is used to check whether a cookie domain matches the given URL. The same list
+    is used to restrict cookie setting by Firefox, Chrome and Opera browsers. It can be disabled if
+    needed by <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_CookieJar::usePublicSuffixList()</a>.</p>
+   <p><strong>HTTP_Request2_CookieJar</strong> implements
+    Serializable interface and thus can be easily serialized and
+    stored somewhere. You can control whether session cookies stored in a jar should be serialized
+    by calling <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_CookieJar::serializeSessionCookies()</a>.</p>
+   <blockquote><p>When <strong>HTTP_Request2</strong> instance has a cookie jar set, <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::addCookie()</a> method will add a cookie
+    to jar, rather than directly to <code>&#039;Cookie&#039;</code> header, using current request URL
+    for setting its <code>&#039;domain&#039;</code> and <code>&#039;path&#039;</code> components.</p></blockquote>
+
+  
+ 
+ 
+ 
+  <h3>Request Body</h3>
+
+  <p>If you are doing a <code>POST</code> request with Content-Type
+   <code>&#039;application/x-www-form-urlencoded&#039;</code> or
+   <code>&#039;multipart/form-data&#039;</code> (in other words, emulating <code>POST</code> form
+   submission), you can add parameters via <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::addPostParameter()</a> and file uploads via <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::addUpload()</a>.
+   <code>HTTP_Request2</code> will take care of generating proper request body. File
+   uploads will be streamed from disk by <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_MultipartBody</a> to reduce memory consumption.</p>
+   <p><strong>Emulating <code>POST</code> form submission</strong></p>
+   <pre><code>&lt;?php
+$request = new HTTP_Request2(&#039;http://www.example.com/profile.php&#039;);
+$request-&gt;setMethod(HTTP_Request2::METHOD_POST)
+    -&gt;addPostParameter(&#039;username&#039;, &#039;vassily&#039;)
+    -&gt;addPostParameter(array(
+        &#039;email&#039; =&gt; &#039;vassily.pupkin@mail.ru&#039;,
+        &#039;phone&#039; =&gt; &#039;+7 (495) 123-45-67&#039;
+    ))
+    -&gt;addUpload(&#039;avatar&#039;, &#039;./exploit.exe&#039;, &#039;me_and_my_cat.jpg&#039;, &#039;image/jpeg&#039;);
+?&gt;</code></pre>
+  
+  
+  <p><strong>addUpload()</strong> can accept either a string with a local file name or a pointer to
+   an open file, as returned by <a href="http://www.php.net/manual-lookup.php?pattern=fopen"><strong>fopen()</strong></a>. You currently can&#039;t
+   directly pass a string with the file contents, however you can pass a pointer to <a href="http://php.net/manual/en/wrappers.php.php"><code>php://memory</code> or
+    <code>php://temp</code></a>:</p><pre><code>&lt;?php
+$fp = fopen(&#039;php://temp/maxmemory:1048576&#039;, &#039;r+&#039;);
+fwrite($fp, generateFileUploadData());
+$request-&gt;addUpload(&#039;stuff&#039;, $fp, &#039;custom.name&#039;, &#039;application/octet-stream&#039;);
+?&gt;</code></pre>
+  
+  <p>HTTP request body can also be set directly, by providing a string or a filename to <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::setBody()</a> method. This is the only way to set a request body for
+   non-<code>POST</code> request.</p>
+    <p><strong>Setting &quot;raw&quot; request body</strong></p>
+    <pre><code>&lt;?php
+$request = new HTTP_Request2(&#039;http://rpc.example.com&#039;);
+$request-&gt;setMethod(HTTP_Request2::METHOD_POST)
+    -&gt;setHeader(&#039;Content-type: text/xml; charset=utf-8&#039;)
+    -&gt;setBody(
+        &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;utf-8\&quot;?&quot; . &quot;&gt;\r\n&quot; .
+        &quot;&lt;methodCall&gt;\r\n&quot; .
+        &quot; &lt;methodName&gt;foo.bar&lt;/methodName&gt;\r\n&quot; .
+        &quot; &lt;params&gt;\r\n&quot; .
+        &quot;  &lt;param&gt;&lt;value&gt;&lt;string&gt;Hello, world!&lt;/string&gt;&lt;/value&gt;&lt;/param&gt;\r\n&quot; .
+        &quot;  &lt;param&gt;&lt;value&gt;&lt;int&gt;42&lt;/int&gt;&lt;/value&gt;&lt;/param&gt;\r\n&quot; .
+        &quot; &lt;/params&gt;\r\n&quot; .
+        &quot;&lt;/methodCall&gt;&quot;
+    );
+?&gt;</code></pre>
+   
+  
+ 
+
+ 
+ 
+  <h3>HTTP Redirects</h3>
+
+  <p>Since release 0.5.0 <strong>HTTP_Request2</strong> can automatically follow HTTP redirects
+   if <code>follow_redirects</code> parameter is set to <strong>TRUE</strong>.</p>
+  <blockquote><p><strong>HTTP_Request2</strong> will only follow redirects to HTTP(S) URLs, redirects to
+   other protocols will result in an Exception.</p></blockquote>
+
+  <blockquote><p><strong><a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::send</a></strong> will return only
+   the final response, if you are interested in the intermediate ones you should use <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-observers">Observers</a>.</p></blockquote>
+</section>
+<section id="package-http-http-request2-adapters">
+<h2>Adapters</h2>
+<h3>Overview</h3>
+
+  <p>Adapters in <strong>HTTP_Request2</strong> package are classes responsible for establishing
+   the actual connection to the remote server, writing requests and reading responses. Adapter can
+   be set either via a configuration parameter (see: <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-config">Configuration</a>) or by <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::setAdapter()</a> method.</p>
+  <p>The package currently contains three adapters:</p>
+    <dl>
+     <dt><strong>HTTP_Request2_Adapter_Socket</strong></dt>
+     <dd><p>This Adapter uses PHP&#039;s builtin <a href="http://www.php.net/manual-lookup.php?pattern=stream_socket_client"><strong>stream_socket_client()</strong></a>
+      function and does not require any special extensions or configuration. Note that this is a
+      pure PHP implementation of HTTP protocol, it does not use <code>http</code> stream
+      wrapper.</p><p>This is the default Adapter, it will be used by <strong>HTTP_Request2</strong> unless
+      you explicitly set the other one.</p></dd>
+    </dl>
+    <dl>
+     <dt><strong>HTTP_Request2_Adapter_Curl</strong></dt>
+     <dd><p>Curl adapter wraps around PHP&#039;s cURL extension and thus allows using extremely sophisticated
+      cURL library. It is a good choice if you have cURL extension available in PHP.</p></dd>
+    </dl>
+    <dl>
+     <dt><strong>HTTP_Request2_Adapter_Mock</strong></dt>
+     <dd><p>This adapter allows testing packages and applications using
+      <strong>HTTP_Request2</strong> without depending on a network connection and remote
+      server availability.</p><p>You can replace the default adapter in <strong>HTTP_Request2</strong> by an instance of
+      <strong>HTTP_Request2_Adapter_Mock</strong> populated via its <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_Adapter_Mock::addResponse()</a> method.
+      The adapter will return prepared responses or throw prepared exceptions when its
+      <strong>sendRequest()</strong> method is called.</p></dd>
+    </dl>
+   
+  
+  <p>Other adapters may be created by subclassing an abstract <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_Adapter</a> class and implementing its <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_Adapter::sendRequest()</a> method.</p>
+ 
+ 
+ 
+  <h3>Socket Adapter Issues</h3>
+
+  <p>Due to <a href="http://bugs.php.net/47030">PHP bug
+   #47030</a> <code>ssl_verify_host</code> configuration parameter is useless without
+   <code>ssl_verify_peer</code>. When the latter is switched off <em>no host validation
+    will be performed</em>.</p>
+ 
+
+ 
+  <h3>Curl Adapter Issues</h3>
+
+  <p>When doing a <code>POST</code> request with file uploads or reading the request body from
+   file, <strong>HTTP_Request2</strong> streams files from disk to reduce memory consumption
+   and to allow monitoring the request progress. This is done by setting up a
+   <strong>CURLOPT_READFUNCTION</strong> callback. PHP does not allow setting another callback,
+   <strong>CURLOPT_IOCTLFUNCTION</strong> (see <a href="http://bugs.php.net/47204">PHP bug #47204</a>) so the request body can not be
+   &quot;rewound&quot; when another request should be performed. Thus a request with a non-empty
+   body to a resource protected by Digest authentication or to a page that does a redirect when
+   <code>follow_redirects</code> is enabled will fail.</p>
+  <p>Since release 0.5.0 <strong>HTTP_Request2</strong> works around this problem by reading
+   the whole request body into memory. Of course this may be an issue when the request body is huge,
+   so consider using Socket Adapter.</p>
+  <p>Setting <code>strict_redirects</code> configuration parameter to <strong>TRUE</strong> will only have
+   effect on Curl Adapter if <strong>CURLOPT_POSTREDIR</strong> (see <a href="http://bugs.php.net/49571">PHP bug #49571</a>) is available in cURL extension.
+   It is available in PHP 5.3.2 and higher.</p>
+ 
+
+ 
+  <h3>Using Mock adapter</h3>
+
+  <p><a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_Adapter_Mock::addResponse()</a>
+   method can accept either a HTTP response (instance of
+   <strong>HTTP_Request2_Response</strong>, a string, a pointer to an open file) or an
+   <strong>Exception</strong>. The latter may be useful to test that your application degrades
+   gracefully when the remote server is not available due to some network problems. Several
+   responses may be added via <strong>addResponse()</strong> to simulate a HTTP transaction
+   consisting of multiple requests and responses. They will be returned by the Adapter in the order
+   they were added.</p>
+  <p>Since release 2.1.0 it is possible to specify a request URL to
+   <strong>addResponse()</strong>. <strong>sendRequest()</strong> will only return responses
+   without an explicit URL set or having the same URL as the request. It is recommended that you set
+   explicit URLs either for all responses or for none of them, otherwise the behaviour will be
+   difficult to predict.</p>
+  
+    <p><strong>Returning responses and throwing exceptions</strong></p>
+    <pre><code>&lt;?php
+require_once &#039;HTTP/Request2.php&#039;;
+require_once &#039;HTTP/Request2/Adapter/Mock.php&#039;;
+
+$mock = new HTTP_Request2_Adapter_Mock();
+$mock-&gt;addResponse(
+    &quot;HTTP/1.1 200 OK\r\n&quot; .
+    &quot;Connection: close\r\n&quot; .
+    &quot;\r\n&quot; .
+    &quot;Explicit response for example.org&quot;,
+    &#039;http://example.org/&#039;
+);
+$mock-&gt;addResponse(
+    &quot;HTTP/1.1 200 OK\r\n&quot; .
+    &quot;Content-Length: 32\r\n&quot; .
+    &quot;Connection: close\r\n&quot; .
+    &quot;\r\n&quot; .
+    &quot;Nothing to see here, move along.&quot;
+);
+$mock-&gt;addResponse(
+    new HTTP_Request2_Exception(&quot;The server is on fire!&quot;)
+);
+
+// this request will succeed
+$request1 = new HTTP_Request2(
+    &#039;http://ok.example.com/&#039;, HTTP_Request2::METHOD_GET,
+    array(&#039;adapter&#039; =&gt; $mock)
+);
+echo &quot;Response: &quot; . $request1-&gt;send()-&gt;getBody() . &quot;\r\n&quot;;
+
+// this request will fail
+$request2 = new HTTP_Request2(&#039;http://burning.example.com/&#039;);
+$request2-&gt;setAdapter($mock);
+try {
+    echo &quot;Response: &quot; . $request2-&gt;send()-&gt;getBody() . &quot;\r\n&quot;;
+} catch (Exception $e) {
+    echo &quot;Error: &quot; . $e-&gt;getMessage() . &quot;\r\n&quot;;
+}
+
+// The response for example.org was ignored by previous requests
+$requestOrg = new HTTP_Request2(
+    &#039;http://example.org/&#039;, HTTP_Request2::METHOD_GET,
+    array(&#039;adapter&#039; =&gt; $mock)
+);
+echo &quot;Response: &quot; . $requestOrg-&gt;send()-&gt;getBody() . &quot;\r\n&quot;;
+?&gt;</code></pre>
+    <p>The above code will output:</p>
+    <pre><br>Response: Nothing to see here, move along.<br>Error: The server is on fire!<br>Response: Explicit response for example.org<br>
+    </pre>
+
+   
+  
+  <p>Mock Adapter also has two static helper methods <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_Adapter_Mock::createResponseFromString()</a> and <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_Adapter_Mock::createResponseFromFile()</a> which build
+   <strong>HTTP_Request2_Response</strong> objects from either a string containing the
+   complete HTTP response or a pointer to an open file with such response, respectively.</p>
+</section>
+<section id="package-http-http-request2-response">
+<h2>HTTP_Request2_Response</h2>
+<h3>Overview</h3>
+
+  <p><strong>HTTP_Request2_Response</strong> encapsulates a HTTP response message and provides
+   easy access to different parts of it. It also contains static helper methods
+   <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_Response::decodeGzip()</a> and
+   <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_Response::decodeDeflate()</a>
+   for decoding response bodies encoded by <code>Content-Encoding: gzip</code> (as defined in
+   <a href="http://www.faqs.org/rfcs/rfc1952">RFC 1952</a>) and
+   <code>Content-Encoding: deflate</code> (<a href="http://www.faqs.org/rfcs/rfc1950">RFC 1950</a>), respectively.</p>
+  <p>An instance of this class will usually be returned by
+   <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::send()</a>
+   method. You can also build an instance yourself using either helper methods of
+   <strong>HTTP_Request2_Adapter_Mock</strong> or manually (see below).</p>
+  <p>You can use the following methods for accessing various parts of HTTP response:
+   <a href="package/HTTP_Request2/docs/index.html">getStatus()</a>,
+   <a href="package/HTTP_Request2/docs/index.html">getReasonPhrase()</a>,
+   <a href="package/HTTP_Request2/docs/index.html">getVersion()</a>,
+   <a href="package/HTTP_Request2/docs/index.html">getHeader()</a>,
+   <a href="package/HTTP_Request2/docs/index.html">getCookies()</a>,
+   <a href="package/HTTP_Request2/docs/index.html">getBody()</a>.
+   Note that the response object will not contain the response body if
+   <code>&#039;store_body&#039;</code> configuration parameter was set to <strong>FALSE</strong>. Also note that
+   <strong>getBody()</strong> always returns body completely decoded, if for some reason you want 
+   to access body still encoded by <code>gzip</code> / <code>deflate</code> you&#039;ll need
+   to use Observers <em>and</em> Socket adapter.</p>
+    <p><strong>Accessing response parts</strong></p>
+    <pre><code>&lt;?php
+$request  = new HTTP_Request2(&#039;http://www.example.com/&#039;);
+$response = $request-&gt;send();
+
+echo &quot;Response status: &quot; . $response-&gt;getStatus() . &quot;\n&quot;;
+echo &quot;Human-readable reason phrase: &quot; . $response-&gt;getReasonPhrase() . &quot;\n&quot;;
+echo &quot;Response HTTP version: &quot; . $response-&gt;getVersion() . &quot;\n&quot;;
+echo &quot;Response headers:\n&quot;;
+foreach ($response-&gt;getHeader() as $k =&gt; $v) {
+    echo &quot;\t{$k}: {$v}\n&quot;;
+}
+echo &quot;Value of a specific header (Content-Type): &quot; . $response-&gt;getHeader(&#039;content-type&#039;) . &quot;\n&quot;;
+echo &quot;Cookies set in response:\n&quot;;
+foreach ($response-&gt;getCookies() as $c) {
+    echo &quot;\tname: {$c[&#039;name&#039;]}, value: {$c[&#039;value&#039;]}&quot; .
+         (empty($c[&#039;expires&#039;])? &#039;&#039;: &quot;, expires: {$c[&#039;expires&#039;]}&quot;) .
+         (empty($c[&#039;domain&#039;])? &#039;&#039;: &quot;, domain: {$c[&#039;domain&#039;]}&quot;) .
+         (empty($c[&#039;path&#039;])? &#039;&#039;: &quot;, path: {$c[&#039;path&#039;]}&quot;) .
+         &quot;, secure: &quot; . ($c[&#039;secure&#039;]? &#039;yes&#039;: &#039;no&#039;) . &quot;\n&quot;;
+    
+}
+echo &quot;Response body:\n&quot; . $response-&gt;getBody();
+?&gt;</code></pre>
+   
+  
+ 
+ 
+  <h3>Building the Response Manually</h3>
+
+  <p>The class is designed to be used in &quot;streaming&quot; scenario, building the response as it is being received:</p>
+    <p><strong>Building the response (pseudocode)</strong></p>
+    <pre><code>&lt;?php
+$statusLine = read_status_line();
+$response = new HTTP_Request2_Response($statusLine);
+
+do {
+    $headerLine = read_header_line();
+    $response-&gt;parseHeaderLine($headerLine);
+} while ($headerLine != &#039;&#039;);
+
+while ($chunk = read_body()) {
+    $response-&gt;appendBody($chunk);
+}
+?&gt;</code></pre>
+       
+  
+  <p>Everything is straightforward enough, but a few things need considering:</p><ul>
+    <li>
+     <a href="package/HTTP_Request2/docs/index.html">Constructor</a> will throw an
+     exception if the provided string does not look like a valid response status line. 
+    </li>
+    <li>
+     It is necessary to pass an empty string to <a href="package/HTTP_Request2/docs/index.html">parseHeaderLine()</a> to
+     indicate the end of response headers: this triggers some additional processing (e.g. cookie
+     parsing).
+    </li>
+   </ul>
+</section>
+<section id="package-http-http-request2-observers">
+<h2>Observers</h2>
+<h3>Overview</h3>
+
+  <p>Observers are classes that can be attached to an instance of <strong>HTTP_Request2</strong>
+   and notified of request&#039;s progress. Possible uses:</p><ul>
+    <li>
+     Drawing a progress bar for large file uploads and / or downloads;
+    </li>
+    <li>
+     Saving large response body to disk instead of storing it in memory;
+    </li>
+    <li>
+     Cancelling the request by throwing an exception in Observer.
+    </li>
+   </ul>
+  
+  <p><strong>HTTP_Request2</strong> implements SplSubject
+   interface, so Observers should implement SplObserver. When
+   Observer is notified of an event, it should use <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2::getLastEvent()</a> to access event details. That method returns an
+   associative array with <code>&#039;name&#039;</code> and <code>&#039;data&#039;</code> keys. Possible
+   event names are</p>
+    <dl>
+     <dt><code>&#039;connect&#039;</code></dt>
+     <dd>
+      On connection to remote server, <code>&#039;data&#039;</code> is the destination (string).
+     </dd>
+    </dl>
+    <dl>
+     <dt><code>&#039;disconnect&#039;</code></dt>
+     <dd>
+      On disconnection from server.
+     </dd>
+    </dl>
+    <dl>
+     <dt><code>&#039;sentHeaders&#039;</code></dt>
+     <dd>
+      On sending the request headers, <code>&#039;data&#039;</code> is the headers sent (string).
+     </dd>
+    </dl>
+    <dl>
+     <dt><code>&#039;sentBodyPart&#039;</code></dt>
+     <dd>
+      On sending a part of the request body, <code>&#039;data&#039;</code> is the length of that part
+      (integer).
+     </dd>
+    </dl>
+    <dl>
+     <dt><code>&#039;sentBody&#039;</code> (since release 2.0.0beta1)</dt>
+     <dd>On sending the complete request body, <code>&#039;data&#039;</code> is the
+      length of request body (integer).</dd>
+    </dl>
+    <dl>
+     <dt><code>&#039;receivedHeaders&#039;</code></dt>
+     <dd>
+      On receiving the response headers, <code>&#039;data&#039;</code> is
+      <strong>HTTP_Request2_Response</strong> object containing these headers.
+     </dd>
+    </dl>
+    <dl>
+     <dt><code>&#039;receivedBodyPart&#039;</code></dt>
+     <dd>
+      On receiving a part of the response body, <code>&#039;data&#039;</code> is the received part
+      (string).
+     </dd>
+    </dl>
+    <dl>
+     <dt><code>&#039;receivedEncodedBodyPart&#039;</code></dt>
+     <dd>
+      As <code>&#039;receivedBodyPart&#039;</code>, but <code>&#039;data&#039;</code> is still encoded by
+      relevant <code>Content-Encoding</code>.
+     </dd>
+    </dl>
+    <dl>
+     <dt><code>&#039;receivedBody&#039;</code></dt>
+     <dd>
+      On receiving the complete response body, data is <strong>HTTP_Request2_Response</strong>
+      object, probably containing this body.
+     </dd>
+    </dl>
+   
+  
+  <blockquote><p>As the events are actually sent by request Adapters, you can receive fewer or different events
+   if you switch to another Adapter. Curl Adapter does not notify of <code>&#039;connect&#039;</code>,
+   <code>&#039;disconnect&#039;</code> and <code>&#039;receivedEncodedBodyPart&#039;</code> events (it
+   always uses <code>&#039;receivedBodyPart&#039;</code> as cURL extension takes care of decoding).
+   Mock Adapter does not send any notifications at all.</p></blockquote>
+
+ 
+
+ 
+  <h3>Usage Example</h3>
+
+  <p>The following example shows how an Observer can be used to save response body to disk without
+   storing it in memory. Note that only events relevant to that task are handled in its
+   <strong>update()</strong> method, the others can be safely ignored.</p>
+  <p>The package contains another Observer implementation: <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_Observer_Log</a> class that allows logging request progress to a file
+   or an instance of <strong>Log</strong>.</p>
+  
+   <p><strong>Saving response body to disk</strong></p>
+   <pre><code>&lt;?php
+class HTTP_Request2_Observer_Download implements SplObserver
+{
+    protected $dir;
+
+    protected $fp;
+
+    public function __construct($dir)
+    {
+        if (!is_dir($dir)) {
+            throw new Exception(&quot;&#039;{$dir}&#039; is not a directory&quot;);
+        }
+        $this-&gt;dir = $dir;
+    }
+
+    public function update(SplSubject $subject)
+    {
+        $event = $subject-&gt;getLastEvent();
+
+        switch ($event[&#039;name&#039;]) {
+        case &#039;receivedHeaders&#039;:
+            if (($disposition = $event[&#039;data&#039;]-&gt;getHeader(&#039;content-disposition&#039;))
+                &amp;&amp; 0 == strpos($disposition, &#039;attachment&#039;)
+                &amp;&amp; preg_match(&#039;/filename=&quot;([^&quot;]+)&quot;/&#039;, $disposition, $m)
+            ) {
+                $filename = basename($m[1]);
+            } else {
+                $filename = basename($subject-&gt;getUrl()-&gt;getPath());
+            }
+            $target = $this-&gt;dir . DIRECTORY_SEPARATOR . $filename;
+            if (!($this-&gt;fp = @fopen($target, &#039;wb&#039;))) {
+                throw new Exception(&quot;Cannot open target file &#039;{$target}&#039;&quot;);
+            }
+            break;
+
+        case &#039;receivedBodyPart&#039;:
+        case &#039;receivedEncodedBodyPart&#039;:
+            fwrite($this-&gt;fp, $event[&#039;data&#039;]);
+            break;
+
+        case &#039;receivedBody&#039;:
+            fclose($this-&gt;fp);
+        }
+    }
+}
+
+$request = new HTTP_Request2(
+    &#039;http://pear.php.net/distributions/manual/pear_manual_en.tar.bz2&#039;,
+    HTTP_Request2::METHOD_GET, array(&#039;store_body&#039; =&gt; false)
+);
+$request-&gt;attach(new HTTP_Request2_Observer_Download(&#039;.&#039;));
+
+// This won&#039;t output anything since body isn&#039;t stored in the response
+echo $request-&gt;send()-&gt;getBody();
+?&gt;</code></pre>
+</section>
+<section id="package-http-http-request2-exceptions">
+<h2>Exceptions</h2>
+<h3>Exceptions overview</h3>
+
+  
+  <p>All exceptions thrown in HTTP_Request2 are instances of <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_Exception</a>.
+   Since release 2.0.0beta1, HTTP_Request2 tries to throw a specialized subclass of that class and
+   provide an error code when possible.</p>
+  <p>Checking for exception subclass and error code can help your application identify transient
+   failures (e.g. <strong>HTTP_Request2_MessageException</strong> with error code
+   <strong>HTTP_Request2_Exception::TIMEOUT</strong>). You can also use this information to
+   display a user friendly error message instead of displaying Exception message that is more
+   programmer friendly.</p>
+  <p>The following <strong>HTTP_Request2_Exception</strong> subclasses are available:</p>
+    <dl>
+     <dt><strong>HTTP_Request2_NotImplementedException</strong></dt>
+     <dd>Exception thrown in case of missing package features.</dd>
+    </dl>
+    <dl>
+     <dt><strong>HTTP_Request2_LogicException</strong></dt>
+     <dd>
+      Exception that represents error in the program logic. These are usually thrown before
+       request even starts.
+      This exception implies an error on part of the programmer, like passing an invalid
+       argument to a method or trying to use Curl Adapter when curl extension is disabled. They
+       are unlikely to happen in production except for those dealing with local files.
+     </dd>
+    </dl>
+    <dl>
+     <dt><strong>HTTP_Request2_ConnectionException</strong></dt>
+     <dd>
+      Exception thrown when connection to a web or proxy server fails.
+     </dd>
+    </dl>
+    <dl>
+     <dt><strong>HTTP_Request2_MessageException</strong></dt>
+     <dd>Thrown when sending or receiving HTTP message fails (this implies that
+      connection succeeded, at least). Can be caused by network problems (e.g. timeout) or remote
+      server sending invalid data.</dd>
+    </dl>
+   
+  
+  
+ 
+ 
+  
+   <h3>Error codes</h3>
+
+  
+  <p>Subclasses of <strong>HTTP_Request2_Exception</strong> can contain two error codes:</p><ul>
+    <li>Package error code, one of the constants described below. Can be accessed via
+     <strong>getCode()</strong> method.</li>
+    <li>Native error code, as returned by an underlying PHP extension used by
+     <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-adapters">the Adapter</a>. Specifically, these are
+     the error codes returned by <a href="http://www.php.net/manual-lookup.php?pattern=stream_socket_client"><strong>stream_socket_client()</strong></a>
+     for Socket Adapter and <a href="http://www.php.net/manual-lookup.php?pattern=curl_errno"><strong>curl_errno()</strong></a> for Curl
+     Adapter. Native error code can be accessed via <a href="package/HTTP_Request2/docs/index.html">HTTP_Request2_Exception::getNativeCode()</a>.</li>
+   </ul>
+  
+  
+  <p>The following package error codes are currently used:</p><table><caption>Error codes used by <strong>HTTP_Request2_LogicException</strong></caption>
+    
+     <thead>
+      <tr>
+       <th>Constant</th>
+       <th>Meaning</th>
+      </tr>
+
+     </thead>
+
+     
+     <tbody>
+      <tr>
+       <td><strong>HTTP_Request2_Exception::INVALID_ARGUMENT</strong></td>
+       <td>An invalid argument was passed to a method.</td>
+      </tr>
+
+      <tr>
+       <td><strong>HTTP_Request2_Exception::MISSING_VALUE</strong></td>
+       <td>Some required value was not available.</td>
+      </tr>
+
+      <tr>
+       <td><strong>HTTP_Request2_Exception::MISCONFIGURATION</strong></td>
+       <td>Request cannot be processed due to errors in PHP configuration (e.g. trying to use
+        disabled PHP extension).</td>
+      </tr>
+
+      <tr>
+       <td><strong>HTTP_Request2_Exception::READ_ERROR</strong></td>
+       <td>Error reading the local file.</td>
+      </tr>
+
+     </tbody></table>
+
+
+   <table><caption>Error codes used by <strong>HTTP_Request2_MessageException</strong></caption>
+    
+     <thead>
+      <tr>
+       <th>Constant</th>
+       <th>Meaning</th>
+      </tr>
+
+     </thead>
+
+     
+     <tbody>
+      <tr>
+       <td><strong>HTTP_Request2_Exception::MALFORMED_RESPONSE</strong></td>
+       <td>Server returned a response that does not conform to HTTP protocol. This means that
+        even status line of response message could not be parsed.</td>
+      </tr>
+
+      <tr>
+       <td><strong>HTTP_Request2_Exception::DECODE_ERROR</strong></td>
+       <td>Failure decoding Content-Encoding or Transfer-Encoding of response.</td>
+      </tr>
+
+      <tr>
+       <td><strong>HTTP_Request2_Exception::TIMEOUT</strong></td>
+       <td>Operation timed out.</td>
+      </tr>
+
+      <tr>
+       <td><strong>HTTP_Request2_Exception::TOO_MANY_REDIRECTS</strong></td>
+       <td>Number of redirects exceeded <code>&#039;max_redirects&#039;</code> <a href="package/HTTP_Request2/docs/index.html#package-http-http-request2-config">configuration parameter</a>.</td>
+      </tr>
+
+      <tr>
+       <td><strong>HTTP_Request2_Exception::NON_HTTP_REDIRECT</strong></td>
+       <td>Redirect to a protocol other than <code>http(s)://</code>.</td>
+      </tr>
+
+     </tbody></table>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9571</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #9571</h1>
+<p>dev</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-12-07 13:46 UTC</td></tr>
+<tr><th>From</th><td>flare1320 at gmail dot com</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.0</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-12-07 13:46 UTC] flare1320 at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Parse error: syntax error, unexpected &#039;-&#039;, expecting &#039;)&#039; in /home/rplus/public_html/dev/elmer/fastbet/SOAP/WSDL.php(727) : eval()&#039;d code on line 7</p>
+<p>Fatal error: Class &#039;WebService_XmlGatewayServiceService_gatewayA&#039; not found in /home/rplus/public_html/dev/elmer/fastbet/SOAP/WSDL.php on line 729</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php</p>
+<p>error_reporting(E_ALL &amp; ~E_NOTICE);<br>
+include(&#039;SOAP/Client.php&#039;);</p>
+<p>// --------------------------------------------------<br>
+// Some variables we&#039;ll use.<br>
+// --------------------------------------------------<br>
+$keypath = &#039;FULL_PATH_TO_FOLDER_CONTAINING_KEYS&#039;;<br>
+$xg_root_cert = $keypath .&#039;xg_root.cer&#039;;<br>
+$xg_client_cert = $keypath . &#039;xg_client.cer&#039;;<br>
+$xg_client_pk = $keypath . &#039;xg_client_pk.txt&#039;;</p>
+<p>$svc = &#039;edu.utexas.its.t0xmlg.t0dwxgtt.test&#039;;<br>
+$input_ns = &#039;http://xmlgateway.its.utexas.edu/service/&#039; . $svc;<br>
+$query_ns = &#039;http://xmlgateway.its.utexas.edu/prod&#039;;</p>
+<p>// --------------------------------------------------<br>
+// Create a SOAP_WSDL object from the service&#039;s WSDL<br>
+// --------------------------------------------------<br>
+$wsdl = new SOAP_WSDL(&#039;http://xmlgateway.its.utexas.edu/xg/wsdl/&#039; . $svc);</p>
+<p>// --------------------------------------------------<br>
+// Generate the proxy/stub classes and assign SSL keys.<br>
+// --------------------------------------------------<br>
+$soapclient = $wsdl-&gt;getProxy();<br>
+$soapclient-&gt;setOpt(&#039;curl&#039;, CURLOPT_VERBOSE, true);<br>
+$soapclient-&gt;setOpt(&#039;curl&#039;, CURLOPT_CAINFO, $xg_root_cert);<br>
+$soapclient-&gt;setOpt(&#039;curl&#039;, CURLOPT_SSLCERT, $xg_client_cert);<br>
+$soapclient-&gt;setOpt(&#039;curl&#039;, CURLOPT_SSLKEY, $xg_client_pk);</p>
+<p>// --------------------------------------------------<br>
+// Building the request SOAP value<br>
+// --------------------------------------------------<br>
+$test_input_inner[] =&amp; new SOAP_Value(&#039;{&#039;.$input_ns.&#039;}subprogram&#039;, &#039;string&#039;, &#039;&#039;);<br>
+$test_input_inner[] =&amp; new SOAP_Value(&#039;{&#039;.$input_ns.&#039;}webtoken&#039;, &#039;string&#039;, &#039;&#039;);<br>
+$test_input_inner[] =&amp; new SOAP_Value(&#039;{&#039;.$input_ns.&#039;}msg&#039;, &#039;string&#039;, &#039;hello&#039;);<br>
+$test_input =&amp; new SOAP_Value(&#039;{&#039;.$input_ns.&#039;}&#039;.$svc.&#039;-input&#039;, &#039;&#039;,<br>
+    $test_input_inner);</p>
+<p>$query_inner[] =&amp; new SOAP_Value(&#039;{&#039;.$query_ns.&#039;}service&#039;, &#039;string&#039;, $svc);<br>
+$query_inner[] =&amp; new SOAP_Value(&#039;{&#039;.$query_ns.&#039;}input-data&#039;, &#039;&#039;, $test_input);<br>
+$query =&amp; new SOAP_Value(&#039;{&#039;.$query_ns.&#039;}query&#039;, &#039;&#039;, $query_inner);</p>
+<p>$input[] =&amp; new SOAP_Value(&#039;{&#039;.$query_ns.&#039;}outputWithLineBreaks&#039;, &#039;string&#039;, &#039;&#039;);<br>
+$input[] =&amp; new SOAP_Value(&#039;{&#039;.$query_ns.&#039;}outputWithTabs&#039;, &#039;string&#039;, &#039;&#039;);<br>
+$input[] =&amp; $query;</p>
+<p>// --------------------------------------------------<br>
+// Call the web service and get the results<br>
+// --------------------------------------------------<br>
+$ret = $soapclient-&gt;getInfo($input);</p>
+<p>print &quot;\n\nThe value returned by the call:&quot;;<br>
+print &#039;&lt;blockquote&gt;&lt;pre&gt;&#039;;<br>
+print $ret[&#039;response&#039;]-&gt;{&quot;output-data&quot;}-&gt;{&quot;$svc-output&quot;}-&gt;{&quot;msg-plus-date-time&quot;};<br>
+print &#039;&lt;/pre&gt;&lt;/blockquote&gt;&#039;;</p>
+<p>print &quot;\n\nThis is the entire result object:&quot;;<br>
+print &#039;&lt;blockquote&gt;&lt;pre&gt;&#039;;<br>
+ob_start();<br>
+print_r($ret);<br>
+$out = ob_get_contents();<br>
+ob_end_clean();<br>
+print htmlentities($out);<br>
+print &#039;&lt;/pre&gt;&lt;/blockquote&gt;&#039;;</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+xml output</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8720</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #8720</h1>
+<p>executeMultiple fails for empty $values array</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-09-17 10:00 UTC</td></tr>
+<tr><th>From</th><td>jo at durchholz dot org</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-09-17 10:00 UTC] jo at durchholz dot org</h3>
+<p>Description:<br>
+------------<br>
+If executeMultiple is given a $values parameter of the form<br>
+  array (<br>
+    array ()<br>
+  )<br>
+MDB2_Statement_Common::bindValueArray will call<br>
+  array_fill (0, 0, NULL)<br>
+which in turn will issue a warning and return FALSE.</p>
+<p>(I consider this a bug in array_fill, which should simply return an empty array, but this won&#039;t fix all those old(ish) PHP installations.)</p>
+<p>This situation can occur only if executeMultiple is used to handle queries that don&#039;t have parameters. (I do this because I have a DB layer on top of MDB2, which uses executeMultiple for all queries for simplicity.)</p>
+<p>Test script:<br>
+---------------<br>
+# Warning: I haven&#039;t tested this stripped-down version.</p>
+<p>$prepared_query =<br>
+  $_db-&gt;prepare (<br>
+    &#039;TRUNCATE TABLE t&#039;,<br>
+    NULL,<br>
+    MDB2_PREPARE_MANIP<br>
+  );<br>
+$_db-&gt;extended-&gt;executeMultiple (<br>
+  $prepared_query,<br>
+  array (array ())<br>
+);</p>
+<p># &#039;TRUNCATE TABLE t&#039; should be executed once, so the<br>
+# $values parameter must have one entry.<br>
+# &#039;TRUNCATE TABLE t&#039; does not have parameter, so that<br>
+# entry in $values must be an empty array.<br>
+# That&#039;s the background behind the array (array ())<br>
+# construct above.</p>
+<p>###########################################################</p>
+<p>Original code:</p>
+<p>-- snip --<br>
+    function bindValueArray(&amp;$values, $types = null)<br>
+    {<br>
+        $types = is_array($types) ? array_values($types) : array_fill(0, count($values), null);<br>
+-- snip --</p>
+<p>Bug fix:<br>
+-- snip --<br>
+    function bindValueArray(&amp;$values, $types = null)<br>
+    {<br>
+        $types =<br>
+          is_array($types) ? array_values($types)<br>
+          : count($values) == 0 ? array ()<br>
+          : array_fill(0, count($values), null);<br>
+-- snip --</p>
+<p>Expected result:<br>
+----------------<br>
+No warnings.</p>
+<p>Actual result:<br>
+--------------<br>
+Issues warning (I have my own error handler, so wording and formatting deviate from normal PHP output):</p>
+<p>pear\MDB2.php, line 3886:<br>
+array_fill(): Number of elements must be positive</p>
+</section>
+<section>
+<h3>[2006-09-17 21:25 UTC] jo at durchholz dot org</h3>
+<p>This says<br>
+  string(17) &quot;@package_version@&quot;<br>
+Not very helpful, I admit...</p>
+<p>... BUT I have kept the downloaded files in a properly version-numbered download directory, and there it says &quot;2.2.0&quot;.<br>
+Sorry if this problem is already fixed in 2.2.2. I will upgrade to 2.2.2 and report again tomorrow or so.</p>
+</section>
+<section>
+<h3>[2006-09-17 21:27 UTC] jo at durchholz dot org</h3>
+<p>(Corrected the summary - somehow it got taken from my previous bug report.)</p>
+</section>
+<section>
+<h3>[2006-09-18 20:49 UTC] jo at durchholz dot org</h3>
+<p>&gt; The given code has not been changed in a while:</p>
+<p>Hm... you&#039;re right. And checking the execution flow with the debugger showed that it doesn&#039;t happen anymore, though I can&#039;t say whether that&#039;s because I upgraded to 2.2.2 or not.</p>
+<p>This seems to be irreproducible in 2.2.2, so I closed the bug.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3222</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_Bittorrent/index.html">File_Bittorrent</a> &#187; Bug #3222</h1>
+<p>BitTorrent bencoding protocol errors</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-17 19:08 UTC</td></tr>
+<tr><th>From</th><td>uzume at xuno dot com</td></tr>
+<tr><th>Assigned</th><td>tacker</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/File_Bittorrent/index.html">File_Bittorrent</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-17 19:08 UTC] uzume at xuno dot com</h3>
+<p>Description:<br>
+------------<br>
+Encode.php can incorrently bencode dictionaries because the BitTorrent protocol specifies:</p>
+<p>&quot;Keys must be strings and appear in sorted order (sorted as raw strings, not alphanumerics).&quot;</p>
+<p>Also encoding and decoding does not properly encode and decode (most) strings as UTF-8 as specified in the new BitTorrent protocol.</p>
+<p>Please refer to the old and new BitTorrent protocol specifications at:</p>
+<p>http://bitconjurer.org/BitTorrent/protocol.html<br>
+http://bittorrent.com/protocol.html</p>
+</section>
+<section>
+<h3>[2005-02-07 01:05 UTC] uzume at xuno dot com</h3>
+<p>This is still broken.</p>
+<p>I now see code that uses asort() to sort arrays in the array encoding but this has even bigger problems.</p>
+<p>Dictionaries need be sorted by key and not by value (use ksort()). Technically, only dictionaries need to be sorted but it probably makes sense to have the lists&#039; output by numeric value of the key (not a string sort though as you will note there is a natsort() for &quot;natural&quot; sorting too) so that the &quot;first&quot; item entered into the array is also the first item serialized.</p>
+<p>I recommend you move the sorting to later after you have identified whether the array is a dictionary or a list (and as I mentioned technically it is to be sorted by keys--not values, and only need be done for dictionaries).</p>
+</section>
+<section>
+<h3>[2005-02-07 14:55 UTC] uzume at xuno dot com</h3>
+<p>It looks like you are doing the right thing now with respect to bencoding PHP arrays. I think I might personally go for a different implmentation but that is another issue than bugs in this software.</p>
+<p>In my original post about this bug I also mentioned that the BitTorrent specification now mentions that all fields are to be interpreted at UTF-8 now (vs. the original specification which stated ASCII in a few places but overrall did not state anything about all fields). This said there are several places where raw binary strings are required (so interpreting as UTF-8 is not appropriate), like in the peice hash values. Anyway, my point it that it would be nice if there was some easy mechanism to available to interpret the bdecoded data as UTF-8 (e.g., very useful for non-English filenames). I know several BitTorrent clients allow such to be interpreted in numberous ways because tradtionally this was not specified and people have generated torrent metafiles with various encodings (JIS, GB2312, etc.).</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4243</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_POP3/index.html">Net_POP3</a> &#187; Bug #4243</h1>
+<p>Problems assessing capabilities.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-04-28 21:06 UTC</td></tr>
+<tr><th>From</th><td>rlpowell at digitalkingdom dot org</td></tr>
+<tr><th>Assigned</th><td>doconnor</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_POP3/index.html">Net_POP3</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Debian Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-28 21:06 UTC] rlpowell at digitalkingdom dot org</h3>
+<p>Description:<br>
+------------<br>
+The following is what I had to do to make net_pop3.php not crash when we inserted into TikiWiki:</p>
+<p>Index: ./lib/webmail/net_pop3.php<br>
+===================================================================<br>
+RCS file: /cvsroot/tikiwiki/tiki/lib/webmail/Attic/net_pop3.php,v<br>
+retrieving revision 1.1.2.1<br>
+retrieving revision 1.1.2.3<br>
+diff -r1.1.2.1 -r1.1.2.3<br>
+36c36<br>
+&lt; // $Id: net_pop3.php,v 1.1.2.1 2005/04/23 20:47:04 mose Exp $<br>
+---<br>
+&gt; // $Id: net_pop3.php,v 1.1.2.3 2005/04/28 20:56:20 rlpowell Exp $<br>
+295c295<br>
+&lt;                         $this-&gt;_capability[&#039;implementation&#039;] = $matches[3];<br>
+---<br>
+&gt;                         $this-&gt;_capability[&#039;implementation&#039;] = $matches[1];<br>
+298c298<br>
+&lt;                         $this-&gt;_capability[&#039;sasl&#039;] = preg_split(&#039;/\s+/&#039;, $matches[3]);<br>
+---<br>
+&gt;                         $this-&gt;_capability[&#039;sasl&#039;] = preg_split(&#039;/\s+/&#039;, $matches[1]);<br>
+301c301<br>
+&lt;                         $this-&gt;_capability[$capa] = $matches[2];<br>
+---<br>
+&gt;                         $this-&gt;_capability[$capa] = $matches[1];<br>
+337a338,339<br>
+&gt;       $serverMethods = array();<br>
+&gt;<br>
+339c341<br>
+&lt;            $serverMethods=$this-&gt;_capability[&#039;sasl&#039;];<br>
+---<br>
+&gt;            $serverMethods[] = $this-&gt;_capability[&#039;sasl&#039;][0];</p>
+</section>
+<section>
+<h3>[2005-05-20 09:45 UTC] pearbug20050520 at pech dot cz</h3>
+<p>This is the problem with undefined index, which has no direct connection to this bug, but should be solved with this bug. You can for example try it against dovecot.</p>
+<p>Thanks.<br>
+Jirka Pech</p>
+<p>--- POP3.php.orig       2005-05-20 11:42:46.317135367 +0200<br>
++++ POP3.php    2005-05-20 11:39:51.590440164 +0200<br>
+@@ -295,7 +295,9 @@<br>
+                         $this-&gt;_capability[&#039;implementation&#039;] = $matches[3];<br>
+                         break;<br>
+                     case &#039;sasl&#039;:<br>
++                       if (isset($matches[3])) {<br>
+                         $this-&gt;_capability[&#039;sasl&#039;] = preg_split(&#039;/\s+/&#039;, $matches[3]);<br>
++                       }<br>
+                         break;<br>
+                     default :<br>
+                         $this-&gt;_capability[$capa] = $matches[2];</p>
+</section>
+<section>
+<h3>[2005-05-20 18:20 UTC] rlpowell at digitalkingdom dot org</h3>
+<p>Just for the record, dovecot is what I was using as well.</p>
+<p>Also, I suggest adding to the if in the second patch below the following:</p>
+<p>} else {<br>
+                            $this-&gt;_capability[&#039;sasl&#039;] = $matches[1];<br>
+                        }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Games_Chess Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Games_Chess/index.html">Games_Chess</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Games_Chess/docs/index.html#package-structures-games-chess-intro">Introduction</a>
+</li></ul>
+</nav>
+<p>Games_Chess is like a brilliant helper who can tell you anything you need to know about an abstract chess game. The only thing Games_Chess cannot do is play against you - it is not a chess engine. Games_Chess handles the logic a chessboard and parsing standard FEN (Forsyth-Edwards Notation) for describing a position as well as SAN (Standard Algebraic Notation) for describing individual moves. This package can be used as a backend driver for playing chess, or for validating and/or creating PGN files using the File_ChessPGN package (when it is completed)</p>
+<section id="package-structures-games-chess-intro">
+<h2>Introduction</h2>
+<h3>What is Games_Chess?</h3>
+ 
+     
+     <p>Games_Chess provides a basic interface for validating and playing
+      chess.  Games_Chess has facilities for calculating all of the important
+      chess rules including check, checkmate, stalemate, basic draws such as bishop+king
+      versus king, 50 move draw, en passant pawn captures, castling, double space
+      first pawn move and basic piece movement.  In addition, Games_Chess can
+      set up a board to a position using the Forsyth-Edwards Notation (<code>FEN</code>)
+      and can output a list of moves in Standard Algebraic Notation (<code>SAN</code>)
+      as well as parse any valid SAN move, no matter how obscure (Qa3xf3, for instance),
+      as well as simple &quot;move the piece on a3 to h3&quot; commands.</p>
+    
+    <h3>How do I use Games_Chess?</h3>
+ 
+     
+     <p>The Games_Chess package comes with a demonstration file, which has
+      highlighted source at <a href="package/Games_Chess/docs/index.html">This location</a>.</p>
+     <p>The Games_Chess package provides three different drivers, one for playing
+      a standard chess game, and two for playing interesting variant games
+      that are popular on the <a href="http://www.chessclub.com">Internet Chess Club (ICC)</a>.</p><ol>
+       <li>
+        
+         <a href="http://www.chessclub.com/help/Crazyhouse">Crazyhouse</a>.
+         basic rules in Crazyhouse chess allow you to place pieces you
+         have captured from your opponent on the board as new pieces for
+         your own army.  This is a wild and highly tactical game.
+        
+       </li>
+       <li>
+        
+         <a href="http://www.chessclub.com/help/wild17">Loser&#039;s Chess</a>.
+         Loser&#039;s chess is similar to checkers in that if a capture is possible,
+         it must be executed.  For this reason, most of the moves are forcing moves
+         in this game, and it results in very fast games.
+        
+       </li>
+      </ol>
+     
+     <p>To use Games_Chess on the most basic level is simple.  Here is a sample script
+      showing the initialization of the three drivers:</p>
+     <pre><code>&lt;?php
+require_once &#039;Games/Chess/Standard.php&#039;;
+require_once &#039;Games/Chess/Crazyhouse.php&#039;;
+require_once &#039;Games/Chess/Losers.php&#039;;
+$standard = new Games_Chess_Standard;
+$crazyhouse = new Games_Chess_Crazyhouse;
+$losers = new Games_Chess_Losers;
+?&gt;</code></pre><p>By default, a Games_Chess driver is created with a blank board.  To set up a new
+      starting position, use this code:</p><pre><code>&lt;?php
+require_once &#039;Games/Chess/Standard.php&#039;;
+$standard = new Games_Chess_Standard;
+$standard-&gt;resetGame();
+?&gt;</code></pre><p>If you wish to load a particular starting position in <a href="http://en.wikipedia.org/wiki/Forsyth-Edwards_notation">FEN</a> notation, pass
+      the FEN string to <strong>resetGame()</strong> like so:</p><pre><code>&lt;?php
+require_once &#039;Games/Chess/Standard.php&#039;;
+$standard = new Games_Chess_Standard;
+$standard-&gt;resetGame(&#039;rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2&#039;);
+?&gt;</code></pre>
+     
+     <h3>How to move pieces with Games_Chess</h3>
+
+      
+      <p>There are two basic methods for performing moves with Games_Chess,
+       <a href="package/Games_Chess/docs/index.html">moveSAN</a>
+       and <a href="package/Games_Chess/docs/index.html">moveSquare</a>.
+       Both of these methods either return <strong>TRUE</strong> or a <strong>PEAR_Error</strong>
+       class upon error, so the proper way to handle for a return value is:</p><pre><code>&lt;?php
+require_once &#039;Games/Chess/Standard.php&#039;;
+$standard = new Games_Chess_Standard;
+$err = $standard-&gt;moveSAN(&#039;Nf9&#039;);
+if ($standard-&gt;isError($err)) {
+    echo $err-&gt;getMessage();
+    die;
+}
+?&gt;</code></pre><p>Note that <strong>Games_Chess-&gt;isError()</strong> should be used as the
+       <strong>PEAR_Error</strong> class is only loaded when needed,
+       to help with efficiency.  If this is not a concern (and it will only be
+       for sites serving thousands of pages per second), it is simpler to set
+       a PEAR_Error callback, which is demonstrated in the next example.</p>
+      <p>The example below demonstrates the two ways that Games_Chess should be
+       called to make moves on the chess board, including the way to 
+       represent a placement move in the Crazyhouse variant:</p><pre><code>&lt;?php
+require_once &#039;PEAR.php&#039;; // for the PEAR_Error class
+function showerror($err)
+{
+    echo $err-&gt;getMessage();
+    exit;
+}
+require_once &#039;Games/Chess/Standard.php&#039;;
+require_once &#039;Games/Chess/Crazyhouse.php&#039;;
+PEAR::setErrorHandling(PEAR_ERROR_CALLBACK, &#039;showerror&#039;);
+$standard = new Games_Chess_Standard;
+$crazyhouse = new Games_Chess_Crazyhouse;
+$standard-&gt;resetGame();
+$crazyhouse-&gt;resetGame();
+
+$standard-&gt;moveSAN(&#039;e4&#039;); // &#039;e2&#039; to &#039;e4&#039; if using moveSquare
+$standard-&gt;moveSquare(&#039;d7&#039;, &#039;d5&#039;); // &#039;d5&#039; if using moveSAN
+$standard-&gt;moveSAN(&#039;exd5&#039;);
+
+$crazyhouse-&gt;moveSquare(&#039;e2&#039;, &#039;e4&#039;); // same as moveSAN() above
+$crazyhouse-&gt;moveSAN(&#039;d5&#039;); // save as moveSquare above
+$crazyhouse-&gt;moveSAN(&#039;exd5&#039;);
+$crazyhouse-&gt;moveSAN(&#039;Qxd5&#039;);
+$crazyhouse-&gt;moveSAN(&#039;P@d7&#039;); // dumb move, but demonstrates piece placement
+?&gt;</code></pre><p>Note that if promoting a pawn, <strong>moveSquare()</strong> requires
+       that the newly promoted piece type be passed in.
+       Options are <code>Q</code> for queen,
+       <code>R</code> for rook, <code>B</code> for bishop and
+       <code>N</code> for knight.</p><pre><code>&lt;?php
+require_once &#039;PEAR.php&#039;; // for the PEAR_Error class
+function showerror($err)
+{
+    echo $err-&gt;getMessage();
+    exit;
+}
+require_once &#039;Games/Chess/Crazyhouse.php&#039;;
+PEAR::setErrorHandling(PEAR_ERROR_CALLBACK, &#039;showerror&#039;);
+$crazyhouse = new Games_Chess_Crazyhouse;
+$crazyhouse-&gt;resetGame();
+$crazyhouse-&gt;moveSAN(&#039;e4&#039;);
+$crazyhouse-&gt;moveSAN(&#039;d5&#039;);
+$crazyhouse-&gt;moveSAN(&#039;exd5&#039;);
+$crazyhouse-&gt;moveSAN(&#039;Qxd5&#039;);
+$crazyhouse-&gt;moveSAN(&#039;d3&#039;);
+$crazyhouse-&gt;moveSAN(&#039;Kd7&#039;);
+$crazyhouse-&gt;moveSAN(&#039;d4&#039;);
+$crazyhouse-&gt;moveSAN(&#039;Ke6&#039;);
+$crazyhouse-&gt;moveSAN(&#039;P@d7&#039;);
+$crazyhouse-&gt;moveSAN(&#039;Qd6&#039;);
+// $crazyhouse-&gt;moveSAN(&#039;d8=Q&#039;); // normal way to do this
+$crazyhouse-&gt;moveSquare(&#039;d7&#039;, &#039;d8&#039;, &#039;Q&#039;); // using moveSquare to do this
+// dumb moves, but demonstrates pawn promotion to queen
+?&gt;</code></pre>
+      
+     
+     <h3>Retrieving information on the game in progress</h3>
+
+      
+      <p>To retrieve necessary information such as the current move list,
+       current FEN, list of captured pieces (Crazyhouse only), determine
+       whether the game is over and so on, you&#039;ll want to use one of the
+       following methods:</p><ul>
+        <li>
+         
+          <a href="package/Games_Chess/docs/index.html"><strong>gameOver()</strong></a>.
+          This method can be used to determine if the game has concluded, and simply returns
+          an abbreviation of <code>W</code> if the white pieces have won (checkmate),
+          <code>B</code> if the black pieces have won (checkmate), <code>D</code>
+          if there is a draw, or false if the game is still in progress.
+         
+        </li>
+        <li>
+         
+          <a href="package/Games_Chess/docs/index.html"><strong>renderFen()</strong></a>.
+         
+         
+          This method returns a Forsyth-Edwards Notation (<code>FEN</code>)
+          representation of the current game state.  Note that the FEN standard does
+          not contain a way to represent captured pieces, and so cannot be used to
+          exactly replicate a Crazyhouse game in progress, although it can be close.
+         
+        </li>
+        <li>
+         
+          <a href="package/Games_Chess/docs/index.html"><strong>toArray()</strong></a>.
+         
+         
+          For the Standard and Loser&#039;s chess drivers, this returns an associative array of
+          algebraic square name (<code>a1</code> to <code>h8</code>) mapped
+          to its contents.  If the square is unoccupied, it will contain its algebraic
+          square name (<code>a1</code> will map to <code>a1</code>), otherwise
+          it will contain the piece name, one of <code>P</code>, <code>R</code>,
+          <code>N</code>, <code>B</code>, <code>Q</code> or
+          <code>K</code>.  If the piece is a white piece, it will be in upper case,
+          like <code>P</code>, and if the piece is a black piece, it will be in
+          lower case like <code>p</code>.
+         
+         
+          For the Crazyhouse driver, this returns an associative array with two
+          indices, <code>board</code> and <code>captured</code>.
+          The <code>board</code> element is identical to the return for
+          Standard/Loser&#039;s chess drivers described in the previous paragraph.  The
+          <code>captured</code> sub-array contains an array of this format:
+          <pre><code>&lt;?php
+$captured =
+    array(
+        &#039;W&#039; =&gt;
+            array(
+                &#039;P&#039; =&gt; 6, // 6 black pawns captured by white
+                &#039;R&#039; =&gt; 0,
+                &#039;N&#039; =&gt; 0,
+                &#039;B&#039; =&gt; 0,
+                &#039;Q&#039; =&gt; 0,
+            ),
+        &#039;B&#039; =&gt;
+            array(
+                &#039;P&#039; =&gt; 4, // 4 white pawns captured by black
+                &#039;R&#039; =&gt; 0,
+                &#039;N&#039; =&gt; 0,
+                &#039;B&#039; =&gt; 0,
+                &#039;Q&#039; =&gt; 0,
+            ),
+    );
+?&gt;</code></pre>
+          Each segment represents white&#039;s or black&#039;s pieces (W and B), and each
+          sub-element represents the number of captured pieces of that type.
+          In the example above, white can choose to place a pawn for up to the next
+          6 moves in a row, whereas black can choose to place a pawn for up to the next
+          4 moves in a row.
+         
+        </li>
+        <li>
+         
+          <a href="package/Games_Chess/docs/index.html"><strong>toMove()</strong></a>.
+         
+         
+          This methods simply returns the color of the pieces that have the next move.
+          <code>W</code> is returned for white, <code>B</code> is
+          returned for black.
+         
+        </li>
+       </ul>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

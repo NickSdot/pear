@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3513</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #3513</h1>
+<p>support of RFC2231 in header fields.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-18 05:43 UTC</td></tr>
+<tr><th>From</th><td>hiroaki dot kawai at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>cipri</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>ANY</td></tr>
+<tr><th>Roadmaps</th><td>1.4.0, 1.4.0RC4, 1.4.0a1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-18 05:43 UTC] hiroaki dot kawai at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Filenames in multibyte string should be encoded as described in RFC2231. Current head version of Mail_Mime does not support it, so I&#039;d like to request add the feature.</p>
+<p>Reproduce code:<br>
+---------------<br>
+--TEST--<br>
+Tests for RFC2231 support in Content-Disposition.<br>
+--SKIPIF--<br>
+--FILE--<br>
+&lt;?php<br>
+error_reporting(E_ALL);<br>
+$testEncoded=&quot;GyRCRnxLXDhsGyhCLnR4dA==&quot;;<br>
+$test = base64_decode($testEncoded); // Japanese filename in ISO-2022-JP charset.</p>
+<p>require_once(&#039;Mail/mime.php&#039;);</p>
+<p>$Mime=new Mail_Mime();<br>
+$Mime-&gt;setTXTBody(&#039;&#039;);<br>
+$Mime-&gt;addAttachment(&#039;Japanese file&#039;,&quot;text/plain&quot;, $test, FALSE);</p>
+<p>$body = $Mime-&gt;get();</p>
+<p>$hdrs = &#039;&#039;;<br>
+foreach ($Mime-&gt;headers() AS $name =&gt; $val) {<br>
+    $hdrs .= &quot;$name: $val\n&quot;;<br>
+}<br>
+$hdrs .= &quot;To: Receiver &lt;receiver@example.com&gt;\n&quot;;<br>
+$hdrs .= &quot;From: Sender &lt;sender@example.com&gt;\n&quot;;<br>
+$hdrs .= &quot;Subject: PEAR::Mail_Mime test mail\n&quot;;</p>
+<p>require_once(&#039;Mail/mimeDecode.php&#039;);</p>
+<p>$mime_message = &quot;$hdrs\n$body&quot;;<br>
+$Decoder = new Mail_mimeDecode($mime_message);<br>
+$params = array(<br>
+    &#039;include_bodies&#039; =&gt; TRUE,<br>
+    &#039;decode_bodies&#039;  =&gt; TRUE,<br>
+    &#039;decode_headers&#039; =&gt; TRUE<br>
+);<br>
+$Decoded = $Decoder-&gt;decode($params);<br>
+print_r($Decoded-&gt;parts[0]-&gt;headers[&#039;content-disposition&#039;]);<br>
+?&gt;<br>
+--EXPECT--<br>
+attachment;<br>
+ filename*=iso-2022-jp&#039;&#039;%1B%24BF%7CK%5C8l%1B%28B.txt</p>
+</section>
+<section>
+<h3>[2005-02-18 14:01 UTC] hiroaki dot kawai at gmail dot com</h3>
+<p>I should have make the phpt test code focused on encoding phase. the code I submitted depended on decoding code.<br>
+Here&#039;s a replacement code.</p>
+<p>--TEST--<br>
+Tests for RFC2231 support in Content-Disposition.<br>
+--SKIPIF--<br>
+--FILE--<br>
+&lt;?php<br>
+mb_internal_encoding(&#039;ISO-2022-JP&#039;);<br>
+error_reporting(E_ALL);<br>
+$testEncoded=&quot;GyRCRnxLXDhsGyhCLnR4dA==&quot;;<br>
+$test = base64_decode($testEncoded);</p>
+<p>require_once(&#039;Mail/mime.php&#039;);</p>
+<p>$Mime=new Mail_Mime();<br>
+$Mime-&gt;setTXTBody(&#039;&#039;);<br>
+$Mime-&gt;addAttachment(&#039;Japanese file&#039;,&quot;text/plain&quot;, $test, FALSE);</p>
+<p>$body = $Mime-&gt;get();<br>
+$bodyarr=explode(&quot;\r\n&quot;,$body);<br>
+print_r($bodyarr[3].&quot;\r\n&quot;);<br>
+print_r($bodyarr[4].&quot;\r\n&quot;);<br>
+?&gt;<br>
+--EXPECT--<br>
+Content-Disposition: attachment;<br>
+ filename*=&quot;iso-2022-jp&#039;&#039;%1B%24BF%7CK%5C8l%1B%28B.txt&quot;</p>
+</section>
+<section>
+<h3>[2005-02-18 14:03 UTC] hiroaki dot kawai at gmail dot com</h3>
+<p>And I created an patch to support RFC2231 encoding feature to the current CVS head version.</p>
+<p>Index: pear/Mail_Mime/mimePart.php<br>
+===================================================================<br>
+RCS file: /repository/pear/Mail_Mime/mimePart.php,v<br>
+retrieving revision 1.13<br>
+diff -u -r1.13 mimePart.php<br>
+--- pear/Mail_Mime/mimePart.php	10 Dec 2004 23:08:26 -0000	1.13<br>
++++ pear/Mail_Mime/mimePart.php	18 Feb 2005 10:48:34 -0000<br>
+@@ -166,9 +166,12 @@</p>
+<p>case &#039;dfilename&#039;:</p>
+<p>if (isset($headers[&#039;Content-Disposition&#039;])) {</p>
+<p>-                        $headers[&#039;Content-Disposition&#039;] .= &#039;; filename=&quot;&#039; . $value . &#039;&quot;&#039;;</p>
+<p>+                        $dfilename = $this-&gt;buildDispositionParam(&quot;filename&quot;, $value);<br>
++                        $headers[&#039;Content-Disposition&#039;] .= &#039;;&#039; . MAIL_MIMEPART_CRLF . $dfilename;<br>
++<br>
+                     } else {</p>
+<p>-                        $dfilename = $value;</p>
+<p>+                        $dfilename = $this-&gt;buildDispositionParam(&quot;filename&quot;, $value);<br>
++<br>
+                     }</p>
+<p>break;</p>
+<p>@@ -347,5 +350,88 @@<br>
+         $output = substr($output, 0, -1 * strlen($eol)); // Don&#039;t want last crlf</p>
+<p>return $output;</p>
+<p>}</p>
+<p>+	function buildDispositionParam($key, $val, $line_max = 76, $charset = NULL)<br>
++	{<br>
++		if(!$charset){<br>
++			if(!extension_loaded(&#039;mbstring&#039;)){<br>
++				$charset = &quot;US-ASCII&quot;;<br>
++			}else{<br>
++				$charset = mb_internal_encoding();<br>
++			}<br>
++		}<br>
++		//if(extension_loaded(&#039;mbstring&#039;)){<br>
++			$internalcharset=mb_internal_encoding();<br>
++			if($internalcharset==FALSE){<br>
++				$internalcharset=&quot;US-ASCII&quot;;<br>
++			}<br>
++		<br>
++			if($internalcharset == &quot;eucJP-win&quot;){<br>
++				$internalcharset=&quot;Windows-31J&quot;;<br>
++				$val=mb_convert_encoding($val,&quot;SJIS-win&quot;);<br>
++			}<br>
++			<br>
++			// Japanese mailer prefer ISO-2022-JP as described in RFC2237<br>
++			if(stristr(mb_language(),&#039;ja&#039;)){<br>
++				$charset=&quot;ISO-2022-JP&quot;;<br>
++			}<br>
++			<br>
++			// Avoid 2231 encoding if possible.<br>
++			if(stristr(mb_detect_encoding($val, &quot;ASCII, &quot;.mb_internal_encoding()),&quot;ASCII&quot;)==false){<br>
++				$internalcharset=&quot;US-ASCII&quot;;<br>
++			}else{<br>
++				if(strcasecmp($internalcharset,$charset)){<br>
++					$val=mb_convert_encoding($val, $charset, $internalcharset);<br>
++				}<br>
++			}<br>
++			// Fix internalcharset name for IANA registry.<br>
++			$charset=mb_preferred_mime_name($charset);<br>
++		//}<br>
++	<br>
++		// XXX The sequence below might not be safe for RFC2822, 2231 encoding may hide the problem.<br>
++	#	$need_escape = FALSE;<br>
++	#	if(mb_strpos($val, &quot;\x09&quot;) !== FALSE) $need_escape = TRUE;<br>
++	#	if(mb_strpos($val, &quot;\r&quot;) !== FALSE) $need_escape = TRUE;<br>
++	#	if(mb_strpos($val, &quot;\n&quot;) !== FALSE) $need_escape = TRUE;<br>
++		<br>
++		$param_pair=&quot; &quot;.$key.&quot;=\&quot;&quot;.$val.&quot;\&quot;&quot;;<br>
++		if($charset == &quot;US-ASCII&quot; &amp;&amp; strlen($param_pair) &lt;= $line_max) { // &amp;&amp; $need_escape might be here.<br>
++			return $param_pair;<br>
++		}<br>
++		<br>
++		// RFC2231 encoding.<br>
++		$encval = strtolower($charset) . &quot;&#039;&#039;&quot; . str_replace(&#039;_&#039;, &#039;%5F&#039;, rawurlencode($val));<br>
++		$param_pair=&quot; &quot;.$key.&quot;*=\&quot;&quot;.$encval.&quot;\&quot;&quot;;<br>
++		if(strlen($param_pair) &lt;= $line_max) { // we don&#039;t need folding<br>
++			return $param_pair;<br>
++		}<br>
++		<br>
++		<br>
++		// folding<br>
++		// 4 bytes for &quot;*0*=&quot;, 1 byte for heading &#039; &#039;, 1 byte for &#039;;&#039;, =&gt; total 6 bytes<br>
++		$rhs_space = $line_max - strlen($key) - 6;<br>
++		<br>
++		// folding<br>
++		$dest = &quot;&quot;;<br>
++		for($i = 0 ; strlen($encval) &gt; $rhs_space ; $i++) {<br>
++			$dest .= &quot; &quot; . $key . &quot;*&quot; . $i . &quot;*=&quot;;<br>
++			$pos = strrpos(substr($encval, 0, $rhs_space), &#039;%&#039;);<br>
++			if( $rhs_space - 2 &lt;= $pos) {	// &#039;%&#039; ‚ªŒã‚ë‚©‚ç2byteˆÈ“à‚É‚ ‚é<br>
++				$dest .= substr($encval, 0, $pos);<br>
++				$encval = substr($encval, $pos);<br>
++			} else {<br>
++				$dest .= substr($encval, 0, $rhs_space);<br>
++				$encval = substr($encval, $rhs_space);<br>
++			}<br>
++			$dest .= &quot;;\r\n&quot;;<br>
++			// bytes allowed in right hand space<br>
++			// 3 bytes for &quot;**=&quot;, 1 byte for heading &#039; &#039;, 1 byte for &#039;;&#039; =&gt; total 5 bytes<br>
++			$rhs_space = $line_max - strlen(strval($i)) - strlen($key) - 5;<br>
++		}<br>
++		$dest .= &quot; &quot; . $key . &quot;*&quot; . $i . &quot;*=&quot;;<br>
++		$dest .= $encval;<br>
++		<br>
++	    return $dest;<br>
++	}<br>
++<br>
+ } // End of class</p>
+<p>?&gt;</p>
+</section>
+<section>
+<h3>[2005-02-18 14:08 UTC] hiroaki dot kawai at gmail dot com</h3>
+<p>Oops, sorry. the patch should be modified. Here is a diff of diff. mbstring extension treatment will be enabled.</p>
+<p>--- mimePart.patch	2005-02-18 22:04:28.123182400 +0900<br>
++++ mimePart.patch.2	2005-02-18 23:06:29.253905600 +0900<br>
+@@ -4,7 +4,7 @@<br>
+ retrieving revision 1.13<br>
+ diff -u -r1.13 mimePart.php<br>
+ --- pear/Mail_Mime/mimePart.php	10 Dec 2004 23:08:26 -0000	1.13<br>
+-+++ pear/Mail_Mime/mimePart.php	18 Feb 2005 10:48:34 -0000<br>
+++++ pear/Mail_Mime/mimePart.php	18 Feb 2005 14:06:29 -0000<br>
+ @@ -166,9 +166,12 @@</p>
+<p>case &#039;dfilename&#039;:</p>
+<p>@@ -33,7 +33,7 @@<br>
+ +				$charset = mb_internal_encoding();<br>
+ +			}<br>
+ +		}<br>
+-+		//if(extension_loaded(&#039;mbstring&#039;)){<br>
+++		if(extension_loaded(&#039;mbstring&#039;)){<br>
+ +			$internalcharset=mb_internal_encoding();<br>
+ +			if($internalcharset==FALSE){<br>
+ +				$internalcharset=&quot;US-ASCII&quot;;<br>
+@@ -59,7 +59,7 @@<br>
+ +			}<br>
+ +			// Fix internalcharset name for IANA registry.<br>
+ +			$charset=mb_preferred_mime_name($charset);<br>
+-+		//}<br>
+++		}<br>
+ +	<br>
+ +		// XXX The sequence below might not be safe for RFC2822, 2231 encoding may hide the problem.<br>
+ +	#	$need_escape = FALSE;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

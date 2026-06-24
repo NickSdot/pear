@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4544</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_mssql/index.html">MDB2_Driver_mssql</a> &#187; Bug #4544</h1>
+<p>MSSQL fast Limit emulation</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4544</th><td>MSSQL fast Limit emulation</td></tr>
+<tr><th>Submitted</th><td>2005-06-07 16:51 UTC</td></tr>
+<tr><th>From</th><td>erudd at netfor dot com</td></tr>
+<tr><th>Status</th><td>Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_mssql/index.html">MDB2_Driver_mssql</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-07 16:51 UTC] erudd at netfor dot com</h3>
+<p>Description:<br>
+------------<br>
+I have a block of SQL code that I am using to emulate MySQLs limit feature in MSSQL by using a cursor.</p>
+<p>The example below will retrieve rows 10 to 30.</p>
+<p>now quite exactly how easy it would be to integrate this logic into the mssql driver (and sybase driver as well, probably others).</p>
+<p>but it works rather quickly and better than my previous hack at doing sublimit queries.</p>
+<p>SELECT TOP 5 Name, uname FROM users WHERE uname NOT IN (SELECT TOP 10 uname FROM users ORDER BY uname ASC) ORDER BY uname ASC</p>
+<p>This would retrieve records 11 to 15, but requires knowing what the primary key(s) of the table are to work..</p>
+<p>Reproduce code:<br>
+---------------<br>
+$db =&amp; DB::connect(&#039;mssql://user:poass@server/database&quot;);</p>
+<p>$sql = &lt;&lt;&lt; EOSQL<br>
+DECLARE Search CURSOR LOCAL SCROLL READ_ONLY FOR<br>
+   SELECT * FROM MyTable<br>
+DECLARE @limit INT, @offset INT<br>
+SET @limit = 20<br>
+SET @offset = 10+1<br>
+OPEN Search<br>
+FETCH ABSOLUTE @offset FROM Search<br>
+WHILE @@FETCH_STATUS =0 AND @limit &gt; 1<br>
+BEGIN<br>
+  FETCH NEXT FROM Search<br>
+  SET @limit = @limit - 1<br>
+END<br>
+CLOSE Search<br>
+DEALLOCATE Search<br>
+EOSQL;<br>
+$res =&amp; $db-&gt;query($sql);<br>
+$row =&amp; $res-&gt;fetchRow();<br>
+do {<br>
+   echo $row[0].&quot;\n&quot;;<br>
+   $row =&amp; $res-&gt;fetchRow();<br>
+   if (is_null($row)) {<br>
+     if ($res-&gt;nextResult()) {<br>
+       $row =&amp; $res-&gt;fetchRow();<br>
+     }<br>
+   }<br>
+} while ($row);</p>
+</section>
+<section>
+<h3>[2006-06-19 21:51 UTC] erudd at netfor dot com</h3>
+<p>This does not require knowledge of the Primary key at all.<br>
+It goes soly based on the record index. so it works EXACLTY like LIMIT 10,30 in MySQL.</p>
+</section>
+<section>
+<h3>[2006-06-19 22:00 UTC] erudd at netfor dot com</h3>
+<p>Exactly it would just return rows 11 through 30.<br>
+The only *oddity* and thing that would have to be worked around is the fact that the cursor would return back 20 individual result sets of 1 record.  AND when pulling back with an associative array an additional field of &#039;rowstat&#039; with a value of 1 is returned. (no clue how to tell mssql to not send it, or if it&#039;s a php-mssql extension issue).</p>
+</section>
+<section>
+<h3>[2006-06-19 22:17 UTC] erudd at netfor dot com</h3>
+<p>I&#039;m using this heavily in a webbased ticketing system and havn&#039;t noticed any &quot;performance&quot; problems or overhead.</p>
+<p>It seems to be less overhead as the server is doing limit emulation instead of having php pull down a few hundred records only to do something with the last 20. This cursor block would have the server do that and only return what I really need.</p>
+<p>Though due to the way this works with MSSQL (I haven&#039;t found a way to get MSSQL to return one result set) it does require the special PHP code block to pull results back, which I have cooerced into a single while () expression.</p>
+<p>while ($row =&amp; $res-&gt;fetchRow(DB_FETCHMODE_ASSOC<br>
+  || ($res-&gt;nextResult() <br>
+  &amp;&amp; $row =&amp; $res-&gt;fetchRow(DB_FETCHMODE_ASSOC ))) {</p>
+<p>This is still PEAR::DB and not PEAR::MDB2, but should be the same except the constant.  I have not yet converted my code to MDB2 (which I like the transaction support MUCH better in MDB2)</p>
+</section>
+<section>
+<h3>[2006-07-04 18:48 UTC] webmaster at kryptronic dot com</h3>
+<p>I am using a similar method.  Instead of using setLimit() on the query before it&#039;s executed, I&#039;m re-writing the query as follows and passing it off to MDB2&#039;s appropriate function.</p>
+<p>For UPDATE/DELETE queries:</p>
+<p>$sql = preg_replace(&#039;/^UPDATE /i&#039;,&quot;UPDATE TOP $count}&quot;,$sql);<br>
+$sql = preg_replace(&#039;/^DELETE /i&#039;,&quot;DELETE TOP $count}&quot;,$sql);</p>
+<p>Which is then passed off to exec($sql).</p>
+<p>For SELECT queries the statement is being re-written as follows:</p>
+<p>SELECT * FROM<br>
+(<br>
+    SELECT TOP $rows * FROM<br>
+    (<br>
+   SELECT TOP $last $sql_after_select<br>
+   ORDER BY $order_clause<br>
+    ) AS foo<br>
+    ORDER BY $order_clause_rev<br>
+) AS bar<br>
+ORDER BY $order_clause</p>
+<p>$rows = The count normally passed to setLimit().</p>
+<p>$last = $rows plus the offset normally passed to setLimit().</p>
+<p>$sql_after_select = preg_replace(&#039;/^SELECT /i&#039;,&#039;&#039;,$sql);</p>
+<p>$order_clause = A valid ORDER BY clause.  Here when one isn&#039;t defined I order by the first column I see in the table DESC (ie. ORDER BY id DESC).</p>
+<p>$order_clause_rev = A reversed ORDER BY clause.  For the example above I would use ORDER BY id ASC.</p>
+<p>This works great and consumes less time and server resources than any other method I&#039;ve tried.  A good discussion of this can be found here:</p>
+<p>http://josephlindsay.com/archives/2005/05/27/paging-results-in-ms-sql-server/</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

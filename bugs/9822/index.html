@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9822</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Logging &#187; <a href="package/Log/index.html">Log</a> &#187; Bug #9822</h1>
+<p>using syslog &quot;steals&quot; the apache error logging if it uses syslog</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-14 00:52 UTC</td></tr>
+<tr><th>From</th><td>cbs at cts dot ucla dot edu</td></tr>
+<tr><th>Assigned</th><td>jon</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Log/index.html">Log</a></td></tr>
+<tr><th>PHP Version</th><td>5.2.0</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-14 00:52 UTC] cbs at cts dot ucla dot edu</h3>
+<p>Description:<br>
+------------<br>
+I&#039;m using php with apache.  I have apache configured to use syslog for all error logging.</p>
+<p>If I use PEAR Log to syslog, the openlog() call in Log/syslog.php steals the syslog stream from apache by re-opening the syslog ouput and re-directs all of the apache errors to the log file just opened.</p>
+<p>Test script:<br>
+---------------<br>
+In apache/conf/httpd.conf set &quot;errlog syslog:local0&quot;</p>
+<p>Then something like:</p>
+<p>&lt;?php</p>
+<p>include_once &#039;Log.php&#039;;<br>
+$log = &amp;Log::singleton(&#039;syslog&#039;, LOG_LOCAL1, &#039;test&#039;);<br>
+$log-&gt;log(&quot;test&quot;, PEAR_LOG_DEBUG);</p>
+<p>?&gt;</p>
+<p>Run that, then in apache try to load a non-existant page.  The apache error gets logged to local1 instead of local0</p>
+<p>The fix is to change Log/syslog.php to not use openlog().  Remove the open() call completely (or change it to always return true).</p>
+<p>Change log() so that</p>
+<p>if (!syslog($this-&gt;_toSyslog($priority), $message)) {<br>
+            return false;<br>
+        }</p>
+<p>is instead</p>
+<p>if (!syslog($this-&gt;_name|$this-&gt;_toSyslog($priority), $message)) {<br>
+            return false;<br>
+        }</p>
+<p>Using OR to combine the logname and loglevel sends the output to the correct file, and doesn&#039;t break apache because openlog() isn&#039;t called.</p>
+<p>Expected result:<br>
+----------------<br>
+The apache error log should always go to local0; the PEAR Log output should always go to local1</p>
+<p>Actual result:<br>
+--------------<br>
+Once openlog() from Log/syslog.php is called, all output from apache and PEAR Log goes to local1</p>
+</section>
+<section>
+<h3>[2007-01-14 23:39 UTC] cbs at cts dot ucla dot edu</h3>
+<p>I believe that whenever you call openlog() it resets all of the logging parameters (ident, options, and facility).  Once PEAR Log/syslog calls openlog(), all apache error messages end up going to the php syslog file, with the ident and options specified as above.</p>
+<p>Occasionally, I see things in the apache error log.  I&#039;m guessing that happens when apache spawns off a new process that would call openlog() after forking.</p>
+<p>What about using the $conf array when creating a new Log/syslog to determine whether or not open() should do anything?</p>
+<p>Something like this:</p>
+<p>--- syslog.php~ 2007-01-14 15:30:32.000000000 -0800<br>
++++ syslog.php  2007-01-14 15:32:11.000000000 -0800<br>
+@@ -49,6 +49,7 @@<br>
+         $this-&gt;_name = $name;<br>
+         $this-&gt;_ident = $ident;<br>
+         $this-&gt;_mask = Log::UPTO($level);<br>
++        $this-&gt;_use_openlog = isset($conf[&#039;use_openlog&#039;]); <br>
+     }<br>
+ <br>
+     /**<br>
+@@ -58,6 +59,7 @@<br>
+      */<br>
+     function open()<br>
+     {<br>
++        if ($this-&gt;_use_openlog == false) return true;<br>
+         if (!$this-&gt;_opened) {<br>
+             openlog($this-&gt;_ident, LOG_PID, $this-&gt;_name);<br>
+             $this-&gt;_opened = true;<br>
+@@ -72,6 +74,7 @@<br>
+      */<br>
+     function close()<br>
+     {<br>
++        if ($this-&gt;_use_openlog == false) return true;<br>
+         if ($this-&gt;_opened) {<br>
+             closelog();<br>
+             $this-&gt;_opened = false;<br>
+@@ -113,7 +116,10 @@<br>
+         /* Extract the string representation of the message. */<br>
+         $message = $this-&gt;_extractMessage($message);<br>
+ <br>
+-        if (!syslog($this-&gt;_toSyslog($priority), $message)) {<br>
++        $prio = $this-&gt;_toSyslog($priority);<br>
++        if ($this-&gt;_use_openlog == false) $prio |= $this-&gt;_name;<br>
++<br>
++        if (!syslog($prio, $message)) {<br>
+             return false;<br>
+         }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

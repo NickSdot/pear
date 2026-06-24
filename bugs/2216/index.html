@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2216</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #2216</h1>
+<p>joinAdd: JOIN ON custom conditions imposible</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #2216</th><td>joinAdd: JOIN ON custom conditions imposible</td></tr>
+<tr><th>Submitted</th><td>2004-08-25 16:50 UTC</td></tr>
+<tr><th>From</th><td>fela at ds dot pg dot gda dot pl</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-25 16:50 UTC] fela at ds dot pg dot gda dot pl</h3>
+<p>Description:<br>
+------------<br>
+Hi.<br>
+Actually is imposible to create sql in joinAdd() with JOIN ... ON .. custom conditions. All conditions from joined objects are writen to WHERE section, but I think, better is write $obj-&gt;_cond to ON section. <br>
+because now INNER, LEFT and RIGHT JOIN work identical (as INNER)</p>
+<p>if not, think if you could add new parametr to joinAdd() function, with custom conditions to ON section.</p>
+<p>Thanks.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Example:</p>
+<p>links[people][firm] = firm:id</p>
+<p>* Actually:<br>
+ $people-&gt;name = &#039;Smith&#039;;<br>
+ $firm-&gt;joinAdd($people,&#039;LEFT&#039;);<br>
+ $firm-&gt;selectAdd();<br>
+ $firm-&gt;selectAdd(&#039;firm.*, people.name&#039;);<br>
+ $firm-&gt;type = &#039;big&#039;;<br>
+returned SQL: <br>
+ SELECT firm.*, people.name <br>
+ FROM firm <br>
+ LEFT JOIN people AS people ON people.firm = firm.id <br>
+ WHERE people.name = &#039;Smith&#039; and firm.type = &#039;big&#039;;</p>
+<p>expected SQL:<br>
+ SELECT firm.*, people.name <br>
+ FROM firm <br>
+ LEFT JOIN people AS people ON <br>
+ people.firm = firm.id AND people.name = &#039;Smith&#039;<br>
+ WHERE firm.type = &#039;big&#039;;</p>
+<p>a difference in results is only in LEFT or RIGHT JOIN, not in INNER JOIN, now LEFT, RIGHT, and INNER return the same results and it is wrong.</p>
+</section>
+<section>
+<h3>[2005-02-18 08:20 UTC] sylfradev at yahoo dot fr</h3>
+<p>I&#039;ve patched joinAdd method to use additional conditions :</p>
+<p>1 - Replaced function signature :<br>
+function joinAdd($obj = false, $joinType=&#039;INNER&#039;, $joinAs=false, $joinCol=false, $additionalJoinsOn = NULL)</p>
+<p>2 - Modified code in joinAdd<br>
+// $appendJoin = &#039;&#039;;<br>
+$appendJoin = (isset($additionalJoinsOn)) ? &#039;AND &#039; . implode(&#039;AND &#039;, $additionalJoinsOn) : &#039;&#039;;</p>
+</section>
+<section>
+<h3>[2007-03-02 09:00 UTC] dsanders at baselinesolutions dot com dot au</h3>
+<p>Hi Alan, I&#039;ve made a little patch against 1.429.</p>
+<p>I&#039;ve added a fifth optional parameter, where2On, that should turn on/off the requested behaviour.</p>
+<p>I&#039;ve moved the section where you cycle through the items of the joinee object up above the section where _join is modified.  I also added the set property values to the joinee&#039;s where clause instead of the joiner&#039;s ($obj-&gt;whereAdd instead of $this-&gt;whereAdd)  I&#039;ve done this so that the condition is gathered together once when preg_replace is called on the joinee&#039;s _query[&#039;condition&#039;].  If where2On is set to true, then the condition is then prepended to the $appendJoin variable.  Otherwise the condition is passed to whereAdd().</p>
+<p>Here&#039;s the patch:</p>
+<p>http://pyrus.sourceforge.net/DB_DataObject.php.patch</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

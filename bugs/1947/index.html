@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1947</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Logging &#187; <a href="package/Log/index.html">Log</a> &#187; Bug #1947</h1>
+<p>When using Log_composite, children never get the close() method !</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-07-22 09:32 UTC</td></tr>
+<tr><th>From</th><td>alejandro at todomexico dot com</td></tr>
+<tr><th>Assigned</th><td>jon</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Log/index.html">Log</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-22 09:32 UTC] alejandro at todomexico dot com</h3>
+<p>Description:<br>
+------------<br>
+Using Log_composite, when you call the close() method, all the children should call the close() method too, but they not.</p>
+<p>// create an instance of Log_composite<br>
+    $log =&amp; Log::singleton(&#039;composite&#039;);</p>
+<p>// add several childs...<br>
+    $log-&gt;addChild($logF);<br>
+    $log-&gt;addChild($logM);<br>
+    $log-&gt;addChild($logDb);</p>
+<p>// log a message...	<br>
+    $log-&gt;log($message, $priority);</p>
+<p>// when you call the close() method, all children should close, they not.<br>
+    $log-&gt;close();</p>
+<p>Reproduce code:<br>
+---------------<br>
+in composite.php, open() should set $this-&gt;_opened  to true, so when close() is called, the code is executed.</p>
+<p>function open()<br>
+    {<br>
+        if (!$this-&gt;_opened) {<br>
+            foreach ($this-&gt;_children as $id =&gt; $child) {<br>
+                $this-&gt;_children[$id]-&gt;open();<br>
+            }<br>
+            // should be set to true <br>
+            $this-&gt;_opened = true;          <br>
+        }<br>
+    }</p>
+<p>Expected result:<br>
+----------------<br>
+All chilldren should execute they respective close() method.</p>
+<p>Actual result:<br>
+--------------<br>
+All chilldren not execute they respective close() method.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

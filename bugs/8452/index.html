@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8452</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Sieve/index.html">Net_Sieve</a> &#187; Bug #8452</h1>
+<p>Unterminated Read Loop</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-08-16 07:36 UTC</td></tr>
+<tr><th>From</th><td>selsky at columbia dot edu</td></tr>
+<tr><th>Assigned</th><td>amistry</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Sieve/index.html">Net_Sieve</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.5</td></tr>
+<tr><th>OS</th><td>Solaris 9</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-16 07:36 UTC] selsky at columbia dot edu</h3>
+<p>Description:<br>
+------------<br>
+Occasionally, my Sieve server (Cyrus 2.3 snapshot) freaks out <br>
+and doesn&#039;t actually return any data on the port after <br>
+completing the TCP handshake.  This causes the _recvLn() to <br>
+return a continuous stream of &#039;&#039;.  The while(true) loop <br>
+therefore never stops and Apache begins to consume 100% CPU.  <br>
+There is a check in _recvLn() for $lastline === &#039;&#039;, but it has <br>
+been commented out since it was added in CVS version 1.5 <br>
+(http://cvs.php.net/viewvc.cgi/pear/Net_Sieve/Sieve.php?<br>
+annotate=1.10 near line 914)</p>
+<p>Can that check be uncommented and the trailing &#039;: &#039; of the <br>
+error messsage removed?</p>
+</section>
+<section>
+<h3>[2006-08-16 07:53 UTC] amistry at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+<section>
+<h3>[2006-08-16 08:29 UTC] amistry at php dot net</h3>
+<p>Is there a sequence of commands that causes this &quot;freak-out&quot; with the Sieve server?  If you can isolate that it would be helpful for writing a testcase for SieveTest.php.  Thanks.</p>
+</section>
+<section>
+<h3>[2006-08-16 08:53 UTC] selsky at columbia dot edu</h3>
+<p>We connect to Sieve via an stunnel wrapper.  I&#039;m able to get <br>
+the error without issueing any Sieve commands at all.  The <br>
+server freaks out before sending any output at all (and <br>
+before the client says anything.  Try the following in a <br>
+loop:</p>
+<p>echo &#039;logout&#039; | openssl s_client -connect cyrushost:2001 -<br>
+quiet</p>
+<p>(2001 is the stunnel wrapped port)</p>
+<p>Occasionally, the s_client command exits like so:</p>
+<p>read:errno=131</p>
+</section>
+<section>
+<h3>[2006-08-17 06:25 UTC] selsky at columbia dot edu</h3>
+<p>I was finally able to track this down.  The problem occurs <br>
+when Cyrus dies on one of my murder front-end hosts, but <br>
+stunnel remains up.  Net_Sieve connects successfully via SSL <br>
+to stunnel, but then stunnel forwards the connection to the <br>
+closed sieve port.  The openssl s_client command returns <br>
+&quot;read:errno=131&quot; whereas Net_Sieve (before this fix) would <br>
+just loop forever.</p>
+</section>
+<section>
+<h3>[2006-08-17 16:16 UTC] amistry at php dot net</h3>
+<p>Well I&#039;m not sure how to write a testcase for this situation.  If you&#039;d like you can have a stab at SieveTest.php.  Either way we have it logged here in the bug tracker for future reference.  Thanks.</p>
+</section>
+<section>
+<h3>[2006-12-22 20:54 UTC] amistry at php dot net</h3>
+<p>Thank you for your bug report. This issue has been fixed<br>
+in the latest released version of the package, which you can download at<br>
+http://pear.php.net/get/Net_Sieve</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

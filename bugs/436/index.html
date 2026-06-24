@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #436</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #436</h1>
+<p>IBase - The memory could not be &quot;read&quot;</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-12-16 12:56 UTC</td></tr>
+<tr><th>From</th><td>joel at memory dot com dot br</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>Windows 2000</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-12-16 12:56 UTC] joel at memory dot com dot br</h3>
+<p>Description:<br>
+------------<br>
+The memory could not be &quot;read&quot;</p>
+<p>Reproduce code:<br>
+---------------<br>
+$user 	 = &#039;SYSDBA&#039;;<br>
+$pass 	 = &#039;masterkey&#039;;<br>
+$host 	 = &#039;192.168.1.100&#039;;<br>
+$db_name = &#039;/dbs/counts.gdb&#039;;</p>
+<p>// Data Source Name: This is the universal connection string<br>
+$dsn = &quot;ibase://$user:$pass@$host/$db_name&quot;;</p>
+<p>$db = DB::connect($dsn, &quot;FALSE&quot;);</p>
+<p>$sql = &quot;SELECT nam_client FROM clients&quot;;<br>
+$result = $db-&gt;query($sql);</p>
+<p>Expected result:<br>
+----------------<br>
+I have the structure above.  when twirling the program through browser, I receive a window pop-up from the apache with the following error:  - the instruction in &quot;0x100bf794&quot; made reference in &quot;0x45440005&quot;.  The memory could not be &quot;read&quot;</p>
+<p>Actual result:<br>
+--------------<br>
+I have the structure above.  when twirling the program through browser, I receive a window pop-up from the apache with the following error:  - the instruction in &quot;0x100bf794&quot; made reference in &quot;0x45440005&quot;.  The memory could not be &quot;read&quot;</p>
+</section>
+<section>
+<h3>[2004-02-25 00:26 UTC] webmaster at retroline dot ru</h3>
+<p>The same code seems to crash php under Unix too. It gives &quot;Segmentation Fault&quot; error.</p>
+</section>
+<section>
+<h3>[2004-10-13 04:46 UTC] reza_prima77 at yahoo dot com</h3>
+<p>Same here. I&#039;m using Debian linux. PHP 4.3.9. Latest <br>
+PEAR::DB. Apache 1.3.7</p>
+</section>
+<section>
+<h3>[2004-12-07 21:27 UTC] wagnerric at ccow dot cxo dot cpqcorp dot net</h3>
+<p>Supply a dialect in your DSN.  Line 114 of DB/ibase.php says:</p>
+<p>$params[] = isset($dsninfo[&#039;dialect&#039;]) ? $dsninfo[&#039;dialect&#039;] : null;</p>
+<p>Changing it to something reasonable:<br>
+  $params[] = isset($dsninfo[&#039;dialect&#039;]) ? dsninfo[&#039;dialect&#039;] : 2;</p>
+<p>clears the problem.  Seems that the call:<br>
+ $conn = @call_user_func_array($connect_function, $params);</p>
+<p>doesn&#039;t like it when dialect is passed as a null.</p>
+</section>
+<section>
+<h3>[2004-12-07 21:39 UTC] wagnerric at ccow dot cxo dot cpqcorp dot net</h3>
+<p>To explain my last comment fuller:</p>
+<p>You could use a dsn array, supplying a dialect:<br>
+  $dsn = array(                 <br>
+      &#039;phptype&#039; =&gt; &#039;ibase&#039;,<br>
+      &#039;hostspec&#039; =&gt; &#039;192.168.1.100&#039;,<br>
+      &#039;database&#039; =&gt; &#039;/dbs/counts.gdb&#039;,<br>
+      &#039;username&#039; =&gt; &#039;SYSDBA&#039;,<br>
+      &#039;password&#039; =&gt; &#039;masterkey&#039;,<br>
+      &#039;dialect&#039;  =&gt; 3);</p>
+<p>or a single line dsn, with parameters:<br>
+ $dsn = &quot;ibase://$user:$pass@$host/$db_name?dialect=2&quot;;</p>
+<p>The code in the message is from the PEAR DB::ibase source, and could be modified, using the shown default.  Dialect 2 is a reasonable default. 3 works too, and is the current dialect level for Interbase &gt; 5 (I think), and all versions of Firebird.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

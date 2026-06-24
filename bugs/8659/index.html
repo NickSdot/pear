@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8659</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Queue/index.html">Mail_Queue</a> &#187; Bug #8659</h1>
+<p>$mail_queue-&gt;get() fails with mdb2 container and sqlite</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-09-07 23:03 UTC</td></tr>
+<tr><th>From</th><td>randy at rcs-comp dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Queue/index.html">Mail_Queue</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>Win XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-09-07 23:03 UTC] randy at rcs-comp dot com</h3>
+<p>Description:<br>
+------------<br>
+when using mail_queue with mdb2 container and sqlite I could not get get() to work.  It would always return false.  I traced the problem all the way to line 863 of the mdb2 sqlite driver:</p>
+<p>$row = @sqlite_fetch_array($this-&gt;result, SQLITE_ASSOC);</p>
+<p>$row was empty, so I removed the &#039;@&#039; and it through an error:</p>
+<p>Warning: sqlite_fetch_array() expects parameter 1 to be resource, object given in C:\system_data\websites\customers\zeydel\lib\PEAR\MDB2\Driver\sqlite.php on line 863</p>
+<p>I am not sure who&#039;s bug this is, but I am starting with you.</p>
+<p>FYI, I used my same code with the DB container and it worked fine.</p>
+</section>
+<section>
+<h3>[2006-09-08 19:06 UTC] randy at rcs-comp dot com</h3>
+<p>I think it did this correctly, here is the code I used:</p>
+<p>if ($fetchmode &amp; MDB2_FETCHMODE_ASSOC) {<br>
+            $row = sqlite_fetch_array($this-&gt;result, SQLITE_ASSOC);<br>
+            print_r( debug_backtrace() );</p>
+<p>and the result from the script:</p>
+<p>Warning: sqlite_fetch_array() expects parameter 1 to be resource, object given in C:\system_data\websites\customers\zeydel\lib\PEAR\MDB2\Driver\sqlite.php on line 863</p>
+<p>Array<br>
+(<br>
+    [0] =&gt; Array<br>
+        (<br>
+            [file] =&gt; C:\system_data\websites\customers\zeydel\lib\PEAR\Mail\Queue\Container\mdb2.php<br>
+            [line] =&gt; 121<br>
+            [function] =&gt; fetchRow<br>
+            [class] =&gt; MDB2_Result_sqlite<br>
+            [object] =&gt; MDB2_BufferedResult_sqlite Object<br>
+                (<br>
+                    [db] =&gt; MDB2_Driver_sqlite Object<br>
+                        (<br>
+                            [escape_quotes] =&gt; &#039;<br>
+                            [escape_identifier] =&gt; &quot;<br>
+                            [_lasterror] =&gt; <br>
+                            [fix_assoc_fields_names] =&gt; 64<br>
+                            [db_index] =&gt; 1<br>
+                            [dsn] =&gt; Array<br>
+                                (<br>
+                                    [phptype] =&gt; sqlite<br>
+                                    [dbsyntax] =&gt; sqlite<br>
+                                    [username] =&gt; <br>
+                                    [password] =&gt; <br>
+                                    [protocol] =&gt; tcp<br>
+                                    [hostspec] =&gt; localhost<br>
+                                    [port] =&gt; <br>
+                                    [socket] =&gt; <br>
+                                    [database] =&gt; <br>
+                                    [mode] =&gt; <br>
+                                )</p>
+<p>[connected_dsn] =&gt; Array<br>
+                                (<br>
+                                    [phptype] =&gt; sqlite<br>
+                                    [dbsyntax] =&gt; sqlite<br>
+                                    [username] =&gt; <br>
+                                    [password] =&gt; <br>
+                                    [protocol] =&gt; tcp<br>
+                                    [hostspec] =&gt; localhost<br>
+                                    [port] =&gt; <br>
+                                    [socket] =&gt; <br>
+                                    [database] =&gt; <br>
+                                    [mode] =&gt; <br>
+                                )</p>
+<p>[connection] =&gt; Resource id #70<br>
+                            [opened_persistent] =&gt; <br>
+                            [database_name] =&gt; C:/system_data/websites/customers/zeydel/webapp/data/application.db<br>
+                            [connected_database_name] =&gt; C:/system_data/websites/customers/zeydel/webapp/data/application.db<br>
+                            [connected_server_info] =&gt; <br>
+                            [supported] =&gt; Array<br>
+                                (<br>
+                                    [sequences] =&gt; emulated<br>
+                                    [indexes] =&gt; 1<br>
+                                    [affected_rows] =&gt; 1<br>
+                                    [summary_functions] =&gt; 1<br>
+                                    [order_by_text] =&gt; 1<br>
+                                    [transactions] =&gt; 1<br>
+                                    [savepoints] =&gt; <br>
+                                    [current_id] =&gt; emulated<br>
+                                    [limit_queries] =&gt; 1<br>
+                                    [LOBs] =&gt; 1<br>
+                                    [replace] =&gt; 1<br>
+                                    [sub_selects] =&gt; 1<br>
+                                    [auto_increment] =&gt; 1<br>
+                                    [primary_key] =&gt; <br>
+                                    [result_introspection] =&gt; <br>
+                                    [prepared_statements] =&gt; emulated<br>
+                                    [identifier_quoting] =&gt; 1<br>
+                                    [pattern_escaping] =&gt; <br>
+                                )</p>
+<p>[options] =&gt; Array<br>
+                                (<br>
+                                    [ssl] =&gt; <br>
+                                    [field_case] =&gt; 0<br>
+                                    [disable_query] =&gt; <br>
+                                    [result_class] =&gt; MDB2_Result_%s<br>
+                                    [buffered_result_class] =&gt; MDB2_BufferedResult_%s<br>
+                                    [result_wrap_class] =&gt; <br>
+                                    [result_buffering] =&gt; 1<br>
+                                    [fetch_class] =&gt; stdClass<br>
+                                    [persistent] =&gt; <br>
+                                    [debug] =&gt; 0<br>
+                                    [debug_handler] =&gt; MDB2_defaultDebugOutput<br>
+                                    [debug_expanded_output] =&gt; <br>
+                                    [default_text_field_length] =&gt; 4096<br>
+                                    [lob_buffer_length] =&gt; 8192<br>
+                                    [log_line_break] =&gt;</p>
+<p>[idxname_format] =&gt; %s_idx<br>
+                                    [seqname_format] =&gt; %s_seq<br>
+                                    [savepoint_format] =&gt; MDB2_SAVEPOINT_%s<br>
+                                    [seqcol_name] =&gt; sequence<br>
+                                    [quote_identifier] =&gt; <br>
+                                    [use_transactions] =&gt; 1<br>
+                                    [decimal_places] =&gt; 2<br>
+                                    [portability] =&gt; 127<br>
+                                    [modules] =&gt; Array<br>
+                                        (<br>
+                                            [ex] =&gt; Extended<br>
+                                            [dt] =&gt; Datatype<br>
+                                            [mg] =&gt; Manager<br>
+                                            [rv] =&gt; Reverse<br>
+                                            [na] =&gt; Native<br>
+                                            [fc] =&gt; Function<br>
+                                        )</p>
+<p>[emulate_prepared] =&gt; <br>
+                                    [datatype_map] =&gt; Array<br>
+                                        (<br>
+                                        )</p>
+<p>[datatype_map_callback] =&gt; Array<br>
+                                        (<br>
+                                        )</p>
+<p>[base_transaction_name] =&gt; ___php_MDB2_sqlite_auto_commit_off<br>
+                                    [fixed_float] =&gt; 0<br>
+                                    [database_path] =&gt; <br>
+                                    [database_extension] =&gt; <br>
+                                    [server_version] =&gt; <br>
+                                )</p>
+<p>[escape_pattern] =&gt; <br>
+                            [wildcards] =&gt; Array<br>
+                                (<br>
+                                    [0] =&gt; %<br>
+                                    [1] =&gt; _<br>
+                                )</p>
+<p>[as_keyword] =&gt;  AS <br>
+                            [warnings] =&gt; Array<br>
+                                (<br>
+                                )</p>
+<p>[debug_output] =&gt; <br>
+                            [in_transaction] =&gt; <br>
+                            [nested_transaction_counter] =&gt; 0<br>
+                            [has_transaction_error] =&gt; <br>
+                            [offset] =&gt; 0<br>
+                            [limit] =&gt; 0<br>
+                            [phptype] =&gt; sqlite<br>
+                            [dbsyntax] =&gt; sqlite<br>
+                            [last_query] =&gt; SELECT * FROM mail_queue WHERE sent_time IS NULL AND try_sent &lt; 25 AND time_to_send &lt; &#039;2006-09-08 15:03:28&#039; ORDER BY time_to_send LIMIT 0,10<br>
+                            [fetchmode] =&gt; 2<br>
+                            [modules] =&gt; Array<br>
+                                (<br>
+                                    [Datatype] =&gt; MDB2_Driver_Datatype_sqlite Object<br>
+                                        (<br>
+                                            [valid_default_values] =&gt; Array<br>
+                                                (<br>
+                                                    [text] =&gt; <br>
+                                                    [boolean] =&gt; 1<br>
+                                                    [integer] =&gt; 0<br>
+                                                    [decimal] =&gt; 0<br>
+                                                    [float] =&gt; 0<br>
+                                                    [timestamp] =&gt; 1970-01-01 00:00:00<br>
+                                                    [time] =&gt; 00:00:00<br>
+                                                    [date] =&gt; 1970-01-01<br>
+                                                    [clob] =&gt; <br>
+                                                    [blob] =&gt; <br>
+                                                )</p>
+<p>[lobs] =&gt; Array<br>
+                                                (<br>
+                                                )</p>
+<p>[db_index] =&gt; 1<br>
+                                        )</p>
+<p>)</p>
+<p>[destructor_registered] =&gt; 1<br>
+                            [_debug] =&gt; <br>
+                            [_default_error_mode] =&gt; <br>
+                            [_default_error_options] =&gt; <br>
+                            [_default_error_handler] =&gt; <br>
+                            [_error_class] =&gt; PEAR_Error<br>
+                            [_expected_errors] =&gt; Array<br>
+                                (<br>
+                                )</p>
+<p>[datatype] =&gt; MDB2_Driver_Datatype_sqlite Object<br>
+                                (<br>
+                                    [valid_default_values] =&gt; Array<br>
+                                        (<br>
+                                            [text] =&gt; <br>
+                                            [boolean] =&gt; 1<br>
+                                            [integer] =&gt; 0<br>
+                                            [decimal] =&gt; 0<br>
+                                            [float] =&gt; 0<br>
+                                            [timestamp] =&gt; 1970-01-01 00:00:00<br>
+                                            [time] =&gt; 00:00:00<br>
+                                            [date] =&gt; 1970-01-01<br>
+                                            [clob] =&gt; <br>
+                                            [blob] =&gt; <br>
+                                        )</p>
+<p>[lobs] =&gt; Array<br>
+                                        (<br>
+                                        )</p>
+<p>[db_index] =&gt; 1<br>
+                                )</p>
+<p>[loaded_version_modules] =&gt; Array<br>
+                                (<br>
+                                    [0] =&gt; datatype<br>
+                                )</p>
+<p>)</p>
+<p>[result] =&gt; MDB2_BufferedResult_sqlite Object<br>
+ *RECURSION*<br>
+                    [rownum] =&gt; -1<br>
+                    [types] =&gt; Array<br>
+                        (<br>
+                        )</p>
+<p>[values] =&gt; Array<br>
+                        (<br>
+                        )</p>
+<p>[offset] =&gt; 0<br>
+                    [offset_count] =&gt; 0<br>
+                    [limit] =&gt; 9<br>
+                    [column_names] =&gt; <br>
+                )</p>
+<p>[type] =&gt; -&gt;<br>
+            [args] =&gt; Array<br>
+                (<br>
+                    [0] =&gt; 2<br>
+                )</p>
+<p>)</p>
+<p>[1] =&gt; Array<br>
+        (<br>
+            [file] =&gt; C:\system_data\websites\customers\zeydel\lib\PEAR\Mail\Queue\Container.php<br>
+            [line] =&gt; 258<br>
+            [function] =&gt; _preload<br>
+            [class] =&gt; Mail_Queue_Container_mdb2<br>
+            [object] =&gt; Mail_Queue_Container_mdb2 Object<br>
+                (<br>
+                    [db] =&gt; MDB2_Driver_sqlite Object<br>
+                        (<br>
+                            [escape_quotes] =&gt; &#039;<br>
+                            [escape_identifier] =&gt; &quot;<br>
+                            [_lasterror] =&gt; <br>
+                            [fix_assoc_fields_names] =&gt; 64<br>
+                            [db_index] =&gt; 1<br>
+                            [dsn] =&gt; Array<br>
+                                (<br>
+                                    [phptype] =&gt; sqlite<br>
+                                    [dbsyntax] =&gt; sqlite<br>
+                                    [username] =&gt; <br>
+                                    [password] =&gt; <br>
+                                    [protocol] =&gt; tcp<br>
+                                    [hostspec] =&gt; localhost<br>
+                                    [port] =&gt; <br>
+                                    [socket] =&gt; <br>
+                                    [database] =&gt; <br>
+                                    [mode] =&gt; <br>
+                                )</p>
+<p>[connected_dsn] =&gt; Array<br>
+                                (<br>
+                                    [phptype] =&gt; sqlite<br>
+                                    [dbsyntax] =&gt; sqlite<br>
+                                    [username] =&gt; <br>
+                                    [password] =&gt; <br>
+                                    [protocol] =&gt; tcp<br>
+                                    [hostspec] =&gt; localhost<br>
+                                    [port] =&gt; <br>
+                                    [socket] =&gt; <br>
+                                    [database] =&gt; <br>
+                                    [mode] =&gt; <br>
+                                )</p>
+<p>[connection] =&gt; Resource id #70<br>
+                            [opened_persistent] =&gt; <br>
+                            [database_name] =&gt; C:/system_data/websites/customers/zeydel/webapp/data/application.db<br>
+                            [connected_database_name] =&gt; C:/system_data/websites/customers/zeydel/webapp/data/application.db<br>
+                            [connected_server_info] =&gt; <br>
+                            [supported] =&gt; Array<br>
+                                (<br>
+                                    [sequences] =&gt; emulated<br>
+                                    [indexes] =&gt; 1<br>
+                                    [affected_rows] =&gt; 1<br>
+                                    [summary_functions] =&gt; 1<br>
+                                    [order_by_text] =&gt; 1<br>
+                                    [transactions] =&gt; 1<br>
+                                    [savepoints] =&gt; <br>
+                                    [current_id] =&gt; emulated<br>
+                                    [limit_queries] =&gt; 1<br>
+                                    [LOBs] =&gt; 1<br>
+                                    [replace] =&gt; 1<br>
+                                    [sub_selects] =&gt; 1<br>
+                                    [auto_increment] =&gt; 1<br>
+                                    [primary_key] =&gt; <br>
+                                    [result_introspection] =&gt; <br>
+                                    [prepared_statements] =&gt; emulated<br>
+                                    [identifier_quoting] =&gt; 1<br>
+                                    [pattern_escaping] =&gt; <br>
+                                )</p>
+<p>[options] =&gt; Array<br>
+                                (<br>
+                                    [ssl] =&gt; <br>
+                                    [field_case] =&gt; 0<br>
+                                    [disable_query] =&gt; <br>
+                                    [result_class] =&gt; MDB2_Result_%s<br>
+                                    [buffered_result_class] =&gt; MDB2_BufferedResult_%s<br>
+                                    [result_wrap_class] =&gt; <br>
+                                    [result_buffering] =&gt; 1<br>
+                                    [fetch_class] =&gt; stdClass<br>
+                                    [persistent] =&gt; <br>
+                                    [debug] =&gt; 0<br>
+                                    [debug_handler] =&gt; MDB2_defaultDebugOutput<br>
+                                    [debug_expanded_output] =&gt; <br>
+                                    [default_text_field_length] =&gt; 4096<br>
+                                    [lob_buffer_length] =&gt; 8192<br>
+                                    [log_line_break] =&gt;</p>
+<p>[idxname_format] =&gt; %s_idx<br>
+                                    [seqname_format] =&gt; %s_seq<br>
+                                    [savepoint_format] =&gt; MDB2_SAVEPOINT_%s<br>
+                                    [seqcol_name] =&gt; sequence<br>
+                                    [quote_identifier] =&gt; <br>
+                                    [use_transactions] =&gt; 1<br>
+                                    [decimal_places] =&gt; 2<br>
+                                    [portability] =&gt; 127<br>
+                                    [modules] =&gt; Array<br>
+                                        (<br>
+                                            [ex] =&gt; Extended<br>
+                                            [dt] =&gt; Datatype<br>
+                                            [mg] =&gt; Manager<br>
+                                            [rv] =&gt; Reverse<br>
+                                            [na] =&gt; Native<br>
+                                            [fc] =&gt; Function<br>
+                                        )</p>
+<p>[emulate_prepared] =&gt; <br>
+                                    [datatype_map] =&gt; Array<br>
+                                        (<br>
+                                        )</p>
+<p>[datatype_map_callback] =&gt; Array<br>
+                                        (<br>
+                                        )</p>
+<p>[base_transaction_name] =&gt; ___php_MDB2_sqlite_auto_commit_off<br>
+                                    [fixed_float] =&gt; 0<br>
+                                    [database_path] =&gt; <br>
+                                    [database_extension] =&gt; <br>
+                                    [server_version] =&gt; <br>
+                                )</p>
+<p>[escape_pattern] =&gt; <br>
+                            [wildcards] =&gt; Array<br>
+                                (<br>
+                                    [0] =&gt; %<br>
+                                    [1] =&gt; _<br>
+                                )</p>
+<p>[as_keyword] =&gt;  AS <br>
+                            [warnings] =&gt; Array<br>
+                                (<br>
+                                )</p>
+<p>[debug_output] =&gt; <br>
+                            [in_transaction] =&gt; <br>
+                            [nested_transaction_counter] =&gt; 0<br>
+                            [has_transaction_error] =&gt; <br>
+                            [offset] =&gt; 0<br>
+                            [limit] =&gt; 0<br>
+                            [phptype] =&gt; sqlite<br>
+                            [dbsyntax] =&gt; sqlite<br>
+                            [last_query] =&gt; SELECT * FROM mail_queue WHERE sent_time IS NULL AND try_sent &lt; 25 AND time_to_send &lt; &#039;2006-09-08 15:03:28&#039; ORDER BY time_to_send LIMIT 0,10<br>
+                            [fetchmode] =&gt; 2<br>
+                            [modules] =&gt; Array<br>
+                                (<br>
+                                    [Datatype] =&gt; MDB2_Driver_Datatype_sqlite Object<br>
+                                        (<br>
+                                            [valid_default_values] =&gt; Array<br>
+                                                (<br>
+                                                    [text] =&gt; <br>
+                                                    [boolean] =&gt; 1<br>
+                                                    [integer] =&gt; 0<br>
+                                                    [decimal] =&gt; 0<br>
+                                                    [float] =&gt; 0<br>
+                                                    [timestamp] =&gt; 1970-01-01 00:00:00<br>
+                                                    [time] =&gt; 00:00:00<br>
+                                                    [date] =&gt; 1970-01-01<br>
+                                                    [clob] =&gt; <br>
+                                                    [blob] =&gt; <br>
+                                                )</p>
+<p>[lobs] =&gt; Array<br>
+                                                (<br>
+                                                )</p>
+<p>[db_index] =&gt; 1<br>
+                                        )</p>
+<p>)</p>
+<p>[destructor_registered] =&gt; 1<br>
+                            [_debug] =&gt; <br>
+                            [_default_error_mode] =&gt; <br>
+                            [_default_error_options] =&gt; <br>
+                            [_default_error_handler] =&gt; <br>
+                            [_error_class] =&gt; PEAR_Error<br>
+                            [_expected_errors] =&gt; Array<br>
+                                (<br>
+                                )</p>
+<p>[datatype] =&gt; MDB2_Driver_Datatype_sqlite Object<br>
+                                (<br>
+                                    [valid_default_values] =&gt; Array<br>
+                                        (<br>
+                                            [text] =&gt; <br>
+                                            [boolean] =&gt; 1<br>
+                                            [integer] =&gt; 0<br>
+                                            [decimal] =&gt; 0<br>
+                                            [float] =&gt; 0<br>
+                                            [timestamp] =&gt; 1970-01-01 00:00:00<br>
+                                            [time] =&gt; 00:00:00<br>
+                                            [date] =&gt; 1970-01-01<br>
+                                            [clob] =&gt; <br>
+                                            [blob] =&gt; <br>
+                                        )</p>
+<p>[lobs] =&gt; Array<br>
+                                        (<br>
+                                        )</p>
+<p>[db_index] =&gt; 1<br>
+                                )</p>
+<p>[loaded_version_modules] =&gt; Array<br>
+                                (<br>
+                                    [0] =&gt; datatype<br>
+                                )</p>
+<p>)</p>
+<p>[mail_table] =&gt; mail_queue<br>
+                    [sequence] =&gt; mail_queue<br>
+                    [queue_data] =&gt; Array<br>
+                        (<br>
+                        )</p>
+<p>[_current_item] =&gt; 0<br>
+                    [_last_item] =&gt; 0<br>
+                    [limit] =&gt; 10<br>
+                    [offset] =&gt; 0<br>
+                    [try] =&gt; 25<br>
+                    [force_preload] =&gt; <br>
+                    [buffer_size] =&gt; 20<br>
+                    [pearErrorMode] =&gt; 1<br>
+                )</p>
+<p>[type] =&gt; -&gt;<br>
+            [args] =&gt; Array<br>
+                (<br>
+                )</p>
+<p>)</p>
+<p>[2] =&gt; Array<br>
+        (<br>
+            [file] =&gt; C:\system_data\websites\customers\zeydel\lib\PEAR\Mail\Queue\Container.php<br>
+            [line] =&gt; 95<br>
+            [function] =&gt; preload<br>
+            [class] =&gt; Mail_Queue_Container<br>
+            [object] =&gt; Mail_Queue_Container_mdb2 Object<br>
+                (<br>
+                    [db] =&gt; MDB2_Driver_sqlite Object<br>
+                        (<br>
+                            [escape_quotes] =&gt; &#039;<br>
+                            [escape_identifier] =&gt; &quot;<br>
+                            [_lasterror] =&gt; <br>
+                            [fix_assoc_fields_names] =&gt; 64<br>
+                            [db_index] =&gt; 1<br>
+                            [dsn] =&gt; Array<br>
+                                (<br>
+                                    [phptype] =&gt; sqlite<br>
+                                    [dbsyntax] =&gt; sqlite<br>
+                                    [username] =&gt; <br>
+                                    [password] =&gt; <br>
+                                    [protocol] =&gt; tcp<br>
+                                    [hostspec] =&gt; localhost<br>
+                                    [port] =&gt; <br>
+                                    [socket] =&gt; <br>
+                                    [database] =&gt; <br>
+                                    [mode] =&gt; <br>
+                                )</p>
+<p>[connected_dsn] =&gt; Array<br>
+                                (<br>
+                                    [phptype] =&gt; sqlite<br>
+                                    [dbsyntax] =&gt; sqlite<br>
+                                    [username] =&gt; <br>
+                                    [password] =&gt; <br>
+                                    [protocol] =&gt; tcp<br>
+                                    [hostspec] =&gt; localhost<br>
+                                    [port] =&gt; <br>
+                                    [socket] =&gt; <br>
+                                    [database] =&gt; <br>
+                                    [mode] =&gt; <br>
+                                )</p>
+<p>[connection] =&gt; Resource id #70<br>
+                            [opened_persistent] =&gt; <br>
+                            [database_name] =&gt; C:/system_data/websites/customers/zeydel/webapp/data/application.db<br>
+                            [connected_database_name] =&gt; C:/system_data/websites/customers/zeydel/webapp/data/application.db<br>
+                            [connected_server_info] =&gt; <br>
+                            [supported] =&gt; Array<br>
+                                (<br>
+                                    [sequences] =&gt; emulated<br>
+                                    [indexes] =&gt; 1<br>
+                                    [affected_rows] =&gt; 1<br>
+                                    [summary_functions] =&gt; 1<br>
+                                    [order_by_text] =&gt; 1<br>
+                                    [transactions] =&gt; 1<br>
+                                    [savepoints] =&gt; <br>
+                                    [current_id] =&gt; emulated<br>
+                                    [limit_queries] =&gt; 1<br>
+                                    [LOBs] =&gt; 1<br>
+                                    [replace] =&gt; 1<br>
+                                    [sub_selects] =&gt; 1<br>
+                                    [auto_increment] =&gt; 1<br>
+                                    [primary_key] =&gt; <br>
+                                    [result_introspection] =&gt; <br>
+                                    [prepared_statements] =&gt; emulated<br>
+                                    [identifier_quoting] =&gt; 1<br>
+                                    [pattern_escaping] =&gt; <br>
+                                )</p>
+<p>[options] =&gt; Array<br>
+                                (<br>
+                                    [ssl] =&gt; <br>
+                                    [field_case] =&gt; 0<br>
+                                    [disable_query] =&gt; <br>
+                                    [result_class] =&gt; MDB2_Result_%s<br>
+                                    [buffered_result_class] =&gt; MDB2_BufferedResult_%s<br>
+                                    [result_wrap_class] =&gt; <br>
+                                    [result_buffering] =&gt; 1<br>
+                                    [fetch_class] =&gt; stdClass<br>
+                                    [persistent] =&gt; <br>
+                                    [debug] =&gt; 0<br>
+                                    [debug_handler] =&gt; MDB2_defaultDebugOutput<br>
+                                    [debug_expanded_output] =&gt; <br>
+                                    [default_text_field_length] =&gt; 4096<br>
+                                    [lob_buffer_length] =&gt; 8192<br>
+                                    [log_line_break] =&gt;</p>
+<p>[idxname_format] =&gt; %s_idx<br>
+                                    [seqname_format] =&gt; %s_seq<br>
+                                    [savepoint_format] =&gt; MDB2_SAVEPOINT_%s<br>
+                                    [seqcol_name] =&gt; sequence<br>
+                                    [quote_identifier] =&gt; <br>
+                                    [use_transactions] =&gt; 1<br>
+                                    [decimal_places] =&gt; 2<br>
+                                    [portability] =&gt; 127<br>
+                                    [modules] =&gt; Array<br>
+                                        (<br>
+                                            [ex] =&gt; Extended<br>
+                                            [dt] =&gt; Datatype<br>
+                                            [mg] =&gt; Manager<br>
+                                            [rv] =&gt; Reverse<br>
+                                            [na] =&gt; Native<br>
+                                            [fc] =&gt; Function<br>
+                                        )</p>
+<p>[emulate_prepared] =&gt; <br>
+                                    [datatype_map] =&gt; Array<br>
+                                        (<br>
+                                        )</p>
+<p>[datatype_map_callback] =&gt; Array<br>
+                                        (<br>
+                                        )</p>
+<p>[base_transaction_name] =&gt; ___php_MDB2_sqlite_auto_commit_off<br>
+                                    [fixed_float] =&gt; 0<br>
+                                    [database_path] =&gt; <br>
+                                    [database_extension] =&gt; <br>
+                                    [server_version] =&gt; <br>
+                                )</p>
+<p>[escape_pattern] =&gt; <br>
+                            [wildcards] =&gt; Array<br>
+                                (<br>
+                                    [0] =&gt; %<br>
+                                    [1] =&gt; _<br>
+                                )</p>
+<p>[as_keyword] =&gt;  AS <br>
+                            [warnings] =&gt; Array<br>
+                                (<br>
+                                )</p>
+<p>[debug_output] =&gt; <br>
+                            [in_transaction] =&gt; <br>
+                            [nested_transaction_counter] =&gt; 0<br>
+                            [has_transaction_error] =&gt; <br>
+                            [offset] =&gt; 0<br>
+                            [limit] =&gt; 0<br>
+                            [phptype] =&gt; sqlite<br>
+                            [dbsyntax] =&gt; sqlite<br>
+                            [last_query] =&gt; SELECT * FROM mail_queue WHERE sent_time IS NULL AND try_sent &lt; 25 AND time_to_send &lt; &#039;2006-09-08 15:03:28&#039; ORDER BY time_to_send LIMIT 0,10<br>
+                            [fetchmode] =&gt; 2<br>
+                            [modules] =&gt; Array<br>
+                                (<br>
+                                    [Datatype] =&gt; MDB2_Driver_Datatype_sqlite Object<br>
+                                        (<br>
+                                            [valid_default_values] =&gt; Array<br>
+                                                (<br>
+                                                    [text] =&gt; <br>
+                                                    [boolean] =&gt; 1<br>
+                                                    [integer] =&gt; 0<br>
+                                                    [decimal] =&gt; 0<br>
+                                                    [float] =&gt; 0<br>
+                                                    [timestamp] =&gt; 1970-01-01 00:00:00<br>
+                                                    [time] =&gt; 00:00:00<br>
+                                                    [date] =&gt; 1970-01-01<br>
+                                                    [clob] =&gt; <br>
+                                                    [blob] =&gt; <br>
+                                                )</p>
+<p>[lobs] =&gt; Array<br>
+                                                (<br>
+                                                )</p>
+<p>[db_index] =&gt; 1<br>
+                                        )</p>
+<p>)</p>
+<p>[destructor_registered] =&gt; 1<br>
+                            [_debug] =&gt; <br>
+                            [_default_error_mode] =&gt; <br>
+                            [_default_error_options] =&gt; <br>
+                            [_default_error_handler] =&gt; <br>
+                            [_error_class] =&gt; PEAR_Error<br>
+                            [_expected_errors] =&gt; Array<br>
+                                (<br>
+                                )</p>
+<p>[datatype] =&gt; MDB2_Driver_Datatype_sqlite Object<br>
+                                (<br>
+                                    [valid_default_values] =&gt; Array<br>
+                                        (<br>
+                                            [text] =&gt; <br>
+                                            [boolean] =&gt; 1<br>
+                                            [integer] =&gt; 0<br>
+                                            [decimal] =&gt; 0<br>
+                                            [float] =&gt; 0<br>
+                                            [timestamp] =&gt; 1970-01-01 00:00:00<br>
+                                            [time] =&gt; 00:00:00<br>
+                                            [date] =&gt; 1970-01-01<br>
+                                            [clob] =&gt; <br>
+                                            [blob] =&gt; <br>
+                                        )</p>
+<p>[lobs] =&gt; Array<br>
+                                        (<br>
+                                        )</p>
+<p>[db_index] =&gt; 1<br>
+                                )</p>
+<p>[loaded_version_modules] =&gt; Array<br>
+                                (<br>
+                                    [0] =&gt; datatype<br>
+                                )</p>
+<p>)</p>
+<p>[mail_table] =&gt; mail_queue<br>
+                    [sequence] =&gt; mail_queue<br>
+                    [queue_data] =&gt; Array<br>
+                        (<br>
+                        )</p>
+<p>[_current_item] =&gt; 0<br>
+                    [_last_item] =&gt; 0<br>
+                    [limit] =&gt; 10<br>
+                    [offset] =&gt; 0<br>
+                    [try] =&gt; 25<br>
+                    [force_preload] =&gt; <br>
+                    [buffer_size] =&gt; 20<br>
+                    [pearErrorMode] =&gt; 1<br>
+                )</p>
+<p>[type] =&gt; -&gt;<br>
+            [args] =&gt; Array<br>
+                (<br>
+                )</p>
+<p>)</p>
+<p>[3] =&gt; Array<br>
+        (<br>
+            [file] =&gt; C:\system_data\websites\customers\zeydel\lib\PEAR\Mail\Queue.php<br>
+            [line] =&gt; 384<br>
+            [function] =&gt; get<br>
+            [class] =&gt; Mail_Queue_Container<br>
+            [object] =&gt; Mail_Queue_Container_mdb2 Object<br>
+                (<br>
+                    [db] =&gt; MDB2_Driver_sqlite Object<br>
+                        (<br>
+                            [escape_quotes] =&gt; &#039;<br>
+                            [escape_identifier] =&gt; &quot;<br>
+                            [_lasterror] =&gt; <br>
+                            [fix_assoc_fields_names] =&gt; 64<br>
+                            [db_index] =&gt; 1<br>
+                            [dsn] =&gt; Array<br>
+                                (<br>
+                                    [phptype] =&gt; sqlite<br>
+                                    [dbsyntax] =&gt; sqlite<br>
+                                    [username] =&gt; <br>
+                                    [password] =&gt; <br>
+                                    [protocol] =&gt; tcp<br>
+                                    [hostspec] =&gt; localhost<br>
+                                    [port] =&gt; <br>
+                                    [socket] =&gt; <br>
+                                    [database] =&gt; <br>
+                                    [mode] =&gt; <br>
+                                )</p>
+<p>[connected_dsn] =&gt; Array<br>
+                                (<br>
+                                    [phptype] =&gt; sqlite<br>
+                                    [dbsyntax] =&gt; sqlite<br>
+                                    [username] =&gt; <br>
+                                    [password] =&gt; <br>
+                                    [protocol] =&gt; tcp<br>
+                                    [hostspec] =&gt; localhost<br>
+                                    [port] =&gt; <br>
+                                    [socket] =&gt; <br>
+                                    [database] =&gt; <br>
+                                    [mode] =&gt; <br>
+                                )</p>
+<p>[connection] =&gt; Resource id #70<br>
+                            [opened_persistent] =&gt; <br>
+                            [database_name] =&gt; C:/system_data/websites/customers/zeydel/webapp/data/application.db<br>
+                            [connected_database_name] =&gt; C:/system_data/websites/customers/zeydel/webapp/data/application.db<br>
+                            [connected_server_info] =&gt; <br>
+                            [supported] =&gt; Array<br>
+                                (<br>
+                                    [sequences] =&gt; emulated<br>
+                                    [indexes] =&gt; 1<br>
+                                    [affected_rows] =&gt; 1<br>
+                                    [summary_functions] =&gt; 1<br>
+                                    [order_by_text] =&gt; 1<br>
+                                    [transactions] =&gt; 1<br>
+                                    [savepoints] =&gt; <br>
+                                    [current_id] =&gt; emulated<br>
+                                    [limit_queries] =&gt; 1<br>
+                                    [LOBs] =&gt; 1<br>
+                                    [replace] =&gt; 1<br>
+                                    [sub_selects] =&gt; 1<br>
+                                    [auto_increment] =&gt; 1<br>
+                                    [primary_key] =&gt; <br>
+                                    [result_introspection] =&gt; <br>
+                                    [prepared_statements] =&gt; emulated<br>
+                                    [identifier_quoting] =&gt; 1<br>
+                                    [pattern_escaping] =&gt; <br>
+                                )</p>
+<p>[options] =&gt; Array<br>
+                                (<br>
+                                    [ssl] =&gt; <br>
+                                    [field_case] =&gt; 0<br>
+                                    [disable_query] =&gt; <br>
+                                    [result_class] =&gt; MDB2_Result_%s<br>
+                                    [buffered_result_class] =&gt; MDB2_BufferedResult_%s<br>
+                                    [result_wrap_class] =&gt; <br>
+                                    [result_buffering] =&gt; 1<br>
+                                    [fetch_class] =&gt; stdClass<br>
+                                    [persistent] =&gt; <br>
+                                    [debug] =&gt; 0<br>
+                                    [debug_handler] =&gt; MDB2_defaultDebugOutput<br>
+                                    [debug_expanded_output] =&gt; <br>
+                                    [default_text_field_length] =&gt; 4096<br>
+                                    [lob_buffer_length] =&gt; 8192<br>
+                                    [log_line_break] =&gt;</p>
+<p>[idxname_format] =&gt; %s_idx<br>
+                                    [seqname_format] =&gt; %s_seq<br>
+                                    [savepoint_format] =&gt; MDB2_SAVEPOINT_%s<br>
+                                    [seqcol_name] =&gt; sequence<br>
+                                    [quote_identifier] =&gt; <br>
+                                    [use_transactions] =&gt; 1<br>
+                                    [decimal_places] =&gt; 2<br>
+                                    [portability] =&gt; 127<br>
+                                    [modules] =&gt; Array<br>
+                                        (<br>
+                                            [ex] =&gt; Extended<br>
+                                            [dt] =&gt; Datatype<br>
+                                            [mg] =&gt; Manager<br>
+                                            [rv] =&gt; Reverse<br>
+                                            [na] =&gt; Native<br>
+                                            [fc] =&gt; Function<br>
+                                        )</p>
+<p>[emulate_prepared] =&gt; <br>
+                                    [datatype_map] =&gt; Array<br>
+                                        (<br>
+                                        )</p>
+<p>[datatype_map_callback] =&gt; Array<br>
+                                        (<br>
+                                        )</p>
+<p>[base_transaction_name] =&gt; ___php_MDB2_sqlite_auto_commit_off<br>
+                                    [fixed_float] =&gt; 0<br>
+                                    [database_path] =&gt; <br>
+                                    [database_extension] =&gt; <br>
+                                    [server_version] =&gt; <br>
+                                )</p>
+<p>[escape_pattern] =&gt; <br>
+                            [wildcards] =&gt; Array<br>
+                                (<br>
+                                    [0] =&gt; %<br>
+                                    [1] =&gt; _<br>
+                                )</p>
+<p>[as_keyword] =&gt;  AS <br>
+                            [warnings] =&gt; Array<br>
+                                (<br>
+                                )</p>
+<p>[debug_output] =&gt; <br>
+                            [in_transaction] =&gt; <br>
+                            [nested_transaction_counter] =&gt; 0<br>
+                            [has_transaction_error] =&gt; <br>
+                            [offset] =&gt; 0<br>
+                            [limit] =&gt; 0<br>
+                            [phptype] =&gt; sqlite<br>
+                            [dbsyntax] =&gt; sqlite<br>
+                            [last_query] =&gt; SELECT * FROM mail_queue WHERE sent_time IS NULL AND try_sent &lt; 25 AND time_to_send &lt; &#039;2006-09-08 15:03:28&#039; ORDER BY time_to_send LIMIT 0,10<br>
+                            [fetchmode] =&gt; 2<br>
+                            [modules] =&gt; Array<br>
+                                (<br>
+                                    [Datatype] =&gt; MDB2_Driver_Datatype_sqlite Object<br>
+                                        (<br>
+                                            [valid_default_values] =&gt; Array<br>
+                                                (<br>
+                                                    [text] =&gt; <br>
+                                                    [boolean] =&gt; 1<br>
+                                                    [integer] =&gt; 0<br>
+                                                    [decimal] =&gt; 0<br>
+                                                    [float] =&gt; 0<br>
+                                                    [timestamp] =&gt; 1970-01-01 00:00:00<br>
+                                                    [time] =&gt; 00:00:00<br>
+                                                    [date] =&gt; 1970-01-01<br>
+                                                    [clob] =&gt; <br>
+                                                    [blob] =&gt; <br>
+                                                )</p>
+<p>[lobs] =&gt; Array<br>
+                                                (<br>
+                                                )</p>
+<p>[db_index] =&gt; 1<br>
+                                        )</p>
+<p>)</p>
+<p>[destructor_registered] =&gt; 1<br>
+                            [_debug] =&gt; <br>
+                            [_default_error_mode] =&gt; <br>
+                            [_default_error_options] =&gt; <br>
+                            [_default_error_handler] =&gt; <br>
+                            [_error_class] =&gt; PEAR_Error<br>
+                            [_expected_errors] =&gt; Array<br>
+                                (<br>
+                                )</p>
+<p>[datatype] =&gt; MDB2_Driver_Datatype_sqlite Object<br>
+                                (<br>
+                                    [valid_default_values] =&gt; Array<br>
+                                        (<br>
+                                            [text] =&gt; <br>
+                                            [boolean] =&gt; 1<br>
+                                            [integer] =&gt; 0<br>
+                                            [decimal] =&gt; 0<br>
+                                            [float] =&gt; 0<br>
+                                            [timestamp] =&gt; 1970-01-01 00:00:00<br>
+                                            [time] =&gt; 00:00:00<br>
+                                            [date] =&gt; 1970-01-01<br>
+                                            [clob] =&gt; <br>
+                                            [blob] =&gt; <br>
+                                        )</p>
+<p>[lobs] =&gt; Array<br>
+                                        (<br>
+                                        )</p>
+<p>[db_index] =&gt; 1<br>
+                                )</p>
+<p>[loaded_version_modules] =&gt; Array<br>
+                                (<br>
+                                    [0] =&gt; datatype<br>
+                                )</p>
+<p>)</p>
+<p>[mail_table] =&gt; mail_queue<br>
+                    [sequence] =&gt; mail_queue<br>
+                    [queue_data] =&gt; Array<br>
+                        (<br>
+                        )</p>
+<p>[_current_item] =&gt; 0<br>
+                    [_last_item] =&gt; 0<br>
+                    [limit] =&gt; 10<br>
+                    [offset] =&gt; 0<br>
+                    [try] =&gt; 25<br>
+                    [force_preload] =&gt; <br>
+                    [buffer_size] =&gt; 20<br>
+                    [pearErrorMode] =&gt; 1<br>
+                )</p>
+<p>[type] =&gt; -&gt;<br>
+            [args] =&gt; Array<br>
+                (<br>
+                )</p>
+<p>)</p>
+<p>[4] =&gt; Array<br>
+        (<br>
+            [file] =&gt; C:\system_data\websites\customers\zeydel\webapp\modules\Email\actions\SendFromQueue.class.php<br>
+            [line] =&gt; 59<br>
+            [function] =&gt; get<br>
+            [class] =&gt; Mail_Queue<br>
+            [object] =&gt; Mail_Queue Object<br>
+                (<br>
+                    [mail_options] =&gt; Array<br>
+                        (<br>
+                            [driver] =&gt; smtp<br>
+                            [host] =&gt; your_smtp_server.com<br>
+                            [port] =&gt; 25<br>
+                            [auth] =&gt; <br>
+                            [username] =&gt; <br>
+                            [password] =&gt; <br>
+                        )</p>
+<p>[container] =&gt; Mail_Queue_Container_mdb2 Object<br>
+                        (<br>
+                            [db] =&gt; MDB2_Driver_sqlite Object<br>
+                                (<br>
+                                    [escape_quotes] =&gt; &#039;<br>
+                                    [escape_identifier] =&gt; &quot;<br>
+                                    [_lasterror] =&gt; <br>
+                                    [fix_assoc_fields_names] =&gt; 64<br>
+                                    [db_index] =&gt; 1<br>
+                                    [dsn] =&gt; Array<br>
+                                        (<br>
+                                            [phptype] =&gt; sqlite<br>
+                                            [dbsyntax] =&gt; sqlite<br>
+                                            [username] =&gt; <br>
+                                            [password] =&gt; <br>
+                                            [protocol] =&gt; tcp<br>
+                                            [hostspec] =&gt; localhost<br>
+                                            [port] =&gt; <br>
+                                            [socket] =&gt; <br>
+                                            [database] =&gt; <br>
+                                            [mode] =&gt; <br>
+                                        )</p>
+<p>[connected_dsn] =&gt; Array<br>
+                                        (<br>
+                                            [phptype] =&gt; sqlite<br>
+                                            [dbsyntax] =&gt; sqlite<br>
+                                            [username] =&gt; <br>
+                                            [password] =&gt; <br>
+                                            [protocol] =&gt; tcp<br>
+                                            [hostspec] =&gt; localhost<br>
+                                            [port] =&gt; <br>
+                                            [socket] =&gt; <br>
+                                            [database] =&gt; <br>
+                                            [mode] =&gt; <br>
+                                        )</p>
+<p>[connection] =&gt; Resource id #70<br>
+                                    [opened_persistent] =&gt; <br>
+                                    [database_name] =&gt; C:/system_data/websites/customers/zeydel/webapp/data/application.db<br>
+                                    [connected_database_name] =&gt; C:/system_data/websites/customers/zeydel/webapp/data/application.db<br>
+                                    [connected_server_info] =&gt; <br>
+                                    [supported] =&gt; Array<br>
+                                        (<br>
+                                            [sequences] =&gt; emulated<br>
+                                            [indexes] =&gt; 1<br>
+                                            [affected_rows] =&gt; 1<br>
+                                            [summary_functions] =&gt; 1<br>
+                                            [order_by_text] =&gt; 1<br>
+                                            [transactions] =&gt; 1<br>
+                                            [savepoints] =&gt; <br>
+                                            [current_id] =&gt; emulated<br>
+                                            [limit_queries] =&gt; 1<br>
+                                            [LOBs] =&gt; 1<br>
+                                            [replace] =&gt; 1<br>
+                                            [sub_selects] =&gt; 1<br>
+                                            [auto_increment] =&gt; 1<br>
+                                            [primary_key] =&gt; <br>
+                                            [result_introspection] =&gt; <br>
+                                            [prepared_statements] =&gt; emulated<br>
+                                            [identifier_quoting] =&gt; 1<br>
+                                            [pattern_escaping] =&gt; <br>
+                                        )</p>
+<p>[options] =&gt; Array<br>
+                                        (<br>
+                                            [ssl] =&gt; <br>
+                                            [field_case] =&gt; 0<br>
+                                            [disable_query] =&gt; <br>
+                                            [result_class] =&gt; MDB2_Result_%s<br>
+                                            [buffered_result_class] =&gt; MDB2_BufferedResult_%s<br>
+                                            [result_wrap_class] =&gt; <br>
+                                            [result_buffering] =&gt; 1<br>
+                                            [fetch_class] =&gt; stdClass<br>
+                                            [persistent] =&gt; <br>
+                                            [debug] =&gt; 0<br>
+                                            [debug_handler] =&gt; MDB2_defaultDebugOutput<br>
+                                            [debug_expanded_output] =&gt; <br>
+                                            [default_text_field_length] =&gt; 4096<br>
+                                            [lob_buffer_length] =&gt; 8192<br>
+                                            [log_line_break] =&gt;</p>
+<p>[idxname_format] =&gt; %s_idx<br>
+                                            [seqname_format] =&gt; %s_seq<br>
+                                            [savepoint_format] =&gt; MDB2_SAVEPOINT_%s<br>
+                                            [seqcol_name] =&gt; sequence<br>
+                                            [quote_identifier] =&gt; <br>
+                                            [use_transactions] =&gt; 1<br>
+                                            [decimal_places] =&gt; 2<br>
+                                            [portability] =&gt; 127<br>
+                                            [modules] =&gt; Array<br>
+                                                (<br>
+                                                    [ex] =&gt; Extended<br>
+                                                    [dt] =&gt; Datatype<br>
+                                                    [mg] =&gt; Manager<br>
+                                                    [rv] =&gt; Reverse<br>
+                                                    [na] =&gt; Native<br>
+                                                    [fc] =&gt; Function<br>
+                                                )</p>
+<p>[emulate_prepared] =&gt; <br>
+                                            [datatype_map] =&gt; Array<br>
+                                                (<br>
+                                                )</p>
+<p>[datatype_map_callback] =&gt; Array<br>
+                                                (<br>
+                                                )</p>
+<p>[base_transaction_name] =&gt; ___php_MDB2_sqlite_auto_commit_off<br>
+                                            [fixed_float] =&gt; 0<br>
+                                            [database_path] =&gt; <br>
+                                            [database_extension] =&gt; <br>
+                                            [server_version] =&gt; <br>
+                                        )</p>
+<p>[escape_pattern] =&gt; <br>
+                                    [wildcards] =&gt; Array<br>
+                                        (<br>
+                                            [0] =&gt; %<br>
+                                            [1] =&gt; _<br>
+                                        )</p>
+<p>[as_keyword] =&gt;  AS <br>
+                                    [warnings] =&gt; Array<br>
+                                        (<br>
+                                        )</p>
+<p>[debug_output] =&gt; <br>
+                                    [in_transaction] =&gt; <br>
+                                    [nested_transaction_counter] =&gt; 0<br>
+                                    [has_transaction_error] =&gt; <br>
+                                    [offset] =&gt; 0<br>
+                                    [limit] =&gt; 0<br>
+                                    [phptype] =&gt; sqlite<br>
+                                    [dbsyntax] =&gt; sqlite<br>
+                                    [last_query] =&gt; SELECT * FROM mail_queue WHERE sent_time IS NULL AND try_sent &lt; 25 AND time_to_send &lt; &#039;2006-09-08 15:03:28&#039; ORDER BY time_to_send LIMIT 0,10<br>
+                                    [fetchmode] =&gt; 2<br>
+                                    [modules] =&gt; Array<br>
+                                        (<br>
+                                            [Datatype] =&gt; MDB2_Driver_Datatype_sqlite Object<br>
+                                                (<br>
+                                                    [valid_default_values] =&gt; Array<br>
+                                                        (<br>
+                                                            [text] =&gt; <br>
+                                                            [boolean] =&gt; 1<br>
+                                                            [integer] =&gt; 0<br>
+                                                            [decimal] =&gt; 0<br>
+                                                            [float] =&gt; 0<br>
+                                                            [timestamp] =&gt; 1970-01-01 00:00:00<br>
+                                                            [time] =&gt; 00:00:00<br>
+                                                            [date] =&gt; 1970-01-01<br>
+                                                            [clob] =&gt; <br>
+                                                            [blob] =&gt; <br>
+                                                        )</p>
+<p>[lobs] =&gt; Array<br>
+                                                        (<br>
+                                                        )</p>
+<p>[db_index] =&gt; 1<br>
+                                                )</p>
+<p>)</p>
+<p>[destructor_registered] =&gt; 1<br>
+                                    [_debug] =&gt; <br>
+                                    [_default_error_mode] =&gt; <br>
+                                    [_default_error_options] =&gt; <br>
+                                    [_default_error_handler] =&gt; <br>
+                                    [_error_class] =&gt; PEAR_Error<br>
+                                    [_expected_errors] =&gt; Array<br>
+                                        (<br>
+                                        )</p>
+<p>[datatype] =&gt; MDB2_Driver_Datatype_sqlite Object<br>
+                                        (<br>
+                                            [valid_default_values] =&gt; Array<br>
+                                                (<br>
+                                                    [text] =&gt; <br>
+                                                    [boolean] =&gt; 1<br>
+                                                    [integer] =&gt; 0<br>
+                                                    [decimal] =&gt; 0<br>
+                                                    [float] =&gt; 0<br>
+                                                    [timestamp] =&gt; 1970-01-01 00:00:00<br>
+                                                    [time] =&gt; 00:00:00<br>
+                                                    [date] =&gt; 1970-01-01<br>
+                                                    [clob] =&gt; <br>
+                                                    [blob] =&gt; <br>
+                                                )</p>
+<p>[lobs] =&gt; Array<br>
+                                                (<br>
+                                                )</p>
+<p>[db_index] =&gt; 1<br>
+                                        )</p>
+<p>[loaded_version_modules] =&gt; Array<br>
+                                        (<br>
+                                            [0] =&gt; datatype<br>
+                                        )</p>
+<p>)</p>
+<p>[mail_table] =&gt; mail_queue<br>
+                            [sequence] =&gt; mail_queue<br>
+                            [queue_data] =&gt; Array<br>
+                                (<br>
+                                )</p>
+<p>[_current_item] =&gt; 0<br>
+                            [_last_item] =&gt; 0<br>
+                            [limit] =&gt; 10<br>
+                            [offset] =&gt; 0<br>
+                            [try] =&gt; 25<br>
+                            [force_preload] =&gt; <br>
+                            [buffer_size] =&gt; 20<br>
+                            [pearErrorMode] =&gt; 1<br>
+                        )</p>
+<p>[send_mail] =&gt; <br>
+                    [pearErrorMode] =&gt; 1<br>
+                    [_debug] =&gt; <br>
+                    [_default_error_mode] =&gt; <br>
+                    [_default_error_options] =&gt; <br>
+                    [_default_error_handler] =&gt; <br>
+                    [_error_class] =&gt; PEAR_Error<br>
+                    [_expected_errors] =&gt; Array<br>
+                        (<br>
+                        )</p>
+<p>)</p>
+<p>[type] =&gt; -&gt;<br>
+            [args] =&gt; Array<br>
+                (<br>
+                )</p>
+<p>)</p>
+<p>[5] =&gt; Array<br>
+        (<br>
+            [file] =&gt; C:\system_data\websites\customers\zeydel\lib\smvc\model\Model.class.php<br>
+            [line] =&gt; 246<br>
+            [function] =&gt; perform<br>
+            [class] =&gt; SendFromQueueAction<br>
+            [object] =&gt; SendFromQueueAction Object<br>
+                (<br>
+                    [constructorData] =&gt; <br>
+                    [model] =&gt; Model Object<br>
+                        (<br>
+                            [registeredModules:private] =&gt; Array<br>
+                                (<br>
+                                    [Content] =&gt; Array<br>
+                                        (<br>
+                                            [name] =&gt; Content<br>
+                                            [version] =&gt; 0.1<br>
+                                            [active] =&gt; 1<br>
+                                            [visibility] =&gt; 1<br>
+                                            [hasAdmin] =&gt; <br>
+                                            [admin_nav_title] =&gt; Content<br>
+                                            [admin_nav] =&gt; <br>
+                                        )</p>
+<p>[Email] =&gt; Array<br>
+                                        (<br>
+                                            [name] =&gt; Email<br>
+                                            [version] =&gt; 0.1<br>
+                                            [active] =&gt; 1<br>
+                                            [visibility] =&gt; <br>
+                                            [hasAdmin] =&gt; <br>
+                                        )</p>
+<p>[Newsletter] =&gt; Array<br>
+                                        (<br>
+                                            [name] =&gt; Newsletter<br>
+                                            [version] =&gt; 0.1<br>
+                                            [active] =&gt; 1<br>
+                                            [visibility] =&gt; 1<br>
+                                            [hasAdmin] =&gt; <br>
+                                            [admin_nav_title] =&gt; Newsletter<br>
+                                            [admin_nav] =&gt; Array<br>
+                                                (<br>
+                                                    [0] =&gt; Array<br>
+                                                        (<br>
+                                                            [name] =&gt; Send Newsletter<br>
+                                                            [type] =&gt; param<br>
+                                                            [params] =&gt; view=Newsletter-Send<br>
+                                                            [security] =&gt; 5<br>
+                                                        )</p>
+<p>[1] =&gt; Array<br>
+                                                        (<br>
+                                                            [name] =&gt; Process Newsletters<br>
+                                                            [type] =&gt; param<br>
+                                                            [params] =&gt; view=Newsletter-Process<br>
+                                                            [security] =&gt; 15<br>
+                                                        )</p>
+<p>)</p>
+<p>)</p>
+<p>[Postings] =&gt; Array<br>
+                                        (<br>
+                                            [name] =&gt; Postings<br>
+                                            [version] =&gt; 0.1<br>
+                                            [active] =&gt; 1<br>
+                                            [visibility] =&gt; 1<br>
+                                            [hasAdmin] =&gt; <br>
+                                            [admin_nav_title] =&gt; Postings<br>
+                                            [admin_nav] =&gt; Array<br>
+                                                (<br>
+                                                    [0] =&gt; Array<br>
+                                                        (<br>
+                                                            [name] =&gt; Fetch Postings<br>
+                                                            [type] =&gt; param<br>
+                                                            [params] =&gt; view=Postings-Fetch<br>
+                                                            [security] =&gt; 15<br>
+                                                        )</p>
+<p>[1] =&gt; Array<br>
+                                                        (<br>
+                                                            [name] =&gt; Manage Postings<br>
+                                                            [type] =&gt; param<br>
+                                                            [params] =&gt; view=Postings-Manage<br>
+                                                            [security] =&gt; 5<br>
+                                                        )</p>
+<p>)</p>
+<p>)</p>
+<p>[Users] =&gt; Array<br>
+                                        (<br>
+                                            [name] =&gt; Users<br>
+                                            [version] =&gt; 0.1<br>
+                                            [active] =&gt; 1<br>
+                                            [visibility] =&gt; 1<br>
+                                            [hasAdmin] =&gt; <br>
+                                            [admin_nav_title] =&gt; Users<br>
+                                            [admin_nav] =&gt; Array<br>
+                                                (<br>
+                                                    [0] =&gt; Array<br>
+                                                        (<br>
+                                                            [name] =&gt; Add<br>
+                                                            [type] =&gt; param<br>
+                                                            [params] =&gt; view=Users-Add<br>
+                                                            [security] =&gt; 10<br>
+                                                        )</p>
+<p>[1] =&gt; Array<br>
+                                                        (<br>
+                                                            [name] =&gt; Manage<br>
+                                                            [type] =&gt; param<br>
+                                                            [params] =&gt; view=Users-Manage</p>
+</section>
+<section>
+<h3>[2006-10-20 17:39 UTC] randy at rcs-comp dot com</h3>
+<p>Sorry, but I did not have time to debug this, so I just made a Creole container since I am much more familiar with Creole.</p>
+<p>http://rcs-comp.com/phpcode/creole.php</p>
+<p>Feel free to modify and incorporate into the project if you desire to do so.  It will need to be worked on some b/c it uses exceptions for error handling since I run PHP 5 only shop.  Also, I added a function towards the bottom of the code queueSize(), which returns the number of rows in the DB that are emails that still need to be sent.</p>
+<p>OTHER ISSUES:<br>
+-------------</p>
+<p>I noticed another bug (?) in the container classes.  In the constructors of the containers, if something fails, you try and return a Mail_Queue_Error object. However, in the PHP 5 version that I am using, the Mail_Queue_Error object was never returned even when there was an error.  The constructor would always return an instance of that container object instead (i.e. Mail_Queue_Container_mdb2 object).  That is one reason why my Creole class uses exceptions.</p>
+<p>I hope this helps some.</p>
+</section>
+<section>
+<h3>[2007-01-20 13:55 UTC] randy at rcs-comp dot com</h3>
+<p>Sorry about the .php file.  Here you go:</p>
+<p>http://rcs-comp.com/phpcode/creole.php.txt</p>
+<p>I am sorry, but I won&#039;t be able to test the new cvs version b/c of time constraints.  However, the next time that I am working with mail_queue, I will give it a shot.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

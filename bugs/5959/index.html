@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5959</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #5959</h1>
+<p>patch: pear makerpm produces RPMs that do not uninstall/upgrade cleanly</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-14 14:25 UTC</td></tr>
+<tr><th>From</th><td>bugs at timj dot co dot uk</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-14 14:25 UTC] bugs at timj dot co dot uk</h3>
+<p>Description:<br>
+------------<br>
+$ pear -V<br>
+PEAR Version: 1.4.4<br>
+PHP Version: 5.0.4<br>
+Zend Engine Version: 2.0.4-dev</p>
+<p>After building packages made with &quot;pear makerpm&quot;, the installed package can neither be upgraded nor erased cleanly.</p>
+<p>This is not the same as bug #4354.</p>
+<p>Test script:<br>
+---------------<br>
+Examples done using HTTP 1.3.5/1.3.6</p>
+<p>Example 1: Erasing</p>
+<p># rpm -i PEAR\:\:HTTP-1.3.5-1.noarch.rpm<br>
+# rpm -e PEAR::HTTP</p>
+<p>Example 2: Upgrading<br>
+# rpm -i PEAR\:\:HTTP-1.3.5-1.noarch.rpm<br>
+# rpm -U PEAR\:\:HTTP-1.3.6-1.noarch.rpm</p>
+<p>Patch:<br>
+# diff -u template.spec.orig template.spec<br>
+--- template.spec.orig<br>
++++ template.spec <br>
+@@ -31,11 +31,18 @@<br>
+ echo BuildRoot=%{buildroot}</p>
+<p>%postun<br>
+-pear uninstall --nodeps -r @possible_channel@@package@<br>
+-rm @rpm_xml_dir@/@package@.xml<br>
++# if refcount = 0 then package has been removed (not upgraded)<br>
++if [ &quot;$1&quot; -eq &quot;0&quot; ]; then<br>
++    pear uninstall --nodeps -r @possible_channel@@package@<br>
++fi</p>
+<p>%post<br>
+-pear install --nodeps -r @rpm_xml_dir@/@package@.xml<br>
++# if refcount = 2 then package has been upgraded<br>
++if [ &quot;$1&quot; -ge &quot;2&quot; ]; then<br>
++    pear upgrade --nodeps -r @rpm_xml_dir@/@package@.xml<br>
++else<br>
++    pear install --nodeps -r @rpm_xml_dir@/@package@.xml<br>
++fi</p>
+<p>%install<br>
+ pear -c %{buildroot}/pearrc install --nodeps -R %{buildroot} \</p>
+<p>Expected result:<br>
+----------------<br>
+(this is the result after applying above patch)</p>
+<p>Example 1 output:<br>
+[install]<br>
+install ok: channel://pear.php.net/HTTP-1.3.5<br>
+[uninstall]<br>
+uninstall ok: channel://pear.php.net/HTTP-1.3.5</p>
+<p>Example 2 output:</p>
+<p>[install]<br>
+install ok: channel://pear.php.net/HTTP-1.3.5<br>
+[upgrade]<br>
+upgrade ok: channel://pear.php.net/HTTP-1.3.6</p>
+<p>Actual result:<br>
+--------------<br>
+Example 1 output:<br>
+[install]<br>
+install ok: channel://pear.php.net/HTTP-1.3.5<br>
+[uninstall]<br>
+pear/HTTP not installed<br>
+rm: cannot remove `/var/lib/pear/HTTP.xml&#039;: No such file or directory<br>
+error: %postun(PEAR::HTTP-1.3.5-1.noarch) scriptlet failed, exit status 1</p>
+<p>Example 2 output:<br>
+[install]<br>
+install ok: channel://pear.php.net/HTTP-1.3.5<br>
+[upgrade]<br>
+Skipping package &quot;pear/HTTP&quot;, already installed as version 1.3.5<br>
+No valid packages found<br>
+install failed<br>
+error: %post(PEAR::HTTP-1.3.6-1.noarch) scriptlet failed, exit status 1</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

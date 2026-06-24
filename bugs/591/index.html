@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #591</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Sieve/index.html">Net_Sieve</a> &#187; Bug #591</h1>
+<p>Net_Sieve doesn&#039;t handle &#039;bye&#039;</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-01-16 10:00 UTC</td></tr>
+<tr><th>From</th><td>Mark at 2pmtech dot co dot uk</td></tr>
+<tr><th>Assigned</th><td>damian</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Sieve/index.html">Net_Sieve</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-01-16 10:00 UTC] Mark at 2pmtech dot co dot uk</h3>
+<p>Description:<br>
+------------<br>
+When Net_Sieve is communicating with a version of the Cyrus Timsieved that has the distributed &#039;murder&#039; architecture enabled.</p>
+<p>If you connect to a timsieved for a user that the server does not host, the timsieved will responde with a &#039;bye&#039; referral response that Net_Sieve does not see as finishing the conversation.</p>
+<p>The following patch fixes this problem</p>
+<p>--- Sieve.php-orig	2003-09-26 11:17:15.000000000 +0100<br>
++++ Sieve.php	2003-09-26 11:17:30.000000000 +0100<br>
+@@ -526,10 +526,15 @@<br>
+                     $line .= str_replace(&quot;\r\n&quot;, &#039; &#039;, $this-&gt;_sock-&gt;read($matches[1]));<br>
+                 }<br>
+                 return PEAR::raiseError(trim($response . substr($line, 2)));<br>
++            } elseif (&#039;bye&#039; == strtolower(substr($line, 0, 3))) {<br>
++                if (preg_match(&#039;/^bye \((referral) &quot;([^&quot;]+)/i&#039;, $line, $matches)) {<br>
++                    $line = $matches[1] . &quot; &quot; . $matches[2];<br>
++                }<br>
++                return PEAR::raiseError(trim($response . $line));<br>
+             }<br>
+             <br>
+             $response .= $line . &quot;\r\n&quot;;<br>
+         }<br>
+     }<br>
+ }<br>
+ ?&gt;</p>
+</section>
+<section>
+<h3>[2004-01-31 19:36 UTC] damian at php dot net</h3>
+<p>Thank you for your bug report. This issue has already been fixed<br>
+in the latest released version of the package, which you can download at <br>
+http://pear.php.net/packages.php</p>
+<p>Fixed in release 0.9</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

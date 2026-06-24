@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1723</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #1723</h1>
+<p>Default Value is not used in checkbox if $_POST already set</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #1723</th><td>Default Value is not used in checkbox if $_POST already set</td></tr>
+<tr><th>Submitted</th><td>2004-06-25 23:03 UTC</td></tr>
+<tr><th>From</th><td>tdr32 at cs dot byu dot edu</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>Fedora Core 2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-06-25 23:03 UTC] tdr32 at cs dot byu dot edu</h3>
+<p>Description:<br>
+------------<br>
+I am testing out a page to create forms where it will call a database with a username that was posted from a previos form, not QuickForm.  When this value is in the $_POST array, my checkboxes won&#039;t care about the default values for them.  They never become checked.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$_POST[&#039;username&#039;] = &#039;me&#039;;</p>
+<p>// create page with checkbox &#039;nolimit&#039;<br>
+$controller-&gt;setDefaults(&#039;nolimit&#039;=&gt;&#039;1&#039;);</p>
+<p>// run the page</p>
+<p>I fixed the problem in my version by modifying checkbox.php in onQuickFormEvent<br>
+if (null === $value) {<br>
+if (isset($caller-&gt;_submitValues) &amp;&amp; 0 &lt; count($caller-&gt;_submitValues)) {<br>
+$value = $this-&gt;_findValue($caller-&gt;_submitValues);<br>
+}<br>
+// before, this was an else statement<br>
+if ($value === null) {<br>
+$value = $this-&gt;_findValue($caller-&gt;_defaultValues);<br>
+}<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+The checkbox should be checked</p>
+<p>Actual result:<br>
+--------------<br>
+The checkbox is not checked.</p>
+</section>
+<section>
+<h3>[2004-06-29 15:21 UTC] tdr32 at cs dot byu dot edu</h3>
+<p>I know that my &quot;fix&quot; created that problem.  But I was just trying to find out the reason behind the behaviour and found that one.  I don&#039;t exactly know a good fix for the behavior except for me to make sure that I never access the page with any elements in the post or get array, or I unset those arrays before calling HTML_QuickForm.</p>
+</section>
+<section>
+<h3>[2004-06-29 16:26 UTC] tdr32 at cs dot byu dot edu</h3>
+<p>Allright, I tried my idea of just making sure that I unset $_POST before I called HTML_QuickForm but I was still having a problem with my default value showing up.  By the way, I upgraded HTML_QuickForm.  So I looked at checkbox.php again (in the upgraded source, without my &quot;fix&quot;) and in onQuickFormEvent I changed isset($caller-&gt;_submitValues) to is_array($caller-&gt;_submitValues), since _submitValues will always be an array if it has values (since it is just a copy of $_POST or $_GET).  I did this because $caller-&gt;_submitValues was always set, even if $_POST was unset because I have magic_quotes on and so when it does the _recursiveFilter (in QuickForm.php) it creates a dummy array that is set.  This fixed my problem so far.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

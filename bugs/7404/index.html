@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7404</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #7404</h1>
+<p>Unable to find modules with several version of pear</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #7404</th><td>Unable to find modules with several version of pear</td></tr>
+<tr><th>Submitted</th><td>2006-04-15 19:38 UTC</td></tr>
+<tr><th>From</th><td>christian_rocher at hotmail dot com</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-15 19:38 UTC] christian_rocher at hotmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>I need to maintain an existing web site (MySQL) with an older version of pear and I must create a new web site (PostgreSQL) with the lastest version of Pear packages. But I can&#039;t upgrade my pear packages registered in php.ini because I don&#039;t want test all the existing stuff again or risk to break something.</p>
+<p>I copied all pear packages I need in the include path of my new site. But the MDB2 package use its internal function &quot;fileExists&quot; to check if a modules exists. This function uses only the paths from the &quot;include_path&quot; environment variable of my php.ini. Therefore the MDB2 can&#039;t find new modules for PostgreSQl and I don&#039;t want to mix versions in the &quot;official&quot; path of pear on my server.</p>
+<p>Actually, I have a workarround : I add my path :<br>
+    ini_set(&#039;include_path&#039;,&#039;mypath;&#039;/.ini_get(&#039;include_path&#039;));</p>
+<p>before calling MDB2 and I remove it after. But it&#039;s not robust, if if forget to do it, I can have the feeling that all works fine but in fact I can encounter errors later depending of differences between versions of pear packages.</p>
+<p>I would be useful to be able to specify a path to MDB2 (and other packages is applicable). Because this is safer to develop new code without the risk to break code in production and install several version of pear on the same server when needed.</p>
+<p>Thank you.</p>
+<p>Test script:<br>
+---------------<br>
+$dsn = array<br>
+    (   &#039;phptype&#039;       =&gt; &#039;mysql&#039;,<br>
+        &#039;username&#039;      =&gt; &#039;me&#039;,<br>
+        &#039;password&#039;      =&gt; &#039;mypwd&#039;,<br>
+        &#039;hostspec&#039;      =&gt; &#039;localhost&#039;,<br>
+        &#039;database&#039;      =&gt; &#039;mydb&#039;);</p>
+<p>$db =&amp; MDB2::factory($dsn);</p>
+<p>if (PEAR::isError($db)) {<br>
+    echo ($mdb2-&gt;getMessage());<br>
+}</p>
+<p>$reverse =&amp; $db-&gt;loadModule(&#039;Reverse&#039;, null, true);<br>
+if (PEAR::isError($db)) {<br>
+    echo ($mdb2-&gt;getMessage());<br>
+}</p>
+<p>$table_info = $reverse-&gt;tableInfo(&#039;pictures&#039;);<br>
+if (PEAR::isError($db)) {<br>
+    echo ($mdb2-&gt;getMessage());<br>
+}<br>
+else {<br>
+    var_dump( $table_info);<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+The dump of the table&#039;s definition</p>
+<p>Actual result:<br>
+--------------<br>
+Fatal error: Call to undefined function: tableinfo() in c:\www\dev\testmdb2.php on line 55</p>
+</section>
+<section>
+<h3>[2006-04-17 01:49 UTC] christian_rocher at hotmail dot com</h3>
+<p>Hi,</p>
+<p>I understand that there are other priorities for MDB2. But I cannot be agree when you say:&quot;However I think that you are probably concerned about a non issue or there is no chance anyways.&quot;.</p>
+<p>When I speak about versions of MDB2 I include the associated version of PEAR. It&#039;s clear that I can&#039;t work with PEAR version 1.0 and MDB2 2.01. And it&#039;s truth for future versions. This is why I must be able to maintain several versions of PEAR and its compatible packages. I can&#039;t wait a call from customer in the futur to manage this situation. I must be safe from now and if I don&#039;t want to come back on existing code in the future, the code that I develop now must be safe even when MDB3 will be available.</p>
+<p>You don&#039;t offer - in the future - the opportunity for developers to work on the latest version of PEAR (I mean : pear.php and MDB2.5.php or MDB3.php) and on another in production (pear.php and MDB2). It is a common case for people in the real life. I don&#039;t know professional developers who update packages in production just to be able to use it in new development. Each version of software must be able to cohabit with others or we are forced to keep old versions of PEAR to be safe.</p>
+<p>It&#039;s my point of view and I think that it must be fixed for the next version of MDB2 that will need another version of PEAR.php.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

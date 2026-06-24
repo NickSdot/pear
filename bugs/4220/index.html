@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4220</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #4220</h1>
+<p>Informix 7.2 support - unified diff format</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4220</th><td>Informix 7.2 support - unified diff format</td></tr>
+<tr><th>Submitted</th><td>2005-04-25 13:44 UTC</td></tr>
+<tr><th>From</th><td>kwinter at sitrack dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>WIN &amp; UNIX</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-25 13:44 UTC] kwinter at sitrack dot com</h3>
+<p>Description:<br>
+------------<br>
+DB package version 1.7.6<br>
+ifx.php file adds to support ids 7.x</p>
+<p>1- &#039;tabname&#039; is a char(18) field in IDS 7.x, hence a &#039;trim()&#039; is needed. Not needed in IDS 9.x due to a varchar column type</p>
+<p>2- get the next free id in a table</p>
+<p>3- recognize ifx datatypes, primary keys and auto increment fields in .ini file</p>
+<p>4- unquote &#039;current&#039; keyword for use in datetime fields</p>
+<p>Reproduce code:<br>
+---------------<br>
+//-1- on line 664 -<br>
+return &#039;SELECT trim(tabname) FROM systables WHERE tabid &gt;= 100&#039;;</p>
+<p>//-2- add lines -<br>
+function nextId($seq_name){<br>
+ $_pk = array_shift($this-&gt;getPKFieldsNames($seq_name));<br>
+ $_next = array_shift(ifx_fetch_row(@ifx_query(&quot;SELECT max(&quot;.$_pk.&quot;)+1 FROM &quot;.$seq_name, $this-&gt;connection), &quot;NEXT&quot;));<br>
+ return abs($_next);<br>
+}</p>
+<p>// returns an array containing the names of the fields that are primary keys.<br>
+function getPKFieldsNames($p_result) {<br>
+        $strFields = $this-&gt;getPKFieldsIDs($p_result);<br>
+        $id = @ifx_query(&quot;select colname from syscolumns,systables where systables.tabid=syscolumns.tabid and systables.tabname=&#039;&quot;.$p_result.&quot;&#039; and colno in (&quot;.$strFields.&quot;)&quot;,$this-&gt;connection);<br>
+        $arrFields=array();<br>
+        if ($id){<br>
+            $row = ifx_fetch_row ($id, &quot;NEXT&quot;);<br>
+            while (is_array($row)){<br>
+                for(reset($row); $fieldName=key($row); next($row)) {<br>
+                    $fieldValue=trim($row[$fieldName]);<br>
+                    $arrFields[$fieldValue]=$fieldValue;<br>
+                }<br>
+                $row = ifx_fetch_row ($id, &quot;NEXT&quot;);<br>
+            }<br>
+        }<br>
+        return $arrFields;<br>
+    }</p>
+<p>// returns a comma-separated list containing the IDs of the fields that are primary keys.<br>
+function getPKFieldsIDs($p_result){<br>
+        $_fields = &quot;&quot;;<br>
+        $id = @ifx_query(&quot;SELECT part1, part2, part3, part4, part5, part6, part7,part8, part9, part10, part11, part12, part13, part14, part15,part16 FROM sysconstraints, sysindexes,systables WHERE sysconstraints.tabid = systables.tabid AND sysconstraints.idxname = sysindexes.idxname AND sysconstraints.tabid = sysindexes.tabid AND sysconstraints.constrtype=&#039;P&#039; AND systables.tabname=&#039;&quot;.$p_result.&quot;&#039;&quot;,$this-&gt;connection);</p>
+<p>$row = ifx_fetch_row ($id, &quot;NEXT&quot;);<br>
+        while (is_array($row))<br>
+        {<br>
+            for(reset($row); $fieldname=key($row); next($row))<br>
+            {<br>
+                if ($row[$fieldname]!=0) $_fields .= $row[$fieldname].&quot;,&quot;;<br>
+            }<br>
+            $row = ifx_fetch_row ($id, &quot;NEXT&quot;);<br>
+        }<br>
+        ifx_free_result ($id);<br>
+        $_fields = substr($_fields,0,-1);<br>
+        return $_fields;<br>
+    }</p>
+<p>//-3- add near line 603<br>
+$pkFlds = $this-&gt;getPKFieldsNames($result);</p>
+<p>//-3- add near line 630 recognize ifx primary keys fields<br>
+if(!empty($pkFlds[$key])) {<br>
+ $res[$i][&#039;flags&#039;] .= &#039; primary_key&#039;;<br>
+}<br>
+// recognize ifx datatypes and auto increment fields<br>
+switch(strtoupper($props[0])) { <br>
+	case &#039;SQLSERIAL&#039;:<br>
+			$res[$i][&#039;flags&#039;] .= &#039; auto_increment&#039;;<br>
+	case &#039;SQLSMINT&#039;:<br>
+	case &#039;SQLINT&#039;:<br>
+	case &#039;SQLDECIMAL&#039;:<br>
+			$res[$i][&#039;type&#039;]  = &#039;INT&#039;;<br>
+			break;<br>
+	case &#039;SQLSMFLOAT&#039;;<br>
+	case &#039;SQLFLOAT&#039;:<br>
+	case &#039;SQLINTERVAL&#039;:<br>
+			$res[$i][&#039;type&#039;]  = &#039;FLOAT&#039;;<br>
+			break;<br>
+	case &#039;SQLDATE&#039;:<br>
+			$res[$i][&#039;type&#039;]  = &#039;DATE&#039;;<br>
+			break;<br>
+	case &#039;SQLDTIME&#039;:<br>
+			$res[$i][&#039;type&#039;]  = &#039;DATETIME&#039;;<br>
+			break;<br>
+	case &#039;SQLVCHAR&#039;:<br>
+	case &#039;SQLNCHAR&#039;:<br>
+	case &#039;SQLNVCHAR&#039;:<br>
+	case &#039;SQLTEXT&#039;:<br>
+	case &#039;SQLCHAR&#039;:<br>
+			$res[$i][&#039;type&#039;]  = &#039;VARCHAR&#039;;<br>
+			break;<br>
+}</p>
+<p>//-4- add near line 246 -<br>
+$query = preg_replace(&#039;/\&#039;current\&#039;/i&#039;,&#039;current&#039;,$query);</p>
+</section>
+<section>
+<h3>[2005-05-16 14:02 UTC] kwinter at sitrack dot com</h3>
+<p>245a246,247<br>
+&gt;         // unquote &#039;current&#039; keyword for use in datetime fields.<br>
+&gt;         $query = preg_replace(&#039;/\&#039;current\&#039;/i&#039;, &#039;current&#039;, $query);<br>
+603c605,608<br>
+&lt; <br>
+---<br>
+&gt;         <br>
+&gt;         // get primary key Fields<br>
+&gt;         $pkFlds = $this-&gt;getPKFieldsNames($result);<br>
+&gt;         <br>
+629a635,668<br>
+&gt;             <br>
+&gt;             // recognize ifx primary keys fields<br>
+&gt;             if (!empty($pkFlds[$key])) {<br>
+&gt;                 $res[$i][&#039;flags&#039;] .= &#039; primary_key&#039;;<br>
+&gt;             }<br>
+&gt;             // recognize ifx datatypes and auto increment fields<br>
+&gt;             switch (strtoupper($props[0])) { <br>
+&gt;                 case &#039;SQLSERIAL&#039;:                        // serial  4<br>
+&gt;                     $res[$i][&#039;flags&#039;] .= &#039; auto_increment&#039;;<br>
+&gt;                 case &#039;SQLSMINT&#039;:                        // smallint  2<br>
+&gt;                 case &#039;SQLINT&#039;:                          // integer 4<br>
+&gt;                 case &#039;SQLDECIMAL&#039;:                      // decimal 2048<br>
+&gt;                     $res[$i][&#039;type&#039;]  = &#039;INT&#039;;<br>
+&gt;                     break;<br>
+&gt;                 case &#039;SQLSMFLOAT&#039;;                      // smallfloat 4<br>
+&gt;                 case &#039;SQLFLOAT&#039;:                        // float 8<br>
+&gt;                 case &#039;SQLINTERVAL&#039;:                      // interval 1024<br>
+&gt;                     $res[$i][&#039;type&#039;]  = &#039;FLOAT&#039;;<br>
+&gt;                     break;<br>
+&gt;                 case &#039;SQLDATE&#039;:                          // date 4<br>
+&gt;                     $res[$i][&#039;type&#039;]  = &#039;DATE&#039;;<br>
+&gt;                     break;<br>
+&gt;                 case &#039;SQLDTIME&#039;:                        // datetime 3594<br>
+&gt;                     $res[$i][&#039;type&#039;]  = &#039;DATETIME&#039;;<br>
+&gt;                     break;<br>
+&gt;                 case &#039;SQLVCHAR&#039;:                        // <br>
+&gt;                 case &#039;SQLNCHAR&#039;:                        // nchar 5<br>
+&gt;                 case &#039;SQLNVCHAR&#039;:                        // nvarchar 8<br>
+&gt;                 case &#039;SQLTEXT&#039;:                          // text 56<br>
+&gt;                 case &#039;SQLCHAR&#039;:                          // char 10 o character 1<br>
+&gt;                     $res[$i][&#039;type&#039;]  = &#039;VARCHAR&#039;;<br>
+&gt;                     break;<br>
+&gt;             }<br>
+&gt; <br>
+664c703,704<br>
+&lt;                 return &#039;SELECT tabname FROM systables WHERE tabid &gt;= 100&#039;;<br>
+---<br>
+&gt;               // &#039;tabname&#039; is a char(18) field in IDS 7.x, hence a &#039;trim()&#039; is needed. Not needed in IDS 9.x due to a varchar column type<br>
+&gt;                 return &#039;SELECT trim(tabname) FROM systables WHERE tabid &gt;= 100&#039;;<br>
+671a712,777<br>
+&gt;     /**<br>
+&gt;      * Returns an array containing the names of the fields that are primary keys.<br>
+&gt;      *<br>
+&gt;      * @param string  $p_result  A string containing the name of a table<br>
+&gt;      * @return array  an associative array with the fields&#039; names<br>
+&gt;      * @see tableInfo()<br>
+&gt;      */<br>
+&gt;     function getPKFieldsNames($p_result)<br>
+&gt;     {<br>
+&gt;         $strFields = $this-&gt;getPKFieldsIDs($p_result);<br>
+&gt; <br>
+&gt;         $id = @ifx_query(&quot;select colname from syscolumns,systables where systables.tabid=syscolumns.tabid and systables.tabname=&#039;&quot;.$p_result.&quot;&#039; and colno in (&quot;.$strFields.&quot;)&quot;, $this-&gt;connection);<br>
+&gt;         $arrFields=array();<br>
+&gt;         if ($id){<br>
+&gt;             $row = ifx_fetch_row($id, &quot;NEXT&quot;);<br>
+&gt;             while (is_array($row)) {<br>
+&gt;                 for (reset($row); $fieldName = key($row); next($row)) {<br>
+&gt;                     $fieldValue = trim($row[$fieldName]);<br>
+&gt;                     $arrFields[$fieldValue] = $fieldValue;<br>
+&gt;                 }<br>
+&gt;                 $row = ifx_fetch_row($id, &quot;NEXT&quot;);<br>
+&gt;             }<br>
+&gt;         }<br>
+&gt;         return $arrFields;<br>
+&gt;     }<br>
+&gt; <br>
+&gt;     /**<br>
+&gt;      * Returns a comma-separated list containing the IDs of the fields that are primary keys.<br>
+&gt;      *<br>
+&gt;      * @param string  $p_result  A string containing the name of a table<br>
+&gt;      * @return string  a comma-separated list containing the IDs of the fields that are primary keys<br>
+&gt;      * @see getPKFieldsNames()<br>
+&gt;      */<br>
+&gt;     function getPKFieldsIDs($p_result)<br>
+&gt;     {<br>
+&gt;         $_fields = &quot;&quot;;<br>
+&gt;         $id = @ifx_query(&quot;SELECT part1, part2, part3, part4, part5, part6, part7,part8, part9, part10, part11, part12, part13, part14, part15,part16 FROM sysconstraints, sysindexes,systables WHERE sysconstraints.tabid = systables.tabid AND sysconstraints.idxname = sysindexes.idxname AND sysconstraints.tabid = sysindexes.tabid AND sysconstraints.constrtype=&#039;P&#039; AND systables.tabname=&#039;&quot;.$p_result.&quot;&#039;&quot;, $this-&gt;connection);<br>
+&gt; <br>
+&gt;         $row = ifx_fetch_row($id, &quot;NEXT&quot;);<br>
+&gt;         while (is_array($row)) {<br>
+&gt;             for (reset($row); $fieldname=key($row); next($row)) {<br>
+&gt;                 if ($row[$fieldname]!=0) $_fields .= $row[$fieldname].&quot;,&quot;;<br>
+&gt;             }<br>
+&gt;             $row = ifx_fetch_row($id, &quot;NEXT&quot;);<br>
+&gt;         }<br>
+&gt;         ifx_free_result($id);<br>
+&gt;         $_fields = substr($_fields, 0, -1);<br>
+&gt;         return $_fields;<br>
+&gt;     }<br>
+&gt; <br>
+&gt;     /**<br>
+&gt;      * Returns the next free id in a table<br>
+&gt;      *<br>
+&gt;      * @param string  $seq_name  A string containing the name of a table<br>
+&gt;      *<br>
+&gt;      * @internal<br>
+&gt;      * @see DB_common::nextID()<br>
+&gt;      * @access public<br>
+&gt;      */<br>
+&gt;     function nextId($seq_name)<br>
+&gt;     {<br>
+&gt;         $_pk = array_shift($this-&gt;getPKFieldsNames($seq_name));<br>
+&gt;         $_next = array_shift(ifx_fetch_row(@ifx_query(&quot;SELECT max(&quot;.$_pk.&quot;)+1 FROM &quot;.$seq_name, $this-&gt;connection), &quot;NEXT&quot;));<br>
+&gt;         return abs($_next);<br>
+&gt;     }<br>
+&gt;</p>
+</section>
+<section>
+<h3>[2005-05-17 21:17 UTC] kwinter at sitrack dot com</h3>
+<p>@@ -243,6 +243,8 @@<br>
+      */<br>
+     function simpleQuery($query)<br>
+     {<br>
++        // unquote &#039;current&#039; keyword for use in datetime fields.<br>
++        $query = preg_replace(&#039;/\&#039;current\&#039;/i&#039;, &#039;current&#039;, $query);<br>
+         $ismanip = DB::isManip($query);<br>
+         $this-&gt;last_query = $query;<br>
+         $this-&gt;affected   = null;<br>
+@@ -600,6 +602,8 @@<br>
+ <br>
+         $flds = @ifx_fieldproperties($id);<br>
+         $count = @ifx_num_fields($id);<br>
++        // get primary key Fields<br>
++        $pkFlds = $this-&gt;getPKFieldsNames($result);<br>
+ <br>
+         if (count($flds) != $count) {<br>
+             return $this-&gt;raiseError(&quot;can&#039;t distinguish duplicate field names&quot;);<br>
+@@ -627,6 +631,40 @@<br>
+                 &#039;len&#039;   =&gt; $props[1],<br>
+                 &#039;flags&#039; =&gt; $props[4] == &#039;N&#039; ? &#039;not_null&#039; : &#039;&#039;,<br>
+             );<br>
++            <br>
++            // recognize ifx primary keys fields<br>
++            if (in_array($key, $pkFlds)) {<br>
++                $res[$i][&#039;flags&#039;] .= &#039; primary_key&#039;;<br>
++            }<br>
++            // recognize ifx datatypes and auto increment fields<br>
++            switch (strtoupper($props[0])) { <br>
++                case &#039;SQLSERIAL&#039;:                   // serial  4<br>
++                    $res[$i][&#039;flags&#039;] .= &#039; auto_increment&#039;;<br>
++                case &#039;SQLSMINT&#039;:                    // smallint  2<br>
++                case &#039;SQLINT&#039;:                      // integer 4<br>
++                case &#039;SQLDECIMAL&#039;:                  // decimal 2048<br>
++                    $res[$i][&#039;type&#039;]  = &#039;INT&#039;;<br>
++                    break;<br>
++                case &#039;SQLSMFLOAT&#039;;                  // smallfloat 4<br>
++                case &#039;SQLFLOAT&#039;:                    // float 8<br>
++                case &#039;SQLINTERVAL&#039;:                 // interval 1024<br>
++                    $res[$i][&#039;type&#039;]  = &#039;FLOAT&#039;;<br>
++                    break;<br>
++                case &#039;SQLDATE&#039;:                     // date 4<br>
++                    $res[$i][&#039;type&#039;]  = &#039;DATE&#039;;<br>
++                    break;<br>
++                case &#039;SQLDTIME&#039;:                    // datetime 3594<br>
++                    $res[$i][&#039;type&#039;]  = &#039;DATETIME&#039;;<br>
++                    break;<br>
++                case &#039;SQLVCHAR&#039;:<br>
++                case &#039;SQLNCHAR&#039;:                    // nchar 5<br>
++                case &#039;SQLNVCHAR&#039;:                   // nvarchar 8<br>
++                case &#039;SQLTEXT&#039;:                     // text 56<br>
++                case &#039;SQLCHAR&#039;:                     // char 10 o character 1<br>
++                    $res[$i][&#039;type&#039;]  = &#039;VARCHAR&#039;;<br>
++                    break;<br>
++            }<br>
++<br>
+             if ($mode &amp; DB_TABLEINFO_ORDER) {<br>
+                 $res[&#039;order&#039;][$res[$i][&#039;name&#039;]] = $i;<br>
+             }<br>
+@@ -661,7 +699,9 @@<br>
+     {<br>
+         switch ($type) {<br>
+             case &#039;tables&#039;:<br>
+-                return &#039;SELECT tabname FROM systables WHERE tabid &gt;= 100&#039;;<br>
++                // &#039;tabname&#039; is a char(18) field in IDS 7.x, hence a &#039;trim()&#039; is<br>
++                // needed. Not needed in IDS 9.x due to a varchar column type.<br>
++                return &#039;SELECT trim(tabname) FROM systables WHERE tabid &gt;= 100&#039;;<br>
+             default:<br>
+                 return null;<br>
+         }<br>
+@@ -669,6 +709,65 @@<br>
+ <br>
+     // }}}<br>
+ <br>
++    /**<br>
++     * Returns an array containing the names of the fields that are primary keys.<br>
++     *<br>
++     * @param   string  $tblName  A string containing the name of a table<br>
++     * @return  array   $pkRtn    An aray with the primary key fields&#039; names<br>
++     * @see tableInfo()<br>
++     */<br>
++    function getPKFieldsNames($tblName)<br>
++    {<br>
++        $pkRtn = array();<br>
++        $pkQuery = &quot;SELECT syscolumns.colname &quot;<br>
++                 . &quot;FROM sysconstraints, sysindexes, systables, syscolumns &quot;<br>
++                 . &quot;WHERE sysconstraints.constrtype = &#039;P&#039; &quot;<br>
++                 . &quot;AND sysconstraints.tabid = systables.tabid &quot;<br>
++                 . &quot;AND sysindexes.tabid  = systables.tabid &quot;<br>
++                 . &quot;AND sysindexes.idxname = sysconstraints.idxname &quot;<br>
++                 . &quot;AND syscolumns.tabid = systables.tabid &quot;<br>
++                 . &quot;AND syscolumns.colno in (sysindexes.part1, sysindexes.part2,&quot;<br>
++                                        . &quot; sysindexes.part3, sysindexes.part4,&quot;<br>
++                                        . &quot; sysindexes.part5, sysindexes.part6,&quot;<br>
++                                        . &quot; sysindexes.part7, sysindexes.part8,&quot;<br>
++                                        . &quot; sysindexes.part9, sysindexes.part10,&quot;<br>
++                                        . &quot; sysindexes.part11, sysindexes.part12,&quot;<br>
++                                        . &quot; sysindexes.part13, sysindexes.part14,&quot;<br>
++                                        . &quot; sysindexes.part15, sysindexes.part16)&quot;<br>
++                 . &quot; AND systables.tabname = &#039;$tblName&#039; &quot;;<br>
++        <br>
++        $pkResult = @ifx_query($pkQuery, $this-&gt;connection);<br>
++        if ($pkResult) {<br>
++            while ($pkArr = @ifx_fetch_row($pkResult, &#039;NEXT&#039;)) {<br>
++                $pkRtn[] = trim(array_shift($pkArr));<br>
++            }<br>
++        }<br>
++        return $pkRtn;<br>
++    }<br>
++<br>
++    /**<br>
++     * Returns the next free id in a table<br>
++     *<br>
++     * @param   string  $tblName  A string containing the name of a table<br>
++     * @see DB_common::nextID()<br>
++     * @access public<br>
++     */<br>
++    function nextId($tblName)<br>
++    {<br>
++        $pkFlds = $this-&gt;getPKFieldsNames($tblName);<br>
++        if (sizeof($pkFlds) == 1) {<br>
++            $nQuery = &#039;SELECT max(&#039; . $pkFlds[0] . &#039;) + 1 FROM &#039; . $tblName;<br>
++            $nResult = @ifx_query($nQuery, $this-&gt;connection);<br>
++            <br>
++            if ($nResult) {<br>
++                if ($nArr = @ifx_fetch_row($nResult, &#039;NEXT&#039;)) {<br>
++                    return abs(array_shift($nArr));<br>
++                }<br>
++            }<br>
++        }<br>
++        return $this-&gt;ifxRaiseError(DB_ERROR_NOT_CAPABLE);<br>
++    }<br>
++<br>
+ }<br>
+ <br>
+ /*</p>
+</section>
+<section>
+<h3>[2005-07-01 07:29 UTC] arnaud dot didry at gmail dot com</h3>
+<p>fabulous ! it works !!!<br>
+that was exactly what i was trying to do !</p>
+<p>thanks a lot !</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

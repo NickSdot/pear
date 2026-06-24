@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4583</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_SMTP/index.html">Net_SMTP</a> &#187; Bug #4583</h1>
+<p>EHLO after successful auth violates RFC-2554</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-06-14 00:00 UTC</td></tr>
+<tr><th>From</th><td>mpb dot mail at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>chagenbu</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_SMTP/index.html">Net_SMTP</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-14 00:00 UTC] mpb dot mail at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+In SMTP.php around line 453:</p>
+<p>/* RFC-2554 requires us to re-negotiate ESMTP after an AUTH. */<br>
+        if (PEAR::isError($error = $this-&gt;_negotiate())) {<br>
+            return $error;<br>
+         }</p>
+<p>RFC-2554 states:</p>
+<p>&quot;The client SHOULD send an EHLO command as the first command after a successful SASL negotiation WHICH RESULTS IN THE ENABLING OF A SECURITY LAYER [emphasis mine].&quot;</p>
+<p>However, SMTP.php is not enabling a security layer (such as SSL).  SMTP.php is simply authenticating.  Therefore, this call to $this-&gt;_negotiate() should be removed.  The call causes AUTH problems when sending mail via ssl://smtp.gmail.com:465, and may cause problems sending mail to other servers as well.</p>
+<p>Here is what happens when I try to send via ssl://smtp.gmail.com:465.</p>
+<p>* The AUTH succeeds: DEBUG: Recv: 235 2.7.0 Accepted<br>
+* SMTP.php then issues an EHLO<br>
+* The EHLO causes gmail to (silently) forget the successful AUTH<br>
+* A MAIL-FROM is sent to gmail.<br>
+* Gmail reject the MAIL-FROM as follows: DEBUG: Recv: 530 5.7.0 Authentication Required</p>
+<p>When I comment out the above call to _negotiate, gmail does not reject the subsequent MAIL-FROM.</p>
+<p>Please contact me if you have any questions!</p>
+<p>Thanks you for supporting PHP/PEAR.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

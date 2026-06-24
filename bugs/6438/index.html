@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6438</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/SQL_Parser/index.html">SQL_Parser</a> &#187; Bug #6438</h1>
+<p>Column list with &#039;*&#039; cannot have additional columns</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-01-07 20:37 UTC</td></tr>
+<tr><th>From</th><td>shannah at sfu dot ca</td></tr>
+<tr><th>Assigned</th><td>epte</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SQL_Parser/index.html">SQL_Parser</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>all</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-01-07 20:37 UTC] shannah at sfu dot ca</h3>
+<p>Description:<br>
+------------<br>
+I&#039;ll describe with an example:</p>
+<p>SELECT *, a FROM Foo</p>
+<p>will cause the parser to fail.</p>
+<p>Test script:<br>
+---------------<br>
+require_once &#039;SQL/Parser.php&#039;;<br>
+require_once &#039;SQL/Compiler.php;<br>
+$parser = new SQL_Parser(null, &#039;MySQL&#039;);<br>
+$compiler = new SQL_Compiler();<br>
+$res = $parser-&gt;parse(&quot;SELECT *,a from Foo&quot;);<br>
+if ( PEAR::isError($res) ) echo &quot;Failed&quot;;<br>
+else echo $compiler-&gt;compile($res);</p>
+<p>// should print &quot;select *, a from Foo&quot;</p>
+<p>I have corrected this problem in my local version.  This is the diff file:</p>
+<p>75c75<br>
+&lt;                 $this-&gt;types,<br>
+---<br>
+&gt;               $this-&gt;types,<br>
+833,836c833,834<br>
+&lt;         if ($this-&gt;token == &#039;*&#039;) {<br>
+&lt;             $tree[&#039;column_names&#039;][] = &#039;*&#039;;<br>
+&lt;             $this-&gt;getTok();<br>
+&lt;         } elseif ($this-&gt;token == &#039;ident&#039; || $this-&gt;isFunc()) {<br>
+---<br>
+&gt;        <br>
+&gt;        if ($this-&gt;token == &#039;ident&#039; || $this-&gt;isFunc() || $this-&gt;token == &#039;*&#039;) {<br>
+838c836<br>
+&lt;                 if ($this-&gt;token == &#039;ident&#039;) {<br>
+---<br>
+&gt;               if ($this-&gt;token == &#039;ident&#039; || $this-&gt;token == &#039;*&#039;) {<br>
+852a851,852<br>
+&gt;                     } else if ($prevTok == &#039;*&#039; ){<br>
+&gt;                       $columnName = $prevTok;<br>
+857c857<br>
+&lt;                     if ($this-&gt;token == &#039;as&#039;) {<br>
+---<br>
+&gt;                                       if ($this-&gt;token == &#039;as&#039;) {</p>
+<p>Expected result:<br>
+----------------<br>
+select *, a from Foo</p>
+<p>Actual result:<br>
+--------------<br>
+Failed</p>
+</section>
+<section>
+<h3>[2006-01-11 19:01 UTC] epte at php dot net</h3>
+<p>Yes, now that I think about it, the check for &#039;*&#039; does break from a loop (prematurely).  Thank you.</p>
+<p>I&#039;ll take a look at this in the next couple days.<br>
+Erich</p>
+</section>
+<section>
+<h3>[2006-01-12 21:53 UTC] epte at php dot net</h3>
+<p>Thank you for the patch.  Unfortunately, the patch breaks other things, apparent from running the unit tests.  I will continue to track this down.</p>
+<p>I have added this test to our testing suite.  :)</p>
+<p>Erich</p>
+</section>
+<section>
+<h3>[2006-04-03 05:24 UTC] epte at php dot net</h3>
+<p>This is fixed now.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

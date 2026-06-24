@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3590</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Configuration &#187; <a href="package/Config/index.html">Config</a> &#187; Bug #3590</h1>
+<p>Error when using config to load a php array</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-25 09:54 UTC</td></tr>
+<tr><th>From</th><td>arthur at movenext dot nl</td></tr>
+<tr><th>Assigned</th><td>aashley</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Config/index.html">Config</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-25 09:54 UTC] arthur at movenext dot nl</h3>
+<p>Description:<br>
+------------<br>
+I get the following error:</p>
+<p>Warning: Invalid argument supplied for foreach() in /usr/share/php/Config/Container/PHPArray.php on line 99</p>
+<p>The functions works fine otherwise. The problem only occurs in version 1.10.4. If I use version 1.10.3 I do not have this problem</p>
+</section>
+<section>
+<h3>[2005-02-25 17:38 UTC] ryansking at mac dot com</h3>
+<p>Can you give us some more info? Like a piece of code <br>
+that reproduces the error (and I literally mean a piece <br>
+of code that causes the error).</p>
+</section>
+<section>
+<h3>[2005-02-28 13:26 UTC] arthur at movenext dot nl</h3>
+<p>The code I use is:</p>
+<p>require_once(&#039;Config.php&#039;);<br>
+$c = new Config();<br>
+$root =&amp; $c-&gt;parseConfig($c_path.$this-&gt;modPath.&#039;settings.inc&#039;, &#039;PHPArray&#039;, array(&#039;name&#039; =&gt; &#039;_SETTING&#039;));</p>
+<p>where $c_path.$this-&gt;modPath.&#039;settings.inc&#039; is a settings file with a php array in it.</p>
+</section>
+<section>
+<h3>[2005-04-02 00:17 UTC] ryansking at mac dot com</h3>
+<p>Sorry for ignoring this bug for so long...</p>
+<p>When I asked for code to reproduce the bug, I really <br>
+need the config file (or something like it that causes <br>
+theh same error).</p>
+</section>
+<section>
+<h3>[2005-04-08 23:07 UTC] matte at silent-e dot com</h3>
+<p>the problem code was introduced in PHPArray.php CVS version 1.23.  Fixing bug #3298 introduced the error.</p>
+<p>config array to test...</p>
+<p>$conf[&#039;mysql&#039;] = array(<br>
+		&#039;user&#039;     =&gt; &#039;croooow&#039;,<br>
+		&#039;password&#039; =&gt; &#039;coolrobot&#039;,<br>
+		&#039;host&#039;     =&gt; &#039;localhost&#039;,<br>
+		&#039;database&#039; =&gt; &#039;deep13&#039;<br>
+	);<br>
+$conf[&#039;emergencyemails&#039;] = array(<br>
+		&#039;joel@example.org&#039;,<br>
+		&#039;cambot@example.org&#039;<br>
+	);</p>
+<p>the &quot;emergencyemails? array will cause the problems due to the keys being integers.  PHPArray.php v1.22 in CVS should not have a problem with this</p>
+</section>
+<section>
+<h3>[2005-05-13 15:20 UTC] nkahn at cmd dot lu</h3>
+<p>I have patched PHPArray.php as describe above. I don&#039;t know if it&#039;s necessary to handle differently array using interger key and array using string key. The fact is that the way it&#039;s actually handled is wrong since you are trying to parse a variable that is no more an array ($nestedValue) since you extracted it using a foreach statement.</p>
+<p>if (is_array($value)) {<br>
+/*<br>
+  if (is_integer(key($value))) {<br>
+    foreach ($value as $nestedValue) {<br>
+      $section =&amp; $container-&gt;createSection($key);<br>
+      $this-&gt;_parseArray($nestedValue, $section);<br>
+    }<br>
+  } else {<br>
+    $section =&amp; $container-&gt;createSection($key);<br>
+    $this-&gt;_parseArray($value, $section);<br>
+  }<br>
+*/<br>
+  $section =&amp; $container-&gt;createSection($key);<br>
+  $this-&gt;_parseArray($value, $section);<br>
+} else {<br>
+  $container-&gt;createDirective($key, $value);<br>
+}</p>
+<p>Here is my configuration file.</p>
+<p>$db_data[&#039;configtypes&#039;][0] = &#039;All&#039;;<br>
+$db_data[&#039;configtypes&#039;][1] = &#039;WAP - CSD&#039;;<br>
+$db_data[&#039;configtypes&#039;][2] = &#039;WAP - GPRS&#039;;<br>
+$db_data[&#039;configtypes&#039;][3] = &#039;MMS - GPRS&#039;;<br>
+$db_data[&#039;configtypes&#039;][4] = &#039;WEB - GPRS&#039;;</p>
+<p>Could you have a look at it ?<br>
+Thanks.</p>
+</section>
+<section>
+<h3>[2005-10-24 14:22 UTC] bugs dot pear at gage dot fr</h3>
+<p>I&#039;ve personnaly patched the code this way :</p>
+<p>if (is_array($value)) {<br>
+    if (is_integer(key($value))) {<br>
+        foreach ($value as $nestedValue) {<br>
+            if(is_array($nestedValue)) {<br>
+                $section =&amp; $container-&gt;createSection($key);<br>
+                $this-&gt;_parseArray($nestedValue, $section);<br>
+            }<br>
+            else {<br>
+                $container-&gt;createDirective($key, $nestedValue);<br>
+            }<br>
+        }<br>
+    } else {</p>
+<p>$section =&amp; $container-&gt;createSection($key);<br>
+        $this-&gt;_parseArray($value, $section);<br>
+    }<br>
+} else {<br>
+    $container-&gt;createDirective($key, $value);<br>
+}</p>
+<p>What do think of this ?</p>
+</section>
+<section>
+<h3>[2005-12-20 00:03 UTC] aashley at php dot net</h3>
+<p>confirmed bugs dot pear at gage dot fr&#039;s patch works. available as patch at:</p>
+<p>http://www.adamashley.name/stuff/config-bug-3590.patch</p>
+</section>
+<section>
+<h3>[2005-12-24 02:30 UTC] aashley at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

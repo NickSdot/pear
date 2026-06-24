@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7848</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a> &#187; Bug #7848</h1>
+<p>Rendering code review and corrections</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #7848</th><td>Rendering code review and corrections</td></tr>
+<tr><th>Submitted</th><td>2006-06-09 11:48 UTC</td></tr>
+<tr><th>From</th><td>michel dot dhooge at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>wiesemann</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid/index.html">Structures_DataGrid</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-09 11:48 UTC] michel dot dhooge at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I started to study the new Datagrid and did some <br>
+corrections as I read the source. Note that most are minor <br>
+corrections. Those I am not sure are commented below:</p>
+<p>In DataGrid/Renderer.php, I thought it would be better to <br>
+sort the properties (and also added missing _multiSort). <br>
+@+463, maybe I misunderstood something about container.</p>
+<p>Question in DataGrid/Renderer/HTMLSortForm.php @+140.</p>
+<p>Test script:<br>
+---------------<br>
+Index: DataGrid.php<br>
+===================================================================<br>
+RCS file: /repository/pear/Structures_DataGrid/DataGrid.php,v<br>
+retrieving revision 1.72<br>
+diff -u -r1.72 DataGrid.php<br>
+--- DataGrid.php	31 May 2006 11:25:00 -0000	1.72<br>
++++ DataGrid.php	9 Jun 2006 08:42:20 -0000<br>
+@@ -489,6 +489,7 @@<br>
+      *<br>
+      * @param  string   $renderer       The defined renderer string<br>
+      * @param  array    $options        Rendering options<br>
++     * @return mixed  True or PEAR_Error<br>
+      * @access public<br>
+      */<br>
+     function setRenderer($type, $options = array())<br>
+@@ -1041,7 +1042,7 @@<br>
+         if (is_array ($sortSpec)) {<br>
+             $this-&gt;sortSpec = $sortSpec;<br>
+         } else {<br>
+-            $this-&gt;sortSpec = array($sortBy =&gt; $direction);<br>
++            $this-&gt;sortSpec = array($sortSpec =&gt; $direction);<br>
+         } <br>
+ <br>
+         if (isset($this-&gt;_dataSource)) {<br>
+Index: package.sh<br>
+===================================================================<br>
+RCS file: /repository/pear/Structures_DataGrid/package.sh,v<br>
+retrieving revision 1.2<br>
+diff -u -r1.2 package.sh<br>
+--- package.sh	31 May 2006 22:43:23 -0000	1.2<br>
++++ package.sh	9 Jun 2006 08:42:20 -0000<br>
+@@ -4,7 +4,7 @@<br>
+ pear package package2-ds-array.xml<br>
+ pear package package2-ds-csv.xml<br>
+ pear package package2-ds-db.xml<br>
+-pear package package2-ds-dbdataobject.xml<br>
++pear package package2-ds-dataobject.xml<br>
+ pear package package2-ds-dbquery.xml<br>
+ pear package package2-ds-dbtable.xml<br>
+ pear package package2-ds-mdb2.xml<br>
+Index: DataGrid/Renderer.php<br>
+===================================================================<br>
+RCS file: /repository/pear/Structures_DataGrid/DataGrid/Renderer.php,v<br>
+retrieving revision 1.47<br>
+diff -u -r1.47 Renderer.php<br>
+--- DataGrid/Renderer.php	28 May 2006 22:29:48 -0000	1.47<br>
++++ DataGrid/Renderer.php	9 Jun 2006 08:42:20 -0000<br>
+@@ -40,7 +40,7 @@<br>
+  * - defaultColumnValues: (array)  Per-column default cell value. This is an array<br>
+  *                                 of the form: array(fieldName =&gt; value, ...).<br>
+  *                                 (default: array())<br>
+- * - hideColumnLinks:     (bool)   By default sorting links are enabled on all<br>
++ * - hideColumnLinks:     (array)  By default sorting links are enabled on all<br>
+  *                                 columns. With this option it is possible to<br>
+  *                                 disable sorting links on specific columns. This<br>
+  *                                 is an array of the form: array(fieldName, ...).<br>
+@@ -77,24 +77,27 @@<br>
+  * <br>
+  * Properties (all read-only):    <br>
+  *     - $_columns<br>
+- *     - $_records<br>
+  *     - $_columnsNum<br>
+- *     - $_recordsNum<br>
+- *     - $_firstRecord;<br>
+- *     - $_lastRecord;<br>
+- *     - $_totalRecordsNum<br>
+  *     - $_currentSort<br>
++ *     - $_firstRecord<br>
++ *     - $_lastRecord<br>
++ *     - $_multiSort              &lt;&lt; Added<br>
++ *     - $_options<br>
+  *     - $_page<br>
+  *     - $_pageLimit<br>
+  *     - $_pagesNum<br>
++ *     - $_records<br>
++ *     - $_recordsNum<br>
+  *     - $_requestPrefix<br>
+  *     - $_sortableFields<br>
+- *     - $_options<br>
++ *     - $_totalRecordsNum<br>
+  *     <br>
+  * Options that drivers may handle:<br>
+  *     - encoding<br>
+  *     - fillWithEmptyRows<br>
+  *     - numberAlign<br>
++ *     - extraVars<br>
++ *     - excludeVars<br>
+  * <br>
+  * @version  $Revision: 1.47 $<br>
+  * @author   Olivier Guilyardi &lt;olivier@samalyse.com&gt;<br>
+@@ -145,17 +148,20 @@<br>
+     var $_currentSort = array();<br>
+ <br>
+     /**<br>
+-     * Wether the backend support sorting by multiple fields<br>
++     * Whether the backend support sorting by multiple fields<br>
+      *<br>
+      * Drivers can read the content of this property but must not change it.<br>
+      *<br>
+      * @var     bool<br>
+      * @access  protected<br>
+      */<br>
+-    var $_multiSort = array();<br>
++    var $_multiSort = false;<br>
+ <br>
+     /**<br>
+      * Number of columns<br>
++     *<br>
++     * Drivers can read the content of this property but must not change it.<br>
++     * <br>
+      * @var int<br>
+      * @access protected<br>
+      */<br>
+@@ -183,6 +189,9 @@<br>
+ <br>
+     /**<br>
+      * First record number (starting from 1), in the current page<br>
++     * <br>
++     * Drivers can read the content of this property but must not change it.<br>
++     *<br>
+      * @var int<br>
+      * @access protected<br>
+      */<br>
+@@ -190,6 +199,9 @@<br>
+     <br>
+     /**<br>
+      * Last record number (starting from 1), in the current page<br>
++     * <br>
++     * Drivers can read the content of this property but must not change it.<br>
++     *<br>
+      * @var int<br>
+      * @access protected<br>
+      */<br>
+@@ -219,6 +231,9 @@<br>
+ <br>
+     /**<br>
+      * Number of pages<br>
++     * <br>
++     * Drivers can read the content of this property but must not change it.<br>
++     *<br>
+      * @var int<br>
+      * @access protected<br>
+      */<br>
+@@ -378,12 +393,13 @@<br>
+     /**<br>
+      * Specify how the datagrid is currently sorted<br>
+      *<br>
+-     * @var array <br>
+      * @param array $spec               Structure: <br>
+      *                                  array(fieldName =&gt; direction, ....)<br>
+-     * @param bool  $multiSortCapable   Wether the backend support sorting by<br>
++     * @param bool  $multiSortCapable   Whether the backend support sorting by<br>
+      *                                  multiple fields<br>
+      * @access public<br>
++     * <br>
++     * &gt;&gt;&gt; Who should call this function and decide for the multiSortCapabilities?<br>
+      */<br>
+     function setCurrentSorting($spec, $multiSortCapable = false)<br>
+     {<br>
+@@ -447,11 +463,13 @@<br>
+     /**<br>
+      * Create or/and prepare the container<br>
+      *<br>
+-     * Drivers may optionally implement this method.<br>
+-     *<br>
+-     * This method is responsible for creating the container if it has not <br>
+-     * already been provided by the user with the setContainer() method.<br>
+-     * It is where preliminary container setup should also be done.<br>
++     * Drivers may optionally implement this method for any pre-build() <br>
++     * operations.<br>
++     *<br>
++     * For the container support, it is responsible for creating the <br>
++     * container if it has not already been provided by the user with <br>
++     * the setContainer() method. It is where preliminary container <br>
++     * setup should also be done.<br>
+      *<br>
+      * @abstract<br>
+      * @access protected<br>
+@@ -550,7 +568,8 @@<br>
+     /**<br>
+      * Finish building the datagrid.<br>
+      *<br>
+-     * Drivers may optionally implement this method.<br>
++     * Drivers may optionally implement this method for any post-build() <br>
++     * operations.<br>
+      *<br>
+      * @abstract<br>
+      * @access  protected<br>
+@@ -708,7 +727,6 @@<br>
+      * writing to the standard output (like calling header(), etc...).<br>
+      * <br>
+      * @access  public<br>
+-     * @return mixed True or a PEAR_Error<br>
+      */<br>
+     function render()<br>
+     {<br>
+Index: DataGrid/Renderer/HTMLSortForm.php<br>
+===================================================================<br>
+RCS file: /repository/pear/Structures_DataGrid/DataGrid/Renderer/HTMLSortForm.php,v<br>
+retrieving revision 1.2<br>
+diff -u -r1.2 HTMLSortForm.php<br>
+--- DataGrid/Renderer/HTMLSortForm.php	31 May 2006 17:42:42 -0000	1.2<br>
++++ DataGrid/Renderer/HTMLSortForm.php	9 Jun 2006 08:42:20 -0000<br>
+@@ -72,7 +72,7 @@<br>
+     var $_form;<br>
+ <br>
+     /**<br>
+-     * Wether the container was provided by the user<br>
++     * Whether the container was provided by the user<br>
+      * @var bool<br>
+      * @access protected<br>
+      */<br>
+@@ -140,6 +140,7 @@<br>
+                     &quot;{$this-&gt;_requestPrefix}DataGridSortForm&quot;, &#039;get&#039;);<br>
+             $this-&gt;_isUserContainer = false;<br>
+         } else {<br>
++            // Isn&#039;t it a bit risky to set this flag here, because this method could be called more than once?<br>
+             $this-&gt;_isUserContainer = true;<br>
+         }<br>
+     }<br>
+Index: DataGrid/Renderer/HTMLTable.php<br>
+===================================================================<br>
+RCS file: /repository/pear/Structures_DataGrid/DataGrid/Renderer/HTMLTable.php,v<br>
+retrieving revision 1.105<br>
+diff -u -r1.105 HTMLTable.php<br>
+--- DataGrid/Renderer/HTMLTable.php	27 Apr 2006 11:21:27 -0000	1.105<br>
++++ DataGrid/Renderer/HTMLTable.php	9 Jun 2006 08:42:20 -0000<br>
+@@ -28,7 +28,7 @@<br>
+  *<br>
+  * Driver for rendering the DataGrid as an HTMLTable<br>
+  *<br>
+- * SUPPORTED OPTIONS:<br>
++ * SUPPORTED OPTIONS (Driver Specific):<br>
+  *<br>
+  * - evenRowAttributes:   (array)  An associative array containing each attribute<br>
+  *                                 of the even rows.<br>
+@@ -253,12 +253,7 @@<br>
+      */<br>
+     function allowEmptyRows($value, $attributes = array())<br>
+     {<br>
+-        if ($value) {<br>
+-            $this-&gt;_options[&#039;fillWithEmptyRows&#039;] = true;<br>
+-        } else {<br>
+-            $this-&gt;_options[&#039;fillWithEmptyRows&#039;] = false;<br>
+-        }<br>
+- <br>
++        $this-&gt;_options[&#039;fillWithEmptyRows&#039;] = (bool)$value;<br>
+         $this-&gt;_options[&#039;emptyRowAttributes&#039;] = $attributes;<br>
+     }<br>
+ <br>
+@@ -310,8 +305,10 @@<br>
+     /**<br>
+      * Generates the HTML for the DataGrid<br>
+      *<br>
++     * @deprecated Use getOutput() instead.<br>
+      * @access  public<br>
+      * @return  string      The HTML of the DataGrid<br>
++     * @see Structures_DataGrid_Renderer::getOutput<br>
+      */<br>
+     function toHTML()<br>
+     {<br>
+@@ -321,8 +318,7 @@<br>
+     /**<br>
+      * Gets the HTML_Table object for the DataGrid<br>
+      *<br>
+-     * OBSOLETE<br>
+-     * <br>
++     * @deprecated Use getContainer() instead.<br>
+      * @access  public<br>
+      * @return  object HTML_Table   The HTML Table object for the DataGrid<br>
+      */</p>
+</section>
+<section>
+<h3>[2006-06-09 21:45 UTC] olivierg at php dot net</h3>
+<p>The best would be to put a link here to your patch if possible.</p>
+<p>However, I&#039;ve been reading all the above and I must say that you have pretty well studied the DataGrid :-) I&#039;m honored of your attention.</p>
+<p>You&#039;re right about the $_isUserContainer property in Renderer_HTMLSortForm that might get wrong if init() is called twice.</p>
+<p>That would happen for example with two calls to render() like in : <br>
+$datagrid-&gt;render(DATAGRID_RENDER_SORTFORM);<br>
+$datagrid-&gt;render(DATAGRID_RENDER_SORTFORM);</p>
+<p>I suppose nobody would do that ;-) Nevertheless, at the second call, the form might contain duplicate fields, and no  submit button.</p>
+<p>The best could be to set the $_isUserContainer property in setContainer()</p>
+<p>Regarding your patch, I would like to reread it in my preferred editor, but I think it&#039;s 99% good. You seem to have rather well understood the container concept.</p>
+<p>I changed the &quot;Diff patch&quot; summary of this request, because it was meaningless. Please provide more informational summaries in the future.</p>
+</section>
+<section>
+<h3>[2006-06-11 12:02 UTC] olivierg at php dot net</h3>
+<p>Your patch has been applied with a few minor changes :</p>
+<p>http://news.php.net/php.pear.cvs/40615</p>
+<p>I like your improvements to the Renderer::init() docblock.</p>
+<p>Regarding your included-in-the-patch question about &quot;Who should call setCurrentSorting() and decide for the multiSortCapabilities&quot;:</p>
+<p>setCurrentSorting(), together with setData() and setLimit() are supposed to be called by the code that loads the driver. In our case that&#039;s the Structures_DataGrid class.</p>
+<p>The multiSort capabilities is related to the multiSort DataSource feature. In short : the DataGrid checks if the DataSource supports multiSort and informs the Renderer about it.</p>
+<p>I&#039;m not sure what to do with the $_isUserContainer property, and where to set it. Could any of you review/develop this point ? A test script, showing what the problem really is, would be welcome...</p>
+</section>
+<section>
+<h3>[2006-06-12 08:40 UTC] michel dot dhooge at gmail dot com</h3>
+<p>@Mark: Sorry I wasn&#039;t connected this week-end!</p>
+<p>Summary: I knew it was really poor but couldn&#039;t think of something good :-(</p>
+<p>&gt; You&#039;re right about the $_isUserContainer property in<br>
+&gt; Renderer_HTMLSortForm that might get wrong if init()<br>
+&gt; is called twice.<br>
+My concern (and this is also why I asked on the PEAR ML) is that init is quite generic and AFAIK there is no clear definition on when it will be called and when it won&#039;t. So even though this works right now, it could break in the future.</p>
+</section>
+<section>
+<h3>[2006-06-13 09:47 UTC] michel dot dhooge at gmail dot com</h3>
+<p>Additional comments and patches:<br>
+- modified DataGrid::render() to also accept a Renderer <br>
+instance,<br>
+- variable $test -&gt; $result</p>
+<p>Index: DataGrid.php<br>
+===================================================================<br>
+RCS <br>
+file: /repository/pear/Structures_DataGrid/DataGrid.php,v<br>
+retrieving revision 1.74<br>
+diff -u -r1.74 DataGrid.php<br>
+--- DataGrid.php	11 Jun 2006 21:46:58 -0000	<br>
+1.74<br>
++++ DataGrid.php	13 Jun 2006 09:29:49 -0000<br>
+@@ -383,24 +383,30 @@<br>
+      *<br>
+      * You can call this method several times with <br>
+different renderers.<br>
+      * <br>
+-     * @param  int      $type   Renderer type (optional)<br>
++     * @param  mixed  $renderer Renderer type (optional)<br>
++     * @param  array  $options  An associative array of <br>
+the form:<br>
++     *                          array(optionName =&gt; <br>
+optionValue, ...)<br>
+      * @access public<br>
+      * @return mixed    True or PEAR_Error<br>
+      */<br>
+-    function render($type = null,$options = array())<br>
++    function render($renderer = null,$options = array())<br>
+     {<br>
+-        if (!is_null($type)) {<br>
++        if (!is_null($renderer)) {<br>
+             $this-&gt;_saveRenderer();<br>
+             <br>
+-            $test = $this-&gt;setRenderer($type);<br>
+-            if (PEAR::isError($test)) {<br>
++            if <br>
+(is_a($renderer, &#039;Structures_DataGrid_Renderer&#039;)) {<br>
++                $result = <br>
+$this-&gt;attachRenderer($renderer);<br>
++            } else {<br>
++                $result = $this-&gt;setRenderer($renderer);<br>
++            }<br>
++            if (PEAR::isError($result)) {<br>
+                 $this-&gt;_restoreRenderer();<br>
+-                return $test;<br>
++                return $result;<br>
+             }<br>
+         } else if (!isset($this-&gt;_renderer)) {<br>
+-            $test = <br>
+$this-&gt;setRenderer(DATAGRID_RENDER_DEFAULT);<br>
+-            if (PEAR::isError($test)) {<br>
+-                return $test;<br>
++            $result = <br>
+$this-&gt;setRenderer(DATAGRID_RENDER_DEFAULT);<br>
++            if (PEAR::isError($result)) {<br>
++                return $result;<br>
+             }<br>
+         }<br>
+         <br>
+@@ -409,10 +415,10 @@<br>
+         }<br>
+         <br>
+         $this-&gt;_renderer-&gt;isBuilt() || $this-&gt;build();<br>
+-        $test = $this-&gt;_renderer-&gt;render();<br>
++        $result = $this-&gt;_renderer-&gt;render();<br>
+ <br>
+-        if (PEAR::isError($test)) {<br>
+-            if ($test-&gt;getCode() == <br>
+DATAGRID_ERROR_UNSUPPORTED) {<br>
++        if (PEAR::isError($result)) {<br>
++            if ($result-&gt;getCode() == <br>
+DATAGRID_ERROR_UNSUPPORTED) {<br>
+                 $type = is_null($this-&gt;_rendererType) <br>
+                         ? get_class($this-&gt;_renderer)<br>
+                         : $this-&gt;_rendererType;<br>
+@@ -421,10 +427,11 @@<br>
+                                         &quot;render() method. <br>
+Try using fill().&quot;);<br>
+             } else {<br>
+                 $this-&gt;_restoreRenderer();<br>
+-                return $test;<br>
++                return $result;<br>
+             }<br>
+         }<br>
+         $this-&gt;_restoreRenderer();<br>
++        return true;<br>
+     }<br>
+ <br>
+     /**<br>
+@@ -485,21 +492,24 @@<br>
+     /**<br>
+      * Set Renderer<br>
+      *<br>
+-     * Defines which renderer to be used by the DataGrid<br>
++     * Creates a new renderer to be used by the DataGrid <br>
+based on given<br>
++     * $type and $options. To attach an existing renderer <br>
+instance, use<br>
++     * attachRenderer instead.<br>
+      *<br>
+-     * @param  string   $renderer       The defined <br>
+renderer string<br>
++     * @param  string   $type           The defined <br>
+renderer string<br>
+      * @param  array    $options        Rendering options<br>
+-     * @return mixed  True or PEAR_Error<br>
++     * @return mixed    Renderer instance or PEAR_Error<br>
+      * @access public<br>
++     * @see Structures_DataGrid::attachRenderer<br>
+      */<br>
+-    function setRenderer($type, $options = array())<br>
++    function &amp; setRenderer($type, $options = array())<br>
+     {<br>
+         $renderer =&amp; $this-&gt;rendererFactory($type, <br>
+$options);<br>
+-        if (!PEAR::isError($renderer)) {<br>
++        if (PEAR::isError($renderer)) {<br>
++            return $renderer;<br>
++        } else {<br>
+             $this-&gt;_rendererType = $type;<br>
+             return $this-&gt;attachRenderer($renderer);<br>
+-        } else {<br>
+-            return $renderer;<br>
+         }<br>
+     }<br>
+ <br>
+@@ -512,6 +522,10 @@<br>
+     function _saveRenderer()<br>
+     {<br>
+         if (isset($this-&gt;_renderer)) {<br>
++            // The following line is a workaround for PHP <br>
+bug 32660<br>
++            // See: http://bugs.php.net/bug.php?id=32660<br>
++            // Another solution would be to remove __get <br>
+which is used only for BC<br>
++            $this-&gt;_rendererBackup = 1;<br>
+             $this-&gt;_rendererBackup =&amp; $this-&gt;_renderer;<br>
+             $this-&gt;_rendererTypeBackup = <br>
+$this-&gt;_rendererType;<br>
+ <br>
+@@ -577,14 +591,15 @@<br>
+     }<br>
+     <br>
+     /**<br>
+-     * Attach a rendering driver<br>
++     * Attach an existing rendering driver<br>
+      * <br>
+      * @param object $renderer Driver object, subclassing <br>
+      *                         <br>
+Structures_DataGrid_Renderer<br>
+-     * @return mixed           Either true or a <br>
+PEAR_Error object<br>
++     * @return mixed    Renderer instance or PEAR_Error<br>
+      * @access public<br>
++     * @see Structures_DataGrid::setRenderer<br>
+      */<br>
+-    function attachRenderer(&amp;$renderer)<br>
++    function &amp; attachRenderer(&amp;$renderer)<br>
+     {<br>
+         if <br>
+(is_subclass_of($renderer, &#039;structures_datagrid_renderer&#039;)) <br>
+{<br>
+             // The following line is a workaround for PHP <br>
+bug 32660<br>
+@@ -607,7 +622,7 @@<br>
+                                     &#039;must be a valid <br>
+renderer driver class&#039;);<br>
+         }<br>
+ <br>
+-        return true;<br>
++        return $renderer;<br>
+     }<br>
+ <br>
+     <br>
+@@ -962,6 +977,7 @@<br>
+                 $this-&gt;_renderer-&gt;setLimit($this-&gt;page, <br>
+$this-&gt;rowLimit, <br>
+                                           <br>
+$this-&gt;getRecordCount());<br>
+                 if ($this-&gt;sortSpec) {<br>
++                    // According to comment, test isn&#039;t <br>
+needed ???<br>
+                     $this-&gt;_setRendererCurrentSorting();<br>
+                 }<br>
+             }<br>
+Index: DataGrid/Renderer.php<br>
+===================================================================<br>
+RCS <br>
+file: /repository/pear/Structures_DataGrid/DataGrid/Renderer.php,v<br>
+retrieving revision 1.48<br>
+diff -u -r1.48 Renderer.php<br>
+--- DataGrid/Renderer.php	11 Jun 2006 11:41:48 -0000	<br>
+1.48<br>
++++ DataGrid/Renderer.php	13 Jun 2006 09:29:49 -0000<br>
+@@ -73,7 +73,6 @@<br>
+  *     - finalize()<br>
+  *     - flatten()<br>
+  *     - render()<br>
+- *     - getPaging()<br>
+  * <br>
+  * Properties (all read-only):    <br>
+  *     - $_columns<br>
+@@ -380,6 +379,9 @@<br>
+     /**<br>
+      * Provide columns and records data<br>
+      * <br>
++     * This method is supposed to be called ONLY by the <br>
+code that loads the <br>
++     * driver. In most cases, that&#039;ll be the <br>
+Structures_DataGrid class.<br>
++     * <br>
+      * @param array $columns Array of <br>
+Structures_DataGrid_Column objects<br>
+      * @param array $records 2D array of records values<br>
+      * @access public<br>
+@@ -392,22 +394,32 @@<br>
+   <br>
+     /**<br>
+      * Specify how the datagrid is currently sorted<br>
+-     *<br>
+-     * @param array $spec               Structure: <br>
++     * <br>
++     * This method is supposed to be called ONLY by the <br>
+code that loads the <br>
++     * driver. In most cases, that&#039;ll be the <br>
+Structures_DataGrid class.<br>
++     * <br>
++     * The multiSort capabilities is related to the <br>
+multiSort DataSource<br>
++     * feature. In short : the DataGrid checks if the <br>
+DataSource supports<br>
++     * multiSort and informs the Renderer about it.<br>
++     * <br>
++     * @param array $currentSort        Structure: <br>
+      *                                  array(fieldName <br>
+=&gt; direction, ....)<br>
+      * @param bool  $multiSortCapable   Whether the <br>
+backend support sorting by<br>
+      *                                  multiple fields<br>
+      * @access public<br>
+      */<br>
+-    function setCurrentSorting($spec, $multiSortCapable = <br>
+false)<br>
++    function setCurrentSorting($currentSort, <br>
+$multiSortCapable = false)<br>
+     {<br>
+-        $this-&gt;_currentSort = $spec;<br>
++        $this-&gt;_currentSort = $currentSort;<br>
+         $this-&gt;_multiSort   = $multiSortCapable;<br>
+     }<br>
+ <br>
+     /**<br>
+      * Specify page and row limits<br>
+      * <br>
++     * This method is supposed to be called ONLY by the <br>
+code that loads the <br>
++     * driver. In most cases, that&#039;ll be the <br>
+Structures_DataGrid class.<br>
++     * <br>
+      * @param int $currentPage Current page number<br>
+      * @param int $rowsPerPage Maximum number of rows per <br>
+page<br>
+      * @param int $totalRowNum Total number of data rows<br>
+Index: DataGrid/Renderer/HTMLSortForm.php<br>
+===================================================================<br>
+RCS <br>
+file: /repository/pear/Structures_DataGrid/DataGrid/Renderer/HTMLSortForm.php,v<br>
+retrieving revision 1.3<br>
+diff -u -r1.3 HTMLSortForm.php<br>
+--- DataGrid/Renderer/HTMLSortForm.php	11 Jun 2006 <br>
+11:41:48 -0000	1.3<br>
++++ DataGrid/Renderer/HTMLSortForm.php	13 Jun 2006 <br>
+09:29:49 -0000<br>
+@@ -215,10 +215,13 @@<br>
+             }<br>
+             $this-&gt;_form-&gt;setConstants($values);<br>
+ <br>
+-            // Only add a submit button if the QF <br>
+container wasn&#039;t provided <br>
+-            // by the user<br>
++            // Only add a submit button and extraVars if <br>
+the QF container wasn&#039;t<br>
++            // provided by the user<br>
+             if (!$this-&gt;_isUserContainer) {<br>
+                 $this-&gt;_form-&gt;addElement(&#039;submit&#039;, null, <br>
+$this-&gt;_options[&#039;textSubmit&#039;]);<br>
++                foreach($this-&gt;_options[&#039;extraVars&#039;] as <br>
+$var =&gt; $value) {<br>
++                    $this-&gt;_form-&gt;addElement(&#039;hidden&#039;, <br>
+$var, $value);<br>
++                }<br>
+             }<br>
+         }<br>
+     }<br>
+Index: DataGrid/Renderer/HTMLTable.php<br>
+===================================================================<br>
+RCS <br>
+file: /repository/pear/Structures_DataGrid/DataGrid/Renderer/HTMLTable.php,v<br>
+retrieving revision 1.106<br>
+diff -u -r1.106 HTMLTable.php<br>
+--- DataGrid/Renderer/HTMLTable.php	11 Jun 2006 <br>
+11:41:48 -0000	1.106<br>
++++ DataGrid/Renderer/HTMLTable.php	13 Jun 2006 <br>
+09:29:49 -0000<br>
+@@ -490,6 +490,7 @@<br>
+      * delta:      The number of pages to display before <br>
+and<br>
+      *             after the current page<br>
+      *<br>
++     * @deprecated Use Structures_DataGrid_Renderer_Pager <br>
+instead?<br>
+      * @access  public<br>
+      * @param   array  $options        Array of <br>
+HTML::Pager options<br>
+      * @return  string                 The HTML for the <br>
+page links</p>
+</section>
+<section>
+<h3>[2006-06-13 13:14 UTC] olivierg at php dot net</h3>
+<p>Thanks for your Patch Michel. However there&#039;s a methodology problem here.</p>
+<p>1 - Please provide links to your your patches. This bug has got unreadable.</p>
+<p>2 - A bug or feature request must try to target a specific issue. To avoid confusion, it&#039;s better to divide problems into small parts, as Descartes said.</p>
+<p>You can not mix everything like you currently do : we were talking about the lack of definition of init()&#039;s role, which  I recognize to be fuzzy, and you submit a patch that addresses a dozen of other issues... I&#039;m getting lost here.</p>
+<p>Don&#039;t get me wrong, your patch is very welcome and seem to contain good things.</p>
+<p>But please open several bugs/requests, each with a specific and precise summary.</p>
+</section>
+<section>
+<h3>[2006-08-17 13:59 UTC] michel dot dhooge at gmail dot com</h3>
+<p>To conclude that painful bug report, I still have the <br>
+following comments in my workspace that weren&#039;t included. <br>
+If you don&#039;t want them, I&#039;ll remove them to stop <br>
+triggering my CVS update...</p>
+<p>diff -u -r1.105 DataGrid.php<br>
+--- DataGrid.php        15 Aug 2006 10:35:49 -0000      <br>
+1.105<br>
++++ DataGrid.php        17 Aug 2006 13:54:10 -0000<br>
+@@ -448,7 +448,7 @@<br>
+      *<br>
+      * You can call this method several times with <br>
+different renderers.<br>
+      *<br>
+-     * @param  int    $renderer Renderer type (optional)<br>
++     * @param  mixed  $renderer Renderer type or instance <br>
+(optional)<br>
+      * @param  array  $options  An associative array of <br>
+the form:<br>
+      *                          array(optionName =&gt; <br>
+optionValue, ...)<br>
+      * @access public<br>
+@@ -586,6 +586,7 @@<br>
+      * @param  array    $options        Rendering options<br>
+      * @return mixed    Renderer instance or PEAR_Error<br>
+      * @access public<br>
++     * @see Structures_DataGrid::attachRenderer<br>
+      */<br>
+     function &amp;setRenderer($type, $options = array())<br>
+     {</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4816</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/I18Nv2/index.html">I18Nv2</a> &#187; Bug #4816</h1>
+<p>converting charset of strftime result</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-07-13 10:03 UTC</td></tr>
+<tr><th>From</th><td>munzeitig at sigmatec dot cz</td></tr>
+<tr><th>Status</th><td>Suspended</td></tr>
+<tr><th>Package</th><td><a href="package/I18Nv2/index.html">I18Nv2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-07-13 10:03 UTC] munzeitig at sigmatec dot cz</h3>
+<p>Description:<br>
+------------<br>
+There is problem with charset of day and month names returned by strftime() function used internally I18Nv2.</p>
+<p>E.g. in our project, we use UTF-8 everywhere = as internal, output and input charset, however the result of strftime() function is not in UTF-8 and needs to be reformated.</p>
+<p>It is not possible to use autoConv(), because that would break others part of code which are already UTF-8 (it is not possibly to apply in general).</p>
+<p>Therefore I suggest there should be some additional functionality added, which will check and ensure that the results of strftime() returned by OS are in desired charset compatible with rest of the code.</p>
+<p>Reproduce code:<br>
+---------------<br>
+// All is in UTF-8 by default. (internal &amp; output)</p>
+<p>// This works wrong.<br>
+echo $locale-&gt;formatDate(null, I18Nv2_DATETIME_LONG);<br>
+// Returns 13 襲venec 2005 (wrong).<br>
+        <br>
+// This works fine.<br>
+echo iconv(null, &#039;UTF-8&#039;, $locale-&gt;formatDate(null, I18Nv2_DATETIME_LONG));<br>
+// Returns 13 èervenec 2005 (correct).</p>
+</section>
+<section>
+<h3>[2005-07-13 10:27 UTC] munzeitig at sigmatec dot cz</h3>
+<p>Just noticed this problem was somehow discussed in bug 4222.</p>
+<p>I guess that using the iconv(null, &#039;UTF-8&#039;, $string) or more general iconv(null, $reqestedEncoding, $string) in definitions in Locale class could solve this problem -- at least it does for me.</p>
+<p>So something like using:<br>
+$this-&gt;abbrDays = array(<br>
+   iconv(null, $reqestedEncoding, strftime(&#039;%a&#039;, $sun)),<br>
+   iconv(null, $reqestedEncoding, strftime(&#039;%a&#039;, $mon)),<br>
+   ...<br>
+instead of:<br>
+$this-&gt;abbrDays = array(<br>
+   strftime(&#039;%a&#039;, $sun),<br>
+   strftime(&#039;%a&#039;, $mon),<br>
+   ...</p>
+<p>This is just for demostration, there could be more wise solution of course. E.g. converting all the results in the definition arrays in foreach or so in case there the $requestedEncoding is set.</p>
+</section>
+<section>
+<h3>[2005-07-21 12:17 UTC] munzeitig at sigmatec dot cz</h3>
+<p>Nope it doesn&#039;t. I have tried almost everything. Except using iconv on the results of strftime(&#039;%a&#039;, $sun) as I wrote above nothing helped so far.</p>
+</section>
+<section>
+<h3>[2005-07-21 15:51 UTC] munzeitig at sigmatec dot cz</h3>
+<p>No, in fact Windows is the testing site only. Anyway it is quite embarassing.</p>
+<p>I&#039;ve noticed that the other bug is marked as Won&#039;t fix. However I&#039;ve also suggested a specific solution to consider. ;-)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3158</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail/index.html">Mail</a> &#187; Bug #3158</h1>
+<p>exit code for Mail::Sendmail-&gt;send not detected correctly</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-11 01:04 UTC</td></tr>
+<tr><th>From</th><td>cbs at cts dot ucla dot edu</td></tr>
+<tr><th>Assigned</th><td>chagenbu</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail/index.html">Mail</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-11 01:04 UTC] cbs at cts dot ucla dot edu</h3>
+<p>Description:<br>
+------------<br>
+This applies, at least, to Mail 1.1.4, and possibly earlier versions.</p>
+<p>The exit code for Mail::Sendmail-&gt;send is not properly detected.  circa line 125 of Mail/Sendmail.php:</p>
+<p>$mail = popen($this-&gt;sendmail_path . (!empty($this-&gt;sendmail_args) ? &#039; &#039; . $this-&gt;sendmail_args : &#039;&#039;) . &quot; -f$from -- $recipients&quot;, &#039;w&#039;);<br>
+            fputs($mail, $text_headers);<br>
+            fputs($mail, $this-&gt;sep);  // newline to end the headers section<br>
+            fputs($mail, $body);<br>
+            $result = pclose($mail) &gt;&gt; 8 &amp; 0xFF; // need to shift the pclose result to get the exit code</p>
+<p>pclose() is defined as returning the termination status of the process that was run.  Shifting it 8 bits and anding with FF causes all results to be 0.  The code should be</p>
+<p>$result = pclose($mail);</p>
+<p>Reproduce code:<br>
+---------------<br>
+using sendmail:  as root, chmod 700 /var/log/clientmqueue (or misconfigure sendmail in some way so that it will exit non-zero) and run:</p>
+<p>&lt;?php<br>
+include_once &#039;Mail.php&#039;;<br>
+$mailer = &amp;Mail::factory(&#039;sendmail&#039;, &#039;&#039;);<br>
+$result = $mailer-&gt;send(&#039;nobody&#039;,<br>
+  array(&#039;From&#039; =&gt; &#039;nobody&#039;, &#039;To&#039; =&gt; nobody&#039;), &quot;test\n&quot;);<br>
+if (PEAR::isError($result)) echo $result-&gt;getMessage().&quot;\n&quot;;<br>
+else echo &quot;good\n&quot;;<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+The above code should print the sendmail error message.</p>
+<p>Actual result:<br>
+--------------<br>
+The above code does prints &quot;good\n&quot;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

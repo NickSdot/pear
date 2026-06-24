@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Structures_BibTex Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_BibTex/index.html">Structures_BibTex</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Structures_BibTex/docs/index.html#package-structures-structures-bibtex-intro">Introduction</a>
+</li>
+<li><a href="package/Structures_BibTex/docs/index.html#package-structures-structures-bibtex-warnings">Warnings</a>
+</li>
+<li><a href="package/Structures_BibTex/docs/index.html#package-structures-structures-bibtex-exporting">Exporting</a>
+</li>
+<li><a href="package/Structures_BibTex/docs/index.html#package-structures-structures-bibtex-misc">Miscellaneous</a>
+</li></ul>
+</nav>
+<p>Parsing BibTex Data to an array and exporting to BibTex and RTF.</p>
+<section id="package-structures-structures-bibtex-intro">
+<h2>Introduction</h2>
+<h3>Overview</h3>
+ 
+  
+  <p>This package provides methods to access information stored in a BibTex file. During parsing it
+  is possible to let the data be validated. In addition. the creation of BibTex Strings as well 
+  as RTF Strings is also supported.</p>
+ 
+  
+  <h3>A few examples</h3>
+ 
+  
+
+  <p><strong>Loading a BibTex File and printing the parsed array</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &#039;Structures/BibTex.php&#039;;
+$bibtex = new Structures_BibTex();
+$ret    = $bibtex-&gt;loadFile(&#039;foo.bib&#039;);
+if (PEAR::isError($ret)) {
+    die($ret-&gt;getMessage());
+}
+$bibtex-&gt;parse();
+echo &#039;&lt;pre&gt;&#039;;
+print_r($bibtex-&gt;data);
+echo &#039;&lt;/pre&gt;&#039;;
+?&gt;</code></pre>
+  
+ 
+
+<h3>Options</h3>
+ 
+    
+    <p>Options can be set either in the constructor or with the method <strong>setOption()</strong>. When setting in the constructor the options are given in an associative array. The options are:</p><ul>
+            <li>
+                
+                    <code>stripDelimiter (default: true)</code> Stripping the delimiter surrounding the entries.
+                
+            </li>
+            <li>
+                
+                    <code>validate (default: true)</code> Validation while parsing.
+                
+            </li>
+            <li>
+                
+                    <code>unwrap (default: false)</code> Unwrapping entries while parsing.
+                
+            </li>
+            <li>
+                
+                    <code>wordWrapWidth (default: false)</code> If set to a number higher one that the entries are wrapped after that amount of characters.
+                
+            </li>
+            <li>
+                
+                    <code>wordWrapBreak (default: \n)</code> String used to break the line (attached to the line).
+                
+            </li>
+            <li>
+                
+                    <code>wordWrapCut (default: 0)</code> If set to zero the line will we wrapped at the next possible space, if set to one the line will be wrapped exactly after the given amount of characters.
+                
+            </li>
+            <li>
+                
+                    <code>removeCurlyBraces (default: false)</code> If set to true Curly Braces will be removed.
+                
+            </li>
+        </ul><p>Example of setting options in the constructor:</p><p><strong>Setting options in the constructor</strong></p>
+            
+            <pre><code>&lt;?php
+$bibtex = new Structures_BibTex(array(&#039;validate&#039;=&gt;false, &#039;unwrap&#039;=&gt;true));
+?&gt;</code></pre>
+        <p>Example of setting options using the method <strong>setOption()</strong>:</p><p><strong>Setting options using setOption</strong></p>
+            
+            <pre><code>&lt;?php
+$bibtex = new Structures_BibTex();
+                $bibtex-&gt;setOption(&#039;validate&#039;, false);
+                $bibtex-&gt;setOption(&#039;unwrap&#039;, true);
+?&gt;</code></pre>
+        
+    
+
+
+<h3>Stored Data</h3>
+ 
+    
+        <p>The data is stored in the class variable <code>data</code>. This is a
+            a list where each entry is a hash table representing one bibtex-entry. The keys
+            of the hash table correspond to the keys used in bibtex and the values are the
+            corresponding values. Some of these keys are:</p><ul>
+                <li>
+                    
+                        <code>cite</code> - The key used in a LaTeX source to do the citing.
+                    
+                </li>
+                <li>
+                    
+                        <code>entryType</code> - The type of the entry, like techreport, book and so on.
+                    
+                </li>
+                <li>
+                    
+                        <code>author</code> - One or more authors of the entry. This entry is also a list with hash tables representing the authors as entries. The author has table is explained later.
+                    
+                </li>
+                <li>
+                    
+                        <code>title</code> - Title of the entry.
+                    
+                </li>
+            </ul>
+        
+
+
+<h3>Author</h3>
+ 
+    
+    <p>As described before the authors are stored in a list. Every entry representing
+        one author as a has table. The hash table consits of four keys: first, von, last
+        and jr. The keys are explained in the following list:</p><ul>
+            <li>
+                
+                    <code>first</code> - The first name of the author.
+                
+            </li>
+            <li>
+                
+                    <code>von</code> - Some names have a &#039;von&#039; part in their name. This is usually a sign of nobleness.
+                
+            </li>
+            <li>
+                
+                    <code>last</code> - The last name of the author.
+                
+            </li>
+            <li>
+                
+                    <code>jr</code> - Sometimes a author is the son of his father and has the same name, then the value would be jr. The same is true for the value sen but vice versa.
+                
+            </li>
+        </ul>
+    
+
+
+<h3>Adding an entry</h3>
+ 
+    
+    <p>To add an entry simply create a hash table with the needed keys and values and call the method <strong>addEntry()</strong>.</p><p><strong>Adding an entry</strong></p>
+            
+            <pre><code>&lt;?php
+$bibtex                         = new Structures_BibTex();
+$addarray                       = array();
+$addarray[&#039;entryType&#039;]          = &#039;Article&#039;;
+$addarray[&#039;cite&#039;]               = &#039;art2&#039;;
+$addarray[&#039;title&#039;]              = &#039;Titel of the Article&#039;;
+$addarray[&#039;author&#039;][0][&#039;first&#039;] = &#039;John&#039;;
+$addarray[&#039;author&#039;][0][&#039;last&#039;]  = &#039;Doe&#039;;
+$addarray[&#039;author&#039;][1][&#039;first&#039;] = &#039;Jane&#039;;
+$addarray[&#039;author&#039;][1][&#039;last&#039;]  = &#039;Doe&#039;;
+$bibtex-&gt;addEntry($addarray);
+?&gt;</code></pre>
+</section>
+<section id="package-structures-structures-bibtex-warnings">
+<h2>Warnings</h2>
+<h3>Overview</h3>
+ 
+  
+  <p>The class <strong>Structures_BibTex</strong> introduces a system to collect warnings that may happen during parsing.
+   Warnings are things in the BibTex source which are not correct but do not cause the parser to fail.
+One example would be a double cite entry.
+   These warnings should help to improve the quality of your BibTex code.
+   Whether warnings are generated or not is controlled by the option validate.
+   Per default warnings are generated.
+   If you want to not generate warnings you should use the <strong>setOption()</strong> method like this.</p><p><strong>Switching off creation of warnings</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &#039;Structures/BibTex.php&#039;;
+$bibtex = new Structures_BibTex();
+$bibtex-&gt;setOption(&#039;validate&#039;, false);
+?&gt;</code></pre>    
+   
+  
+ 
+  
+  <h3>Usage</h3>
+ 
+  
+  <p>The warnings are stored in an array called warnings which is public accessible.
+   To check is a warning exists you can use the method <strong>hasWarning()</strong>.
+   This method returns true if there are warnings and false otherwise.</p><p><strong>Checking for warnings</strong></p>
+    
+    <pre><code>&lt;?php
+require_once &#039;Structures/BibTex.php&#039;;
+$bibtex = new Structures_BibTex();
+$ret    = $bibtex-&gt;loadFile(&#039;foo.bib&#039;);
+if (PEAR::isError($ret)) {
+    die($ret-&gt;getMessage());
+}
+$bibtex-&gt;parse();
+if ($bibtex-&gt;hasWarning()) {
+    print &#039;There are warnings!&lt;br /&gt;&#039;;
+}
+?&gt;</code></pre>
+   <p>Every warning itself is hash table with the following keys:</p><ul>
+    <li>
+     
+      <code>warning</code> - Type of the warning
+     
+    </li>
+    <li>
+     
+      <code>entry</code> - The line that caused the warning
+     
+    </li>
+    <li>
+     
+      <code>wholeentry</code> - The whole entry in which the warning occurred
+     
+    </li>
+   </ul><p>To print every warning with type and line that caused the warning you could do something like this:</p><p><strong>Checking for warnings</strong></p>
+    
+    <pre><code>&lt;?php
+require_once &#039;Structures/BibTex.php&#039;;
+$bibtex = new Structures_BibTex();
+$ret    = $bibtex-&gt;loadFile(&#039;foo.bib&#039;);
+if (PEAR::isError($ret)) {
+    die($ret-&gt;getMessage());
+}
+$bibtex-&gt;parse();
+if ($bibtex-&gt;hasWarning()) {
+    foreach ($bibtex-&gt;warnings as $warning) {
+        echo &#039;Warning: &#039;.$warning[&#039;warning&#039;].&#039;&lt;br /&gt;&#039;;
+        echo &#039;Line: &#039;.$warning[&#039;entry&#039;].&#039;&lt;hr /&gt;&#039;;
+    }
+}
+?&gt;</code></pre>
+   <p>Finally if you want to clear all warnings you can use the method <strong>clearWarnings()</strong>.</p>
+ 
+
+  <h3>Types of Warnings</h3>
+
+  
+  <p>The following Warnings are known:</p><ul>
+    <li>
+        
+            <code>WARNING_MISSING_END_BRACE</code> - This warning is generated when the end brace in an entry is missing. Take this warning seriously!
+        
+    </li>
+    <li>
+     
+      <code>WARNING_AT_IN_BRACES</code> - A Value is delimited by Braces. Then inside a @ is not allowed.
+     
+    </li>
+    <li>
+     
+      <code>WARNING_ESCAPED_DOUBLE_QUOTE_INSIDE_DOUBLE_QUOTES</code> - A Value is delimited by double quotes. Then inside no escaped double quote is allowed.
+     
+    </li>
+    <li>
+     
+      <code>WARNING_UNBALANCED_AMOUNT_OF_BRACES</code> - The amount of braces inside a value is not equal (opening and closing). The parses fails if in the complete entry this amount is not correct. But if only on an entry it is not correct then this is only a warning. As a matter of fact of the parser does not fail but there is an unbalanced amount of braces in an entry this warning has to be generated something times two.
+     
+    </li>
+    <li>
+        
+            <code>WARNING_MULTIPLE_ENTRIES</code> - Every entry is identified by a unique string. This warning is created if there are at least two entries with the same identification.
+        
+    </li>
+    <li>
+        
+            <code>WARNING_LINE_WAS_NOT_CONVERTED</code> - This warning is created if during exporting (for example in RTF or HTML) one entry was ignored because of no matching data in the entry. At least one of the following entries have to exist in the entry to get converted: title, journal, year or authors.
+        
+    </li>
+    <li>
+        
+            <code>STRING_ENTRY_NOT_YET_SUPPORTED</code> - BibTex defines some special entry types, String is one of them and is used to define abbreviations. This is not yet supported by Structres_BibTex.
+        
+    </li>
+    <li>
+        
+            <code>PREAMBLE_ENTRY_NOT_YET_SUPPORTED</code> - BibTex defines some special entry types, Preamble is one of them and is used to define formatted code. This is not yet supported by Structres_BibTex.
+        
+    </li>
+    <li>
+        
+            <code>WARNING_NOT_ALLOWED_ENTRY_TYPE</code> - BibTex allows to define own types. This warning is genereated when a type was detected which is not part of the standard types. The allowed or standard type are defined in the class variable allowedTypes as array.
+        
+    </li>
+   </ul>
+</section>
+<section id="package-structures-structures-bibtex-exporting">
+<h2>Exporting</h2>
+<h3>Overview</h3>
+ 
+  
+  <p>The class <strong>Structures_BibTex</strong> provides some methods to export the data stored in the class.
+   Currently the class exports the data in the following formats:</p><ul>
+       <li>
+           
+               <code>BibTeX</code> - The whole data in BibTeX
+           
+       </li>
+       <li>
+           
+               <code>RTF</code> - The data with enough matching data as a short list in RTF format
+           
+       </li>
+       <li>
+           
+               <code>HTML</code> - The data with enough matching data as a short list in HTML format
+           
+       </li>
+   </ul>
+    
+ 
+  
+  <h3>Author</h3>
+ 
+  
+  <p>The default is to export the name of the author in this format: &quot;VON LAST, JR, FIRST&quot;. The corresponding placeholder will be substituted. The placeholders have to be uppercase. The format string is defined in the class variable authorstring. Changing the ouput of the author in the entries to this format &quot;FIRST LAST&quot; can be done like this:</p><p><strong>Changing author format</strong></p>
+    
+    <pre><code>&lt;?php
+require_once &#039;Structures/BibTex.php&#039;;
+$bibtex               = new Structures_BibTex();
+$bibtex-&gt;authorstring = &#039;FIRST LAST&#039;;
+?&gt;</code></pre>
+   
+    
+ 
+
+  <h3>BibTeX</h3>
+ 
+  
+  <p>One of the basic features is of course the export in BibTeX format. This is simply done by invoking
+      the <strong>bibTex()</strong> method.</p><p><strong>Exporting in BibTeX format</strong></p>
+    
+    <pre><code>&lt;?php
+require_once &#039;Structures/BibTex.php&#039;;
+$bibtex = new Structures_BibTex();
+$ret    = $bibtex-&gt;loadFile(&#039;foo.bib&#039;);
+if (PEAR::isError($ret)) {
+    die($ret-&gt;getMessage());
+}
+$bibtex-&gt;parse();
+echo &#039;The data in BibTeX format:&lt;br /&gt;&#039;;
+echo $bibtex-&gt;bibTex();
+?&gt;</code></pre>
+   
+  
+ 
+
+ <h3>RTF</h3>
+ 
+     
+     <p>This feature was introduced to enable some kind of import into Word. Word (of course also Open Office or kword)
+         understands the RTF format. It is simply possible to save the output as &#039;somefile.rtf&#039; and be opened in Word. This
+         will satisfy the Windows users. To use it simply call the method <strong>rtf()</strong>.</p><p><strong>Exporting in RTF format</strong></p>
+             
+             <pre><code>&lt;?php
+require_once &#039;Structures/BibTex.php&#039;;
+$bibtex = new Structures_BibTex();
+$ret    = $bibtex-&gt;loadFile(&#039;foo.bib&#039;);
+if (PEAR::isError($ret)) {
+    die($ret-&gt;getMessage());
+}
+$bibtex-&gt;parse();
+echo &#039;The data in RTF format:&lt;br /&gt;&#039;;
+echo $bibtex-&gt;rtf();
+?&gt;</code></pre>
+         
+     
+     <p>The default format for every entry is first the authors, then the title bold and in double quotes, then the journal
+         italic and finally the year. To change the default format you should override the class variable rtfstring. The default
+         rtfstring looks like this: &#039;AUTHORS, &quot;{\b TITLE}&quot;, {\i JOURNAL}, YEAR&#039;. The string AUTHORS, TITLE, JOURNAL and YEAR are
+         substituted with the corresponding values.</p><p><strong>Exporting in RTF format with different RTF string</strong></p>
+             
+             <pre><code>&lt;?php
+require_once &#039;Structures/BibTex.php&#039;;
+$bibtex = new Structures_BibTex();
+$ret    = $bibtex-&gt;loadFile(&#039;foo.bib&#039;);
+if (PEAR::isError($ret)) {
+    die($ret-&gt;getMessage());
+}
+$bibtex-&gt;parse();
+$bibtex-&gt;rtfstring  = &#039;AUTHORS, &quot;TITLE&quot;, JOURNAL, YEAR&#039;;
+echo &#039;The data in RTF format (but this time plain):&lt;br /&gt;&#039;;
+echo $bibtex-&gt;rtf();
+?&gt;</code></pre>
+         
+     
+ 
+ <h3>HTML</h3>
+ 
+     
+     <p>This feature is just a simple HTML generation. The default formatting is the same as in rtf. 
+         To use it call the method <strong>html()</strong>.</p><p><strong>Exporting in HTML format</strong></p>
+             
+             <pre><code>&lt;?php
+require_once &#039;Structures/BibTex.php&#039;;
+$bibtex = new Structures_BibTex();
+$ret    = $bibtex-&gt;loadFile(&#039;foo.bib&#039;);
+if (PEAR::isError($ret)) {
+    die($ret-&gt;getMessage());
+}
+$bibtex-&gt;parse();
+echo &#039;The data in HTML format:&lt;br /&gt;&#039;;
+echo $bibtex-&gt;html();
+?&gt;</code></pre>
+         
+     
+     <p>As with the RTF export it is possible to override the default HTML string.The default string is stored in the
+         class variable htmlstring and looks like this: AUTHORS, &quot;&lt;strong&gt;TITLE&lt;/strong&gt;&quot;, &lt;em&gt;JOURNAL&lt;/em&gt;, YEAR&lt;br /&gt;.</p><p><strong>Exporting in HTML format with different HTML string</strong></p>
+             
+             <pre><code>&lt;?php
+require_once &#039;Structures/BibTex.php&#039;;
+$bibtex = new Structures_BibTex();
+$ret    = $bibtex-&gt;loadFile(&#039;foo.bib&#039;);
+if (PEAR::isError($ret)) {
+    die($ret-&gt;getMessage());
+}
+$bibtex-&gt;parse();
+$bibtex-&gt;htmlstring  = &#039;AUTHORS, &quot;TITLE&quot;, JOURNAL, YEAR&#039;;
+echo &#039;The data in HTML format (but this time plain):&lt;br /&gt;&#039;;
+echo $bibtex-&gt;html();
+?&gt;</code></pre>
+</section>
+<section id="package-structures-structures-bibtex-misc">
+<h2>Miscellaneous</h2>
+<h3>Overview</h3>
+ 
+        
+        <p>On this page miscellaneous methods of the class <strong>Structures_BibTex</strong> are described.
+            These methods include:</p><ul>
+                <li>
+                    
+                        <code>amount</code> - The amount of BibTex entries
+                    
+                </li>
+                <li>
+                    
+                        <code>getStatistic</code> - Statistics about BibTex entries
+                    
+                </li>
+            </ul>
+        
+    
+    <h3>amount</h3>
+
+        
+        <p>This method simply returns the amount of BibTex entries which are currently stored in the class.
+            The value is returned as Integer value.</p>
+    
+    <h3>getStatistic</h3>
+
+        
+        <p>This methods returns an array with a statistic about all error types together with the amount.
+            The keys are the types and the values the amount in integer.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6694</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #6694</h1>
+<p>-&gt;find() for simple tables generates bad SQL</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-02-04 23:33 UTC</td></tr>
+<tr><th>From</th><td>steve at cuppett dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>Red Hat Enterprise Linux 4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-04 23:33 UTC] steve at cuppett dot com</h3>
+<p>Description:<br>
+------------<br>
+In PostgreSQL 7.4.x (postgresql-7.4.8-1.RHEL4.1) and PHP 4.3.9  (php-4.3.9-3.9) with DB_DataObjects 1.8.2, an incorrect (and disturbing) query is being generated.</p>
+<p>This happens with the find operation.  I get the following query:</p>
+<p>SELECT * FROM owners WHERE ( owners.user = 1 )</p>
+<p>which generates an error in PostgreSQL.  I should get a query similar to the following:</p>
+<p>SELECT * FROM owners WHERE user = 1</p>
+<p>Test script:<br>
+---------------<br>
+Database table:</p>
+<p>CREATE TABLE owners (<br>
+    id bigserial NOT NULL,<br>
+    &quot;user&quot; bigint NOT NULL<br>
+);</p>
+<p>Definition to DB_DataObject:</p>
+<p>class DataObjects_Owner extends DB_DataObject {<br>
+	<br>
+	var $__table = &#039;owners&#039;;<br>
+	var $id;<br>
+	var $user;<br>
+	<br>
+    /* Static get */<br>
+    function staticGet($k,$v=NULL) { return DB_DataObject::staticGet(&#039;DataObjects_Owner&#039;,$k,$v); }</p>
+<p>// now define your table structure.<br>
+    // key is column name, value is type<br>
+    function table() {<br>
+        return array(<br>
+            &#039;id&#039;     =&gt; DB_DATAOBJECT_INT,<br>
+            &#039;user&#039;   =&gt; DB_DATAOBJECT_INT<br>
+        );<br>
+    }<br>
+    <br>
+    // now define the keys.<br>
+    function keys() {<br>
+        return array(&#039;id&#039;);<br>
+    }<br>
+}</p>
+<p>Exploit code:</p>
+<p>function isOwner()<br>
+	{<br>
+		$toReturn = false;<br>
+		DB_DataObject::debugLevel(5);<br>
+		if (isset($this-&gt;id))<br>
+		{<br>
+			$this_owner = new DataObjects_Owner;<br>
+			$this_owner-&gt;user = $this-&gt;id;<br>
+			$rowcount = $this_owner-&gt;find();<br>
+			if ($rowCount == 1)<br>
+			{<br>
+				$toReturn = true;<br>
+			}<br>
+		}<br>
+		return $toReturn;<br>
+	}</p>
+<p>Expected result:<br>
+----------------<br>
+I expect a rational query to be generated that isn&#039;t an error.  That deviation of the actual query generated is included above.</p>
+<p>Actual result:<br>
+--------------<br>
+The incorrect PostgreSQL query:</p>
+<p>SELECT * FROM owners WHERE ( owners.user = 1 )</p>
+<p>is generated.</p>
+<p>Here is the error from debugLevel 5:</p>
+<p>dataobjects_owner: find:<br>
+dataobjects_owner: CONNECT: Checking for database database_ in options<br>
+dataobjects_owner: CONNECT: USING CACHED CONNECTION<br>
+dataobjects_owner: QUERY: SELECT * FROM owners WHERE ( owners.user = 1 )<br>
+dataobjects_owner: Query Error: [db_error: message=&quot;DB Error: syntax error&quot; code=-2 mode=return level=notice prefix=&quot;&quot; info=&quot;SELECT * FROM owners WHERE ( owners.user = 1 ) [nativecode=ERROR: syntax error at or near &quot;user&quot; at character 39]&quot;]<br>
+dataobjects_owner: ERROR: db_error Object ( [error_message_prefix] =&gt; [mode] =&gt; 1 [level] =&gt; 1024 [code] =&gt; -2 [message] =&gt; DB Error: syntax error [userinfo] =&gt; SELECT * FROM owners WHERE ( owners.user = 1 ) [nativecode=ERROR: syntax error at or near &quot;user&quot; at character 39] [backtrace] =&gt; Array ( [0] =&gt; Array ( [file] =&gt; /usr/share/pear/DB.php [line] =&gt; 888 [function] =&gt; pear_error [class] =&gt; db_error [type] =&gt; -&gt; ) [1] =&gt; Array ( [file] =&gt; /usr/share/pear/PEAR.php [line] =&gt; 536 [function] =&gt; db_error [class] =&gt; db_error [type] =&gt; -&gt; ) [2] =&gt; Array ( [file] =&gt; /usr/share/pear/DB/common.php [line] =&gt; 1849 [function] =&gt; raiseerror [class] =&gt; pear [type] =&gt; :: ) [3] =&gt; Array ( [file] =&gt; /usr/share/pear/DB/pgsql.php [line] =&gt; 785 [function] =&gt; raiseerror [class] =&gt; db_pgsql [type] =&gt; -&gt; ) [4] =&gt; Array ( [file] =&gt; /usr/share/pear/DB/pgsql.php [line] =&gt; 337 [function] =&gt; pgsqlraiseerror [class] =&gt; db_pgsql [type] =&gt; -&gt; ) [5] =&gt; Array ( [file] =&gt; /usr/share/pear/DB/common.php [line] =&gt; 1162 [function] =&gt; simplequery [class] =&gt; db_pgsql [type] =&gt; -&gt; ) [6] =&gt; Array ( [file] =&gt; /usr/share/pear/DB/DataObject.php [line] =&gt; 2324 [function] =&gt; query [class] =&gt; db_pgsql [type] =&gt; -&gt; ) [7] =&gt; Array ( [file] =&gt; /usr/share/pear/DB/DataObject.php [line] =&gt; 443 [function] =&gt; _query [class] =&gt; dataobjects_owner [type] =&gt; -&gt; ) [8] =&gt; Array ( [file] =&gt; /home/project/project/www/includes/dataobjects/user.php [line] =&gt; 59 [function] =&gt; find [class] =&gt; dataobjects_owner [type] =&gt; -&gt; ) [9] =&gt; Array ( [file] =&gt; /home/project/project/www/includes/actions/login.php [line] =&gt; 92 [function] =&gt; isowner [class] =&gt; dataobjects_user [type] =&gt; -&gt; ) [10] =&gt; Array ( [file] =&gt; /home/project/project/www/third_party/struts4php/action/actionbanana.php [line] =&gt; 304 [function] =&gt; perform [class] =&gt; loginaction [type] =&gt; -&gt; ) [11] =&gt; Array ( [file] =&gt; /home/project/project/www/third_party/struts4php/action/actionbanana.php [line] =&gt; 185 [function] =&gt; processactionperform [class] =&gt; actionbanana [type] =&gt; -&gt; ) [12] =&gt; Array ( [file] =&gt; /home/project/project/www/index.php [line] =&gt; 4 [function] =&gt; process [class] =&gt; actionbanana [type] =&gt; -&gt; ) ) [callback] =&gt; )<br>
+dataobjects_owner: find: CHECK autofetchd<br>
+dataobjects_owner: find: DONE</p>
+</section>
+<section>
+<h3>[2006-02-04 23:45 UTC] steve at cuppett dot com</h3>
+<p>Was aware that I was using -&gt;find() elsewhere in my project successfully.  It appears that with string elements, quotes can validate the query.  Perhaps quotes are needed in the numeric cases as well?  Successful query:</p>
+<p>SELECT * FROM users WHERE ( users.username = &#039;steve&#039; )</p>
+<p>Trace output from successful string usage:</p>
+<p>dataobjects_user: find:<br>
+dataobjects_user: CONNECT: Checking for database database_ in options<br>
+dataobjects_user: CONNECT: NEW CONNECTION<br>
+dataobjects_user: CONNECT: pgsql://project:t3ng4t3@localhost/project 082729cbfe8a2469f504bff2e5f80d4e<br>
+dataobjects_user: CONNECT: a:1:{s:32:&quot;082729cbfe8a2469f504bff2e5f80d4e&quot;;O:8:&quot;db_pgsql&quot;:8:{s:10:&quot;autocommit&quot;;b:1;s:8:&quot;dbsyntax&quot;;s:5:&quot;pgsql&quot;;s:3:&quot;dsn&quot;;a:9:{s:7:&quot;phptype&quot;;s:5:&quot;pgsql&quot;;s:8:&quot;dbsyntax&quot;;s:5:&quot;pgsql&quot;;s:8:&quot;username&quot;;s:7:&quot;project&quot;;s:8:&quot;password&quot;;s:7:&quot;t3ng4t3&quot;;s:8:&quot;protocol&quot;;s:3:&quot;tcp&quot;;s:8:&quot;hostspec&quot;;s:9:&quot;localhost&quot;;s:4:&quot;port&quot;;b:0;s:6:&quot;socket&quot;;b:0;s:8:&quot;database&quot;;s:7:&quot;project&quot;;}s:8:&quot;features&quot;;a:7:{s:5:&quot;limit&quot;;s:5:&quot;alter&quot;;s:8:&quot;new_link&quot;;s:5:&quot;4.3.0&quot;;s:7:&quot;numrows&quot;;b:1;s:8:&quot;pconnect&quot;;b:1;s:7:&quot;prepare&quot;;b:0;s:3:&quot;ssl&quot;;b:1;s:12:&quot;transactions&quot;;b:1;}s:9:&quot;fetchmode&quot;;i:1;s:22:&quot;fetchmode_object_class&quot;;s:8:&quot;stdClass&quot;;s:7:&quot;options&quot;;a:8:{s:16:&quot;result_buffering&quot;;i:500;s:10:&quot;persistent&quot;;b:0;s:3:&quot;ssl&quot;;b:0;s:5:&quot;debug&quot;;i:0;s:14:&quot;seqname_format&quot;;s:6:&quot;%s_seq&quot;;s:8:&quot;autofree&quot;;b:0;s:11:&quot;portability&quot;;i:0;s:8:&quot;optimize&quot;;s:11:&quot;performance&quot;;}s:13:&quot;was_connected&quot;;b:1;}}<br>
+dataobjects_user: QUERY: SELECT * FROM users WHERE ( users.username = &#039;steve&#039; )<br>
+dataobjects_user: query: QUERY DONE IN 0.016561985015869 seconds<br>
+dataobjects_user: RESULT: O:9:&quot;db_result&quot;:11:{s:8:&quot;autofree&quot;;b:0;s:3:&quot;dbh&quot;;O:8:&quot;db_pgsql&quot;:8:{s:10:&quot;autocommit&quot;;b:1;s:8:&quot;dbsyntax&quot;;s:5:&quot;pgsql&quot;;s:3:&quot;dsn&quot;;a:9:{s:7:&quot;phptype&quot;;s:5:&quot;pgsql&quot;;s:8:&quot;dbsyntax&quot;;s:5:&quot;pgsql&quot;;s:8:&quot;username&quot;;s:7:&quot;project&quot;;s:8:&quot;password&quot;;s:7:&quot;t3ng4t3&quot;;s:8:&quot;protocol&quot;;s:3:&quot;tcp&quot;;s:8:&quot;hostspec&quot;;s:9:&quot;localhost&quot;;s:4:&quot;port&quot;;b:0;s:6:&quot;socket&quot;;b:0;s:8:&quot;database&quot;;s:7:&quot;project&quot;;}s:8:&quot;features&quot;;a:7:{s:5:&quot;limit&quot;;s:5:&quot;alter&quot;;s:8:&quot;new_link&quot;;s:5:&quot;4.3.0&quot;;s:7:&quot;numrows&quot;;b:1;s:8:&quot;pconnect&quot;;b:1;s:7:&quot;prepare&quot;;b:0;s:3:&quot;ssl&quot;;b:1;s:12:&quot;transactions&quot;;b:1;}s:9:&quot;fetchmode&quot;;i:1;s:22:&quot;fetchmode_object_class&quot;;s:8:&quot;stdClass&quot;;s:7:&quot;options&quot;;a:8:{s:16:&quot;result_buffering&quot;;i:500;s:10:&quot;persistent&quot;;b:0;s:3:&quot;ssl&quot;;b:0;s:5:&quot;debug&quot;;i:0;s:14:&quot;seqname_format&quot;;s:6:&quot;%s_seq&quot;;s:8:&quot;autofree&quot;;b:0;s:11:&quot;portability&quot;;i:0;s:8:&quot;optimize&quot;;s:11:&quot;performance&quot;;}s:13:&quot;was_connected&quot;;b:1;}s:9:&quot;fetchmode&quot;;i:1;s:22:&quot;fetchmode_object_class&quot;;s:8:&quot;stdClass&quot;;s:11:&quot;limit_count&quot;;N;s:10:&quot;limit_from&quot;;N;s:10:&quot;parameters&quot;;a:0:{}s:5:&quot;query&quot;;s:62:&quot;SELECT * FROM users WHERE ( users.username = &#039;steve&#039; ) &quot;;s:6:&quot;result&quot;;i:0;s:11:&quot;row_counter&quot;;N;s:9:&quot;statement&quot;;N;}<br>
+dataobjects_user: find: CHECK autofetchd<br>
+dataobjects_user: find: DONE</p>
+</section>
+<section>
+<h3>[2006-02-04 23:54 UTC] steve at cuppett dot com</h3>
+<p>Attempted to modify owner class definition to trick PEAR into thinking that my BIGINT was a string so that it would use quotes.  That doesn&#039;t appear to work.  Modified class:</p>
+<p>class DataObjects_Owner extends DB_DataObject {<br>
+	<br>
+	var $__table = &#039;owners&#039;;<br>
+	var $id;<br>
+	var $user;<br>
+	<br>
+    /* Static get */<br>
+    function staticGet($k,$v=NULL) { return DB_DataObject::staticGet(&#039;DataObjects_Owner&#039;,$k,$v); }</p>
+<p>// now define your table structure.<br>
+    // key is column name, value is type<br>
+    function table() {<br>
+        return array(<br>
+            &#039;id&#039;     =&gt; DB_DATAOBJECT_INT,<br>
+            &#039;user&#039;   =&gt; DB_DATAOBJECT_STR<br>
+        );<br>
+    }<br>
+    <br>
+    // now define the keys.<br>
+    function keys() {<br>
+        return array(&#039;id&#039;);<br>
+    }<br>
+}</p>
+<p>Trace returned:</p>
+<p>dataobjects_owner: find:<br>
+dataobjects_owner: CONNECT: Checking for database database_ in options<br>
+dataobjects_owner: CONNECT: USING CACHED CONNECTION<br>
+dataobjects_owner: QUERY: SELECT * FROM owners WHERE ( owners.user = &#039;1&#039; )<br>
+dataobjects_owner: Query Error: [db_error: message=&quot;DB Error: syntax error&quot; code=-2 mode=return level=notice prefix=&quot;&quot; info=&quot;SELECT * FROM owners WHERE ( owners.user = &#039;1&#039; ) [nativecode=ERROR: syntax error at or near &quot;user&quot; at character 39]&quot;]<br>
+dataobjects_owner: ERROR: db_error Object ( [error_message_prefix] =&gt; [mode] =&gt; 1 [level] =&gt; 1024 [code] =&gt; -2 [message] =&gt; DB Error: syntax error [userinfo] =&gt; SELECT * FROM owners WHERE ( owners.user = &#039;1&#039; ) [nativecode=ERROR: syntax error at or near &quot;user&quot; at character 39] [backtrace] =&gt; Array ( [0] =&gt; Array ( [file] =&gt; /usr/share/pear/DB.php [line] =&gt; 888 [function] =&gt; pear_error [class] =&gt; db_error [type] =&gt; -&gt; ) [1] =&gt; Array ( [file] =&gt; /usr/share/pear/PEAR.php [line] =&gt; 536 [function] =&gt; db_error [class] =&gt; db_error [type] =&gt; -&gt; ) [2] =&gt; Array ( [file] =&gt; /usr/share/pear/DB/common.php [line] =&gt; 1849 [function] =&gt; raiseerror [class] =&gt; pear [type] =&gt; :: ) [3] =&gt; Array ( [file] =&gt; /usr/share/pear/DB/pgsql.php [line] =&gt; 785 [function] =&gt; raiseerror [class] =&gt; db_pgsql [type] =&gt; -&gt; ) [4] =&gt; Array ( [file] =&gt; /usr/share/pear/DB/pgsql.php [line] =&gt; 337 [function] =&gt; pgsqlraiseerror [class] =&gt; db_pgsql [type] =&gt; -&gt; ) [5] =&gt; Array ( [file] =&gt; /usr/share/pear/DB/common.php [line] =&gt; 1162 [function] =&gt; simplequery [class] =&gt; db_pgsql [type] =&gt; -&gt; ) [6] =&gt; Array ( [file] =&gt; /usr/share/pear/DB/DataObject.php [line] =&gt; 2324 [function] =&gt; query [class] =&gt; db_pgsql [type] =&gt; -&gt; ) [7] =&gt; Array ( [file] =&gt; /usr/share/pear/DB/DataObject.php [line] =&gt; 443 [function] =&gt; _query [class] =&gt; dataobjects_owner [type] =&gt; -&gt; ) [8] =&gt; Array ( [file] =&gt; /home/project/project/www/includes/dataobjects/user.php [line] =&gt; 82 [function] =&gt; find [class] =&gt; dataobjects_owner [type] =&gt; -&gt; ) [9] =&gt; Array ( [file] =&gt; /home/project/project/www/includes/actions/login.php [line] =&gt; 91 [function] =&gt; isowner [class] =&gt; dataobjects_user [type] =&gt; -&gt; ) [10] =&gt; Array ( [file] =&gt; /home/project/project/www/third_party/struts4php/action/actionbanana.php [line] =&gt; 304 [function] =&gt; perform [class] =&gt; loginaction [type] =&gt; -&gt; ) [11] =&gt; Array ( [file] =&gt; /home/project/project/www/third_party/struts4php/action/actionbanana.php [line] =&gt; 185 [function] =&gt; processactionperform [class] =&gt; actionbanana [type] =&gt; -&gt; ) [12] =&gt; Array ( [file] =&gt; /home/project/project/www/index.php [line] =&gt; 4 [function] =&gt; process [class] =&gt; actionbanana [type] =&gt; -&gt; ) ) [callback] =&gt; )<br>
+dataobjects_owner: find: CHECK autofetchd<br>
+dataobjects_owner: find: DONE</p>
+</section>
+<section>
+<h3>[2006-02-05 02:42 UTC] steve at cuppett dot com</h3>
+<p>Have upgraded the same system running RHEL 4 Update 2 to PostgreSQL 8.1.2 via SRPM.  This problem seems resolved at that level; however, going off distro to do that seems incorrect to me.</p>
+<p>Is there anything else that can be done at the query generation level to work around this problem on standard PostgreSQL installations from Red Hat?  (PG 7.4.8)</p>
+<p>Unsure whether to open a bug against PostgreSQL or Red Hat Enterprise support now.</p>
+</section>
+<section>
+<h3>[2006-02-07 21:53 UTC] steve at cuppett dot com</h3>
+<p>No.  This theory is wrong, should have mentioned that.  Older version of DB_DataObject didn&#039;t have brackets ().  When I hit problem, I updated PEAR DB and DB_DataObject and started seeing the bracket.  Both had same problem.</p>
+<p>Can create the table in PostgreSQL on RHEL4 and recreate without PEAR DB_DataObject by entering commands both with and without quotes into the command line.</p>
+</section>
+<section>
+<h3>[2006-02-07 22:12 UTC] steve at cuppett dot com</h3>
+<p>Have opened problem report with Red Hat:</p>
+<p>https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=180407</p>
+</section>
+<section>
+<h3>[2006-02-08 01:39 UTC] steve at cuppett dot com</h3>
+<p>Doesn&#039;t seem to have done anything to Postgresql in terms of the generation.  I tried both ` and &#039; in the query suggested and PostgreSQL didn&#039;t seem to appreciate it.  Maybe something is missing in my config?</p>
+<p>$options = array(<br>
+	    &#039;database&#039;           =&gt; &#039;xxxxxxxxxxxx&#039;,<br>
+	    &#039;require_prefix&#039;     =&gt; &#039;include/dataobjects/&#039;,<br>
+	    &#039;class_prefix&#039;       =&gt; &#039;DataObjects_&#039;, <br>
+            &#039;quote_indentifiers&#039; =&gt; &#039;1&#039;<br>
+	);</p>
+<p>With that config, nothing changed in the query generated.</p>
+</section>
+<section>
+<h3>[2006-02-08 13:50 UTC] steve at cuppett dot com</h3>
+<p>I have a feeling your recommendation will work.  Here is the response from the Red Hat bug database that was closed:</p>
+<p>------- Additional Comments From tgl@redhat.com  2006-02-08 01:38 EST -------<br>
+USER is a reserved word according to both the SQL standard and the Postgres grammar.  You can use it as <br>
+a column name only if you always surround it in double quotes.  The fact that the 8.1 grammar lets you <br>
+use it as the second name in a qualified identifier without quotes is a bit interesting, but it does not make <br>
+7.4&#039;s behavior a bug ... and in fact you&#039;d be pretty foolish to assume that releases after 8.1 will still let you <br>
+do that.  (The example without the qualified name isn&#039;t doing what you think at all ... it&#039;s invoking the <br>
+CURRENT_USER function.)</p>
+<p>Bottom line: choose a different name for your column, or get used to using double quotes.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

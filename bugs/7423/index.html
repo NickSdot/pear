@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7423</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_Graph/index.html">Image_Graph</a> &#187; Bug #7423</h1>
+<p>No bar for datasets with single value</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-04-19 14:47 UTC</td></tr>
+<tr><th>From</th><td>christoffer at natlikan dot se</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Image_Graph/index.html">Image_Graph</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>Linux 2.4.21</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-19 14:47 UTC] christoffer at natlikan dot se</h3>
+<p>Description:<br>
+------------<br>
+When you have datasets with only one value no bar will show upp. I know it&#039;s kind of silly to have a graph with only one bar... but it&#039;s not my call.</p>
+<p>I&#039;ve been trying to fix it and think I&#039;ve come up with a solution. By changing the lines 705-707 in Axis.php</p>
+<p>from:<br>
+if ($this-&gt;_axisValueSpan == 0) {<br>
+    $this-&gt;_delta = false;<br>
+} elseif ($this-&gt;_type == IMAGE_GRAPH_AXIS_X) {</p>
+<p>to:<br>
+/*<br>
+if ($this-&gt;_axisValueSpan == 0) {<br>
+    $this-&gt;_delta = false;<br>
+} elseif ($this-&gt;_type == IMAGE_GRAPH_AXIS_X) { */<br>
+if ($this-&gt;_type == IMAGE_GRAPH_AXIS_X) {</p>
+<p>In other words, by removing the first if-satement.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+require_once &#039;Image/Graph.php&#039;;</p>
+<p>// Create the graph<br>
+$Graph =&amp; Image_Graph::factory(&#039;graph&#039;, array(400, 300));<br>
+// Add a TrueType font<br>
+$Font =&amp; $Graph-&gt;addNew(&#039;font&#039;, &#039;Verdana&#039;);<br>
+// Set the font size to 11 pixels<br>
+$Font-&gt;setSize(8);</p>
+<p>$Graph-&gt;setFont($Font);</p>
+<p>$Graph-&gt;add(<br>
+    Image_Graph::vertical(<br>
+        Image_Graph::factory(&#039;title&#039;, array(&#039;Bar Chart Sample&#039;, 12)), <br>
+        Image_Graph::vertical(<br>
+            $Plotarea = Image_Graph::factory(&#039;plotarea&#039;), <br>
+            $Legend = Image_Graph::factory(&#039;legend&#039;), <br>
+            90<br>
+        ),<br>
+        5<br>
+    )<br>
+);</p>
+<p>$Legend-&gt;setPlotarea($Plotarea);</p>
+<p>// Create the dataset<br>
+$Dataset =&amp; Image_Graph::factory(&#039;random&#039;, array(1, 2, 15, false));<br>
+// Create the 1st plot as smoothed area chart using the 1st dataset<br>
+$Plot =&amp; $Plotarea-&gt;addNew(&#039;bar&#039;, array(&amp;$Dataset));</p>
+<p>// Set a line color<br>
+$Plot-&gt;setLineColor(&#039;gray&#039;);</p>
+<p>// Set a standard fill style<br>
+$Plot-&gt;setFillColor(&#039;blue@0.2&#039;);</p>
+<p>// Output the Graph<br>
+$Graph-&gt;done();<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+A graph with one centered bar.</p>
+<p>Actual result:<br>
+--------------<br>
+A graph with no bar at all.</p>
+</section>
+<section>
+<h3>[2006-04-25 04:26 UTC] alex_lai at hotmail dot com</h3>
+<p>I want to provide my testing result for generating a graph with only one bar in it for v0.7.2.</p>
+<p>If the x-axis is a Image_Graph_Axis_Category or Image_Graph_Axis, the bar does get plotted. However, the bar is plotted right on the y-axis. If you change the color of the bar graph you will be able to view this. For a logarithmic axis, the single bar is generated correctly.</p>
+<p>There are existing work arounds for this behavior. If the x-axis is linear, Image_Graph_Axis, then force a minimum and maximum x-axis value and the bar will display nicely. If the x-axis is a category type, Image_Graph_Axis_Category, then add additional value to the dataset with x and y value (y&#039;s set to zero) in the desired order to have it appear on the x-axis.</p>
+<p>A possible appropriate behavior is to modify the code to let users input an offset value from the y-axis for the first value on the x-axis or vice versa, something like, setAxisOffset. This would also be beneficial for logarithmic axis as well.</p>
+<p>Alex</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8386</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #8386</h1>
+<p>HTML body not correctly encoded if attachments present</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-08-08 11:01 UTC</td></tr>
+<tr><th>From</th><td>lucabert at lucabert dot de</td></tr>
+<tr><th>Assigned</th><td>cipri</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.5</td></tr>
+<tr><th>OS</th><td>Linux RedHat 9</td></tr>
+<tr><th>Roadmaps</th><td>1.4.0, 1.4.0a1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-08 11:01 UTC] lucabert at lucabert dot de</h3>
+<p>Description:<br>
+------------<br>
+If an E-Mail has attachments, it seems not to encode the HTML part.<br>
+Many Mailer have problem to display the message.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?<br>
+include(&#039;Mail.php&#039;);<br>
+include(&#039;Mail/mime.php&#039;);</p>
+<p>$mime = new Mail_mime(&quot;\n&quot;);<br>
+$mime-&gt;setTXTBody(&#039;Das ist ein Test&#039;);<br>
+$mime-&gt;setHTMLBody(&#039;&lt;HTML&gt;&lt;BODY&gt;&lt;H1&gt;Das ist ein TEST&lt;/H1&gt;&lt;/BODY&gt;&lt;/HTML&gt;&#039;);<br>
+$mime-&gt;addAttachment(&#039;/tmp/test.gz&#039;, &#039;application/x-gzip&#039;, &#039;test.gz&#039;);</p>
+<p>$hdrs = array(<br>
+              &#039;From&#039; =&gt; &#039;Luca Bertoncello &lt;lucabert@server.de&gt;&#039;,<br>
+              &#039;To&#039; =&gt; &#039;lucabert@server.de&#039;,<br>
+              &#039;Subject&#039; =&gt; &#039;Ein kleines Test&#039;,<br>
+              &#039;Message-Id&#039; =&gt; &#039;&lt;&#039;.date(&#039;YmdHis&#039;).&#039;.&#039;.posix_getpid().&#039;@localhost&gt;&#039;,<br>
+              &#039;Date&#039; =&gt; date(&#039;r&#039;)<br>
+              );</p>
+<p>$body = $mime-&gt;get();<br>
+$hdrs = $mime-&gt;headers($hdrs);</p>
+<p>$mail =&amp; Mail::factory(&#039;smtp&#039;, array(&#039;host&#039; =&gt; &#039;localhost&#039;, &#039;auth&#039; =&gt; &#039;CRAM-MD5&#039;, &#039;username&#039; =&gt; &#039;&lt;my Username&gt;&#039;, &#039;password&#039; =&gt; &#039;&lt;my Password&gt;&#039;, &#039;localhost&#039; =&gt; &#039;server.de&#039;));<br>
+$ret = $mail-&gt;send(&#039;lucabert@server.de&#039;, $hdrs, $body);<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+This is a normal HTML E-Mail with an Attachment:</p>
+<p>Subject: HTML mit 2 Attachments<br>
+From: Luca Bertoncello &lt;lucabert@server.de&gt;<br>
+To: lucabert@server.de<br>
+Content-Type: multipart/mixed; boundary=&quot;=-FssUx3EEijD6zZ/ed9KI&quot;<br>
+Message-Id: &lt;1154341815.5647.1.camel@lucabert&gt;<br>
+Mime-Version: 1.0<br>
+X-Mailer: Ximian Evolution 1.4.6 (1.4.6-2)<br>
+Date: Mon, 31 Jul 2006 12:30:15 +0200</p>
+<p>--=-FssUx3EEijD6zZ/ed9KI<br>
+Content-Type: multipart/alternative; boundary=&quot;=-X5H4pZuJcQ+po6ZfSGQ3&quot;</p>
+<p>--=-X5H4pZuJcQ+po6ZfSGQ3<br>
+Content-Type: text/plain<br>
+Content-Transfer-Encoding: 7bit</p>
+<p>Und HTML dazu</p>
+<p>--=-X5H4pZuJcQ+po6ZfSGQ3<br>
+Content-Type: text/html; charset=utf-8<br>
+Content-Transfer-Encoding: 7bit</p>
+<p>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0 TRANSITIONAL//EN&quot;&gt;<br>
+&lt;HTML&gt;<br>
+&lt;HEAD&gt;<br>
+  &lt;META HTTP-EQUIV=&quot;Content-Type&quot; CONTENT=&quot;text/html; CHARSET=UTF-8&quot;&gt;<br>
+  &lt;META NAME=&quot;GENERATOR&quot; CONTENT=&quot;GtkHTML/3.0.10&quot;&gt;<br>
+&lt;/HEAD&gt;<br>
+&lt;BODY&gt;<br>
+Und &lt;FONT COLOR=&quot;#3366ff&quot;&gt;&lt;B&gt;&lt;I&gt;&lt;U&gt;&lt;S&gt;HTML&lt;/S&gt;&lt;/U&gt;&lt;/I&gt;&lt;/B&gt;&lt;/FONT&gt; dazu<br>
+&lt;/BODY&gt;<br>
+&lt;/HTML&gt;</p>
+<p>--=-X5H4pZuJcQ+po6ZfSGQ3--</p>
+<p>--=-FssUx3EEijD6zZ/ed9KI<br>
+Content-Disposition: attachment; filename=test.gz<br>
+Content-Type: application/x-gzip; name=test.gz<br>
+Content-Transfer-Encoding: base64</p>
+<p>H4sICHLbzUQAA3BpcHBvAAsoyi9L5AIAtFpUkQYAAAA=</p>
+<p>--=-FssUx3EEijD6zZ/ed9KI--</p>
+<p>Actual result:<br>
+--------------<br>
+And this is what I get with the script:</p>
+<p>MIME-Version: 1.0<br>
+From: Luca Bertoncello &lt;lucabert@server.de&gt;<br>
+To: lucabert@server.de<br>
+Subject: Ein kleines Test<br>
+Message-Id: &lt;20060808123727.19652@localhost&gt;<br>
+Date: Tue,  8 Aug 2006 12:37:27 +0200<br>
+Content-Type: multipart/mixed;<br>
+	boundary=&quot;=_ecadccd86e007f0fabc3b902aa72fbeb&quot;</p>
+<p>--=_ecadccd86e007f0fabc3b902aa72fbeb<br>
+Content-Type: multipart/alternative;<br>
+	boundary=&quot;=_e5f0bb1e2fb2b32f9a165a2837a330cf&quot;</p>
+<p>--=_e5f0bb1e2fb2b32f9a165a2837a330cf<br>
+Content-Type: text/plain; charset=&quot;ISO-8859-1&quot;<br>
+Content-Transfer-Encoding: 7bit</p>
+<p>Das ist ein Test<br>
+--=_e5f0bb1e2fb2b32f9a165a2837a330cf<br>
+Content-Type: text/html; charset=&quot;ISO-8859-1&quot;<br>
+Content-Transfer-Encoding: quoted-printable</p>
+<p>&lt;HTML&gt;&lt;BODY&gt;&lt;H1&gt;Das ist ein TEST&lt;/H1&gt;&lt;/BODY&gt;&lt;/HTML&gt;<br>
+--=_e5f0bb1e2fb2b32f9a165a2837a330cf--<br>
+--=_ecadccd86e007f0fabc3b902aa72fbeb<br>
+Content-Type: application/x-gzip<br>
+Content-Transfer-Encoding: base64<br>
+Content-Disposition: attachment; filename=&quot;test.gz&quot;</p>
+<p>H4sICHLbzUQAA3BpcHBvAAsoyi9L5AIAtFpUkQYAAAA=<br>
+--=_ecadccd86e007f0fabc3b902aa72fbeb--</p>
+<p>The Problem is that, betwenn the 2 boundaries after HTML, there is NO newline!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

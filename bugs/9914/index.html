@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9914</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid_DataSource_Array/index.html">Structures_DataGrid_DataSource_Array</a> &#187; Bug #9914</h1>
+<p>Incorrect array index assumption</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-22 15:12 UTC</td></tr>
+<tr><th>From</th><td>rjbarbour at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>wiesemann</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid_DataSource_Array/index.html">Structures_DataGrid_DataSource_Array</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.5</td></tr>
+<tr><th>OS</th><td>XP SP2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-22 15:12 UTC] rjbarbour at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+The array $_ar may have integer indexes. The script assume, on line 120 of Array.php, that the first element of the array will be at $_ar[0]. This can be an incorrect assumption.<br>
+See example below.</p>
+<p>Test script:<br>
+---------------<br>
+$my_array = array( 5 =&gt; &#039;five&#039;, 3 =&gt; &#039;three&#039; );<br>
+$datagrid-&gt;bind($my_array);<br>
+//$this-&gt;_ar[0] on line 120 of Array.php will evaluate to NULL</p>
+<p>Expected result:<br>
+----------------<br>
+No warning.</p>
+<p>Actual result:<br>
+--------------<br>
+Warning: array_keys() [function.array-keys]: The first argument should be an array in C:\&lt;my_path&gt;\PEAR\pear\Structures\DataGrid\DataSource\Array.php on line 120</p>
+</section>
+<section>
+<h3>[2007-01-22 15:13 UTC] rjbarbour at gmail dot com</h3>
+<p>changed my email address</p>
+</section>
+<section>
+<h3>[2007-01-23 22:23 UTC] rjbarbour at gmail dot com</h3>
+<p>Access to key 0 may be invalid if the first element of the shiny new array is unset:</p>
+<p>eg:</p>
+<p>$my_array =  array( <br>
+  array( &#039;name&#039; =&gt; &#039;Alice&#039;, &#039;address&#039; =&gt; &#039;foo&#039; ),<br>
+  array( &#039;name&#039; =&gt; &#039;Bob&#039;, &#039;address&#039; =&gt; &#039;bar&#039;)<br>
+  array( &#039;name&#039; =&gt; &#039;Charlie&#039;, &#039;address&#039; =&gt; &#039;quxx&#039;)<br>
+);<br>
+unset($my_array[&#039;0&#039;]);<br>
+/*<br>
+Array now looks like this:<br>
+array( <br>
+  1 =&gt; array( &#039;name&#039; =&gt; &#039;Bob&#039;, &#039;address&#039; =&gt; &#039;bar&#039;)<br>
+  2 =&gt; array( &#039;name&#039; =&gt; &#039;Charlie&#039;, &#039;address&#039; =&gt; &#039;quxx&#039;)<br>
+)<br>
+*/<br>
+$datagrid-&gt;bind($my_array);</p>
+<p>If $my_array is re-indexed with array_merge() then Array.php will not complain.</p>
+<p>I don&#039;t think it should be necessary to do this.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

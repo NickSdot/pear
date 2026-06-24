@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5895</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_FTP/index.html">Net_FTP</a> &#187; Bug #5895</h1>
+<p>Recursive chmod ends in endless loop</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-08 13:22 UTC</td></tr>
+<tr><th>From</th><td>sasha_k at techs dot com dot ua</td></tr>
+<tr><th>Assigned</th><td>toby</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_FTP/index.html">Net_FTP</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-08 13:22 UTC] sasha_k at techs dot com dot ua</h3>
+<p>Description:<br>
+------------<br>
+The problem is as &quot;Bug #4969 Recursive rm ends in endless loop&quot; in &quot;chmode_recursive&quot; too.</p>
+<p>was:<br>
+------------------------------------<br>
+    function chmodRecursive($target, $permissions)<br>
+    {<br>
+        static $dir_permissions;</p>
+<p>if(!isset($dir_permissions)){ // Making directory specific permissions<br>
+            $dir_permissions = $this-&gt;_makeDirPermissions($permissions);<br>
+        }</p>
+<p>// If $target is an array: Loop through it<br>
+        if (is_array($target)) {</p>
+<p>for ($i = 0; $i &lt; count($target); $i++) {<br>
+                $res = $this-&gt;chmodRecursive($target[$i], $permissions);<br>
+                if (PEAR::isError($res)) {<br>
+                    return $res;<br>
+                } // end if isError<br>
+            } // end for i &lt; count($target)</p>
+<p>} else {</p>
+<p>$remote_path = $this-&gt;_construct_path($target);</p>
+<p>// Chmod the directory itself<br>
+            $result = $this-&gt;chmod($remote_path, $dir_permissions);</p>
+<p>if (PEAR::isError($result)) {<br>
+                return $result;<br>
+            }</p>
+<p>// If $remote_path last character is not a slash, add one<br>
+            if (substr($remote_path, strlen($remote_path)-1) != &quot;/&quot;) {</p>
+<p>$remote_path .= &quot;/&quot;;<br>
+            }</p>
+<p>$dir_list = array();<br>
+            $mode = NET_FTP_DIRS_ONLY;<br>
+            $dir_list = $this-&gt;ls($remote_path, $mode);<br>
+            foreach ($dir_list as $dir_entry) {<br>
+                $remote_path_new = $remote_path.$dir_entry[&quot;name&quot;].&quot;/&quot;;</p>
+<p>// Chmod the directory we&#039;re about to enter<br>
+                $result = $this-&gt;chmod($remote_path_new, $dir_permissions);<br>
+	<br>
+                if (PEAR::isError($result)) {<br>
+                    return $result;<br>
+                }<br>
+	<br>
+                $result = $this-&gt;chmodRecursive($remote_path_new, $permissions);<br>
+	<br>
+                if (PEAR::isError($result)) {<br>
+                    return $result;<br>
+                }<br>
+            } // end foreach dir_list as dir_entry</p>
+<p>$file_list = array();<br>
+            $mode = NET_FTP_FILES_ONLY;<br>
+            $file_list = $this-&gt;ls($remote_path, $mode);</p>
+<p>foreach ($file_list as $file_entry) {</p>
+<p>$remote_file = $remote_path.$file_entry[&quot;name&quot;];</p>
+<p>$result = $this-&gt;chmod($remote_file, $permissions);</p>
+<p>if (PEAR::isError($result)) {<br>
+                    return $result;<br>
+                }</p>
+<p>} // end foreach $file_list</p>
+<p>} // end if is_array</p>
+<p>return true; // No errors</p>
+<p>} // end method chmodRecursive<br>
+------------------------------------</p>
+<p>patch:<br>
+------------------------------------<br>
+    function chmodRecursive($target, $permissions)<br>
+    {<br>
+        static $dir_permissions;</p>
+<p>if(!isset($dir_permissions)){ // Making directory specific permissions<br>
+            $dir_permissions = $this-&gt;_makeDirPermissions($permissions);<br>
+        }</p>
+<p>// If $target is an array: Loop through it<br>
+        if (is_array($target)) {</p>
+<p>for ($i = 0; $i &lt; count($target); $i++) {<br>
+                $res = $this-&gt;chmodRecursive($target[$i], $permissions);<br>
+                if (PEAR::isError($res)) {<br>
+                    return $res;<br>
+                } // end if isError<br>
+            } // end for i &lt; count($target)</p>
+<p>} else {</p>
+<p>$remote_path = $this-&gt;_construct_path($target);</p>
+<p>// Chmod the directory itself<br>
+            $result = $this-&gt;chmod($remote_path, $dir_permissions);</p>
+<p>if (PEAR::isError($result)) {<br>
+                return $result;<br>
+            }</p>
+<p>// If $remote_path last character is not a slash, add one<br>
+            if (substr($remote_path, strlen($remote_path)-1) != &quot;/&quot;) {</p>
+<p>$remote_path .= &quot;/&quot;;<br>
+            }</p>
+<p>$dir_list = array();<br>
+            $mode = NET_FTP_DIRS_ONLY;<br>
+            $dir_list = $this-&gt;ls($remote_path, $mode);<br>
+            foreach ($dir_list as $dir_entry) {<br>
+        	if (($dir_entry[&quot;name&quot;] != &#039;.&#039;) &amp;&amp; ($dir_entry[&quot;name&quot;] != &#039;..&#039;)) {<br>
+	<br>
+	                $remote_path_new = $remote_path.$dir_entry[&quot;name&quot;].&quot;/&quot;;<br>
+	<br>
+	                // Chmod the directory we&#039;re about to enter<br>
+	                $result = $this-&gt;chmod($remote_path_new, $dir_permissions);<br>
+	<br>
+	                if (PEAR::isError($result)) {<br>
+	                    return $result;<br>
+	                }<br>
+	<br>
+	                $result = $this-&gt;chmodRecursive($remote_path_new, $permissions);<br>
+	<br>
+	                if (PEAR::isError($result)) {<br>
+	                    return $result;<br>
+	                }<br>
+        	}</p>
+<p>} // end foreach dir_list as dir_entry</p>
+<p>$file_list = array();<br>
+            $mode = NET_FTP_FILES_ONLY;<br>
+            $file_list = $this-&gt;ls($remote_path, $mode);</p>
+<p>foreach ($file_list as $file_entry) {</p>
+<p>$remote_file = $remote_path.$file_entry[&quot;name&quot;];</p>
+<p>$result = $this-&gt;chmod($remote_file, $permissions);</p>
+<p>if (PEAR::isError($result)) {<br>
+                    return $result;<br>
+                }</p>
+<p>} // end foreach $file_list</p>
+<p>} // end if is_array</p>
+<p>return true; // No errors</p>
+<p>} // end method chmodRecursive<br>
+------------------------------------</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

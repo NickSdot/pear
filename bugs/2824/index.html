@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2824</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_URL/index.html">Net_URL</a> &#187; Bug #2824</h1>
+<p>error suppresion is used where code canbe easily changed to avoid errors</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #2824</th><td>error suppresion is used where code canbe easily changed to avoid errors</td></tr>
+<tr><th>Submitted</th><td>2004-11-24 22:35 UTC</td></tr>
+<tr><th>From</th><td>alexei at net24 dot co dot nz</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_URL/index.html">Net_URL</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.2</td></tr>
+<tr><th>OS</th><td>freebsd</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-11-24 22:35 UTC] alexei at net24 dot co dot nz</h3>
+<p>Description:<br>
+------------<br>
+functions __construct and _parseRawQuerystring use error suppression (@) where code can be easily rewritten to avoid errors</p>
+<p>patch included</p>
+<p>Reproduce code:<br>
+---------------<br>
+? Net_URL.diff<br>
+Index: URL.php<br>
+===================================================================<br>
+RCS file: /repository/pear/Net_URL/URL.php,v<br>
+retrieving revision 1.37<br>
+diff -u -r1.37 URL.php<br>
+--- URL.php	26 Jun 2004 12:45:07 -0000	1.37<br>
++++ URL.php	24 Nov 2004 22:21:06 -0000<br>
+@@ -125,7 +125,7 @@<br>
+         // Only use defaults if not an absolute URL given<br>
+         if (!preg_match(&#039;/^[a-z0-9]+:\/\//i&#039;, $url)) {<br>
+ <br>
+-            $this-&gt;protocol = (@$_SERVER[&#039;HTTPS&#039;] == &#039;on&#039; ? &#039;https&#039; : &#039;http&#039;);<br>
++            $this-&gt;protocol = (isset($_SERVER[&#039;HTTPS&#039;]) &amp;&amp; $_SERVER[&#039;HTTPS&#039;] == &#039;on&#039; ? &#039;https&#039; : &#039;http&#039;);<br>
+ <br>
+             /**<br>
+             * Figure out host/port<br>
+@@ -370,7 +370,7 @@<br>
+             }<br>
+             if (substr($key, -2) == &#039;[]&#039;) {<br>
+                 $key = substr($key, 0, -2);<br>
+-                if (@!is_array($return[$key])) {<br>
++                if (!isset($return[$key]) || !is_array($return[$key])) {<br>
+                     $return[$key]   = array();<br>
+                     $return[$key][] = $value;<br>
+                 } else {</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

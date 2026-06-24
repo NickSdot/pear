@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #168</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_DTD/index.html">XML_DTD</a> &#187; Bug #168</h1>
+<p>XML_DTD_Tree-&gt;getChildren() underscore problem</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-10-30 15:22 UTC</td></tr>
+<tr><th>From</th><td>aake at iki dot fi</td></tr>
+<tr><th>Assigned</th><td>cox</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_DTD/index.html">XML_DTD</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Mac OS X 10.2.8</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-10-30 15:22 UTC] aake at iki dot fi</h3>
+<p>Description:<br>
+------------<br>
+It seems that XML_DTD_Tree-&gt;getChildren() method fails <br>
+to recognize ELEMENT names (in DTD files) with <br>
+underscores properly thus interpreting them as two <br>
+different elements.</p>
+<p>Reproduce code:<br>
+---------------<br>
+...</p>
+<p>$dtd_parser = new XML_DTD_parser();<br>
+$dtd_tree = $dtd_parser-&gt;parse(&#039;book.dtd&#039;);<br>
+print_r($dtd_tree-&gt;getChildren(&#039;book&#039;));</p>
+<p>...</p>
+<p>DTD (book.dtd):</p>
+<p>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</p>
+<p>&lt;!ELEMENT book (title,author?,page_number)&gt;<br>
+&lt;!ELEMENT title (#PCDATA)&gt;<br>
+&lt;!ELEMENT author (#PCDATA)&gt;<br>
+&lt;!ELEMENT page_number (#PCDATA)&gt;</p>
+<p>&lt;!ATTLIST book cover (hard | soft | unknown) &quot;unknown&quot;&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Array ( [0] =&gt; title [1] =&gt; author [2] =&gt; page_number )</p>
+<p>Actual result:<br>
+--------------<br>
+Array ( [0] =&gt; title [1] =&gt; author [2] =&gt; page [3] =&gt; number )</p>
+</section>
+<section>
+<h3>[2003-12-17 16:23 UTC] i dot veith at gmx dot de</h3>
+<p>The method &quot;_ELEMENT&quot; splits the Elements and if an Element is Named like &quot;ELEMENT_NAME&quot; The method maks two Elemets out of it (&quot;ELEMENT&quot; and  &quot;NAME&quot;).<br>
+And now its clear, why my xml will never be valide.</p>
+<p>What to do:<br>
+In the DTD.php (from Package version 0.4.1) on Line 195 and 206 the regular expresion in incomplete.</p>
+<p>Line 195:<br>
+replace<br>
+$children = preg_split(&#039;/([^#a-zA-Z0-9.-]+)/&#039;, $ch, -1, PREG_SPLIT_NO_EMPTY);<br>
+width<br>
+$children = preg_split(&#039;/([^#a-zA-Z0-9_.-]+)/&#039;, $ch, -1, PREG_SPLIT_NO_EMPTY);</p>
+<p>line 206:<br>
+replace<br>
+$reg = preg_replace(&#039;/([#a-zA-Z0-9.-]+)/&#039;, &#039;(,?\\0)&#039;, $reg);<br>
+width<br>
+$reg = preg_replace(&#039;/([#a-zA-Z0-9_.-]+)/&#039;, &#039;(,?\\0)&#039;, $reg);</p>
+<p>It’s the underscore after &quot;0-9&quot; and before &quot;.-&quot;.</p>
+<p>Compare: (&lt;)D:\www\dtd\DTD.php (12078 bytes)<br>
+	with: (&gt;)C:\XML_DTD-0.4.1\DTD.php (12462 bytes)</p>
+<p>195c194<br>
+&lt;                 $children = preg_split(&#039;/([^#a-zA-Z0-9_.-]+)/&#039;, $ch, -1, PREG_SPLIT_NO_EMPTY);<br>
+---<br>
+&gt;                 $children = preg_split(&#039;/([^#a-zA-Z0-9.-]+)/&#039;, $ch, -1, PREG_SPLIT_NO_EMPTY);<br>
+206c205<br>
+&lt;                 $reg = preg_replace(&#039;/([#a-zA-Z0-9_.-]+)/&#039;, &#039;(,?\\0)&#039;, $reg);<br>
+---<br>
+&gt;                 $reg = preg_replace(&#039;/([#a-zA-Z0-9.-]+)/&#039;, &#039;(,?\\0)&#039;, $reg);</p>
+</section>
+<section>
+<h3>[2004-02-18 14:29 UTC] tuupola at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

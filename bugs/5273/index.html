@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5273</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Logging &#187; <a href="package/Log/index.html">Log</a> &#187; Bug #5273</h1>
+<p>E_WARNING generated when opening log file</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-09-02 03:58 UTC</td></tr>
+<tr><th>From</th><td>oracle dot shinoda at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>jon</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Log/index.html">Log</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.0</td></tr>
+<tr><th>OS</th><td>Linux (Debian)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-09-02 03:58 UTC] oracle dot shinoda at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Using Log 1.8.7. In method open() in Log/file.php, there is an attempt to chmod the newly-opened log file:</p>
+<p>/* Attempt to set the log file&#039;s mode. */<br>
+            @chmod($this-&gt;_filename, $this-&gt;_mode);</p>
+<p>Sure, if it doesn&#039;t work, the @ suppresses error _output_. But it doesn&#039;t stop the fact that the error _occured_.</p>
+<p>What this means in my case is, I have a function that is my error handler (registered with set_error_handler()), and it gets called when that line is executed, because PHP doesn&#039;t have permissions to chmod it.</p>
+<p>My error function doesn&#039;t know about the @, and so blithely goes ahead and does it&#039;s business (in my case, killing the script).</p>
+<p>I suggest that there be an attempt at checking if the chmod operation be allowed first, as a backstop. I changed the lines above (around line 207) to the following:</p>
+<p>/* Attempt to set the log file&#039;s mode. */<br>
+            if (is_writable(dirname($this-&gt;_filename))) {<br>
+                @chmod($this-&gt;_filename, $this-&gt;_mode);<br>
+            }</p>
+<p>Of course, the check may not be the best, but it works for me.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+set_error_handler(&#039;error&#039;);<br>
+function error ($code, $message, $file, $line, $vars)<br>
+{<br>
+    // Does various stuff<br>
+    exit(1);<br>
+}</p>
+<p>require_once &#039;Log.php&#039;;<br>
+$log =&amp; Log::factory(&#039;file&#039;, &#039;/var/log/apache/the.log&#039;);</p>
+<p>// trigger a log write somehow</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+No error.</p>
+<p>Actual result:<br>
+--------------<br>
+Script exits, because error() was called.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

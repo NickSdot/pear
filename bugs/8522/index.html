@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8522</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #8522</h1>
+<p>Incorrect handling of right_level merge from multiple groups</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8522</th><td>Incorrect handling of right_level merge from multiple groups</td></tr>
+<tr><th>Submitted</th><td>2006-08-21 00:53 UTC</td></tr>
+<tr><th>From</th><td>jan dot bolmeson at ecotech dot se</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-21 00:53 UTC] jan dot bolmeson at ecotech dot se</h3>
+<p>Description:<br>
+------------<br>
+I have been trying to get this right the last couple of hours but I don&#039;t seem to get it work. The situatiopn is as follows; I have a UserA , he is a member of GroupA and GroupB.</p>
+<p>GroupA and GroupB both have the RightA but at different right levels. GroupA at level 3 whereas GroupB at level -3. So far so good.</p>
+<p>Now when I check the right for the user it returns tells me that the current right_level is 3.</p>
+<p>What I have tried:<br>
+1. I added a user right at level -3. It returned 0 (don&#039;t know why 0 instead of -3, but that&#039;s ok)<br>
+2. I removed membership of GroupA. Returned -3 -correctly.</p>
+<p>So the question stands - if a right is assigned two several groups at different levels - how is the right level calculated?</p>
+<p>Expected result:<br>
+----------------<br>
+see description.</p>
+<p>Actual result:<br>
+--------------<br>
+see description.</p>
+</section>
+<section>
+<h3>[2006-08-21 01:10 UTC] jan dot bolmeson at ecotech dot se</h3>
+<p>I just dug a little bit deeper and went for the readGroupRights() function in DB.php:270. It fetches group rights with a MAX-condition and hence only pick up a right once and then with the max right_level.</p>
+<p>SELECT GR.right_id, MAX( GR.right_level )<br>
+FROM liveuser_grouprights GR<br>
+WHERE GR.group_id<br>
+IN ( GroupA_ID , GroupB_ID )<br>
+GROUP BY GR.right_id<br>
+LIMIT 0 , 50</p>
+<p>If the situaiton is as in my example below - the other groups right_level at -3 is ignored.</p>
+<p>In my point of view negated rights should always have precedence? Or what do you think?</p>
+</section>
+<section>
+<h3>[2006-08-21 01:12 UTC] jan dot bolmeson at ecotech dot se</h3>
+<p>I replaced MAX with SUM in my version... just a thought...</p>
+</section>
+<section>
+<h3>[2006-08-21 12:53 UTC] jan dot bolmeson at ecotech dot se</h3>
+<p>Hi Lukas,</p>
+<p>Thanks for your quick reply - but I don&#039;t really agree with you. As I wrote in the bug report and you say - it WORKS if the right&#039;s negated by a userright - but why don&#039;t you want this behaviour for grouprights as well?</p>
+<p>In my point of view declined rights should always precede rights that give access. Whereas user rights have precedence above grouprights just as it is implemented.</p>
+<p>In my application with several hundred rights, groups and users I don&#039;t want to put a user right on every user - instead I want to be able to put the user in a group that determines the rights.</p>
+<p>E.g. I have a Normal group which gives the user a set of rights. Now when I add a limited user account I still want him to have the rights from the Normal group except one or two. In my point of view - the easiest thing should be to add the user to a Limited Group.</p>
+<p>Now I could add all the normal rights except for the two, but that seem redundant (with 80+ rights)- so I wanted Limited to consist of two rights with level -3. Hence the bug report?</p>
+<p>Am thinking in a wrong direction, or how would you solve the matter?</p>
+<p>Thanks in advance,<br>
+Jan Bolmeson<br>
+ZCE</p>
+</section>
+<section>
+<h3>[2006-08-21 17:49 UTC] jan dot bolmeson at ecotech dot se</h3>
+<p>Hi (again)!</p>
+<p>I am not going to try to convince you, you have made a great job with the package and you have my full trust. I have been happy ever since I figured out that SUM() solved my problem - the rest is just my opinion... :)</p>
+<p>I agree with you that rights should be divided into subsets but after a while even the smallest subsets tend to grow. =o|</p>
+<p>The thing that cought my attention was that (this wasn&#039;t documented in your docs and) your default choice between accepting or denying access you choose to give rather then forbid. This was just opposite to what I have been though... :)</p>
+<p>Keep up the good work!<br>
+Jan Bolmeson<br>
+ZCE</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4868</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #4868</h1>
+<p>PHP4.4 Only variable references should be returned by reference</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-07-20 06:06 UTC</td></tr>
+<tr><th>From</th><td>sumeet at prateeksha dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.0</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-07-20 06:06 UTC] sumeet at prateeksha dot com</h3>
+<p>Description:<br>
+------------<br>
+dear sir,</p>
+<p>my server adminstrator in his infinite wisdom, has recently upgrade to PHP version 4.4. the DB pear library give me the following error.</p>
+<p>Error No. 8 in Line No. 1127 in File : /home/public_html/DB.php  <br>
+Only variable references should be returned by reference</p>
+<p>Please can anybody rectify the same..</p>
+<p>sumeet shroff</p>
+<p>Reproduce code:<br>
+---------------<br>
+    function &amp;fetchRow($fetchmode = DB_FETCHMODE_DEFAULT, $rownum = null)<br>
+    {<br>
+        if ($fetchmode === DB_FETCHMODE_DEFAULT) {<br>
+            $fetchmode = $this-&gt;fetchmode;<br>
+        }<br>
+        if ($fetchmode === DB_FETCHMODE_OBJECT) {<br>
+            $fetchmode = DB_FETCHMODE_ASSOC;<br>
+            $object_class = $this-&gt;fetchmode_object_class;<br>
+        }<br>
+        if ($this-&gt;limit_from !== null) {<br>
+            if ($this-&gt;row_counter === null) {<br>
+                $this-&gt;row_counter = $this-&gt;limit_from;<br>
+                // Skip rows<br>
+                if ($this-&gt;dbh-&gt;features[&#039;limit&#039;] === false) {<br>
+                    $i = 0;<br>
+                    while ($i++ &lt; $this-&gt;limit_from) {<br>
+                        $this-&gt;dbh-&gt;fetchInto($this-&gt;result, $arr, $fetchmode);<br>
+                    }<br>
+                }<br>
+            }<br>
+            if ($this-&gt;row_counter &gt;= ($this-&gt;limit_from + $this-&gt;limit_count))<br>
+            {<br>
+                if ($this-&gt;autofree) {<br>
+                    $this-&gt;free();<br>
+                }<br>
+                $tmp = null;<br>
+                return $tmp;<br>
+            }<br>
+            if ($this-&gt;dbh-&gt;features[&#039;limit&#039;] === &#039;emulate&#039;) {<br>
+                $rownum = $this-&gt;row_counter;<br>
+            }<br>
+            $this-&gt;row_counter++;<br>
+        }<br>
+        $res = $this-&gt;dbh-&gt;fetchInto($this-&gt;result, $arr, $fetchmode, $rownum);<br>
+        if ($res === DB_OK) {<br>
+            if (isset($object_class)) {<br>
+                // The default mode is specified in the<br>
+                // DB_common::fetchmode_object_class property<br>
+                if ($object_class == &#039;stdClass&#039;) {<br>
+                    $arr = (object) $arr;<br>
+                } else {<br>
+                    $arr = &amp;new $object_class($arr);<br>
+                }<br>
+            }<br>
+            return $arr;   // line 1127</p>
+<p>}</p>
+<p>Actual result:<br>
+--------------<br>
+Error No. 8 in Line No. 1127 in File : /home/public_html/DB.php  <br>
+Only variable references should be returned by reference</p>
+</section>
+<section>
+<h3>[2005-07-20 07:46 UTC] sumeet at prateeksha dot com</h3>
+<p>hello friends</p>
+<p>i have earlier posted this bug, and since then found a solution.</p>
+<p>line 1127 should read as<br>
+   $arr2 = $arr;<br>
+   return $arr2;</p>
+<p>instead of<br>
+   return $arr;</p>
+<p>Sumeet Shroff</p>
+</section>
+<section>
+<h3>[2005-07-21 05:59 UTC] sumeet at prateeksha dot com</h3>
+<p>dear danielc,</p>
+<p>thanks for your input. i cannot pinpoint the &quot;test code&quot; but it is when i use $result-&gt;fetchRow(DB_FETCHMODE_ASSOC).</p>
+<p>I have a win32 local machine, and the problem does not occur on my local macine, but my server is linux and i now need to conduct the test there.</p>
+<p>one of the major changes (see changelog) for php 4.4.0 is &quot;Fixed memory corruptions when using references in a wrong way.&quot;</p>
+<p>maybe that has something to do with the error that i recieve.</p>
+<p>sumeet shroff</p>
+</section>
+<section>
+<h3>[2005-07-21 17:14 UTC] sumeet at prateeksha dot com</h3>
+<p>dear danielc</p>
+<p>i am using php 4.40 on the server and the mysql is version 4.1.11 .</p>
+<p>the problem is that i have used several classes using the DB and HTML_Template PEAR library, hence it is difficult to pinpoint the code. unless i reproduce the entire classes.</p>
+<p>but what i am surprised is that i just changed line 1127 and it works.</p>
+<p>sumeet</p>
+</section>
+<section>
+<h3>[2005-07-26 11:30 UTC] h dot sintemaartensdijk at apx dot nl</h3>
+<p>Please reopen this issue, as it is not bogus. I had the same issue and managed to create a fairly simple script to reproduce this behaviour.</p>
+<p>I&#039;m running php 4.4.0 on win32</p>
+<p>&lt;?php<br>
+error_reporting(E_ALL);</p>
+<p>require_once &#039;DB.php&#039;;</p>
+<p>$dsn = &#039;oci8://web:web@APXDAMELTEST2&#039;;<br>
+$options = array(<br>
+    &#039;debug&#039;       =&gt; 2,<br>
+    &#039;portability&#039; =&gt; DB_PORTABILITY_ALL,<br>
+);</p>
+<p>$db =&amp; DB::connect($dsn, $options);<br>
+if (PEAR::isError($db)) {<br>
+    die($db-&gt;getMessage());<br>
+}</p>
+<p>$sql = &#039;SELECT * FROM mytable;<br>
+$rows = $db-&gt;getAll($sql, DB_FETCHMODE_ASSOC);<br>
+?&gt;</p>
+<p>The resulting error is <br>
+Notice: Only variable references should be returned by reference in d:\PHP4\PEAR\DB\common.php on line 1633</p>
+<p>This is a different line than the one original error, since I use getAll rather than fetchRow, but it should be related.</p>
+<p>I noticed the error only shows if I specify a fetchmode in the getAll, that should help find the cause.</p>
+</section>
+<section>
+<h3>[2005-07-27 17:18 UTC] sumeet at prateeksha dot com</h3>
+<p>dear sir,</p>
+<p>i am now reproducing the code...</p>
+<p>Reprocude code<br>
+--------------<br>
+	$search_str = &#039;	SELECT *, date_format(jobs_date,&quot;%d-%m-%Y&quot;) as jobs_date_dmy FROM &#039;.TABLE_JOBS.&#039; tj<br>
+ 					LEFT JOIN &#039;.TABLE_JOBS_DESCRIPTION.&#039; tjd<br>
+ 					ON tj.jobs_id = tjd.jobs_id <br>
+ 				 	WHERE 1 &#039;;</p>
+<p>$search_str .= &#039; ORDER BY jobs_sortorder&#039;;<br>
+ 	<br>
+ 	global $connection;<br>
+ 	$result = $connection-&gt;query($search_str);<br>
+ 	<br>
+ 	<br>
+ 	$template = new cms_template();<br>
+ 	$template-&gt;addBlockFile(&#039;PAGEBODY&#039;,&#039;PageBody&#039;,&#039;contents/search_for_jobs_listing.tpl.php&#039;);<br>
+	<br>
+ 	<br>
+	if ( $result-&gt;numRows() &gt; 0 ) { 	 		<br>
+	<br>
+ 		while( $row = $result-&gt;fetchRow(DB_FETCHMODE_ASSOC)) { 		<br>
+			$template-&gt;setCurrentBlock(&#039;ROW&#039;);<br>
+ 			foreach( $row as $key =&gt; $value ) {<br>
+				$template-&gt;setVariable($key,$value);<br>
+ 			} 		 		<br>
+ 			$template-&gt;parseCurrentBlock();<br>
+ 		} 	<br>
+		<br>
+ 	}<br>
+ 	else { 			<br>
+ 		//		&lt;!-- BEGIN NOROW --&gt;	<br>
+		<br>
+ 		$template-&gt;setCurrentBlock(&#039;NOROW&#039;);<br>
+ 		$template-&gt;setVariable(&#039;DUMMY2&#039;,&#039;&#039;); 		<br>
+ 		$template-&gt;parseCurrentBlock();<br>
+		<br>
+ 	}<br>
+	<br>
+ 	<br>
+ 	$template-&gt;show(); 	<br>
+ 	die;</p>
+<p>------------------------</p>
+<p>the is error is</p>
+<p>Error No. 8 in Line No. 1127 in File : /home/chamber/public_html/DB.php  <br>
+Only variable references should be returned by reference</p>
+<p>sumeet shroff</p>
+</section>
+<section>
+<h3>[2005-07-28 05:02 UTC] sumeet at prateeksha dot com</h3>
+<p>dear danielc,</p>
+<p>thanks you for your advice regarding reproducing code. i will keep that in mind next time.</p>
+<p>as i mentioned that my server is using linux, php 4.4.0 and apache, the script does not work on my server.</p>
+<p>we request you to kindly try the same on a linux box (hope u encoutner the error) and suggest a possible solution for the same.</p>
+<p>your help is most appreciated.</p>
+<p>sumeet</p>
+</section>
+<section>
+<h3>[2005-07-29 16:05 UTC] steve at overlee dot com</h3>
+<p>I am also on a Linux server and receiving the same error.</p>
+<p>My error reads:<br>
+In /usr/lib/php/DB.php, line: 898<br>
+Only variable references should be returned by reference</p>
+<p>This happened when the server was upgraded to PHP 4.4.0</p>
+<p>I&#039;m not even sure what triggers the error :s</p>
+</section>
+<section>
+<h3>[2005-08-01 21:03 UTC] steve at overlee dot com</h3>
+<p>Commenting out the following lines ignores the error:</p>
+<p>//error_reporting (E_ALL ^ E_NOTICE);<br>
+//set_error_handler (&#039;php_error_handler&#039;);</p>
+<p>This is a temporary fix, it worked for me.</p>
+</section>
+<section>
+<h3>[2005-08-04 04:47 UTC] steve at overlee dot com</h3>
+<p>Here is the results (auto_prepend_file value is blank)</p>
+<p>---------- Ver:4.4.0 SAPI:apache<br>
+---------- System: Linux virginia.networkphantom.net 2.4.21-27.0.2.ELsmp #1 SMP Wed Jan 12 23:35:44 EST 2005 i686<br>
+Configure Command: &#039;./configure&#039; &#039;--with-apxs=/usr/local/apache/bin/apxs&#039; &#039;--with-mysql&#039; &#039;--enable-magic-quotes&#039; &#039;--with-openssl&#039; &#039;--with-pear&#039; &#039;--enable-sockets&#039; &#039;--enable-track-vars&#039; &#039;--enable-versioning&#039; &#039;--with-curl&#039; &#039;--with-gettext&#039; &#039;--with-xml&#039; &#039;--with-dom&#039; &#039;--with-mcrypt&#039; &#039;--with-gd&#039; &#039;--with-iconv&#039; &#039;--enable-mbstring&#039; &#039;--with-mbstring=all&#039; &#039;--with-png-dir=/usr&#039; &#039;--with-jpeg-dir=/usr/local&#039; &#039;--with-zlib&#039; &#039;--with-kerberos&#039; &#039;--enable-bcmath&#039; &#039;--enable-calendar&#039; &#039;--with-xpm-dir=/usr/X11R6&#039; &#039;--enable-ftp&#039; &#039;--with-dom-xslt&#039; &#039;--with-imap&#039; &#039;--with-imap-ssl&#039; &#039;--with-mcrypt&#039; &#039;--with-mhash&#039; &#039;--with-mysqli&#039; &#039;--enable-discard-path&#039; &#039;--with-pdflib&#039; &#039;--enable-xslt&#039; &#039;--with-xslt-sablot&#039; &#039;--with-ttf&#039; &#039;--with-freetype-dir=/usr&#039; &#039;--enable-gd-native-ttf&#039; &#039;--enable-wddx&#039; &#039;--with-mssql&#039; &#039;--with-iconv&#039;<br>
+Server API: Apache<br>
+auto_prepend_file: no value</p>
+<p>Notice: Only variable references should be returned by reference in /usr/lib/php/DB/common.php on line 1605<br>
+Array ( [0] =&gt; Array ( [a] =&gt; 5 ) )</p>
+</section>
+<section>
+<h3>[2005-08-05 22:06 UTC] stevec at engr dot orst dot edu</h3>
+<p>PHP: 4.4.0<br>
+Pear DB: 1.7.6<br>
+Apache: 1.3.33 (running on linux)</p>
+<p>What I&#039;ve noticed is the error only occurs after it&#039;s read the last record in the record set.  Maybe something with the EOF not setting correctly?  Here is a simple script that reproduces the problem:</p>
+<p>$rs = $dbh-&gt;query(&quot;SELECT * FROM `table`&quot;);</p>
+<p>// If zero records, this errors<br>
+$row = $rs-&gt;fetchRow();</p>
+<p>// This errors after the last record has been displayed<br>
+while ($row = $rs-&gt;fetchRow()) {<br>
+    print_r($row);<br>
+}</p>
+</section>
+<section>
+<h3>[2005-08-16 14:54 UTC] cvs-php-net at schirmeier dot com</h3>
+<p>I get this error in another line of common.php:                                                                                     <br>
+                                                                                                                                    <br>
+Notice: Only variable references should be returned by reference in /var/www/localhost/..../libs/DB/common.php on line 766<br>
+                                                                                                                                    <br>
+As reported by others, this showed up after an upgrade to PHP 4.4.0. At least the notice in common.php:766 seems to be related to http://bugs.php.net/bug.php?id=33558 which is fixed in CVS and will vanish in PHP 4.4.1.</p>
+</section>
+<section>
+<h3>[2005-09-18 22:24 UTC] cvs-php-net at schirmeier dot com</h3>
+<p>Err. No idea what I was thinking when commenting this bug report.</p>
+<p>Moving to current stable DB-1.7.6 solved the problem, it seems to have already been fixed in common.php v1.27 (resolving bug #361). Unfortunately I can&#039;t tell which DB version I was using before as it is under my own version control and there are no version hints besides the CVS $Id$ string...</p>
+<p>Sorry for bothering you.</p>
+</section>
+<section>
+<h3>[2005-10-21 03:55 UTC] paul dot koch at gmx dot de</h3>
+<p>dear danielc,<br>
+thanks for your efforts.<br>
+I used your script and was able to reproduce the bug (PHP 4.40 with DB.php: 1.80 and common.php 1.137).<br>
+Then I tried your friendly suggestions from &quot;2005-09-17 17:03 UTC&quot;.<br>
+I added the Array-Definition-Line above Line 1116. :-) (looked senseful).<br>
+But then I searched for common.php v 1.138 with no chance to find it. So this bug &#039;s still working :-(<br>
+Any chance to get v 1.138 ???</p>
+<p>Greetz&amp;Thanks, Paul</p>
+</section>
+<section>
+<h3>[2005-10-21 23:50 UTC] paul dot koch at gmx dot de</h3>
+<p>Daniel,<br>
+thanks for your answer, i found and replaced the common.php to v1.138.<br>
+Unfortunately the notice-message still appears.<br>
+This ist the output of your script:</p>
+<p>---------- Ver:4.4.0 SAPI:apache<br>
+---------- System: Linux webelch 2.6.10-as7-he.piii.4gb #1 SMP Thu Jun 2 10:12:05 CEST 2005 i686<br>
+Configure Command: &#039;./configure&#039; &#039;--program-prefix=php4-&#039; &#039;--prefix=/usr/local/php4&#039; &#039;--datadir=/usr/share/php4&#039; &#039;--with-config-file-path=/etc&#039; &#039;--enable-force-cgi-redirect&#039; &#039;--disable-debug&#039; &#039;--enable-pic&#039; &#039;--disable-rpath&#039; &#039;--enable-inline-optimization&#039; &#039;--with-bz2=shared&#039; &#039;--with-dom=shared,/usr&#039; &#039;--with-exec-dir=/usr/bin&#039; &#039;--with-freetype-dir=/usr&#039; &#039;--with-png-dir=/usr&#039; &#039;--with-gd=shared&#039; &#039;--enable-gd-native-ttf&#039; &#039;--with-ttf=shared&#039; &#039;--with-gdbm=shared&#039; &#039;--with-gettext=shared&#039; &#039;--with-iconv=shared&#039; &#039;--with-jpeg-dir=shared,/usr&#039; &#039;--with-openssl&#039; &#039;--with-png=shared&#039; &#039;--with-pspell=shared&#039; &#039;--with-regex=system&#039; &#039;--with-xml=shared&#039; &#039;--with-expat=shared&#039; &#039;--with-zlib=/usr/local&#039; &#039;--with-zlib-dir=/usr/local&#039; &#039;--with-layout=GNU&#039; &#039;--enable-bcmath=shared&#039; &#039;--enable-exif=shared&#039; &#039;--enable-ftp=shared&#039; &#039;--enable-magic-quotes&#039; &#039;--enable-safe-mode&#039; &#039;--enable-sockets&#039; &#039;--enable-sysvsem&#039; &#039;--enable-sysvshm&#039; &#039;--enable-discard-path&#039; &#039;--enable-track-vars&#039; &#039;--enable-trans-sid&#039; &#039;--enable-yp&#039; &#039;--enable-wddx&#039; &#039;--without-oci8&#039; &#039;--with-pear=/usr/share/pear&#039; &#039;--with-imap=shared&#039; &#039;--with-imap-ssl&#039; &#039;--with-kerberos&#039; &#039;--with-ldap=shared&#039; &#039;--with-mysql=shared,/usr&#039; &#039;--enable-memory-limit&#039; &#039;--enable-shmop&#039; &#039;--enable-versioning&#039; &#039;--enable-calendar=shared&#039; &#039;--enable-dbx=shared&#039; &#039;--enable-dio=shared&#039; &#039;--enable-mcal=shared&#039; &#039;--enable-dba=shared&#039; &#039;--enable-dbase=shared&#039; &#039;--with-ndbm=shared&#039; &#039;--with-ndb=shared&#039; &#039;--with-mcrypt=shared&#039; &#039;--with-mhash=shared&#039; &#039;--with-ming=shared&#039; &#039;--with-curl=shared,/usr&#039; &#039;--with-apxs=/usr/local/apache/bin/apxs&#039; &#039;--enable-mbstring=shared&#039;<br>
+Server API: Apache<br>
+auto_prepend_file: no value</p>
+<p>Notice: Only variable references should be returned by reference in /usr/share/pear/DB/common.php on line 1633<br>
+Array ( [0] =&gt; Array ( [a] =&gt; 5 ) )<br>
+Notice: Only variable references should be returned by reference in /usr/share/pear/DB/common.php on line 1164</p>
+<p>Regards, Paul</p>
+</section>
+<section>
+<h3>[2005-10-22 00:10 UTC] paul dot koch at gmx dot de</h3>
+<p>Daniel,<br>
+i forgot to change the include_path on top of your script.<br>
+So the above output of your script results by using DB.php and common.php of my service providers PEAR-Package, and I&#039;m unable to identify the version of DB.php there, and sure there is no added line 1116.<br>
+Now i changed the include_path to the altered files DB.php and common.php, so here ist the output of your proposed replacement procedure:</p>
+<p>---------- Ver:4.4.0 SAPI:apache<br>
+---------- System: Linux webelch 2.6.10-as7-he.piii.4gb #1 SMP Thu Jun 2 10:12:05 CEST 2005 i686<br>
+Configure Command: &#039;./configure&#039; &#039;--program-prefix=php4-&#039; &#039;--prefix=/usr/local/php4&#039; &#039;--datadir=/usr/share/php4&#039; &#039;--with-config-file-path=/etc&#039; &#039;--enable-force-cgi-redirect&#039; &#039;--disable-debug&#039; &#039;--enable-pic&#039; &#039;--disable-rpath&#039; &#039;--enable-inline-optimization&#039; &#039;--with-bz2=shared&#039; &#039;--with-dom=shared,/usr&#039; &#039;--with-exec-dir=/usr/bin&#039; &#039;--with-freetype-dir=/usr&#039; &#039;--with-png-dir=/usr&#039; &#039;--with-gd=shared&#039; &#039;--enable-gd-native-ttf&#039; &#039;--with-ttf=shared&#039; &#039;--with-gdbm=shared&#039; &#039;--with-gettext=shared&#039; &#039;--with-iconv=shared&#039; &#039;--with-jpeg-dir=shared,/usr&#039; &#039;--with-openssl&#039; &#039;--with-png=shared&#039; &#039;--with-pspell=shared&#039; &#039;--with-regex=system&#039; &#039;--with-xml=shared&#039; &#039;--with-expat=shared&#039; &#039;--with-zlib=/usr/local&#039; &#039;--with-zlib-dir=/usr/local&#039; &#039;--with-layout=GNU&#039; &#039;--enable-bcmath=shared&#039; &#039;--enable-exif=shared&#039; &#039;--enable-ftp=shared&#039; &#039;--enable-magic-quotes&#039; &#039;--enable-safe-mode&#039; &#039;--enable-sockets&#039; &#039;--enable-sysvsem&#039; &#039;--enable-sysvshm&#039; &#039;--enable-discard-path&#039; &#039;--enable-track-vars&#039; &#039;--enable-trans-sid&#039; &#039;--enable-yp&#039; &#039;--enable-wddx&#039; &#039;--without-oci8&#039; &#039;--with-pear=/usr/share/pear&#039; &#039;--with-imap=shared&#039; &#039;--with-imap-ssl&#039; &#039;--with-kerberos&#039; &#039;--with-ldap=shared&#039; &#039;--with-mysql=shared,/usr&#039; &#039;--enable-memory-limit&#039; &#039;--enable-shmop&#039; &#039;--enable-versioning&#039; &#039;--enable-calendar=shared&#039; &#039;--enable-dbx=shared&#039; &#039;--enable-dio=shared&#039; &#039;--enable-mcal=shared&#039; &#039;--enable-dba=shared&#039; &#039;--enable-dbase=shared&#039; &#039;--with-ndbm=shared&#039; &#039;--with-ndb=shared&#039; &#039;--with-mcrypt=shared&#039; &#039;--with-mhash=shared&#039; &#039;--with-ming=shared&#039; &#039;--with-curl=shared,/usr&#039; &#039;--with-apxs=/usr/local/apache/bin/apxs&#039; &#039;--enable-mbstring=shared&#039;<br>
+Server API: Apache<br>
+auto_prepend_file: no value</p>
+<p>Notice: Only variable references should be returned by reference in /is/htdocs/11499/www.blablabla.de/includes/PEAR/DB/common.php on line 1638<br>
+Array ( [0] =&gt; Array ( [a] =&gt; 5 ) )<br>
+Notice: Only variable references should be returned by reference in /is/htdocs/11499/www.blablabla.de/includes/PEAR/DB/common.php on line 1169</p>
+</section>
+<section>
+<h3>[2005-10-25 09:52 UTC] tsidwick at gmail dot com</h3>
+<p>in the hope that someone finds this information usefull :</p>
+<p>I just upgraded to php 4.4.0 on a debian sid server and received the same notice in several places within a medium sized framework (heavily dependant on pear)</p>
+<p>however as a temporary patch as previously mentioned replacing :</p>
+<p>return xxx;</p>
+<p>with</p>
+<p>$a = xxx;<br>
+return xxx;</p>
+<p>makes the notice disapear.</p>
+<p>the weirdest was DataObject.php (version 1.7.7) line 2583 which gave the notice with</p>
+<p>return false;</p>
+<p>but not with</p>
+<p>$a = false;<br>
+return $a;</p>
+<p>which to me points the finger directly at php, this code is too simple to contain an error.</p>
+</section>
+<section>
+<h3>[2006-10-10 19:13 UTC] gherson at snet dot net</h3>
+<p>Just to confirm problem and fix still apropos: I also made all of my many &quot;Only variable references should be returned by reference&quot; errors disappear by commenting out a simple</p>
+<p>//return $result;    in favor of:<br>
+      $workaround=$result;<br>
+      return $workaround;</p>
+<p>The error first appeared on my site with upgrade to PHP5 on 1/24/06.  Surprised to still see the problem with Zend Core for Oracle 1.5.0 (PHP Version	5.1.6, Zend Engine Version 2.1.0, Server API apache2handler).</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4096</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #4096</h1>
+<p>Security: Database connection errors report password to the browser</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-04-07 16:52 UTC</td></tr>
+<tr><th>From</th><td>tw at 6sys dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Fedora Core 3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-07 16:52 UTC] tw at 6sys dot com</h3>
+<p>Description:<br>
+------------<br>
+Using PEAR::DB_DataObject 1.7.13, I put the full DSN in an INI file.  The DSN includes the database password, of course.  If there is a connection error (in this case, the database server went down), the first use of DB_DataObject results in an error message - raiseError() is getting called, which calls PEAR::raiseError(), which does kill the app (though the module docs seem to say the error isn&#039;t actually raised - confusing).</p>
+<p>This is all fine.  But, when the error is raised, it&#039;s printed to the browser, and the error message produced by PEAR::DB contains the DSN, which contains the database password.  So, when my database server went down, anyone coming to the site saw the database password.</p>
+<p>Reproduce code:<br>
+---------------<br>
+In the .ini:</p>
+<p>[DB_DataObject]<br>
+database = &quot;mysql://user:pass@localhost/database&quot;<br>
+debug=0<br>
+...</p>
+<p>In the code:</p>
+<p>...<br>
+$site = new RDBSites;  // a DB_DataObject descendent.<br>
+if ($site-&gt;get(1) != 1)<br>
+	die(&quot;Can&#039;t find the default site.&quot;);<br>
+...</p>
+<p>Expected result:<br>
+----------------<br>
+Returning FALSE from get() would be best, so I could handle the error myself.</p>
+<p>Dying with a descriptive error message output to the PHP log file with error_log(), and perhaps some user-friendly output to the browser like &quot;Error connecting to the database,&quot; would also be fine.</p>
+<p>Dying with no error message at all would also be preferable.</p>
+<p>Actual result:<br>
+--------------<br>
+Output to browser:</p>
+<p>DB_DataObject Error: [db_error: message=&quot;DB Error: connect failed&quot; code=-24 mode=return level=notice prefix=&quot;&quot; info=&quot; [nativecode=Access denied for user: &#039;user@localhost&#039; (Using password: YES)] ** mysql://user:pass@localhost/database&quot;]</p>
+<p>(note the presence of the password)</p>
+</section>
+<section>
+<h3>[2005-04-07 18:34 UTC] tw at 6sys dot com</h3>
+<p>Sorry, I misassigned the package - this is against DB_DataObject, not DB, so danielc&#039;s comment doesn&#039;t apply.</p>
+<p>Or if you meant it to apply - DB_DataObject::get() is not returning, so I can&#039;t check its return code; it&#039;s raising an error that kills the script.</p>
+</section>
+<section>
+<h3>[2005-04-11 14:50 UTC] tw at 6sys dot com</h3>
+<p>Looks good.  Thanks!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2726</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a> &#187; Bug #2726</h1>
+<p>Group elements not freezing if group already frozen</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-11-10 03:08 UTC</td></tr>
+<tr><th>From</th><td>michael at baselinesols dot com</td></tr>
+<tr><th>Assigned</th><td>avb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm/index.html">HTML_QuickForm</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-11-10 03:08 UTC] michael at baselinesols dot com</h3>
+<p>Description:<br>
+------------<br>
+HTML_Quickform version: 3.2.4pl1</p>
+<p>If a class that extends HTML_QuickForm_group (eg HTML_QuickForm_date) is instanciated and then frozen (using freeze()) before the _createElements() method is called, then the elements that are created during _createElements() are not frozen.</p>
+<p>The main side effect of this is incorrect HTML generation if the accept() or toHtml() methods are called.</p>
+<p>There are a number of ways to overcome this (sorry for posting code in this section, but it needs explanation):</p>
+<p>1. When the freeze() method is called in HTML_QuickForm_group, make sure that _createElements() is called before proceeding with freezing each element:</p>
+<p>if (empty($this-&gt;_elements)) {<br>
+    $this-&gt;_createElements();<br>
+}<br>
+...</p>
+<p>2. Each sub-class of HTML_QuickForm_group must explictly freeze the element after creating it in _createElements() (IMO this is the most &quot;correct&quot; and fastest method). Eg, for HTML_QuickForm_date::_createElements():</p>
+<p>...<br>
+$next_element =&amp; new HTML_QuickForm_select($sign, null, $options, $this-&gt;getAttributes());<br>
+if ($this-&gt;_flagFrozen) {<br>
+    $next_element-&gt;freeze();<br>
+}<br>
+$this-&gt;_elements[] =&amp; $next_element;<br>
+...</p>
+<p>3. Check if the group is frozen and explicitly call freeze in HTML_QuickForm_group::_createElements() - and then sub-classes would call parent::_createElements() method at the end of their _createElements() method.</p>
+<p>And there are probably a number of other ways that this can be done too.</p>
+<p>The main problem with choice 2 is that it leaves it up to the sub-class to take responsibility for correctly freezing each newly created element - if there was any way the HTML_QuickForm_group class could do this, then possibly that would be preferrable.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

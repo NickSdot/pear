@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9851</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #9851</h1>
+<p>pgsql: create table as select... and insert into tab select not working</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-17 05:15 UTC</td></tr>
+<tr><th>From</th><td>corey at corlogic dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-17 05:15 UTC] corey at corlogic dot com</h3>
+<p>Description:<br>
+------------<br>
+Using MDB2 to connect to pgsql 8.1.5:</p>
+<p>Attempting to perform the sql operations</p>
+<p>&quot;create temporary table mytable<br>
+as &lt;complicated query&gt;&quot;</p>
+<p>worked under pg_query, but fails in mdb2</p>
+<p>&quot;insert into select &quot; should also work, but does not.</p>
+<p>Test script:<br>
+---------------<br>
+using psql, do the following (pgsql ver 8.1.5)</p>
+<p>z=# create table src (x int, y int, z int);<br>
+CREATE TABLE<br>
+z=# insert into src values (1,2,3);<br>
+INSERT 0 1<br>
+z=# insert into src values (4,5,6);<br>
+INSERT 0 1<br>
+z=# insert into src values (7,8,9);<br>
+INSERT 0 1<br>
+z=# create temporary table mytemp as select * from src where x &gt; 1;<br>
+SELECT<br>
+z=# select * from mytemp;<br>
+ x | y | z <br>
+---+---+---<br>
+ 4 | 5 | 6<br>
+ 7 | 8 | 9<br>
+(2 rows)</p>
+<p>z=# \q</p>
+<p>&lt;?</p>
+<p>include_once(&#039;inc/UserTemplate.php&#039;);</p>
+<p>$conn = connect($config);</p>
+<p>// this worked in pg_query <br>
+$stmt = $conn-&gt;prepare(&#039;<br>
+  create temporary table mytemp<br>
+  as  select * <br>
+      from src <br>
+      where x &gt; 1&#039;);</p>
+<p>if (PEAR::isError($stmt)) {<br>
+  print &#039;one: &#039; . $stmt-&gt;getMessage(). &#039;&lt;br&gt;&#039;;<br>
+} else {</p>
+<p>$res = $stmt-&gt;execute();</p>
+<p>if (PEAR::isError($res)) {<br>
+    print &#039;two: &#039; . $res-&gt;getMessage(). &#039;&lt;br&gt;&#039;;<br>
+  }<br>
+}</p>
+<p>// this should be considered an insert, but MDB2 seems to think <br>
+// it&#039;s a select</p>
+<p>$stmt2 = $conn-&gt;prepare(&#039;<br>
+  insert into src(x,y,z)<br>
+  select x*10, y*10, z*10<br>
+  from src&#039;<br>
+);</p>
+<p>if (PEAR::isError($stmt2)) {<br>
+  print &#039;three: &#039; . $stmt2-&gt;getMessage(). &#039;&lt;br&gt;&#039;;<br>
+} else {</p>
+<p>$res2 = $stmt2-&gt;execute();</p>
+<p>if (PEAR::isError($res2)) {<br>
+    print &#039;four: &#039; . $res2-&gt;getMessage(). &#039;&lt;br&gt;&#039;;<br>
+  } else {<br>
+    print &#039;result: &#039; . $res2; // should be a rowcount, is an object<br>
+  }<br>
+}<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+The script should create the global temporary table, and the insert into select statement should be treated as DML, not as a select.</p>
+<p>Actual result:<br>
+--------------<br>
+create temp table command fails outright.</p>
+<p>insert into select seems to ignore the INSERT into portion.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

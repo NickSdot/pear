@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6987</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/Pager/index.html">Pager</a> &#187; Bug #6987</h1>
+<p>No way to modify destination URL when using method &#039;POST&#039;</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #6987</th><td>No way to modify destination URL when using method &#039;POST&#039;</td></tr>
+<tr><th>Submitted</th><td>2006-03-02 00:35 UTC</td></tr>
+<tr><th>From</th><td>remi at metacore dot net</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Pager/index.html">Pager</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>Linux 2.4.27-2-686</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-03-02 00:35 UTC] remi at metacore dot net</h3>
+<p>Description:<br>
+------------<br>
+I&#039;ve been trying to get Pager to play nice with QuickForm (i.e. QuickForm being used to generate a list of search results, and Pager being used to paginate them) on a page that requires GET parameters to display properly.</p>
+<p>i.e. to search for the items, you go to the page /index.php?flag1=a&amp;flag2=b .  Once at that page a QuickForm is displayed (it is method POST and needs to stay as method POST) that you enter your search terms into and then click &quot;Search&quot;.</p>
+<p>When displaying the results, I need to use method POST with Pager (so that the QuickForm search-parameters get re-submitted to the page), but I also need to maintain the form target as /index.php?flag1=a&amp;flag2=b -- from what I can tell, there is no current way to do this.</p>
+<p>What I&#039;d like is a configuration option that you can use to assign either GET parameters or the target URL if your Pager method is POST (so that you can have Pager configured to POST to the location $_SERVER[&#039;REQUEST_URI&#039;], for example).</p>
+<p>Right now I&#039;ve got a wrapper object that does this for me in a very simple/kludgy way:</p>
+<p>class my_Pager_Jumping extends Pager_Jumping<br>
+{<br>
+  function _setOptions($options)<br>
+  {<br>
+    $r = parent::_setOptions($options);<br>
+    if ($options[&#039;url&#039;])<br>
+    {<br>
+      $this-&gt;_url = $options[&#039;url&#039;];	<br>
+    }<br>
+    return $r;<br>
+  }<br>
+}</p>
+</section>
+<section>
+<h3>[2006-03-02 17:08 UTC] remi at metacore dot net</h3>
+<p>If I pass in the FormID option, then it uses that form but rewrites the &#039;action&#039; tag to point at /index.php -- I need it to point to /index.php?flag1=a&amp;flag2=b .</p>
+<p>To start the form element is like this:</p>
+<p>&lt;form  action=&quot;/index.php?flag1=a&amp;flag2=b&quot; method=&quot;post&quot; name=&quot;search&quot; id=&quot;search&quot;&gt;</p>
+<p>.. but the JavaScript created by Pager does this:</p>
+<p>var form = document.getElementById(&quot;search&quot;);<br>
+var input = &quot;&quot;;<br>
+form.action = &quot;/as/index.php&quot;;<br>
+form.method = &quot;POST&quot;;</p>
+<p>... maybe if you are using a pre-existing form element with the Pager, you should leave it alone/not re-write things like .action and .method?</p>
+</section>
+<section>
+<h3>[2006-03-02 17:10 UTC] remi at metacore dot net</h3>
+<p>Oops, sorry.  I made a typo.</p>
+<p>... rather than:</p>
+<p>var form = document.getElementById(&quot;search&quot;);<br>
+var input = &quot;&quot;;<br>
+form.action = &quot;/as/index.php&quot;;<br>
+form.method = &quot;POST&quot;;</p>
+<p>... it should be:</p>
+<p>var form = document.getElementById(&quot;search&quot;);<br>
+var input = &quot;&quot;;<br>
+form.action = &quot;/index.php&quot;;<br>
+form.method = &quot;POST&quot;;</p>
+</section>
+<section>
+<h3>[2006-03-03 08:29 UTC] remi at metacore dot net</h3>
+<p>No, what bothers me is that it loses the GET parameters on the form&#039;s &#039;action&#039;.  The example that I gave is about as full as I can make it, I think.</p>
+<p>&lt;form action=&quot;index.php?a=b&amp;c=d&quot; method=&quot;POST&quot; id=&quot;form1&quot;&gt;</p>
+<p>... but if I set FormID to &#039;form1&#039; in Pager, it will annihilate the ?a=b&amp;c=d part with the javascript:</p>
+<p>var form = document.getElementById(&quot;form1&quot;);<br>
+var input = &quot;&quot;;<br>
+form.action = &quot;/index.php&quot;;<br>
+form.method = &quot;POST&quot;;</p>
+<p>... I don&#039;t understand why the Pager re-writes the form action and method like it does -- if it has been told specifically to use it (i.e. if the user has set the FormID parameter), then isn&#039;t it reasonable to assume that the user has configured the form the way they want it to be, and Pager should leave it alone?</p>
+</section>
+<section>
+<h3>[2006-03-06 19:11 UTC] remi at metacore dot net</h3>
+<p>&quot;you can pass them to Pager with the &quot;extraVars&quot; array option. This way you won&#039;t lose them. That holds true for any extra GET/POST parameter you want to propagate through the various pages.&quot;</p>
+<p>The problem with &#039;extraVars&#039; is that it *converts* the variables from GET to POST (in the example given).  So instead of POSTing data *to* /index.php?flag1=a&amp;flag2=b , it posts data to /index.php and passes flag1=a and flab2=b as POST data which breaks the page(s) that I speak of.  AFAIK, &#039;extraVars&#039; does not provide a way to label some variables as GET and some as POST.  That would work, though, if it did provide it...</p>
+<p>&quot;Does it makes sense?&quot;</p>
+<p>It makes sense, and I understand the reasons for the default behaviour of the Pager now.  Thanks :)</p>
+<p>However, in this specific case I would still give an arm and a leg for a way to append GET parameters to the form that the Pager is POSTing using.  So that it can POST to the URL /index.php?flag1=a&amp;flag2=b , for example.</p>
+<p>I&#039;m not asking for a change in the default behaviour; but it seems to me that having the option would be useful (for me for sure, and I would wager perhaps others as well).</p>
+</section>
+<section>
+<h3>[2006-03-06 20:01 UTC] remi at metacore dot net</h3>
+<p>&quot;so why don&#039;t you simply use httpMethod=GET?<br>
+Or fetch your variables with the $REQUEST array instead of $_GET or $_POST?&quot;</p>
+<p>The form search parameters need to be passed as POST data.  The navigation parameters that *get you to* the search page need to be passed as GET parameters.  It&#039;s the standard way that things are done in this instance, and I need to adhere to that.  To be perfectly honest, other than problems such as this one with the Pager, it works pretty well.</p>
+<p>Standardizing on using $_REQUEST instead of $_GET/$_POST is not an easy thing to do with an existing base, unfortunately... it was easier to make Pager deal with it in a more flexible manner.</p>
+<p>&quot;You may either use GET or POST on a single HTTP request, not both.&quot;</p>
+<p>I agree, but note that you *can* have ?query variables in any absolute URI, as per the HTTP spec -- and that means you can have them in a POST operation, as well.  Apache supports it, browser supports it, etc.  Pager doesn&#039;t yet, though.</p>
+<p>Ref: http://www.w3.org/Protocols/HTTP/1.0/draft-ietf-http-spec.html#URI</p>
+<p>&quot;Let me know if you still have issues.&quot;</p>
+<p>As I said, I&#039;ve already solved the problem by over-riding the Pager object with another... but I believe that this is useful functionality that it would be good for Pager to implement.  There&#039;s no reason *not* to implement the option to let people specify query (GET) parameters on a POST operation, from what I can tell.</p>
+<p>It would make Pager more flexible (and in my case allow me to get rid of the over-ridden object &#039;hack&#039; that I use to get around it now).</p>
+</section>
+<section>
+<h3>[2006-03-07 01:39 UTC] remi at metacore dot net</h3>
+<p>I&#039;ve sent example code.  I hope it is enough for you to see the issue.</p>
+<p>Not sure if what I am working on is &quot;way out there&quot; in terms of crazy PHP code... it strikes me as surprising that no-one else has encountered this before, to be honest.</p>
+<p>It seems a reasonable usage of $_GET and $_POST.</p>
+</section>
+<section>
+<h3>[2006-03-07 01:44 UTC] remi at metacore dot net</h3>
+<p>To respond to some of your points:</p>
+<p>&gt; ok. Again, why don&#039;t you use Pager with httpMethod=GET?</p>
+<p>... because the HTML QuickForm is targetted as POST and uses $_SERVER[&#039;REQUEST_URI&#039;] as it&#039;s target action.</p>
+<p>&gt; you can, just use the &#039;fileName&#039; option so it includes<br>
+&gt; the GET parameters too...</p>
+<p>I tried this before I filed this bug, it is trimming them off for me.  If I use the following example code:</p>
+<p>$pager = new Pager_Sliding(array<br>
+	(<br>
+		&#039;append&#039; =&gt; TRUE,<br>
+		&#039;curPageLinkClassName&#039; =&gt; &#039;current&#039;,<br>
+		&#039;delta&#039; =&gt; 4,<br>
+		&#039;fileName&#039; =&gt; $_SERVER[&#039;REQUEST_URI&#039;],<br>
+		&#039;httpMethod&#039; =&gt; &#039;POST&#039;,<br>
+		&#039;importQuery&#039; =&gt; TRUE,<br>
+		&#039;itemData&#039; =&gt; $items,<br>
+		&#039;nextImg&#039; =&gt; &#039;»&#039;,<br>
+		&#039;perPage&#039; =&gt; 2,<br>
+		&#039;prevImg&#039; =&gt; &#039;«&#039;,<br>
+		&#039;separator&#039; =&gt; &#039;&#039;,<br>
+		&#039;spacesAfterSeparator&#039; =&gt; 0,<br>
+		&#039;spacesBeforeSeparator&#039; =&gt; 0<br>
+	));</p>
+<p>... where $_SERVER[&#039;REQUEST_URI&#039;] is &#039;/index.php?a=search&#039;, then the form action attribute is set to &#039;/index.php&#039;, *not* &#039;/index.php?a=search&#039;.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

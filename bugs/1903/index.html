@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1903</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #1903</h1>
+<p>phpt tests fail under PHP5 (1.3 branch)</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-07-17 12:19 UTC</td></tr>
+<tr><th>From</th><td>ahundiak at ingr dot com</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0</td></tr>
+<tr><th>OS</th><td>NA</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-17 12:19 UTC] ahundiak at ingr dot com</h3>
+<p>Description:<br>
+------------<br>
+I encountered a few issues while trying to run (under PHP 5.0.0) the basic<br>
+PEAR tests.</p>
+<p>pear1.phpt,pear2.phpt,pear_error.phpt,pear_error2.phpt,pear_error3.phpt,pear<br>
+_error4.phpt</p>
+<p>1. The PHP5 version of run-tests.php sets the error handling mode to E_ALL | E_STRICT.  You need to edit the script to get rid of E_SCRIPT or override it with a command argument.  Otherwise, you get lots&#039; of E_STRICT notices. Note also that the PHP5 version of run-tests.php will not work under PHP4.</p>
+<p>2. get_class returns lowercase in PHP4, PHP5 returns the actual classname. Assorted debug messages are now different because of the case change  which in turn causes the tests to fail.  Since they are only debug messages then simply putting a strtolower call around the classname should be ok.  Three spots need adjusting:<br>
+a. The PEAR class constructor/destructor methods (in the debug blocks)<br>
+b. The PEAR_Error-&gt;toString message builder (two spots)<br>
+c. pear2.phpt</p>
+<p>3. pear_error.phpt has it&#039;s own error_handler routine with various standard error type codes hardcoded.  Need to add E_STRICT to the list (and just ignore any E_STRICT calls) because the error handler is always called regardless of<br>
+the error_reporting setting.</p>
+<p>With these adjustments, the 6 tests will pass under PHP4 and PHP5.  I have not tried the rest of the pear/tests yet. I am willing to do so and provide patches.</p>
+<p>Reproduce code:<br>
+---------------<br>
+A patch file is available here:<br>
+http://www.cerad.org/pear/pear5a.diff.txt</p>
+</section>
+<section>
+<h3>[2004-07-17 12:52 UTC] ahundiak at ingr dot com</h3>
+<p>BTW, an alternative approach would be to create a tests5 directory and regenerate the expected results.  I don&#039;t know how many automated scripts are out there that would be impacted by this.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

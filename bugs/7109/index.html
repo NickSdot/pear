@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7109</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_oci8/index.html">MDB2_Driver_oci8</a> &#187; Bug #7109</h1>
+<p>Oracle Driver, Autoincremement Constraint problem</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-03-13 14:43 UTC</td></tr>
+<tr><th>From</th><td>nolife at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_oci8/index.html">MDB2_Driver_oci8</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-03-13 14:43 UTC] nolife at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+When creating an autoincrement field mdb2 creates a constraint .<br>
+The name is based on the tablename and the constant &quot;AUTOINCREMENT_PK&quot; <br>
+This is used for various things.<br>
+My Oracle 9R2 defaults to a varchar2(30) for the constraint identifier, this limits the table size and the reportet pear error does not really help debugging the problem.</p>
+<p>Test script:<br>
+---------------<br>
+hotfix that solves the problem for me, suggested is a validation that tests the table string length<br>
+--------------------------------------------------------<br>
+--- oci8_orig.php       2006-03-10 14:26:19.000000000 +0100<br>
++++ oci8.php    2006-03-13 14:36:18.000000000 +0100<br>
+@@ -140,7 +140,7 @@<br>
+         }<br>
+ <br>
+         $table = strtoupper($table);<br>
+-        $index_name  = $table . &#039;_AUTOINCREMENT_PK&#039;;<br>
++        $index_name  = $table . &#039;_AUTOINC_PK&#039;;<br>
+         $definition = array(<br>
+             &#039;primary&#039; =&gt; true,<br>
+             &#039;fields&#039; =&gt; array($name =&gt; true),<br>
+@@ -169,7 +169,7 @@<br>
+                 &#039;_makeAutoincrement: sequence for autoincrement PK could not be created&#039;);<br>
+         }<br>
+         $sequence_name = $db-&gt;getSequenceName($table);<br>
+-        $trigger_name  = $db-&gt;quoteIdentifier($table . &#039;_AUTOINCREMENT_PK&#039;, true);<br>
++        $trigger_name  = $db-&gt;quoteIdentifier($table . &#039;_AUTOINC_PK&#039;, true);<br>
+         $table = $db-&gt;quoteIdentifier($table, true);<br>
+         $name  = $db-&gt;quoteIdentifier($name, true);<br>
+         $trigger_sql = &quot;CREATE TRIGGER $trigger_name BEFORE INSERT ON $table&quot;;<br>
+@@ -196,7 +196,7 @@<br>
+         }<br>
+ <br>
+         $table = strtoupper($table);<br>
+-        $trigger_name = $table . &#039;_AUTOINCREMENT_PK&#039;;<br>
++        $trigger_name = $table . &#039;_AUTOINC_PK&#039;;<br>
+         $trigger_name = $db-&gt;quoteIdentifier($trigger_name, true);<br>
+         $trigger = $db-&gt;queryOne(&quot;SELECT trigger_name FROM user_triggers WHERE trigger_name = &#039;$trigger_name&#039;&quot;);<br>
+         if (PEAR::isError($trigger)) {<br>
+@@ -217,7 +217,7 @@<br>
+                     &#039;_dropAutoincrement: sequence for autoincrement PK could not be dropped&#039;);<br>
+             }<br>
+ <br>
+-            $index_name = $table . &#039;_AUTOINCREMENT_PK&#039;;<br>
++            $index_name = $table . &#039;_AUTOINC_PK&#039;;<br>
+             $result = $db-&gt;manager-&gt;dropConstraint($table, $index_name);<br>
+             if (PEAR::isError($result)) {<br>
+                 return $db-&gt;raiseError(MDB2_ERROR, null, null,<br>
+@@ -795,4 +795,4 @@<br>
+         return $result;<br>
+     }<br>
+ }<br>
+-?&gt;<br>
+\ Kein Zeilenumbruch am Dateiende.<br>
++?&gt;<br>
+--------------------------------------------------------</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

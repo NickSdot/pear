@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7451</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_Wiki/index.html">Text_Wiki</a> &#187; Bug #7451</h1>
+<p>Segmentation fault (11) in Apache Log if the Text_wiki interprets Text</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-04-21 10:08 UTC</td></tr>
+<tr><th>From</th><td>bugs at administrator dot de</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Text_Wiki/index.html">Text_Wiki</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Debian Linux 2.6.12-1-k7 Kernel</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-21 10:08 UTC] bugs at administrator dot de</h3>
+<p>Description:<br>
+------------<br>
+The follow code generate a &quot;Segmentation fault (11)&quot; im my Apache. My Config is: Apache/2.2.0 (Unix) mod_ssl/2.2.0 OpenSSL/0.9.8a PHP/5.1.2, MySQl 5.0.16</p>
+<p>The error is only if the Text use the &quot;&lt;code&gt;&quot; Command.</p>
+<p>If i delete the Line 6: &#039;objExcel.ActiveSheet.Cells(x, 9).Value = &quot;Ja&quot;&#039; than it works fine, with line 6 a download request open in the Browser with a Segmentation fault in my Log.</p>
+<p>Here now the Text: (without SNIPP ---)</p>
+<p>SNIPP --------------------------------------------<br>
+Hi,<br>
+kein Problem:</p>
+<p>&lt;code&gt;</p>
+<p>objExcel.ActiveSheet.Cells(x, 9).Value = &quot;Ja&quot;</p>
+<p>On Error Resume Next</p>
+<p>Set objFSO = CreateObject(&quot;Scripting.FileSystemObject&quot;)<br>
+Set objExcel = CreateObject(&quot;Excel.Application&quot;)</p>
+<p>objExcel.Visible = True<br>
+objExcel.Workbooks.Add</p>
+<p>&#039;Set objWorkbook = objExcel.Workbooks.Add<br>
+Set objWorksheet = objWorkbook.Worksheets(3)<br>
+Set colSheets = objWorkbook.Sheets</p>
+<p>&#039;#######################################<br>
+&#039; Auslesen der Textdatei - Darin stehen die OU Gruppen<br>
+&#039;#######################################<br>
+Dim arrFileLines()<br>
+i = 0<br>
+Set objFile = objFSO.OpenTextFile(&quot;ou.txt&quot;, 1)</p>
+<p>Do Until objFile.AtEndOfStream<br>
+     Redim Preserve arrFileLines(i)<br>
+     arrFileLines(i) = objFile.ReadLine<br>
+i = i + 1<br>
+Loop<br>
+objFile.Close</p>
+<p>&#039;#######################################<br>
+&#039;#######################################<br>
+&#039;colSheets.add ,objWorksheet,b<br>
+x = 2<br>
+oucount = 1<br>
+mustchangepw = 1<br>
+ischangedpw = 1</p>
+<p>For l = Ubound(arrFileLines) to LBound(arrFileLines) Step -1<br>
+	<br>
+	&#039;x = 3</p>
+<p>Set objWorksheet = objWorkbook.Worksheets(1)<br>
+	objWorksheet.Activate</p>
+<p>&#039;#############################################################<br>
+	&#039;Erstelllt die Überschriften in der Exceldatei<br>
+	&#039;#############################################################<br>
+	objExcel.ActiveSheet.Cells(1, 1).Value = &quot;Name&quot;<br>
+	objExcel.ActiveSheet.Cells(1, 2).Value = &quot;Benutzername&quot;<br>
+	objExcel.ActiveSheet.Cells(1, 3).Value = &quot;Letze PW-Änderung&quot;<br>
+	objExcel.ActiveSheet.Cells(1, 4).Value = &quot;Organisationeinheiten&quot;<br>
+    objExcel.ActiveSheet.Cells(1, 5).Value = &quot;Passwortalter&quot;<br>
+    objExcel.ActiveSheet.Cells(1, 6).Value = &quot;Pw Info &quot;<br>
+    objExcel.ActiveSheet.Cells(1, 7).Value = &quot;PW soll ablaufen&quot;<br>
+	objExcel.ActiveSheet.Cells(1, 8).Value = &quot;Letzter Login&quot;<br>
+	objExcel.ActiveSheet.Cells(1, 9).Value = &quot;Zugang deaktiviert&quot;<br>
+	<br>
+	&#039;#############################################################<br>
+	&#039;Passt die Spaltenbreite der jeweiligen Überschrift an<br>
+	&#039;#############################################################<br>
+	objExcel.ActiveSheet.Cells(1, 1).ColumnWidth = 16<br>
+	objExcel.ActiveSheet.Cells(1, 2).ColumnWidth = 20<br>
+	objExcel.ActiveSheet.Cells(1, 3).ColumnWidth = 18<br>
+	objExcel.ActiveSheet.Cells(1, 4).ColumnWidth = 41<br>
+    objExcel.ActiveSheet.Cells(1, 5).ColumnWidth = 15<br>
+    objExcel.ActiveSheet.Cells(1, 6).ColumnWidth = 13<br>
+    objExcel.ActiveSheet.Cells(1, 7).ColumnWidth = 14<br>
+	objExcel.ActiveSheet.Cells(1, 8).ColumnWidth = 12<br>
+	objExcel.ActiveSheet.Cells(1, 9).ColumnWidth = 17</p>
+<p>&#039;#############################################################<br>
+	&#039;Dekl. von Konstanten<br>
+	&#039;#############################################################<br>
+	Const ADS_UF_ACCOUNTDISABLE = 2<br>
+	Const ADS_UF_PASSWORD_EXPIRED = &amp;h800000<br>
+	Const ADS_ACETYPE_ACCESS_DENIED_OBJECT = &amp;H6<br>
+	Const CHANGE_PASSWORD_GUID = &quot;{ab721a53-1e2f-11d0-9819-00aa0040529b}&quot;</p>
+<p>Set objHash = CreateObject(&quot;Scripting.Dictionary&quot;)<br>
+	objHash.Add &quot;ADS_UF_DONT_EXPIRE_PASSWD&quot;, &amp;h10000</p>
+<p>Set objConnection = CreateObject(&quot;ADODB.Connection&quot;)<br>
+	objConnection.Open &quot;Provider=ADsDSOObject;&quot;<br>
+	Set objCommand = CreateObject(&quot;ADODB.Command&quot;)<br>
+	objCommand.ActiveConnection = objConnection</p>
+<p>objCommand.Properties(&quot;Page Size&quot;) = 1000<br>
+	objCommand.Properties(&quot;Searchscope&quot;) = ADS_SCOPE_SUBTREE</p>
+<p>&#039;#############################################################<br>
+	&#039;Dekl. für das schreiben der Textdatei<br>
+	&#039;#############################################################<br>
+	Dim fso<br>
+	Dim TF<br>
+	<br>
+	Set fso = CreateObject(&quot;Scripting.FileSystemObject&quot;)<br>
+	Set TF = FSO.OpenTextFile(&quot;C:\Dokumente und Einstellungen\Daniel\Desktop\pw\benutzer.txt&quot;,8, True)</p>
+<p>objCommand.CommandText = _<br>
+    &quot;&lt;GC://&quot; &amp; arrFileLines(l) &amp; &quot;&gt;;(objectCategory=User)&quot; &amp; _<br>
+        &quot;;userAccountControl,distinguishedName,cn;subtree&quot;</p>
+<p>Set objRecordSet = objCommand.Execute<br>
+Do Until objRecordset.EOF<br>
+ intUserAccountControl = objRecordset.Fields(&quot;userAccountControl&quot;)<br>
+ If NOT intUserAccountControl AND ADS_UF_ACCOUNTDISABLE Then<br>
+    For Each Key In objHash.Keys</p>
+<p>&#039;#############################################################<br>
+	&#039;Auslesen der Infos und erzeugen des Excelinhalts<br>
+	&#039;#############################################################</p>
+<p>set objuser = getObject (&quot;LDAP://&quot; &amp; objRecordset.Fields(&quot;distinguishedName&quot;).value)</p>
+<p>lastlogon = objuser.LastLogin<br>
+	dtmValue = objuser.PasswordLastChanged<br>
+    &#039;cnName = objuser.cn<br>
+    dnName = objRecordset.Fields(&quot;distinguishedName&quot;).value</p>
+<p>dnnamesumcount = Len(dnname)<br>
+    dnnamecount = InStr(1,dnname,&quot;OU&quot;)<br>
+    cut = dnnamesumcount - dnnamecount <br>
+    dncut = Right(dnname, cut)<br>
+	&#039;wscript.echo dncut<br>
+		<br>
+	TF.WriteLine(&quot;WYDLER\&quot; + objuser.sAMAccountName)<br>
+	objExcel.ActiveSheet.Cells(x, 1).Value = objuser.cn &#039;cnName<br>
+	objExcel.ActiveSheet.Cells(x, 2).Value = objuser.sAMAccountName <br>
+   	objExcel.ActiveSheet.Cells(x, 3).Value = objuser.PasswordLastChanged &#039;Left(dtmValue,10)<br>
+  	<br>
+    datepw = Left(dtmValue,10)<br>
+	today = Now<br>
+	today1 = &quot;05.04.2006&quot;<br>
+	days = DateDiff (&quot;d&quot;, datepw, today)<br>
+		<br>
+	If objHash(Key) And intUserAccountControl Then<br>
+	objExcel.ActiveSheet.Cells(x, 6).Value = &quot;PW läuft nie ab&quot;<br>
+	objExcel.Cells(x, 6).Interior.ColorIndex = 4<br>
+	<br>
+	else<br>
+	objExcel.ActiveSheet.Cells(x, 6).Value = &quot;PW läuft ab&quot;<br>
+	objExcel.Cells(x, 6).Interior.ColorIndex = 3<br>
+	End if<br>
+	<br>
+	If days &gt; 90 Then <br>
+	&#039;objExcel.Cells(x, 1).Interior.ColorIndex = 3<br>
+	&#039;objExcel.Cells(x, 2).Interior.ColorIndex = 3<br>
+	&#039;objExcel.Cells(x, 3).Interior.ColorIndex = 3<br>
+	objExcel.Cells(x, 5).Interior.ColorIndex = 3<br>
+	mustchangepw = mustchangepw + 1 <br>
+ 		   <br>
+	Else<br>
+	&#039;objExcel.Cells(x, 1).Interior.ColorIndex = 4<br>
+	&#039;objExcel.Cells(x, 2).Interior.ColorIndex = 4<br>
+	&#039;objExcel.Cells(x, 3).Interior.ColorIndex = 4<br>
+	objExcel.Cells(x, 5).Interior.ColorIndex = 4<br>
+	&#039;objExcel.ActiveSheet.Cells(x, 5).Value = 0<br>
+	ischangedpw = ischangedpw + 1<br>
+	End if<br>
+    		<br>
+	&#039;objExcel.ActiveSheet.Cells(x, 3).Value = dncut<br>
+	objExcel.ActiveSheet.Cells(x, 4).Value = dncut &#039;arrFileLines(l)<br>
+    objExcel.ActiveSheet.Cells(x, 5).Value = days<br>
+    objExcel.ActiveSheet.Cells(x, 7).Value = &quot;Nein&quot;<br>
+    objExcel.ActiveSheet.Cells(x, 8).Value = Left(lastlogon,10)</p>
+<p>If intUserAccountControl AND ADS_UF_ACCOUNTDISABLE Then<br>
+&lt;/code&gt;<br>
+        objExcel.ActiveSheet.Cells(x, 9).Value = &quot;Ja&quot;</p>
+<p>Else<br>
+	objExcel.ActiveSheet.Cells(x, 9).Value = &quot;Nein&quot;<br>
+			<br>
+	End If <br>
+   	<br>
+	x = x + 1        	<br>
+	 <br>
+	Next<br>
+    End If<br>
+   	objRecordset.MoveNext<br>
+	 <br>
+	Loop</p>
+<p>objConnection.Close<br>
+TF.Close</p>
+<p>oucount = oucount + 1</p>
+<p>Next<br>
+Set objRange = objWorksheet.UsedRange<br>
+&#039;ActiveWorkbook.SaveAs Filename:=&quot;C:\Test.txt&quot;, FileFormat:=xlCSV)</p>
+<p>objRange.EntireColumn.Autofit()<br>
+objExcel.Close<br>
+wscript.echo &quot;Fertig!&quot;</p>
+<p>Hoffe es ist genug!! :-)</p>
+<p>Gruß<br>
+Dani</p>
+<p>SNIPP --------------------------------------------</p>
+<p>Thanks<br>
+Frank Scholl<br>
+administrator.de Germany</p>
+<p>Test script:<br>
+---------------<br>
+&quot;$text&quot; get data from Mysql.</p>
+<p>include_once &#039;Text/Wiki.php&#039;;<br>
+$wiki =&amp; new Text_Wiki();<br>
+$text = $wiki-&gt;transform($text);<br>
+echo $text;</p>
+<p>Actual result:<br>
+--------------<br>
+im my apache Log:</p>
+<p>[Fri Apr 21 11:52:34 2006] [notice] child pid 29487 exit signal Segmentation fault (11)<br>
+[Fri Apr 21 11:57:51 2006] [notice] child pid 29554 exit signal Segmentation fault (11)</p>
+<p>...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

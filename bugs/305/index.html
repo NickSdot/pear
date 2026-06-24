@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #305</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #305</h1>
+<p>_pgFieldFlags() fails for schemas</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-11-27 08:28 UTC</td></tr>
+<tr><th>From</th><td>sdteffen at web dot de</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Windows 2000</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-11-27 08:28 UTC] sdteffen at web dot de</h3>
+<p>Description:<br>
+------------<br>
+_pgFieldFlags() fails when the table name contains a schema,<br>
+e.g. test.Table1</p>
+<p>Diff against DB-1.5.0RC2.tgz:</p>
+<p>--- /c/Program Files/php/pear/DB/pgsql.php	2003-11-27 10:29:52.010464000 +0200<br>
++++ /c/pgsql.php	2003-11-27 10:29:31.991678400 +0200<br>
+@@ -571,23 +571,35 @@<br>
+     function _pgFieldFlags($resource, $num_field, $table_name)<br>
+     {<br>
+         $field_name = @pg_fieldname($resource, $num_field);<br>
+-<br>
+-        $result = @pg_exec($this-&gt;connection, &quot;SELECT f.attnotnull, f.atthasdef<br>
+-                                FROM pg_attribute f, pg_class tab, pg_type typ<br>
++        $schema_table = preg_split(&quot;/\./&quot;, $table_name);<br>
++	if(count($schema_table) == 2) {<br>
++	  $table_name_part = $schema_table[1];<br>
++	  $schema_name = $schema_table[0];<br>
++	} else {<br>
++	  $table_name_part = $table_name;<br>
++	  $schema_name = &quot;public&quot;;<br>
++	}<br>
++	$result = @pg_exec($this-&gt;connection, &quot;SELECT f.attnotnull, f.atthasdef<br>
++                                FROM pg_attribute f, pg_class tab, pg_type typ,<br>
++				pg_namespace schema<br>
+                                 WHERE tab.relname = typ.typname<br>
+                                 AND typ.typrelid = f.attrelid<br>
+                                 AND f.attname = &#039;$field_name&#039;<br>
+-                                AND tab.relname = &#039;$table_name&#039;&quot;);<br>
++                                AND tab.relname = &#039;$table_name_part&#039;<br>
++				AND tab.relnamespace=schema.oid<br>
++				AND schema.nspname=&#039;$schema_name&#039;&quot;);<br>
+         if (@pg_numrows($result) &gt; 0) {<br>
+             $row = @pg_fetch_row($result, 0);<br>
+             $flags  = ($row[0] == &#039;t&#039;) ? &#039;not_null &#039; : &#039;&#039;;<br>
+ <br>
+             if ($row[1] == &#039;t&#039;) {<br>
+                 $result = @pg_exec($this-&gt;connection, &quot;SELECT a.adsrc<br>
+-                                    FROM pg_attribute f, pg_class tab, pg_type typ, pg_attrdef a<br>
++                                    FROM pg_attribute f, pg_class tab, pg_type typ, pg_attrdef a,<br>
++				    pg_namespace schema<br>
+                                     WHERE tab.relname = typ.typname AND typ.typrelid = f.attrelid<br>
+                                     AND f.attrelid = a.adrelid AND f.attname = &#039;$field_name&#039;<br>
+-                                    AND tab.relname = &#039;$table_name&#039; AND f.attnum = a.adnum&quot;);<br>
++                                    AND tab.relname = &#039;$table_name_part&#039; AND f.attnum = a.adnum<br>
++				    AND tab.relnamespace=schema.oid AND schema.nspname=&#039;$schema_name&#039;&quot;);<br>
+                 $row = @pg_fetch_row($result, 0);<br>
+                 $num = str_replace(&#039;\&#039;&#039;, &#039;&#039;, $row[0]);<br>
+ <br>
+@@ -595,12 +607,14 @@<br>
+             }<br>
+         }<br>
+         $result = @pg_exec($this-&gt;connection, &quot;SELECT i.indisunique, i.indisprimary, i.indkey<br>
+-                                FROM pg_attribute f, pg_class tab, pg_type typ, pg_index i<br>
++                                FROM pg_attribute f, pg_class tab, pg_type typ, pg_index i,<br>
++				pg_namespace schema<br>
+                                 WHERE tab.relname = typ.typname<br>
+                                 AND typ.typrelid = f.attrelid<br>
+                                 AND f.attrelid = i.indrelid<br>
+                                 AND f.attname = &#039;$field_name&#039;<br>
+-                                AND tab.relname = &#039;$table_name&#039;&quot;);<br>
++                                AND tab.relname = &#039;$table_name_part&#039;<br>
++				AND tab.relnamespace=schema.oid AND schema.nspname=&#039;$schema_name&#039;&quot;);<br>
+         $count = @pg_numrows($result);<br>
+ <br>
+         for ($i = 0; $i &lt; $count ; $i++) {</p>
+<p>Reproduce code:<br>
+---------------<br>
+ $infoaofa = $dbh-&gt;tableInfo(&quot;public.test&quot;);<br>
+ print_r($infoaofa);</p>
+<p>Expected result:<br>
+----------------<br>
+Array<br>
+(<br>
+    [0] =&gt; Array<br>
+        (<br>
+            [table] =&gt; public.test<br>
+            [name] =&gt; test<br>
+            [type] =&gt; int4<br>
+            [len] =&gt; 4<br>
+            [flags] =&gt; not_null unique primary<br>
+        )</p>
+<p>)</p>
+<p>Actual result:<br>
+--------------<br>
+testArray<br>
+(<br>
+    [0] =&gt; Array<br>
+        (<br>
+            [table] =&gt; public.test<br>
+            [name] =&gt; test<br>
+            [type] =&gt; int4<br>
+            [len] =&gt; 4<br>
+            [flags] =&gt; not_null<br>
+        )</p>
+<p>)</p>
+</section>
+<section>
+<h3>[2004-06-18 09:21 UTC] s dot ballestrero at firenze dot linux dot it</h3>
+<p>I STRONGLY disagree with the &quot;Wont fix&quot;.<br>
+Please see also bug #1607<br>
+If you insist on not fixing this in pgsql.php,<br>
+please allow me to make a pgsql_schema.php driver that supports schemas on PostgreSQL.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

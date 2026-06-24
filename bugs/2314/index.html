@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2314</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Ping/index.html">Net_Ping</a> &#187; Bug #2314</h1>
+<p>&quot;Backend not Supported&quot; error</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-09-11 16:33 UTC</td></tr>
+<tr><th>From</th><td>acc_pear at riggers dot me dot uk</td></tr>
+<tr><th>Assigned</th><td>jan</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Ping/index.html">Net_Ping</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0</td></tr>
+<tr><th>OS</th><td>linux fedora core 2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-09-11 16:33 UTC] acc_pear at riggers dot me dot uk</h3>
+<p>Description:<br>
+------------<br>
+Version 2.4 of Net_Ping throws a pear error with message &quot;Backend not supported&quot;</p>
+<p>I believe this is down to the change in implementation of get_class_methods() in PHP5 - the strings returned are case-sensitive. This causes the Net_Ping_Result::_prepareParseResult() to fail, as &quot;_parseresultlinux&quot; doesn&#039;t exist in the array of class methods.</p>
+<p>Suggest</p>
+<p>return in_array(&#039;_parseresult&#039;.$sysname, $parse_methods);</p>
+<p>is changed to</p>
+<p>return in_array(&#039;_parseResult&#039;.$sysname, $parse_methods);</p>
+<p>in Net_Ping_Result::_prepareParseResult()</p>
+<p>Reproduce code:<br>
+---------------<br>
+require_once(&#039;Net/Ping.php&#039;);<br>
+$p = Net_Ping::factory();<br>
+$res = $p-&gt;ping(&#039;172.0.0.10&#039;);</p>
+<p>if( PEAR::isError($res) ) {<br>
+        echo $res-&gt;getMessage();<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+No error message</p>
+<p>Actual result:<br>
+--------------<br>
+&quot;Backend not Supported&quot;</p>
+</section>
+<section>
+<h3>[2004-09-11 17:16 UTC] acc_pear at riggers dot me dot uk</h3>
+<p>oops. Of course:<br>
+return in_array(&#039;_parseResult&#039;.$sysname, $parse_methods);<br>
+will break php4...</p>
+</section>
+<section>
+<h3>[2004-09-19 18:09 UTC] acc_pear at riggers dot me dot uk</h3>
+<p>Patch to fix for both php4 and 5</p>
+<p>Index: Ping.php<br>
+===================================================================<br>
+RCS file: /repository/pear/Net_Ping/Ping.php,v<br>
+retrieving revision 1.38<br>
+diff -u -r1.38 Ping.php<br>
+--- Ping.php    21 Jul 2004 14:27:25 -0000      1.38<br>
++++ Ping.php    19 Sep 2004 12:47:46 -0000<br>
+@@ -633,7 +633,7 @@<br>
+        */<br>
+        function _prepareParseResult($sysname)<br>
+        {<br>
+-        $parse_methods = array_values(get_class_methods(&#039;Net_Ping_Result&#039;));<br>
++        $parse_methods = array_values(array_map(&#039;strtolower&#039;,get_class_methods(&#039;Net_Ping_Result&#039;)));</p>
+<p>return in_array(&#039;_parseresult&#039;.$sysname, $parse_methods);<br>
+        } /* function _prepareParseResult() */</p>
+</section>
+<section>
+<h3>[2005-03-25 22:19 UTC] bertolinisj at earthlink dot net</h3>
+<p>This fix for #2314 can also be applied to the NET_Traceroute package as it is plagued by the same bug.</p>
+<p>The  _prepareParseResult function of the Net_Traceroute_Result Container Class has the same issue and failed for me on win 2000 and XP when using the sample:</p>
+<p>Hope this helps<br>
+Sergio Bertolini</p>
+</section>
+<section>
+<h3>[2005-09-13 02:00 UTC] ohmer at epita dot info</h3>
+<p>this bug report is 1 year old and the tarball i installed via pear install Net_Ping is still not patched. will that be done a day ?</p>
+</section>
+<section>
+<h3>[2005-12-18 04:04 UTC] eqguy2002 at yahoo dot com</h3>
+<p>Thanks for posting the fix. I have been beating my head against my desk trying to figure out the problem.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

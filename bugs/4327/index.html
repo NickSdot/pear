@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4327</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_Archive/index.html">File_Archive</a> &#187; Bug #4327</h1>
+<p>PHP Hang on Permissions</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-11 17:22 UTC</td></tr>
+<tr><th>From</th><td>dmytton at php dot net</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/File_Archive/index.html">File_Archive</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Linux (Red Hat 7.2)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-11 17:22 UTC] dmytton at php dot net</h3>
+<p>Description:<br>
+------------<br>
+Although I am not able to replicate this on my PHP 5/Windows or PHP 4.3.11/Linux system, one of my users is reporting a problem whereby if files within a directory are chmod 0777 (for example), PHP will hang when archiving the directory. It will only work correctly if they are of permission 0644. If the file permissions are anything higher than 0644 (e.g. 0700, 0755 or 0777), then the archiving of a full directory fails. This has been tested for both zip and tar archives with the same result.</p>
+<p>PHP 4.3.11 (cli) (built: Apr 29 2005 01:38:06)<br>
+Copyright © 1997-2004 The PHP Group<br>
+Zend Engine v1.3.0, Copyright © 1998-2004 Zend Technologies<br>
+with Zend Extension Manager v1.0.6, Copyright © 2003-2004, by Zend Technologies<br>
+with Zend Optimizer v2.5.7, Copyright © 1998-2004, by Zend Technologies</p>
+<p>Unix running Apache 1.3.3 - Cpanel</p>
+<p>rpm -q tar<br>
+tar-1.13.25-4.7.1</p>
+<p>The directory is PNETdloader/ and is as follows:</p>
+<p>-rw-r--r-- 1 me me 3199 May 10 17:46 config_local.php<br>
+-rw-r--r-- 1 me me 28096 May 10 17:44 install<br>
+-rw-r--r-- 1 me me 5505 May 10 19:35 install_license.php<br>
+-rw-r--r-- 1 me me 3726 May 10 20:39 install.txt<br>
+-rw-r--r-- 1 me me 4952 May 10 19:35 license_check.php<br>
+-rw-r--r-- 1 me me 7871 May 10 16:25 license.txt<br>
+-rw-r--r-- 1 me me 5006 May 10 19:35 PNETdloader.php</p>
+<p>This works fine. However, some files need to be writable by default when the archive is extracted, but changing them to 0755 (for example) causes PHP to hang.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$ext = &#039;.tar&#039;;<br>
+$location = &#039;PNETdloader/&#039;<br>
+$source = File_Archive::read($location, $location);<br>
+					$source-&gt;extract(File_Archive::toArchive($location.$ext, File_Archive::toFiles()));</p>
+<p>Expected result:<br>
+----------------<br>
+The zip archive/tar archive should be created.</p>
+<p>Actual result:<br>
+--------------<br>
+Fatal error: Maximum execution time of 30 seconds exceeded in /usr/lib/php/PEAR.php on line 820</p>
+</section>
+<section>
+<h3>[2005-05-11 18:33 UTC] dmytton at php dot net</h3>
+<p>That was mistake I made when writing the example code. The actual code is embedded into a class that I&#039;ve written to handle downloads so I extracted the code and provided it in a useful format so you can try and replicate it. The actual value of $location will not actually have a / in it. The archive created is called $location.tar and in this case, should be PNETdloader.tar. Also, the finished archive is not created within the source directory, it is created within the directory that the script is running from.</p>
+<p>The actual code I am using copied directly from my class is:</p>
+<p>$ext = &#039;.tar&#039;;<br>
+				// We need to change to the the release_source directory<br>
+				if (chdir($iono-&gt;settings[&#039;release_source_path&#039;]))<br>
+				{<br>
+					$source = File_Archive::read($location, $location);<br>
+					$source-&gt;extract(File_Archive::toArchive($location.$ext, File_Archive::toFiles()));<br>
+					chdir(&#039;../&#039;);				<br>
+				}</p>
+<p>$iono-&gt;settings[&#039;release_source_path&#039;] is a full path to the directory such as /home/username/public_html/files with $location being the location of the file or directory to archive relative to the $iono-&gt;settings[&#039;release_source_path&#039;] directory</p>
+</section>
+<section>
+<h3>[2005-05-13 21:36 UTC] dmytton at php dot net</h3>
+<p>Waiting for my customer to reply to my request...If they don&#039;t respond by next week, I&#039;ll close this issue since I can&#039;t replicate it myself.</p>
+</section>
+<section>
+<h3>[2005-05-19 14:50 UTC] dmytton at php dot net</h3>
+<p>Can&#039;t reproduce. No response from customer.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

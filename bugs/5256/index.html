@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5256</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/I18Nv2/index.html">I18Nv2</a> &#187; Bug #5256</h1>
+<p>No way to fetch all matching languages</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5256</th><td>No way to fetch all matching languages</td></tr>
+<tr><th>Submitted</th><td>2005-08-31 12:57 UTC</td></tr>
+<tr><th>From</th><td>o dot persson at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>mike</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/I18Nv2/index.html">I18Nv2</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.5</td></tr>
+<tr><th>OS</th><td>Debian GNU/Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-31 12:57 UTC] o dot persson at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Today you can fetch the best matched language. But there&#039;s no way to fetch the rest of the languages. This would be very interesting in some cases -- eg. when there&#039;s no translation available for the best matched language one can fall back to the second best.</p>
+<p>Attached is a small patch (against the current CVS version). Feel free to do whatever you like. I think it would be a great feature. ;)</p>
+<p>Test script:<br>
+---------------<br>
+Index: ../components/PEAR/I18Nv2/Negotiator.php<br>
+===================================================================<br>
+--- ../components/PEAR/I18Nv2/Negotiator.php    (revision 59)<br>
++++ ../components/PEAR/I18Nv2/Negotiator.php    (working copy)<br>
+@@ -274,6 +274,20 @@<br>
+     }</p>
+<p>/**<br>
++     * Find Language matches<br>
++     *<br>
++     * @access  public<br>
++     * @return  string<br>
++     * @param   array   $langs<br>
++     */<br>
++    function getLanguageMatches($langs = null)<br>
++    {<br>
++        $languages = $this-&gt;_getMatches($langs, $this-&gt;_acceptLanguage,<br>
++                                        $this-&gt;_defaultLanguage);<br>
++        return array_unique($languages);<br>
++    }<br>
++<br>
++    /**<br>
+      * Find locale match<br>
+      *<br>
+      * @access  public<br>
+@@ -303,13 +317,24 @@<br>
+         if (!$haystack) {<br>
+             return $default;<br>
+         }<br>
++        $matches = $this-&gt;_getMatches($needle, $haystack);<br>
++        return (count($matches) &gt; 0) ? array_shift($matches) : $default;<br>
++    }<br>
++<br>
++    /**<br>
++     * Return an array of matched values from first and second parameter.<br>
++     *<br>
++     * @access  private<br>
++     * @return  string<br>
++     * @param   array   $needle<br>
++     * @param   array   $haystack<br>
++     */<br>
++    function _getMatches($needle, $haystack)<br>
++    {<br>
+         if (!$needle) {<br>
+-            return array_shift($haystack);<br>
++            return $haystack;<br>
+         }<br>
+-        if ($result = array_shift($a = array_intersect($haystack, $needle))) {<br>
+-            return $result;<br>
+-        }<br>
+-        return $default;<br>
++        return array_intersect($haystack, $needle);<br>
+     }</p>
+<p>/**</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

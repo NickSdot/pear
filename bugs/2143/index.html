@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2143</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/Auth_SASL/index.html">Auth_SASL</a> &#187; Bug #2143</h1>
+<p>We found that Auth_SASL_DigestMD5::getResponse() generates invalid response.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-08-17 03:15 UTC</td></tr>
+<tr><th>From</th><td>khagiya1 at yahoo dot co dot jp</td></tr>
+<tr><th>Assigned</th><td>amistry</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Auth_SASL/index.html">Auth_SASL</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.7</td></tr>
+<tr><th>OS</th><td>windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-17 03:15 UTC] khagiya1 at yahoo dot co dot jp</h3>
+<p>Description:<br>
+------------<br>
+We found that Auth_SASL_DigestMD5::getResponse() <br>
+generates invalid response.</p>
+<p>According to RFC2831, &quot;maxbuf&quot; value must be <br>
+preceded by &quot;maxbuf=&quot;. <br>
+Similarly, &quot;nc&quot; field&#039;s value must consist of <br>
+LHEX (lower-case hexadecimal letters) which does <br>
+not include surrounding double-quote (&quot;).</p>
+<p>The following are related excerpts from RFC2831. <br>
+------------------------------------------------------------------ <br>
+EUsing Digest Authentication as a SASL Mechanism <br>
+( http://www.faqs.org/rfcs/rfc2831.html )</p>
+<p>digest-challenge  = <br>
+         1#( realm | nonce | qop-options | stale | maxbuf | charset <br>
+               algorithm | cipher-opts | auth-param )</p>
+<p>maxbuf            = &quot;maxbuf&quot; &quot;=&quot; maxbuf-value <br>
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^ &lt;-- this point is problem!!. <br>
+        maxbuf-value      = 1*DIGIT</p>
+<p>digest-response  = 1#( username | realm | nonce | cnonce | <br>
+                          nonce-count | qop | digest-uri | response | <br>
+                          maxbuf | charset | cipher | authzid | <br>
+                          auth-param )</p>
+<p>nonce-count      = &quot;nc&quot; &quot;=&quot; nc-value <br>
+                                   ^^^^^^^^ &lt;-- this point is problem!!. <br>
+       nc-value         = 8LHEX <br>
+       LHEX             = &quot;0&quot; | &quot;1&quot; | &quot;2&quot; | &quot;3&quot; | <br>
+                          &quot;4&quot; | &quot;5&quot; | &quot;6&quot; | &quot;7&quot; | <br>
+                          &quot;8&quot; | &quot;9&quot; | &quot;a&quot; | &quot;b&quot; | <br>
+                          &quot;c&quot; | &quot;d&quot; | &quot;e&quot; | &quot;f&quot; <br>
+------------------------------------------------------------------</p>
+<p>Patch is attached. Thanks.</p>
+<p>Index: DigestMD5.php<br>
+===================================================================<br>
+RCS file: /home/cvsroot/Framework/pear/pear-20040624/Auth/SASL/DigestMD5.php,v<br>
+retrieving revision 1.1.1.1<br>
+diff -c -r1.1.1.1 DigestMD5.php<br>
+*** DigestMD5.php	24 Jun 2004 01:24:59 -0000	1.1.1.1<br>
+--- DigestMD5.php	17 Aug 2004 02:25:55 -0000<br>
+***************<br>
+*** 74,80 ****<br>
+              $digest_uri     = sprintf(&#039;%s/%s&#039;, $service, $hostname);<br>
+              $response_value = $this-&gt;_getResponseValue($authcid, $pass, $challenge[&#039;realm&#039;], $challenge[&#039;nonce&#039;], $cnonce, $digest_uri, $authzid);<br>
+  <br>
+!             return sprintf(&#039;username=&quot;%s&quot;,realm=&quot;%s&quot;&#039; . $authzid_string  . &#039;,nonce=&quot;%s&quot;,cnonce=&quot;%s&quot;,nc=&quot;00000001&quot;,qop=auth,digest-uri=&quot;%s&quot;,response=%s,%d&#039;, $authcid, $challenge[&#039;realm&#039;], $challenge[&#039;nonce&#039;], $cnonce, $digest_uri, $response_value, $challenge[&#039;maxbuf&#039;]);<br>
+          } else {<br>
+              return PEAR::raiseError(&#039;Invalid digest challenge&#039;);<br>
+          }<br>
+--- 74,80 ----<br>
+              $digest_uri     = sprintf(&#039;%s/%s&#039;, $service, $hostname);<br>
+              $response_value = $this-&gt;_getResponseValue($authcid, $pass, $challenge[&#039;realm&#039;], $challenge[&#039;nonce&#039;], $cnonce, $digest_uri, $authzid);<br>
+  <br>
+!             return sprintf(&#039;username=&quot;%s&quot;,realm=&quot;%s&quot;&#039; . $authzid_string  . &#039;,nonce=&quot;%s&quot;,cnonce=&quot;%s&quot;,nc=00000001,qop=auth,digest-uri=&quot;%s&quot;,response=%s,maxbuf=%d&#039;, $authcid, $challenge[&#039;realm&#039;], $challenge[&#039;nonce&#039;], $cnonce, $digest_uri, $response_value, $challenge[&#039;maxbuf&#039;]);<br>
+          } else {<br>
+              return PEAR::raiseError(&#039;Invalid digest challenge&#039;);<br>
+          }</p>
+</section>
+<section>
+<h3>[2004-08-17 03:23 UTC] khagiya1 at yahoo dot co dot jp</h3>
+<p>Summary change.</p>
+</section>
+<section>
+<h3>[2006-03-22 05:20 UTC] amistry at php dot net</h3>
+<p>damian is inactive.  I&#039;ve committed the patch to the CVS.  Please verify that it is correct.  Thank you.</p>
+</section>
+<section>
+<h3>[2006-05-21 07:12 UTC] amistry at php dot net</h3>
+<p>Thank you for your bug report. This issue has been fixed<br>
+in the latest released version of the package, which you can download at<br>
+http://pear.php.net/get/Auth_SASL</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

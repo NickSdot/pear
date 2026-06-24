@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8540</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_AJAX/index.html">HTML_AJAX</a> &#187; Bug #8540</h1>
+<p>Setting charset</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8540</th><td>Setting charset</td></tr>
+<tr><th>Submitted</th><td>2006-08-23 08:32 UTC</td></tr>
+<tr><th>From</th><td>piotr_wierzbowski at sevenet dot pl</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_AJAX/index.html">HTML_AJAX</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Debian</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-23 08:32 UTC] piotr_wierzbowski at sevenet dot pl</h3>
+<p>Description:<br>
+------------<br>
+How can I set charset for everything in this package, it is UTF-8 and I need iso-8859-2<br>
+I would be greatfull if i could set default charset in one variable (or if it&#039;s possible already give me a sign - sorry there is no good api :( )</p>
+</section>
+<section>
+<h3>[2006-08-23 08:35 UTC] piotr_wierzbowski at sevenet dot pl</h3>
+<p>*no good api desc. ;)</p>
+</section>
+<section>
+<h3>[2006-10-25 18:18 UTC] jeichorn at php dot net</h3>
+<p>the JSON serialization only works in utf-8 or ascii, are you thinking for non JSON requests or something else</p>
+</section>
+<section>
+<h3>[2006-10-25 19:28 UTC] jeichorn at php dot net</h3>
+<p>Also where do you want to set the Charset and want do you want that to do.  Change the charset header, auto transcode using mbstring, something else.</p>
+</section>
+<section>
+<h3>[2006-10-27 07:51 UTC] piotr_wierzbowski at sevenet dot pl</h3>
+<p>For example: I have form with select list and serch filter as text field, i&#039;m typeing into text field something and browser generates AJAX request witch changes my select list, it works completely fine, select list is changed, but options are in wrong charset, although when I return it manualy using ex. print_r they are right. When they are send using AJAX, they have wrong encoding. It would be fine if I could set text encoding witch is returned to browser. It could be set in dispatcher, maybe.</p>
+</section>
+<section>
+<h3>[2006-10-27 18:40 UTC] jeichorn at php dot net</h3>
+<p>If the data in question is being moved using JSON then encoding besides utf8 aren&#039;t an option</p>
+</section>
+<section>
+<h3>[2006-10-30 08:36 UTC] piotr_wierzbowski at sevenet dot pl</h3>
+<p>So how can i set something different than JSON witch can handle ISO-8859-2</p>
+</section>
+<section>
+<h3>[2006-11-11 15:17 UTC] raita at pambu dot com</h3>
+<p>Hey, I have kind of the same problem.</p>
+<p>I use js: <br>
+HTML_AJAX.replace(&#039;browser&#039;, &#039;users.php&#039;);</p>
+<p>and in the users-file I use swedish letters å ä and ö. But they get garbled up to chars like: � when loaded with ajax.</p>
+<p>What to do?</p>
+<p>Kind regards,<br>
+raita</p>
+</section>
+<section>
+<h3>[2006-11-21 14:53 UTC] auroraeosrose at php dot net</h3>
+<p>XmlHttpRequest uses the JSON serializer by default (the HTML_AJAX_Action class uses JSON as well).  Unless you use a different serializer such as XML to pass the data you MUST deal with UTF-8 encoded data.  This is a technical limitation of JSON and javascript, not HTML_AJAX.  That means if you send data from PHP which is not UTF-8 it will be garbled.  Right now HTML_AJAX assumes you are using UTF-8 and adds that to the content-type http header that is sent with the returned data.</p>
+<p>Currently there are four serializers for HTML_AJAX, JSON, PHP, XML, and URLencoded.  The examples directory has scripts using all of them.  Although JSON must use UTF-8, it would be possible to add a &quot;change charset&quot; option for the xml serializer that could send the appropriate charset header when sending the data, and when creating the request sendig any get/post data correctly.  However you&#039;d still be responsible for</p>
+<p>1. Making sure the data you send from PHP is in the right charset.<br>
+2. Setting headers for the initial page so the browser has the right charset.<br>
+3. Dealing with the data returned from the xmlhttprequest, you&#039;d have to write javascript to deal with it</p>
+<p>Probably the easiest solution is simply to use UTF-8 for your webpage.  It would be less of a headache to use iconv or mbstring to transcode your current data to utf-8 before sending it, and changing your current intital page charset to UTF-8.</p>
+<p>raita - your question is totally different - you need to make sure the initial page charset you&#039;re sending matches the charset of the users.php file</p>
+<p>The bottom line - If you&#039;d like to have the XML serializer (and possibly urlencoded or php serializers) be able to set a charset, please ask, but JSON must use UTF-8</p>
+</section>
+<section>
+<h3>[2006-11-28 12:03 UTC] piotr_wierzbowski at sevenet dot pl</h3>
+<p>I found a solution: before returning data to Ajax I changed charset with mb_convert_encoding($value, &quot;utf-8&quot;, &quot;iso-8859-2&quot;);<br>
+and it works nice :]</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

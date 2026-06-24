@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2153</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/Translation2/index.html">Translation2</a> &#187; Bug #2153</h1>
+<p>Translation2_Admin_Container_db can&#039;t alter table, only create new ones</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-08-18 01:59 UTC</td></tr>
+<tr><th>From</th><td>esm at baseclass dot modulweb dot dk</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Translation2/index.html">Translation2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>Winn2k / IIS</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-18 01:59 UTC] esm at baseclass dot modulweb dot dk</h3>
+<p>Description:<br>
+------------<br>
+On line 71 in method createNewLang (Admin/Container/DB.php)</p>
+<p>This is the code that checks if an existing table should be altered (rather than a new table created):</p>
+<p>if (in_array($this-&gt;options[&#039;strings_tables&#039;][$langID], $res)) {<br>
+            //table exists<br>
+            $query = sprintf(&#039;ALTER TABLE %s ADD COLUMN %s&#039;,<br>
+                            $this-&gt;options[&#039;strings_tables&#039;][$langID],<br>
+                            $lang_col<br>
+            );<br>
+        } else ... etc.....</p>
+<p>This does not work for two reasons:</p>
+<p>1. The result returned by</p>
+<p>$res = $this-&gt;query(&#039;SHOW TABLES&#039;, &#039;getAll&#039;);</p>
+<p>is a multidimensional array like this:</p>
+<p>Array<br>
+            (<br>
+                [0] =&gt; Array<br>
+                    (<br>
+                        [0] =&gt; table1<br>
+                    )</p>
+<p>[1] =&gt; Array<br>
+                    (<br>
+                        [0] =&gt; table2<br>
+                    )</p>
+<p>etc....</p>
+<p>The php function in_array() cannot search arrays recursively. Thus the check</p>
+<p>if (in_array($this-&gt;options[&#039;strings_tables&#039;][$langID], $res))</p>
+<p>will ALWAYS return false.</p>
+<p>2. The query created to ALTER the table will never be valid</p>
+<p>$query = sprintf(&#039;ALTER TABLE %s ADD COLUMN %s&#039;,</p>
+<p>will end up something like this:</p>
+<p>ALTER TABLE i18n ADD COLUMN en</p>
+<p>Which is invalid SQL (no column properties defined)</p>
+</section>
+<section>
+<h3>[2004-08-20 18:16 UTC] esm at baseclass dot modulweb dot dk</h3>
+<p>The version stamp of my Admin/Container/DB.php</p>
+<p>$Id: db.php,v 1.8 2004/04/19 14:58:47 quipo Exp $</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

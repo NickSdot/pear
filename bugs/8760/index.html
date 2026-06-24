@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8760</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_Table/index.html">DB_Table</a> &#187; Bug #8760</h1>
+<p>Insert only if row doesn&#039;t exist</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8760</th><td>Insert only if row doesn&#039;t exist</td></tr>
+<tr><th>Submitted</th><td>2006-09-21 16:56 UTC</td></tr>
+<tr><th>From</th><td>benjaminhill at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>wiesemann</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/DB_Table/index.html">DB_Table</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-09-21 16:56 UTC] benjaminhill at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I find myself re-using a similar function often in seed scripts:</p>
+<p>/**<br>
+ * Simple method to insert a row into a table, &quot;smart&quot; version of MDB2 Extended autoExecute<br>
+ * returns: 0 if no insert, PK of new row or &quot;1&quot; if no pk.<br>
+ * $values: Associative array of column values<br>
+ * $only_if_new: Checks to see if the values already exist<br>
+ * $has_pk: Automatically uses nextId(), if a new row is inserted<br>
+ * $match_values: optional Associative array, if the values to match on aren&#039;t the same as the values to conditionally insert<br>
+ */<br>
+insert_row($table_name, $values, $only_if_new = false, $has_pk = true, $match_values=null) {<br>
+...</p>
+<p>In an ideal world, one call to this function could insert across many tables based on foreign keys, but that is VERY blue sky.</p>
+</section>
+<section>
+<h3>[2006-09-21 17:05 UTC] benjaminhill at gmail dot com</h3>
+<p>Ok, this is VERY ugly code.  But it gets the idea across.</p>
+<p>function insert_row($table, $values, $only_if_new = false, $has_pk = true) {<br>
+  $db = MDB2 :: singleton();<br>
+  if ($only_if_new) {<br>
+    $sql = &quot;select &quot;;<br>
+    $sql .= ($has_pk) ? $table . &quot;_id&quot; : &quot;count(1)&quot;;<br>
+    $sql .= &quot; from $table where &quot;;<br>
+    <br>
+    $sqlJoin = array();<br>
+    foreach ($values as $_key =&gt; $_val) {<br>
+      $sqlJoin[] = $_key . &quot; = &quot; . $db-&gt;quote($_val);<br>
+    }<br>
+    $sql .= implode(&#039; and &#039;, $sqlJoin);<br>
+    <br>
+    if (isset ($_SESSION[&#039;debug&#039;]))<br>
+      echo $sql . &#039;&lt;hr/&gt;\n&#039;;</p>
+<p>$id = $db-&gt;queryOne($sql);<br>
+    if (PEAR :: isError($id)) {<br>
+      throw new Exception(&#039;MDB2 Error on check for existing row:&#039; . $id-&gt;getMessage());<br>
+    }<br>
+    if ($id)<br>
+      return $id;<br>
+  }</p>
+<p>if ($has_pk)<br>
+    $values[$table . &quot;_id&quot;] = $db-&gt;nextId($table);<br>
+  if (isset ($_SESSION[&#039;debug&#039;]))<br>
+    print_r($values);</p>
+<p>$result = $db-&gt;autoExecute($table, $values, MDB2_AUTOQUERY_INSERT);<br>
+  if (PEAR :: isError($result)) {<br>
+    throw new Exception(&#039;MDB2 Error on insert into table:&#039; . $table . &#039;:&#039; . print_r($values,true) . &#039;:&#039; . print_r($result, true));<br>
+  }</p>
+<p>return ($has_pk) ? $values[$table . &quot;_id&quot;] : 1;<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

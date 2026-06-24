@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4337</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/Pager/index.html">Pager</a> &#187; Bug #4337</h1>
+<p>New version breaks encoding.</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-12 21:45 UTC</td></tr>
+<tr><th>From</th><td>pager dot pear dot php dot net at matt dot thoughtprocess dot n</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Pager/index.html">Pager</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-12 21:45 UTC] pager dot pear dot php dot net at matt dot thoughtprocess dot n</h3>
+<p>Description:<br>
+------------<br>
+The new version breaks a lot of my code.</p>
+<p>Reproduce code:<br>
+---------------<br>
+This is one of the scripts in question:<br>
+http://cbp1.com/listings_search.php</p>
+<p>If you choose &#039;1,000,000&#039; for a max price and &#039;Brentwood&#039;</p>
+<p>Specifically here is the original request which works with &amp;pageID=2 appended to the end:<br>
+http://cbp1.com/listings_search.php?action=search&amp;s%5Beq%5D%5B_prop_type%5D=RES&amp;s%5Bbtw%5D%5B_list_price%5D%5Blow%5D=0&amp;s%5Bbtw%5D%5B_list_price%5D%5Bhigh%5D=1000000&amp;s%5Beq%5D%5B_square_footage%5D=%2B0&amp;s%5Beq%5D%5B_number_of_bedrooms%5D=%2B0&amp;s%5Beq%5D%5B_total_bathrooms%5D=%2B0&amp;s%5Beq%5D%5B_trans%5D=S&amp;s%5Bin%5D%5B_area%5D%5B%5D=211&amp;s%5Bin%5D%5B_city%5D%5B%5D=0&amp;s%5Beq%5D%5B_style%5D=0&amp;s%5Beq%5D%5B_street_number%5D=&amp;s%5Beq%5D%5B_street_name%5D=&amp;s%5Beq%5D%5B_subdivision%5D=&amp;s%5Beq%5D%5B_zip%5D=&amp;s%5Beq%5D%5B_last_updated_date%5D=%2B0&amp;submit=Show+Properties&amp;pageID=2</p>
+<p>Here is the Pager generated URL after the most recent Pager 2.3.1 that no longer works:<br>
+http://cbp1.com/listings_search.php?action=search&amp;s[eq][_prop_type]=RES&amp;s[eq][_square_footage]=+0&amp;s[eq][_number_of_bedrooms]=+0&amp;s[eq][_total_bathrooms]=+0&amp;s[eq][_trans]=S&amp;s[eq][_style]=0&amp;s[eq][_street_number]=&amp;s[eq][_street_name]=&amp;s[eq][_subdivision]=&amp;s[eq][_zip]=&amp;s[eq][_last_updated_date]=+0&amp;s[btw][_list_price][low]=0&amp;s[btw][_list_price][high]=1000000&amp;s[in][_area][0]=211&amp;s[in][_city][0]=0&amp;submit=Show%20Properties&amp;pageID=2</p>
+<p>Here is my external fix to take care of this problem:<br>
+        // Page nav links<br>
+        $links = $pager-&gt;getLinks();</p>
+<p>foreach(array_keys($links) as $key)<br>
+{<br>
+        $links[$key]=preg_replace(&#039;/\[/&#039;, &quot;%5B&quot;, $links[$key]);<br>
+        $links[$key]=preg_replace(&#039;/\]/&#039;, &quot;%5D&quot;, $links[$key]);<br>
+        $links[$key]=preg_replace(&#039;/\+/&#039;, &quot;%2B&quot;, $links[$key]);<br>
+}</p>
+</section>
+<section>
+<h3>[2005-05-12 22:17 UTC] pager dot pear dot php dot net at matt dot thoughtprocess dot n</h3>
+<p>After my original submission I realized I needed two more lines to correct the first and last links in the array that have brackets around the page numbers. This is such a dirty hack. :)</p>
+<p>// Page nav links<br>
+        $links = $pager-&gt;getLinks();</p>
+<p>foreach(array_keys($links) as $key) {<br>
+        $links[$key]=preg_replace(&#039;/\[/&#039;, &quot;%5B&quot;, $links[$key]);<br>
+        $links[$key]=preg_replace(&#039;/\]/&#039;, &quot;%5D&quot;, $links[$key]);<br>
+        $links[$key]=preg_replace(&#039;/\+/&#039;, &quot;%2B&quot;, $links[$key]);<br>
+        $links[$key]=preg_replace(&#039;/\&gt;\%5B/&#039;, &quot;&gt;[&quot;, $links[$key]);<br>
+        $links[$key]=preg_replace(&#039;/\%5D\&lt;/&#039;, &quot;]&lt;&quot;, $links[$key]);<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

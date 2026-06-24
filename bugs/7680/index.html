@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7680</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #7680</h1>
+<p>Prepare statement do not support LIMIT in MySQL</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-05-20 16:27 UTC</td></tr>
+<tr><th>From</th><td>reg at dav-muz dot net</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.2</td></tr>
+<tr><th>OS</th><td>Irrelevant (Linux Slackware10.2)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-05-20 16:27 UTC] reg at dav-muz dot net</h3>
+<p>Description:<br>
+------------<br>
+MySQL &lt; 5.0.7 (4.1 in my case) do not support LIMIT in PREPARE statement, but MDB2 could support this for compatibility reason. But it is not so...</p>
+<p>I have test it with MDB2_PORTABILITY_ALL and MDB2_PORTABILITY_NONE.</p>
+<p>See http://dev.mysql.com/doc/refman/4.1/en/select.html (and use &quot;prepare &quot; in the search function of your browser). I think there is more exceptions.</p>
+<p>Test script:<br>
+---------------<br>
+$prepared = $mdb2-&gt;prepare(&#039;SELECT * FROM `news` LIMIT ?,?&#039;, array(&#039;integer&#039;, &#039;integer&#039;));<br>
+$result = $prepared-&gt;execute(array(0, 30));</p>
+<p>Expected result:<br>
+----------------<br>
+Success.</p>
+<p>Actual result:<br>
+--------------<br>
+_doQuery: Could not execute statement[Native code: 1064] [Native message: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near &#039;?,?&#039; at line 1]</p>
+</section>
+<section>
+<h3>[2006-05-20 16:56 UTC] reg at dav-muz dot net</h3>
+<p>...huff</p>
+<p>In my application (a framework and a CMS) is possible that I use all the databases supported by MDB2 and this problem could create a switch control for every differences of databases in many functions.</p>
+<p>It is possible, for resolve quicly the problem, to add a parameter to prepare function to force the substitution of placeholders via PHP?</p>
+<p>An example:<br>
+function &amp;prepare($query, $types = null, $result_types = null, $lobs = array(), $forceSubstitution = false)</p>
+<p>I could do for you if this is a useful feature (I will do in any case but it is more clean and useful in MDB2 package!). I could write a private function for MDB2_Driver_Common.  :)</p>
+</section>
+<section>
+<h3>[2006-05-20 19:17 UTC] reg at dav-muz dot net</h3>
+<p>THX!</p>
+<p>It is just emulated for default and, in line 416 of MDB2/mysql.php, it is set to true if the version is major or pair of 4.1.</p>
+<p>IMHO, I think that is this the problem, MySQL is no more compatible with &quot;prepared_statements&quot; than previous: it is only partially compatible.</p>
+<p>&quot;sub_selects&quot; is compatible in MySQL &gt;= 4.0 (if I am not wrong, is in the same page).</p>
+<p>The code:<br>
+if (is_array($server_info)<br>
+    &amp;&amp; ($server_info[&#039;major&#039;] &gt; 4<br>
+        || $server_info[&#039;major&#039;] == 4<br>
+        )<br>
+    ) {<br>
+    $this-&gt;supported[&#039;sub_selects&#039;] = true;<br>
+    if ($server_info[&#039;major&#039;] &gt; 5<br>
+        || $server_info[&#039;major&#039;] == 5<br>
+        ) {<br>
+        $this-&gt;supported[&#039;prepared_statements&#039;] = true;<br>
+    }<br>
+}</p>
+</section>
+<section>
+<h3>[2006-05-20 19:44 UTC] reg at dav-muz dot net</h3>
+<p>It run only with prepared_statements = false.</p>
+<p>Sorry for my english, I am not sure of understand right:</p>
+<p>&lt;cut&gt;<br>
+For prepared statements, you can use placeholders (supported as of MySQL version 5.0.7). The following statements will return one row from the tbl table:</p>
+<p>SET @a=1;<br>
+PREPARE STMT FROM &#039;SELECT * FROM tbl LIMIT ?&#039;;<br>
+EXECUTE STMT USING @a;<br>
+&lt;/cut&gt;<br>
+and<br>
+&lt;cut&gt;<br>
+however LIMIT does not support placeholders<br>
+(it also does not support expressions for that matter).<br>
+&lt;/cut&gt;</p>
+<p>I use often LIMIT feature with placeholders because the framework do a large flexibility to final user and this is the principal feature. If MySQL 4.1 do not support fully placeholders (only LIMIT is out, uff..) I, and who use LIMIT, need to use this selection (the if proposed) in MDB2 or directly in the code.</p>
+<p>If this selection is in MDB2 there is no problem for all.<br>
+If this selection is in the code: the code do something thas is not in the right place..</p>
+<p>Other solution that come in my mind is to put the selection in _doQuery() to save performance and stability.</p>
+<p>If you wont I could write the code for do that, say me where..  ;)</p>
+</section>
+<section>
+<h3>[2006-05-20 20:06 UTC] reg at dav-muz dot net</h3>
+<p>Thanks!</p>
+<p>Now I am blocked because I have to publish this release of framework and this is the only last critical bug: but half of my hostings and clients have MySQL 4.1.x ... :(</p>
+<p>Patching all PEAR repository is not a good idea, some are not mine and I can&#039;t... (some have previous version and could have problems..)<br>
+Can you commit my workaround to solve quicly the problem, before have your well written solution?</p>
+<p>Thank you really a lot, if you can!</p>
+</section>
+<section>
+<h3>[2006-05-20 20:10 UTC] reg at dav-muz dot net</h3>
+<p>&gt; Can you commit my workaround to solve quicly the problem,<br>
+&gt; before have your well written solution?</p>
+<p>Excuse me: for only not compatible versions like mine.</p>
+</section>
+<section>
+<h3>[2006-05-20 20:11 UTC] reg at dav-muz dot net</h3>
+<p>Ok, THX!</p>
+</section>
+<section>
+<h3>[2006-05-22 09:47 UTC] reg at dav-muz dot net</h3>
+<p>Now it run with:<br>
+supported[&#039;prepared_statements&#039;] = &#039;emulated&#039;</p>
+<p>And also with:<br>
+options[&#039;emulate_prepared&#039;] = true;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

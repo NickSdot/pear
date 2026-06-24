@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8212</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #8212</h1>
+<p>Problem with PDO</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-07-13 20:39 UTC</td></tr>
+<tr><th>From</th><td>xerrez at worldofcrime dot de</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Debian Etch</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-13 20:39 UTC] xerrez at worldofcrime dot de</h3>
+<p>Description:<br>
+------------<br>
+When using the PDO Auth Container no login is possible.<br>
+After receiving the row in the $row variable, there is a enquiry if the $result variable is an array. But this variable isn&#039;t set before, so it is not an error an the function readUserData return null.</p>
+<p>(Sorry for my bad english. I am german)</p>
+<p>Test script:<br>
+---------------<br>
+(original)<br>
+    function readUserData($handle = &#039;&#039;, $passwd = &#039;&#039;, $auth_user_id = false)<br>
+    {<br>
+        $fields = array();<br>
+        foreach ($this-&gt;tables[&#039;users&#039;][&#039;fields&#039;] as $field =&gt; $req) {<br>
+            $fields[] = $this-&gt;alias[$field] . &#039; AS &#039; . $field;<br>
+        }</p>
+<p>// Setting the default query.<br>
+        $query = &#039;SELECT &#039; . implode(&#039;,&#039;, $fields) . &#039;<br>
+                   FROM &#039;   . $this-&gt;prefix . $this-&gt;alias[&#039;users&#039;] . &#039;<br>
+                   WHERE  &#039;;<br>
+        if ($auth_user_id) {<br>
+            $query .= $this-&gt;alias[&#039;auth_user_id&#039;] . &#039;=&#039;<br>
+                . $this-&gt;dbc-&gt;quote($auth_user_id);<br>
+        } else {<br>
+            $query .= $this-&gt;alias[&#039;handle&#039;] . &#039;=&#039;<br>
+                . $this-&gt;dbc-&gt;quote($handle);</p>
+<p>if (!is_null($this-&gt;tables[&#039;users&#039;][&#039;fields&#039;][&#039;passwd&#039;])) {<br>
+                // If $passwd is set, try to find the first user with the given<br>
+                // handle and password.<br>
+                $query .= &#039; AND   &#039; . $this-&gt;alias[&#039;passwd&#039;] . &#039;=&#039;<br>
+                    . $this-&gt;dbc-&gt;quote($this-&gt;encryptPW($passwd));<br>
+            }<br>
+        }</p>
+<p>// Query database<br>
+	    $res = $this-&gt;dbc-&gt;query($query);</p>
+<p>if ($res === false) {<br>
+            $error_info = $this-&gt;dbc-&gt;errorInfo();<br>
+            $this-&gt;stack-&gt;push(<br>
+                LIVEUSER_ERROR, &#039;exception&#039;,<br>
+                array(<br>
+                    &#039;reason&#039; =&gt; $error_info[2],<br>
+                    &#039;debug&#039;  =&gt; $query<br>
+                )<br>
+            );<br>
+            return false;<br>
+        }</p>
+<p>$row = $res-&gt;fetch(PDO::FETCH_ASSOC);</p>
+<p>if ($row === false) {<br>
+            $this-&gt;stack-&gt;push(<br>
+                LIVEUSER_ERROR, &#039;exception&#039;,<br>
+                array(<br>
+                    &#039;reason&#039; =&gt; $this-&gt;dbc-&gt;errorCode(),<br>
+                    &#039;debug&#039;  =&gt; $this-&gt;dbc-&gt;errorInfo()<br>
+                )<br>
+            );<br>
+            return false;<br>
+        }</p>
+<p>if (!is_array($result)) {<br>
+            return null;<br>
+        }</p>
+<p>// User was found, read data into class variables and set return value to true<br>
+        if (array_key_exists(&#039;lastlogin&#039;, $row) &amp;&amp; !empty($row[&#039;lastlogin&#039;])) {<br>
+            $row[&#039;lastlogin&#039;] = strtotime($row[&#039;lastlogin&#039;]);<br>
+        }<br>
+        $this-&gt;propertyValues = $row;</p>
+<p>return true;<br>
+    }</p>
+<p>(patched)<br>
+    function readUserData($handle = &#039;&#039;, $passwd = &#039;&#039;, $auth_user_id = false)<br>
+    {<br>
+        $fields = array();<br>
+        foreach ($this-&gt;tables[&#039;users&#039;][&#039;fields&#039;] as $field =&gt; $req) {<br>
+            $fields[] = $this-&gt;alias[$field] . &#039; AS &#039; . $field;<br>
+        }</p>
+<p>// Setting the default query.<br>
+        $query = &#039;SELECT &#039; . implode(&#039;,&#039;, $fields) . &#039;<br>
+                   FROM &#039;   . $this-&gt;prefix . $this-&gt;alias[&#039;users&#039;] . &#039;<br>
+                   WHERE  &#039;;<br>
+        if ($auth_user_id) {<br>
+            $query .= $this-&gt;alias[&#039;auth_user_id&#039;] . &#039;=&#039;<br>
+                . $this-&gt;dbc-&gt;quote($auth_user_id);<br>
+        } else {<br>
+            $query .= $this-&gt;alias[&#039;handle&#039;] . &#039;=&#039;<br>
+                . $this-&gt;dbc-&gt;quote($handle);</p>
+<p>if (!is_null($this-&gt;tables[&#039;users&#039;][&#039;fields&#039;][&#039;passwd&#039;])) {<br>
+                // If $passwd is set, try to find the first user with the given<br>
+                // handle and password.<br>
+                $query .= &#039; AND   &#039; . $this-&gt;alias[&#039;passwd&#039;] . &#039;=&#039;<br>
+                    . $this-&gt;dbc-&gt;quote($this-&gt;encryptPW($passwd));<br>
+            }<br>
+        }</p>
+<p>// Query database<br>
+	    $res = $this-&gt;dbc-&gt;query($query);</p>
+<p>if ($res === false) {<br>
+            $error_info = $this-&gt;dbc-&gt;errorInfo();<br>
+            $this-&gt;stack-&gt;push(<br>
+                LIVEUSER_ERROR, &#039;exception&#039;,<br>
+                array(<br>
+                    &#039;reason&#039; =&gt; $error_info[2],<br>
+                    &#039;debug&#039;  =&gt; $query<br>
+                )<br>
+            );<br>
+            return false;<br>
+        }</p>
+<p>$row = $res-&gt;fetch(PDO::FETCH_ASSOC);</p>
+<p>if ($row === false) {<br>
+            $this-&gt;stack-&gt;push(<br>
+                LIVEUSER_ERROR, &#039;exception&#039;,<br>
+                array(<br>
+                    &#039;reason&#039; =&gt; $this-&gt;dbc-&gt;errorCode(),<br>
+                    &#039;debug&#039;  =&gt; $this-&gt;dbc-&gt;errorInfo()<br>
+                )<br>
+            );<br>
+            return false;<br>
+        }</p>
+<p>if (!is_array($row)) {<br>
+            return null;<br>
+        }</p>
+<p>// User was found, read data into class variables and set return value to true<br>
+        if (array_key_exists(&#039;lastlogin&#039;, $row) &amp;&amp; !empty($row[&#039;lastlogin&#039;])) {<br>
+            $row[&#039;lastlogin&#039;] = strtotime($row[&#039;lastlogin&#039;]);<br>
+        }<br>
+        $this-&gt;propertyValues = $row;</p>
+<p>return true;<br>
+    }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

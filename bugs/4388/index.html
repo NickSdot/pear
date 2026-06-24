@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4388</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #4388</h1>
+<p>[PATCH] DB Error if calling numRows() before tableInfo() (ORACLE)</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-19 15:16 UTC</td></tr>
+<tr><th>From</th><td>kori at atlas dot cz</td></tr>
+<tr><th>Assigned</th><td>aharvey</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Windows 2000</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-19 15:16 UTC] kori at atlas dot cz</h3>
+<p>Description:<br>
+------------<br>
+I found a minor bug in DB:numRows() method in file oci8.php.</p>
+<p>There is an error &#039;DB Error: DB backend not capable&#039; if calling method numRows() before tableInfo().</p>
+<p>I think you forgot add 2 lines of code to numRows() method.</p>
+<p>With my code It works as expected.</p>
+<p>-- Michal</p>
+<p>PEAR DB: Release: 1.7.6</p>
+<p>Reproduce code:<br>
+---------------<br>
+     $options = array(&#039;debug&#039; =&gt; 2, &#039;portability&#039; =&gt; DB_PORTABILITY_LOWERCASE | DB_PORTABILITY_NUMROWS, &#039;persistent&#039; =&gt; TRUE);<br>
+    <br>
+    $dsn = &quot;oci8://username:pass@ORACLE&quot;;<br>
+    <br>
+    $db =&amp; DB::connect($dsn, $options);<br>
+    <br>
+    $res  =&amp; $db -&gt; query(&#039;SELECT col1, col2 FROM table&#039;); <br>
+    <br>
+    $count = $res -&gt; numRows(); <br>
+    <br>
+    $info = $db -&gt; tableInfo($res); //returns DB:Error but should be an array<br>
+    <br>
+    print_r($info);</p>
+<p>Expected result:<br>
+----------------<br>
+My solution:</p>
+<p>function numRows($result)<br>
+    {<br>
+        // emulate numRows for Oracle.  yuck.<br>
+        if ($this-&gt;options[&#039;portability&#039;] &amp; DB_PORTABILITY_NUMROWS &amp;&amp;<br>
+            $result === $this-&gt;last_stmt)<br>
+        {<br>
+            $countquery = &#039;SELECT COUNT(*) FROM (&#039;.$this-&gt;last_query.&#039;)&#039;;<br>
+            $save_query = $this-&gt;last_query;<br>
+            $save_stmt = $this-&gt;last_stmt;</p>
+<p>if (count($this-&gt;_data)) {<br>
+                $smt = $this-&gt;prepare(&#039;SELECT COUNT(*) FROM (&#039;.$this-&gt;last_query.&#039;)&#039;);<br>
+                $count = $this-&gt;execute($smt, $this-&gt;_data);<br>
+            } else {<br>
+                $count =&amp; $this-&gt;query($countquery);<br>
+            }</p>
+<p>if (DB::isError($count) ||<br>
+                DB::isError($row = $count-&gt;fetchRow(DB_FETCHMODE_ORDERED)))<br>
+            {<br>
+                $this-&gt;last_query = $save_query;<br>
+                $this-&gt;last_stmt = $save_stmt;<br>
+                return $this-&gt;raiseError(DB_ERROR_NOT_CAPABLE);<br>
+            }<br>
+            <br>
+            // ----- THERE SHOULD BE THESE 2 LINES OF CODE</p>
+<p>$this-&gt;last_query = $save_query;<br>
+            $this-&gt;last_stmt = $save_stmt;<br>
+	<br>
+	    // ------------------</p>
+<p>return $row[0];</p>
+<p>}<br>
+        return $this-&gt;raiseError(DB_ERROR_NOT_CAPABLE);<br>
+    }</p>
+</section>
+<section>
+<h3>[2005-05-19 16:10 UTC] kori at atlas dot cz</h3>
+<p>I looked to older and probably similar bug #739 &quot;oci8 numRows only works once for a result&quot; and my &quot;fix&quot; solve this problem also (bad last statement resource id after calling numRows()).</p>
+<p>...but maybe I&#039;m wrong :-)</p>
+<p>-- Michal</p>
+</section>
+<section>
+<h3>[2006-03-11 20:15 UTC] kori at atlas dot cz</h3>
+<p>I&#039;m sorry, I&#039;m not familiar with CVS :-( I can send you whole file by e-mail...</p>
+<p>--Michal</p>
+</section>
+<section>
+<h3>[2006-03-30 20:19 UTC] aschapiro at gmail dot com</h3>
+<p>When you want to use DB_DataObject with oci8, how can you set the portability option into DB_PORTABILITY_NUMROWS ?</p>
+<p>The solution Ive found is forcing that option to DB_PORTABILITY_NUMROWS at the beggining of oci8.php numRows method.</p>
+<p>Is there a better way???<br>
+Thanks! Ariel Schapiro.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

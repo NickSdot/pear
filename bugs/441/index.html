@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #441</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/Pager/index.html">Pager</a> &#187; Bug #441</h1>
+<p>Pager does not escape &#039;&amp;&#039; in links</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-12-16 18:26 UTC</td></tr>
+<tr><th>From</th><td>ieure at debian dot org</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Pager/index.html">Pager</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-12-16 18:26 UTC] ieure at debian dot org</h3>
+<p>Description:<br>
+------------<br>
+Links returned by Pager use raw &#039;&amp;&#039;s in the GET string. This is broken, <br>
+and causes non-well-formed XML documents when using XHTML. &#039;&amp;&#039; <br>
+should be replaced with &#039;&amp;&#039;</p>
+<p>Reproduce code:<br>
+---------------<br>
+Just examine the output of $pager-&gt;getLinks();</p>
+<p>Expected result:<br>
+----------------<br>
+Pager should return HTML-entity-escaped link URLs.</p>
+<p>Actual result:<br>
+--------------<br>
+Pager returns raw &#039;&amp;&#039;s.</p>
+</section>
+<section>
+<h3>[2003-12-16 18:30 UTC] ieure at debian dot org</h3>
+<p>Hmm, tried to add a patch but it didn&#039;t seem to work. Here <br>
+are patches for Common &amp; Jumping, against 2.0: <br>
+ <br>
+--- Common.php.orig     Tue Dec 16 10:27:31 2003 <br>
++++ Common.php  Tue Dec 16 10:28:02 2003 <br>
+@@ -587,8 +587,8 @@ <br>
+ <br>
+         if ($this-&gt;_currentPage &gt; 1) { <br>
+             $back = sprintf(&#039;&lt;a href=&quot;%s&quot; %s <br>
+title=&quot;%s&quot;&gt;%s&lt;/a&gt;&#039;, <br>
+-                            ( $this-&gt;_append ? <br>
+$this-&gt;_url.$this-&gt;getPreviousPageID() : <br>
+-                                    <br>
+$this-&gt;_url.sprintf($this-&gt;_fileName, <br>
+$this-&gt;getPreviousPageID()) ), <br>
++                            ( $this-&gt;_append ? <br>
+htmlentities($this-&gt;_url.$this-&gt;getPreviousPageID()) : <br>
++                                    <br>
+htmlentities($this-&gt;_url.sprintf($this-&gt;_fileName, <br>
+$this-&gt;getPreviousPageID())) ), <br>
+                             $this-&gt;_classString, <br>
+                             $this-&gt;_altPrev, <br>
+                             $this-&gt;_prevImg) <br>
+@@ -643,8 +643,8 @@ <br>
+         if ($this-&gt;_currentPage &lt; $this-&gt;_totalPages) { <br>
+             $next = $this-&gt;_spacesAfter <br>
+                  . sprintf(&#039;&lt;a href=&quot;%s&quot; %s <br>
+title=&quot;%s&quot;&gt;%s&lt;/a&gt;&#039;, <br>
+-                            ( $this-&gt;_append ? <br>
+$this-&gt;_url.$this-&gt;getNextPageID() : <br>
+-                                    <br>
+$this-&gt;_url.sprintf($this-&gt;_fileName, <br>
+$this-&gt;getNextPageID()) ), <br>
++                            ( $this-&gt;_append ? <br>
+htmlentities($this-&gt;_url.$this-&gt;getNextPageID()) : <br>
++                                    <br>
+htmlentities($this-&gt;_url.sprintf($this-&gt;_fileName, <br>
+$this-&gt;getNextPageID())) ), <br>
+                             $this-&gt;_classString, <br>
+                             $this-&gt;_altNext, <br>
+                             $this-&gt;_nextImg) <br>
+ <br>
+ <br>
+--- Jumping.php.orig    Tue Dec 16 10:26:00 2003 <br>
++++ Jumping.php Tue Dec 16 10:26:04 2003 <br>
+@@ -254,7 +254,7 @@ <br>
+             if ($i != $this-&gt;_currentPage) { <br>
+                 $this-&gt;range[$i] = false; <br>
+                 $links .= sprintf(&#039;&lt;a href=&quot;%s&quot; %s <br>
+title=&quot;%s&quot;&gt;%d&lt;/a&gt;&#039;, <br>
+-                                ( $this-&gt;_append ? <br>
+$this-&gt;_url.$i : $this-&gt;_url.sprintf($this-&gt;_fileName, $i) <br>
+), <br>
++                                ( $this-&gt;_append ? <br>
+htmlentities($this-&gt;_url.$i) : <br>
+htmlentities($this-&gt;_url.sprintf($this-&gt;_fileName, $i)) ), <br>
+                                 $this-&gt;_classString, <br>
+                                 $this-&gt;_altPage.&#039; &#039;.$i, <br>
+                                 $i);</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

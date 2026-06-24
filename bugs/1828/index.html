@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1828</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #1828</h1>
+<p>auto build and database schema of LDAP</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #1828</th><td>auto build and database schema of LDAP</td></tr>
+<tr><th>Submitted</th><td>2004-07-08 22:08 UTC</td></tr>
+<tr><th>From</th><td>tdr32 at cs dot byu dot edu</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>Fedora Core 2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-07-08 22:08 UTC] tdr32 at cs dot byu dot edu</h3>
+<p>Description:<br>
+------------<br>
+I have a LDAP directory and have been connecting to it through DB_LDAP.  When I started to use DB_DataObject, I noticed that it didn&#039;t auto build for the LDAP directory.   The problem is that it doesn&#039;t support the functions of getListOf and tableInfo.  Well, I tweaked around a bit and got it up and running on auto building for LDAP.  I don&#039;t know about updating and that stuff since I haven&#039;t gotten that far, just thought you might want to see my patch.  It isn&#039;t perfect, and it might only work for my situation.  One thing that would need to be changed is not just assigning the type of the columns (attributes) to just string.  But that was the easiest work around.</p>
+<p>Thanks for your great work.</p>
+<p>Reproduce code:<br>
+---------------<br>
+In Generator.php, in the _createTableList():</p>
+<p>if (!PEAR::isError($this-&gt;tables,DB_ERROR_NOT_CAPABLE)) {<br>
+foreach($this-&gt;tables as $table) {<br>
+// no change<br>
+}<br>
+}<br>
+elseif (get_class($__DB) == &#039;db_ldap&#039;) {<br>
+$sql = $__DB-&gt;prepare(&#039;(objectClass=!)&#039;);<br>
+$table =&amp; $__DB-&gt;execute($sql,&#039;*&#039;,&#039;list&#039;,array(&#039;attrsonly&#039;=&gt;0,&#039;sizelimit&#039;=&gt;1));<br>
+if (!PEAR::isError($table)) {<br>
+$defs = $table-&gt;fetchall();<br>
+$table_name = $defs[0][&#039;dn&#039;];<br>
+$table_name = substr($table_name,0,strpos($table_name,&#039;=&#039;));<br>
+$this-&gt;tables = array($table_name);<br>
+foreach (array_keys($defs[0]) as $name) {<br>
+$def = array (<br>
+&#039;table&#039; =&gt; $table_name,<br>
+&#039;name&#039; =&gt; $name,<br>
+&#039;type&#039; =&gt; &#039;string&#039;,<br>
+&#039;len&#039; =&gt; &#039;255&#039;,<br>
+&#039;flags&#039; =&gt; &#039;not_null&#039;);<br>
+$this-&gt;_definitions[$table_name][] = (object) $def;         <br>
+}<br>
+}</p>
+</section>
+<section>
+<h3>[2004-07-08 22:19 UTC] tdr32 at cs dot byu dot edu</h3>
+<p>I actually tried to extend DB_DataObject and write a LDAP version, but I had a problem with your errors.  It _createTableList(), it checks for an error on line 170 and since LDAP doesn&#039;t support those functions it just quites.  So,  I can&#039;t even extend DB_DataObject (or I could and just have to use 2 createTables when I am generating the classes, one for SQL and one for LDAP).  So maybe a better suggestion than my previous one, is to not make DB_DataObject support LDAP (since even DB doesn&#039;t support it) but to make it so that error doesn&#039;t kill the program until it has returned to the calling function, start().  That can be done by checking to see if $this-&gt;tables is an error in start and change the exit to continue in the foreach ($this-&gt;tables).</p>
+<p>Thanks</p>
+<p>Thanks</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

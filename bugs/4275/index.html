@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4275</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_LDAP/index.html">Net_LDAP</a> &#187; Bug #4275</h1>
+<p>Problem with stepwise updates and Schema</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-03 22:09 UTC</td></tr>
+<tr><th>From</th><td>marian at kisd dot de</td></tr>
+<tr><th>Assigned</th><td>delatbabel</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Net_LDAP/index.html">Net_LDAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-03 22:09 UTC] marian at kisd dot de</h3>
+<p>Description:<br>
+------------<br>
+Hi Tarjei and Jan,</p>
+<p>i am just testing Net_LDAP 0.6.6. I know it&#039;s not stable, but I would like to know if the following is a known problem.</p>
+<p>My scenario:</p>
+<p>I have an LDAP entry of objectclasss &#039;posixAccount&#039;. Now I want to also make it a Samba account, so I add the required attributes to the entry and also add objectclass &#039;sambaSamAccount&#039;.</p>
+<p>When I finally call the update() method, I get an object class violation.</p>
+<p>(Warning:  ldap_modify(): Modify: Object class violation in c:\php\PEAR\pear\Net\LDAP\Entry.php on line 516)</p>
+<p>This seems to be due to the fact that Entry::update() seems to run the changes in several steps. In order to work fine with schema checking, that should happen in only one step.</p>
+<p>Please let me know whether this is a known issue, what the status is and also if you need help on this.</p>
+<p>Thanks!</p>
+<p>Marian</p>
+</section>
+<section>
+<h3>[2005-11-29 09:23 UTC] matthijs at cacholong dot nl</h3>
+<p>Here is a patch that fixes this problem in LDAP/Entry.php (version 0.6.6)</p>
+<p>$ svn diff -r14:17 Entry.php<br>
+Index: Entry.php<br>
+===================================================================<br>
+--- Entry.php   (revision 14)<br>
++++ Entry.php   (revision 17)<br>
+@@ -485,38 +485,21 @@<br>
+         } else {<br>
+             $this-&gt;_error[&#039;first&#039;] = $this-&gt;_modAttrs;<br>
+             $this-&gt;_error[&#039;count&#039;] = count($this-&gt;_modAttrs);<br>
+-<br>
+-            // modified attributes<br>
+-            if (( count($this-&gt;_modAttrs)&gt;0) &amp;&amp;<br>
+-                  !ldap_modify($this-&gt;_link, $this-&gt;dn(), $this-&gt;_modAttrs))<br>
+-            {<br>
+-                return $this-&gt;raiseError(&quot;Entry &quot; . $this-&gt;dn() . &quot; not modified(attribs not modified): &quot; .<br>
+-                                         ldap_error($this-&gt;_link),ldap_errno($this-&gt;_link));<br>
++<br>
++            foreach ( $this-&gt;_delAttrs as $k =&gt; $v ) {<br>
++                if ( $v == &#039;&#039; &amp;&amp; $this-&gt;exists($k) ) {<br>
++                    $this-&gt;_delAttrs[$k] = array();<br>
++                }<br>
+             }<br>
+-<br>
+-            // attributes to be deleted<br>
+-            if (( count($this-&gt;_delAttrs) &gt; 0 ))<br>
++<br>
++            // Concatanate _modAttrs, _delAttrs and _addAttrs so that they are<br>
++            // modified at once. (schemacheck requires that)<br>
++            $_attrs = $this-&gt;_modAttrs + $this-&gt;_delAttrs + $this-&gt;_addAttrs;<br>
++            if (( count($_attrs) &gt; 0) &amp;&amp;<br>
++                    !ldap_modify($this-&gt;_link, $this-&gt;dn(), $_attrs))<br>
+             {<br>
+-                // in ldap v3 we need to supply the old attribute values for deleting<br>
+-                if (@ldap_get_option( $this-&gt;_link, LDAP_OPT_PROTOCOL_VERSION, $version) &amp;&amp; $version == 3) {<br>
+-                    foreach ( $this-&gt;_delAttrs as $k =&gt; $v ) {<br>
+-                        if ( $v == &#039;&#039; &amp;&amp; $this-&gt;exists($k) ) {<br>
+-                            $this-&gt;_delAttrs[$k] = $this-&gt;get_value( $k );<br>
+-                        }<br>
+-                    }<br>
+-                }<br>
+-                if ( !ldap_mod_del($this-&gt;_link, $this-&gt;dn(), $this-&gt;_delAttrs) ) {<br>
+-                    return $this-&gt;raiseError(&quot;Entry &quot; . $this-&gt;dn() . &quot; not modified (attributes not deleted): &quot; .<br>
+-                                             ldap_error($this-&gt;_link),ldap_errno($this-&gt;_link));<br>
+-                }<br>
++                return $this-&gt;raiseError(&quot;Entry &quot;. $this-&gt;dn(). &quot; not modified (attribs not modified): &quot;. ldap_error($this-&gt;_link), ldap_errno($this-&gt;_link));<br>
+             }<br>
+-<br>
+-            // new attributes<br>
+-            if ((count($this-&gt;_addAttrs)) &gt; 0 &amp;&amp; !ldap_modify($this-&gt;_link, $this-&gt;dn(), $this-&gt;_addAttrs)) {<br>
+-                return $this-&gt;raiseError( &quot;Entry &quot; . $this-&gt;dn() . &quot; not modified (attributes not added): &quot; .<br>
+-                                          ldap_error($this-&gt;_link),ldap_errno($this-&gt;_link));<br>
+-            }<br>
+-            return true;<br>
+         }<br>
+     }<br>
+ }</p>
+</section>
+<section>
+<h3>[2006-03-01 04:26 UTC] delatbabel at php dot net</h3>
+<p>Thank you for taking the time to report a problem with the package.<br>
+This problem may have been already fixed by a previous change that<br>
+is in the CVS of the package.  Please log into CVS with:</p>
+<p>cvs -d :pserver:cvsread@cvs.php.net:/repository login</p>
+<p>and check out the CVS repository of this package and upgrade</p>
+<p>cvs -d :pserver:cvsread@cvs.php.net:/repository co pear/Net_LDAP<br>
+pear upgrade pear/Net_LDAP/package2.xml</p>
+<p>or</p>
+<p>pear upgrade pear/Net_LDAP/package.xml</p>
+<p>If you are able to reproduce the bug with the latest CVS,<br>
+please change the status back to &quot;Open&quot;.<br>
+Again, thank you for your continued support of PEAR.</p>
+<p>This patch doesn&#039;t seem to fit in the current CVS of Net_LDAP.  Try the current CVS release and let me know where to apply this patch, or whether it applies at all.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

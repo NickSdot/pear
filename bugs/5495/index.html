@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5495</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Caching &#187; <a href="package/Cache_Lite/index.html">Cache_Lite</a> &#187; Bug #5495</h1>
+<p>should support eternal caching</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5495</th><td>should support eternal caching</td></tr>
+<tr><th>Submitted</th><td>2005-09-22 14:04 UTC</td></tr>
+<tr><th>From</th><td>anarcat at anarcat dot ath dot cx</td></tr>
+<tr><th>Assigned</th><td>fab</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Cache_Lite/index.html">Cache_Lite</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Debian GNU/Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-09-22 14:04 UTC] anarcat at anarcat dot ath dot cx</h3>
+<p>Description:<br>
+------------<br>
+In the version of PEAR Cache::Lite we have, it is impossible to tell the cache system never to refresh. This is really useful in case of frontend systems that need to cache forever and refresh on-demand.</p>
+<p>A patch is attached, for Cache::Lite 1.5.2.</p>
+<p>Test script:<br>
+---------------<br>
+--- Lite.php.orig       2005-09-22 09:59:18.000000000 -0400<br>
++++ Lite.php    2005-09-22 10:01:49.000000000 -0400<br>
+@@ -67,6 +67,8 @@<br>
+     /**<br>
+     * Timestamp of the last valid cache<br>
+     *<br>
++    * If null, the cache is valid forever.<br>
++    *<br>
+     * @var int $_refreshTime<br>
+     */<br>
+     var $_refreshTime;<br>
+@@ -271,7 +273,11 @@<br>
+                 $this-&gt;$property = $value;<br>
+             }<br>
+         }<br>
+-        $this-&gt;_refreshTime = time() - $this-&gt;_lifeTime;<br>
++       if (is_null($this-&gt;_lifeTime)) {<br>
++           $this-&gt;_refreshTime = null;<br>
++       } else {<br>
++            $this-&gt;_refreshTime = time() - $this-&gt;_lifeTime;<br>
++       }<br>
+     }<br>
+     <br>
+     /**<br>
+@@ -308,7 +314,7 @@<br>
+                     $data = $this-&gt;_read();<br>
+                 }<br>
+             } else {<br>
+-                if ((file_exists($this-&gt;_file)) &amp;&amp; (@filemtime($this-&gt;_file) &gt; <br>
+$this-&gt;_refreshTime)) {<br>
++                if ((file_exists($this-&gt;_file)) &amp;&amp; (@filemtime($this-&gt;_file) &gt; <br>
+$this-&gt;_refreshTime) &amp;&amp; !is_null($this-&gt;_refreshTime)) {<br>
+                     $data = $this-&gt;_read();<br>
+                 }<br>
+             }<br>
+@@ -429,7 +435,11 @@<br>
+     function setLifeTime($newLifeTime)<br>
+     {<br>
+         $this-&gt;_lifeTime = $newLifeTime;<br>
+-        $this-&gt;_refreshTime = time() - $newLifeTime;<br>
++       if (is_null($newLifeTime)) {<br>
++           $this-&gt;refreshTime = null;<br>
++       } else {<br>
++            $this-&gt;_refreshTime = time() - $newLifeTime;<br>
++       }<br>
+     }<br>
+ <br>
+     /**</p>
+</section>
+<section>
+<h3>[2005-09-22 16:35 UTC] anarcat at anarcat dot ath dot cx</h3>
+<p>If formatting is a problem, you can fetch the patch here:</p>
+<p>http://lethe.koumbit.net/cgi-bin/darcs.cgi/tricked/?c=diff&amp;p=20050922140910-d03ae-33e4aa974e2ea3be3ad3749a639d76c2eea61f00.gz</p>
+</section>
+<section>
+<h3>[2005-10-05 18:38 UTC] fab at php dot net</h3>
+<p>thanks, i will consider this for the next version</p>
+</section>
+<section>
+<h3>[2005-11-16 22:40 UTC] fab at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

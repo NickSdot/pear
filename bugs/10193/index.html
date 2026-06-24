@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #10193</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm2/index.html">HTML_QuickForm2</a> &#187; Bug #10193</h1>
+<p>[patch] add addOptionalElement() to HTML_Quickform</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #10193</th><td>[patch] add addOptionalElement() to HTML_Quickform</td></tr>
+<tr><th>Submitted</th><td>2007-02-26 15:52 UTC</td></tr>
+<tr><th>From</th><td>greg at mtechsolutions dot ca</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm2/index.html">HTML_QuickForm2</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-02-26 15:52 UTC] greg at mtechsolutions dot ca</h3>
+<p>Description:<br>
+------------<br>
+This may be a bit too specialized for Quickform, but I will submit the patch anyways in case someone has some interest. I also welcome feedback on the implementation.</p>
+<p>Adds an addOptionalElement() function that adds an element which includes a checkbox next to it. If the checkbox is not selected, the element is disabled set to a &#039;standard value&#039; (defined in the call to addOptionalElement()). If checked, the element becomes active and the user can set it to whatever they want. If a default value is passed via HTML_Quickform::setDefaults(), the checkbox is selected, and the default value is shown in the control. If a constant is specified with HTML_Quickform::setConstants(), the value of the control is set to the constant, and the checkbox is disabled.</p>
+<p>The element can be any quickform element, and this requires patch 10191 (http://pear.php.net/bugs/10191).</p>
+<p>Note that this does require prototype.js (http://www.prototypejs.org/) and prototypeUtils.js (http://jehiah.cz/archive/form-element-setvalue - for the JS function setValue()). Although it could probably be written in native JS, for my purposes prototype is fine, and I don&#039;t see much point putting in the effort and duplicating their code if this patch is in fact too specific to be added to HTML_Quickform anyways.</p>
+<p>Original patch: http://freepbx.org/trac/changeset/3815</p>
+<p>Test script:<br>
+---------------<br>
+Index: /freepbx/branches/quickform/amp_conf/htdocs/admin/common/HTML/QuickForm/optionalgroup.php<br>
+===================================================================<br>
+--- /freepbx/branches/quickform/amp_conf/htdocs/admin/common/HTML/QuickForm/optionalgroup.php (revision 3815)<br>
++++ /freepbx/branches/quickform/amp_conf/htdocs/admin/common/HTML/QuickForm/optionalgroup.php (revision 3815)<br>
+@@ -0,0 +1,199 @@<br>
++&lt;?php<br>
++/* vim: set expandtab tabstop=4 shiftwidth=4: */<br>
++// +----------------------------------------------------------------------+<br>
++// | PHP version 4.0                                                      |<br>
++// +----------------------------------------------------------------------+<br>
++// | Copyright (c) 1997, 1998, 1999, 2000, 2001 The PHP Group             |<br>
++// +----------------------------------------------------------------------+<br>
++// | This source file is subject to version 2.0 of the PHP license,       |<br>
++// | that is bundled with this package in the file LICENSE, and is        |<br>
++// | available at through the world-wide-web at                           |<br>
++// | http://www.php.net/license/2_02.txt.                                 |<br>
++// | If you did not receive a copy of the PHP license and are unable to   |<br>
++// | obtain it through the world-wide-web, please send a note to          |<br>
++// | license@php.net so we can mail you a copy immediately.               |<br>
++// +----------------------------------------------------------------------+<br>
++// | Authors: Adam Daniel &lt;adaniel1@eesus.jnj.com&gt;                        |<br>
++// |          Bertrand Mansion &lt;bmansion@mamasam.com&gt;                     |<br>
++// +----------------------------------------------------------------------+<br>
++//<br>
++// $Id: group.php,v 1.38 2006/01/11 17:13:20 mansion Exp $<br>
++<br>
++require_once(&quot;HTML/QuickForm/group.php&quot;);<br>
++<br>
++/**<br>
++ * HTML class for a form element group<br>
++ * <br>
++ * @author       Adam Daniel &lt;adaniel1@eesus.jnj.com&gt;<br>
++ * @author       Bertrand Mansion &lt;bmansion@mamasam.com&gt;<br>
++ * @version      1.0<br>
++ * @since        PHP4.04pl1<br>
++ * @access       public<br>
++ */<br>
++class HTML_QuickForm_optionalgroup extends HTML_QuickForm_group<br>
++{<br>
++	var $_real_name;<br>
++	var $_standard_value;<br>
++	<br>
++	var $_ele_standard = 0;<br>
++	var $_ele_checkbox = 2;<br>
++	var $_ele_control = 1;<br>
++	<br>
++    // {{{ constructor<br>
++<br>
++    /**<br>
++     * Class constructor<br>
++     * <br>
++     * @param     mixed     $standardValue  (optional)The value to use if the user doesn&#039;t specify a value.<br>
++	 *                                      If an array is passed, uses $standardValue[$elementName] if found.<br>
++     * @param     string    $elementName    (optional)The name of the element<br>
++     * @param     array     $elementLabel   (optional)The label to use<br>
++     * @param     array     $elementObject  (optional)The element to use as the main control<br>
++     * @since     1.0<br>
++     * @access    public<br>
++     * @return    void<br>
++     */<br>
++    function HTML_QuickForm_optionalgroup($standardValue=null, $elementName=null, $elementLabel=null, $elementObject=null)<br>
++    {   <br>
++        if (is_null($elementObject)) {<br>
++			return;<br>
++		}<br>
++		<br>
++		if (is_array($standardValue) &amp;&amp; isset($standardValue[$elementName])) {<br>
++			$this-&gt;_standard_value = $standardValue[$elementName];<br>
++		} else {<br>
++			$this-&gt;_standard_value = $standardValue;<br>
++		}<br>
++		<br>
++		$elementObject-&gt;_generateId();<br>
++        $id = $elementObject-&gt;getAttribute(&#039;id&#039;);<br>
++		<br>
++		$this-&gt;_real_name = $elementObject-&gt;getName();<br>
++		<br>
++        $elements = array();<br>
++		// hidden element to store default value<br>
++        $elements[$this-&gt;_ele_standard] =&amp; HTML_QuickForm::createElement(&#039;hidden&#039;, &#039;qf_default_&#039;.$elementName, null); <br>
++		$elements[$this-&gt;_ele_standard]-&gt;_generateId();<br>
++		$hidden_id = $elements[$this-&gt;_ele_standard]-&gt;getAttribute(&#039;id&#039;);<br>
++		<br>
++		// checkbox element, to select that real element is editable<br>
++        /*<br>
++		$checkattrs = array(<br>
++            &#039;onclick&#039; =&gt; //javascript<br>
++                &#039;if (this.checked) { &#039;.<br>
++                &#039;   document.getElementById(\&#039;&#039;.$id.&#039;\&#039;).disabled = false; &#039;.<br>
++                &#039;   document.getElementById(\&#039;&#039;.$id.&#039;\&#039;).class = \&#039;disabled\&#039;; &#039;.<br>
++                &#039;} else { &#039;.<br>
++                &#039;   document.getElementById(\&#039;&#039;.$id.&#039;\&#039;).disabled = true; &#039;.<br>
++                &#039;   document.getElementById(\&#039;&#039;.$id.&#039;\&#039;).class = \&#039;\&#039;; &#039;.<br>
++                &#039;   document.getElementById(\&#039;&#039;.$id.&#039;\&#039;).value = document.getElementById(\&#039;&#039;.$hidden_id.&#039;\&#039;).value;&#039;.<br>
++                &#039;   document.getElementById(\&#039;&#039;.$id.&#039;\&#039;).focus();&#039;.<br>
++                &#039;}&#039;,<br>
++        );<br>
++		*/<br>
++		$checkattrs = array(<br>
++            &#039;onclick&#039; =&gt; //javascript<br>
++                &#039;if (this.checked) { &#039;.<br>
++                &#039;   $(\&#039;&#039;.$id.&#039;\&#039;).enable();&#039;.<br>
++                &#039;   $(\&#039;&#039;.$id.&#039;\&#039;).class = \&#039;disabled\&#039;; &#039;.<br>
++                &#039;} else { &#039;.<br>
++                &#039;   $(\&#039;&#039;.$id.&#039;\&#039;).disable();&#039;.<br>
++                &#039;   $(\&#039;&#039;.$id.&#039;\&#039;).class = \&#039;\&#039;; &#039;.<br>
++                &#039;   Form.Element.setValue(\&#039;&#039;.$id.&#039;\&#039;, $(\&#039;&#039;.$hidden_id.&#039;\&#039;).getValue() );&#039;.<br>
++                &#039;   $(\&#039;&#039;.$id.&#039;\&#039;).activate();&#039;.<br>
++                &#039;}  alert($(\&#039;&#039;.$id.&#039;\&#039;).class);&#039;,<br>
++			&#039;title&#039; =&gt; &#039;Enable/disable this control&#039;,<br>
++			&#039;class&#039; =&gt; &#039;enablercheck&#039;,<br>
++        );<br>
++		<br>
++		<br>
++		$elements[$this-&gt;_ele_checkbox] =&amp; HTML_QuickForm::createElement(&#039;checkbox&#039;, &#039;qf_checkbox_&#039;.$elementName, null, null, $checkattrs);<br>
++		<br>
++		// real control element<br>
++		$elements[$this-&gt;_ele_control] =&amp; $elementObject;<br>
++        <br>
++		ksort($elements);<br>
++		<br>
++		//&#039;qf_optionalgroup_&#039;.$elementName<br>
++        parent::HTML_QuickForm_group($elementName, $elementLabel, $elements, &#039; &#039;, true);<br>
++    } //end constructor<br>
++    <br>
++    // }}}<br>
++<br>
++    // {{{ onQuickFormEvent()<br>
++<br>
++    /**<br>
++     * Called by HTML_QuickForm whenever form event is made on this element<br>
++     *<br>
++     * @param     string    $event  Name of event<br>
++     * @param     mixed     $arg    event arguments<br>
++     * @param     object    $caller calling object<br>
++     * @since     1.0<br>
++     * @access    public<br>
++     * @return    void<br>
++     */<br>
++    function onQuickFormEvent($event, $arg, &amp;$caller)<br>
++    {<br>
++        switch ($event) {<br>
++            case &#039;updateValue&#039;:<br>
++                $this-&gt;_createElementsIfNotExist();<br>
++                // elements[0] is hidden default element<br>
++				// elements[1] is checkbox,<br>
++                // elements[2] is actual control<br>
++				<br>
++                // constant values override both default and submitted ones<br>
++                // default values are overriden by submitted<br>
++                if (isset($caller-&gt;_constantValues[$this-&gt;getName()])) {<br>
++                    // constant in use, so this is always checked, and textbox is always disabled<br>
++	                $this-&gt;_elements[$this-&gt;_ele_checkbox]-&gt;setChecked(false);<br>
++                    $this-&gt;_elements[$this-&gt;_ele_checkbox]-&gt;setDisabled(true);<br>
++                    $this-&gt;_elements[$this-&gt;_ele_checkbox]-&gt;addClass(&#039;disabled&#039;);<br>
++                    <br>
++                    $this-&gt;_elements[$this-&gt;_ele_control]-&gt;setDisabled(true);<br>
++                    $this-&gt;_elements[$this-&gt;_ele_control]-&gt;addClass(&#039;disabled&#039;);<br>
++                    $this-&gt;_elements[$this-&gt;_ele_control]-&gt;setValue($caller-&gt;_constantValues[$this-&gt;getName()]);<br>
++                } else {<br>
++					// checkbox control is enabled<br>
++                    $this-&gt;_elements[$this-&gt;_ele_checkbox]-&gt;setDisabled(false);<br>
++                    $this-&gt;_elements[$this-&gt;_ele_checkbox]-&gt;removeClass(&#039;disabled&#039;);<br>
++                    <br>
++                    // get the &#039;standard&#039; value<br>
++                    $default = isset($caller-&gt;_defaultValues[$this-&gt;getName()]) ? $caller-&gt;_defaultValues[$this-&gt;getName()] : null;<br>
++                    <br>
++					// save default value to the form<br>
++					//TODO $this-&gt;_elements[0]-&gt;setValue($default);<br>
++					$this-&gt;_elements[0]-&gt;setValue($this-&gt;_standard_value);<br>
++					<br>
++                    if ($caller-&gt;isSubmitted() &amp;&amp; isset($caller-&gt;_submitValues[$this-&gt;getName()]) <br>
++                      &amp;&amp; $caller-&gt;_submitValues[$this-&gt;getName()] != $this-&gt;_standard_value) {<br>
++                        // submitted, not using &quot;standard&quot;<br>
++                        $this-&gt;_elements[$this-&gt;_ele_checkbox]-&gt;setChecked(true);<br>
++                        $this-&gt;_elements[$this-&gt;_ele_control]-&gt;setDisabled(false);<br>
++                        $this-&gt;_elements[$this-&gt;_ele_control]-&gt;removeClass(&#039;disabled&#039;);<br>
++                        $this-&gt;_elements[$this-&gt;_ele_control]-&gt;setValue($caller-&gt;_submitValues[$this-&gt;getName()]);<br>
++                    } else if ($default) {<br>
++						// not submitted, and a default is set<br>
++						$this-&gt;_elements[$this-&gt;_ele_checkbox]-&gt;setChecked(true);<br>
++                        $this-&gt;_elements[$this-&gt;_ele_control]-&gt;setDisabled(false);<br>
++                        $this-&gt;_elements[$this-&gt;_ele_control]-&gt;removeClass(&#039;disabled&#039;);<br>
++                        $this-&gt;_elements[$this-&gt;_ele_control]-&gt;setValue($default);<br>
++					} else {<br>
++                        // not submitted, or value is = standard value<br>
++                        $this-&gt;_elements[$this-&gt;_ele_checkbox]-&gt;setChecked(false);<br>
++                        $this-&gt;_elements[$this-&gt;_ele_control]-&gt;setDisabled(true);<br>
++                        $this-&gt;_elements[$this-&gt;_ele_control]-&gt;addClass(&#039;disabled&#039;);<br>
++                        $this-&gt;_elements[$this-&gt;_ele_control]-&gt;setValue($this-&gt;_standard_value);<br>
++                    }<br>
++                }<br>
++<br>
++                break;<br>
++<br>
++            default:<br>
++                parent::onQuickFormEvent($event, $arg, $caller);<br>
++        }<br>
++        return true;<br>
++    } // end func onQuickFormEvent<br>
++<br>
++    // }}}<br>
++<br>
++}<br>
+Index: /freepbx/branches/quickform/amp_conf/htdocs/admin/common/HTML/QuickForm.php<br>
+===================================================================<br>
+--- /freepbx/branches/quickform/amp_conf/htdocs/admin/common/HTML/QuickForm.php (revision 3661)<br>
++++ /freepbx/branches/quickform/amp_conf/htdocs/admin/common/HTML/QuickForm.php (revision 3815)<br>
+@@ -49,4 +49,5 @@<br>
+             &#039;xbutton&#039;       =&gt;array(&#039;HTML/QuickForm/xbutton.php&#039;,&#039;HTML_QuickForm_xbutton&#039;),<br>
+             &#039;advmultiselect&#039;=&gt;array(&#039;HTML/QuickForm/advmultiselect.php&#039;,&#039;HTML_QuickForm_advmultiselect&#039;),<br>
++            &#039;optionalgroup&#039; =&gt;array(&#039;HTML/QuickForm/optionalgroup.php&#039;,&#039;HTML_QuickForm_optionalgroup&#039;),<br>
+         );<br>
+ <br>
+@@ -727,4 +728,40 @@<br>
+         return $group;<br>
+     } // end func addGroup<br>
++    <br>
++    // }}}<br>
++	// {{{ addOptionalElement()<br>
++<br>
++    /**<br>
++     * Adds an optional element, using a checkbox<br>
++     * @param    array      $elements       array of elements composing the group<br>
++     * @param    string     $name           (optional)group name<br>
++     * @param    string     $groupLabel     (optional)group label<br>
++     * @param    string     $separator      (optional)string to separate elements<br>
++     * @param    string     $appendName     (optional)specify whether the group name should be<br>
++     *                                      used in the form element name ex: group[element]<br>
++     * @return   object     reference to added group of elements<br>
++     * @since    2.8<br>
++     * @access   public<br>
++     * @throws   PEAR_Error<br>
++     */<br>
++    function &amp;addOptionalElement($element, $name, $standardValue, $groupLabel /*, optional multiple params.. */)<br>
++    {<br>
++        if (is_object($element) &amp;&amp; is_subclass_of($element, &#039;html_quickform_element&#039;)) {<br>
++           $elementObject = &amp;$element;<br>
++        } else {<br>
++			// get arguments for elementObject<br>
++            $args = array_slice(func_get_args(),3); <br>
++			array_unshift($args, null); // stick null on the beginning (element name)<br>
++			<br>
++			$elementObject =&amp; $this-&gt;_loadElement(&#039;addElement&#039;, $element, $args);<br>
++            if (PEAR::isError($elementObject)) {<br>
++                return $elementObject;<br>
++            }<br>
++        }<br>
++        <br>
++		$group =&amp; $this-&gt;addElement(&#039;optionalgroup&#039;, $standardValue, $name, $groupLabel, $elementObject);<br>
++        return $group;<br>
++		<br>
++    } // end func addOptionalElement<br>
+     <br>
+     // }}}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

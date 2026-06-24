@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4308</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_mysql/index.html">MDB2_Driver_mysql</a> &#187; Bug #4308</h1>
+<p>Typo in MySQL::connect</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-09 22:20 UTC</td></tr>
+<tr><th>From</th><td>scragz at hotmail dot com</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_mysql/index.html">MDB2_Driver_mysql</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>SuSE 9.3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-09 22:20 UTC] scragz at hotmail dot com</h3>
+<p>Description:<br>
+------------<br>
+In MDB2/Driver/mysql.php at appx. line 331, there are a couple variables that should be $this-&gt;dsn instead of $dsn. This is for the new_link bit.</p>
+<p>I&#039;m currently having a problem where connecting to two databases with the same info except database name, executing a query on the first, executing a query on the second, and then executing a query on the first again results in the third query using the wrong database. I found this while trying to figure out what is going on to cause this problem that didn&#039;t exist before I migrated from DB to MDB2.</p>
+<p>This is using a CVS pull from today, 2005-05-09.</p>
+<p>Reproduce code:<br>
+---------------<br>
+This is what it should be as far as I can tell:</p>
+<p>if (!$this-&gt;options[&#039;persistent&#039;]) {<br>
+            if (isset($this-&gt;dsn[&#039;new_link&#039;])<br>
+                &amp;&amp; ($this-&gt;dsn[&#039;new_link&#039;] == &#039;true&#039; || $this-&gt;dsn[&#039;new_link&#039;] === true))<br>
+            {<br>
+                $params[] = true;<br>
+            } else {<br>
+                $params[] = false;<br>
+            }<br>
+        }</p>
+</section>
+<section>
+<h3>[2005-05-10 00:20 UTC] smith at backendmedia dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+<p>MDB2 does not select the database on every query like DB does. But using the new_link option should give you independent connections.</p>
+</section>
+<section>
+<h3>[2006-05-29 17:37 UTC] tomass at splius dot lt</h3>
+<p>I&#039;am afraid, but this bug still exists :(</p>
+<p>I&#039;m currently having a problem where connecting to two databases with<br>
+the same info except database name, executing a query on the first,<br>
+executing a query on the second, and then executing a query on the<br>
+first again results in the third query using the wrong database. I<br>
+found this while trying to figure out what is going on to cause this<br>
+problem that didn&#039;t exist before I migrated from DB to MDB2.</p>
+<p>I&#039;am using MDB2 v2.0.3</p>
+</section>
+<section>
+<h3>[2006-05-30 03:46 UTC] tomass at splius dot lt</h3>
+<p>The code, what I use:</p>
+<p>$dbUser   = &quot;root&quot;;<br>
+$dbPasswd = &quot;toor&quot;;<br>
+$database = &quot;db1&quot;;<br>
+$dsn = &quot;mysql://$dbUser:$dbPasswd@localhost/$database?new_link=true&quot;;<br>
+$db  =&amp; MDB2::factory($dsn);<br>
+if (PEAR::isError($db)) {<br>
+  die ($db-&gt;getMessage());<br>
+}<br>
+$dbUser   = &quot;root&quot;;<br>
+$dbPasswd = &quot;toor&quot;;<br>
+$database = &quot;db2&quot;;<br>
+$dsn  = &quot;mysql://$dbUser:$dbPasswd@localhost/$database?new_link=true&quot;;<br>
+$stdb =&amp; MDB2::factory($dsn);</p>
+</section>
+<section>
+<h3>[2006-05-30 09:07 UTC] tomass at splius dot lt</h3>
+<p>PHP is 4.4.2</p>
+</section>
+<section>
+<h3>[2006-05-30 21:38 UTC] str at strgt dot cjb dot net</h3>
+<p>I tried that option on the dsn and it works now. Thank you... but you shuould update the documentation.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

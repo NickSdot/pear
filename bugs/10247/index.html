@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #10247</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_Archive/index.html">File_Archive</a> &#187; Bug #10247</h1>
+<p>unnecessary calls to die()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-03-02 19:22 UTC</td></tr>
+<tr><th>From</th><td>mkirk at cs dot umn dot edu</td></tr>
+<tr><th>Assigned</th><td>pfischer</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/File_Archive/index.html">File_Archive</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-03-02 19:22 UTC] mkirk at cs dot umn dot edu</h3>
+<p>Description:<br>
+------------<br>
+It seems reasonable that all calls to die could be replaced with PEAR::raiseError()</p>
+<p>Specifically, I am handling the case when attempting to extract a gzipped file as a tar-gzip. I encounter the line</p>
+<p>die(&#039;Checksum error on entry &#039;.$this-&gt;currentFilename);</p>
+<p>The script shouldn&#039;t just halt, but return a useful error.</p>
+<p>There are calls to die on line 205 in Archive/Reader/Tar.php and on line 70 in Archive/Reader/Concat.php</p>
+<p>Test script:<br>
+---------------<br>
+//since uploaded files are given a random name<br>
+//without a useful extension, we can&#039;t extract from<br>
+//an uploaded archive.<br>
+$naive_reader = File_Archive::readUploadedFile(&#039;submitted_file&#039;);</p>
+<p>//re-read the file reader with a specified extension<br>
+$archive = File_Archive::readArchive( $file_extension=&#039;tgz&#039; , $naive_reader );</p>
+<p>$dir_writer = File_Archive::appender($dir = &#039;submissions&#039;);</p>
+<p>$error = File_Archive::extract( $archive , $dir_writer);<br>
+if( PEAR::isError( $error) )<br>
+{<br>
+  echo &quot;there was an error detected, couldnt extract&quot;;<br>
+}<br>
+else<br>
+{<br>
+  echo &quot;archive was extracted&quot;;<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+echo either &quot;there was an error detected, couldnt extract&quot;<br>
+or echo &quot;archive was extracted&quot;</p>
+<p>Actual result:<br>
+--------------<br>
+this call to die from line 205 in Archive/Reader/Tar.php<br>
+die(&#039;Checksum error on entry &#039;.$this-&gt;currentFilename);</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

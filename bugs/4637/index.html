@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4637</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Payment &#187; <a href="package/Payment_DTA/index.html">Payment_DTA</a> &#187; Bug #4637</h1>
+<p>Invalid DTA File with SFIRM</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-06-20 10:33 UTC</td></tr>
+<tr><th>From</th><td>m dot hosse at geodigital dot org</td></tr>
+<tr><th>Assigned</th><td>mschuett</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Payment_DTA/index.html">Payment_DTA</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-20 10:33 UTC] m dot hosse at geodigital dot org</h3>
+<p>Description:<br>
+------------<br>
+Hi</p>
+<p>i tried to import a DTA-File into SFIRM (banking software of the Sparkasse). This software intensivly checks the structure of the file and returns a very good report.</p>
+<p>The report for a file made by your class, shows one error: File-Length has to be a multiple of 128.</p>
+<p>The problem ist the part c. This has a length of 187 + 29*x. I added some spaces to reach a length of 256 and then the error has gone.</p>
+<p>So i added some code in getFileContent just before record e. Maybe you can use it.<br>
+---snip---<br>
+// Add Spaces for a content length that is a multiple of 128<br>
+$content .= str_repeat (&quot; &quot;,128-strlen($content) % 128);</p>
+<p>/**<br>
+* data record E<br>
+*/<br>
+---snap---<br>
+cu<br>
+Michael</p>
+</section>
+<section>
+<h3>[2005-10-13 14:43 UTC] h dot hosse at geodigital dot org</h3>
+<p>Hi</p>
+<p>sorry for the delayed answer. I had to work on other projects.</p>
+<p>You are right. The problem occurs only if there is only one line of reasons for payment. With two lines my added code did not work. So i changed it a little bit.<br>
+---snip---<br>
+// Add Spaces for a content length that is a multiple of 128<br>
+if (strlen($content) % 128 != 0)<br>
+  $content .= str_repeat (&quot; &quot;,128-strlen($content) % 128);<br>
+---snap---<br>
+cu<br>
+Michael</p>
+</section>
+<section>
+<h3>[2005-11-03 21:10 UTC] pear at martinholtz dot de</h3>
+<p>Hi,<br>
+nimmt es mir bitte nicht übel, aber da Hermann Stainer deutsch spricht und mir das leichter von der Hand geht, heute in deutsch:</p>
+<p>Wir hatten zuerst genau das selber Problem wie Michael. Seine Lösung hat hervorragend mit einer Buchung funktioniert. Leider nicht mit mehreren.</p>
+<p>Und: das bezieht sich jetzt spezielle auf Sparkassen!</p>
+<p>Hier kann man nachlesen, was Sparkassen erwarten:<br>
+http://www.sskm.de/download/tipps_hilfe/sfirm32/DTAUS_Euro.pdf (von der Sparkasse München)</p>
+<p>Dies ist auch eine nette Erklärung:<br>
+http://www.zahlungsverkehrsfragen.de/textsl_dta.html</p>
+<p>Und die Bundesbank meint folgendes:<br>
+http://www.bundesbank.de/download/zahlungsverkehr/zv_spezifikationen_v1_0_de.pdf<br>
+(S.367ff - ist im PDF aus Seite 387)</p>
+<p>Geholfen hat uns auch <br>
+http://www.xpecto.de/dtauschecker/</p>
+<p>Inzwischen glaube ich verstanden zu haben, wo das Problem liegt:<br>
+Die Sparkassen halten sich nicht an die Spezifikation der Bundesbank (oder ich hab was übersehen).</p>
+<p>Die Pear-Klasse ermöglicht eine größere Anzahl an zusätzichen Erweiterungsteilen.</p>
+<p>Leider erwarten die Sparkassen immer 128 Byte Blöcke.<br>
+D.h. das Anhängen von 29-Byte Blöcken geht schief.</p>
+<p>hier unsere Version des &quot;C-Parts&quot; in getFileContent:</p>
+<p>Achtung: ich gehe davon aus, dass diese Lösung tatsächlich nur für die Sparkassen funktioniert. Ein Telefonat mit der Sparkasse Münsterland-Ost hat leider nicht klären können, ob das Feld für die Satzlänge überhaupt berücksichtigt wird.</p>
+<p>(Wir haben jetzt noch nicht getestet, was passiert wenn wir wirklich alle möglichen Erweiterungsdatensätze gefüllt habe.)</p>
+<p>/**<br>
+         * data record(s) C<br>
+         */</p>
+<p>foreach ($this-&gt;exchanges as $exchange) {<br>
+            $sum_account_numbers += $exchange[&#039;receiver_account_number&#039;];<br>
+            $sum_bank_codes += $exchange[&#039;receiver_bank_code&#039;];<br>
+            $sum_amounts += $exchange[&#039;amount&#039;];</p>
+<p>$additional_purposes = $exchange[&#039;purposes&#039;];<br>
+            $first_purpose = array_shift($additional_purposes);</p>
+<p>$additional_parts = array();</p>
+<p>if (strlen($exchange[&#039;receiver_additional_name&#039;]) &gt; 0) {<br>
+                $additional_parts[] = array(&quot;type&quot; =&gt; &quot;01&quot;,<br>
+                    &quot;content&quot; =&gt; $exchange[&#039;receiver_additional_name&#039;]<br>
+                    );<br>
+            }</p>
+<p>foreach ($additional_purposes as $additional_purpose) {<br>
+                $additional_parts[] = array(&quot;type&quot; =&gt; &quot;02&quot;,<br>
+                    &quot;content&quot; =&gt; $additional_purpose<br>
+                    );<br>
+            }</p>
+<p>if (strlen($exchange[&#039;sender_additional_name&#039;]) &gt; 0) {<br>
+                $additional_parts[] = array(&quot;type&quot; =&gt; &quot;03&quot;,<br>
+                    &quot;content&quot; =&gt; $exchange[&#039;sender_additional_name&#039;]<br>
+                    );<br>
+            }</p>
+<p>$additional_parts_number = count($additional_parts);</p>
+<p>// record length (187 Bytes + 29 Bytes for each additional part)<br>
+            $content .= str_pad (187 + $additional_parts_number * 29, 4, &quot;0&quot;, STR_PAD_LEFT); <br>
+            // record type<br>
+            $content .= &quot;C&quot;; <br>
+            // first involved bank<br>
+            $content .= str_pad ($exchange[&#039;sender_bank_code&#039;], 8, &quot;0&quot;, STR_PAD_LEFT); <br>
+            // receiver&#039;s bank code<br>
+            $content .= str_pad ($exchange[&#039;receiver_bank_code&#039;], 8, &quot;0&quot;, STR_PAD_LEFT); <br>
+            // receiver&#039;s account number<br>
+            $content .= str_pad ($exchange[&#039;receiver_account_number&#039;], 10, &quot;0&quot;, STR_PAD_LEFT); <br>
+            // internal customer number (11 chars) or NULL<br>
+            $content .= &quot;0&quot; . str_repeat (&quot;0&quot;, 11) . &quot;0&quot;; <br>
+            // payment mode (text key)<br>
+            $content .= ($this-&gt;type == DTA_CREDIT) ? &quot;51&quot; : &quot;05&quot;; <br>
+            // additional text key<br>
+            $content .= &quot;000&quot;; <br>
+            // bank internal<br>
+            $content .= &quot; &quot;; <br>
+            // free (reserve)<br>
+            $content .= str_repeat (&quot;0&quot;, 11); <br>
+            // sender&#039;s bank code<br>
+            $content .= str_pad ($exchange[&#039;sender_bank_code&#039;], 8, &quot;0&quot;, STR_PAD_LEFT); <br>
+            // sender&#039;s account number<br>
+            $content .= str_pad ($exchange[&#039;sender_account_number&#039;], 10, &quot;0&quot;, STR_PAD_LEFT); <br>
+            // amount<br>
+            $content .= str_pad ($exchange[&#039;amount&#039;], 11, &quot;0&quot;, STR_PAD_LEFT); <br>
+            // free (reserve)<br>
+            $content .= str_repeat (&quot; &quot;, 3); <br>
+            // receiver&#039;s name<br>
+            $content .= str_pad ($exchange[&#039;receiver_name&#039;], 27, &quot; &quot;, STR_PAD_RIGHT); <br>
+            // delimitation<br>
+            $content .= str_repeat (&quot; &quot;, 8); <br>
+            // sender&#039;s name<br>
+            $content .= str_pad ($exchange[&#039;sender_name&#039;], 27, &quot; &quot;, STR_PAD_RIGHT); <br>
+            // first line of purposes<br>
+            $content .= str_pad ($first_purpose, 27, &quot; &quot;, STR_PAD_RIGHT); <br>
+            // currency (1 = Euro)<br>
+            $content .= &quot;1&quot;; <br>
+            // free (reserve)<br>
+            $content .= str_repeat (&quot; &quot;, 2); <br>
+            // amount of additional parts<br>
+            $content .= str_pad ($additional_parts_number, 2, &quot;0&quot;, STR_PAD_LEFT);</p>
+<p>/* 2005.11.02 mh:<br>
+	 * (Achtung: scheint nur für Sparkassen zu gelten?)<br>
+	 * <br>
+	 * ich gehe davon aus, dass die ersten zwei &quot;additional_parts&quot; zwingend nötig<br>
+	 * sind. d.h. ich kommentiere die if&#039;s aus und alles wird gut.<br>
+	 * Weiter gehe ich davon aus, dass auch die beiden nicht mitzählen bei der Angabe<br>
+	 * der Erweiterungsblöck!<br>
+	 * <br>
+	 * auf http://www.infodrom.org/projects/dtaus/dtaus.php3 steht:<br>
+	 * &quot;So können weitere Datensätze angehängt werden. Sie müssen insgesamt jedoch <br>
+	 * 128 Zeichen lang sein. Also vier 29-Zeichen Blöcke und anschließend mit 12 <br>
+	 * Blanks auffüllen. Maximal vier 128-Zeichen-Records, wobei der vierte maximal <br>
+	 * einen Erweiterungsdatensatz enthält.&quot;<br>
+	 *<br>
+	 */<br>
+            // if (count($additional_parts) &gt; 0) {<br>
+                for ($index = 1;$index &lt;= 2;$index++) {<br>
+                    if (count($additional_parts) &gt; 0) {<br>
+                        $additional_part = array_shift($additional_parts);<br>
+                    } else {<br>
+                        $additional_part = array(&quot;type&quot; =&gt; &quot;  &quot;,<br>
+                            &quot;content&quot; =&gt; &quot;&quot;<br>
+                            );<br>
+                    }<br>
+                    // type of addional part<br>
+                    $content .= $additional_part[&#039;type&#039;]; <br>
+                    // additional part content<br>
+                    $content .= str_pad ($additional_part[&#039;content&#039;], 27, &quot; &quot;, STR_PAD_RIGHT);<br>
+                }<br>
+                // delimitation<br>
+                $content .= str_repeat (&quot; &quot;, 11);<br>
+            // } // if</p>
+<p>/*<br>
+	 * auf http://www.infodrom.org/projects/dtaus/dtaus.php3 steht:<br>
+	 * &quot;So können weitere Datensätze angehängt werden. Sie müssen insgesamt jedoch <br>
+	 * 128 Zeichen lang sein. Also vier 29-Zeichen Blöcke und anschließend mit 12 <br>
+	 * Blanks auffüllen. Maximal vier 128-Zeichen-Records, wobei der vierte maximal <br>
+	 * <br>
+	 * <br>
+	 * Das bedeutet an dieser Stelle, dass falls noch additional_parts da sind,<br>
+	 * die Schleife für VIER zusätzliche Teile durchgeführt werden muss.<br>
+	 * Danach kann dann nur noch ein Block hinzugefügt werden!<br>
+	 */<br>
+                if (count($additional_parts) &gt; 0) {<br>
+		    // auch wenn nur ein zusätzlicher Text existiert, müssen<br>
+		    // alle 4 Blöcke im Zweifel auch mit Leerzeichen gefüllt werden<br>
+                    for ($index = 1;$index &lt;= 4;$index++) {<br>
+                        if (count($additional_parts) &gt; 0) {<br>
+                            $additional_part = array_shift($additional_parts);<br>
+                        } else {<br>
+                            $additional_part = array(&quot;type&quot; =&gt; &quot;  &quot;,<br>
+                                &quot;content&quot; =&gt; &quot;&quot;<br>
+                                );<br>
+                        }<br>
+                        // type of addional part<br>
+                        $content .= $additional_part[&#039;type&#039;]; <br>
+                        // additional part content<br>
+                        $content .= str_pad ($additional_part[&#039;content&#039;], 27, &quot; &quot;, STR_PAD_RIGHT);<br>
+                    }<br>
+                    // delimitation<br>
+                    $content .= str_repeat (&quot; &quot;, 12);<br>
+                }</p>
+<p>// Falls jetzt immer noch additional_parts existieren,<br>
+		// darf davon nur noch einer auch ausgegeben werden:<br>
+		if (count($additional_parts) &gt; 0) {<br>
+			$additional_part = array_shift($additional_parts);<br>
+			$content .= $additional_part[&#039;type&#039;];<br>
+			$content .= str_pad($additional_part[&#039;content&#039;],27,&#039; &#039;,STR_PAD_RIGHT);<br>
+			// und jetzt die restlichen zeichen auffüllen!<br>
+			$content .= str_repeat(&#039; &#039;,99); // 128 - 29 Zeichen<br>
+		}</p>
+<p>} // foreach exchange</p>
+</section>
+<section>
+<h3>[2005-11-04 06:43 UTC] m dot hosse at geodigital dot org</h3>
+<p>Hi</p>
+<p>ich antworte mal jetzt auch in deutsch. IMO ist DTA sowieso eine rein deutsche Angelegenheit. :-)</p>
+<p>Es ist richtig, daß meine Lösung nur mit einer Überweisung korrekt funktionierte. Ich habe mir das nochmal eingehender angeschaut und bin zu folgenden Ergebnissen gekommen:</p>
+<p>1. Die Datensatzlänge der C-Sätze muß immer durch 128 teilbar sein.<br>
+2. Es müssen keine Erweiterungssätze verwendet werden.<br>
+3. Wenn leere Erweiterungssätze verwendet werden, dann meckert das SFIRM-DTA-Prüfprogramm. Leere Erweiterungssätze sind solche, die zwar einen Typ haben, aber keine Daten übermitteln.<br>
+4. Die Satzlänge wird schon berücksichtigt. Nur gelten leere Erweiterungssätze nicht als Daten. Insofern passt es dann wieder.</p>
+<p>Ich habe diese Punkte nun mal umgesetzt und die Dateien (mit mehreren Überweisungen gegen den SFIRM-DTA-Checker und gegen den Online-Checker http://www.xpecto.de/dtauschecker/ geprüft. In beiden Fällen treten nun auch keine Warnungen mehr auf.</p>
+<p>Was wurde geändert:<br>
+1. Zusätzliche Verwendungszwecke werden nur noch ausgegeben, wenn sie nicht leer sind.<br>
+            foreach ($additional_purposes as $additional_purpose) {<br>
+                if (trim($additional_purpose) != &quot;&quot;)<br>
+                    $additional_parts[] = array(&quot;type&quot; =&gt; &quot;02&quot;, &quot;content&quot; =&gt; $additional_purpose);<br>
+            }</p>
+<p>2. Die Erweiterung auf 128 bzw. 256 Zeichen passiert nun in der foreach-Schleife für die C-Datensätze.</p>
+<p>Hier nochmal die gesamte Methode:<br>
+    function getFileContent()<br>
+    {<br>
+        $content = &quot;&quot;;</p>
+<p>$sum_account_numbers = 0;<br>
+        $sum_bank_codes = 0;<br>
+        $sum_amounts = 0;</p>
+<p>/**<br>
+         * data record A<br>
+         */</p>
+<p>// record length (128 Bytes)<br>
+        $content .= str_pad (&quot;128&quot;, 4, &quot;0&quot;, STR_PAD_LEFT);<br>
+        // record type<br>
+        $content .= &quot;A&quot;;<br>
+        // file mode (credit or debit)<br>
+        $content .= ($this-&gt;type == DTA_CREDIT) ? &quot;G&quot; : &quot;L&quot;;<br>
+        // Customer File (&quot;K&quot;) / Bank File (&quot;B&quot;)<br>
+        $content .= &quot;K&quot;;<br>
+        // sender&#039;s bank code<br>
+        $content .= str_pad ($this-&gt;account_file_sender[&#039;bank_code&#039;], 8, &quot;0&quot;, STR_PAD_LEFT);<br>
+        // only used if Bank File, otherwise NULL<br>
+        $content .= str_repeat (&quot;0&quot;, 8);<br>
+        // sender&#039;s name<br>
+        $content .= str_pad ($this-&gt;account_file_sender[&#039;name&#039;], 27, &quot; &quot;, STR_PAD_RIGHT);<br>
+        // date of file creation<br>
+        $content .= strftime(&quot;%d%m%y&quot;, $this-&gt;timestamp);<br>
+        // free (bank internal)<br>
+        $content .= str_repeat (&quot; &quot;, 4);<br>
+        // sender&#039;s account number<br>
+        $content .= str_pad ($this-&gt;account_file_sender[&#039;account_number&#039;], 10, &quot;0&quot;, STR_PAD_LEFT);<br>
+        // sender&#039;s reference number (optional)<br>
+        $content .= str_repeat (&quot;0&quot;, 10);<br>
+        // free (reserve)<br>
+        $content .= str_repeat (&quot; &quot;, 15);<br>
+        // execution date (&quot;DDMMYYYY&quot;, optional)<br>
+        $content .= str_repeat (&quot; &quot;, 8);<br>
+        // free (reserve)<br>
+        $content .= str_repeat (&quot; &quot;, 24);<br>
+        // currency (1 = Euro)<br>
+        $content .= &quot;1&quot;;</p>
+<p>/**<br>
+         * data record(s) C<br>
+         */</p>
+<p>foreach ($this-&gt;exchanges as $exchange) {<br>
+            $sum_account_numbers += $exchange[&#039;receiver_account_number&#039;];<br>
+            $sum_bank_codes += $exchange[&#039;receiver_bank_code&#039;];<br>
+            $sum_amounts += $exchange[&#039;amount&#039;];</p>
+<p>$additional_purposes = $exchange[&#039;purposes&#039;];<br>
+            $first_purpose = array_shift($additional_purposes);</p>
+<p>$additional_parts = array();</p>
+<p>if (strlen($exchange[&#039;receiver_additional_name&#039;]) &gt; 0) {<br>
+                $additional_parts[] = array(&quot;type&quot; =&gt; &quot;01&quot;,<br>
+                    &quot;content&quot; =&gt; $exchange[&#039;receiver_additional_name&#039;]<br>
+                    );<br>
+            }</p>
+<p>foreach ($additional_purposes as $additional_purpose) {<br>
+                if (trim($additional_purpose) != &quot;&quot;)<br>
+                    $additional_parts[] = array(&quot;type&quot; =&gt; &quot;02&quot;, &quot;content&quot; =&gt; $additional_purpose);<br>
+            }</p>
+<p>if (strlen($exchange[&#039;sender_additional_name&#039;]) &gt; 0) {<br>
+                $additional_parts[] = array(&quot;type&quot; =&gt; &quot;03&quot;,<br>
+                    &quot;content&quot; =&gt; $exchange[&#039;sender_additional_name&#039;]<br>
+                    );<br>
+            }</p>
+<p>$additional_parts_number = count($additional_parts); <br>
+            // record length (187 Bytes + 29 Bytes for each additional part)<br>
+            $content .= str_pad (187 + $additional_parts_number * 29, 4, &quot;0&quot;, STR_PAD_LEFT); <br>
+            // record type<br>
+            $content .= &quot;C&quot;; <br>
+            // first involved bank<br>
+            $content .= str_pad ($exchange[&#039;sender_bank_code&#039;], 8, &quot;0&quot;, STR_PAD_LEFT); <br>
+            // receiver&#039;s bank code<br>
+            $content .= str_pad ($exchange[&#039;receiver_bank_code&#039;], 8, &quot;0&quot;, STR_PAD_LEFT); <br>
+            // receiver&#039;s account number<br>
+            $content .= str_pad ($exchange[&#039;receiver_account_number&#039;], 10, &quot;0&quot;, STR_PAD_LEFT); <br>
+            // internal customer number (11 chars) or NULL<br>
+            $content .= &quot;0&quot; . str_repeat (&quot;0&quot;, 11) . &quot;0&quot;; <br>
+            // payment mode (text key)<br>
+            $content .= ($this-&gt;type == DTA_CREDIT) ? &quot;51&quot; : &quot;05&quot;; <br>
+            // additional text key<br>
+            $content .= &quot;000&quot;; <br>
+            // bank internal<br>
+            $content .= &quot; &quot;; <br>
+            // free (reserve)<br>
+            $content .= str_repeat (&quot;0&quot;, 11); <br>
+            // sender&#039;s bank code<br>
+            $content .= str_pad ($exchange[&#039;sender_bank_code&#039;], 8, &quot;0&quot;, STR_PAD_LEFT); <br>
+            // sender&#039;s account number<br>
+            $content .= str_pad ($exchange[&#039;sender_account_number&#039;], 10, &quot;0&quot;, STR_PAD_LEFT); <br>
+            // amount<br>
+            $content .= str_pad ($exchange[&#039;amount&#039;], 11, &quot;0&quot;, STR_PAD_LEFT); <br>
+            // free (reserve)<br>
+            $content .= str_repeat (&quot; &quot;, 3); <br>
+            // receiver&#039;s name<br>
+            $content .= str_pad ($exchange[&#039;receiver_name&#039;], 27, &quot; &quot;, STR_PAD_RIGHT); <br>
+            // delimitation<br>
+            $content .= str_repeat (&quot; &quot;, 8); <br>
+            // sender&#039;s name<br>
+            $content .= str_pad ($exchange[&#039;sender_name&#039;], 27, &quot; &quot;, STR_PAD_RIGHT); <br>
+            // first line of purposes<br>
+            $content .= str_pad ($first_purpose, 27, &quot; &quot;, STR_PAD_RIGHT); <br>
+            // currency (1 = Euro)<br>
+            $content .= &quot;1&quot;; <br>
+            // free (reserve)<br>
+            $content .= str_repeat (&quot; &quot;, 2); <br>
+            // amount of additional parts<br>
+            $content .= str_pad ($additional_parts_number, 2, &quot;0&quot;, STR_PAD_LEFT);</p>
+<p>if (count($additional_parts) &gt; 0) {<br>
+                for ($index = 1;$index &lt;= 2;$index++) {<br>
+                    if (count($additional_parts) &gt; 0) {<br>
+                        $additional_part = array_shift($additional_parts);<br>
+                    } else {<br>
+                        $additional_part = array(&quot;type&quot; =&gt; &quot;  &quot;,<br>
+                            &quot;content&quot; =&gt; &quot;&quot;<br>
+                            );<br>
+                    }<br>
+                    // type of addional part<br>
+                    $content .= $additional_part[&#039;type&#039;]; <br>
+                    // additional part content<br>
+                    $content .= str_pad ($additional_part[&#039;content&#039;], 27, &quot; &quot;, STR_PAD_RIGHT);<br>
+                }<br>
+                // delimitation<br>
+                $content .= str_repeat (&quot; &quot;, 11);<br>
+            }</p>
+<p>for ($part = 3;$part &lt;= 5;$part++) {<br>
+                if (count($additional_parts) &gt; 0) {<br>
+                    for ($index = 1;$index &lt;= 4;$index++) {<br>
+                        if (count($additional_parts) &gt; 0) {<br>
+                            $additional_part = array_shift($additional_parts);<br>
+                        } else {<br>
+                            $additional_part = array(&quot;type&quot; =&gt; &quot;  &quot;,<br>
+                                &quot;content&quot; =&gt; &quot;&quot;<br>
+                                );<br>
+                        }<br>
+                        // type of addional part<br>
+                        $content .= $additional_part[&#039;type&#039;]; <br>
+                        // additional part content<br>
+                        $content .= str_pad ($additional_part[&#039;content&#039;], 27, &quot; &quot;, STR_PAD_RIGHT);<br>
+                    }<br>
+                    // delimitation<br>
+                    $content .= str_repeat (&quot; &quot;, 12);<br>
+                }<br>
+            }<br>
+		        // Add Spaces for a content length that is a multiple of 128<br>
+    		    if (strlen($content) % 128 != 0)<br>
+	      		  $content .= str_repeat (&quot; &quot;,128-strlen($content) % 128);<br>
+        }<br>
+        <br>
+        /**<br>
+         * data record E<br>
+         */</p>
+<p>// record length (128 bytes)<br>
+        $content .= str_pad (&quot;128&quot;, 4, &quot;0&quot;, STR_PAD_LEFT); <br>
+        // record type<br>
+        $content .= &quot;E&quot;; <br>
+        // free (reserve)<br>
+        $content .= str_repeat (&quot; &quot;, 5); <br>
+        // number of records type C<br>
+        $content .= str_pad (count($this-&gt;exchanges), 7, &quot;0&quot;, STR_PAD_LEFT); <br>
+        // free (reserve)<br>
+        $content .= str_repeat (&quot;0&quot;, 13); <br>
+        // sum of account numbers<br>
+        $content .= str_pad ($sum_account_numbers, 17, &quot;0&quot;, STR_PAD_LEFT); <br>
+        // sum of bank codes<br>
+        $content .= str_pad ($sum_bank_codes, 17, &quot;0&quot;, STR_PAD_LEFT); <br>
+        // sum of amounts<br>
+        $content .= str_pad ($sum_amounts, 13, &quot;0&quot;, STR_PAD_LEFT); <br>
+        // delimitation<br>
+        $content .= str_repeat (&quot; &quot;, 51);</p>
+<p>return $content;<br>
+    }</p>
+<p>cu<br>
+Michael</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

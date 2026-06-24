@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9096</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #9096</h1>
+<p>mssql_fetch_array() returns null in fetchInto()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-10-19 18:18 UTC</td></tr>
+<tr><th>From</th><td>ausserirdisch at sven-space dot de</td></tr>
+<tr><th>Assigned</th><td>aharvey</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>Debian Etch</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-10-19 18:18 UTC] ausserirdisch at sven-space dot de</h3>
+<p>Description:<br>
+------------<br>
+Enviroments:<br>
+- Debian Etch with Apache2 and PHP 5.1.6.<br>
+- Windows XP Pro SP2 with MS SQL Server 2000</p>
+<p>I&#039;m connecting from the Webapplication (Debian server) via PEAR::DataObject to the MS SQL server to import some data. It works fine with FreTDS. But there is one Problem occuring on the Debian system:</p>
+<p>When I fetch the data then in DataObject::fetch() there will <br>
+be called at one time the DB_mssql::fetchInto() method. In this method the php-function mssql_fetch_array() is called. On a Windows system with PHP5 on Apache2 there is no problem. But on the Debian system this function returns null, because the function did not expect two parameters.</p>
+<p>The next point I tried was to change the fetchmode of the fetchInto() method. Becaus in the class DB_mssql is an if-statement which checks the fetchmode and then calls either mssql_fetch_array with two parameter or mssql_fetch_row with one parameter (which works on the Debian system). But I found no clean way to set this fetchmode from my DataObject subclases. So I hacked the DB_mssql function fetchInto() that way, that it checks my superglobal variable if the server is a windows system or not an then calls the funtion mssql_fetch_rray with one or two parameters.</p>
+<p>I searched around three days to solve this problem. There are some curious circumstances:<br>
+It seems that in the Debian PHP packages is no mssql-extension. Neither in the Etch package nor in the dotdeb-packages. Also not in the PHP4 Sarge package. So it seems that PEAR::DB loads the sybase_ct extension. And I guess, that then the function mssql_fetch_array() only can handle one parameter: the result.</p>
+<p>Test script:<br>
+---------------<br>
+File: DB/mssql.php<br>
+Line: 311</p>
+<p>function fetchInto($result, &amp;$arr, $fetchmode, $rownum = null)<br>
+{<br>
+    if ($rownum !== null) {<br>
+        if (!@mssql_data_seek($result, $rownum)) {<br>
+            return null;<br>
+        }<br>
+     }<br>
+     if ($fetchmode &amp; DB_FETCHMODE_ASSOC) {<br>
+         // returns always null and warning:<br>
+         // unexpected parameter MSSQL_ASSOC<br>
+         $arr = @mssql_fetch_array($result, MSSQL_ASSOC);<br>
+         if ($this-&gt;options[&#039;portability&#039;] &amp;  DB_PORTABILITY_LOWERCASE &amp;&amp; $arr) {<br>
+              $arr = array_change_key_case($arr, CASE_LOWER);<br>
+          }<br>
+      } else {<br>
+          $arr = @mssql_fetch_row($result);<br>
+      }<br>
+      if (!$arr) {<br>
+            return null;<br>
+      }<br>
+      // ...<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

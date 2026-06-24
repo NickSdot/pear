@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #779</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #779</h1>
+<p>Attachments ignored in PHP &gt;= 4.3.2</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-02-17 17:20 UTC</td></tr>
+<tr><th>From</th><td>louis at 6internet dot com</td></tr>
+<tr><th>Assigned</th><td>cipri</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>Red Hat Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-02-17 17:20 UTC] louis at 6internet dot com</h3>
+<p>Description:<br>
+------------<br>
+The short PHP script under Reproduce Code making use of mimeDecode.php correctly returns both the body and attachment of a MIME encoded email for PHP 4.3.1 and earlier.  However, the script fails to extract the attachment and only returns the body for PHP 4.3.2 and newer, but reports no error message.</p>
+<p>I&#039;ve downloaded and compiled a lot of PHP versions to discover that 4.3.1 -&gt; 4.3.2 is when functionality stopped working.</p>
+<p>Using latest version of mimeDecode.php downloaded from PEAR in last couple of days.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+  require_once(&#039;/usr/share/pear/Mail.php&#039;);<br>
+  require_once(&#039;/usr/share/pear/Mail/mimeDecode.php&#039;);</p>
+<p>$stdin = fopen(&#039;php://stdin&#039;,&#039;r&#039;);<br>
+  if( !$stdin ) {<br>
+        echo &#039;ERROR: Cannot open stdin&#039;;<br>
+        exit();<br>
+  }</p>
+<p>$msg = fread($stdin,1000000);</p>
+<p>fclose($stdin);</p>
+<p>$params[&#039;include_bodies&#039;] = TRUE;<br>
+  $params[&#039;decode_bodies&#039;]  = TRUE;<br>
+  $params[&#039;decode_headers&#039;] = TRUE;<br>
+  $params[&#039;input&#039;]          = $msg;<br>
+  $params[&#039;crlf&#039;]           = &quot;\n&quot;;<br>
+  $mail = Mail_mimeDecode::decode($params);</p>
+<p>print_r($mail);<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Should return attachment for all versions of PHP, like so (at the moment on 4.3.1 and earlier give this):</p>
+<p>stdClass Object<br>
+(<br>
+    [headers] =&gt; Array<br>
+        (<br>
+            [from] =&gt; &quot;HIDDEN&quot; &lt;HIDDEN@HIDDEN&gt;<br>
+            [to] =&gt; &lt;HIDDEN@HIDDEN&gt;<br>
+            [subject] =&gt; HIDDEN<br>
+            [date] =&gt; Wed, 11 Feb 2004 09:11:43 -0000<br>
+            [mime-version] =&gt; 1.0<br>
+            [content-type] =&gt; multipart/mixed; boundary=&quot;----=_NextPart_000_136C_01C3F24A.3AE231F0&quot;<br>
+            [x-priority] =&gt; 3<br>
+            [x-msmail-priority] =&gt; Normal<br>
+            [x-mimeole] =&gt; Produced By Microsoft MimeOLE V6.00.2800.1165<br>
+        )</p>
+<p>[ctype_primary] =&gt; multipart<br>
+    [ctype_secondary] =&gt; mixed<br>
+    [ctype_parameters] =&gt; Array<br>
+        (<br>
+            [boundary] =&gt; ----=_NextPart_000_136C_01C3F24A.3AE231F0<br>
+        )</p>
+<p>[parts] =&gt; Array<br>
+        (<br>
+            [0] =&gt; stdClass Object<br>
+                (<br>
+                    [headers] =&gt; Array<br>
+                        (<br>
+                            [content-type] =&gt; text/plain; charset=&quot;iso-8859-1&quot;<br>
+                            [content-transfer-encoding] =&gt; 7bit<br>
+                        )</p>
+<p>[ctype_primary] =&gt; text<br>
+                    [ctype_secondary] =&gt; plain<br>
+                    [ctype_parameters] =&gt; Array<br>
+                        (<br>
+                            [charset] =&gt; iso-8859-1<br>
+                        )</p>
+<p>[body] =&gt; The main body of the email</p>
+<p>)</p>
+<p>[1] =&gt; stdClass Object<br>
+                (<br>
+                    [headers] =&gt; Array<br>
+                        (<br>
+                            [content-type] =&gt; application/pdf; name=&quot;myattach.pdf&quot;<br>
+                            [content-transfer-encoding] =&gt; base64<br>
+                            [content-disposition] =&gt; attachment; filename=&quot;myattach.pdf&quot;<br>
+                        )</p>
+<p>[ctype_primary] =&gt; application<br>
+                    [ctype_secondary] =&gt; pdf<br>
+                    [ctype_parameters] =&gt; Array<br>
+                        (<br>
+                            [name] =&gt; myattach.pdf<br>
+                        )</p>
+<p>[disposition] =&gt; attachment<br>
+                    [d_parameters] =&gt; Array<br>
+                        (<br>
+                            [filename] =&gt; myattach.pdf<br>
+                        )</p>
+<p>[body] =&gt; %PDF-1.1<br>
+3 0 obj<br>
+&lt;&lt;/Type /XObject<br>
+/Subtype /Image<br>
+/Name /I3<br>
+/Width 192/Height 142<br>
+/ImageMask true /BitsPerComponent 1<br>
+etc etc etc etc</p>
+<p>Actual result:<br>
+--------------<br>
+From PHP 4.3.2 on the attachment is ignored:</p>
+<p>stdClass Object<br>
+(<br>
+    [headers] =&gt; Array<br>
+        (<br>
+            [from] =&gt; &quot;HIDDEN&quot; &lt;HIDDEN@HIDDEN&gt;<br>
+            [to] =&gt; &lt;HIDDEN@HIDDEN&gt;<br>
+            [subject] =&gt; HIDDEN<br>
+            [date] =&gt; Wed, 11 Feb 2004 09:11:43 -0000<br>
+            [mime-version] =&gt; 1.0<br>
+            [content-type] =&gt; multipart/mixed; boundary=&quot;----=_NextPart_000_136C_01C3F24A.3AE231F0&quot;<br>
+            [x-priority] =&gt; 3<br>
+            [x-msmail-priority] =&gt; Normal<br>
+            [x-mimeole] =&gt; Produced By Microsoft MimeOLE V6.00.2800.1165<br>
+        )</p>
+<p>[ctype_primary] =&gt; multipart<br>
+    [ctype_secondary] =&gt; mixed<br>
+    [ctype_parameters] =&gt; Array<br>
+        (<br>
+            [boundary] =&gt; ----=_NextPart_000_136C_01C3F24A.3AE231F0<br>
+        )</p>
+<p>[parts] =&gt; Array<br>
+        (<br>
+            [0] =&gt; stdClass Object<br>
+                (<br>
+                    [headers] =&gt; Array<br>
+                        (<br>
+                            [content-type] =&gt; text/plain; charset=&quot;iso-8859-1&quot;<br>
+                            [content-transfer-encoding] =&gt; 7bit<br>
+                        )</p>
+<p>[ctype_primary] =&gt; text<br>
+                    [ctype_secondary] =&gt; plain<br>
+                    [ctype_parameters] =&gt; Array<br>
+                        (<br>
+                            [charset] =&gt; iso-8859-1<br>
+                        )</p>
+<p>[body] =&gt; The main body of the email</p>
+<p>)</p>
+<p>)</p>
+<p>)</p>
+</section>
+<section>
+<h3>[2004-10-01 17:30 UTC] shaw at salem dot edu</h3>
+<p>This still doesn&#039;t work with php 4.3.8 and Mail_Mime 1.2.1.</p>
+</section>
+<section>
+<h3>[2005-08-13 05:40 UTC] arik dot funke at gmx dot de</h3>
+<p>Example file to illustrate problem:<br>
+-----------------------------------</p>
+<p>From: &lt;arik@funke.homeip.net&gt;<br>
+To: &lt;25@funke.homeip.net&gt;<br>
+Content-type: multipart/mixed; boundary=&quot;------------070901010701060400010005&quot;;</p>
+<p>--------------070901010701060400010005<br>
+Content-Type: image/tiff;<br>
+ name=&quot;testfax.tif&quot;<br>
+Content-Transfer-Encoding: base64<br>
+Content-Disposition: inline;<br>
+ filename=&quot;testfax.tif&quot;</p>
+<p>SUkqAAgAAAARAAABBAABAAAAwAYAAAEBBAABAAAA7wgAAAIBAwABAAAAAQAAAAMBAwABAAAA<br>
+AwAAAAYBAwABAAAAAAAAAAoBAwABAAAAAQAAABEBBAABAAAA6gAAABIBAwABAAAAAQAAABUB<br>
+AwABAAAAAQAAABYBBAABAAAA7wgAABcBBAABAAAA3iQAABoBBQABAAAA2gAAABsBBQABAAAA<br>
+4gAAABwBAwABAAAAAQAAACQBBAABAAAAAAAAACgBAwABAAAAAgAAAEcBAwABAAAAAAAAAAAA<br>
+AADMAAAAAQAAAMQAAAABAAAAABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbN<br>
+QAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZ<br>
+qACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKb<br>
+NQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABT<br>
+ZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAK<br>
+bNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1AB<br>
+TZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoA<br>
+KbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1A<br>
+BTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmo<br>
+AKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1<br>
+ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNm<br>
+oAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps<br>
+1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFN<br>
+moAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAp<br>
+s1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAF<br>
+NmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agA<br>
+ps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUA<br>
+FNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2ag<br>
+Aps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzU<br>
+AFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2a<br>
+gAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmz<br>
+UAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2<br>
+agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACm<br>
+zUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU<br>
+2agAps1ABTZqACmzUAFNmoALIKlI5LlZAyOTNKwAWQVKRyXKyBkcmaVgAm1X3spwPM8FwPXB<br>
+cb9PZjqbOsgAm1X3spwPM8FwPXBcb9PZjqbOsgAm1X3spwPM8FwPXBcb9PZjqbOsgAm1X3sp<br>
+wPM8FwPXBcb9PZjqbOsgAm1X3Mp/c92oI4vBAYSZT+wYSZHF4IDCTKf2Iz/EcVQL32cjlMji<br>
+zF4J32f0z/agWZT3cwh2zrIAJtV9zKf3PdqCOLwQGEmU/sGEmRxeCAwkyn9iM/xHFUC99nI5<br>
+TI4sxeCd9n9M/2oFmU93MIds6yACbJ9+f333Nk/vurA8j777UZH33VgeR999iO++/vsD9Puf<br>
+pkffenVkfZ/TP9g/T753z6mzrIAJsn35/ffc2T++6sDyPvvtRkffdWB5H332I777++wP0+5+<br>
+mR996dWR9n9M/2D9PvnfPqbOsgAmyffn999zxX7qwPEc98nkffdWB4jnvg++8j7A/T7709Pv<br>
+vTqyPs/pn+wfp999z6mzrIAJsn35/ffc8V+6sDxHPfJ5H33VgeI574PvvI+wP0++9PT7706s<br>
+j7P6Z/sH6fffc+ps6yACbCM/333PAxZkfA/QU+YyAkyPgfoKfUb77/CzImU/vvT0CTI5HyPs<br>
+/pkb5MphO+59WzrYAJsIz/ffc8DFmR8D9BT5jICTI+B+gp9Rvvv8LMiZT++9PQJMjkfI+z+m<br>
+RvkymE77n1bOtgAmwjP999zzH3pzwPI+575PIwfPA8j7nvqPvvvTA/vvvT0wfpzyPs/pkb43<br>
+96fc9mEAAmwjP999zzH3pzwPI+575PIwfPA8j7nvqPvvvTA/vvvT0wfpzyPs/pkb4396fc9m<br>
+EAAmwjP99255j7054HkfffajI+9OeB5H332D+++9MD+7c/TI+9PTnkds/p6Yn9999z6mzrIA<br>
+JsIz/fdueY+9OeB5H332oyPvTngeR999g/vvvTA/u3P0yPvT055HbP6emJ/fffc+ps6yACbC<br>
+Mgjt+eBk/YpBKPQn7+yZTKYpBKPQn7+wf3Mn7FUCnb5yOUymLMU/o3z+npkxTlP7OR2zrIAJ<br>
+sIyCO354GT9ikEo9Cfv7JlMpikEo9Cfv7B/cyfsVQKdvnI5TKYsxT+jfP6emTFOU/s5HbOsg<br>
+AsmgOyds0wACyaA7J2zTAALTG2zTAALTG2zTAAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQA<br>
+U2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqA<br>
+CmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQ<br>
+AU2agAps1ABTZqACyVEC7XWwAWSogXa62ACbCC2oxvMdWZtrLIAJsILajG8x1Zm2ssgAmyfv<br>
+2oxvMe6m1lkAE2T9+1GN5j3U2ssgAm1XUU92cWe7mUwnfZ8gphOIgp7s4p21lkAE2q6inuzi<br>
+z3cymE77PkFMJxEFPdnFO2ssgAm1Xp987++5s/3PI+z5/ufVn++d/adtZZABNqvT75399zZ/<br>
+ueR9nz/c+rP987+07ayyACbVen33333PEc8j7Pp+fVn++++07ayyACbVen33333PEc8j7Pp+<br>
+fVn++++07ayyACbVen33333P0FnkfZ8gWfVn+++5kRtZbABNqvT77777n6CzyPs+QLPqz/ff<br>
+cyI2stgAm1Xp9999255H3PI+z5/ufVn+++9Nr8ACbVen3333bnkfc8j7Pn+59Wf77702vwAJ<br>
+snyPvvubfnkfc8jtnz/c+rP9996Z21lkAE2T5H333NvzyPueR2z5/ufVn+++9M7ayyACbCCm<br>
+U/vTn6E/Mpt8+QT8yPkFP74UhtZZABNhBTKf3pz9CfmU2+fIJ+ZHyCn98KQ2ssgAm89skoAJ<br>
+vPbJKACbuTZWQATdybKyACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps<br>
+1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFN<br>
+moAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAp<br>
+s1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAF<br>
+NmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agA<br>
+ps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUA<br>
+FNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2ag<br>
+Aps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzU<br>
+AFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2a<br>
+gAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmz<br>
+UAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2<br>
+agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACm<br>
+zUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU<br>
+2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqAC<br>
+mzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQA<br>
+U2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqA<br>
+CmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQ<br>
+AU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZq<br>
+ACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbN<br>
+QAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZ<br>
+qACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKb<br>
+NQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABT<br>
+ZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAK<br>
+bNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1AB<br>
+TZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoA<br>
+KbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1A<br>
+BTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmo<br>
+AKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1<br>
+ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNm<br>
+oAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps<br>
+1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFN<br>
+moAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAp<br>
+s1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAF<br>
+NmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agA<br>
+ps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUA<br>
+FNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2ag<br>
+Aps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzU<br>
+AFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2a<br>
+gAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmz<br>
+UAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2<br>
+agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACm<br>
+zUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU<br>
+2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqAC<br>
+mzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQA<br>
+U2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqA<br>
+CmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQ<br>
+AU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZq<br>
+ACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbN<br>
+QAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZ<br>
+qACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKb<br>
+NQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABT<br>
+ZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAK<br>
+bNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1AB<br>
+TZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoA<br>
+KbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1A<br>
+BTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmo<br>
+AKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1<br>
+ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNm<br>
+oAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps<br>
+1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFN<br>
+moAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAp<br>
+s1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAF<br>
+NmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agA<br>
+ps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUA<br>
+FNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2ag<br>
+Aps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzU<br>
+AFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2a<br>
+gAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmz<br>
+UAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2<br>
+agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACm<br>
+zUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU<br>
+2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqAC<br>
+mzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQA<br>
+U2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqA<br>
+CmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQ<br>
+AU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZq<br>
+ACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbN<br>
+QAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZ<br>
+qACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKb<br>
+NQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABT<br>
+ZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAK<br>
+bNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1AB<br>
+TZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoA<br>
+KbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1A<br>
+BTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmo<br>
+AKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1<br>
+ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNm<br>
+oAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps<br>
+1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFN<br>
+moAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAp<br>
+s1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAF<br>
+NmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agA<br>
+ps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUA<br>
+FNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2ag<br>
+Aps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzU<br>
+AFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2a<br>
+gAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmz<br>
+UAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2<br>
+agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACm<br>
+zUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU<br>
+2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqAC<br>
+mzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQA<br>
+U2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqA<br>
+CmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQ<br>
+AU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZq<br>
+ACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbN<br>
+QAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZ<br>
+qACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKb<br>
+NQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABT<br>
+ZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAK<br>
+bNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1AB<br>
+TZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoA<br>
+KbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1A<br>
+BTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmo<br>
+AKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1<br>
+ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNm<br>
+oAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps<br>
+1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFN<br>
+moAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAp<br>
+s1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAF<br>
+NmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agA<br>
+ps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUA<br>
+FNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2ag<br>
+Aps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACmzUAFNmoAKbNQAU2agAps1ABTZqACACA<br>
+CACACAAB<br>
+--------------070901010701060400010005--</p>
+</section>
+<section>
+<h3>[2005-08-13 09:23 UTC] arik dot funke at gmx dot de</h3>
+<p>I investigated this a bit further. The problem actually arises from the sample PHP code that is provided:#</p>
+<p>If:<br>
+---<br>
+$msg = fread($stdin,1000000);</p>
+<p>is replaced by:<br>
+---------------<br>
+$msg = &quot;&quot;;<br>
+while (!feof($stdin)) {<br>
+  $msg .= fread($msg, 1000000);<br>
+}</p>
+<p>the problem does not occur anymore. In fact, as the read buffer in the example provided is only 1MB and the attachment is larger than that the email is read only partially. The Pear Manual that provided the sample code should probably be edited to include this detail...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

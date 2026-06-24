@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5836</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_Bittorrent/index.html">File_Bittorrent</a> &#187; Bug #5836</h1>
+<p>Missing support for &gt;2GB files</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-10-31 20:47 UTC</td></tr>
+<tr><th>From</th><td>brian at matzon dot dk</td></tr>
+<tr><th>Assigned</th><td>tacker</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/File_Bittorrent/index.html">File_Bittorrent</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-31 20:47 UTC] brian at matzon dot dk</h3>
+<p>Description:<br>
+------------<br>
+Unable to properly decode torrents with &gt;2GB files. problem is _decode_int() which uses intval. It should be using floatval. I manually changed to that, but then getStats failed. I was unable to determine the issue with getStats.</p>
+</section>
+<section>
+<h3>[2006-01-18 16:30 UTC] alexiev at gmail dot com</h3>
+<p>Besides the change in Decode.php, a change in Encode.php is required: the &quot;double&quot; type showld be treated the same as &quot;integer&quot; type, in order the encoding to work with numbers, greated than 2GB! I will try to provide a patch shortly.</p>
+</section>
+<section>
+<h3>[2006-01-18 16:50 UTC] alexiev at gmail dot com</h3>
+<p>Here is the patch:<br>
+File File_Bittorrent_issue5836.patch</p>
+<p>diff -u Bittorrent/Decode.php Bittorrent_Fix/Decode.php<br>
+--- Bittorrent/Decode.php       2006-01-18 18:34:58.000000000 +0200<br>
++++ Bittorrent_Fix/Decode.php   2006-01-18 18:21:17.000000000 +0200<br>
+@@ -362,7 +362,7 @@<br>
+     function _decode_int()<br>
+     {<br>
+         $pos_e  = strpos($this-&gt;_source, &#039;e&#039;, $this-&gt;_position);<br>
+-        $return = intval(substr($this-&gt;_source, $this-&gt;_position, $pos_e - $this-&gt;_position));<br>
++        $return = floatval(substr($this-&gt;_source, $this-&gt;_position, $pos_e - $this-&gt;_position));<br>
+         $this-&gt;_position = $pos_e + 1;<br>
+         return $return;<br>
+     }<br>
+diff -u Bittorrent/Encode.php Bittorrent_Fix/Encode.php<br>
+--- Bittorrent/Encode.php       2006-01-18 18:34:58.000000000 +0200<br>
++++ Bittorrent_Fix/Encode.php   2006-01-18 18:35:50.000000000 +0200<br>
+@@ -81,8 +81,9 @@<br>
+         case &#039;string&#039;:<br>
+             return $this-&gt;encode_string($mixed);<br>
+             break;<br>
++        case &#039;double&#039;:<br>
+         case &#039;integer&#039;:<br>
+-            return  $this-&gt;encode_int($mixed);<br>
++            return  $this-&gt;encode_int(round($mixed));<br>
+             break;<br>
+         case &#039;array&#039;:<br>
+             return $this-&gt;encode_array($mixed);</p>
+<p>Usage: <br>
+cd /usr/share/php/File/Bittorrent;<br>
+patch -p1 &lt; /path/to/File_Bittorrent_issue5836.patch</p>
+</section>
+<section>
+<h3>[2006-01-18 17:00 UTC] alexiev at gmail dot com</h3>
+<p>Please, have in mind, the floatval function is present in PHP 4 &gt;= 4.2.0 and PHP 5, so in order to keep the package requirements (PHP 4 &gt;= 4.0.0), a call to PHP_Compat::loadFunction(&#039;floatval&#039;) showld be made in the Decode.php file.</p>
+</section>
+<section>
+<h3>[2006-01-20 14:24 UTC] alexiev at gmail dot com</h3>
+<p>There is a flaw in the above patch: all int fields are decoded to float vars (even if the number is less than 2G). Here is the patch, that only decodes as float if the number would oveflow the int var:</p>
+<p>diff -u Bittorrent/Decode.php Bittorrent_Fix/Decode.php<br>
+--- Bittorrent/Decode.php       2006-01-20 16:07:02.000000000 +0200<br>
++++ Bittorrent_Fix/Decode.php   2006-01-20 16:14:19.000000000 +0200<br>
+@@ -362,7 +362,15 @@<br>
+     function _decode_int()<br>
+     {<br>
+         $pos_e  = strpos($this-&gt;_source, &#039;e&#039;, $this-&gt;_position);<br>
+-        $return = intval(substr($this-&gt;_source, $this-&gt;_position, $pos_e - $this-&gt;_position));<br>
++<br>
++        /**<br>
++         * The return value showld be automatically casted to fload if the intval would<br>
++         * overflow. The &quot;+ 0&quot; accomplishes exactly that, using the internal casting<br>
++         * logic of PHP<br>
++         *<br>
++         * Fixed by SASh<br>
++         */<br>
++        $return = substr($this-&gt;_source, $this-&gt;_position, $pos_e - $this-&gt;_position) + 0;<br>
+         $this-&gt;_position = $pos_e + 1;<br>
+         return $return;<br>
+     }<br>
+diff -u Bittorrent/Encode.php Bittorrent_Fix/Encode.php<br>
+--- Bittorrent/Encode.php       2006-01-20 16:07:02.000000000 +0200<br>
++++ Bittorrent_Fix/Encode.php   2006-01-18 18:35:50.000000000 +0200<br>
+@@ -81,8 +81,9 @@<br>
+         case &#039;string&#039;:<br>
+             return $this-&gt;encode_string($mixed);<br>
+             break;<br>
++        case &#039;double&#039;:<br>
+         case &#039;integer&#039;:<br>
+-            return  $this-&gt;encode_int($mixed);<br>
++            return  $this-&gt;encode_int(round($mixed));<br>
+             break;<br>
+         case &#039;array&#039;:<br>
+             return $this-&gt;encode_array($mixed);</p>
+</section>
+<section>
+<h3>[2006-01-20 14:46 UTC] tacker at php dot net</h3>
+<p>Good, I will test the patch this weekend even if I hate testing it because of the time every run takes.</p>
+</section>
+<section>
+<h3>[2006-09-04 09:00 UTC] tacker at php dot net</h3>
+<p>Thank you for your bug report. This issue has been fixed<br>
+in the latest released version of the package, which you can download at<br>
+http://pear.php.net/get/File_Bittorrent</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

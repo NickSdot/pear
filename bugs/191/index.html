@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #191</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Bug #191</h1>
+<p>study() is called too early, the file is not specified yet</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-11-04 14:26 UTC</td></tr>
+<tr><th>From</th><td>szathml at delfin dot klte dot hu</td></tr>
+<tr><th>Assigned</th><td>alexmerz</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td>MP3_ID</td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Linux, Windows</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-11-04 14:26 UTC] szathml at delfin dot klte dot hu</h3>
+<p>Description:<br>
+------------<br>
+I found a bug in MP3_Id.php in the PEAR repository. Even if I study a file, it doesn&#039;t work. I<br>
+found out why: in the example you write:</p>
+<p>$id3 = &amp;new MP3_Id();<br>
+$id3-&gt;read($file);</p>
+<p>But you call the study() function from the constructor, but the file name<br>
+at that moment is unknown! So for example filesize cannot be<br>
+determined. My patch:</p>
+<p>var $study   = false;</p>
+<p>function MP3_Id($study = false) {<br>
+        if (defined(&#039;ID3_SHOW_DEBUG&#039;)) $this-&gt;debug = true;<br>
+        $this-&gt;study = ($study || defined(&#039;ID3_AUTO_STUDY&#039;));<br>
+    }</p>
+<p>function read($file) {<br>
+        $this-&gt;file = $file;    // it must be set before study()<br>
+        if ($this-&gt;study) $this-&gt;study();</p>
+<p>if ($this-&gt;debug) print($this-&gt;debugbeg . &quot;id3(&#039;$file&#039;)&lt;HR&gt;\n&quot;);</p>
+<p>if ($this-&gt;debug) print($this-&gt;debugend);</p>
+<p>return $this-&gt;_read_v1();<br>
+    }</p>
+<p>I tried to contact the maintainer, but my mail bounced back.</p>
+</section>
+<section>
+<h3>[2004-01-15 16:36 UTC] alexmerz at php dot net</h3>
+<p>The bug is fixed in cvs, a new release will be avaible this evening</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

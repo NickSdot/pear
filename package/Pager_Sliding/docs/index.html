@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pager_Sliding Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/Pager_Sliding/index.html">Pager_Sliding</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Pager_Sliding/docs/index.html#package-html-pager-sliding-intro">Introduction</a>
+</li>
+<li><a href="package/Pager_Sliding/docs/index.html#package-html-pager-sliding-compare">Pager (v.1.x) vs. Pager_Sliding</a>
+</li>
+<li><a href="package/Pager_Sliding/docs/index.html#package-html-pager-sliding-getcurrentpageid">Pager_Sliding::getCurrentPageID</a>
+</li>
+<li><a href="package/Pager_Sliding/docs/index.html#package-html-pager-sliding-getlinks">Pager_Sliding::getLinks</a>
+</li>
+<li><a href="package/Pager_Sliding/docs/index.html#package-html-pager-sliding-getnextpageid">Pager_Sliding::getNextPageID</a>
+</li>
+<li><a href="package/Pager_Sliding/docs/index.html#package-html-pager-sliding-getoffsetbypageid">Pager_Sliding::getOffsetByPageId</a>
+</li>
+<li><a href="package/Pager_Sliding/docs/index.html#package-html-pager-sliding-getpagedata">Pager_Sliding::getPageData</a>
+</li>
+<li><a href="package/Pager_Sliding/docs/index.html#package-html-pager-sliding-getpageidbyoffset">Pager_Sliding::getPageIdByOffset</a>
+</li>
+<li><a href="package/Pager_Sliding/docs/index.html#package-html-pager-sliding-getpreviouspageid">Pager_Sliding::getPreviousPageID</a>
+</li>
+<li><a href="package/Pager_Sliding/docs/index.html#package-html-pager-sliding-isfirstpage">Pager_Sliding::isFirstPage</a>
+</li>
+<li><a href="package/Pager_Sliding/docs/index.html#package-html-pager-sliding-islastpage">Pager_Sliding::isLastPage</a>
+</li>
+<li><a href="package/Pager_Sliding/docs/index.html#package-html-pager-sliding-islastpagecomplete">Pager_Sliding::isLastPageComplete</a>
+</li>
+<li><a href="package/Pager_Sliding/docs/index.html#package-html-pager-sliding-numitems">Pager_Sliding::numItems</a>
+</li>
+<li><a href="package/Pager_Sliding/docs/index.html#package-html-pager-sliding-numpages">Pager_Sliding::numPages</a>
+</li>
+<li><a href="package/Pager_Sliding/docs/index.html#package-html-pager-sliding-sliding">Pager_Sliding::Sliding</a>
+</li></ul>
+</nav>
+<p>Data paging class which also builds links to the pages.</p>
+<section id="package-html-pager-sliding-intro">
+<h2>Introduction</h2>
+<h3>What is Pager_Sliding?</h3>
+
+   
+   <p><strong>Pager_Sliding</strong> is a class to page an array of data.
+    It is taken as input and it is paged according to various parameters.
+    <strong>Pager_Sliding</strong> also builds links within a specified range,
+    and allows complete customization of the output (it even works with mod_rewrite).
+    It is compatible with PEAR::Pager&#039;s API</p>
+  
+
+  <h3>Deprecated</h3>
+
+    
+    <p>This package is <em>deprecated</em> in favour of the new
+      <strong>Pager</strong> v.2.x.</p>
+   
+
+  <h3>Example 1</h3>
+
+   
+    <p>This simple example will page the array of alphabetical letters, giving back
+     pages with 3 letters per page, and links to the previous two / next two pages:</p><pre><code>&lt;?php
+require_once &#039;Pager/Sliding.php&#039;;
+$params = array(
+            &#039;perPage&#039;    =&gt; 3,
+            &#039;delta&#039;      =&gt; 2,
+            &#039;itemData&#039;   =&gt; array(&#039;a&#039;,&#039;b&#039;,&#039;c&#039;,&#039;d&#039;,&#039;e&#039;,[...omissis...],&#039;z&#039;)
+            );
+$pager = &amp; new Pager_Sliding($params);
+$data  = $pager-&gt;getPageData();
+$links = $pager-&gt;getLinks();
+//$links is an ordered+associative array with &#039;back&#039;/&#039;pages&#039;/&#039;next&#039;/&#039;first&#039;/&#039;last&#039;/&#039;all&#039; links.
+//NB: $links[&#039;all&#039;] is the same as $pager-&gt;links;
+
+//echo links to other pages:
+echo $links[&#039;all&#039;]
+
+//Show data for current page:
+echo &#039;PAGED DATA: &#039; ; print_r($data);
+
+//Results from methods:
+echo &#039;getCurrentPageID()...: &#039;; var_dump($pager-&gt;getCurrentPageID());
+echo &#039;getNextPageID()......: &#039;; var_dump($pager-&gt;getNextPageID());
+echo &#039;getPreviousPageID()..: &#039;; var_dump($pager-&gt;getPreviousPageID());
+echo &#039;numItems()...........: &#039;; var_dump($pager-&gt;numItems());
+echo &#039;numPages()...........: &#039;; var_dump($pager-&gt;numPages());
+echo &#039;isFirstPage()........: &#039;; var_dump($pager-&gt;isFirstPage());
+echo &#039;isLastPage().........: &#039;; var_dump($pager-&gt;isLastPage());
+echo &#039;isLastPageComplete().: &#039;; var_dump($pager-&gt;isLastPageComplete());
+echo &#039;$pager-&gt;range........: &#039;; var_dump($pager-&gt;range);
+?&gt;</code></pre><p>In case you&#039;re wondering, $pager-&gt;range is a numeric array; its keys are the numbers of
+     the pages in the current range, and the matching values are booleans (<strong>TRUE</strong> if its key
+     represents currentPage, <strong>FALSE</strong> otherwise). This array can be useful to build the links
+     manually, e.g. when using a template engine.</p>
+   
+
+   <h3>Example 2</h3>
+
+    
+    <p>This example shows how you can use this class with mod_rewite.
+     Let&#039;s suppose we have a .htaccess like this:</p>
+<br>---------<br>RewriteEngine on<br>#Options FollowSymlinks<br><br>RewriteBase /<br>RewriteRule ^articles/([a-z]{1,12})/art([0-9]{1,4})\.html$ /article.php?num=$2&amp;amp;month=$1 [L]<br>---------
+     <p>It should transform an url like &quot;/articles/march/art15.html&quot;
+     into &quot;/article.php?num=15&amp;month=march&quot;</p>
+    <pre><code>&lt;?php
+require_once &#039;Pager/Sliding.php&#039;;
+
+$month = &#039;september&#039;;
+$params = array(
+            &#039;append&#039;    =&gt; false,
+            &#039;urlVar&#039;    =&gt; &#039;num&#039;,
+            &#039;path&#039;      =&gt; &#039;http://myserver.com/articles/&#039; . $month,
+            &#039;fileName&#039;  =&gt; &#039;art%d.html&#039;,  //Pager replaces &quot;%d&quot; with page number...
+            &#039;itemData&#039;  =&gt; array(&#039;a&#039;,&#039;b&#039;,&#039;c&#039;,[...omissis...],&#039;z&#039;),
+            &#039;perPage&#039;   =&gt; 3
+            );
+$pager = &amp; new Pager_Sliding($params);
+
+$data  = $pager-&gt;getPageData();
+echo $pager-&gt;links;
+echo &#039;Data for current page: &#039;; print_r($data);
+?&gt;</code></pre>
+    
+   
+
+   <h3>More pagers in a single page</h3>
+
+    
+    <p>Using more than one pager in a single page is as simple as using a different
+     <code>urlVar</code> for each pager:</p><pre><code>&lt;?php
+require_once &#039;Pager/Sliding.php&#039;;
+
+//first pager
+$params1 = array(
+            &#039;perPage&#039;    =&gt; 3,
+            &#039;urlVar&#039;     =&gt; pageID_articles,  //1st identifier
+            &#039;itemData&#039;   =&gt; $someArray
+            );
+$pager1 = &amp; new Pager_Sliding($params1);
+$data1  = $pager1-&gt;getPageData();
+$links1 = $pager1-&gt;getLinks();
+
+//second pager
+$params2 = array(
+            &#039;perPage&#039;    =&gt; 8,
+            &#039;urlVar&#039;     =&gt; pageID_news,      //2nd identifier
+            &#039;itemData&#039;   =&gt; $someOtherArray
+            );
+$pager2 = &amp; new Pager_Sliding($params2);
+$data2  = $pager2-&gt;getPageData();
+$links2 = $pager2-&gt;getLinks();
+?&gt;</code></pre>
+</section>
+<section id="package-html-pager-sliding-compare">
+<h2>Pager (v.1.x) vs. Pager_Sliding</h2>
+<h3>What are the differences with <strong>Pager</strong>?</h3>
+
+   
+   <p>While <strong>Pager</strong> v.1.x has a &quot;jumping window&quot; style,
+    <strong>Pager_Sliding</strong> has a &quot;sliding window&quot; style.
+    What does that mean? Let&#039;s see an example:</p>
+  
+  <h3><strong>Pager</strong> v.1.x logic</h3>
+
+   
+    <p>Let&#039;s suppose that the data spans on 15 pages, and the window width is 5 page links.
+     The links are built on &quot;frames&quot; of 5 pages each:  [1-5] [6-10] [11-15]
+     <strong>Pager</strong> v.1.x always shows the same 5 page links while you are
+     on one of these pages.
+     Here&#039;s a temporal succession of the links, starting from page 1 and moving forward.
+     There are brakets around current page number to highlight this:</p><pre><code>&lt;?php
+a)    {1} 2  3  4  5  =&gt;   // first frame: [1-5]
+b) &lt;=  1 {2} 3  4  5  =&gt;
+c) &lt;=  1  2 {3} 4  5  =&gt;
+d) &lt;=  1  2  3 {4} 5  =&gt;
+e) &lt;=  1  2  3  4 {5} =&gt;   // HERE IT JUMPS TO THE NEXT FRAME
+f) &lt;= {6} 7  8  9 10  =&gt;   // second frame: [6-10]
+g) &lt;=  6 {7} 8  9 10  =&gt;
+h) &lt;=  6  7 {8} 9 10  =&gt;
+?&gt;</code></pre><p>and so on. See what a &quot;jumping window&quot; frame is? When you reach a limit (in the
+     example, you go from page 5 to page 6), it &quot;jumps&quot; to next frame
+     (links from page 6 to 10).</p>
+   
+
+  <h3><strong>Pager_Sliding</strong> logic</h3>
+
+   
+    <p>Instead of jumping from one frame to the other, with <strong>Pager_Sliding</strong>
+      the change is done smoothly, and the current page is always shown at the center of the
+      &quot;window&quot; (except of course for the first and the last pages):</p><pre><code>&lt;?php
+a)       {1} 2  3  4  5  =&gt; [15]
+b) [1] &lt;= 1 {2} 3  4  5  =&gt; [15]
+c) [1] &lt;= 1  2 {3} 4  5  =&gt; [15]  // HERE IT&#039;s STARTING WORKING AS DESIGNED
+d) [1] &lt;= 2  3 {4} 5  6  =&gt; [15]  // see: current page number is at the center of the window
+e) [1] &lt;= 3  4 {5} 6  7  =&gt; [15]  // and it stays there...
+f) [1] &lt;= 4  5 {6} 7  8  =&gt; [15]
+g) [1] &lt;= 5  6 {7} 8  9  =&gt; [15]
+h) [1] &lt;= 6  7 {8} 9 10  =&gt; [15]
+?&gt;</code></pre><p>and so on.</p>
+   
+
+
+   <h3>Other differences</h3>
+
+    
+    <p>Apart from the different &quot;philosophy&quot;, <strong>Pager_Sliding</strong>
+     is also designed to be highly customizable.</p>
+    <p><em>UPDATE</em>: since Pager 2.x release, every option once only available
+     in Pager_Sliding is now fully implemented in Pager too, and more. As stated in the
+     Intro, Pager_Sliding is now <em>deprecated</em> in favour of the new
+     <strong>Pager</strong> v.2.x. You can have both behaviours (&quot;Jumping&quot; and
+     &quot;Sliding&quot;) in <strong>Pager</strong> v.2.x, just change the <code>mode</code>.
+     Please refer to <strong>Pager</strong> docs for more details.</p><ul>
+     <li>
+      
+       There are *many* options to change the look and feel of the links in your page.
+       They are explained in the constructor docs.
+      
+     </li>
+     <li>
+      
+       It can work with Apache mod_rewrite module too, see the examples for that.
+      
+     </li>
+     <li>
+      
+       It is &quot;template&quot;-friendly, i.e. you can assign the processed links and
+       page numbers to your custom vars and use them to draw your link bar according
+       to your page layout, without worrying about the underlying logic.
+      
+     </li>
+     <li>
+      
+       You can easily extend the class; this is useful if you plan to use the class
+       in many different pages and you don&#039;t want to set the same options everytime:
+       just set your preferred default values in your extending class and you&#039;re done!
+      
+     </li>
+     </ul>
+</section>
+<section id="package-html-pager-sliding-getcurrentpageid">
+<h2>Pager_Sliding::getCurrentPageID</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Pager/Sliding.php&#039;;
+     
+     <p><code>
+      integer <strong>getCurrentPageID</strong> ( 
+      
+      
+     )</code></p>
+    
+   
+   
+    <h3>Return value</h3>
+    <p><code>integer</code> - Current page number.</p>
+</section>
+<section id="package-html-pager-sliding-getlinks">
+<h2>Pager_Sliding::getLinks</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Pager/Sliding.php&#039;;
+     
+     <p><code>
+      array <strong>Pager_Sliding::getLinks</strong> ( 
+      integer $pageID
+        = null
+      
+     )</code></p>
+    
+    
+    
+    <h3>Parameter</h3>
+    <ul>
+      <li>
+       
+        integer <code>$pageID</code> - Optional pageID. If specified,
+         linksfor that page are provided instead of current one.
+       
+      </li>
+     </ul>
+    
+   
+   
+
+    <h3>Return value</h3>
+    <p><em>return</em> back/pages/next/first/last/all links,
+       both as numeric and associative array.</p>
+</section>
+<section id="package-html-pager-sliding-getnextpageid">
+<h2>Pager_Sliding::getNextPageID</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Pager/Sliding.php&#039;;
+     
+     <p><code>
+      mixed <strong>Pager_Sliding::getNextPageID</strong> ( 
+      
+      
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>If current page is last page this function returns <strong>FALSE</strong>,
+      otherwise returns next page number.</p>
+    
+   
+    <h3>Return value</h3>
+    <p><em>return</em> Next page number or <strong>FALSE</strong></p>
+</section>
+<section id="package-html-pager-sliding-getoffsetbypageid">
+<h2>Pager_Sliding::getOffsetByPageId</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Pager/Sliding.php&#039;;
+     
+     <p><code>
+      array <strong>Pager_Sliding::getOffsetByPageId</strong> ( 
+      integer $pageid
+        = null
+      
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>Eg, if you pass it <code>pageID</code> = 5 and your <code>delta</code> is 2 it will return you 3 and 7.
+      PageID of 6 would give you 4 and 8</p>
+     <p>NB: The behaviour of this function could be misleading: it was left only
+      for compatibility with PEAR::Pager.
+      It could raise some confusion when pageID is within <code>delta</code>
+      positions from an extreme: in fact this method returns also the extremes, while
+      $this-&gt;_getPageLinks leaves them out.
+      Pager_Sliding works this way: if pageID is NOT an extreme, show first and
+      last page within brackets: [1] &lt;&lt;  5 | _6_ | 7  &gt;&gt; [15]
+      So when dealing with pageID within delta positions from an extreme,
+      this method would return the extreme as well, while $this-&gt;_getPageLinks
+      would return (for instance) 2 | _3_ | 4 | 5  even if pageID is 3 and delta
+      is 2. Consider this method <em>deprecated</em> and/or subject
+      to changes.</p>
+    
+   
+    <h3>Parameter</h3>
+    <ul>
+      <li>
+       
+        <code>integer $pageid</code> - PageID to get offsets for
+       
+      </li>
+     </ul>
+    
+   
+
+   
+    <h3>Return value</h3>
+    <p><em>return</em> array with first and last offsets</p>
+   
+
+   <h3>Deprecated</h3>
+
+
+    <p><em>deprecated</em></p>
+</section>
+<section id="package-html-pager-sliding-getpagedata">
+<h2>Pager_Sliding::getPageData</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Pager/Sliding.php&#039;;
+     
+     <p><code>
+      array <strong>Pager_Sliding::getPageData</strong> ( 
+      integer $pageID
+        = null
+      
+     )</code></p>
+    
+   
+
+  
+   <h3>Parameter</h3>
+    <ul>
+      <li>
+       
+        <code>integer $pageID</code> - Desired page ID (optional)
+       
+      </li>
+     </ul>
+    
+   
+   
+    <h3>Return value</h3>
+    <p><em>return</em> array of data for this page.</p>
+</section>
+<section id="package-html-pager-sliding-getpageidbyoffset">
+<h2>Pager_Sliding::getPageIdByOffset</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Pager/Sliding.php&#039;;
+     
+     <p><code>
+      array <strong>Pager_Sliding::getPageIdByOffset</strong> ( 
+      integer $index
+     )</code></p>
+    
+    
+    
+    <h3>Parameter</h3>
+    <ul>
+      <li>
+       
+        <code>integer $index</code> - Offset to get pageID for
+       
+      </li>
+     </ul>
+    
+   
+
+   
+    <h3>Return value</h3>
+    <p><em>return</em> Page number for this offset</p>
+   
+   <h3>Deprecated</h3>
+
+    
+    <p><em>deprecated</em>. It is only here for compatibility with PEAR::Pager.</p>
+</section>
+<section id="package-html-pager-sliding-getpreviouspageid">
+<h2>Pager_Sliding::getPreviousPageID</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Pager/Sliding.php&#039;;
+     
+     <p><code>
+      mixed <strong>Pager_Sliding::getPreviousPageID</strong> ( 
+      
+      
+     )</code></p>
+    
+    
+    
+     <h3>Description</h3>
+     <p>If current page is first page this function returns <strong>FALSE</strong>,
+      otherwise returns previous page number.</p>
+    
+    
+    <h3>Return value</h3>
+    <p><em>return</em> Previous page number or <strong>FALSE</strong>.</p>
+</section>
+<section id="package-html-pager-sliding-isfirstpage">
+<h2>Pager_Sliding::isFirstPage</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Pager/Sliding.php&#039;;
+     
+     <p><code>
+      bool <strong>Pager_Sliding::isFirstPage</strong> ( 
+      
+      
+     )</code></p>
+    
+    
+
+    
+    <h3>Return value</h3>
+    <p><em>return</em> <strong>TRUE</strong> or <strong>FALSE</strong>, wrt it is the first page or not.</p>
+</section>
+<section id="package-html-pager-sliding-islastpage">
+<h2>Pager_Sliding::isLastPage</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Pager/Sliding.php&#039;;
+     
+     <p><code>
+      bool <strong>Pager_Sliding::isLastPage</strong> ( 
+      
+      
+     )</code></p>
+    
+    
+
+    
+    <h3>Return value</h3>
+    <p><em>return</em> <strong>TRUE</strong> or <strong>FALSE</strong>, wrt it is the last page or not.</p>
+</section>
+<section id="package-html-pager-sliding-islastpagecomplete">
+<h2>Pager_Sliding::isLastPageComplete</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Pager/Sliding.php&#039;;
+     
+     <p><code>
+      bool <strong>Pager_Sliding::isLastPageComplete</strong> ( 
+      
+      
+     )</code></p>
+    
+    
+
+   
+
+    <h3>Return value</h3>
+    <p><em>return</em> <strong>TRUE</strong> or <strong>FALSE</strong>, wrt the last page is complete
+      (i.e. it has <code>perPage</code> values in the array for the last
+      page) or not.</p>
+</section>
+<section id="package-html-pager-sliding-numitems">
+<h2>Pager_Sliding::numItems</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Pager/Sliding.php&#039;;
+     
+     <p><code>
+      int <strong>Pager_Sliding::numItems</strong> ( 
+      
+      
+     )</code></p>
+    
+    
+
+   
+
+    <h3>Return value</h3>
+    <p><em>return</em> integer - Number of items</p>
+</section>
+<section id="package-html-pager-sliding-numpages">
+<h2>Pager_Sliding::numPages</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Pager/Sliding.php&#039;;
+     
+     <p><code>
+      int <strong>Pager_Sliding::numPages</strong> ( 
+      
+      
+     )</code></p>
+    
+   
+
+
+
+   
+    <h3>Return value</h3>
+    <p><em>return</em> integer - Number of pages</p>
+</section>
+<section id="package-html-pager-sliding-sliding">
+<h2>Pager_Sliding::Sliding</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;Pager/Sliding.php&#039;;
+     
+    <p><code>
+     object <strong>&amp;Sliding</strong> ( 
+     array $options
+    )</code></p>
+    
+   
+   
+    <h3>Parameter</h3>
+    <p><strong>Pager_Sliding</strong> constructor takes an associative array
+     of parameters as input values. This is the complete list of these options:</p><ul>
+     <li>
+      <code>itemData</code> [array]
+      
+       Array of items to page.
+      
+     </li>
+     <li>
+      <code>totalItems</code> [integer]
+      
+       Number of items to page (used only if <code>itemData</code>
+       is not provided).
+      
+     </li>
+     <li>
+      <code>perPage</code> [integer]
+      
+       Number of items to display on each page.
+      
+     </li>
+     <li>
+      <code>delta</code> [integer]
+      
+       Number of page numbers to display before and after the current one.
+      
+     </li>
+     <li>
+      <code>expanded</code> [boolean]
+      
+       if <strong>TRUE</strong>, window size is always 2*delta+1
+      
+     </li>
+     <li>
+      <code>linkClass</code> [string]
+      
+       Name of CSS class used for link styling.
+      
+     </li>
+     <li>
+      <code>urlVar</code> [string]
+      
+       Name of URL var used to indicate the page number.
+       Default value is &quot;pageID&quot;.
+      
+     </li>
+     <li>
+      <code>path</code> [string]
+      
+       Complete path to the page (without the page name).
+      
+     </li>
+     <li>
+      <code>fileName</code> [string]
+      
+       name of the page, with a &quot;%d&quot; if <code>append</code> == <strong>TRUE</strong>.
+      
+     </li>
+     <li>
+      <code>append</code> [boolean]
+      
+       If <strong>TRUE</strong> pageID is appended as GET value to the URL.
+       If <strong>FALSE</strong> it is embedded in the URL according to
+       <code>fileName</code> specs.
+      
+     </li>
+     <li>
+      <code>altPrev</code> [string]
+      
+       Alt text to display for prev page, on prev link.
+       Default value is &quot;previous page&quot;;
+      
+     </li>
+     <li>
+      <code>altNext</code> [string]
+      
+       Alt text to display for next page, on next link.
+       Default value is &quot;next page&quot;;
+      
+     </li>
+     <li>
+      <code>altPage</code> [string]
+      
+       Alt text to display before the page number.
+       Default value is &quot;page &quot;.
+      
+     </li>
+     <li>
+      <code>prevImg</code> [string]
+      
+       Something to display instead of &quot;&lt;&lt;&quot;.
+       It can be text such as &quot;&lt;&lt; PREV&quot; or an &lt;img/&gt; as well.
+      
+     </li>
+     <li>
+      <code>nextImg</code> [string]
+      
+       Something to display instead of &quot;&gt;&gt;&quot;.
+       It can be text such as &quot;NEXT &gt;&gt;&quot; or an &lt;img/&gt; as well.
+      
+     </li>
+     <li>
+      <code>separator</code> [string]
+      
+       What to use to separate numbers. It can be an &lt;img/&gt;, a comma,
+       an hyphen, or whatever.
+      
+     </li>
+     <li>
+      <code>spacesBeforeSeparator</code> [integer]
+      
+       Number of spaces before the separator.
+      
+     </li>
+     <li>
+      <code>spacesAfterSeparator</code> [integer]
+      
+       Number of spaces after the separator.
+      
+     </li>
+     <li>
+      <code>firstPagePre</code> [string]
+      
+       String used before first page number.
+       It can be an &lt;img/&gt;, a &quot;{&quot;, an empty string, or whatever.
+      
+     </li>
+     <li>
+      <code>firstPagePost</code> [string]
+      
+       String used after first page number.
+       It can be an &lt;img/&gt;, a &quot;}&quot;, an empty string, or whatever.
+      
+     </li>
+     <li>
+      <code>lastPagePre</code> [string]
+      
+       Similar to <code>firstPagePre</code>, but used for
+       last page number.
+      
+     </li>
+     <li>
+      <code>lastPagePost</code> [string]
+      
+       Similar to <code>firstPagePost</code>, but used for
+       last page number.
+      
+     </li>
+     <li>
+      <code>curPageLinkClassName</code> [string]
+      
+       Name of CSS class used for current page link.
+      
+     </li>
+     <li>
+      <code>lastPagePost</code> [boolean]
+      
+       if there&#039;s only one page, don&#039;t display pager (returns an empty string).
+      
+     </li>
+    </ul><p>REQUIRED options are:</p><ul>
+     <li>
+      <code>fileName</code> IF
+       <code>append</code>==<strong>FALSE</strong>
+      (default is <strong>TRUE</strong>)
+      
+     </li>
+    <li>
+      <code>itemData</code> OR <code>totalItems</code>
+      (if itemData is set, totalItems is overwritten)
+      
+     </li>
+    </ul>
+   
+  
+   
+    <h3>Return value</h3>
+    <p><code>object</code> - a specific <strong>Pager_Sliding</strong> instance
+     or a <strong>PEAR_Error</strong> object, if fails</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

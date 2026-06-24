@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2922</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #2922</h1>
+<p>revokeGroupRight() from removeRight() is incorrectly called</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-12-08 16:27 UTC</td></tr>
+<tr><th>From</th><td>michael dot caplan at lechateau dot ca</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-08 16:27 UTC] michael dot caplan at lechateau dot ca</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>There is an error in .13.3 admin MDB2 container (and possibly others) which results in group rights not being deleted (and possibly incorrect group rights being deleted instead).  revokeGroupRight() from removeRight() is incorrectly called.  A patch is required to revokeGroupRight() to allow the deletion of rights (where the group is not known).</p>
+<p>===================================================================<br>
+RCS file: /prod/cvs/intranet_3/lib/LiveUser/Admin/Perm/Container/MDB2_Medium.php,v<br>
+retrieving revision 1.1<br>
+retrieving revision 1.2<br>
+diff -p --unified=3 -r1.1 -r1.2<br>
+--- MDB2_Medium.php	2004/10/25 18:40:35	1.1<br>
++++ MDB2_Medium.php	2004/12/08 16:16:11	1.2<br>
+@@ -51,7 +51,7 @@ require_once &#039;LiveUser/Admin/Perm/Contai<br>
+  * @author  Markus Wolff &lt;wolff@21st.de&gt;<br>
+  * @author  Matt Scifo &lt;mscifo@php.net&gt;<br>
+  * @author  Arnaud Limbourg &lt;arnaud@php.net&gt;<br>
+- * @version $Id: MDB2_Medium.php,v 1.1 2004/10/25 18:40:35 intranet Exp $<br>
++ * @version $Id: MDB2_Medium.php,v 1.2 2004/12/08 16:16:11 michael Exp $<br>
+  * @package LiveUser<br>
+  */<br>
+ class LiveUser_Admin_Perm_Container_MDB2_Medium extends LiveUser_Admin_Perm_Container_MDB2_Simple<br>
+@@ -401,7 +401,7 @@ class LiveUser_Admin_Perm_Container_MDB2<br>
+      */<br>
+     function removeRight($rightId)<br>
+     {<br>
+-        $res = $this-&gt;revokeGroupRight($rightId);<br>
++        $res = $this-&gt;revokeGroupRight(null, $rightId);</p>
+<p>if (!$res) {<br>
+             return false;<br>
+@@ -418,19 +418,26 @@ class LiveUser_Admin_Perm_Container_MDB2<br>
+      * @param  integer id of right<br>
+      * @return boolean true on success or false on failure<br>
+      */<br>
+-    function revokeGroupRight($groupId, $rightId = null)<br>
++    function revokeGroupRight($groupId = null, $rightId = null)<br>
+     {<br>
++        if (is_null($groupId) &amp;&amp; is_null($rightId)) {<br>
++            return false;<br>
++        }<br>
+         $query = &#039;DELETE FROM<br>
+                   &#039; . $this-&gt;prefix . &#039;grouprights<br>
+-                WHERE<br>
+-                  &#039; . $this-&gt;groupTableCols[&#039;required&#039;][&#039;group_id&#039;][&#039;name&#039;] . &#039; = &#039;<br>
+-                      . $this-&gt;dbc-&gt;quote($groupId, $this-&gt;groupTableCols[&#039;required&#039;][&#039;group_id&#039;][&#039;type&#039;]);<br>
++                WHERE &#039;;<br>
++<br>
++        $where = array();<br>
++        if (!is_null($groupId)) {<br>
++            $where[] = $this-&gt;groupTableCols[&#039;required&#039;][&#039;group_id&#039;][&#039;name&#039;] . &#039; = &#039;<br>
++                       . $this-&gt;dbc-&gt;quote($groupId, $this-&gt;groupTableCols[&#039;required&#039;][&#039;group_id&#039;][&#039;type&#039;]);<br>
++        }<br>
++<br>
+         if (!is_null($rightId)) {<br>
+-            $query .= &#039; AND<br>
+-              right_id = &#039; . $this-&gt;dbc-&gt;quote($rightId, &#039;integer&#039;);<br>
++            $where[] = &#039;right_id = &#039; . $this-&gt;dbc-&gt;quote($rightId, &#039;integer&#039;);<br>
+         }</p>
+<p>-        $result = $this-&gt;dbc-&gt;query($query);<br>
++        $result = $this-&gt;dbc-&gt;query($query . implode(&#039; AND &#039;, $where));</p>
+<p>if (MDB2::isError($result)) {<br>
+             return false;</p>
+</section>
+<section>
+<h3>[2004-12-08 16:33 UTC] smith at backendmedia dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+<p>Since we have reworked the admin API from the ground up this bug should not be around in the next release. We dont plan to make another release in the 0.13.x release cycle. However this means its great that you have provided this patch so that other people can benefit from this fix. I will however mark this bug as fixed in CVS.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

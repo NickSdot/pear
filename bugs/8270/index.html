@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8270</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #8270</h1>
+<p>Nested transaction raise an error with the MySQL and Schema module</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-07-23 21:02 UTC</td></tr>
+<tr><th>From</th><td>christian_rocher at hotmail dot com</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-07-23 21:02 UTC] christian_rocher at hotmail dot com</h3>
+<p>Description:<br>
+------------<br>
+I use the Schema module to create/upgrate my databse schema. Since this version of MDB2 I get an error:</p>
+<p>&quot;.\pear\MDB2.php line 1801 - Call to undefined function: MDB2_Driver_mysql::beginNestedTransaction().&quot;</p>
+<p>My workarround is to force the support of transactions to false as soon as I&#039;m connected:</p>
+<p>$Schema-&gt;connect( $DBConnection);<br>
+    $Schema-&gt;db-&gt;supported[transactions] = false;</p>
+<p>Test script:<br>
+---------------<br>
+$DBConnection =&amp; MDB2::factory( $DSN, $DSN_Options);<br>
+$Schema =&amp; $DBConnection-&gt;loadModule( &#039;Schema&#039;, null, true);<br>
+if ( PEAR::isError( $Schema))<br>
+{<br>
+   return $Schema;<br>
+}<br>
+$Schema-&gt;connect( $DBConnection);</p>
+<p>Expected result:<br>
+----------------<br>
+Successful connected</p>
+<p>Actual result:<br>
+--------------<br>
+&quot;.\pear\MDB2.php line 1801 - Call to undefined function: MDB2_Driver_mysql::beginNestedTransaction().&quot;</p>
+</section>
+<section>
+<h3>[2006-07-30 17:27 UTC] christian_rocher at hotmail dot com</h3>
+<p>Hi,</p>
+<p>This is my mistake, I tried to reduce the code I added in this bug. You&#039;re right, my sample is not valid. To be sure I tried with your code and the behaviour is unchanged (error):</p>
+<p>MDB2::loadFile(&#039;Schema&#039;);<br>
+$schema =&amp; new MDB2_Schema::factory($dsn, $options);<br>
+if ( PEAR::isError( $Schema))return $Schema;</p>
+<p>$Result = $Schema-&gt;updateDatabase( $Database);<br>
+$Result = $Schema-&gt;updateDatabase( $Database1);<br>
+$Result = $Schema-&gt;updateDatabase( $Database2);</p>
+<p>I have three variables to define my schema, I divided it by logical modules. I found that the first call to updateDatabase works fine, but the next raise the error. Thus, I merge all my dictionaries runtime to call updateDatabase only one time.</p>
+</section>
+<section>
+<h3>[2006-09-08 01:38 UTC] anderson at tsci dot com dot br</h3>
+<p>I&#039;m having the same error whith ibase driver, it was working fine with MDB, but I just updated my OS(Fedora 5) with PHP5.1.4-1 and MDB2. At first, the funtion fetchInto() was not working, then i found something saing that it was replaced by fetchRow(), but the error is the same:</p>
+<p>&quot;PHP Fatal error:  Call to undefined function: MDB2_Driver_ibase::fetchRow(). in /usr/share/pear/MDB2.php on line 1917&quot;</p>
+<p>here is my code(the line where the problem is I guess):</p>
+<p>$result = $this-&gt;db-&gt;query($sql);<br>
+while ($row = $this-&gt;db-&gt;fetchRow($result,MDB2_FETCHMODE_ASSOC) ) {</p>
+<p>in MDB this line look like this:</p>
+<p>$result = $this-&gt;db-&gt;query($sql);<br>
+while ($row = $this-&gt;$db-&gt;fetchInto(MDB_FETCHMODE_ASSOC,$result)) {</p>
+<p>I&#039;m almost rewriting this site from the start...</p>
+<p>any ideas?</p>
+<p>P.s.: Sorry my english.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

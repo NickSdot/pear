@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6730</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #6730</h1>
+<p>PEAR::DB is not compliant with PHP 5</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-02-08 23:24 UTC</td></tr>
+<tr><th>From</th><td>caaguado at xcentra dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-08 23:24 UTC] caaguado at xcentra dot com</h3>
+<p>Description:<br>
+------------<br>
+When using PEAR::DB 1.7.6 with error_reporting level E_ALL<br>
+(2047, I&#039;m TOTALLY sure about this, since it&#039;s the value<br>
+set in php.ini, plus I set it again to E_ALL in my<br>
+application), a lot of PHP 5 compatibility error<br>
+notifications are registered in the application&#039;s<br>
+system log (I use PEAR::Log for logging).</p>
+<p>All these errors are related to lack of alignment of<br>
+PEAR::DB with PHP 5 (at least with PHP 5.1.2). A list of<br>
+error types by file comes next (it&#039;s not a comprehensive<br>
+list though, but a list including the type of errors that<br>
+appear. They should be fixed in all the files that make the<br>
+PEAR::DB package up):</p>
+<p>DB.php:490 &gt;&gt; Assigning the return value of new by reference is deprecated<br>
+DB.php:540 &gt;&gt; Non-static method DB::parseDSN() should not be called statically<br>
+DB.php:571 &gt;&gt; Non-static method DB::isError() should not be called statically<br>
+DB.php:610 &gt;&gt; is_a(): Deprecated. Please use the instanceof operator<br>
+DB.php:944 &gt;&gt; var: Deprecated. Please use the public/private/protected modifiers</p>
+<p>Additionally, the DB::connect() also generates the<br>
+following error:</p>
+<p>test.php:188 &gt;&gt; Non-static method DB::connect() should not be called statically</p>
+<p>I&#039;ve taken a look at Bug # 6015 and issuer<br>
+php-bug at sm dot msk dot ru is right reporting these<br>
+errors. Since I&#039;m providing feedback about a higher<br>
+number or errors, please don&#039;t answer this bug report<br>
+telling that it&#039;s a duplicated copy of Bug # 6015 or<br>
+Bug # 4868.</p>
+<p>Thanks a lot for your support !!</p>
+</section>
+<section>
+<h3>[2006-02-09 00:20 UTC] caaguado at xcentra dot com</h3>
+<p>Hi, it&#039;s me again. I just found out that Apache&#039;s error log<br>
+gets also flooded with error messages like the following:</p>
+<p>[Thu Feb 09 01:10:31 2006] [error] [client 127.0.0.1] PHP Notice:  Undefined variable: priority in c:\\apache\\htdocs\\dev\\pkgs\\DB.php on line 490\n</p>
+<p>Execution of the script using PEAR::DB hangs for a long time<br>
+and the Apache returns a &quot;500 Internal Server Error&quot;.</p>
+</section>
+<section>
+<h3>[2006-02-09 01:33 UTC] caaguado at xcentra dot com</h3>
+<p>Hi Daniel,</p>
+<p>Yes, you&#039;re right regarding the DB.php file version. I&#039;m<br>
+also using v1.80, but I added some comments in the upper<br>
+part of the file, so line 490 is line 470 in the v1.80<br>
+original code.</p>
+<p>Apart of the warnings appearing in the log, the main<br>
+problem, I guess, are all the &quot;Undefined variable: priority&quot;<br>
+entries in Apache&#039;s error log, which make PHP hang.</p>
+<p>Do you mean the set_error_handler() documentation in the<br>
+PHP Manual at php.net? The only new specific parameter for<br>
+PHP 5 is &quot;error_types&quot;, and it is used for error filtering.<br>
+If you&#039;re recommending me to use that parameter, I still<br>
+think it&#039;s not a &quot;clean solution&quot;, since it&#039;s not a<br>
+question of ignoring the errors, but of fixing them instead,<br>
+don&#039;t you think? IMHO, if the syntax if not fully compliant<br>
+to PHP 5 in some lines of the code, then they should be<br>
+modified... ;-) Please correct me if I&#039;m wrong!</p>
+</section>
+<section>
+<h3>[2006-02-10 00:17 UTC] caaguado at xcentra dot com</h3>
+<p>Hi Daniel,</p>
+<p>1.<br>
+No, my system is not messed up. It&#039;s something a bit<br>
+strange, but I think there is an explanation:</p>
+<p>According to this: http://pdxphp.org/node/72, it seems that<br>
+the &quot;PHP Notice:  Undefined variable: priority in&quot; entry in<br>
+Apache&#039;s error log is related to using PHP&#039;s call_user_func<br>
+function.</p>
+<p>Right after connecting with the DB with DB::connect(), I<br>
+set a custom callback error handler for DB errors with the<br>
+following code:</p>
+<p>DB_common::setErrorHandling(PEAR_ERROR_CALLBACK, &#039;ce_DB_common_error_handler&#039;);</p>
+<p>setErrorHandling() is inheritated from the core PEAR class.</p>
+<p>Since class DB_Error extends PEAR_Error, each time an<br>
+instance of class DB_Error is used, and since I set error<br>
+handling to PEAR_ERROR_CALLBACK, PHP&#039;s call_user_func()<br>
+is used to invoke my ce_DB_common_error_handler() function.<br>
+You can check this behaviour in the PEAR_Error class code<br>
+in PEAR 1.4.6.</p>
+<p>I&#039;ve verified that every single &quot;PHP Notice:  Undefined<br>
+variable: priority in&quot; entry corresponds with a line<br>
+in any of the PEAR::DB files in which a &quot;var&quot; keyword<br>
+is used.</p>
+<p>So, as a summary, each time the deprecated &quot;var&quot; keyword<br>
+is used in PEAR::DB, I see one entry in my application&#039;s<br>
+error log of this type:</p>
+<p>&quot;var: Deprecated. Please use the public/private/protected modifiers&quot;</p>
+<p>and one in Apache&#039;s error log of this type:</p>
+<p>&quot;PHP Notice:  Undefined variable: priority in (...)&quot;</p>
+<p>Both notifications are pointing to the same fact: A<br>
+deprecated keyword is still being used in PEAR::DB !</p>
+<p>2.<br>
+So, what a long journey to end up saying that &quot;PEAR DB is<br>
+a PHP 4 class.  It will not ever be made into a PHP 5<br>
+class&quot;. If this is final, please be fair a delete the<br>
+&quot;DB is compatible with both PHP 4 and PHP 5&quot; line at the<br>
+end of the package description.</p>
+<p>I understand that maintaining two development branches<br>
+(as, for example, for the PHPUnit / PHPUnit2) is a lot<br>
+of work. It&#039;s even OK to say that it will always be a<br>
+PHP 4 class. But claiming to be PHP 5 compatible when<br>
+the package throws a lot of errors when used with PHP 5<br>
+is nor professional nor fair, specially when fixing<br>
+things like those deprecated modifiers is only a<br>
+question of searching and replacing throughout the<br>
+code tree.</p>
+<p>Please remove the PHP 5 compatibility statement, because<br>
+it&#039;s simply not true !</p>
+<p>3.<br>
+I think that the &quot;That is all. No need to reply.&quot;<br>
+comment wasn&#039;t very nice. If you&#039;re so much cleverer<br>
+than the average guy (me, in this case), why don&#039;t<br>
+you simply turn off the bug tracking system for<br>
+this packege?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

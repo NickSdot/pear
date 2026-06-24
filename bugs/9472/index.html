@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9472</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PHP &#187; <a href="package/PHP_Fork/index.html">PHP_Fork</a> &#187; Bug #9472</h1>
+<p>package not installable</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-26 14:34 UTC</td></tr>
+<tr><th>From</th><td>glen at delfi dot ee</td></tr>
+<tr><th>Assigned</th><td>cweiske</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PHP_Fork/index.html">PHP_Fork</a></td></tr>
+<tr><th>PHP Version</th><td>5.2.0</td></tr>
+<tr><th>OS</th><td>PLD Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-26 14:34 UTC] glen at delfi dot ee</h3>
+<p>Description:<br>
+------------<br>
+glen@builder-ac /tmp $ sudo pear install PHP_Fork-beta<br>
+pear/PHP_Fork requires PHP extension &quot;pcntl&quot;<br>
+pear/PHP_Fork requires PHP extension &quot;shmop&quot;<br>
+pear/PHP_Fork requires PHP extension &quot;posix&quot;<br>
+Invalid Dependency<br>
+No valid packages found<br>
+install failed</p>
+<p>glen@builder-ac /tmp $ pear -V<br>
+PEAR Version: 1.5.0a1<br>
+PHP Version: 5.2.0<br>
+Zend Engine Version: 2.2.0<br>
+Running on: Linux builder-ac 2.6.13.5-1smp #1 SMP Thu Feb <br>
+9 02:45:39 EET 2006 i686</p>
+</section>
+<section>
+<h3>[2006-11-27 18:54 UTC] glen at delfi dot ee</h3>
+<p>just for the record, the version it attempted to install <br>
+and failed was &quot;0.3.0 (beta) was released on 2005-03-24&quot;</p>
+</section>
+<section>
+<h3>[2006-11-28 08:19 UTC] lucamariano at php dot net</h3>
+<p>Thank you for taking the time to write to us, but this is not<br>
+a bug.</p>
+<p>The purpose of PHP_Fork is to implement a OO interface to the PHP extension pcntl. So this ext is required.<br>
+the posix ext is required to take the control over multiple php processes.<br>
+In order to implement IPC (inter process communication) the shmop module is also required .</p>
+</section>
+<section>
+<h3>[2006-12-21 15:33 UTC] glen at delfi dot ee</h3>
+<p>the problem is at install stage, install itself does not <br>
+need those extensions being present.</p>
+<p>so most likely the package.xml file is invalid (what the <br>
+error message actually is saying)</p>
+<p>anyway, even after installing those extensions the error <br>
+stays:</p>
+<p>+ /usr/bin/pear -c pearrc -d doc_dir=/docs -d <br>
+php_dir=/usr/share/pear -d bin_dir=/usr/bin -d <br>
+data_dir=/usr/share/pear/data -d <br>
+test_dir=/usr/share/pear/tests <br>
+install --packagingroot=/home/glen/rpm/pld/BUILD/PHP_Fork-0.3.0 --offline --nodeps /home/glen/rpm/pld/SOURCES/PHP_Fork-0.3.0.tgz<br>
++ &gt; .install.log<br>
++ c=1<br>
++ cat .install.log<br>
+Invalid Dependency<br>
+WARNING: dependencies failed<br>
+No valid packages found<br>
+install failed<br>
++ exit 1<br>
+error: Bad exit status from /var/tmp/rpm-tmp.54023 (%prep)</p>
+<p>RPM build errors:<br>
+    Bad exit status from /var/tmp/rpm-tmp.54023 (%prep)<br>
+Error: package build failed. (no more info)</p>
+</section>
+<section>
+<h3>[2007-02-11 07:21 UTC] blgrams at mail dot ru</h3>
+<p>I have same error. And i found that error is generated in PEAR/Dependency2.php line 1090, when i write &quot;print_r($dep) before this: <br>
+------<br>
+        list($newdep, $type) = $this-&gt;normalizeDep($dep);<br>
+        if (!$newdep) {<br>
+            return $this-&gt;raiseError(&quot;Invalid Dependency&quot;);<br>
+        }<br>
+------<br>
+result was:<br>
+------<br>
+Array<br>
+(<br>
+    [type] =&gt; sapi<br>
+    [rel] =&gt; has<br>
+    [name] =&gt; cli<br>
+    [optional] =&gt; no<br>
+)<br>
+-----<br>
+So, this variable $dep is send to function<br>
+-----<br>
+    function normalizeDep($dep)<br>
+    {<br>
+        $types = array(<br>
+            &#039;pkg&#039; =&gt; &#039;Package&#039;,<br>
+            &#039;ext&#039; =&gt; &#039;Extension&#039;,<br>
+            &#039;os&#039; =&gt; &#039;Os&#039;,<br>
+            &#039;php&#039; =&gt; &#039;Php&#039;<br>
+        );<br>
+        if (isset($types[$dep[&#039;type&#039;]])) {<br>
+            $type = $types[$dep[&#039;type&#039;]];<br>
+        } else {<br>
+            return array(false, false);<br>
+        }<br>
+-----<br>
+Here you can see, that type of PHP_Fork is &#039;cli&#039;, but it doesnt present in $types and function returns array(false,false). thats why we see error.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

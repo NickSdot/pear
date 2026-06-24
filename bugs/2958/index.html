@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2958</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject_FormBuilder/index.html">DB_DataObject_FormBuilder</a> &#187; Bug #2958</h1>
+<p>crossLink customization</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #2958</th><td>crossLink customization</td></tr>
+<tr><th>Submitted</th><td>2004-12-13 15:56 UTC</td></tr>
+<tr><th>From</th><td>ruempler at topconcepts dot com</td></tr>
+<tr><th>Assigned</th><td>justinpatrin</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject_FormBuilder/index.html">DB_DataObject_FormBuilder</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-13 15:56 UTC] ruempler at topconcepts dot com</h3>
+<p>Description:<br>
+------------<br>
+As once discussed, a callback/function for customizing the fields in a crossLink would be nice, so that it&#039;s possible to change there WHERE and the SELECT, maybe the whole Query, or the DataObject (before -&gt;find() is done).</p>
+<p>For example, ATM date customization and restricting the WHERE clause is not possible, all entries from the the toField-Table are shown.</p>
+</section>
+<section>
+<h3>[2004-12-14 05:46 UTC] frank dot NOSPAM at fahs dot net</h3>
+<p>I was the one who sparked the similar conversation.  My example was such:</p>
+<p>2 tables projects, images</p>
+<p>images has a proj_id field as each image belongs to a project</p>
+<p>projects has a img_id field that links one of the images that belong to it as a key image.  Problem is when a image is chosen I dont want all images to show.  I only want the images that belong to that project to show when FB is used.</p>
+<p>What I thought would be a great and simple solution, realizing that it would probably require cooperation with DataObject, is to allow the database.link.ini to handle a kind of where clause such as:</p>
+<p>[projects]<br>
+key_img = images:img_id @ images:proj_id = proj_id</p>
+<p>where the &#039;@&#039; symbol would obviously define the where clause.  Makes it super simple for the user.</p>
+<p>Here is at least some of what I did to work around the issue as is.  Note that if you see this and think &quot;hey you could have done this simpler by ...&quot;, I would love to know that thought.</p>
+<p>Dataobjects--</p>
+<p>Images.php</p>
+<p>...</p>
+<p>/* Change find() to provide only images selected for this project */<br>
+    function find($n = false, $all = false) {<br>
+        if(!$all &amp;&amp; isset($_POST[&#039;edit_proj&#039;]) &amp;&amp; isset($_POST[&#039;submit_proj&#039;]) &amp;&amp; ($_POST[&#039;submit_proj&#039;] != &quot;Edit Image&quot;)) {<br>
+            $this-&gt;img_project = $_REQUEST[&#039;edit_proj&#039;];<br>
+        }<br>
+        return parent::find($n);<br>
+    }</p>
+<p>So code wise thats not too bad (though it took me a while to get it tweaked just right).  What BOTHERS me most about it is that I have to use $_REQUEST variables in my dataobject, bleah thats yucky.  It would be so much nicer if it could be defined in the link.ini.  That way it is only used when that particular crosslink is accessed and you dont have to escape it for all other requests.  I can think of a bunch of other &#039;pros&#039; incluidng amplifying the simplicity that DO and DOFB seem to strive for.</p>
+<p>I also understand Justins concerns of a BC break and its lack of usage in DO other than to provide FB with more strenght. Hey wait isnt that enough =)</p>
+<p>Frank</p>
+</section>
+<section>
+<h3>[2004-12-14 05:52 UTC] frank at fahs dot net</h3>
+<p>Second note...Justins suggestion makes alot of sense upon further consideration.  Its still pretty simple and it would allow for a variety of tweaks.</p>
+<p>But I do love the .ini setup, it seems so clean. Of course I have no idea currently what it would mean on the inside.  But I would like to find out.  Anyone?</p>
+<p>FF</p>
+</section>
+<section>
+<h3>[2004-12-14 08:13 UTC] ruempler at topconcepts dot com</h3>
+<p>Justin, I meant to change the selectAdd, and where WHERE, so I can do things like date customization in the cross-link. Your solution sounds pretty nice and should be very low effort to implement.</p>
+</section>
+<section>
+<h3>[2004-12-15 06:55 UTC] ruempler at topconcepts dot com</h3>
+<p>Justin, thank you very much!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

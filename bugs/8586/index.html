@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8586</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Encryption &#187; <a href="package/Crypt_Xtea/index.html">Crypt_Xtea</a> &#187; Bug #8586</h1>
+<p>patch to improve the Xtea algorithm performance</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8586</th><td>patch to improve the Xtea algorithm performance</td></tr>
+<tr><th>Submitted</th><td>2006-08-30 13:11 UTC</td></tr>
+<tr><th>From</th><td>toffanin dot mauro at gmail dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Crypt_Xtea/index.html">Crypt_Xtea</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-30 13:11 UTC] toffanin dot mauro at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+The patch below do a little code modification to improve <br>
+performances during Xtea encryption and decryption <br>
+processes.</p>
+<p>benchmarking the new class it is possible to gain 10/20% <br>
+of speedup; more iterations, more performances are gained.</p>
+<p>the patch also modify the constructor class, to let the <br>
+user to specify the iterations number as a constructor <br>
+parameter:</p>
+<p>$xtea = new Crypt_Xtea(32);</p>
+<p>so it is not necesserary to use setIter() function.<br>
+BC is not break, if no parameter is passed, the default is <br>
+always 32.</p>
+<p>the patch also remove setIter() call from the constructor <br>
+class, because it is redundant code: constructor class <br>
+know where to store the iterations default number, so it <br>
+is save directly into $this-&gt;n_iter variable instead to <br>
+pass throught setIter() function.</p>
+<p>Hope the patch can be useful.<br>
+Toffanin Mauro</p>
+<p>Test script:<br>
+---------------<br>
+--- Xtea.php	2006-08-30 14:47:17.661690136 +0200<br>
++++ Xtea.php	2006-08-30 14:57:09.567706744 +0200<br>
+@@ -142,9 +142,9 @@<br>
+      *  @author         Jeroen Derks &lt;jeroen@derks.it&gt;<br>
+      *  @see            setIter()<br>
+      */<br>
+-    function Crypt_Xtea()<br>
++    function Crypt_Xtea($n_iter=32)<br>
+     {<br>
+-        $this-&gt;setIter(32);<br>
++        $this-&gt;n_iter = $n_iter;<br>
+     }<br>
+ <br>
+     // }}}<br>
+@@ -225,16 +225,19 @@<br>
+         $k          = array(0, 0, 0, 0);<br>
+         for ($i = 0; $i &lt; $n_data_long; ++$i) {<br>
+             // get next key part of 128 bits<br>
+-            if ($j + 4 &lt;= $n_key_long) {<br>
+-                $k[0] = $key_long[$j];<br>
+-                $k[1] = $key_long[$j + 1];<br>
+-                $k[2] = $key_long[$j + 2];<br>
+-                $k[3] = $key_long[$j + 3];<br>
+-            } else {<br>
+-                $k[0] = $key_long[$j % $n_key_long];<br>
+-                $k[1] = $key_long[($j + 1) % $n_key_long];<br>
+-                $k[2] = $key_long[($j + 2) % $n_key_long];<br>
+-                $k[3] = $key_long[($j + 3) % $n_key_long];<br>
++	    switch ($j + 4 &lt;= $n_key_long) {<br>
++	    	case TRUE:<br>
++	                $k[0] = $key_long[$j];<br>
++        	        $k[1] = $key_long[$j + 1];<br>
++                	$k[2] = $key_long[$j + 2];<br>
++	                $k[3] = $key_long[$j + 3];<br>
++			break;<br>
++		case FALSE:<br>
++  	                $k[0] = $key_long[$j % $n_key_long];<br>
++        	        $k[1] = $key_long[($j + 1) % $n_key_long];<br>
++                	$k[2] = $key_long[($j + 2) % $n_key_long];<br>
++	                $k[3] = $key_long[($j + 3) % $n_key_long];<br>
++			break;<br>
+             }<br>
+             $j = ($j + 4) % $n_key_long;<br>
+ <br>
+@@ -284,16 +287,19 @@<br>
+ <br>
+         for ($i = 0; $i &lt; $n_enc_data_long; $i += 2) {<br>
+             // get next key part of 128 bits<br>
+-            if ($j + 4 &lt;= $n_key_long) {<br>
+-                $k[0] = $key_long[$j];<br>
+-                $k[1] = $key_long[$j + 1];<br>
+-                $k[2] = $key_long[$j + 2];<br>
+-                $k[3] = $key_long[$j + 3];<br>
+-            } else {<br>
+-                $k[0] = $key_long[$j % $n_key_long];<br>
+-                $k[1] = $key_long[($j + 1) % $n_key_long];<br>
+-                $k[2] = $key_long[($j + 2) % $n_key_long];<br>
+-                $k[3] = $key_long[($j + 3) % $n_key_long];<br>
++	   switch ($j + 4 &lt;= $n_key_long) {<br>
++	   	case TRUE:<br>
++	                $k[0] = $key_long[$j];<br>
++        	        $k[1] = $key_long[$j + 1];<br>
++                	$k[2] = $key_long[$j + 2];<br>
++	                $k[3] = $key_long[$j + 3];<br>
++			break;<br>
++		case FALSE:<br>
++  	                $k[0] = $key_long[$j % $n_key_long];<br>
++        	        $k[1] = $key_long[($j + 1) % $n_key_long];<br>
++                	$k[2] = $key_long[($j + 2) % $n_key_long];<br>
++	                $k[3] = $key_long[($j + 3) % $n_key_long];<br>
++			break;<br>
+             }<br>
+             $j = ($j + 4) % $n_key_long;</p>
+</section>
+<section>
+<h3>[2006-08-30 13:24 UTC] toffanin dot mauro at gmail dot com</h3>
+<p>.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

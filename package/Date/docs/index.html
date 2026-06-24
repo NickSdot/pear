@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/Date/docs/index.html#package-datetime-date-examples">Examples</a>
+</li>
+<li><a href="package/Date/docs/index.html#package-datetime-date-basics">Basics</a>
+</li></ul>
+</nav>
+<p>PEAR Date is a generic class to represent and work with dates. It does not use timestamps which means it can be used for dates before 1970 and after 2038. The class provides methods to convert a date in different formats, calculate differences, weekdays and more.</p>
+<section id="package-datetime-date-examples">
+<h2>Examples</h2>
+<h3>Introduction</h3>
+
+
+  <p>Following the saying &quot;learning by doing&quot;, we start with some examples.</p>
+
+ <p>The first step to work with the class is to instantiate a
+  <a href="package/Date/docs/index.html">Date</a>,
+  object.</p>
+
+ 
+  <p><strong>Creating a Date object</strong></p>
+  <pre><code>&lt;?php
+require_once &#039;Date.php&#039;;
+
+//without parameter == now
+$now = new Date();
+
+//pass a string in ISO format
+$longAgo = new Date(&#039;1813-02-23T05:34:23&#039;);
+
+//create a Date object from a PHP unix timestamp
+$timestamp = time();
+$nearlyNow = new Date($timestamp);
+
+//make a copy of an existing Date object
+$copyDate = new Date($longAgo);
+?&gt;</code></pre>
+ 
+
+ <p>After finishing your work with the date object, you probably want to
+  have it back. This can be done in different ways, for example by
+  using
+  <a href="package/Date/docs/index.html">getTime()</a>
+  or
+  <a href="package/Date/docs/index.html">getDate()</a></p>
+
+ 
+  <p><strong>Getting the date in different formats</strong></p>
+  <pre><code>&lt;?php
+require_once &#039;Date.php&#039;;
+$now = new Date();
+
+//UNIX timestamp:     1183054688
+echo $now-&gt;getTime();
+
+//ISO formatted date: 2007-06-28 20:18:08
+echo $now-&gt;getDate();
+?&gt;</code></pre>
+ 
+
+ <p>Date has a lot more methods to output your date, but that is
+  subject of a later chapter.</p>
+
+ <p>Now that we know how to create a <strong>Date</strong> instance,
+  we&#039;ll do some easy tasks.</p>
+
+ 
+
+
+ 
+  <h3>Calculating a time difference</h3>
+
+  
+
+  <p>You often have the task to know which time span lies between two dates.
+   With <strong>Date</strong>, this is easy to accomplish.
+   First we use
+   <a href="package/Date/docs/index.html">setFromDateDiff()</a>
+   on a fresh
+   <strong>Date_Span</strong> object and then
+   <a href="package/Date/docs/index.html">toDays()</a>
+   to get the exact number of days
+   between the two dates.</p>
+
+  
+   <p><strong>Calculating a time span</strong></p>
+   <pre><code>&lt;?php
+require_once &#039;Date.php&#039;;
+
+$someDate  = new Date(&#039;1813-02-23T05:34:23&#039;);
+$otherDate = new Date(&#039;1789-12-21T18:23:42&#039;);
+
+$span = new Date_Span();
+$span-&gt;setFromDateDiff($someDate, $otherDate);
+
+//time span in days: 8463,46575231
+echo $span-&gt;toDays();
+
+//time span in full years: 23
+echo (int)($span-&gt;toDays() / 365);
+?&gt;</code></pre>
+  
+
+  <blockquote>
+
+   <p><a href="package/Date/docs/index.html">Date_Span</a>
+    works, unlike
+    <a href="package/Date/docs/index.html">Date</a>,
+    internally with integers, which means that you have a precision of 32 bit
+    or ~68 years.
+    Date span objects with more that 67 years will lead to unexpected results!</p>
+  </blockquote>
+
+ 
+
+
+ 
+  <h3>Converting timezones</h3>
+
+  
+  <p><strong>Date</strong> can help you working with time zones.
+   An array with all supported timezones can be retrieved by using
+   <a href="package/Date/docs/index.html">Date_Timezone::getAvailableIDs()</a>,
+   statically as in
+   <strong>$list = Date_TimeZone::getAvailableIDs();</strong>.</p>
+
+  <p><code>convertTZ</code> converts the Date object&#039;s
+   internal settings to the given time zone.
+   Using
+   <a href="package/Date/docs/index.html">format()</a>
+   you can display the timezone
+   setting. With <strong>Date_TimeZone</strong>&#039;s
+   <code>getDefault</code> method the default time
+   zone for this computer can be obtained.</p>
+
+  
+   <p><strong>Converting timezones</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &#039;Date.php&#039;;
+
+//assume it&#039;s 2007-06-28 18:42:12
+$now      = new Date();
+$timezone = new Date_TimeZone(&#039;Australia/Adelaide&#039;);
+
+//convert the date object to the timezone
+$now-&gt;convertTZ($timezone);
+
+//will give you:     2007-06-29 02:12:12
+echo $now-&gt;getDate();
+//now with timezone: 2007-06-29 02:12:12+09:30
+echo $now-&gt;format(&#039;%Y-%m-%d %H:%M:%S%O&#039;);
+
+//switch back
+$defaultZone = Date_TimeZone::getDefault();
+$now-&gt;convertTZ($defaultZone);
+
+//we have our normal zone now: 2007-06-28 18:42:12+02:00
+echo $now-&gt;format(&#039;%Y-%m-%d %H:%M:%S%O&#039;);
+?&gt;</code></pre>
+  
+
+ 
+
+
+
+ 
+  <h3>Sorting an array of dates</h3>
+
+
+  <p>Once you have an array of <strong>Date</strong> objects, you
+   might want to sort it. The class provides a static method
+   <a href="package/Date/docs/index.html">compare()</a>
+   that helps with this.</p>
+
+  
+   <p><strong>Sorting dates</strong></p>
+   
+   <pre><code>&lt;?php
+require_once &#039;Date.php&#039;;
+
+$dates = array(
+    new Date(&#039;1813-02-23T05:34:23&#039;),
+    new Date(),
+    new Date(&#039;1714-12-21T18:23:42&#039;),
+);
+
+usort($dates, array(&#039;Date&#039;, &#039;compare&#039;));
+
+/*
+* prints the dates correctly sorted:
+*  1714-12-21 18:23:42
+*  1813-02-23 05:34:23
+*  2007-06-28 20:59:39
+*/
+foreach ($dates as $date) {
+    echo $date-&gt;getDate() . &quot;\n&quot;;
+}
+?&gt;</code></pre>
+</section>
+<section id="package-datetime-date-basics">
+<h2>Basics</h2>
+<h3>Introduction</h3>
+
+  
+  <p>The auto-generated
+   <a href="package/Date/docs/index.html">API documentation</a>
+   is very valuable to get information
+   about this packages&#039; methods and which parameters they require.
+   But of course you first need to have an overview about the abilities
+   of the class.</p>
+ 
+
+
+ 
+  <h3>Getting data</h3>
+
+  
+  <p>There are a number of simple getter methods that let you retrieve
+   single pieces of a date currently set.</p>
+
+  <ul>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::getYear()</a>
+    
+   </li>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::getMonth()</a>
+    
+   </li>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::getDay()</a>
+    
+   </li>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::getHour()</a>
+    
+   </li>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::getMinute()</a>
+    
+   </li>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::getSecond()</a>
+    
+   </li>
+  </ul>
+
+  <p><strong>Date</strong> does also have some advanced methods to obtain
+   data from it.</p>
+
+  <ul>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::getDayName()</a>
+     returns the name of the day in short (<code>Mon</code>)
+     or long form (<code>Monday</code>)
+    
+   </li>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::getMonthName()</a>
+     returns the name of the month in short (<code>Jan</code>) or
+     long form (<code>January</code>)
+    
+   </li>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::getDayOfWeek()</a>
+     calculates the number of the day in the week (0-6, Sunday being 0)
+    
+   </li>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::getWeekOfYear()</a>
+     returns the week number of this date
+    
+   </li>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::getQuarterOfYear()</a>
+    
+   </li>
+  </ul>
+ 
+
+
+ 
+  <h3>Navigating between dates</h3>
+
+
+  <p>The following method all return a new date object.</p>
+
+  <ul>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::getNextDay()</a>
+    
+   </li>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::getPrevDay()</a>
+    
+   </li>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::getNextWeekday()</a>
+    
+   </li>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::getPrevWeekday()</a>
+    
+   </li>
+  </ul>
+
+  <p>You can also do excact calculations by adding and subtracting intervals.
+   The <code>*Span</code> methods require a 
+   <a href="package/Date/docs/index.html">Date_Span</a>
+   object to be passed as only parameter while the others take
+   a number representing seconds.</p>
+
+  <ul>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::addSeconds()</a>
+    
+   </li>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::subtractSeconds()</a>
+    
+   </li>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::addSpan()</a>
+    
+   </li>
+   <li>
+    
+     <a href="package/Date/docs/index.html">Date::subtractSpan()</a>
+    
+   </li>
+  </ul>
+
+  <blockquote>
+
+   <p><a href="package/Date/docs/index.html">Date_Span</a>
+    works, unlike
+    <a href="package/Date/docs/index.html">Date</a>,
+    internally with integers, which means that you have a precision of 32 bit
+    or ~68 years.
+    Date span objects with more that 67 years will lead to unexpected results!</p>
+  </blockquote>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8450</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_Wiki_Mediawiki/index.html">Text_Wiki_Mediawiki</a> &#187; Bug #8450</h1>
+<p>Invalid nesting of paragraphs for tables</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-08-15 16:28 UTC</td></tr>
+<tr><th>From</th><td>bjs5075 at rit dot edu</td></tr>
+<tr><th>Assigned</th><td>ritzmo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Text_Wiki_Mediawiki/index.html">Text_Wiki_Mediawiki</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Debian etch</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-15 16:28 UTC] bjs5075 at rit dot edu</h3>
+<p>Description:<br>
+------------<br>
+Because the Text_Wiki parser has no concept of element <br>
+nesting, it is very difficult to enforce a hierchy <br>
+required by XHTML elements.<br>
+One example is that paragraphs are split by table <br>
+formatting, ultimately producing invalid XHTML.</p>
+<p>The paragraph must somehow know to split itself over <br>
+delimeters that it cannot contain (such as table). Or in <br>
+such cases where it does contain them, to not insert any <br>
+paragraph tokens at all.</p>
+<p>Test script:<br>
+---------------<br>
+{|<br>
+|</p>
+<p>table cell<br>
+|<br>
+more text</p>
+<p>|}</p>
+<p>Expected result:<br>
+----------------<br>
+Something similar to:</p>
+<p>&lt;table&gt;<br>
+    &lt;tr&gt;<br>
+        &lt;td&gt;&lt;p&gt;table cell&lt;/p&gt;&lt;/td&gt;<br>
+        &lt;td&gt;&lt;p&gt;more text&lt;/p&gt;&lt;/td&gt;<br>
+    &lt;/tr&gt;<br>
+&lt;/table&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+Paragraph must not overlap table elements as happens here:</p>
+<p>&lt;table&gt;<br>
+    &lt;tr&gt;<br>
+        &lt;td&gt;&lt;p&gt;table cell &lt;/td&gt;<br>
+        &lt;td&gt; more text&lt;/p&gt;</p>
+<p>&lt;/td&gt;<br>
+    &lt;/tr&gt;<br>
+    &lt;tr&gt;<br>
+    &lt;/tr&gt;<br>
+&lt;/table&gt;</p>
+</section>
+<section>
+<h3>[2006-08-15 17:20 UTC] ritzmo at php dot net</h3>
+<p>This is a weird Bug, as it actually shouldn&#039;t occur.<br>
+But a quick fix would be to strip double line breaks from the table elements.</p>
+</section>
+<section>
+<h3>[2006-08-15 17:26 UTC] bjs5075 at rit dot edu</h3>
+<p>Here&#039;s a fix that simply adds line breaks around the table <br>
+tags; forcing the paragraphs to break around the tags.</p>
+<p>--- Parse/Mediawiki/Table.php   (revision 766)<br>
++++ Parse/Mediawiki/Table.php   (working copy)<br>
+@@ -280,7 +280,7 @@<br>
+         $this-&gt;_countCells[$this-&gt;_level]<br>
+[$this-&gt;_countRows[$this-&gt;_level]] += $param[&#039;span&#039;];<br>
+         $ret = $this-&gt;wiki-&gt;addToken($this-&gt;rule, <br>
+$param);<br>
+         $param[&#039;type&#039;] = &#039;cell_end&#039;;<br>
+-        return $ret . $matches[3] . <br>
+$this-&gt;wiki-&gt;addToken($this-&gt;rule, $param );<br>
++        return $ret .&quot;\n&quot;. $matches[3] .&quot;\n&quot;. <br>
+$this-&gt;wiki-&gt;addToken($this-&gt;rule, $param );<br>
+     }<br>
+ }<br>
+ ?&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

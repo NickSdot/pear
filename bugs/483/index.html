@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #483</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/OLE/index.html">OLE</a> &#187; Bug #483</h1>
+<p>_FILEH_ never opened</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-12-23 03:33 UTC</td></tr>
+<tr><th>From</th><td>spammable at howsfamily dot net</td></tr>
+<tr><th>Status</th><td>Duplicate</td></tr>
+<tr><th>Package</th><td><a href="package/OLE/index.html">OLE</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Windows XP Pro</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-12-23 03:33 UTC] spammable at howsfamily dot net</h3>
+<p>Description:<br>
+------------<br>
+I had a problem on my system with another PEAR module creating 0-byte files. It turned out that the problem was that the OLE library, which it depended on, reported an error opening a temporary file.</p>
+<p>When I looked through the OLE code in Root.php, I found a number of references to $this-&gt;_FILEH_, but I never found a place where this was assigned to.</p>
+<p>I added the line</p>
+<p>$this-&gt;_FILEH_ = fopen($this-&gt;_tmp_filename, &quot;r+w&quot;);</p>
+<p>at line 100 in Root.php, and everything worked. I&#039;m not sure if this is idiosyncratic to my own system, or more widespread. It strikes me as a very obvious bug.</p>
+</section>
+<section>
+<h3>[2003-12-23 10:57 UTC] xnoguer at php dot net</h3>
+<p>What version of OLE are you using? The latest version of OLE has this line on Root.php:</p>
+<p>$this-&gt;_FILEH_ = @fopen($this-&gt;_tmp_filename,&quot;w+b&quot;);</p>
+</section>
+<section>
+<h3>[2003-12-23 12:21 UTC] spammable at howsfamily dot net</h3>
+<p>I&#039;m using OLE 0.5, and you&#039;re right, that line does exist. My only interaction OLE is through the a third party module, Spreadsheet_Excel_Writer, so I haven&#039;t really gone through the depths of it. But the line you refer to occurs in an &quot;else&quot; clause:</p>
+<p>//Lines 97-107<br>
+if (($filename == &#039;-&#039;) or ($filename == &#039;&#039;))<br>
+...<br>
+else<br>
+{<br>
+    $this-&gt;_FILEH_ = @fopen($filename, &quot;wb&quot;);<br>
+    ...<br>
+}</p>
+<p>However, the section in the &quot;if&quot; clause still makes reference to _FILEH_:</p>
+<p>//Line 101-102<br>
+if ($this-&gt;_FILEH_ == false)<br>
+    return $this-&gt;raiseError(&quot;Can&#039;t create temporary file.&quot;);</p>
+<p>Without _FILEH_ being assigned to, this will always be falsem and thus always raise the error.</p>
+<p>As I said, I haven&#039;t really gone through your code, so it simply may be that the excel module invokes your code incorrectly, but I found that adding a line to open the file in the &quot;if&quot; clause solved my problem. I&#039;m not sure if it translates from my specific problem to the general case.</p>
+</section>
+<section>
+<h3>[2003-12-24 10:30 UTC] xnoguer at php dot net</h3>
+<p>The if block is:</p>
+<p>if (($filename == &#039;-&#039;) or ($filename == &#039;&#039;))<br>
+{<br>
+    $this-&gt;_tmp_filename = tempnam($this-&gt;_tmp_dir, &quot;OLE_PPS_Root&quot;);<br>
+    $this-&gt;_FILEH_ = @fopen($this-&gt;_tmp_filename,&quot;w+b&quot;);<br>
+    if ($this-&gt;_FILEH_ == false) {<br>
+        return $this-&gt;raiseError(&quot;Can&#039;t create temporary file.&quot;);<br>
+    }<br>
+}</p>
+<p>so $this-&gt;_FILEH_ does get assigned anyway. Only problem is, if you don&#039;t have permissions for the default temp dir and haven&#039;t set another dir with setTempDir() it will fail.</p>
+<p>I know that if you are using Spreadsheet_Excel_Writer you don&#039;t have a way to set the temp dir to be used by OLE (yet). I&#039;m the maintainer for Spreadsheet_Excel_Writer too, and there is a setTempDir() method in cvs, but I can&#039;t make a release now.<br>
+ Please check my answer to bug #482. If that solves your problem I&#039;ll close this bug and keep that one open.</p>
+</section>
+<section>
+<h3>[2003-12-24 10:43 UTC] spammable at howsfamily dot net</h3>
+<p>Yes, I edited my copy of Spreadsheet_Excel_Writer to set the temporary directory. If the &quot;if&quot; clause you quoted is right, it looks like I must have accidentally modified my copy when I was dicking around with getting it to work. Sorry about that, feel free to close the bug.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

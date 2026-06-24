@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9204</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_mssql/index.html">MDB2_Driver_mssql</a> &#187; Bug #9204</h1>
+<p>Sequences don&#039;t work with MSSQL</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-10-31 14:20 UTC</td></tr>
+<tr><th>From</th><td>alberto dot morselli at cup2000 dot it</td></tr>
+<tr><th>Assigned</th><td>davidc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_mssql/index.html">MDB2_Driver_mssql</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.6</td></tr>
+<tr><th>OS</th><td>Windows XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-10-31 14:20 UTC] alberto dot morselli at cup2000 dot it</h3>
+<p>Description:<br>
+------------<br>
+With MSSQLServer 2000 SP4 installed on Windows Server 2003 SP1 the nextId method doesn&#039;t work properly.</p>
+<p>The first time it&#039;s called it creates the table &#039;mytable_seq&#039; with one column named &#039;sequence&#039;. The only record in the table is sequence = 2.</p>
+<p>The second time it&#039;s called it adds a record sequence = 0 in table &#039;mytable_seq&#039;.</p>
+<p>The third time it&#039;s calles id doesn&#039;t do anything. No error is returned.</p>
+<p>Method getServerVersion returns:<br>
+[major] =&gt; 8<br>
+[minor] =&gt; 00<br>
+[patch] =&gt; 2039<br>
+[extra] =&gt;<br>
+[native] =&gt; Microsoft SQL Server 2000 - 8.00.2039 (Intel X86) May 3 2005 23:18:38 Copyright (c) 1988-2003 Microsoft Corporation Standard Edition on Windows NT 5.2 (Build 3790: Service Pack 1)</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+require_once &#039;MDB2.php&#039;;<br>
+$dsn = &quot;mssql://myuser:mypwd@localhost/mydb&quot;;<br>
+$db =&amp; MDB2::connect($dsn);<br>
+$id = $db-&gt;nextId(&#039;mytable&#039;);<br>
+echo &quot;&lt;pre&gt;&quot;;<br>
+print_r($id);<br>
+echo &quot;&lt;/pre&gt;\n&quot;;<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+First time<br>
+&lt;pre&gt;1&lt;/pre&gt;</p>
+<p>Second time<br>
+&lt;pre&gt;2&lt;/pre&gt;</p>
+<p>Third time<br>
+&lt;pre&gt;3&lt;/pre&gt;</p>
+<p>Actual result:<br>
+--------------<br>
+First time<br>
+&lt;pre&gt;1&lt;/pre&gt;</p>
+<p>Second time<br>
+&lt;pre&gt;0&lt;/pre&gt;</p>
+<p>Third time<br>
+&lt;pre&gt;&lt;/pre&gt;</p>
+</section>
+<section>
+<h3>[2006-10-31 14:35 UTC] alberto dot morselli at cup2000 dot it</h3>
+<p>It seems that everytime nextId is called it tries to write a record into table &#039;mytable_seq&#039; with sequence=0.<br>
+This insert fails because sequence is primary key and there is  already a row with sequence=0.</p>
+</section>
+<section>
+<h3>[2006-12-28 16:54 UTC] alberto dot morselli at cup2000 dot it</h3>
+<p>I need to make sequences work as quickly as possible.<br>
+So I decided to modify code by myself, even if I&#039;m not a good coder.<br>
+I commented every changes I made like that:<br>
+    Added lines: //++Alberto<br>
+    Removed lines: //--Alberto</p>
+<p>In MDB2/Driver/mssql.php I modified functions _checkSequence and nextID</p>
+<p>function _checkSequence($seq_name)<br>
+    {<br>
+        $query = &quot;SELECT * FROM $seq_name&quot;;<br>
+        $tableExists =&amp; $this-&gt;_doQuery($query, true);<br>
+        if (PEAR::isError($tableExists)) {<br>
+            if ($tableExists-&gt;getCode() == MDB2_ERROR_NOSUCHTABLE) {<br>
+                return false;<br>
+            }<br>
+            //return $tableExists;<br>
+            return false;<br>
+        }</p>
+<p>//        return true; //--Alberto<br>
+        return mssql_result($tableExists, 0, 0); //++Alberto</p>
+<p>//With this change function returns the last (and only) value stored into the sequence field</p>
+<p>}</p>
+<p>function nextID($seq_name, $ondemand = true)<br>
+    {<br>
+        $sequence_name = $this-&gt;quoteIdentifier($this-&gt;getSequenceName($seq_name), true);<br>
+        $seqcol_name = $this-&gt;quoteIdentifier($this-&gt;options[&#039;seqcol_name&#039;], true);<br>
+        $this-&gt;expectError(MDB2_ERROR_NOSUCHTABLE);</p>
+<p>//        if ($this-&gt;_checkSequence($sequence_name)) { //--Alberto<br>
+        $seq_val = $this-&gt;_checkSequence($sequence_name); //++Alberto<br>
+        if ($seq_val) { //++Alberto</p>
+<p>//With this change I store the result to reuse it</p>
+<p>$query = &quot;SET IDENTITY_INSERT $sequence_name ON &quot;.</p>
+<p>//                     &quot;INSERT INTO $sequence_name ($seqcol_name) VALUES (0)&quot;; //--Alberto<br>
+                     &quot;INSERT INTO $sequence_name ($seqcol_name) VALUES (&quot; . ($seq_val + 1). &quot;)&quot;; //++Alberto</p>
+<p>//Here was the failure: value 0 can be insert only once.<br>
+//With this change I insert the value read from the sequence plus 1</p>
+<p>} else {<br>
+            $query = &quot;INSERT INTO $sequence_name ($seqcol_name) VALUES (0)&quot;;<br>
+        }<br>
+        $result =&amp; $this-&gt;_doQuery($query, true);<br>
+        $this-&gt;popExpect();<br>
+        if (PEAR::isError($result)) {<br>
+            if ($ondemand &amp;&amp; !$this-&gt;_checkSequence($sequence_name)) {<br>
+                $this-&gt;loadModule(&#039;Manager&#039;, null, true);<br>
+                // Since we are creating the sequence on demand<br>
+                // we know the first id = 1 so initialize the<br>
+                // sequence at 2</p>
+<p>//                $result = $this-&gt;manager-&gt;createSequence($seq_name, 2); //--Alberto<br>
+                $result = $this-&gt;manager-&gt;createSequence($seq_name); //++Alberto</p>
+<p>//I want to start sequence from 1, not from 2</p>
+<p>if (PEAR::isError($result)) {<br>
+                    return $this-&gt;raiseError($result, null, null,<br>
+                        &#039;nextID: on demand sequence &#039;.$seq_name.&#039; could not be created&#039;);<br>
+                } else {<br>
+                    // First ID of a newly created sequence is 1<br>
+                    return 1;<br>
+                }<br>
+            }<br>
+            return $result;<br>
+        }<br>
+        $value = $this-&gt;lastInsertID($sequence_name);<br>
+        if (is_numeric($value)) {<br>
+            $query = &quot;DELETE FROM $sequence_name WHERE $seqcol_name &lt; $value&quot;;<br>
+            $result =&amp; $this-&gt;_doQuery($query, true);<br>
+            if (PEAR::isError($result)) {<br>
+                $this-&gt;warnings[] = &#039;nextID: could not delete previous sequence table values from &#039;.$seq_name;<br>
+            }<br>
+        }<br>
+        return $value;<br>
+    }</p>
+<p>In MDB2/Driver/Manager/mssql.php I&#039;ve modified function createSequence</p>
+<p>function createSequence($seq_name, $start = 1)<br>
+    {<br>
+        $db =&amp; $this-&gt;getDBInstance();<br>
+        if (PEAR::isError($db)) {<br>
+            return $db;<br>
+        }</p>
+<p>$sequence_name = $db-&gt;quoteIdentifier($db-&gt;getSequenceName($seq_name), true);<br>
+        $seqcol_name = $db-&gt;quoteIdentifier($db-&gt;options[&#039;seqcol_name&#039;], true);<br>
+        $query = &quot;CREATE TABLE $sequence_name ($seqcol_name &quot; .<br>
+                 &quot;INT PRIMARY KEY CLUSTERED IDENTITY($start,1) NOT NULL)&quot;;</p>
+<p>$res = $db-&gt;exec($query);<br>
+        if (PEAR::isError($res)) {<br>
+            return $res;<br>
+        }</p>
+<p>if ($start == 1) {<br>
+//            return MDB2_OK; //--Alberto Function MUST insert a value (need by changes made in _checkSequence)<br>
+        }</p>
+<p>$query = &quot;SET IDENTITY_INSERT $sequence_name ON &quot;.<br>
+                 &quot;INSERT INTO $sequence_name ($seqcol_name) VALUES ($start)&quot;;<br>
+        $res = $db-&gt;exec($query);</p>
+<p>if (!PEAR::isError($res)) {<br>
+            return MDB2_OK;<br>
+        }</p>
+<p>$result = $db-&gt;exec(&quot;DROP TABLE $sequence_name&quot;);<br>
+        if (PEAR::isError($result)) {<br>
+            return $db-&gt;raiseError($result, null, null,<br>
+                &#039;createSequence: could not drop inconsistent sequence table&#039;);<br>
+        }</p>
+<p>return $db-&gt;raiseError($res, null, null,<br>
+            &#039;createSequence: could not create sequence table&#039;);<br>
+    }</p>
+<p>Perhaps it&#039;s not the best way to correct the problem, but with this changes sequences seem to work (at least with my machine configuration) and I haven&#039;t found collateral effects yet.</p>
+</section>
+<section>
+<h3>[2007-01-19 13:34 UTC] alberto dot morselli at cup2000 dot it</h3>
+<p>Hi David,<br>
+I saw you have corrected sequence emulation with the changes I suggested you.<br>
+ <br>
+Unfortunately yesterday I noticed this solution should have problems if many client call nextId function at the same time.<br>
+So I ask a MSSQL expert for some seggestions, and I found a better and much much easier way to do the same.<br>
+ <br>
+In attachment you can find the new solution, based on mdb2_driver_mssql-1.1.2<br>
+The only modified file is MDB2/mssql.php: basing on revision 1.152, I only changed instruction with the INSERT in nextID function (you can see //++Alberto comment). <br>
+MDB2/Manager/mssql.php doesn&#039;t need any changes, so the working release is 1.82</p>
+<p>function nextID($seq_name, $ondemand = true)<br>
+    {<br>
+        $sequence_name = $this-&gt;quoteIdentifier($this-&gt;getSequenceName($seq_name), true);<br>
+        $seqcol_name = $this-&gt;quoteIdentifier($this-&gt;options[&#039;seqcol_name&#039;], true);<br>
+        $this-&gt;expectError(MDB2_ERROR_NOSUCHTABLE);<br>
+        if ($this-&gt;_checkSequence($sequence_name)) {<br>
+//            $query = &quot;SET IDENTITY_INSERT $sequence_name ON &quot;.   //--Alberto<br>
+//                     &quot;INSERT INTO $sequence_name ($seqcol_name) VALUES (0)&quot;;   //--Alberto<br>
+            $query = &quot;SET IDENTITY_INSERT $sequence_name OFF &quot; .   //++Alberto<br>
+                     &quot;INSERT INTO $sequence_name DEFAULT VALUES&quot;;   //++Alberto<br>
+        } else {<br>
+            $query = &quot;INSERT INTO $sequence_name ($seqcol_name) VALUES (0)&quot;;<br>
+        }<br>
+        $result =&amp; $this-&gt;_doQuery($query, true);<br>
+        $this-&gt;popExpect();<br>
+        if (PEAR::isError($result)) {<br>
+            if ($ondemand &amp;&amp; !$this-&gt;_checkSequence($sequence_name)) {<br>
+                $this-&gt;loadModule(&#039;Manager&#039;, null, true);<br>
+                $result = $this-&gt;manager-&gt;createSequence($seq_name);<br>
+                if (PEAR::isError($result)) {<br>
+                    return $this-&gt;raiseError($result, null, null,<br>
+                        &#039;on demand sequence &#039;.$seq_name.&#039; could not be created&#039;, __FUNCTION__);<br>
+                } else {<br>
+                    return $this-&gt;nextID($seq_name, false);<br>
+                }<br>
+            }<br>
+            return $result;<br>
+        }<br>
+        $value = $this-&gt;lastInsertID($sequence_name);<br>
+        if (is_numeric($value)) {<br>
+            $query = &quot;DELETE FROM $sequence_name WHERE $seqcol_name &lt; $value&quot;;<br>
+            $result =&amp; $this-&gt;_doQuery($query, true);<br>
+            if (PEAR::isError($result)) {<br>
+                $this-&gt;warnings[] = &#039;nextID: could not delete previous sequence table values from &#039;.$seq_name;<br>
+            }<br>
+        }<br>
+        return $value;<br>
+    }</p>
+<p>Thank you<br>
+Alberto Morselli</p>
+</section>
+<section>
+<h3>[2007-01-19 15:41 UTC] alberto dot morselli at cup2000 dot it</h3>
+<p>I forgot to reopen the bug...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

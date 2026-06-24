@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3398</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Configuration &#187; <a href="package/Config/index.html">Config</a> &#187; Bug #3398</h1>
+<p>Bug in Quote and Comma Parser for IniCommented</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-08 01:53 UTC</td></tr>
+<tr><th>From</th><td>ayourk at hotmail dot com</td></tr>
+<tr><th>Assigned</th><td>ryansking</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Config/index.html">Config</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>FreeBSD</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-08 01:53 UTC] ayourk at hotmail dot com</h3>
+<p>Description:<br>
+------------<br>
+In a directive that is an array of values, sometimes it doesn&#039;t seperate the different array values properly.<br>
+I&#039;m using:</p>
+<p>Installed packages:<br>
+===================<br>
+Package                   Version  State<br>
+Config                    1.10.3   stable<br>
+XML_Parser                1.2.4    stable<br>
+XML_RPC                   1.2.0RC6 beta<br>
+XML_Util                  1.1.1    stable</p>
+<p>Reproduce code:<br>
+---------------<br>
+Config file:<br>
+[Preset]<br>
+presets=common</p>
+<p>[common]<br>
+sntpTZ=type=4, &quot;value=CST6DST5,M4.1.0/02:00:00,M10.5.0/02:00:00&quot;, name=sntpTZ, label=TimeZone, form=text, &quot;select=array (value =&gt; %value, size =&gt; 37);&quot;</p>
+<p>Code file:<br>
+&lt;?php<br>
+  require_once(&#039;Config.php&#039;);<br>
+  $config = new Config();<br>
+  $root =&amp; $config-&gt;parseConfig(&#039;samplebug.conf&#039;, &#039;inicommented&#039;);<br>
+  if (PEAR::isError($root)) {<br>
+    die(&#039;Error while reading configuration: &#039; . $root-&gt;getMessage() . &quot;\r\n&quot;);<br>
+  }<br>
+  echo &quot;&lt;pre&gt;&quot;;<br>
+  var_export($root-&gt;toArray());<br>
+  echo &quot;&lt;/pre&gt;&quot;;<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Master Key: array (<br>
+  &#039;root&#039; =&gt; <br>
+  array (<br>
+    &#039;Preset&#039; =&gt; <br>
+    array (<br>
+      &#039;presets&#039; =&gt; &#039;common&#039;,<br>
+    ),<br>
+    &#039;common&#039; =&gt; <br>
+    array (<br>
+      &#039;sntpTZ&#039; =&gt; <br>
+      array (<br>
+        0 =&gt; &#039;type=4&#039;,<br>
+        1 =&gt; &#039;value=CST6DST5,M4.1.0/02:00:00,M10.5.0/02:00:00&#039;<br>
+        2 =&gt; &#039;name=sntpTZ&#039;,<br>
+        3 =&gt; &#039;label=TimeZone&#039;,<br>
+        4 =&gt; &#039;form=text&#039;,<br>
+        5 =&gt; &#039;select=array (value =&gt; %value, size =&gt; 37);&#039;,<br>
+      ),<br>
+    ),<br>
+  ),<br>
+)</p>
+<p>Actual result:<br>
+--------------<br>
+Master Key: array (<br>
+  &#039;root&#039; =&gt; <br>
+  array (<br>
+    &#039;Preset&#039; =&gt; <br>
+    array (<br>
+      &#039;presets&#039; =&gt; &#039;common&#039;,<br>
+    ),<br>
+    &#039;common&#039; =&gt; <br>
+    array (<br>
+      &#039;sntpTZ&#039; =&gt; <br>
+      array (<br>
+        0 =&gt; &#039;type=4&#039;,<br>
+        1 =&gt; &#039;value=CST6DST5,M4.1.0/02:00:00,M10.5.0/02:00:00 name=sntpTZ&#039;,<br>
+        2 =&gt; &#039;label=TimeZone&#039;,<br>
+        3 =&gt; &#039;form=text&#039;,<br>
+        4 =&gt; &#039;select=array (value =&gt; %value, size =&gt; 37);&#039;,<br>
+      ),<br>
+    ),<br>
+  ),<br>
+)</p>
+</section>
+<section>
+<h3>[2005-04-09 03:43 UTC] ryansking at mac dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+<p>Please take a look at the CVS and give it a spin. <br>
+Thanks.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

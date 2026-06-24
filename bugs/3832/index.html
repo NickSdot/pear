@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3832</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a> &#187; Bug #3832</h1>
+<p>dates are exported as text, not as dates</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-03-15 21:09 UTC</td></tr>
+<tr><th>From</th><td>caos at safepoint dot nl</td></tr>
+<tr><th>Assigned</th><td>xnoguer</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.1</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-15 21:09 UTC] caos at safepoint dot nl</h3>
+<p>Description:<br>
+------------<br>
+I &#039;ve created a little PHP program that reads records from Postgresql and creates a Excel sheet (of course with Spreadsheet_Excel_writer).</p>
+<p>At first sight the produced Excel file seems to be OK, but when a (excel) sort is done on the colum that contains dates it doesn&#039;t sort properly or excel wants you to choose on how to interpreted the values (as tekst or numbers) . <br>
+This is because the dates in this column are not interpreted as dates by excel.</p>
+<p>When the excel sheet is read with OpenOffice 1.1.2  &#039;Calc&#039; you can see a quote before the date value (which would mean it should be interpreted as text by Calc, but this can also be a &#039;bug&#039; in the excel import filter of calc).</p>
+<p>I alread added a date format  to the column with the dates :<br>
+$date_format =&amp; $workbook-&gt;addFormat();<br>
+$date_format-&gt;setNumFormat(&#039;DD-MM-YYYY&#039;);</p>
+<p>The format is set in the excel file, but it doesn&#039;t help</p>
+<p>Used Software:<br>
+MS Excel 2002, Openoffice 1.1.2 Calc (all on windows 2000)<br>
+Spreadsheet_Excel_Writer version 0.8<br>
+Webbrowser: IE 6.x</p>
+<p>Reproduce code:<br>
+---------------<br>
+Source file:<br>
+http://www.safepoint.nl/bugs/uren_export.sphp</p>
+<p>example: excel file<br>
+http://www.safepoint.nl/bugs/Uren_export.xls</p>
+<p>Expected result:<br>
+----------------<br>
+Excel file with proper date values in date column</p>
+<p>Actual result:<br>
+--------------<br>
+Excel file with date values as text in date column</p>
+</section>
+<section>
+<h3>[2005-03-17 08:09 UTC] christianm at amplix dot de</h3>
+<p>Addition:<br>
+It&#039;s a problem with all versions of Spreadsheet_Excel_Writer down to 0.6 (only tested til this version) with date/time-fields<br>
+Excel corrects this error, OO Calc (1.1.4 and 2 beta) not.<br>
+Writing an excel file with Excel 97 and adding a field with a time within (hh:mm:ss), then open this file in OO Calc don&#039;t show this error with leading &#039; ,so I think, this isn&#039;t an error in the import filter of Calc.<br>
+And it&#039;s not an error of database-extraction, even normal written $worksheet-&gt;write($i,$j,&#039;hh-mm-ss&#039;) produce this error.</p>
+<p>Webbrowsers: IE6,Mozilla 1.7, Firefox 1.0</p>
+</section>
+<section>
+<h3>[2005-03-25 10:18 UTC] thierry dot besancon at laposte dot net</h3>
+<p>I do have the bug in Spreadsheet_Excel_writer 0.4 too.</p>
+</section>
+<section>
+<h3>[2005-03-29 10:25 UTC] Thierry dot Besancon at laposte dot net</h3>
+<p>I found a workaround that lets me think there&#039;s probably no bug in PHP Spreadsheet_Excel_writer.</p>
+<p>I used the following :</p>
+<p>$dformat =&amp; $workbook-&gt;addFormat();<br>
+$dformat-&gt;setNumFormat(&#039;DD/MM/YYYY&#039;); // french date format<br>
+$worksheet-&gt;write($i,$j,&quot;=DATEVALUE(\&quot;1967-03-27\&quot;)&quot;, $dformat) ; // my birthday :-)</p>
+<p>According to the document of the excel writer module for perl, a date is something internally coded as a number of days since some time origin. So you just can&#039;t write &quot;1967-03-27&quot; and expect it to be seen through PHP Spreadsheet_Excel_writer as a date in a XLS file. That&#039;s why I used the EXCEL function &quot;DATEVALUE&quot; that computes in EXCEL  the number of days since the origin. As the computing is done in the spreadsheet, it has no impact on the PHP side. Writing :<br>
+$worksheet-&gt;write($i,$j,&quot;1967-03-27&quot;) ;<br>
+or<br>
+$worksheet-&gt;write($i,$j,&quot;=DATEVALUE(\&quot;1967-03-27\&quot;)&quot;, $dformat) ;<br>
+is the same thing in terms of performance on the web server with php side.</p>
+<p>That worked with excel 2003 and php 4.3.x with Spreadsheet_Excel_writer 0.4 and at this time, I think the workaround works for versions up to 0.8.</p>
+<p>Best regards.<br>
+Thierry Besancon</p>
+</section>
+<section>
+<h3>[2005-03-29 13:06 UTC] caos at safepoint dot nl</h3>
+<p>First let me say, thank you Thierry!<br>
+This is a working solution and I&#039;am using it right now.</p>
+<p>Although I&#039;am happy I have this solution, I feel this is a workaround and is not solving the problem at the right level.<br>
+The Excel_writer package should be able to produce  a proper Microsoft date value. I would be happy if the Excel_writer was extended with a methode to create a MS date value (used by Excel) from a given date.</p>
+</section>
+<section>
+<h3>[2005-04-18 15:21 UTC] florent dot masson at francetelecom dot com</h3>
+<p>Hi,</p>
+<p>I has the same issue and investigated.<br>
+According to : http://sc.openoffice.org/excelfileformat.pdf<br>
+&quot;All dates are stored as count of days past this base date.&quot; (Base date is 1899-Dec-31 by default)</p>
+<p>So in order to have a correct date in excel, you have to write a count of days in the cell, and not a string.</p>
+<p>Here&#039;s some example code that works for me :</p>
+<p>function date_to_excel($date) {//converts a dd/mm/yyyy date to excel count of days<br>
+	if (ereg(&quot;^([0-9]{1,2})/([0-9]{1,2})/([0-9]{2,4})$&quot;,$date,$t)) {<br>
+		return ceil(strtotime(&quot;$t[2]/$t[1]/$t[3]&quot;)/60/60/24)+25569;<br>
+	}<br>
+	else return $date;<br>
+}</p>
+<p>$fcelldate =&amp; $xls-&gt;addFormat();<br>
+$fcelldate-&gt;setAlign(&quot;center&quot;);<br>
+$fcelldate-&gt;setNumFormat(15);</p>
+<p>$sheet-&gt;write($i,1,date_to_excel($ligne[1]), $fcelldate);</p>
+<p>Someone should probably add a writeDate() function that takes a php timestamp as input (remember Base date for php is 1970-01-01)</p>
+<p>Regards,<br>
+Florent Masson</p>
+</section>
+<section>
+<h3>[2005-04-18 15:59 UTC] florent dot masson at francetelecom dot com</h3>
+<p>RTFM :/</p>
+<p>The answer was in the doc. See examlple at :<br>
+http://pear.php.net/manual/en/package.fileformats.spreadsheet-excel-writer.spreadsheet-excel-writer-format.setnumformat.php</p>
+</section>
+<section>
+<h3>[2005-06-28 12:34 UTC] s dot appel at bigfoot dot com</h3>
+<p>A big problem is that most systems use 1-1-1970 for start date and excell uses 1-1-1900. So any date before 1970 will go wrong with strtotime. This is a little function i wrote</p>
+<p>function MakeExcelSerial($date = false, $month = false, $year = false)<br>
+{<br>
+	// works between 1-1-1900 and 31-12-2100</p>
+<p>if ($month === false)  $month  = Date (&quot;n&quot;);<br>
+       if ($date === false)  $date  = Date (&quot;j&quot;);<br>
+       if ($year === false)  $year  = Date (&quot;Y&quot;);</p>
+<p>if (($year &lt; 100) and ($year &gt; 0)) $year += 1900;<br>
+       if ($year &lt; 1900) return 0;</p>
+<p>$m_days = Array (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);<br>
+       if (($year % 4 == 0) &amp;&amp; ($year % 100 &gt; 0) || ($year % 100 == 0 &amp;&amp; $year % 400 == 0))<br>
+       {<br>
+           $m_days[1] = 29; <br>
+           // leap-years can be: 1600, 2000, 2400, etc.<br>
+           // but excel also thinks 1900 is a leap year<br>
+       }</p>
+<p>$d_year = $year - 1900;<br>
+       $days = 1;                      // 1-1-1900 equals 1<br>
+       $days += $d_year * 365;</p>
+<p>$days += floor (($d_year-1) / 4);   // compensate for leap-years (note leap day is after the leap year 1-jan)</p>
+<p>// go forward (+), based on $month and $date<br>
+       for ($k = 1; $k &lt; $month; $k++)<br>
+       {<br>
+           $days += $m_days [$k - 1];<br>
+       }<br>
+       $days += $date;</p>
+<p>return $days;<br>
+}</p>
+</section>
+<section>
+<h3>[2005-09-07 13:42 UTC] madeinlisboa at yahoo dot com</h3>
+<p>It seems that the sample in the SetNumFormat page is outputing the date with one hour difference from the original. I guess the patched code looks like this:<br>
+// number of seconds in a day<br>
+$seconds_in_a_day = 86400;<br>
+// Unix timestamp to Excel date difference in seconds<br>
+$ut_to_ed_diff = $seconds_in_a_day * 25569 + 3600;</p>
+</section>
+<section>
+<h3>[2005-10-25 21:54 UTC] xnoguer at php dot net</h3>
+<p>As florent says this is documented for the setNumFormat() method, a date is actually a number (days since December 30 1899) with a particular format. Will consider writing a writeDate() method later to make this simpler.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

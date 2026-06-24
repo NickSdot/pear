@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3201</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #3201</h1>
+<p>get* and set* no longer work on private, public and protected class variables</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-14 15:30 UTC</td></tr>
+<tr><th>From</th><td>bigtree at 29a dot nl</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-14 15:30 UTC] bigtree at 29a dot nl</h3>
+<p>Description:<br>
+------------<br>
+As of php 5.0.3, the function get_class_vars() was changed so that it doesn&#039;t return private, protected (and maybe also public) class variables. This function is used by the DB_DataObject&#039;s _call method to determine whether the requested field actually exists.</p>
+<p>If one uses protected variables in an extended class of DB_DataObject (private wouldn&#039;t work because of the extension) and only use get* and set* to insure data integrity, this will stop working.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+class Person Extends DB_DataObject {</p>
+<p>public $__table = &#039;persontable&#039;;<br>
+    <br>
+    protected $id;</p>
+<p>}</p>
+<p>$myPerson = new Person();</p>
+<p>echo $myPerson-&gt;setid(1) ? &#039;ok&#039; : &#039;not ok&#039;;<br>
+?&gt;</p>
+<p>Using PHP 5 (up to 5.0.2), this would work, but in order for it to work as of 5.0.3, I recommend changing line 3142 of DataObject (1.7.2) from:</p>
+<p>&lt;?php<br>
+        $array =  array_keys(get_class_vars($class));<br>
+?&gt;</p>
+<p>to</p>
+<p>&lt;?php<br>
+        $array = array_keys(get_object_vars($this));<br>
+?&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

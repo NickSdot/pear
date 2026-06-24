@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6795</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #6795</h1>
+<p>portability problem with case and alias</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #6795</th><td>portability problem with case and alias</td></tr>
+<tr><th>Submitted</th><td>2006-02-16 14:03 UTC</td></tr>
+<tr><th>From</th><td>felix_ant at gva dot es</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.9</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-16 14:03 UTC] felix_ant at gva dot es</h3>
+<p>Description:<br>
+------------<br>
+Hello!</p>
+<p>We are developing an application that uses PEAR::DB. We are testing the portability to different Databases. We are testing with Oracle and PostgreSQL. We have found a problem: Oracle returns the result of a query with the column names in upper case and PostgreSQL with lower case except the columns that have column alias.</p>
+<p>What we want is the returned result to be always in uppercase or in lowercase (whatever the DB were) but always respecting the column alias case mode if this alias exists.</p>
+<p>Are there any type of portability option that can solve our problem?</p>
+<p>Test script:<br>
+---------------<br>
+/*OPTION 1*/<br>
+$select = &quot;select cpro,cmun as \&quot;codigoMunicipio\&quot;, dmun as \&quot;descMunicipio\&quot; from tcom_municipios&quot;;<br>
+$origen = DB::connect($dsn);<br>
+$res = $origen-&gt;getAll($select,DB_FETCHMODE_ASSOC);</p>
+<p>/*OPTION 2*/<br>
+$select = &quot;select cpro,cmun as \&quot;codigoMunicipio\&quot;, dmun as \&quot;descMunicipio\&quot; from tcom_municipios&quot;;<br>
+$origen = DB::connect($dsn);<br>
+$origen-&gt;setOption(&#039;portability&#039;, DB_PORTABILITY_LOWERCASE);<br>
+$res = $origen-&gt;getAll($select,DB_FETCHMODE_ASSOC);</p>
+<p>Expected result:<br>
+----------------<br>
+Result:<br>
+In PostgreSQL:<br>
+Array ( [cpro] =&gt; 46 [codigoMunicipio] =&gt; 903 [descMunicipio] =&gt; SAN ANTONIO)<br>
+In Oracle:<br>
+Array ( [cpro] =&gt; 46 [codigoMunicipio] =&gt; 903 [descMunicipio] =&gt; SAN ANTONIO)</p>
+<p>Actual result:<br>
+--------------<br>
+/*OPTION 1*/<br>
+In PostgreSQL:<br>
+Array ( [cpro] =&gt; 46 [codigoMunicipio] =&gt; 903 [descMunicipio] =&gt; SAN ANTONIO)<br>
+In Oracle:<br>
+Array ( [CPRO] =&gt; 46 [codigoMunicipio] =&gt; 903 [descMunicipio] =&gt; SAN ANTONIO) <br>
+The result is not correct in Oracle because our application was waiting columns named cpro, codigoMunicipio and descMunicipio.</p>
+<p>/*OPTION 2*/<br>
+In PostgreSQL:<br>
+Array ( [cpro] =&gt; 46 [codigomunicipio] =&gt; 903 [descmunicipio] =&gt; SAN ANTONIO)<br>
+In Oracle:<br>
+Array ( [cpro] =&gt; 46 [codigomunicipio] =&gt; 903 [descmunicipio] =&gt; SAN ANTONIO) <br>
+The result is not correct because our application was waiting columns named cpro, codigoMunicipio and descMunicipio.</p>
+</section>
+<section>
+<h3>[2006-02-17 09:19 UTC] felix_ant at gva dot es</h3>
+<p>Hello!</p>
+<p>First, thanks for your time.</p>
+<p>About the question I sent you yesterday. We are programming a Framework for developping corporative applications. As I told you we are using PEAR:DB for accesing to all different kind of databases that we have.</p>
+<p>So, reading your answer I undestand that if we want an application with PEAR:DB that works with both DB Oracle or Postgres we only have two options:</p>
+<p>1) Fixing the portability to lowercase and make our applications expecting to receive variables only in lowercase<br>
+2) Not choosing  any option of portability and using  always alias in every field of the query.</p>
+<p>Is that correct?</p>
+<p>If so, it is not very appropiate for our applications.This would limit the use of our framework a lot because we would have to say to our programmers that they can only expect column names in lowercase (now we permit them to use what they want).</p>
+<p>We are using now the second option but we do not like it because it is only a recommendation to the programmers and we don´t parsing the queries to check that all the columns have alias.</p>
+<p>Do we have any other options?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

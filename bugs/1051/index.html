@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1051</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_FTP/index.html">Net_FTP</a> &#187; Bug #1051</h1>
+<p>Ftp getRecursive hangs</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-22 08:57 UTC</td></tr>
+<tr><th>From</th><td>mpk at dentline dot nl</td></tr>
+<tr><th>Assigned</th><td>toby</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Net_FTP/index.html">Net_FTP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>OS</th><td>Linux Mandrake 9.2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-22 08:57 UTC] mpk at dentline dot nl</h3>
+<p>Description:<br>
+------------<br>
+I have a list of directories with a series of files in each that I want to retrieve. Automatic retrieval with $ftp-&gt;getRecursive() hangs after 3 directories. For a strange reason it cannot retrieve a file (that means it is created in the destination directory but it remains with 0 size). For all the subsequent directories I get this message  &quot;Warning: Invalid argument supplied for foreach() in /usr/lib/php/FTP.php on line 1467&quot;. It retrieves then no files though it creates if needed the directories. I have tested with all the versions from 1.2, 1.3b1, 1.3b2.</p>
+<p>Reproduce code:<br>
+---------------<br>
+dump($ftp-&gt;cd(&#039;/www/praktijken&#039;), &#039;FTP::cd()&#039;);<br>
+$dirs = $ftp-&gt;ls(null, NET_FTP_DIRS_ONLY);<br>
+for ($i=0;$i&lt;count($dirs);$i++){<br>
+        $dirnaam = $dirs[$i][name];<br>
+        print $dirnaam;<br>
+        if (!is_dir(&quot;/www/praktijken/$dirnaam&quot;)) {<br>
+                umask(0);<br>
+                mkdir (&quot;/www/praktijken/$dirnaam&quot;, 0755);<br>
+        }<br>
+        $ftp-&gt;getRecursive(&quot;/www/praktijken/$dirnaam/&quot; , &quot;/www/praktijken/$dirnaam/&quot;, true, FTP_BINARY);<br>
+    }</p>
+<p>Expected result:<br>
+----------------<br>
+Retrieve all files in the corresponding directories</p>
+</section>
+<section>
+<h3>[2004-03-22 11:12 UTC] mpk at dentline dot nl</h3>
+<p>The server side: ProFTPd version 1.29 on Debian Linux 3.0 <br>
+--enable-ftp on client side activated (also tested with same results with Mandrake 9.1 and PHP 4.3.1).</p>
+<p>The list of directories is the following. By the third directory <br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 Demo<br>
+drwxr-xr-x 2 dentline users 4096 Feb 27 11:11 acht<br>
+drwxr-xr-x 2 dentline users 4096 Feb 27 11:01 akmal<br>
+drwxr-xr-x 2 dentline users 356352 Mar 22 09:13 allessie<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 barendregt<br>
+drwxr-xr-x 2 dentline users 4096 Feb 27 11:23 bennekom<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 bernardo<br>
+drwxr-xr-x 2 dentline users 4096 Mar 18 11:38 bolhuis<br>
+drwxr-xr-x 2 dentline users 4096 Mar 19 08:17 demo<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 demo1<br>
+drwxr-xr-x 2 dentline users 8192 Mar 2 10:42 demo10<br>
+drwxr-xr-x 2 dentline users 4096 Feb 14 12:23 demo11<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 demo12<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 demo13<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 demo14<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 demo15<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 demo16<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 demo17<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 demo18<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 demo19<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 demo2<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 demo20<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 demo21<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 demo22<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 demo23<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:57 demo24<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo25<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo26<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo27<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo28<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo29<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo3<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo30<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo31<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo32<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo33<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo34<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo35<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo36<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo37<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo38<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo39<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo4<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo40<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo41<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo42<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo43<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo44<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo45<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo46<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo47<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:58 demo48<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:59 demo49<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:59 demo5<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:59 demo50<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:59 demo51<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:59 demo52<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:59 demo53<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo54<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo55<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo56<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo57<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo58<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo59<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo6<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo60<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo61<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo62<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo63<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo64<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo65<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo66<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo67<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo68<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo69<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo7<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo70<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo71<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo72<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo73<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo74<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo75<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo76<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo77<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo78<br>
+drwxr-xr-x 2 dentline users 4096 Mar 3 11:23 demo79<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo8<br>
+drwxr-xr-x 2 dentline users 4096 Mar 11 13:46 demo80<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo81<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo82<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo83<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo84<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo85<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo86<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo87<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo88<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo89<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo9<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo90<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo91<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo92<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo93<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo94<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo95<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo96<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 demo97<br>
+drwxr-xr-x 2 dentline users 45056 Jan 21 16:01 demo98<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 15:59 dentalcare<br>
+drwxr-xr-x 2 dentline users 4096 Mar 16 08:15 dewit<br>
+drwxr-xr-x 2 dentline users 40960 Mar 19 09:51 djamaludin<br>
+drwxr-xr-x 2 dentline users 4096 Feb 11 10:28 dongemond<br>
+drwxr-xr-x 2 dentline users 20480 Mar 22 10:35 eijsbouts<br>
+drwxr-xr-x 2 dentline users 4096 Feb 27 10:36 faessaert<br>
+drwxr-xr-x 2 dentline users 4096 Feb 27 09:22 flexdent<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 16:00 ftp<br>
+drwxr-xr-x 2 dentline users 4096 Feb 27 10:04 groothuis<br>
+drwxr-xr-x 2 dentline users 4096 Feb 27 08:57 gruter<br>
+drwxr-xr-x 2 dentline users 4096 Feb 27 11:44 hornman<br>
+drwxr-xr-x 2 dentline users 4096 Feb 27 10:48 houtsma<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 16:00 jarno<br>
+drwxr-xr-x 2 dentline users 4096 Feb 27 08:46 meeuwis<br>
+drwxr-xr-x 2 dentline users 4096 Feb 27 09:05 mensink<br>
+drwxr-xr-x 2 dentline users 4096 Jan 25 10:22 mpk<br>
+-rw-r--r-- 1 dentline users 67 Feb 4 15:52 null<br>
+drwxr-xr-x 2 dentline users 4096 Mar 21 22:21 oltmans<br>
+drwxr-xr-x 2 dentline users 49152 Mar 22 10:42 omnivor<br>
+drwxr-xr-x 2 dentline users 8192 Feb 14 13:58 parorotterdam<br>
+drwxr-xr-x 2 dentline users 4096 Feb 4 16:00 simplex<br>
+drwxr-xr-x 2 dentline users 16384 Mar 22 08:53 sms<br>
+drwxr-xr-x 2 dentline users 8192 Mar 18 14:30 sonneveld<br>
+drwxr-xr-x 2 dentline users 45056 Mar 22 10:42 tandheelkunst<br>
+drwxr-xr-x 2 dentline users 12288 Mar 22 09:40 tendens<br>
+drwxr-xr-x 2 dentline users 28672 Mar 22 10:28 teng<br>
+drwxr-xr-x 2 dentline users 4096 Jan 16 13:35 test<br>
+drwxr-xr-x 2 dentline users 16384 Mar 19 15:20 test_dev<br>
+drwxr-xr-x 2 dentline users 4096 Feb 17 10:58 topcuogli<br>
+drwxr-xr-x 2 dentline users 4096 Mar 16 17:35 vangelder<br>
+drwxr-xr-x 2 dentline users 28672 Mar 22 10:29 wasser<br>
+drwxr-xr-x 2 dentline users 4096 Feb 27 11:34 weststrate<br>
+drwxr-xr-x 2 dentline users 16384 Mar 22 10:36 wigchert<br>
+drwxr-xr-x 2 dentline users 4096 Feb 27 08:52 willemstraat</p>
+<p>Up to the second directory it retrieves ok. It produces at the client side a directory list (second directory /www/praktijken/acht): <br>
+-rw-r--r--    1 apache   apache       1681 mrt 22 09:49 afspraaktypes20040226155821.xml<br>
+-rw-r--r--    1 apache   apache       1681 mrt 22 09:49 afspraaktypes20040226155901.xml<br>
+-rw-r--r--    1 apache   apache       1681 mrt 22 09:49 afspraaktypes20040227121056.xml<br>
+-rw-r--r--    1 apache   apache     271414 mrt 22 09:49 afspraken20040226155834000.xml<br>
+-rw-r--r--    1 apache   apache      98440 mrt 22 09:49 afspraken20040226155849001.xml<br>
+-rw-r--r--    1 apache   apache        439 mrt 22 09:49 afspraken20040226155854002.xml<br>
+-rw-r--r--    1 apache   apache     271414 mrt 22 09:49 afspraken20040226155914000.xml<br>
+-rw-r--r--    1 apache   apache      98440 mrt 22 09:49 afspraken20040226155928001.xml<br>
+-rw-r--r--    1 apache   apache        439 mrt 22 09:49 afspraken20040226155935002.xml<br>
+-rw-r--r--    1 apache   apache     273153 mrt 22 09:49 afspraken20040227121108000.xml<br>
+-rw-r--r--    1 apache   apache      97867 mrt 22 09:49 afspraken20040227121123001.xml<br>
+-rw-r--r--    1 apache   apache          3 mrt 22 09:49 bloklog.txt<br>
+-rw-r--r--    1 apache   apache       2493 mrt 22 09:49 importpraktijk20040226155821000.xml<br>
+-rw-r--r--    1 apache   apache       2493 mrt 22 09:49 importpraktijk20040226155901000.xml<br>
+-rw-r--r--    1 apache   apache       2493 mrt 22 09:49 importpraktijk20040227121055000.xml<br>
+-rw-r--r--    1 apache   apache         67 mrt 22 09:49 null</p>
+<p>At the third, it hangs at the first file. So the produced result is (for /www/praktijken/akmal)</p>
+<p>totaal 0<br>
+-rw-r--r--    1 apache   apache          0 mrt 22 09:49 afspraaktypes20040226160448.xml</p>
+<p>Sometimes it can get up to the fourth directory. But about then it is over. After it hangs at a file, it follows a regular timeout from the ftp server within few minutes.</p>
+<p>I cannot give a test account at the moment it is a production environment.</p>
+</section>
+<section>
+<h3>[2004-03-22 13:13 UTC] mpk at dentline dot nl</h3>
+<p>I just tested it. It looks like it has nothing to do with the problem. It stalls at a file and after X minutes it does a timeout. The problem is the stalling. This happens in a period of 10-20 seconds (the one it takes to retrieve some 20 &lt;1k files). Is there any way to overcome the stalling? Or any other ideas? Thanks.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

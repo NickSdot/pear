@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4136</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #4136</h1>
+<p>Automatic link generation</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4136</th><td>Automatic link generation</td></tr>
+<tr><th>Submitted</th><td>2005-04-13 09:21 UTC</td></tr>
+<tr><th>From</th><td>krecik at e-wro dot net</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Any</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-13 09:21 UTC] krecik at e-wro dot net</h3>
+<p>Description:<br>
+------------<br>
+It would be nice if the links.ini file were automatically generated/augmented from FOREIGN KEY declarations.</p>
+</section>
+<section>
+<h3>[2005-09-03 15:14 UTC] wouter_hartog at hotmail dot com</h3>
+<p>I totally agree with this request, but I would go a step further; we should not need a links.ini file at all if the database has all the Foreign Keys defined properly. So not just a script to auto-generate the links.ini file, but change the code in the DB_DataObject package to create links based on Foreign Keys.</p>
+</section>
+<section>
+<h3>[2005-09-05 09:52 UTC] krecik at e-wro dot net</h3>
+<p>Well, alan pointed right thing: somebody has to write a patch.  I&#039;m not prepared to do it (lack of time and PHP experience) so I don&#039;t push matter further.</p>
+<p>As a side note, I&#039;d like to mention it would be not so easy to do properly.  SQL allows to declare multi-field keys and trying to handle them would possibly give a whole new class of headaches for anyone doing it.  At least gave to me when I tried to invent reasonable interface, not to mention an implementation.</p>
+</section>
+<section>
+<h3>[2005-09-08 16:20 UTC] rkgphp at accedo dot es</h3>
+<p>Check this out...</p>
+<p>&lt;?php</p>
+<p>// +----------------------------------------------------------------------+<br>
+// | PHP Version 4                                                        |<br>
+// +----------------------------------------------------------------------+<br>
+// | Copyright (c) Ruben Gomez Agudo &lt;rkgphp@accedo.es&gt;                   |<br>
+// +----------------------------------------------------------------------+<br>
+// | This source file is subject to version 2.02 of the PHP license,      |<br>
+// | that is bundled with this package in the file LICENSE, and is        |<br>
+// | available at through the world-wide-web at                           |<br>
+// | http://www.php.net/license/2_02.txt.                                 |<br>
+// | If you did not receive a copy of the PHP license and are unable to   |<br>
+// | obtain it through the world-wide-web, please send a note to          |<br>
+// | license@php.net so we can mail you a copy immediately.               |<br>
+// +----------------------------------------------------------------------+<br>
+// | Author:  Ruben Gomez &lt;rkgphp@accedo.es&gt;<br>
+// +----------------------------------------------------------------------+</p>
+<p>// This source automatically generates a links.ini file from a DB processed<br>
+// with DB_DataObjects, based in some criterias at the DB design, usually done<br>
+// by me and hope by you too</p>
+<p>//require_once &quot;debuglib.php&quot;;<br>
+/*<br>
+REQUIRED_VAR: $file_in<br>
+OPTIONAL_VAR: [$file_out]<br>
+*/</p>
+<p>if(!is_string($file_in)) {<br>
+  print &quot;I need the file in!&quot;;<br>
+  die();<br>
+}</p>
+<p>if(file_exists($file_in)) {<br>
+  $lines = file($file_in);<br>
+}   else {<br>
+  print &quot;The file $file_in doesn&#039;t exists!&quot;;<br>
+  die();<br>
+}</p>
+<p>if(!is_string($file_out)) {<br>
+  $file_out = preg_replace(&quot;/(.*)\.ini/&quot;, &quot;$1.links.ini&quot;, $file_in);<br>
+}</p>
+<p>foreach($lines as $line) {<br>
+  if(preg_match(&quot;/\[(.*)\]/&quot;, $line, $res)) {<br>
+    if(preg_match(&quot;/(.*)__keys/&quot;, $res[1], $res2)) {<br>
+      $table = $res2[1];<br>
+      $keys = true;<br>
+      <br>
+      //      print &quot;&lt;br&gt;table=$table ; keys=$keys ; line=&#039;$line&#039;&quot;;<br>
+      continue;<br>
+    } else {<br>
+      $table = $res[1];<br>
+      $keys = false;</p>
+<p>//      print &quot;&lt;br&gt;table=$table ; keys=$keys ; line=&#039;$line&#039;&quot;;<br>
+      continue;<br>
+    }<br>
+  }</p>
+<p>$table = trim($table, &quot;\r\n &quot;);<br>
+  $line = trim($line, &quot;\r\n &quot;);<br>
+    <br>
+  if(!is_string($table) || $table==&quot;&quot; ||<br>
+     !is_string($line) || $line==&quot;&quot;)<br>
+    continue;</p>
+<p>if($keys) {<br>
+    if(preg_match(&quot;/^([A-z0-9_]+)[ ]*=.*$/&quot;, $line, $res3))<br>
+    $k[$table][] = $res3[1];<br>
+  } else {<br>
+    if(preg_match(&quot;/^([A-z0-9_]+)[ ]*=[ ]*[0-9]+$/&quot;, $line, $res3))<br>
+      $a[$table][] = $res3[1];<br>
+  }</p>
+<p>}</p>
+<p>//print_a($a);<br>
+//print_a($k);</p>
+<p>/*<br>
+Now we have the columns and the keys. Let&#039;s make the links...</p>
+<p>...by searching every (not key) column in each table, comparing with all the<br>
+others key columns in the other tables</p>
+<p>... Modify this to adapt the program to your needs. This is perfect for me.<br>
+*/</p>
+<p>foreach($a as $table =&gt; $columns) {</p>
+<p>foreach($columns as $column) {</p>
+<p>// Skip key columns<br>
+    $column_is_key = false;<br>
+    foreach($k[$table] as $kcolumns) {<br>
+      if($column == $kcolumns) {<br>
+	$column_is_key = true;<br>
+	break;<br>
+      }<br>
+    }<br>
+    if($column_is_key)<br>
+      continue;</p>
+<p>foreach($k as $table2 =&gt; $keys2) {<br>
+      // Skip himself<br>
+      if($table2 == $table)<br>
+	continue;</p>
+<p>foreach($keys2 as $key2) {<br>
+	if($column == $key2)<br>
+	  $l[$table][] = &quot;$column = $table2:$key2&quot;;<br>
+	  continue;<br>
+      }</p>
+<p>}<br>
+  }<br>
+}</p>
+<p>//int_a($k);<br>
+//print_a($l);</p>
+<p>foreach($l as $table =&gt; $links) {<br>
+  $out .= &quot;[$table]\n&quot;;<br>
+  foreach($links as $link)<br>
+    $out .= &quot;$link\n&quot;;<br>
+  $out .= &quot;\n&quot;;<br>
+}</p>
+<p>if (!$handle = fopen($file_out, &#039;w&#039;)) {<br>
+  echo &quot;Cannot open file ($file_out)&quot;;<br>
+  exit;<br>
+}<br>
+if (fwrite($handle, $out) === FALSE) {<br>
+  echo &quot;Cannot write to file ($file_out)&quot;;<br>
+  exit;<br>
+}<br>
+echo &quot;Success, wrote links to the file $file_out&quot;;<br>
+fclose($handle);</p>
+<p>?&gt;</p>
+</section>
+<section>
+<h3>[2005-09-14 21:05 UTC] carlosjordao at gmail dot com</h3>
+<p>Hi,<br>
+  I&#039;m thinking about it. I have written a scrap of code that does it. Well  it works (for postgres), but it has some details very specific to the postgres database. <br>
+  I don&#039;t know how to do it. I would like some advices.</p>
+<p>Here goes the SQL Query I use:<br>
+select ARRAY(select attname from pg_attribute where attnum = any (conkey) and attrelid=conrelid) as from_col, (select relname from pg_class where oid=conrelid) as from_table, a.relname as to_table, ARRAY(select attname from pg_attribute where attnum = any (confkey) AND attrelid=a.oid) as to_col from pg_constraint c, pg_class a where contype=&#039;f&#039; and confrelid=a.oid order by from_table;</p>
+<p>The code I have put into Generator.php is very simple.<br>
+It gets the data provided by this query and writes out to the {$base}/{$this-&gt;_database}.links.ini file.</p>
+<p>The problems is: the query output is something specific to postgres; the first field comes like array, and is returned like a string instead an array. I&#039;ve put it into pgsql.php, inside function getSpecificQuery(), but I don&#039;t know how make that a generic output to be processed inside Generator.php</p>
+<p>Besides that, I need to consider the schema thing. This query doesn&#039;t output tables name with schema, what will not work if the .ini file has the tables with schema name.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

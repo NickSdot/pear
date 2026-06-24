@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4104</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_oci8/index.html">MDB2_Driver_oci8</a> &#187; Bug #4104</h1>
+<p>oci8://user:pwd@tnsname broken in php5</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-04-08 15:00 UTC</td></tr>
+<tr><th>From</th><td>adrian dot crossley at hesa dot ac dot uk</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_oci8/index.html">MDB2_Driver_oci8</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>Windows 2000/2003</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-04-08 15:00 UTC] adrian dot crossley at hesa dot ac dot uk</h3>
+<p>Description:<br>
+------------<br>
+With php4 I have always used a dns of oci8://user:pwd@tnsname to connect to my databases.</p>
+<p>This is broken in php5 because $dsn[&#039;database&#039;] is passed to connect_function whereas in php4 it was $dsn[&#039;hostspec&#039;].  The php4 method was very much in keeping with normal Oracle connect strings.</p>
+<p>For php5 I have to use oci8://user:pwd@/tnsname.  I can find no reason for this change. Am I really to change the syntax of all my dsn strings?</p>
+<p>Also, the php5 version attempts a &quot;direct connect&quot; (not sure what that is does it mean local?) when a No Listener error is encountered.  In my case a failure to connect to my DEV2 database (its intentionally down) now causes php to connect to my LIVE (default) database. What is the reason for this too?</p>
+<p>The second isse compounds the first by causing all my dsn strings to connect to result in a connection to my LIVE (default) database.</p>
+<p>Bug #700 is similar.  It notes &quot;Dave makes some compelling points&quot; but has unexplained Won&#039;t Fix status.</p>
+<p>Many thanks in advance</p>
+<p>Reproduce code:<br>
+---------------<br>
+not applicable.</p>
+<p>Expected result:<br>
+----------------<br>
+not applicable.</p>
+<p>Actual result:<br>
+--------------<br>
+not applicable.</p>
+</section>
+<section>
+<h3>[2005-04-08 19:28 UTC] bretrzaun at hotmail dot com</h3>
+<p>Having the same problem here (PHP 5.0.4 on Windows XP).</p>
+</section>
+<section>
+<h3>[2005-04-11 10:41 UTC] magnus at mek dot nu</h3>
+<p>I have this problem as well. And I installed DB-1.6.8 to have everything return to normal since this problem did not occur with php5 until I upgraded the pear class DB above 1.6.8...</p>
+<p>Cheers, Magnus</p>
+</section>
+<section>
+<h3>[2005-04-11 15:31 UTC] adrian dot crossley at hesa dot ac dot uk</h3>
+<p>Many thanks for the BC hack.</p>
+<p>Any news on the secondary issue.  Why are we attempting to connect to an unnamed database when a TNS Listener is not found?  In my opinion this should be handled at application level not library level.</p>
+</section>
+<section>
+<h3>[2005-04-21 18:05 UTC] malists at epon dot ro</h3>
+<p>Couple enhancements and a bug report about oci8 in DB 1.7.5:</p>
+<p>1. give preference to OCILogon (as it&#039;s recommended by Oracle and requires no configuration) rather than oci_connect<br>
+        if (function_exists(&#039;oci_connect&#039;)) {<br>
+-&gt;<br>
+        if (function_exists(&#039;ocilogon&#039;)) {</p>
+<p>2. take in account the debug parameter and don&#039;t use @ in front of functions when it is &gt; 2, as common.php does and others.</p>
+<p>3. this is the correct OCILogon syntax:<br>
+            if ($dsn[&#039;hostspec&#039;]) {<br>
+                $this-&gt;connection = $connect_function($dsn[&#039;username&#039;],<br>
+                                                       $dsn[&#039;password&#039;],<br>
+                                                       &#039;//&#039; . $dsn[&#039;hostspec&#039;] . &#039;/&#039; . $dsn[&#039;database&#039;]);</p>
+</section>
+<section>
+<h3>[2006-01-13 00:03 UTC] izzyalanis at gmail dot com</h3>
+<p>Also needs to support tnsnames-less connections with full hostname and port specified.</p>
+<p>&quot;username:password@host:port/service&quot;<br>
+should be executed as...<br>
+OCILogin(&quot;username&quot;, &quot;password&quot;, &quot;host:port:service&quot;);</p>
+<p>&quot;username:password@host/service&quot;<br>
+should be executed as...<br>
+OCILogin(&quot;username&quot;, &quot;password&quot;, &quot;host/service&quot;)<br>
+or<br>
+OCILogin(&quot;username&quot;, &quot;password&quot;, &quot;host:1521/service&quot;)</p>
+<p>&quot;username:password@service&quot;<br>
+should be executed as...<br>
+OCILogin(&quot;username&quot;, &quot;password&quot;, &quot;service&quot;)</p>
+<p>and</p>
+<p>&quot;username:password@/service&quot;<br>
+should also be executed as...<br>
+OCILogin(&quot;username&quot;, &quot;password&quot;, &quot;service&quot;)</p>
+</section>
+<section>
+<h3>[2006-01-17 15:09 UTC] izzyalanis at gmail dot com</h3>
+<p>When the dsn is passed to DB::connect as a string, rather than an associative array, it&#039;s automagically picked apart into the individual pieces: &#039;hostspec&#039;, &#039;port&#039;, and &#039;database&#039; (etc).</p>
+<p>Of course, one could avoid passing the dsn as a string, and always pass it as an associative array, with &#039;the right&#039; string in the hostpec (or database) slot as a workaround... but getting the code to work right would be nice. And not really all that difficult.</p>
+</section>
+<section>
+<h3>[2006-05-10 18:55 UTC] gmandas at scholastic dot com</h3>
+<p>PHP5 on Solaris 11 Oracle9i.  I can&#039;t get connect to connect...</p>
+</section>
+<section>
+<h3>[2006-05-10 19:17 UTC] gmandas at scholastic dot com</h3>
+<p>Please disregard my previous posting.  I was able to connect using: $dsn = &#039;oci8://user:pass@[IP ADDRESS]:1521/(DESCRIPTION =<br>
+    (ADDRESS_LIST =(ADDRESS = (PROTOCOL = TCP)(HOST = [DNS NAME] )(PORT = 1521)))<br>
+    (CONNECT_DATA = (SERVER = DEDICATED) (SERVICE_NAME = oracle)))&#039;;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

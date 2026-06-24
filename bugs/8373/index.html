@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8373</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_mssql/index.html">MDB2_Driver_mssql</a> &#187; Bug #8373</h1>
+<p>ALTER TABLE bug when adding more than 1 column</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-08-07 13:11 UTC</td></tr>
+<tr><th>From</th><td>kaiser at unisolution dot de</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_mssql/index.html">MDB2_Driver_mssql</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.8</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-07 13:11 UTC] kaiser at unisolution dot de</h3>
+<p>Description:<br>
+------------<br>
+There is a bug in the alterTable function. It works fine when adding only one column, but doesn´t work for more than 1 column. Problem is that it produces a sql statement like this:</p>
+<p>ALTER TABLE abc ADD column1 integer, ADD column2 integer</p>
+<p>but that doesn´t work in MS SQL, it should be:</p>
+<p>ALTER TABLE abc ADD column1 integer, column2 integer</p>
+<p>I fixed this bug by modifing the alterTable function in /Driver/Manager/mssql.php</p>
+<p>I replaced (starting from line 227)</p>
+<p>foreach ($changes[&#039;add&#039;] as $field_name =&gt; $field) {<br>
+                if ($query) {<br>
+                    $query.= &#039;, &#039;;<br>
+                }<br>
+                $query.= &#039;ADD &#039;.$db-&gt;getDeclaration($field[&#039;type&#039;], $field_name, $field);<br>
+            }</p>
+<p>by</p>
+<p>foreach ($changes[&#039;add&#039;] as $field_name =&gt; $field) {<br>
+                if ($query) {<br>
+                    $query.= &#039;, &#039;;<br>
+                }<br>
+                else {<br>
+                $query.= &#039;ADD &#039;;<br>
+                }<br>
+                $query.= $db-&gt;getDeclaration($field[&#039;type&#039;], $field_name, $field);<br>
+            }</p>
+<p>and now it seems to work correctly ...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

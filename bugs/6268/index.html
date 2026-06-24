@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6268</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; System &#187; <a href="package/System_Command/index.html">System_Command</a> &#187; Bug #6268</h1>
+<p>execute() raises SYSTEM_COMMAND_STDERR error when command exits non-zero</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-12-16 18:29 UTC</td></tr>
+<tr><th>From</th><td>cconstantine at php dot net</td></tr>
+<tr><th>Assigned</th><td>cconstantine</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/System_Command/index.html">System_Command</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>*nix</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-12-16 18:29 UTC] cconstantine at php dot net</h3>
+<p>Description:<br>
+------------<br>
+The execute() method behaves backwards/oddly:</p>
+<p>- a command which writes to stderr and returns zero<br>
+  does NOT raise SYSTEM_COMMAND_STDERR (nor any other<br>
+  error.) This is &quot;odd&quot;.</p>
+<p>- a command which does NOT write to sderr, but DOES<br>
+  return non-zero does raises SYSTEM_COMMAND_STDERR<br>
+  This is simply wrong.</p>
+<p>Furthermore, the output captured from stderr is not used for <br>
+anything, nor is it obtainable by the caller.</p>
+<p>Test script:<br>
+---------------<br>
+TEST ONE...</p>
+<p>&lt;?php<br>
+require_once &#039;System/Command.php&#039;;<br>
+$cmd =&amp; new System_Command;</p>
+<p>// a simple command which does not write to stderr,<br>
+// but which does return a non-zero exit value<br>
+$cmd-&gt;pushCommand(&#039;exit&#039;,&#039;1&#039;);</p>
+<p>$res = $cmd-&gt;execute();<br>
+if ( PEAR::isError($res) ) {<br>
+    print(&quot;&#039;&quot;.$res-&gt;getMessage().&quot;&#039;\n&quot;);<br>
+} else {<br>
+    print(&quot;ok!\n&quot;);<br>
+}<br>
+?&gt;</p>
+<p>TEST TWO...</p>
+<p>&lt;?php<br>
+require_once &#039;System/Command.php&#039;;<br>
+$cmd =&amp; new System_Command;</p>
+<p>// A command which DOES write to stderr, and exits<br>
+// with zero return value.<br>
+$cmd-&gt;pushCommand(&#039;/usr/bin/logger&#039;,&#039;-s&#039;,&#039;hello world&#039;);</p>
+<p>$res = $cmd-&gt;execute();<br>
+if ( PEAR::isError($res) ) {<br>
+    print(&quot;&#039;&quot;.$res-&gt;getMessage().&quot;&#039;\n&quot;);<br>
+} else {<br>
+    print(&quot;ok!\n&quot;);<br>
+}<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+TEST ONE...</p>
+<p>Should raise some error which actually represents that the <br>
+command returned non-zero. Fix the error code/message.</p>
+<p>TEST TWO...</p>
+<p>Should raise some error which represents that the exit value <br>
+is zero, but that there was output on stderr. Add a new error <br>
+code and way to get at the output from stderr -- but for <br>
+backcompat execute() should NOT raise an error if the return <br>
+value is zero (regardless of stderr output.)</p>
+<p>Actual result:<br>
+--------------<br>
+TEST ONE...</p>
+<p>The test code outputs &quot;&#039;System_Command Error: command wrote to <br>
+stderr&#039;&quot;</p>
+<p>TEST TWO...</p>
+<p>The test code outputs &quot;ok!&quot;</p>
+</section>
+<section>
+<h3>[2006-03-14 22:21 UTC] cconstantine at php dot net</h3>
+<p>Thank you for your bug report. This issue has been fixed<br>
+in the latest released version of the package, which you can download at<br>
+http://pear.php.net/get/System_Command</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #978</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #978</h1>
+<p>Implement document/literal server</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #978</th><td>Implement document/literal server</td></tr>
+<tr><th>Submitted</th><td>2004-03-09 07:39 UTC</td></tr>
+<tr><th>From</th><td>xiangweizhuo at hotmail dot com</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>window</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-09 07:39 UTC] xiangweizhuo at hotmail dot com</h3>
+<p>Description:<br>
+------------<br>
+The current SOAP package doesn&#039;t seem to implement the document/literal server.</p>
+<p>From some of the comments in the package, adding the options</p>
+<p>$options = array(&#039;use&#039; =&gt; &#039;literal&#039;, &#039;style&#039; =&gt; &#039;document&#039;);</p>
+<p>to the SOAP_Server does not produce a document/literal WSDL schema.</p>
+<p>So, it a document/literal server implementable with the current SOAP package? (SOAP SOAP-0.8RC3.tgz)</p>
+<p>Reproduce code:<br>
+---------------<br>
+//From the server.php example in the SOAP package.</p>
+<p>require_once &#039;SOAP/Server.php&#039;;<br>
+$options = array(&#039;use&#039; =&gt; &#039;literal&#039;, &#039;style&#039; =&gt; &#039;document&#039;);<br>
+$server = new SOAP_Server($options);<br>
+.<br>
+.<br>
+.</p>
+<p>Expected result:<br>
+----------------<br>
+A document/literal (WSDL schema) SOAP service.</p>
+<p>Actual result:<br>
+--------------<br>
+A RPC/Encoded (WSDL schema) SOAP service</p>
+</section>
+<section>
+<h3>[2004-04-06 00:16 UTC] xiangweizhuo at hotmail dot com</h3>
+<p>Yes, generating document/literal style WSDL from PHP would be the best. Similar to the rpc/encoded way of creating the WSDL but for document/literal if possible.</p>
+<p>Cheer, Wei.</p>
+</section>
+<section>
+<h3>[2005-03-03 19:52 UTC] thatcoder at gmail dot com</h3>
+<p>Any luck on implementation of this?</p>
+</section>
+<section>
+<h3>[2005-07-18 21:01 UTC] mw dot trash at gmail dot com</h3>
+<p>any eta on when this may be fixed?</p>
+</section>
+<section>
+<h3>[2006-01-25 19:47 UTC] gnomebubble at gmail dot com</h3>
+<p>A temporary solution would be to apply this patch this patch to Disco.php. It&#039;s much more than a hack, but it&#039;s not a full solution either, since there&#039;s a really nasty case of (newer) doubled code in WSDL.php which I only noticed later. The problem is, though, that WSDL.php&#039;s WSDL code cannot generate a WSDL schema (at least not that I could find how to do it), so you still need Disco.php (which seems out of date). On the other hand WSDL.php is apparently used by Server.php for converting PHP types to SOAP types, so there may be some discrepancies between the two.</p>
+<p>The real proper solution (in case someone cares to implement it), would be coding Document/Literal support into WSDL.php (which was designed with RPC/Encoded in mind) and then creating a newfangled Disco_Server which generates WSDL code based on the WSDL class in WSDL.php.</p>
+<p>Just a note: This patch is the result of a few hours of coding. It&#039;s probably not devoid of bugs. I only tested it with Visual Studio .NET 2005. I&#039;m not sure if it works with earlier versions, but it should, as I tried to model the output, as far as possible, after ASP.Net&#039;s output.</p>
+<p>In any case, working this out proved out to be easier than I thought. Unlike what some people said, Document/Literal is NOT a lot more complicated than RPC/Encoded. In fact, it seemed to me to be slightly simpler, and I was working on the schema code - the message parsing and generation code is obviously a great deal simpler in Document/Literal.</p>
+<p>==================================<br>
+End rant and here&#039;s the patch:</p>
+<p>--- Old/Disco.php	Tue Jan 17 05:28:04 2006<br>
++++ New/Disco.php	Tue Jan 17 12:07:23 2006<br>
+@@ -41,7 +41,8 @@<br>
+ <br>
+ <br>
+     function SOAP_DISCO_Server($soap_server, $service_name, $service_desc = &#039;&#039;,<br>
+-                               $import_ns = null)<br>
++                               $import_ns = null, $service_ns = null, $options = array(<br>
++                                   &#039;style&#039; =&gt; &#039;rpc&#039;, &#039;use&#039; =&gt; &#039;encoded&#039;))<br>
+     {<br>
+         parent::SOAP_Base_Object(&#039;Server&#039;);<br>
+ <br>
+@@ -49,11 +50,12 @@<br>
+             || !get_class($soap_server) == &#039;soap_server&#039;) return;<br>
+ <br>
+         $this-&gt;_service_name = $service_name;<br>
+-        $this-&gt;_service_ns = &quot;urn:$service_name&quot;;<br>
++        $this-&gt;_service_ns = isset($service_ns) ? $service_ns : &quot;urn:$service_name&quot;;<br>
+         $this-&gt;_service_desc = $service_desc;<br>
+         $this-&gt;import_ns = isset($import_ns) ? $import_ns : $this-&gt;import_ns;<br>
+         $this-&gt;soap_server = $soap_server;<br>
+         $this-&gt;host = isset($_SERVER[&#039;HTTP_HOST&#039;]) ? $_SERVER[&#039;HTTP_HOST&#039;] : &#039;localhost&#039;;<br>
++        $this-&gt;options = $options;<br>
+     }<br>
+ <br>
+     function getDISCO()<br>
+@@ -125,7 +127,7 @@<br>
+         $this-&gt;_bindingname = $this-&gt;_service_name . &#039;Binding&#039;;<br>
+         $this-&gt;_wsdl[&#039;definitions&#039;][&#039;binding&#039;][&#039;attr&#039;][&#039;name&#039;] = $this-&gt;_bindingname;<br>
+         $this-&gt;_wsdl[&#039;definitions&#039;][&#039;binding&#039;][&#039;attr&#039;][&#039;type&#039;] = &#039;tns:&#039; . $this-&gt;_portname;<br>
+-        $this-&gt;_wsdl[&#039;definitions&#039;][&#039;binding&#039;][&#039;soap:binding&#039;][&#039;attr&#039;][&#039;style&#039;] = &#039;rpc&#039;;<br>
++        $this-&gt;_wsdl[&#039;definitions&#039;][&#039;binding&#039;][&#039;soap:binding&#039;][&#039;attr&#039;][&#039;style&#039;] = $this-&gt;options[&#039;style&#039;];<br>
+         $this-&gt;_wsdl[&#039;definitions&#039;][&#039;binding&#039;][&#039;soap:binding&#039;][&#039;attr&#039;][&#039;transport&#039;] = SCHEMA_SOAP_HTTP;<br>
+ <br>
+         // SERVICE<br>
+@@ -183,6 +185,51 @@<br>
+         return $schema;<br>
+     }<br>
+ <br>
++    function _generateStruct(&amp;$ctype, $members)<br>
++    {<br>
++        // Generate member sequence (if $members is a non-empty array)<br>
++        if (is_array($members) &amp;&amp; count($members) &gt; 0) {<br>
++            $seq =&amp; $ctype[&#039;sequence&#039;][];<br>
++            $seq[&#039;attr&#039;] = &#039;&#039;;<br>
++            foreach ($members as $name =&gt; $type) {<br>
++                list($typens, $type) = $this-&gt;_getTypeNs($type);<br>
++                $param_element =&amp; $seq[&#039;element&#039;][];<br>
++                $param_element[&#039;attr&#039;][&#039;minOccurs&#039;] = &#039;1&#039;;<br>
++                $param_element[&#039;attr&#039;][&#039;maxOccurs&#039;] = &#039;1&#039;;<br>
++                $param_element[&#039;attr&#039;][&#039;name&#039;] = $name;<br>
++                $param_element[&#039;attr&#039;][&#039;type&#039;] = $typens . &#039;:&#039; . $type;<br>
++            }<br>
++        }<br>
++    }<br>
++<br>
++    function _generateArray(&amp;$ctype, $type, $name = null)<br>
++    {<br>
++        // array(array()) hack<br>
++        if (is_array($type) &amp;&amp; count($type) == 1)<br>
++        {<br>
++            foreach ($type as $xname =&gt; $xtype)<br>
++                break;<br>
++            $type = $xtype;<br>
++<br>
++            if (!is_int($namex)) // Associative array<br>
++                $name = $xname;<br>
++                <br>
++        }<br>
++<br>
++        // If no name is specified: follow the .Net convention of naming item element by type<br>
++        if (!$name)<br>
++            $name = $type;<br>
++<br>
++        list($typens, $type) = $this-&gt;_getTypeNs($type);<br>
++        $seq =&amp; $ctype[&#039;sequence&#039;][];<br>
++        $seq[&#039;attr&#039;] = &#039;&#039;;<br>
++        $el =&amp; $seq[&#039;element&#039;][];<br>
++        $el[&#039;attr&#039;][&#039;minOccurs&#039;] = &#039;0&#039;;<br>
++        $el[&#039;attr&#039;][&#039;maxOccurs&#039;] = &#039;unbounded&#039;;<br>
++        $el[&#039;attr&#039;][&#039;name&#039;] = $name;<br>
++        $el[&#039;attr&#039;][&#039;type&#039;] = $typens . &#039;:&#039; . $type;<br>
++    }<br>
++<br>
+     function addSchemaFromMap(&amp;$map)<br>
+     {<br>
+         if (!$map) {<br>
+@@ -201,18 +248,32 @@<br>
+                 $ctype[&#039;attr&#039;][&#039;name&#039;] = $type;<br>
+                 foreach ($_type_def as $_varname =&gt; $_vartype) {<br>
+                     if (!is_int($_varname)) {<br>
+-                        list($_vartypens,$_vartype) = $this-&gt;_getTypeNs($_vartype);<br>
+-                        $ctype[&#039;all&#039;][&#039;attr&#039;] = &#039;&#039;;<br>
+-                        $el =&amp; $ctype[&#039;all&#039;][&#039;element&#039;][];<br>
+-                        $el[&#039;attr&#039;][&#039;name&#039;] = $_varname;<br>
+-                        $el[&#039;attr&#039;][&#039;type&#039;] = $_vartypens . &#039;:&#039; . $_vartype;<br>
++                        // Struct-style complex type<br>
++                        if ($this-&gt;options[&#039;use&#039;] == &#039;literal&#039;) {<br>
++                            $this-&gt;_generateStruct(&amp;$ctype, $_type_def);<br>
++                            break;<br>
++                        }<br>
++                        else {<br>
++                            list($_vartypens,$_vartype) = $this-&gt;_getTypeNs($_vartype);<br>
++                            $ctype[&#039;all&#039;][&#039;attr&#039;] = &#039;&#039;;<br>
++                            $el =&amp; $ctype[&#039;all&#039;][&#039;element&#039;][];<br>
++                            $el[&#039;attr&#039;][&#039;name&#039;] = $_varname;<br>
++                            $el[&#039;attr&#039;][&#039;type&#039;] = $_vartypens . &#039;:&#039; . $_vartype;<br>
++                        }<br>
+                     } else {<br>
+-                        $ctype[&#039;complexContent&#039;][&#039;attr&#039;] = &#039;&#039;;<br>
+-                        $ctype[&#039;complexContent&#039;][&#039;restriction&#039;][&#039;attr&#039;][&#039;base&#039;] = &#039;SOAP-ENC:Array&#039;;<br>
+-                        foreach ($_vartype as $array_var =&gt; $array_type) {<br>
+-                            list($_vartypens, $_vartype) = $this-&gt;_getTypeNs($array_type);<br>
+-                            $ctype[&#039;complexContent&#039;][&#039;restriction&#039;][&#039;attribute&#039;][&#039;attr&#039;][&#039;ref&#039;] = &#039;SOAP-ENC:arrayType&#039;;<br>
+-                            $ctype[&#039;complexContent&#039;][&#039;restriction&#039;][&#039;attribute&#039;][&#039;attr&#039;][&#039;wsdl:arrayType&#039;] = $_vartypens . &#039;:&#039; . $_vartype . &#039;[]&#039;;<br>
++                        // Array-style complex type<br>
++                        if ($this-&gt;options[&#039;use&#039;] == &#039;literal&#039;) {<br>
++                            $this-&gt;_generateArray(&amp;$ctype, $_vartype);<br>
++                            break;<br>
++                        }<br>
++                        else {<br>
++                            $ctype[&#039;complexContent&#039;][&#039;attr&#039;] = &#039;&#039;;<br>
++                            $ctype[&#039;complexContent&#039;][&#039;restriction&#039;][&#039;attr&#039;][&#039;base&#039;] = &#039;SOAP-ENC:Array&#039;;<br>
++                            foreach ($_vartype as $array_var =&gt; $array_type) {<br>
++                                list($_vartypens, $_vartype) = $this-&gt;_getTypeNs($array_type);<br>
++                                $ctype[&#039;complexContent&#039;][&#039;restriction&#039;][&#039;attribute&#039;][&#039;attr&#039;][&#039;ref&#039;] = &#039;SOAP-ENC:arrayType&#039;;<br>
++                                $ctype[&#039;complexContent&#039;][&#039;restriction&#039;][&#039;attribute&#039;][&#039;attr&#039;][&#039;wsdl:arrayType&#039;] = $_vartypens . &#039;:&#039; . $_vartype . &#039;[]&#039;;<br>
++                            }<br>
+                         }<br>
+                     }<br>
+                 }<br>
+@@ -220,6 +281,38 @@<br>
+         }<br>
+     }<br>
+ <br>
++    function _generateMessage(&amp;$message, $message_name, $param_types)<br>
++    {<br>
++        $message[&#039;attr&#039;][&#039;name&#039;] = $message_name;<br>
++<br>
++        // This code handles RPC/Encoded and Document/Literal-wrapped<br>
++        // (Microsoft .Net-style). Any other style will be rendered<br>
++        // as RPC/Encoded.<br>
++        if ($this-&gt;options[&#039;style&#039;] == &#039;document&#039; &amp;&amp;<br>
++            $this-&gt;options[&#039;use&#039;] == &#039;literal&#039;)<br>
++        {<br>
++            // Generate reference to message parameters element<br>
++            $part =&amp; $message[&#039;part&#039;][];<br>
++            $part[&#039;attr&#039;][&#039;name&#039;] = &#039;parameters&#039;;<br>
++            $part[&#039;attr&#039;][&#039;element&#039;] = $message_name . &#039;Params&#039;;<br>
++<br>
++            // Generate schema definition for the parameters element<br>
++            $schema =&amp; $this-&gt;_getSchema($this-&gt;_service_ns);<br>
++            $element =&amp; $schema[&#039;element&#039;][];<br>
++            $element[&#039;attr&#039;][&#039;name&#039;] = $message_name . &#039;Params&#039;;<br>
++            $ctype =&amp; $element[&#039;complexType&#039;];<br>
++            $ctype[&#039;attr&#039;] = &#039;&#039;;<br>
++            $this-&gt;_generateStruct(&amp;$ctype, $param_types);<br>
++        }<br>
++        else // RPC/Encoded: inline message parts<br>
++            foreach ($param_types as $name =&gt; $type) {<br>
++                list($typens, $type) = $this-&gt;_getTypeNs($type);<br>
++                $part =&amp; $message[&#039;part&#039;][];<br>
++                $part[&#039;attr&#039;][&#039;name&#039;] = $name;<br>
++                $part[&#039;attr&#039;][&#039;type&#039;] = $typens . &#039;:&#039; . $type;<br>
++        }<br>
++    }<br>
++<br>
+     function addMethodsFromMap(&amp;$map, $namespace, $classname = null)<br>
+     {<br>
+         if (!$map) {<br>
+@@ -232,29 +325,24 @@<br>
+             } else {<br>
+                 $method_namespace = $namespace;<br>
+             }<br>
+-            // INPUT<br>
+-            if (isset($method_types[&#039;in&#039;]) &amp;&amp; is_array($method_types[&#039;in&#039;])) {<br>
+-                $input_message =&amp; $this-&gt;_wsdl[&#039;definitions&#039;][&#039;message&#039;][];<br>
+-                $input_message[&#039;attr&#039;][&#039;name&#039;] = $method_name . &#039;Request&#039;;<br>
+-                foreach ($method_types[&#039;in&#039;] as $name =&gt; $type) {<br>
+-                    list($typens, $type) = $this-&gt;_getTypeNs($type);<br>
+-                    $part =&amp; $input_message[&#039;part&#039;][];<br>
+-                    $part[&#039;attr&#039;][&#039;name&#039;] = $name;<br>
+-                    $part[&#039;attr&#039;][&#039;type&#039;] = $typens . &#039;:&#039; . $type;<br>
+-                }<br>
+-            }<br>
+ <br>
+-            // OUTPUT<br>
+-            if (isset($method_types[&#039;out&#039;]) &amp;&amp; is_array($method_types[&#039;out&#039;])) {<br>
+-                $output_message =&amp; $this-&gt;_wsdl[&#039;definitions&#039;][&#039;message&#039;][];<br>
+-                $output_message[&#039;attr&#039;][&#039;name&#039;] = $method_name . &#039;Response&#039;;<br>
+-                foreach ($method_types[&#039;out&#039;] as $name =&gt; $type) {<br>
+-                    list($typens, $type) = $this-&gt;_getTypeNs($type);<br>
+-                    $part =&amp; $output_message[&#039;part&#039;][];<br>
+-                    $part[&#039;attr&#039;][&#039;name&#039;] = $name;<br>
+-                    $part[&#039;attr&#039;][&#039;type&#039;] = $typens . &#039;:&#039; . $type;<br>
+-                }<br>
+-            }<br>
++            // INPUT MESSAGE<br>
++            if (isset($method_types[&#039;in&#039;]) &amp;&amp; is_array($method_types[&#039;in&#039;]))<br>
++                $param_types = $method_types[&#039;in&#039;];<br>
++            else<br>
++                $param_types = array();<br>
++            $input_message_name = $method_name . &#039;Request&#039;;<br>
++            $input_message =&amp; $this-&gt;_wsdl[&#039;definitions&#039;][&#039;message&#039;][];<br>
++            $this-&gt;_generateMessage(&amp;$input_message, $input_message_name, $param_types);<br>
++<br>
++            // OUTPUT MESSAGE<br>
++            if (isset($method_types[&#039;out&#039;]) &amp;&amp; is_array($method_types[&#039;out&#039;]))<br>
++                $param_types = $method_types[&#039;out&#039;];<br>
++            else<br>
++                $param_types = array();<br>
++            $output_message_name = $method_name . &#039;Response&#039;;<br>
++            $output_message =&amp; $this-&gt;_wsdl[&#039;definitions&#039;][&#039;message&#039;][];<br>
++            $this-&gt;_generateMessage(&amp;$output_message, $output_message_name, $param_types);<br>
+ <br>
+             // PORTTYPES<br>
+             $operation =&amp; $this-&gt;_wsdl[&#039;definitions&#039;][&#039;portType&#039;][&#039;operation&#039;][];<br>
+@@ -262,11 +350,11 @@<br>
+ <br>
+             // INPUT<br>
+             $operation[&#039;input&#039;][&#039;attr&#039;][&#039;message&#039;] = &#039;tns:&#039;<br>
+-                            . $input_message[&#039;attr&#039;][&#039;name&#039;];<br>
++                            . $input_message_name;<br>
+ <br>
+             // OUTPUT<br>
+             $operation[&#039;output&#039;][&#039;attr&#039;][&#039;message&#039;] = &#039;tns:&#039;<br>
+-                            . $output_message[&#039;attr&#039;][&#039;name&#039;];<br>
++                            . $output_message_name;<br>
+ <br>
+             // BINDING<br>
+             $binding =&amp; $this-&gt;_wsdl[&#039;definitions&#039;][&#039;binding&#039;][&#039;operation&#039;][];<br>
+@@ -276,15 +364,17 @@<br>
+ <br>
+             // INPUT<br>
+             $binding[&#039;input&#039;][&#039;attr&#039;] = &#039;&#039;;<br>
+-            $binding[&#039;input&#039;][&#039;soap:body&#039;][&#039;attr&#039;][&#039;use&#039;] = &#039;encoded&#039;;<br>
++            $binding[&#039;input&#039;][&#039;soap:body&#039;][&#039;attr&#039;][&#039;use&#039;] = $this-&gt;options[&#039;use&#039;];<br>
+             $binding[&#039;input&#039;][&#039;soap:body&#039;][&#039;attr&#039;][&#039;namespace&#039;] = $method_namespace;<br>
+-            $binding[&#039;input&#039;][&#039;soap:body&#039;][&#039;attr&#039;][&#039;encodingStyle&#039;] = SOAP_SCHEMA_ENCODING;<br>
++            if ($this-&gt;options[&#039;use&#039;] == &#039;encoded&#039;)<br>
++                $binding[&#039;input&#039;][&#039;soap:body&#039;][&#039;attr&#039;][&#039;encodingStyle&#039;] = SOAP_SCHEMA_ENCODING;<br>
+ <br>
+             // OUTPUT<br>
+             $binding[&#039;output&#039;][&#039;attr&#039;] = &#039;&#039;;<br>
+-            $binding[&#039;output&#039;][&#039;soap:body&#039;][&#039;attr&#039;][&#039;use&#039;] = &#039;encoded&#039;;<br>
++            $binding[&#039;output&#039;][&#039;soap:body&#039;][&#039;attr&#039;][&#039;use&#039;] = $this-&gt;options[&#039;use&#039;];<br>
+             $binding[&#039;output&#039;][&#039;soap:body&#039;][&#039;attr&#039;][&#039;namespace&#039;] = $method_namespace;<br>
+-            $binding[&#039;output&#039;][&#039;soap:body&#039;][&#039;attr&#039;][&#039;encodingStyle&#039;] = SOAP_SCHEMA_ENCODING;<br>
++            if ($this-&gt;options[&#039;use&#039;] == &#039;encoded&#039;)<br>
++                $binding[&#039;output&#039;][&#039;soap:body&#039;][&#039;attr&#039;][&#039;encodingStyle&#039;] = SOAP_SCHEMA_ENCODING;<br>
+         }<br>
+     }<br>
+ <br>
+@@ -355,6 +445,7 @@<br>
+ <br>
+     function _getTypeNs($type)<br>
+     {<br>
++        // TODO: Allow parsing of simpleType class instead of string<br>
+         preg_match_all(&quot;&#039;\{(.*)\}&#039;sm&quot;, $type, $m);<br>
+         if (isset($m[1][0]) &amp;&amp; $m[1][0] != &#039;&#039;) {<br>
+             if (!array_key_exists($m[1][0],$this-&gt;namespaces)) {<br>
+@@ -364,6 +455,8 @@<br>
+             }<br>
+             $typens = $this-&gt;namespaces[$m[1][0]];<br>
+             $type = ereg_replace($m[0][0],&#039;&#039;,$type);<br>
++        } else if (count($m = explode(&#039;:&#039;, $type, 2)) &gt; 1) {<br>
++            list($typens, $type) = $m;<br>
+         } else {<br>
+             $typens = &#039;xsd&#039;;<br>
+         }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

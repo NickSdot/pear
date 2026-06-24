@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8502</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Text &#187; <a href="package/Text_Wiki/index.html">Text_Wiki</a> &#187; Bug #8502</h1>
+<p>XHTML renderer needs id encoder</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8502</th><td>XHTML renderer needs id encoder</td></tr>
+<tr><th>Submitted</th><td>2006-08-18 13:43 UTC</td></tr>
+<tr><th>From</th><td>bjs5075 at rit dot edu</td></tr>
+<tr><th>Status</th><td>Open</td></tr>
+<tr><th>Package</th><td><a href="package/Text_Wiki/index.html">Text_Wiki</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Debian etch</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-18 13:43 UTC] bjs5075 at rit dot edu</h3>
+<p>Description:<br>
+------------<br>
+Because XHTML tag IDs must be valid XML IDs, they are a <br>
+restricted subset of normal tag parameters. Text- or <br>
+URI-encoding does *not* generate valid XML IDs.</p>
+<p>I suggest that the render object have a method (similar to <br>
+textEncode and urlEncode methods) for encoding XML IDs.</p>
+<p>Here is a simple valid-tag-generator:<br>
+    /**<br>
+    * Default method to render ID names<br>
+    * NOTICE: This does not generate a unique mapping, <br>
+simply a valid ID<br>
+    *<br>
+    * @access public<br>
+    * @param string $s the text to render<br>
+    * @return rendered text<br>
+    *<br>
+    */</p>
+<p>function idEncode($s)<br>
+    {<br>
+        $s = preg_replace(&#039;/[^A-Za-z0-9\.\-_:]+/&#039;, &#039;_&#039;, <br>
+$s); // All invalid characters replaced in groups<br>
+        $s = preg_replace(&#039;/^([^A-Za-z_:])/&#039;, &#039;_\1&#039;, <br>
+$s); // First char must be subset of valid<br>
+        return $s;<br>
+    }</p>
+<p>Test script:<br>
+---------------<br>
+IDs:<br>
+9test<br>
+.what<br>
+-this:5<br>
+does%</p>
+<p>Expected result:<br>
+----------------<br>
+_9test<br>
+_what<br>
+_this:5<br>
+does_</p>
+<p>Actual result:<br>
+--------------<br>
+9test<br>
+.what<br>
+-this:5<br>
+does%</p>
+</section>
+<section>
+<h3>[2006-08-18 14:09 UTC] bjs5075 at rit dot edu</h3>
+<p>If I have an anchor (created possibly by a heading name) <br>
+created from the string &quot;9anchor&quot;, and I create a link, <br>
+using the mediawiki parser syntax, such as <br>
+[[Name#9anchor]] that is intended to link to that heading, <br>
+then both the heading generator and the anchor-link <br>
+generator MUST both come to the same conclusion about what <br>
+the name of the XHTML id should be.</p>
+<p>As of now, the XHTML renderer for headers and wikilinks <br>
+just takes whatever anchor ID is given it and either puts <br>
+it in the ID field (as in Header) or tries to URL-encode <br>
+it (as in Wikilink).</p>
+<p>URL encoding will *not* generate a valid XML ID required <br>
+by XHTML documents. XML IDs are a separate subset of text <br>
+than URIs.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8444</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_AJAX/index.html">HTML_AJAX</a> &#187; Bug #8444</h1>
+<p>Handle PEAR_Errors returned from proxied object methods as errors</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8444</th><td>Handle PEAR_Errors returned from proxied object methods as errors</td></tr>
+<tr><th>Submitted</th><td>2006-08-15 10:36 UTC</td></tr>
+<tr><th>From</th><td>koto at webworkers dot pl</td></tr>
+<tr><th>Assigned</th><td>auroraeosrose</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_AJAX/index.html">HTML_AJAX</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.0</td></tr>
+<tr><th>OS</th><td>win</td></tr>
+<tr><th>Roadmaps</th><td>0.5.1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-15 10:36 UTC] koto at webworkers dot pl</h3>
+<p>Description:<br>
+------------<br>
+Returning PEAR_Error object from proxied PHP object method returns message:</p>
+<p>PHP Fatal error: Maximum function nesting level of &#039;100&#039; reached, aborting! in c:\php\PEAR\HTML\AJAX\JSON.php on line 241 (when using Xdebug extension - without it it would probably hang trying to convert the PEAR_Error object using the json serializer).</p>
+<p>I think as PEAR_Error class is solely used to represent various errors in PHP applications built upon PEAR packages that there should be an option in HTML_AJAX to represent this class as any other error.</p>
+<p>Appropriate working patch has already been submitted by Oliver Kuhl in mailing list:</p>
+<p>--- AJAX.php.orig       2006-04-27 07:14:00.000000000 +0200<br>
++++ AJAX.php    2006-04-27 07:41:16.000000000 +0200<br>
+@@ -430,6 +430,16 @@<br>
+         if(is_object($response) &amp;&amp; is_a($response, &#039;HTML_AJAX_Response&#039;)) {<br>
+             $output = $response-&gt;getPayload();<br>
+             $content = $response-&gt;getContentType();<br>
++        } elseif(is_a($response, &#039;PEAR_Error&#039;)) {<br>
++            $serializer = $this-&gt;_getSerializer($this-&gt;serializer);<br>
++            $output = $serializer-&gt;serialize(array(<br>
++                &#039;message&#039;  =&gt; $response-&gt;getMessage(),<br>
++                &#039;userinfo&#039; =&gt; $response-&gt;getUserInfo(),<br>
++                &#039;code&#039;     =&gt; $response-&gt;getCode(),<br>
++                &#039;mode&#039;     =&gt; $response-&gt;getMode()<br>
++                )<br>
++            );<br>
++            $content = $this-&gt;contentTypeMap[&#039;Error&#039;];<br>
+         } else {<br>
+             $serializer = $this-&gt;_getSerializer($this-&gt;serializer);<br>
+             $output = $serializer-&gt;serialize($response);</p>
+<p>Test script:<br>
+---------------<br>
+server.php<br>
+====<br>
+registerClass(new errortest,&#039;errortest&#039;,array(&#039;geterror&#039;));<br>
+$server-&gt;handleRequest();<br>
+?&gt;</p>
+<p>index.php<br>
+======</p>
+<p>var callbacks = {<br>
+    geterror : function(result) {<br>
+        document.getElementById(&#039;result&#039;).innerHTML = result;<br>
+    }<br>
+}</p>
+<p>var remote = new errortest(callbacks);</p>
+<p>&lt;a href=&quot;#&quot; onclick=&quot;remote.geterror(); return false;&quot;&gt;show error&lt;/a&gt;<br>
+&lt;/body&gt;<br>
+&lt;/html&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Error-handling takes place as it is for &#039;regular&#039; PHP errors</p>
+<p>Actual result:<br>
+--------------<br>
+After a few seconds processing the request, following message is displayed in result div:</p>
+<p>Fatal error: Maximum function nesting level of &#039;100&#039; reached, aborting! in c:\php\PEAR\HTML\AJAX\JSON.php on line 432</p>
+<p>with the debug backtrace.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

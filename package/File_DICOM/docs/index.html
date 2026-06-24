@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File_DICOM Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_DICOM/index.html">File_DICOM</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/File_DICOM/docs/index.html#package-fileformats-file-dicom-intro">Introduction</a>
+</li>
+<li><a href="package/File_DICOM/docs/index.html#package-default-file-dicom-file-dicom-file-dicom">constructor File_DICOM::File_DICOM</a>
+</li>
+<li><a href="package/File_DICOM/docs/index.html#package-default-file-dicom-file-dicom-parse">File_DICOM::parse</a>
+</li>
+<li><a href="package/File_DICOM/docs/index.html#package-default-file-dicom-file-dicom-write">File_DICOM::write</a>
+</li>
+<li><a href="package/File_DICOM/docs/index.html#package-default-file-dicom-file-dicom-getvalue">File_DICOM::getValue</a>
+</li>
+<li><a href="package/File_DICOM/docs/index.html#package-default-file-dicom-file-dicom-setvalue">File_DICOM::setValue</a>
+</li>
+<li><a href="package/File_DICOM/docs/index.html#package-default-file-dicom-file-dicom-dumpimage">File_DICOM::dumpImage</a>
+</li></ul>
+</nav>
+<p>Package for reading and modifying DICOM files</p>
+<section id="package-fileformats-file-dicom-intro">
+<h2>Introduction</h2>
+<h3>What is DICOM?</h3>
+
+   
+   <p><strong>File_DICOM</strong> allows reading and modifying of DICOM files.
+    DICOM stands for Digital Imaging and COmmunications in Medicine, and is a
+    standard for creating, storing and transfering digital images (X-rays,
+    tomography) and related information used in medicine.
+    This package in particular does not support the exchange/transfer of
+    DICOM data, nor any network related functionality.
+    More information on the DICOM standard can be found at the 
+    <a href="http://medical.nema.org/">NEMA site</a>.</p>
+   <p>Please be aware that any use of the information produced by this
+    package for diagnosing purposes is strongly discouraged by the
+    author. See <a href="http://www.gnu.org/licenses/lgpl.html">here</a>
+     for more information.</p>
+  
+
+  <h3>Using it</h3>
+
+   
+   <p><strong>File_DICOM</strong> can be used to accomplish two things,
+   to retrieve data from a file (including image data), and to set new values
+   for that data (allowing to write the modified file).</p>
+   <p>Let&#039;s see how we could show some relevant data from a DICOM file and
+    export its image data at the same time.</p>
+   <p><strong>Showing data</strong></p>
+    
+    <pre><code>&lt;?php
+require_once(&#039;File/DICOM.php&#039;);
+
+$dicom = new File_DICOM();
+$res = $dicom-&gt;parse(&quot;test.dcm&quot;);
+
+// check for errors
+if (PEAR::isError($res)) {
+    die(&quot;Error: &quot;.$res-&gt;getMessage().&quot;\n&quot;);
+}
+
+// show a few attributes of the DICOM file using group and element index
+echo &#039;StudyDate : &#039;.$dicom-&gt;getValue(0x0008, 0x0020).&quot;\n&quot;;
+echo &#039;Image Date : &#039;.$dicom-&gt;getValue(0x0008, 0x0023).&quot;\n&quot;;
+echo &#039;Image Type : &#039;.$dicom-&gt;getValue(0x0008, 0x0008).&quot;\n&quot;;
+echo &#039;Study Time : &#039;.$dicom-&gt;getValue(0x0008, 0x0030).&quot;\n&quot;;
+echo &#039;Institution Name : &#039;.$dicom-&gt;getValue(0x0008, 0x0080).&quot;\n&quot;;
+echo &#039;Manufacturer : &#039;.$dicom-&gt;getValue(0x0008, 0x0070).&quot;\n&quot;;
+echo &#039;Manufacturer Model Name : &#039;.$dicom-&gt;getValue(0x0008, 0x1090).&quot;\n&quot;;
+// or using element name
+echo &#039;Patient Name : &#039;.$dicom-&gt;getValue(&#039;PatientName&#039;).&quot;\n&quot;;
+echo &#039;Patient Age : &#039;.$dicom-&gt;getValue(&#039;PatientAge&#039;).&quot;\n&quot;;
+
+// dump a PGM image from the file data
+$res = $dicom-&gt;dumpImage(&#039;test.pgm&#039;);
+if (PEAR::isError($res)) {
+    die(&quot;Error: &quot;.$res-&gt;getMessage().&quot;\n&quot;);
+}
+?&gt;</code></pre>
+</section>
+<section id="package-default-file-dicom-file-dicom-file-dicom">
+<h2>constructor File_DICOM::File_DICOM</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/DICOM.php&#039;;
+     
+     <p><code>
+      void      constructor <strong>File_DICOM::File_DICOM</strong> ( 
+
+     )</code></p>
+    
+    
+
+   
+    <h3>Description</h3>
+    <p>It creates a File_DICOM object.</p>
+
+   
+
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-default-file-dicom-file-dicom-parse">
+<h2>File_DICOM::parse</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/DICOM.php&#039;;
+     
+     <p><code>
+      mixed      <strong>File_DICOM::parse</strong> ( 
+      string $infile
+     )</code></p>
+    
+    
+
+    
+     <h3>Description</h3>
+     <p>Parse a DICOM file and get all of its header members.</p>
+    
+   
+    <h3>Parameter</h3>
+    
+      <dl>
+       <dt>
+        
+                        
+                string
+                 <code>$infile</code>
+       </dt>
+       <dd>
+        <p>The DICOM file to parse</p>
+       </dd>
+      </dl>     
+     
+    
+   
+   
+   
+    <h3>Return value</h3>
+    <p><em>returns</em> true on success, PEAR_Error on failure</p>
+   
+
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-default-file-dicom-file-dicom-write">
+<h2>File_DICOM::write</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/DICOM.php&#039;;
+     
+     <p><code>
+      mixed      <strong>File_DICOM::write</strong> ( 
+      string  $outfile = &#039;&#039;
+     )</code></p>
+    
+    
+
+    
+     <h3>Description</h3>
+     <p>This package is not documented yet.</p>
+    
+   
+    <h3>Parameter</h3>
+    
+      <dl>
+       <dt>
+        
+                        
+                string
+                 <code>$outfile</code>
+       </dt>
+       <dd>
+        <p>The name of the file to write. If not given                         it
+assumes the name of the file parsed.                         If no file
+was parsed and no name is given                         returns a
+PEAR_Error</p>
+       </dd>
+      </dl>     
+     
+    
+   
+   
+   
+    <h3>Return value</h3>
+    <p><em>returns</em> true on success, PEAR_Error on failure</p>
+   
+
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-default-file-dicom-file-dicom-getvalue">
+<h2>File_DICOM::getValue</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/DICOM.php&#039;;
+     
+     <p><code>
+      mixed      <strong>File_DICOM::getValue</strong> ( 
+      mixed $group_or_name
+       , integer $element = null
+     )</code></p>
+    
+    
+
+    
+     <h3>Description</h3>
+     <p>Gets the value for a DICOM element of a given group from the parsed DICOM file</p>
+    
+   
+    <h3>Parameter</h3>
+    
+      <dl>
+       <dt>
+        
+                mixed
+                 <code>$group_or_name</code>
+       </dt>
+       <dd>
+        <p>The group the DICOM element belongs to (integer), or its name (string)</p>
+       </dd>
+      </dl>     
+     
+     
+      <dl>
+       <dt>
+        
+                integer
+                 <code>$element</code>
+       </dt>
+       <dd>
+        <p>The identifier for the DICOM element (unique inside a group). Optional</p>
+       </dd>
+      </dl>     
+     
+    
+   
+   
+   
+    <h3>Return value</h3>
+    <p><em>returns</em> The value for the DICOM element on success, PEAR_Error on failure</p>
+   
+
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+   
+   
+   
+   <h3>Example</h3>
+   <p><strong>Using <strong>getValue()</strong></strong></p>
+    
+    <pre><code>&lt;?php
+require_once(&#039;File/DICOM.php&#039;);
+
+$dicom_file = new File_DICOM();
+$res = $dicom_file-&gt;parse(&#039;test.dcm&#039;);
+
+// check for errors
+if (PEAR::isError($res)) {
+    die($res-&gt;getMessage());
+}
+
+echo &#039;this value: &#039;.$dicom_file-&gt;getValue(&#039;PatientName&#039;).&quot;\n&quot;;
+echo &#039;Should be the same as this value: &#039;.$dicom_file-&gt;getValue(0x0010, 0x0010).&quot;\n&quot;;
+?&gt;</code></pre>
+</section>
+<section id="package-default-file-dicom-file-dicom-setvalue">
+<h2>File_DICOM::setValue</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/DICOM.php&#039;;
+     
+     <p><code>
+      void      <strong>File_DICOM::setValue</strong> ( 
+      integer $gp
+       , integer $el
+       , mixed $value
+     )</code></p>
+    
+    
+
+   
+    <h3>Description</h3>
+    <p>Sets the value for a DICOM element. Only works with strings now.</p>
+   
+
+   
+    <h3>Parameter</h3>
+    
+      <dl>
+       <dt>
+        
+                        
+                integer
+                 <code>$gp</code>
+       </dt>
+       <dd>
+        <p>The group the DICOM element belongs to</p>
+       </dd>
+      </dl>     
+     
+     
+      <dl>
+       <dt>
+        
+                        
+                integer
+                 <code>$el</code>
+       </dt>
+       <dd>
+        <p>The identifier for the DICOM element (unique inside a group)</p>
+       </dd>
+      </dl>     
+     
+     
+      <dl>
+       <dt>
+        
+                        
+                mixed
+                 <code>$value</code>
+       </dt>
+       <dd>
+        
+       </dd>
+      </dl>     
+     
+    
+   
+
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+<section id="package-default-file-dicom-file-dicom-dumpimage">
+<h2>File_DICOM::dumpImage</h2>
+<h3>Synopsis</h3>
+    
+     
+      require_once &#039;File/DICOM.php&#039;;
+     
+     <p><code>
+      mixed      <strong>File_DICOM::dumpImage</strong> ( 
+      string $filename
+     )</code></p>
+    
+    
+
+    
+     <h3>Description</h3>
+     <p>Use with Caution!!. For a 8.5MB DICOM file on a P4 it takes 28  seconds to dump it&#039;s image.</p>
+
+    
+   
+    <h3>Parameter</h3>
+    
+      <dl>
+       <dt>
+        
+         string
+         <code>$filename</code>
+       </dt>
+       <dd>
+        <p>The file where to save the image</p>
+       </dd>
+      </dl>     
+     
+    
+   
+
+   
+    <h3>Return value</h3>
+    <p><em>returns</em> true on success, PEAR_Error on failure.</p>
+   
+
+   
+    <h3>Note</h3>
+    <p>This function can not be called
+statically.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

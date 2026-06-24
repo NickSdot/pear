@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1554</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Authentication &#187; <a href="package/LiveUser/index.html">LiveUser</a> &#187; Bug #1554</h1>
+<p>file:LiveUser/Admin/Auth/Container/MDB2.php line 250</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-06-03 15:52 UTC</td></tr>
+<tr><th>From</th><td>waxdipped at yahoo dot co dot uk</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/LiveUser/index.html">LiveUser</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Linux (SuSE 9.0)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-06-03 15:52 UTC] waxdipped at yahoo dot co dot uk</h3>
+<p>Description:<br>
+------------<br>
+When using MDB2 for database abstraction, calling addUser with custom fields results in custom field value of &#039;Array&#039; in MySQL databse.</p>
+<p>file:LiveUser/Admin/Auth/Container/MDB2.php<br>
+function: addUser<br>
+line number: 250</p>
+<p>$val[] = $this-&gt;dbc-&gt;quote($v, $customFields[$k][&#039;type&#039;]);</p>
+<p>change to</p>
+<p>$val[] = $this-&gt;dbc-&gt;quote($v[&#039;value&#039;], $customFields[$k][&#039;type&#039;]);</p>
+<p>or</p>
+<p>$val[] = $this-&gt;dbc-&gt;quote($customFields[$k][&#039;value&#039;], $customFields[$k][&#039;type&#039;]);</p>
+<p>Reproduce code:<br>
+---------------<br>
+from bundled example &#039;admin_example_mdb2.php&#039;</p>
+<p>$admin = new LiveUser_Admin($conf, &#039;FR&#039;);<br>
+$custom = array(<br>
+    array(&#039;name&#039; =&gt; &#039;name&#039;,  &#039;value&#039; =&gt; &#039;asdfMDB22&#039;,             &#039;type&#039; =&gt; &#039;text&#039;),<br>
+    array(&#039;name&#039; =&gt; &#039;email&#039;, &#039;value&#039; =&gt; &#039;fleh@example.comMDB23&#039;, &#039;type&#039; =&gt; &#039;text&#039;)<br>
+);<br>
+$user_id = $admin-&gt;addUser(&#039;johndoe&#039;, &#039;dummypass&#039;, true, null, null, null, $custom);</p>
+<p>Expected result:<br>
+----------------<br>
+Table liveuser_users:<br>
++--------------+---------+----------------------------------+-----------+---------------+----------------+-----------+------------------------------+------------------+<br>
+| auth_user_id | handle  | passwd                           | lastlogin | owner_user_id | owner_group_id | is_active | email                        | name             |<br>
++--------------+---------+----------------------------------+-----------+---------------+----------------+-----------+------------------------------+------------------+<br>
+| 1            | johndoe | 4518bda19425be276817a3b3eeee82b8 | NULL      |          NULL |           NULL | Y         | fleh@example.comMDBUpdated22 | asdfMDBUpdated22 |<br>
++--------------+---------+----------------------------------+-----------+---------------+----------------+-----------+------------------------------+------------------+</p>
+<p>Actual result:<br>
+--------------<br>
+Table liveuser_users:<br>
++--------------+---------+----------------------------------+-----------+---------------+----------------+---<br>
+-----+------------------------+----------------+<br>
+| auth_user_id | handle  | passwd                           | lastlogin | owner_user_id | owner_group_id | is<br>
+tive | email                  | name           |<br>
++--------------+---------+----------------------------------+-----------+---------------+----------------+---<br>
+-----+------------------------+----------------+<br>
+| 1            | johndoe | 4518bda19425be276817a3b3eeee82b8 | NULL      |          NULL |           NULL | Y<br>
+     | Array                  | Array          |</p>
+</section>
+<section>
+<h3>[2004-06-03 16:33 UTC] smith at backendmedia dot com</h3>
+<p>Could you try the CVS version? Since we have made changes that seem to have fixed this issue.</p>
+</section>
+<section>
+<h3>[2004-06-03 19:41 UTC] waxdipped at yahoo dot co dot uk</h3>
+<p>Hello,<br>
+I checked out the current CVS version. This problem is indeed fixed, but I found a new problem:</p>
+<p>In the CVS version of LiveUser/Admin/Auth/Container/MDB2.php ($Id: MDB2.php,v 1.17 2004/05/13 09:23:12 lsmith Exp $) the function &quot;getUsers&quot; is broken. The same function in LiveUser version 0.11.1 ($Id: MDB2.php,v 1.15 2004/04/25 15:55:09 lsmith Exp $) works fine. Looks broken in Admin/Auth/Container/MDB.php and Admin/Auth/Container/DB.php also. The array keys for customFields and filters are missing in the latest version.</p>
+</section>
+<section>
+<h3>[2004-06-13 14:53 UTC] smith at backendmedia dot com</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

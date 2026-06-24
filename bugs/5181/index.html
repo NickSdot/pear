@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5181</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_Graph/index.html">Image_Graph</a> &#187; Bug #5181</h1>
+<p>smooth_line doesn&#039;t draw a function</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-08-23 04:15 UTC</td></tr>
+<tr><th>From</th><td>nospam0 at malkusch dot de</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/Image_Graph/index.html">Image_Graph</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-08-23 04:15 UTC] nospam0 at malkusch dot de</h3>
+<p>Description:<br>
+------------<br>
+Have a look at &lt;http://test.malkusch.de/smoothGraph.php&gt;.  <br>
+It is not a function. You can see the code at  <br>
+&lt;http://test.malkusch.de/smoothGraph.phps&gt;. BTW <br>
+smooth_line doesn&#039;t antialias.</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php</p>
+<p>$data   = array(</p>
+<p>0   =&gt; 10,<br>
+    10  =&gt; 5,<br>
+    11  =&gt; 100</p>
+<p>);</p>
+<p>$canvas     = Image_Canvas::factory(&#039;png&#039;, array(&#039;width&#039; =&gt; 600, &#039;height&#039; =&gt; 400, &#039;antialias&#039; =&gt; &#039;native&#039;));<br>
+$graph      = Image_Graph::factory(&#039;graph&#039;, $canvas);<br>
+$plotarea   = $graph-&gt;addNew(&#039;plotarea&#039;, array(&#039;axis&#039;, &#039;axis&#039;));<br>
+$dataset    = Image_Graph::factory(&#039;dataset&#039;);<br>
+$plot       = $plotarea-&gt;addNew(&#039;smooth_line&#039;, $dataset);<br>
+            <br>
+foreach ($data as $x =&gt; $y) {<br>
+    $dataset-&gt;addPoint($x, $y);</p>
+<p>}</p>
+<p>$graph-&gt;done(); <br>
+        <br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+A function.</p>
+<p>Actual result:<br>
+--------------<br>
+A relation.</p>
+</section>
+<section>
+<h3>[2005-08-23 06:25 UTC] pear dot nosey at veggerby dot dk</h3>
+<p>This is not a bug (per se) it is the way the smoothing function calculates the points (it&#039;s the &quot;only&quot; way to create a smooth curve through these points using the implemented method - Bezier curves). If you plot the exact same graph in Excel you get... the same result.</p>
+<p>The smoothed curves doesn&#039;t antialias because it looks like cr*p when it does (due to the high number of very short lines), I know it doesn&#039;t explicitly say so in the code but if you read between the lines and can read my mind it actuallly says so in the docs :p(http://cvs.php.net/co.php/pear/Image_Canvas/Canvas/GD.php?r=1.3). I&#039;ll fix the docs so it states this explicitly.</p>
+</section>
+<section>
+<h3>[2005-08-23 11:11 UTC] nospam0 at malkusch dot de</h3>
+<p>&gt; it&#039;s the &quot;only&quot; way to create a smooth curve through   <br>
+&gt; these points using the implemented method - Bezier   <br>
+&gt; curves  <br>
+  <br>
+But the result is definetly wrong. It gets even worser if  <br>
+you have a look again at  <br>
+&lt;http://test.malkusch.de/smoothGraph.php&gt;.   <br>
+  <br>
+I don&#039;t believe that this is the only way to create a  <br>
+smooth graph. Did you try any interpolation? I think it is  <br>
+more important to create a function (which doesn&#039;t need to  <br>
+include all data points) than a complete smooth relation.  <br>
+ <br>
+&gt; If you plot the exact same graph in Excel you get... the  <br>
+&gt; same result. <br>
+ <br>
+Excel has no importance. What about programms like maple, <br>
+or any programm which is used by an professional <br>
+statistician?</p>
+</section>
+<section>
+<h3>[2005-08-23 11:35 UTC] pear dot nosey at veggerby dot dk</h3>
+<p>I agree that it does not look &quot;right&quot;, however smoothing curves are not &quot;exact science&quot;, there are of course other algorithms fx. Bicubic splines (this issue has been touched before: http://pear.php.net/bugs/bug.php?id=3293) and I&#039;m sure you can create an algorithm that suits your needs, but as stated in the last &quot;post&quot;:</p>
+<p>&quot;The way the smoothing in Image_Graph is done is based on 2<br>
+requirements:</p>
+<p>1) Overall smoothness<br>
+2) The curve intersects _all_ datapoints&quot;</p>
+<p>Maybe you can manipulate the &quot;curvature&quot; or roundness by messing with the smoothFactor in Image_Canvas\Tool.php (if it works I will provide a method for adjusting this): higher values the more &quot;round&quot; the curve will be.</p>
+<p>I do not believe that there is anything wrong with the function (which was why I mentioned Excel, you can even try to plot the same data using the SVG canvas, where the smoothing is done natively (also Bezier) and I&#039;ll bet you that you get the same result), but as said this is not &quot;exact science&quot; anyway so you would have to choose an algorithm that can display your data in a way that suits you best - unfortunately the only implemented method here is Bezier curves. I&#039;m not even sure that the solution would be to provide more methods, since the Bezier method implemented in Image_Canvas\Tool.php is only there because there is no native method, like there is in PDF, SVG and SWF (IIRC SWF uses cubic splines).</p>
+<p>regards<br>
+Jesper</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

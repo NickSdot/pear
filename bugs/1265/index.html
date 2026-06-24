@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1265</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Payment &#187; <a href="package/Payment_Process/index.html">Payment_Process</a> &#187; Bug #1265</h1>
+<p>Add handler support to typeFieldMap</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #1265</th><td>Add handler support to typeFieldMap</td></tr>
+<tr><th>Submitted</th><td>2004-04-23 04:33 UTC</td></tr>
+<tr><th>From</th><td>aashley at optimiser dot com</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Payment_Process/index.html">Payment_Process</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0RC1 (Release Candidate 1)</td></tr>
+<tr><th>OS</th><td>All</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-23 04:33 UTC] aashley at optimiser dot com</h3>
+<p>Description:<br>
+------------<br>
+Added handler support to setPayment. The processor I&#039;m building requires the expiry month and year as seperate fields, so I&#039;ve added the handler code from _process to setPayment() in Common.php</p>
+<p>patch:</p>
+<p>--- /usr/share/pear/Payment/Process/Common.php  2004-04-13 15:45:48.000000000 +0800<br>
++++ Common.php  2004-04-21 22:37:25.000000000 +0800<br>
+@@ -229,10 +229,25 @@<br>
+                 // Map over the payment specific fiels. Check out<br>
+                 // $_typeFieldMap for more information.<br>
+                 $paymentType = $payment-&gt;getType();<br>
+-                foreach ($this-&gt;_typeFieldMap[$paymentType] as $key =&gt; $val) {<br>
+-                    if(!isset($this-&gt;_data[$val])) {<br>
+-                        $this-&gt;_data[$val] = $this-&gt;_payment-&gt;$key;<br>
++                foreach ($this-&gt;_typeFieldMap[$paymentType] as $generic =&gt; $specific) {<br>
++                    $func = &#039;_handle&#039;.ucfirst($generic);<br>
++                    if (method_exists($this, $func)) {<br>
++                        //$this-&gt;debug(&quot;Calling {$func} to handle {$generic}&quot;);<br>
++                        $result = $this-&gt;$func();<br>
++                        if (PEAR::isError($result)) {<br>
++                            return $result;<br>
++                        }<br>
++                    } else {<br>
++                        // TODO This may screw things up - the problem is that<br>
++                        // CC information is no longer member variables, so we<br>
++                        // can&#039;t overwrite it. You could always handle this with<br>
++                        // a _handle funciton. I don&#039;t think it will cause problems,<br>
++                        // but it could.<br>
++                        if (!isset($this-&gt;_data[$specific])) {<br>
++                            $this-&gt;_data[$specific] = $this-&gt;_payment-&gt;$generic;<br>
++                        }<br>
+                     }<br>
++<br>
+                 }<br>
+  <br>
+                 return true;</p>
+</section>
+<section>
+<h3>[2004-04-30 07:54 UTC] aashley at optimiser dot com</h3>
+<p>here&#039;s the patch again, if this doesnt work give us a yell and ill send it via email.</p>
+<p>--- Common.orig.php     2004-04-30 16:02:08.905151105 +0800<br>
++++ Common.php  2004-04-21 22:37:25.000000000 +0800<br>
+@@ -229,10 +229,25 @@<br>
+                 // Map over the payment specific fiels. Check out<br>
+                 // $_typeFieldMap for more information.<br>
+                 $paymentType = $payment-&gt;getType();<br>
+-                foreach ($this-&gt;_typeFieldMap[$paymentType] as $key =&gt; $val) {<br>
+-                    if(!isset($this-&gt;_data[$val])) {<br>
+-                        $this-&gt;_data[$val] = $this-&gt;_payment-&gt;$key;<br>
++                foreach ($this-&gt;_typeFieldMap[$paymentType] as $generic =&gt; $specific) {<br>
++                    $func = &#039;_handle&#039;.ucfirst($generic);<br>
++                    if (method_exists($this, $func)) {<br>
++                        //$this-&gt;debug(&quot;Calling {$func} to handle {$generic}&quot;);<br>
++                        $result = $this-&gt;$func();<br>
++                        if (PEAR::isError($result)) {<br>
++                            return $result;<br>
++                        }<br>
++                    } else {<br>
++                        // TODO This may screw things up - the problem is that<br>
++                        // CC information is no longer member variables, so we<br>
++                        // can&#039;t overwrite it. You could always handle this with<br>
++                        // a _handle funciton. I don&#039;t think it will cause problems,<br>
++                        // but it could.<br>
++                        if (!isset($this-&gt;_data[$specific])) {<br>
++                            $this-&gt;_data[$specific] = $this-&gt;_payment-&gt;$generic;<br>
++                        }<br>
+                     }<br>
++<br>
+                 }<br>
+  <br>
+                 return true;</p>
+</section>
+<section>
+<h3>[2004-04-30 15:47 UTC] joe at joestump dot net</h3>
+<p>It&#039;s still borking - could you email me the patch?</p>
+</section>
+<section>
+<h3>[2004-06-18 05:09 UTC] aashley at optimiser dot com</h3>
+<p>I&#039;ve updated the patch for so it works with Payment Process 0.5.7</p>
+<p>Its available at http://frood.cernun.net/stuff/Common.php-handle-support-typeFieldMap.patch</p>
+<p>I&#039;ve also made changes to the patch so that in setPayment() the payment object is passed in by reference and linked to the current object by reference, no copying.</p>
+</section>
+<section>
+<h3>[2004-06-21 21:59 UTC] daviidu at everydns dot net</h3>
+<p>Can you clarify what (why) you are doing this in your patch:</p>
+<p>+                            if(isset($this-&gt;_payment-&gt;$generic))<br>
++                            {<br>
++                                $this-&gt;_data[$specific] = $this-&gt;_payment-&gt;$generic;<br>
++                            }</p>
+<p>What&#039;s the order that things should happen with what I pasted above and what is just above that in your patch?</p>
+<p>-davidu</p>
+</section>
+<section>
+<h3>[2004-06-22 00:59 UTC] aashley at optimiser dot com</h3>
+<p>why i was doing? something to do with writing code at 3am :), ive updated the patch with the intended behaviour</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

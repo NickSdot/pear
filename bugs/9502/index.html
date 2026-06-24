@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9502</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #9502</h1>
+<p>Strong typing query result misbehaves</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-11-29 19:08 UTC</td></tr>
+<tr><th>From</th><td>benblay at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>Linux 2.6.15-23</td></tr>
+<tr><th>Roadmaps</th><td>2.5.0b4</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-11-29 19:08 UTC] benblay at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+When using the second parameter of queryRow() to strong type results, columns not specified behave erratically.  That is, some values are not returned at all.  If the same method is used without strong typing, the column values are returned as text without a problem.</p>
+<p>I&#039;ve tested this in a variety of ways and it seems that the number of fields that are strong typed are applied to the field set represented by * no matter what.</p>
+<p>Test script:<br>
+---------------<br>
+Example 1:</p>
+<p>$insInfo = $db-&gt;queryRow(&#039;SELECT * FROM &quot;thisTable&quot; WHERE &quot;thisTableid&quot; = &#039;.$rec, array(&#039;SectionOneInclude&#039; =&gt; &#039;boolean&#039;, &#039;SectionTwoInclude&#039; =&gt; &#039;boolean&#039;));</p>
+<p>Example 2:</p>
+<p>$insInfo = $db-&gt;queryRow(&#039;SELECT &quot;SectionOneInclude&quot;, &quot;SectionTwoInclude&quot;, * FROM &quot;thisTable&quot; WHERE &quot;thisTableid&quot; = &#039;.$rec, array(&#039;SectionOneInclude&#039; =&gt; &#039;boolean&#039;, &#039;SectionTwoInclude&#039; =&gt; &#039;boolean&#039;));</p>
+<p>Expected result:<br>
+----------------<br>
+In Example 1, I would expect to get the entire result set as normal, with the two values for $insInfo[&#039;SectionOneInclude&#039;] and $insInfo[&#039;SectionTwoInclude&#039;] strong typed to boolean.  While the latter does occur, the strong typing also applies to the first two columns of the entire result set.  In other words, if the columns of the table were thisTableid, Name, Address, Phone, SectionOneInclude, and SectionTwoInclude, the result expected result is:<br>
+[thisTableid] =&gt; 2<br>
+[Name] =&gt; ABC Widgets<br>
+[Address] =&gt; 123 Main Street<br>
+[Phone] =&gt; 555-666-7777<br>
+[SectionOneInclude] =&gt; 1<br>
+[SectionTwoInclude] =&gt;</p>
+<p>I&#039;d expect the same result for the second example, except that the SectionOneInclude and SectionTwoInclude fields would be returned at the top of the results.</p>
+<p>Actual result:<br>
+--------------<br>
+[thisTableid] =&gt; <br>
+[Name] =&gt; <br>
+[Address] =&gt; 123 Main Street<br>
+[Phone] =&gt; 555-666-7777<br>
+[SectionOneInclude] =&gt; 1<br>
+[SectionTwoInclude] =&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

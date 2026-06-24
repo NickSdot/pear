@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3372</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_Socket/index.html">Net_Socket</a> &#187; Bug #3372</h1>
+<p>net_socket needs to support stream transport specification to work w/ php 5</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-03 16:52 UTC</td></tr>
+<tr><th>From</th><td>liamr at umich dot edu</td></tr>
+<tr><th>Assigned</th><td>chagenbu</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_Socket/index.html">Net_Socket</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>linux 2.4.28</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-03 16:52 UTC] liamr at umich dot edu</h3>
+<p>Description:<br>
+------------<br>
+fsockopen in php5 seems to be pickier about requiring the stream transport specification ( &#039;tcp://&#039;, &#039;unix://&#039;, etc ) when opening sockets.</p>
+<p>PHP 4 would allow you to do...</p>
+<p>$fp = fsockopen( &#039;/tmp/example.sock, 0, $errno, <br>
+        $errstr, 30 );</p>
+<p>PHP 5 requires</p>
+<p>$fp = fsockopen( &#039;unix:///tmp/example.sock, 0, <br>
+        $errno, $errstr, 30 );</p>
+<p>As Net_Socket::connect uses fsockopen and pfsockopen, it should be able to handle the transport specification, and currently doesn&#039;t.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$socket = &amp;new Net_Socket();<br>
+$socket-&gt;connect( &#039;unix:///tmp/example.sock&#039;, 0, true, 30);</p>
+<p>Expected result:<br>
+----------------<br>
+A unix socket should get opened</p>
+<p>Actual result:<br>
+--------------<br>
+If your /etc/resolv.conf contains..</p>
+<p>search example.com</p>
+<p>Net_Socket tries to open a tcp socket to a host named</p>
+<p>unix:///tmp/example.sock.example.com</p>
+<p>6294  socket(PF_INET, SOCK_DGRAM, IPPROTO_IP) = 4<br>
+6294  connect(4, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr(&quot;www.xxx.yyy.zzz&quot;)}, 28) = 0<br>
+6294  send(4, &quot;\254\320\1\0\0\1\0\0\0\0\0\0\21unix:///tmp/example.sock\5example\3com\0\0\<br>
+1\0\1&quot;, 45, 0) = 45<br>
+6294  gettimeofday({1107447499, 264462}, NULL) = 0<br>
+6294  poll([{fd=4, events=POLLIN, revents=POLLIN}], 1, 5000) = 1<br>
+6294  ioctl(4, FIONREAD, [100])         = 0<br>
+6294  recvfrom(4, &quot;\254\320\205\203\0\1\0\0\0\1\0\0\21unix:///tmp/example.sock\5example\3<br>
+com\0\0\1\0\1\300\36\0\6\0\1\0\0p\200\0+\3dns\3itd\300\36\nhostmaster\300\36\v\3<br>
+63k\20\0\0p\200\0\0008@\0$\352\0\0\0p\200&quot;, 1024, 0, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr(&quot;www.xxx.yyy.zzz&quot;)}, [16]) = 100<br>
+6294  close(4)                          = 0</p>
+</section>
+<section>
+<h3>[2005-02-03 17:20 UTC] liamr at umich dot edu</h3>
+<p>This patch seems to work...</p>
+<p>diff -U 2 /tmp/Socket.php Socket.php <br>
+--- /tmp/Socket.php      2005-02-03 12:08:34.000000000 -0500<br>
++++ Socket.php  2005-02-03 12:10:12.000000000 -0500<br>
+@@ -102,5 +102,5 @@<br>
+         if (!$addr) {<br>
+             return $this-&gt;raiseError(&#039;$addr cannot be empty&#039;);<br>
+-        } elseif (strspn($addr, &#039;.0123456789&#039;) == strlen($addr) || substr($addr, 0, 1) == &#039;/&#039;) {<br>
++        } elseif (strspn($addr, &#039;.0123456789&#039;) == strlen($addr) || substr($addr, 0, 1) == &#039;/&#039; || strstr($addr, &#039;://&#039;)) {<br>
+             $this-&gt;addr = $addr;<br>
+         } else {</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

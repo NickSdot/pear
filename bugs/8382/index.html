@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8382</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; System &#187; <a href="package/System_Command/index.html">System_Command</a> &#187; Bug #8382</h1>
+<p>Capturing Stderr &amp; Exit Code</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8382</th><td>Capturing Stderr &amp; Exit Code</td></tr>
+<tr><th>Submitted</th><td>2006-08-08 02:30 UTC</td></tr>
+<tr><th>From</th><td>ahayes at php dot net</td></tr>
+<tr><th>Assigned</th><td>cconstantine</td></tr>
+<tr><th>Status</th><td>Duplicate</td></tr>
+<tr><th>Package</th><td><a href="package/System_Command/index.html">System_Command</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>FC5</td></tr>
+<tr><th>Roadmaps</th><td>1.1.0</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-08 02:30 UTC] ahayes at php dot net</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>I noticed that there has been a new release of 1.0.5 and I also note that new STDERR option, however as far as I can tell, under certain circumstances this will actually not have any effect at all.</p>
+<p>For instance, as taken from Line 420, System_Command.php:</p>
+<p>=========8&lt;===========<br>
+if ($returnVal !== 0) {<br>
+    // command returned nonzero; that&#039;s always an error<br>
+    $return = PEAR::raiseError(null, SYSTEM_COMMAND_NONZERO_EXIT, null, E_USER_WARNING, null, &#039;System_Command_Error&#039;, true);<br>
+}<br>
+else if (!$this-&gt;options[&#039;STDERR&#039;]) {<br>
+    // caller does not care about stderr; return success<br>
+    $return = implode(&quot;\n&quot;, $result);<br>
+}<br>
+else {<br>
+    // our caller cares about stderr; check stderr output<br>
+    clearstatcache();<br>
+    if (filesize($tmpFile) &gt; 0) {<br>
+        // the command actually wrote to stderr<br>
+        $stderr_output = file_get_contents($tmpFile);<br>
+        $return = PEAR::raiseError(null, SYSTEM_COMMAND_STDERR, null, E_USER_WARNING, $stderr_output, &#039;System_Command_Error&#039;, true);<br>
+    } else {<br>
+        // total success; return stdout gathered by exec()<br>
+        $return = implode(&quot;\n&quot;, $result);<br>
+    }<br>
+}<br>
+=========&gt;8===========</p>
+<p>With this condition we will never actually get to &#039;else&#039;, as in most cases, if a program is going to write to stderr, they will usually exit with a non zero.</p>
+<p>In anycase, there is no way for the caller to retrieve the exit code from the program, which means there is no way for the user to really do much with the response other than just say that it died for some reason.</p>
+<p>What I propose is that the debugInfo actually be populated with an array, I have not checked if this breaks PEAR schemas/standards, however it does work.</p>
+<p>This could be done as follows:</p>
+<p>Line 420, System_Command.php:</p>
+<p>=========8&lt;===========<br>
+if ($returnVal !== 0) {<br>
+    <br>
+    if($this-&gt;options[&#039;STDERR&#039;]) {<br>
+        // our caller cares about stderr; check stderr output<br>
+        clearstatcache();<br>
+        if (filesize($tmpFile) &gt; 0) {<br>
+            // the command actually wrote to stderr<br>
+            $stderr_output = file_get_contents($tmpFile);</p>
+<p>/**<br>
+             * Just incase the program doesn&#039;t behave properly and sends error messages<br>
+             * to standard output and not standard error, lets get the standard output<br>
+             */                <br>
+            if(empty($stderr_output) &amp;&amp; !empty($result)) {<br>
+                $stderr_output = implode(&quot; &quot;, $result);<br>
+            }</p>
+<p>$return = PEAR::raiseError(<br>
+                null, <br>
+                SYSTEM_COMMAND_STDERR, <br>
+                null, <br>
+                E_USER_WARNING, <br>
+                array(<br>
+                    &#039;code&#039;   =&gt; $returnVal,<br>
+                    &#039;stderr&#039; =&gt; trim($stderr_output),<br>
+                ), <br>
+                &#039;System_Command_Error&#039;, <br>
+                true<br>
+            );<br>
+        } else {<br>
+            // total success; return stdout gathered by exec()<br>
+            $return = implode(&quot;\n&quot;, $result);<br>
+        }<br>
+    } else {<br>
+    <br>
+        // command returned nonzero; that&#039;s always an error<br>
+        $return = PEAR::raiseError(null, SYSTEM_COMMAND_NONZERO_EXIT, null, E_USER_WARNING, null, &#039;System_Command_Error&#039;, true);<br>
+    <br>
+    }<br>
+    <br>
+} else {<br>
+    // caller does not care about stderr; return success<br>
+    $return = implode(&quot;\n&quot;, $result);<br>
+}<br>
+=========&gt;8===========</p>
+<p>This both allows the user to retrieve the exit code and also  stderr.</p>
+<p>Thanks<br>
+Alex</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php</p>
+<p>require_once &#039;System/Command.php&#039;;</p>
+<p>$cmd = new System_Command;<br>
+$cmd-&gt;setOption(&#039;STDERR&#039;, true);</p>
+<p>$cmd-&gt;pushCommand(&#039;gunzip&#039;);</p>
+<p>$result = $cmd-&gt;execute();</p>
+<p>echo $result-&gt;getMessage();<br>
+echo &quot;\n&quot;;<br>
+var_dump($result-&gt;getDebugInfo());</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+System_Command Error: command wrote to stderr<br>
+array(2) {<br>
+  [&quot;code&quot;]=&gt;<br>
+  int(1)<br>
+  [&quot;stderr&quot;]=&gt;<br>
+  string(37) &quot;gunzip: stdin: unexpected end of file&quot;<br>
+}</p>
+<p>Note that I am not saying this is the only way to do it, its just that it would be nice to capture both the exit code and stderr. Presently to my knowledge you can&#039;t do this. This is just one solution to the problem, there is perhaps a much better way of doing this that will not break backwards compatibility, however since this does not appear to work currently then probably no one is relying on it.</p>
+<p>Actual result:<br>
+--------------<br>
+System_Command Error: non-zero exit value from command<br>
+NULL</p>
+</section>
+<section>
+<h3>[2006-08-08 19:27 UTC] cconstantine at php dot net</h3>
+<p>Thank you for your input. As you surmised in your message, <br>
+it&#039;s the BC-break that is the hurdle.</p>
+<p>At a glance...<br>
+Changing the debugInfo to be an array would be a BC break <br>
+since prev versions only put the exit val in there as a <br>
+scalar. Also I believe this is a feature/change-req not a <br>
+bug report (correct me if you disagree) -- and I&#039;ve changed <br>
+this bug accordingly.</p>
+</section>
+<section>
+<h3>[2006-08-09 00:16 UTC] ahayes at php dot net</h3>
+<p>Yes, capturing the exit code is a feature request as you state, however as I pointed out (probably not very clearly however, sorry), there is a problem with the if/else in that if a program exits with non 0, you can never get stderr.</p>
+<p>Since in most cases a user will want to capture stderr when a program has exited with non 0, do you think that this actually will break BC?</p>
+<p>I guess the other option is that you can add an option, say for example, &#039;STDERROR_EXIT&#039;, which would then cause the debugInfo to be populated with an array, which would definately not break BC.</p>
+</section>
+<section>
+<h3>[2006-08-09 18:38 UTC] cconstantine at php dot net</h3>
+<p>correct.</p>
+<p>version 1.0.5 introduced the ability to get stderr&#039;s output <br>
+when the command exits *zero*. Before v1.0.5, you could never <br>
+get stderr&#039;s output. That was the widest improvement possible <br>
+[wrt getting stderr] w/o a BC break.</p>
+</section>
+<section>
+<h3>[2006-08-09 18:42 UTC] cconstantine at php dot net</h3>
+<p>...and replying to myself:</p>
+<p>your last idea -- add an option that gives access to the <br>
+stderr output (prob in an array in debugInfo) -- is the way to <br>
+go. Simply, low low priority -- unless you&#039;re experiencing an <br>
+actual problem.</p>
+</section>
+<section>
+<h3>[2006-08-10 06:50 UTC] ahayes at php dot net</h3>
+<p>Well, that is why I created the bug/feature report ;)</p>
+<p>To give you a real world example, I am using the unzip program on the command line, as PHP implementation does not support password&#039;s.</p>
+<p>So, if I use System_Command with the Unzip program, which exits non zero upon error, I presently with version 1.0.5, can&#039;t capture the reason for failure in stderr, or the actual exit code, thus I have no way of actually knowing why the unzip failed.</p>
+<p>I will have a look at the source and submit some changes to you, as I have it working in my local copy, i just need to add the non BC fix as previsously stated. Perhaps you can then look at adding these changes to a future release.</p>
+<p>Thanks<br>
+Alex</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

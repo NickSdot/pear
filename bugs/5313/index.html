@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5313</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a> &#187; Bug #5313</h1>
+<p>Performance of many calls to strlen() function in Parser.php</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-09-06 19:09 UTC</td></tr>
+<tr><th>From</th><td>jamie dot alessio at ucop dot edu</td></tr>
+<tr><th>Assigned</th><td>xnoguer</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-09-06 19:09 UTC] jamie dot alessio at ucop dot edu</h3>
+<p>Description:<br>
+------------<br>
+In the process of creating an excel file with eleven worksheets I ran into performance problems. The script was taking over 30 seconds to generate an 80Kb file. I used xdebug2 (www.xdebug.org) to get profiling information on the script and discovered that the majority of the execution time was spent in the Spreadsheet_Excel_Writer code.</p>
+<p>The biggest performance hit was from calls to the PHP strlen() function. The strlen() function was being called 116,930 times and was consuming 58% of the time of the entire script. I tracked down the problem to the Spreadsheet_Excel_Writer_Parser::_advance() function and noticed that strlen() was being called several times as part of a while() loop. Instead of calling the strlen() function several times in a loop, I rewrote the function to store the return value of strlen() at the beginning of the loop and then used the variable instead of calling strlen() so many times.</p>
+<p>Example....</p>
+<p>///////////////////////////////////////////////<br>
+// Original code<br>
+while ($i &lt; strlen($this-&gt;_formula))<br>
+{<br>
+  // do something here<br>
+}</p>
+<p>// New code<br>
+$formula_length = strlen($this-&gt;_formula);<br>
+while ($i &lt; $formula_length)<br>
+{<br>
+  // do something here<br>
+}<br>
+//<br>
+///////////////////////////////////////////////</p>
+<p>This simple change reduced the number of calls to strlen() to 43,119 (down from 116,930) and reduced the script execution time by over 15 seconds!</p>
+<p>I can provide a full diff for changes, but it is a simple fix and will become apparent as soon as you look at the Spreadsheet_Excel_Writer_Parser::_advance() function.</p>
+<p>The next big performance hit is from calls to is_array() in the recursive function Spreadsheet_Excel_Writer_Parser::toReversePolish() but a quick fix for that problem isn&#039;t as readily apparent. For reference, in my script is_array() is being called 42,840 times from toReversePolish() and is consuming 35% of the execution time.</p>
+<p>Let me know if you&#039;d like test cases or a diff for this, but I think you&#039;ll see what I&#039;m talking about once you take a look at Spreadsheet_Excel_Writer_Parser::_advance().</p>
+<p>This is very similar to this fixed bug in PEAR::DB<br>
+http://bugs.php.net/bug.php?id=23698</p>
+</section>
+<section>
+<h3>[2005-09-06 19:14 UTC] jamie dot alessio at ucop dot edu</h3>
+<p>just fixing typo in &#039;Summary&#039;</p>
+</section>
+<section>
+<h3>[2005-10-24 18:00 UTC] jamie dot alessio at ucop dot edu</h3>
+<p>I profiled the new code you put in the CVS repository with xdebug. Your updates provided performance gains similar to those I described after modifying the code myself - it significantly reduced the number of calls to strlen() (116,930 calls down to 34,421 in my test) which cut the script execution time roughly in half. This looks like a no-brainer to add to the stable release of the package.</p>
+<p>&gt;&gt; Regarding the is_array issue, could you try <br>
+&gt;&gt; doing a isset() before the is_array and tell <br>
+&gt;&gt; me if that helps anything ?<br>
+&gt;&gt;<br>
+&gt;&gt; i.e. isset($foo) &amp;&amp; is_array($foo) that&#039;s known <br>
+&gt;&gt; to sometimes speed things up, just want a <br>
+&gt;&gt; confirmation in this case.<br>
+&gt;&gt;<br>
+I added the isset() calls before the is_array() calls and profiled that code too. The addition of isset() did not reduce the number of calls to is_array() and did not provide any speed improvement. is_array() is only called in two places in the Spreadsheet_Excel_Writer_Parser::toReversePolish() function and in both cases I believe the variable will *always* be set so that the addition of the isset() call doesn&#039;t provide any benefit. Again, without really digging into the code here I don&#039;t see any easy wins on this one.</p>
+<p>I&#039;ll leave this bug open for now but as far as I&#039;m concerned the main problem that I opened the bug for has been addressed. Thanks for taking the time to update the PEAR code.</p>
+</section>
+<section>
+<h3>[2005-11-12 03:50 UTC] xnoguer at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+<p>I&#039;m closing this one now. I&#039;ll release a new version soon, including the improvements made by dufuz&#039;s.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #10190</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2/index.html">MDB2</a> &#187; Bug #10190</h1>
+<p>Unit tests fail under PHP4</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-02-26 13:32 UTC</td></tr>
+<tr><th>From</th><td>andrew dot hill at openads dot org</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2/index.html">MDB2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Centos 4.3, Apache 1.3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-02-26 13:32 UTC] andrew dot hill at openads dot org</h3>
+<p>Description:<br>
+------------<br>
+The use of __call() to capture undefined methods does not work with PHP4. This means that many of the PHPUnit tests in MDB2_Extended_TestCase [ie. testGetAssoc(), testGetOne(), testGetCol(), testGetRow()] fail.</p>
+<p>Test script:<br>
+---------------<br>
+--- MDB2.php    (revision 4657)<br>
++++ MDB2.php    (working copy)<br>
+@@ -1922,6 +1922,73 @@<br>
+     }</p>
+<p>// }}}<br>
++    // {{{ function getAssoc($query, $types = null, $params = array())<br>
++<br>
++    /**<br>
++     * A hacked in method to allow getAssoc to be called in PHP4, where<br>
++     * it would normally be called via __call() above in PHP5.<br>
++     *<br>
++     * @see MDB2_Extended::getAssoc().<br>
++     */<br>
++    function getAssoc($query, $types = null, $params = array(),<br>
++        $param_types = null, $fetchmode = MDB2_FETCHMODE_DEFAULT,<br>
++        $rekey = false, $force_array = false, $group = false)<br>
++    {<br>
++        $callParams = array($query, $types, $params,<br>
++            $param_types, $fetchmode,<br>
++            $rekey, $force_array, $group);<br>
++        return $this-&gt;__call(&#039;getAssoc&#039;, $callParams);<br>
++    }<br>
++<br>
++    // }}}<br>
++    // {{{ function getOne($query, $type = null, $params = array())<br>
++<br>
++    /**<br>
++     * A hacked in method to allow getOne to be called in PHP4, where<br>
++     * it would normally be called via __call() above in PHP5.<br>
++     *<br>
++     * @see MDB2_Extended::getOne().<br>
++     */<br>
++    function getOne($query, $type = null, $params = array(),<br>
++        $param_types = null, $colnum = 0)<br>
++    {<br>
++        $callParams = array($query, $type, $params, $param_types, $colnum);<br>
++        return $this-&gt;__call(&#039;getOne&#039;, $callParams);<br>
++    }<br>
++<br>
++    // }}}<br>
++    // {{{ function getCol($query, $type = null, $params = array())<br>
++<br>
++    /**<br>
++     * A hacked in method to allow getCol to be called in PHP4, where<br>
++     * it would normally be called via __call() above in PHP5.<br>
++     *<br>
++     * @see MDB2_Extended::getCol().<br>
++     */<br>
++    function getCol($query, $type = null, $params = array(),<br>
++        $param_types = null, $colnum = 0)<br>
++    {<br>
++        $callParams = array($query, $type, $params, $param_types, $colnum);<br>
++        return $this-&gt;__call(&#039;getCol&#039;, $callParams);<br>
++    }<br>
++<br>
++    // }}}<br>
++    // {{{ function getRow($query, $type = null, $params = array())<br>
++<br>
++    /**<br>
++     * A hacked in method to allow getRow to be called in PHP4, where<br>
++     * it would normally be called via __call() above in PHP5.<br>
++     *<br>
++     * @see MDB2_Extended::getRow().<br>
++     */<br>
++    function getRow($query, $types = null, $params = array(),<br>
++        $param_types = null, $fetchmode = MDB2_FETCHMODE_DEFAULT)<br>
++    {<br>
++        $callParams = array($query, $types, $params, $param_types, $fetchmode);<br>
++        return $this-&gt;__call(&#039;getRow&#039;, $callParams);<br>
++    }<br>
++<br>
++    // }}}<br>
+     // {{{ function beginTransaction($savepoint = null)</p>
+<p>/**</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

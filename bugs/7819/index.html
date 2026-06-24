@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7819</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/XML_RPC/index.html">XML_RPC</a> &#187; Bug #7819</h1>
+<p>Wrong Reponse on &#039;-1&#039; -String</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Doc Bug #7819</th><td>Wrong Reponse on &#039;-1&#039; -String</td></tr>
+<tr><th>Submitted</th><td>2006-06-06 08:36 UTC</td></tr>
+<tr><th>From</th><td>mra at deltaz dot com</td></tr>
+<tr><th>Assigned</th><td>cweiske</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/XML_RPC/index.html">XML_RPC</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>win and linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-06 08:36 UTC] mra at deltaz dot com</h3>
+<p>Description:<br>
+------------<br>
+If you pass a string containing &quot;-1&quot; do XML_RPC_Value constructor without a type (this means string as default type) the response is empty, but should contain the &quot;-1&quot; string in the result.</p>
+<p>Test script:<br>
+---------------<br>
+require_once &#039;XML/RPC/Server.php&#039;;</p>
+<p>//with some good and bad cases<br>
+function foobar($params) {<br>
+//  (1) Doesn&#039;t work fine<br>
+    $obj = new XML_RPC_Value(&#039;-1&#039;);<br>
+//  (2) Doesn&#039;t work fine<br>
+//  $obj = new XML_RPC_Value((string) &#039;-1&#039;);<br>
+//  (3) Work&#039;s fine<br>
+//  $obj = new XML_RPC_Value(&#039;-1&#039;, &#039;string&#039;);<br>
+//  (4) Even this works fine &quot;-2&quot; as string <br>
+//  $obj = new XML_RPC_Value(&#039;-2&#039;);<br>
+    return new XML_RPC_Response($obj);<br>
+}</p>
+<p>$server = new XML_RPC_Server(<br>
+    array(<br>
+        &#039;foobar&#039; =&gt; array(<br>
+            &#039;function&#039; =&gt; &#039;foobar&#039;)<br>
+        ),<br>
+    0, // service not now<br>
+    1  // Debug 1=on<br>
+);</p>
+<p>if (empty($HTTP_RAW_POST_DATA)) {<br>
+    echo &quot;empty&quot;;<br>
+} else {<br>
+    $server-&gt;service();<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+&lt;methodResponse&gt;<br>
+&lt;params&gt;<br>
+&lt;param&gt;<br>
+&lt;value&gt;&lt;string&gt;-1&lt;/string&gt;&lt;/value&gt;<br>
+&lt;/param&gt;<br>
+&lt;/params&gt;<br>
+&lt;/methodResponse&gt;</p>
+<p>--&gt;produced with (3), looks good</p>
+<p>Actual result:<br>
+--------------<br>
+&lt;methodResponse&gt;<br>
+&lt;params&gt;<br>
+&lt;param&gt;<br>
+&lt;/param&gt;<br>
+&lt;/params&gt;<br>
+&lt;/methodResponse&gt;</p>
+<p>--&gt;produced with (1)<br>
+--&gt;So empty payload as result</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

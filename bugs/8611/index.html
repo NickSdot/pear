@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8611</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #8611</h1>
+<p>can&#039;t install as a non-root user</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-09-01 17:12 UTC</td></tr>
+<tr><th>From</th><td>geocar at internetconnection dot net</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Debian 3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-09-01 17:12 UTC] geocar at internetconnection dot net</h3>
+<p>Description:<br>
+------------<br>
+Installing as a non-root user fails if the home directory is not found off the root, or off a directory that is off the root.</p>
+<p>To reproduce: make a user with the home directory /usr/local/someplace/users/yourusername</p>
+<p>The permissions for yourusername should be 0750, and the user doesn&#039;t belong the group that &quot;owns&quot; his home directory.</p>
+<p>Install _always_ fails with an error &quot;cannot create /usr/local/someplace/users/yourusername&quot;</p>
+<p>I worked around the problem by making a symlink in /yourusername, performed the install, then used fine . -type f  -print0 |xargs -0 perl -p -i -e &#039;s/\/yourusername/\/usr\/local\/someplace\/users\/yourusername/sg&#039;</p>
+<p>and fixing up php.ini to point to the PEAR directory.</p>
+</section>
+<section>
+<h3>[2006-09-02 16:59 UTC] geocar at internetconnection dot net</h3>
+<p>I attempted to use gopear.</p>
+<p>The directory does already exist.</p>
+<p>It shouldn&#039;t matter if the user has the ability to create the directory or not.</p>
+</section>
+<section>
+<h3>[2006-09-02 19:38 UTC] geocar at internetconnection dot net</h3>
+<p>``Ok, and what is the permissions/owner of this directory and which which user to you run go-pear?&#039;&#039;</p>
+<p>I create a user:</p>
+<p>mkdir -p /usr/share/web<br>
+chown root:root /usr/share/web<br>
+chmod 0711 /usr/share/web<br>
+useradd -d /usr/share/web/foo -g users foo<br>
+chown foo:www /usr/share/web/foo<br>
+chmod 0750 /usr/share/web/foo</p>
+<p>foo logs in, and copies the php.cgi into ~/cgi-bin/php5 and runs:</p>
+<p>$ PATH=$HOME/cgi-bin:$PATH<br>
+$ export PATH<br>
+$ lynx -source http://pear.php.net/go-pear \<br>
+| php5</p>
+<p>as following the instructions, prefix is set to /usr/share/web/foo</p>
+<p>install proceeds, after unpacking PEAR, and setting up config (attempting to create pear.conf) install aborts complaining that /usr/share/web/foo already exists.</p>
+<p>If I ln -s /foo /usr/share/web/foo and run the install setting the &quot;prefix&quot; to /foo, and then editing all cases of /foo then install will succeed.</p>
+<p>&quot;It shouldn&#039;t matter if the user has the ability to create the directory or not.&quot;</p>
+<p>If it does not exist, it obviously does matter. But this is not the case here. No, even if it doesn&#039;t exist.</p>
+<p>the installer should mkdir and ignore its error code. It should instead test success using chdir, or opendir, or even by attempting to create a file in there (if its really attempting to test writability), or similar.</p>
+<p>It should _not_ attempt_ to predict whether creating the directory will fail.</p>
+</section>
+<section>
+<h3>[2006-09-02 21:14 UTC] geocar at internetconnection dot net</h3>
+<p>Welcome to go-pear!</p>
+<p>Go-pear will install the &#039;pear&#039; command and all the files needed by<br>
+it.  This command is your tool for PEAR installation and maintenance.</p>
+<p>Go-pear also lets you download and install the PEAR packages bundled<br>
+with PHP: MDB2.</p>
+<p>If you wish to abort, press Control-C now, or press Enter to continue:</p>
+<p>HTTP proxy (http://user:password@proxy.myhost.com:port), or Enter for none::</p>
+<p>Below is a suggested file layout for your new PEAR installation.  To<br>
+change individual locations, type the number in front of the<br>
+directory.  Type &#039;all&#039; to change all of them or simply press Enter to<br>
+accept these locations.</p>
+<p>1. Installation prefix           : /usr/local<br>
+ 2. Binaries directory            : $prefix/bin<br>
+ 3. PHP code directory ($php_dir) : $prefix/share/pear<br>
+ 4. Documentation base directory  : $php_dir/docs<br>
+ 5. Data base directory           : $php_dir/data<br>
+ 6. Tests base directory          : $php_dir/tests<br>
+ 7. Temporary files directory     : $prefix/temp</p>
+<p>1-7, &#039;all&#039; or Enter to continue: 1<br>
+Installation prefix [/usr/local] : /usr/share/web/jpetit</p>
+<p>Below is a suggested file layout for your new PEAR installation.  To<br>
+change individual locations, type the number in front of the<br>
+directory.  Type &#039;all&#039; to change all of them or simply press Enter to<br>
+accept these locations.</p>
+<p>1. Installation prefix           : /usr/share/web/jpetit<br>
+ 2. Binaries directory            : $prefix/bin<br>
+ 3. PHP code directory ($php_dir) : $prefix/share/pear<br>
+ 4. Documentation base directory  : $php_dir/docs<br>
+ 5. Data base directory           : $php_dir/data<br>
+ 6. Tests base directory          : $php_dir/tests<br>
+ 7. Temporary files directory     : $prefix/temp</p>
+<p>1-7, &#039;all&#039; or Enter to continue:<br>
+mkdir failed: &lt;/&gt;<br>
+Unable to create PHP code directory ($php_dir) /usr/share/web/jpetit/share/pear.Run this script as root or pick another location.<br>
+jpetit@hermes:~$ ls -ld .<br>
+drwxr-x---  14 jpetit www 4096 Sep  1 17:06 .<br>
+jpetit@hermes:~$ pwd<br>
+/usr/share/web/jpetit<br>
+jpetit@hermes:~$ ls -dl share/pear/<br>
+drwxr-xr-x  13 jpetit users 4096 Sep  2 21:12 share/pear/</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

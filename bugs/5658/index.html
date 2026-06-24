@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5658</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Logging &#187; <a href="package/Log/index.html">Log</a> &#187; Bug #5658</h1>
+<p>LOG 0.9.0 breaks __autoload</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-10-11 16:41 UTC</td></tr>
+<tr><th>From</th><td>nick dot locking at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>jon</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Log/index.html">Log</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.4</td></tr>
+<tr><th>OS</th><td>Trustix 2.1</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-11 16:41 UTC] nick dot locking at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+When I use __autoload in conjunction with Log, an upgrade to the new version breaks it completely - it seems to attempt an autoload first and then try and get its own PEAR classes, which fails ungracefully, but only, seemingly, with the SQL handler.</p>
+<p>Test script:<br>
+---------------<br>
+require_once(&quot;Log.php&quot;);<br>
+require_once(&#039;DB.php&#039;);</p>
+<p>// Automatically load classes.<br>
+function __autoload($className) {<br>
+	require_once(INCLUDES_DIR.&#039;/class_&#039;.strtolower($className).&#039;.php&#039;);<br>
+}</p>
+<p>$logDB =  Log::singleton(&#039;sql&#039;, &#039;log&#039;, &#039;username&#039;, array(&quot;db&quot;=&gt;$dbObjConnection));</p>
+<p>Expected result:<br>
+----------------<br>
+Nothing!</p>
+<p>Actual result:<br>
+--------------<br>
+An error claiming PHP can&#039;t include the file, generated from my autoload function - so it&#039;s not finding the class and is attempting to autoload it. I&#039;ve seen another possibly similar bug, #3197, which could be related, claiming that an is_a check is what causes the error, although I&#039;m not sure if this is the case.</p>
+</section>
+<section>
+<h3>[2005-10-24 11:08 UTC] nick dot locking at gmail dot com</h3>
+<p>This might not be autoload related after all - here&#039;s some sample code:</p>
+<p>----------------------------------<br>
+/* PEAR stuff - should be in include-path */<br>
+require_once(&quot;Log.php&quot;);<br>
+require_once(&#039;DB.php&#039;);</p>
+<p>// Get the database config constants.<br>
+require_once(&#039;_sitemaker_config.php&#039;);</p>
+<p>// Attempt to create a PEAR::Log object.<br>
+if (!$LOG=Log::singleton(&#039;composite&#039;)) die(&#039;Failed to create Log object.&#039;);</p>
+<p>/* Create DB connection */<br>
+$dbobj = DB::connect(&quot;mysql://&quot; . DB_USER . &quot;:&quot; . DB_PASS . &quot;@&quot; . DB_HOSTNAME . &quot;/&quot; . DB_NAME);</p>
+<p>// Add a DB logger to the Log object.<br>
+$logDB = Log::singleton(&#039;sql&#039;, &#039;log&#039;, &#039;logident&#039;, array(&quot;db&quot;=&gt;$dbobj), PEAR_LOG_DEBUG);<br>
+$LOG-&gt;addChild($logDB);</p>
+<p>// Produce the error.<br>
+$LOG-&gt;log(&#039;Test!&#039;, PEAR_LOG_CRIT);<br>
+die();<br>
+------------------------------------------</p>
+<p>And here&#039;s what it produces:</p>
+<p>Notice: Undefined offset: 0 in /usr/lib/php/DB/common.php on line 993</p>
+<p>Notice: Undefined offset: 0 in /usr/lib/php/DB/common.php on line 994</p>
+</section>
+<section>
+<h3>[2005-10-24 16:08 UTC] nick dot locking at gmail dot com</h3>
+<p>Jon,</p>
+<p>You&#039;re right - it was the existing DB connection issue. I replaced the DB object with a DSN and it worked perfectly. Thanks!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

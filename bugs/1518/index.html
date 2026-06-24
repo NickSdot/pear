@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1518</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #1518</h1>
+<p>Wrong header Mime conversion</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-27 14:58 UTC</td></tr>
+<tr><th>From</th><td>storozhilov at mail dot ru</td></tr>
+<tr><th>Status</th><td>Duplicate</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>FreeBSD 5.2.1-p5</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-27 14:58 UTC] storozhilov at mail dot ru</h3>
+<p>Description:<br>
+------------<br>
+When trying to send mail message with the subject, containing some words of non-vestern characters, theese words converted separately without spaces between them. But spaces must be converted too. Otherwise theese spaces are disappeares while displaying subject in E-Mail clients (KMail, Mozilla, etc.).</p>
+<p>$ pear list<br>
+INSTALLED PACKAGES:<br>
+===================<br>
+PACKAGE        VERSION STATE<br>
+Archive_Tar    1.1     stable<br>
+Console_Getopt 1.2     stable<br>
+DB             1.6.2   stable<br>
+HTTP           1.2.2   stable<br>
+Mail           1.1.3   stable<br>
+Mail_Mime      1.2.1   stable<br>
+Net_SMTP       1.2.3   stable<br>
+Net_Socket     1.0.1   stable<br>
+PEAR           1.3.1   stable<br>
+XML_Parser     1.0.1   stable<br>
+XML_RPC        1.1.0   stable</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?<br>
+$crlf = &quot;\n&quot;;<br>
+$mime = new Mail_mime($crlf);<br>
+$mime-&gt;setHTMLBody($html);<br>
+$body = $mime-&gt;get(array(<br>
+  &#039;head_charset&#039; =&gt; &#039;koi8-r&#039;,<br>
+  &#039;html_charset&#039; =&gt; &#039;koi8-r&#039;<br>
+));<br>
+$hdrs = $mime-&gt;headers(array(<br>
+  &#039;To&#039; =&gt; &#039;vasyapupkin@vasya.com&#039;,<br>
+  &#039;Subject&#039; = &#039;Ìàøà åëà êàøó&#039;<br>
+));<br>
+$mail =&amp; Mail::factory(&#039;mail&#039;);<br>
+$mail-&gt;send(&#039;me@myhost.com&#039;, $hdrs, $body);<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+I expect to see in mutt (or other E-Mail client) following subject: &#039;Ìàøà åëà êàøó&#039;</p>
+<p>Actual result:<br>
+--------------<br>
+But I see: &#039;Ìàøàåëàêàøó&#039;</p>
+</section>
+<section>
+<h3>[2004-08-22 15:52 UTC] support_nospam_ at sworld_nospam_ dot lv</h3>
+<p>i changed the code at the end of mime.php file from this:</p>
+<p>$replacement = preg_replace(&#039;/([\x80-\xFF])/e&#039;, &#039;&quot;=&quot; . strtoupper(dechex(ord(&quot;\1&quot;)))&#039;, $value);<br>
+$hdr_value = str_replace($value, &#039;=?&#039; . $this-&gt;_build_params[&#039;head_charset&#039;] . &#039;?Q?&#039; . $replacement . &#039;?=&#039;, $hdr_value);</p>
+<p>to this:</p>
+<p>$replacement = preg_replace(&#039;/([\x80-\xFF])/e&#039;, &#039;&quot;=&quot; . strtoupper(dechex(ord(&quot;\1&quot;)))&#039;, $value);<br>
+$value .= &#039;=20&#039;;<br>
+$hdr_value = str_replace($value, &#039;=?&#039; . $this-&gt;_build_params[&#039;head_charset&#039;] . &#039;?Q?&#039; . $replacement . &#039;?=&#039;, $hdr_value);</p>
+<p>so, just added one string: $value .= &#039;=20&#039;; whicha adds at the end of each word a space, encoded as &#039;=20&#039;</p>
+<p>i&#039;ve not tested it a lot, but it seems to be working...</p>
+</section>
+<section>
+<h3>[2004-11-12 14:53 UTC] ed at avi dot ru</h3>
+<p>That problem and solution was already discussed here:</p>
+<p>http://pear.php.net/bugs/bug.php?id=30</p>
+<p>There&#039;s also the sample of the patched method.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

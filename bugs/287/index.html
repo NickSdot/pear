@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #287</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #287</h1>
+<p>nextId() uses wrong sequence</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-11-23 23:07 UTC</td></tr>
+<tr><th>From</th><td>ieure at websprockets dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-11-23 23:07 UTC] ieure at websprockets dot com</h3>
+<p>Description:<br>
+------------<br>
+Calling nextId (with pgsql) uses a different sequence than what I pass <br>
+in $seq_name.</p>
+<p>Reproduce code:<br>
+---------------<br>
+Table def:<br>
+CREATE TABLE &quot;users&quot; (<br>
+        &quot;username&quot; text NOT NULL,<br>
+        &quot;password&quot; text NOT NULL,<br>
+        &quot;id&quot; serial<br>
+);</p>
+<p>(this autocreates &#039;users_id_seq&#039;)</p>
+<p>Then:</p>
+<p>$id = $DB-&gt;nextId(&#039;users_id_seq&#039;);</p>
+<p>Expected result:<br>
+----------------<br>
+nextId() returns the next value from &#039;users_id_seq,&#039; per the <br>
+documentation. <br>
+ <br>
+http://pear.php.net/manual/en/package.database.db.db-common.nextid.php <br>
+&quot;string $seq_name - name of the sequence&quot;</p>
+<p>Actual result:<br>
+--------------<br>
+nextId() creates &#039;users_id_seq_seq&#039; and returns the next value from  <br>
+that. If the database was seeded prior to using DB, the insert will fail <br>
+due to duplicate IDs. <br>
+ <br>
+getSequenceName() (in DB/common.php) seems to be the  <br>
+cuplrit, as it returns &#039;users_id_seq_seq&#039; when called from nextId().</p>
+</section>
+<section>
+<h3>[2003-12-18 16:50 UTC] chagenbu at php dot net</h3>
+<p>This is now nextId() has always behaved, and changing it would break a lot of applications. Is there a reason you can&#039;t just call $db-&gt;nextId(&#039;users_id&#039;)?</p>
+</section>
+<section>
+<h3>[2004-01-15 19:28 UTC] ieure at websprockets dot com</h3>
+<p>The bug isn&#039;t bogus, the problem is real. The fact that DB <br>
+has had the bug for a long time and code now depends on it <br>
+is irrelevant. <br>
+ <br>
+At the very least, the documentation should be updated to <br>
+indicate that it does /not/ use the sequence you tell it <br>
+to, and perhaps a warning not to let nextId create <br>
+sequences for you. <br>
+ <br>
+Long-term, it should be fixed (perhaps in 2.0), or if we <br>
+absolutely must keep it&#039;s (utterly broken) behavior, a <br>
+replacement function which works correctly and has a <br>
+different name should be added.</p>
+</section>
+<section>
+<h3>[2004-01-15 21:01 UTC] ieure at websprockets dot com</h3>
+<p>In response to Chuck&#039;s question, no, there is no reason I  <br>
+can&#039;t simply use &#039;tablename_fieldname&#039; instead of (the  <br>
+correct) &#039;tablename_fieldname_seq.&#039; Indeed, it&#039;s what I  <br>
+/had/ to do in order to work around this problem.  <br>
+  <br>
+Regardless, the documentation does not say &quot;name of the  <br>
+sequence, with _seq omitted,&quot; nor does it say &quot;sequence  <br>
+name will be converted to the format specified in the  <br>
+&#039;seqname_format&#039; option. It says &quot;name of the sequence,&quot;  <br>
+and it does not use the name you give it.  <br>
+  <br>
+It&#039;s not obvious that this is the behavior until you start  <br>
+having problems with your database and have to track down  <br>
+what&#039;s going wrong.  <br>
+  <br>
+Setting seqname_format to &#039;%s&#039; makes nextId() use the <br>
+sequence I pass it. This still should be documented <br>
+somewhere.</p>
+</section>
+<section>
+<h3>[2004-01-16 07:55 UTC] ieure at websprockets dot com</h3>
+<p>All this discussion is quite irrelevant, imo. The function <br>
+does not do what the documentation claims. Either the <br>
+documentation needs to be updated to tell what the function <br>
+does, or the function needs to be changed to do what the <br>
+documentation says. I&#039;ll be happy to provide a patch for <br>
+either one. <br>
+ <br>
+We could argue about use cases forever, but the simple fact <br>
+is that the function doesn&#039;t do what the docs say.</p>
+</section>
+<section>
+<h3>[2004-11-26 13:13 UTC] cece at syrup dot hu</h3>
+<p>Why not use</p>
+<p>$id = $DB-&gt;nextId(&#039;users_id&#039;);</p>
+<p>instead?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

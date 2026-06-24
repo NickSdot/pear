@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1607</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #1607</h1>
+<p>[patch] PostgreSQL schema (aka namespace) support</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #1607</th><td>[patch] PostgreSQL schema (aka namespace) support</td></tr>
+<tr><th>Submitted</th><td>2004-06-10 17:17 UTC</td></tr>
+<tr><th>From</th><td>s dot ballestrero at firenze dot linux dot it</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Duplicate</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>Any</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-06-10 17:17 UTC] s dot ballestrero at firenze dot linux dot it</h3>
+<p>Description:<br>
+------------<br>
+While trying to use DB_DataObjects on a PostgreSQL database<br>
+with schemas and failing, I found that $conn-&gt;getListOf(&#039;tables&#039;) returns the names of the tables without the schema name in front (i.e. &#039;mytable&#039;,&#039;mytable&#039; instead of &#039;myschema1.mytable&#039;,&#039;myschema2.mytable&#039;).<br>
+ I fixed it by replacing the SQL for listing the tables [DB/pgsql.php v 1.75 function getSpecialQuery($type) line 802] with</p>
+<p>SELECT n.nspname||&#039;.&#039;||c.relname as &quot;Name&quot;<br>
+FROM pg_class c<br>
+JOIN pg_user u ON c.relowner = u.usesysid<br>
+LEFT JOIN pg_namespace n ON n.oid = c.relnamespace <br>
+WHERE c.relkind = &#039;r&#039;<br>
+AND not exists (select 1 from pg_views where viewname = c.relname)<br>
+AND c.relname !~ &#039;^pg_&#039;<br>
+UNION<br>
+SELECT n.nspname||&#039;.&#039;||c.relname as &quot;Name&quot;<br>
+FROM pg_class c<br>
+LEFT JOIN pg_namespace n ON n.oid = c.relnamespace<br>
+WHERE c.relkind = &#039;r&#039;<br>
+AND not exists (select 1 from pg_views where viewname = c.relname)<br>
+AND not exists (select 1 from pg_user where usesysid = c.relowner)<br>
+AND c.relname !~ &#039;^pg_&#039;</p>
+<p>Would this be the right way to fix it ? Would this fix break something else ?</p>
+<p>Cheers, Sergio</p>
+<p>PS This bug is similar/related to [#682 Feature request: getListOf(&#039;pgsql:schema.table&#039;);] but, since it breaks DataObjects/createTables.php, I really think it should be a bug, not a feature request.</p>
+<p>Reproduce code:<br>
+---------------<br>
+# create a db like: <br>
+create schema myschema1;<br>
+create schema myschema2;<br>
+create table myschema1.mytable (id serial, descr text);<br>
+create table myschema2.mytable (id serial, descr text);</p>
+<p># connect to it and do<br>
+print_r( $conn-&gt;getListOf(&#039;tables&#039;) );</p>
+<p>Expected result:<br>
+----------------<br>
+Array<br>
+(<br>
+    [0] =&gt;myschema1.mytable,<br>
+    [1] =&gt;myschema2.mytable<br>
+)</p>
+<p>Actual result:<br>
+--------------<br>
+Array<br>
+(<br>
+    [0] =&gt;mytable,<br>
+    [1] =&gt;mytable<br>
+)</p>
+</section>
+<section>
+<h3>[2004-06-18 09:02 UTC] s dot ballestrero at firenze dot linux dot it</h3>
+<p>I found out that also DB::_pgFieldFlags(...) is affected by PGSQL schemas.<br>
+ I&#039;ve put up a complete patch on http://www.planetweb.it/opensource/</p>
+<p>Please note that this patch WILL BREAK COMPATIBILITY with  PostgreSQL pre-7.3 that did not have the pg_namespace system table. How do you think I should handle this problem ?</p>
+</section>
+<section>
+<h3>[2004-06-18 09:06 UTC] s dot ballestrero at firenze dot linux dot it</h3>
+<p>(fix the bug Summary that Mozilla autofill messed up :-( )</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

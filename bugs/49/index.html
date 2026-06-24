@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #49</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #49</h1>
+<p>sybase simpleQuery is broken</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-09-30 11:56 UTC</td></tr>
+<tr><th>From</th><td>r dot vanicek at seznam dot cz</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Debian GNU/Linux woody</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-09-30 11:56 UTC] r dot vanicek at seznam dot cz</h3>
+<p>Description:<br>
+------------<br>
+simpleQuery method in the sybase class always returns an error. I have discovered that the problem is caused by the sybase_select_db call which always fails with the message:</p>
+<p>Warning: sybase_select_db(): Sybase message: Incorrect syntax near &#039;use&#039;. (severity 15) in /usr/local/lib/php/DB/sybase.php on line 220</p>
+<p>The fix is to comment out the if statement, because it is not needed (the database is already selected, after calling connect). The previous version (RC1) did not have this statement (select_db) inside the simpleQuery and my opinion is that it should not be here (it is strange to change the db with every command).</p>
+<p>I hope your day goes well, Roman</p>
+<p>Reproduce code:<br>
+---------------<br>
+                require_once &quot;DB.php&quot;;</p>
+<p>$GLOBALS[&#039;dsn&#039;] = array(<br>
+                   &#039;phptype&#039;=&gt;&#039;sybase&#039;,<br>
+                   &#039;username&#039;=&gt;&#039;user&#039;,<br>
+                   &#039;password&#039;=&gt;&#039;PSWD&#039;,<br>
+                   &#039;hostspec&#039;=&gt;&#039;servername&#039;,<br>
+                   &#039;database&#039;=&gt;&#039;dbname&#039;,<br>
+                   &#039;charset&#039;=&gt;&#039;iso-8859-2&#039;);</p>
+<p>$GLOBALS[&#039;kkDB&#039;] = @DB::connect($GLOBALS[&#039;dsn&#039;],false);<br>
+                $GLOBALS[&#039;kkDB&#039;]-&gt;query(&#039;set dateformat dmy&#039;);</p>
+<p>$res = $kkDB-&gt;query(&quot;select * from ANYTABLE&quot;);<br>
+                var_dump($res);</p>
+</section>
+<section>
+<h3>[2003-11-14 14:09 UTC] fielker at informatik dot fh-augsburg dot de</h3>
+<p>Hi i found out where the problem is: <br>
+ <br>
+simple_query mages use of &quot;$this-&gt;_db&quot; which is not <br>
+initalized. So I looked at the mysql code. In connect() <br>
+$this-&gt;_db  is set to $dsninfo[&#039;database&#039;]. So here the <br>
+fix. <br>
+ <br>
+Pleas PEAR guys add this to the next release of DB. THX. <br>
+ <br>
+        if ($dsninfo[&#039;database&#039;]) { <br>
+            if (!@sybase_select_db($dsninfo[&#039;database&#039;], <br>
+$conn)) { <br>
+                return <br>
+$this-&gt;raiseError(DB_ERROR_NODBSELECTED, null, <br>
+                                         null, null, <br>
+sybase_get_last_message()); <br>
+            } <br>
+        } <br>
+ <br>
+        if ($dsninfo[&#039;database&#039;]) { <br>
+            if (!@sybase_select_db($dsninfo[&#039;database&#039;], <br>
+$conn)) { <br>
+                return <br>
+$this-&gt;raiseError(DB_ERROR_NODBSELECTED, null, <br>
+                                         null, null, <br>
+sybase_get_last_message()); <br>
+            } <br>
+            $this-&gt;_db = $dsninfo[&#039;database&#039;];  // <br>
+-&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt; ADD THIS (line 114) <br>
+        }</p>
+</section>
+<section>
+<h3>[2003-11-20 17:49 UTC] trevor dot dennis at eds dot com</h3>
+<p>Even with the code fix given, you must now still pass the database name to the connect string where you didn&#039;t have to before.</p>
+<p>Normally one relies on Sybase to automatically place you in your correct default database upon connection based on the user login name.  Maybe the connect code should query the current database if it was not defined on the DSN string.</p>
+<p>select db_name()</p>
+<p>I agree with the first statement though.  It should not be setting the database before every simple query.  This may cause issues with transactions or at the very least will slow down processing if you&#039;re doing a large many row insert.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

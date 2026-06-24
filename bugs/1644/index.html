@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1644</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject_FormBuilder/index.html">DB_DataObject_FormBuilder</a> &#187; Bug #1644</h1>
+<p>[patch] generate SELECT from non-numeric fields</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #1644</th><td>[patch] generate SELECT from non-numeric fields</td></tr>
+<tr><th>Submitted</th><td>2004-06-15 11:00 UTC</td></tr>
+<tr><th>From</th><td>s dot ballestrero at firenze dot linux dot it</td></tr>
+<tr><th>Assigned</th><td>justinpatrin</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject_FormBuilder/index.html">DB_DataObject_FormBuilder</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>Any</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-06-15 11:00 UTC] s dot ballestrero at firenze dot linux dot it</h3>
+<p>Description:<br>
+------------<br>
+patch against FormBuilder.php,v 1.25 to produce &lt;select&gt; <br>
+also for links on non-numeric fields<br>
+BTW, an &quot;attach&quot; field on the bug report form would be nice...<br>
+----------------------------------------<br>
+--- /opt/php/share/pear/DB/DataObject/FormBuilder.php   2004-06-08 19:39:51.000000000 +0200<br>
++++ FormBuilder.php     2004-06-15 12:42:26.000000000 +0200<br>
+@@ -484,18 +485,22 @@<br>
+                               in_array($key,$this-&gt;_do-&gt;textFields)) {<br>
+                         $element =&amp; HTML_QuickForm::createElement($this-&gt;_getQFType(&#039;longtext&#039;), $key, $this-&gt;getFieldLabel($key));<br>
+                     } else {<br>
++<br>
++                       $links = $this-&gt;_do-&gt;links();<br>
++                       if (is_array($links) &amp;&amp; array_key_exists($key, $links)) {<br>
++                           $opt = $this-&gt;getSelectOptions($key);<br>
++                           $element =&amp; HTML_QuickForm::createElement(&#039;select&#039;, $key, $this-&gt;getFieldLabel($key), $opt);<br>
++                           unset($opt);<br>
++                       } else {<br>
++                           unset($element);<br>
++                       }<br>
++                       unset($links);<br>
++<br>
+                         // Auto-detect field types depending on field&#039;s database type<br>
+                         switch (true) {<br>
+                             case ($type &amp; DB_DATAOBJECT_INT):<br>
+-                                $links = $this-&gt;_do-&gt;links();<br>
+-                                if (is_array($links) &amp;&amp; array_key_exists($key, $links)) {<br>
+-                                    $opt = $this-&gt;getSelectOptions($key);<br>
+-                                    $element =&amp; HTML_QuickForm::createElement(&#039;select&#039;, $key, $this-&gt;getFieldLabel($key), $opt);<br>
+-                                } else {<br>
+-                                    $element =&amp; HTML_QuickForm::createElement($this-&gt;_getQFType(&#039;integer&#039;), $key, $this-&gt;getFieldLabel($key-                                    $elValidator = &#039;numeric&#039;;<br>
+-                                }<br>
+-                                unset($links);<br>
++                               if (empty($element)) $element =&amp; HTML_QuickForm::createElement($this-&gt;_getQFType(&#039;integer&#039;), $key, $this-&gt;ge+                               $elValidator = &#039;numeric&#039;;<br>
+                                 break;<br>
+                             case ($type &amp; DB_DATAOBJECT_DATE): // TODO<br>
+                                 $element =&amp; $this-&gt;_createDateElement($key);<br>
+@@ -506,18 +511,18 @@<br>
+                             case ($type &amp; DB_DATAOBJECT_TIME): // TODO<br>
+                             case ($type &amp; DB_DATAOBJECT_BOOL): // TODO<br>
+                             case ($type &amp; DB_DATAOBJECT_TXT):<br>
+-                                $element =&amp; HTML_QuickForm::createElement($this-&gt;_getQFType(&#039;longtext&#039;), $key, $this-&gt;getFieldLabel($key));+                                if (empty($element)) $element =&amp; HTML_QuickForm::createElement($this-&gt;_getQFType(&#039;longtext&#039;), $key, $this-&gt;                                 break;<br>
+                             case ($type &amp; DB_DATAOBJECT_STR):<br>
+                                 // If field content contains linebreaks, make textarea - otherwise, standard textbox<br>
+                                 if (!empty($this-&gt;_do-&gt;$key) &amp;&amp; strstr($this-&gt;_do-&gt;$key, &quot;\n&quot;)) {<br>
+                                     $element =&amp; HTML_QuickForm::createElement($this-&gt;_getQFType(&#039;longtext&#039;), $key, $this-&gt;getFieldLabel($ke                                 } else {<br>
+-                                    $element =&amp; HTML_QuickForm::createElement($this-&gt;_getQFType(&#039;shorttext&#039;), $key, $this-&gt;getFieldLabel($k+                                    if (empty($element)) $element =&amp; HTML_QuickForm::createElement($this-&gt;_getQFType(&#039;shorttext&#039;), $key, $t                                 }<br>
+                                 break;<br>
+                             default:<br>
+-                                $element =&amp; HTML_QuickForm::createElement(&#039;text&#039;, $key, $this-&gt;getFieldLabel($key));<br>
++                                if (empty($element)) $element =&amp; HTML_QuickForm::createElement(&#039;text&#039;, $key, $this-&gt;getFieldLabel($key));<br>
+                         } // End switch<br>
+                     } // End else</p>
+</section>
+<section>
+<h3>[2004-06-16 14:29 UTC] s dot ballestrero at firenze dot linux dot it</h3>
+<p>Now you can get my patch from http://www.planetweb.it/opensource/</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

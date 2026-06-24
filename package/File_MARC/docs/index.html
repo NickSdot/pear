@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File_MARC Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_MARC/index.html">File_MARC</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/File_MARC/docs/index.html#package-fileformats-file-marc-reading">Reading MARC data</a>
+</li>
+<li><a href="package/File_MARC/docs/index.html#package-fileformats-file-marc-formatting">Formatting MARC data</a>
+</li></ul>
+</nav>
+<p>This package creates, reads, and modifies Machine Readable Cataloging (MARC) formatted files.</p>
+<section id="package-fileformats-file-marc-reading">
+<h2>Reading MARC data</h2>
+<h3>Overview</h3>
+
+  
+
+  <p><strong>File_MARC</strong> allows you to read Machine
+   Readable Cataloging (MARC) data in MARC 21 format.
+   <strong>File_MARCXML</strong>, which is bundled with
+   <strong>File_MARC</strong>, allows you to read MARCXML formatted
+   data.</p>
+ 
+
+ <h3>Reading MARC data from different sources</h3>
+
+  
+  <p>Your input source can be a PHP stream (<strong>File_MARC::SOURCE_FILE</strong>) or a string
+   (<strong>File_MARC::SOURCE_STRING</strong>). The source location and source types are the
+   first and second arguments to the <strong>File_MARC</strong>
+   and <strong>File_MARCXML</strong> constructors.</p>
+
+  <p><strong>Reading MARC 21 data from a file</strong></p>
+   
+   <p>In the following example, MARC21 data has been stored on disk in a file 
+    named <code>journals.mrc</code>. To read the MARCX21 data, we
+    call the constructor for <strong>File_MARC</strong>. We do not need
+    to tell File_MARC that <code>journals.mrc</code> is a filename or
+    stream pointing to the MARC content, because the value of the second
+    parameter of the constructor for <strong>File_MARC</strong> defaults
+    to <strong>File_MARC::SOURCE_FILE</strong>.</p>
+
+   <pre><code>&lt;?php
+require &#039;File/MARC.php&#039;;
+
+// Retrieve a set of MARC records from a file
+$journals = new File_MARC(&#039;journals.mrc&#039;);
+
+// Iterate through the retrieved records
+while ($record = $journals-&gt;next()) {
+    // Pretty print each record
+    print $record;
+    print &quot;\n&quot;;
+}
+?&gt;</code></pre>
+  
+
+  <p><strong>Reading MARCXML data from a string</strong></p>
+   
+   <p>In the following example, MARCXML data has been returned from a call to
+    a Web service and has therefore been stored in a PHP variable, 
+    <code>$xml_data</code>, as a string. To read the MARCXML data, we
+    call the constructor for <strong>File_MARCXML</strong>. To tell
+    File_MARCXML that <code>$xml_data</code> is a string, we specify
+    <strong>File_MARC::SOURCE_STRING</strong> as the second parameter of the
+    constructor.</p>
+
+   <pre><code>&lt;?php
+require &#039;File/MARCXML.php&#039;;
+
+// Retrieve a set of MARCXML records from a string
+$journals = new File_MARCXML($xml_data, File_MARC::SOURCE_STRING);
+
+// Iterate through the retrieved records
+while ($record = $journals-&gt;next()) {
+    // Pretty print each record
+    print $record;
+    print &quot;\n&quot;;
+}
+?&gt;</code></pre>
+  
+ 
+
+ <h3>Reading MARC data from different sources</h3>
+
+  
+  <p>A <strong>File_MARC</strong> object consists of a leader and an
+   iterable set of <strong>File_MARC_Record</strong> objects
+   representing MARC records. Each of these, in turn, consists of an
+   iterable set of <strong>File_MARC_Data_Field</strong> or
+   <strong>File_MARC_Control_Field</strong> objects representing MARC
+   fields. A <strong>File_MARC_Data_Field</strong> consists of a set of
+   iterable <strong>File_MARC_Subfield</strong> objects representing
+   MARC subfields.</p>
+
+  <p><strong>Printing the elements of a record</strong></p>
+   
+
+   <pre><code>&lt;?php
+require &#039;File/MARC.php&#039;;
+
+// Retrieve a set of MARC records
+$bibrecords = new File_MARC(&#039;catdump.mrc&#039;, File_MARC::SOURCE_FILE);
+
+// Iterate through the retrieved records
+while ($record = $bibrecords-&gt;next()) {
+    // Print the leader
+    print $record-&gt;getLeader();
+    $subjects = $record-&gt;getFields(&#039;650&#039;);
+    if ($subjects) {
+        // Retrieve just the first 24_ field
+        print $record-&gt;getField(&#039;24.&#039;, true);
+        print &quot;\n&quot;;
+
+        // Now print all of the retrieved subjects
+        foreach ($subjects as $field) {
+            print $field;
+            print &quot;\n&quot;;
+        } 
+        print &quot;\n&quot;;
+    }
+}
+?&gt;</code></pre>
+
+  
+
+
+  <p>All of this means that <strong>File_MARC</strong> makes it easy
+   to read in a set of MARC records and iterate through the contents to retrieve 
+   specific fields and subfields. 
+   
+   <strong>File_MARC</strong> offers
+   convenience methods for retrieving specific fields without forcing you to
+   iterate through the fields. <code>getField</code> returns
+   the first field that matches the field name, while
+   <code>getFields</code> returns an array of all of the fields
+   that match the specified field name. Both of these methods accept an
+   optional boolean parameter that specifies whether your match string should
+   be treated as a Perl Compatible Regular Expression.</p>
+
+  <p><strong>Retrieving all 650 fields from a record</strong></p>
+   
+
+   <pre><code>&lt;?php
+require &#039;File/MARC.php&#039;;
+
+// Retrieve a set of MARC records from a z39 result string
+$bibrecords = new File_MARC($z39_result, File_MARC::SOURCE_STRING);
+
+// Iterate through the retrieved records
+while ($record = $bibrecords-&gt;next()) {
+    // Retrieve an array of all of the 650 fields
+    $subjects = $record-&gt;getFields(&#039;650&#039;);
+    if ($subjects) {
+        // Retrieve just the first 24_ field
+        print $record-&gt;getField(&#039;24.&#039;, true);
+        print &quot;\n&quot;;
+
+        // Now print all of the retrieved subjects
+        foreach ($subjects as $field) {
+            print $field;
+            print &quot;\n&quot;;
+        } 
+        print &quot;\n&quot;;
+    }
+}
+?&gt;</code></pre>
+  
+ 
+
+ <h3>Iterating through fields and subfields</h3>
+
+  
+  <p>When you iterate over a <strong>File_MARC_Data_Field</strong> object
+   using <strong>foreach()</strong>, the MARC tag for the given field is
+   returned as the key for the element and the set of subfields is returned
+   as the value of the element.</p>
+  <p>Similarly, when you iterate over a <strong>File_MARC_Subfield</strong>
+   object using <strong>foreach()</strong>, the code for the given subfield
+   is returned as the key of the element and the value of the given subfield
+   is returned as the value of the element.</p>
+
+  <p><strong>Iterating over fields and subfields in a MARC record</strong></p>
+   
+   <p>In the following example, we iterate through a set of 650 fields
+    to print out the subject headings contained in the subfields for each
+    field.</p>
+   <pre><code>&lt;?php
+require &#039;File/MARC.php&#039;;
+
+// Retrieve a set of MARC records from a z39 result string
+$bibrecords = new File_MARC($z39_result, File_MARC::SOURCE_STRING);
+
+// Go through each record
+while ($record = $bibrecords-&gt;next()) {
+    // Iterate through the fields
+    foreach ($record-&gt;getFields() as $tag =&gt; $subfields) {
+        // Skip everything except for 650 fields
+        if ($tag == &#039;650&#039;) {
+            print &quot;Subject:&quot;;
+            foreach ($subfields-&gt;getSubfields() as $code =&gt; $value) {
+                print &quot; $value&quot;;
+            }
+            print &quot;\n&quot;;
+        }
+    }
+}
+?&gt;</code></pre>
+
+  
+
+ 
+
+ <h3>Retrieving field indicators</h3>
+
+  
+  <p>Data fields, represented by the <strong>File_MARC_Data_Field</strong>
+   class, offer a <strong>getIndicator()</strong> function to enable you to
+   retrieve the value of an indicator.</p>
+
+  <p><strong>Retrieving an indicator</strong></p>
+   
+   <p>In the following example, we retrieve the title (245) field of a MARC
+    record and check the second indicator for the field to determine whether
+    there are non-filing indicators that we should ignore when sorting the
+    contents of the field.</p>
+   <pre><code>&lt;?php
+require &#039;File/MARC.php&#039;;
+
+$titleField = $record-&gt;getField(&#039;245&#039;);
+$nonfiling = $titleField-&gt;getIndicator(2);
+
+if ($nonfiling) {
+  // Sort using the subset of the $a subfield
+  $title = substr($titleField-&gt;getSubfield(&#039;a&#039;), $nonfiling);
+} else {
+  // Sort using the entire contents of the $a subfield
+  $title = $titleField-&gt;getSubfield(&#039;a&#039;);
+}
+?&gt;</code></pre>
+</section>
+<section id="package-fileformats-file-marc-formatting">
+<h2>Formatting MARC data</h2>
+<h3>Overview</h3>
+
+  
+
+  <p>The <strong>File_MARC_Record</strong> class enables you to write
+   Machine Readable Cataloging (MARC) data in MARC 21
+   format, in a human-readable string format, and (with some restrictions)
+   in MARCXML format.</p>
+ 
+
+ <h3>Formatting MARC 21 data</h3>
+
+  
+  <p>To return a record in MARC 21 format, call the <strong>toRaw()</strong>
+   method on the <strong>File_MARC_Record</strong> object.</p>
+
+  <p><strong>Writing MARC 21 data to a file</strong></p>
+   
+   <p>In the following example, we have created one or more MARC records
+    represented by <strong>File_MARC_Record</strong> objects
+    stored in the <code>$records</code> array. To write this
+    data to a file in MARC 21 format, we simply open the file in binary
+    mode and write the contents of the records in the array to the file
+    by calling the <strong>toRaw()</strong> method on each record
+    in turn.</p>
+
+   <pre><code>&lt;?php
+require &#039;File/MARC.php&#039;;
+
+// convert_metadata_to_marc() is a fictional method
+// that returns an array of File_MARC_Record objects
+$records = convert_metadata_to_marc(); 
+
+// Open a file for binary write access
+$marc21_file = fopen(&quot;records.mrc&quot;, &quot;wb&quot;);
+
+// Iterate through the records
+while ($record = $records-&gt;next()) {
+    // Write each record to the file in MARC 21 format
+    fwrite($marc21_file, $record-&gt;toRaw());
+}
+
+// Close the file
+fclose($marc21_file);
+?&gt;</code></pre>
+  
+ 
+
+ <h3>Creating human-readable output from MARC data</h3>
+
+  
+  <p>To return a human-readable version of a MARC 21 or MARCXML record,
+   call the <strong>__toString()</strong> method on the
+   <strong>File_MARC_Record</strong> object. Note that you call the
+   <strong>__toString()</strong> method implicitly when you call the 
+   <strong>print()</strong> function on a
+   <strong>File_MARC_Record</strong> object.</p>
+
+  <p><strong>Returning a human-readable representation of MARC</strong></p>
+   
+   <p>In the following example, we print the contents of each
+    MARC record in a human-readable format and also explicitly call
+    the <strong>__toString()</strong> method so that we can write
+    the human-readable contents to a file. Notice that it does not
+    matter whether the source format is MARC or MARCXML, the methods
+    we call to format the data for output are the same.</p>
+
+   <pre><code>&lt;?php
+require &#039;File/MARCXML.php&#039;;
+
+// Retrieve a set of MARCXML records from a string
+$journals = new File_MARCXML($xml_data, File_MARC::SOURCE_STRING);
+
+// Open a file for binary write access
+$marc21_file = fopen(&quot;records.mrc&quot;, &quot;wb&quot;);
+
+// Iterate through the retrieved records
+while ($record = $journals-&gt;next()) {
+    // Pretty print each record
+    print $record;
+    print &quot;\n&quot;;
+
+    // Write the pretty-printed record to file
+    fwrite($marc21_file, $record-&gt;__toString() . &quot;\n&quot;);
+}
+
+// Close the file
+fclose($marc21_file);
+?&gt;</code></pre>
+  
+ 
+
+ <h3>Formatting MARCXML data</h3>
+
+  
+  <p>To return a record in MARCXML format, call the <strong>toXML()</strong>
+   method on the <strong>File_MARC_Record</strong> object.</p>
+  
+  <blockquote>
+<h4>Significant restrictions on the <strong>toXML()</strong> method</h4>
+
+   
+   <ul>
+    <li>
+     
+      Most significantly, PHP offers no means of converting from the MARC8
+      encoding that most legacy MARC records have been encoded in to a valid
+      XML encoding such as UTF-8. MARC libraries in other languages have
+      worked around this basic lack of infrastructure by creating their own
+      character encoding conversion libraries. At this time, the author of
+      <strong>File_MARC</strong> does not have the capacity to build
+      the same support as a PEAR package but would welcome any assistance.
+      Better still would be the addition of ANSEL and MARC8 encoding support
+      to the iconv and ICU toolkits that are used to supply encoding conversion
+      by most open-source projects and languages.
+     
+    </li>
+    <li>
+     
+      The <strong>toXML()</strong> method currently produces a single,
+      complete, valid XML MARCXML document for a single
+      <strong>File_MARC_Record</strong> object. You cannot simply
+      concatenate the results of calling <strong>toXML()</strong> on two 
+      <strong>File_MARC_Record</strong> objects, because that will
+      produce invalid an invalid XML document. At this time, it is up to the
+      developer to extract the <code>record</code> node from each MARCXML
+      document and concatenate them inside a <code>collection</code> root
+      element if they want to create a MARCXML document that contains more than
+      a single record.
+     
+    </li>
+   </ul>
+  </blockquote>
+
+
+  <p><strong>Writing MARCXML data to a file</strong></p>
+   
+   <p>In the following example, we have created a MARC record
+    represented by a <strong>File_MARC_Record</strong> object
+    stored in the <code>$record</code> variable. To write this
+    data to a file in MARCXML format, we simply open the file in binary
+    mode and write the record to the file by calling the
+    <strong>toXML()</strong> method on the record object.</p>
+
+   <pre><code>&lt;?php
+require &#039;File/MARC.php&#039;;
+
+// Create a MARC record
+$record = create_a_marc_record();
+
+// Open a file for binary write access
+$marcxml_file = fopen(&quot;records.mrc&quot;, &quot;wb&quot;);
+
+// Write the record to the file in MARCXML format
+fwrite($marcxml_file, $record-&gt;toXML());
+
+// Close the file
+fclose($marcxml_file);
+?&gt;</code></pre>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

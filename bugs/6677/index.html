@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6677</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_Pager/index.html">DB_Pager</a> &#187; Bug #6677</h1>
+<p>Only variable references should be returned by reference</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-02-02 23:40 UTC</td></tr>
+<tr><th>From</th><td>koto at webworkers dot pl</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_Pager/index.html">DB_Pager</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>WIN XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-02 23:40 UTC] koto at webworkers dot pl</h3>
+<p>Description:<br>
+------------<br>
+PHP 4.3.10 and PHP 5 versions enforce stronger checking of return values from functions that should return references.</p>
+<p>&#039;Only variable references should be returned by reference&#039; PHP notice is the common effect of this policy - this package is unfortunately also affected, as various other PEAR packages (try searching for &#039;references&#039; within bugs).</p>
+<p>This bug triggers PHP notices on line 170,175 and 199 of DB/Pager.php file.</p>
+<p>Proposed simple fix (unfortunalely it&#039;s not very pretty, although AFAIK there is no other way around it):<br>
+line 170:</p>
+<p>$ret = null;<br>
+   return $ret;</p>
+<p>line 175:<br>
+               $ret =&amp; PEAR::raiseError (null, &#039;wrong &quot;limit&quot; param&#039;, null,<br>
+                                     null, null, &#039;DB_Error&#039;, true);<br>
+               return $ret;</p>
+<p>line 199:<br>
+            $ret =&amp; PEAR::raiseError (null, &#039;wrong &quot;from&quot; param&#039;, null,<br>
+                                     null, null, &#039;DB_Error&#039;, true);<br>
+            return $ret;</p>
+<p>Test script:<br>
+---------------<br>
+require &#039;DB/Pager.php&#039;;</p>
+<p>// empty data passed    <br>
+$result =&amp; DB_Pager::getData(0, 10, 0);</p>
+<p>Expected result:<br>
+----------------<br>
+$result = null;</p>
+<p>Actual result:<br>
+--------------<br>
+Notice: Only variable references should be returned by reference in c:\php\PEAR\DB\Pager.php on line 170</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1378</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #1378</h1>
+<p>Need to urldecode password for http_proxy in pear installer</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-11 00:08 UTC</td></tr>
+<tr><th>From</th><td>i at camerongreen dot org</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0RC1 (Release Candidate 1)</td></tr>
+<tr><th>OS</th><td>Fedora</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-11 00:08 UTC] i at camerongreen dot org</h3>
+<p>Description:<br>
+------------<br>
+The Remote.php class in the PEAR installer does not urldecode<br>
+parameters after it parses the URL.</p>
+<p>This means that if a password contains the wrong characters, it will<br>
+not work. For instance http://username:p@ssword@proxy.my.url.com will cause an error because the @ symbol in p@ssword will confuse it.</p>
+<p>You therefore need to urlencode the @ to its entity equivalent, and after parse_url has seperated it in the code, urldecode it.</p>
+<p>All this means for you is to run a urldecode on the proxy user name and password before you assign it to their vars.</p>
+<p>Cheerio,</p>
+<p>Cameron</p>
+<p>Reproduce code:<br>
+---------------<br>
+Easy fix....you might want to put @ symbols in front of the function call though,</p>
+<p>diff /usr/local/php/lib/php/PEAR/Remote.php  /usr/local/php/lib/php/PEAR/Remote.php.old<br>
+138,139c138,139<br>
+&lt;             $proxy_user = urldecode(@$proxy[&#039;user&#039;]);<br>
+&lt;             $proxy_pass = urldecode(@$proxy[&#039;pass&#039;]);<br>
+---<br>
+&gt;             $proxy_user = @$proxy[&#039;user&#039;];<br>
+&gt;             $proxy_pass = @$proxy[&#039;pass&#039;];</p>
+</section>
+<section>
+<h3>[2004-05-11 00:57 UTC] i at camerongreen dot org</h3>
+<p>Sorry, should have searched through the code for similar problems.  Here are updated diffs for Common.php and Remote.php</p>
+<p>diff Remote.php Remote.php.old<br>
+138,139c138,139<br>
+&lt;             $proxy_user = urldecode(@$proxy[&#039;user&#039;]);<br>
+&lt;             $proxy_pass = urldecode(@$proxy[&#039;pass&#039;]);<br>
+---<br>
+&gt;             $proxy_user = @$proxy[&#039;user&#039;];<br>
+&gt;             $proxy_pass = @$proxy[&#039;pass&#039;];<br>
+209,210c209,210<br>
+&lt;             $proxy_user = urldecode(@$proxy[&#039;user&#039;]);<br>
+&lt;             $proxy_pass = urldecode(@$proxy[&#039;pass&#039;]);<br>
+---<br>
+&gt;             $proxy_user = @$proxy[&#039;user&#039;];<br>
+&gt;             $proxy_pass = @$proxy[&#039;pass&#039;];</p>
+</section>
+<section>
+<h3>[2004-05-11 00:58 UTC] i at camerongreen dot org</h3>
+<p>diff Common.php Common.php.old<br>
+1702,1703c1702,1703<br>
+&lt;             $proxy_user = urldecode(@$proxy[&#039;user&#039;]);<br>
+&lt;             $proxy_pass = urldecode(@$proxy[&#039;pass&#039;]);<br>
+---<br>
+&gt;             $proxy_user = @$proxy[&#039;user&#039;];<br>
+&gt;             $proxy_pass = @$proxy[&#039;pass&#039;];</p>
+</section>
+<section>
+<h3>[2006-10-27 08:44 UTC] list dot dhooge at gmail dot com</h3>
+<p>Since 2004, new uses of http_proxy appear and didn&#039;t include the url_decode call. This is currently the case in:<br>
+PEAR/Downloader.php - lines 1374-1375<br>
+PEAR/REST.php - lines 294-295</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

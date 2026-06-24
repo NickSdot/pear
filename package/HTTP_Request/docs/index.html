@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTP_Request Manual</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_Request/index.html">HTTP_Request</a> &#187; Manual</h1>
+<nav>
+<h2>Contents</h2>
+<ul>
+<li><a href="package/HTTP_Request/docs/index.html#package-http-http-request-intro">Introduction</a>
+</li>
+<li><a href="package/HTTP_Request/docs/index.html#package-http-http-request-basic-auth">Basic Authentication</a>
+</li>
+<li><a href="package/HTTP_Request/docs/index.html#package-http-http-request-cookie">Cookies</a>
+</li>
+<li><a href="package/HTTP_Request/docs/index.html#package-http-http-request-file-upload">File uploads</a>
+</li>
+<li><a href="package/HTTP_Request/docs/index.html#package-http-http-request-headers">Request headers</a>
+</li>
+<li><a href="package/HTTP_Request/docs/index.html#package-http-http-request-proxy-auth">Proxy Authorization</a>
+</li>
+<li><a href="package/HTTP_Request/docs/index.html#package-http-http-request-response-eval">Response Evaluation</a>
+</li>
+<li><a href="package/HTTP_Request/docs/index.html#package-http-http-request-listeners">HTTP_Request_Listener</a>
+</li></ul>
+</nav>
+<p>The package provides an easy way to perform HTTP requests. It supports GET/POST/HEAD/TRACE/PUT/DELETE, Basic authentication, Proxy, Proxy Authentication, SSL, file uploads etc.</p>
+<section id="package-http-http-request-intro">
+<h2>Introduction</h2>
+<h3>Overview</h3>
+
+  
+
+  <p>With this package, one can easily perform HTTP request from within
+   PHP scripts. It support
+   GET/POST/HEAD/TRACE/PUT/DELETE, Basic authentication, Proxy, Proxy
+   Authentication, SSL, file uploads etc.</p>
+  <p>Because of the above mentioned features
+   <strong>HTTP_Request</strong> makes it possible to mimic big
+   parts of web browsers such as the widely-known Mozilla browser in PHP
+   applications. Possible application areas are:</p><ul>
+    <li>
+     
+      Checking the validity of WWW links with the help of
+      <strong><a href="package/HTTP_Request/docs/index.html#package-http-http-request-response-eval">getResponseCode</a></strong>.
+     
+    </li>
+    <li>
+     
+      Grabbing remote web pages and parsing the result.
+     
+    </li>
+    <li>
+     
+      etc.
+     
+    </li>
+   </ul>
+
+ 
+
+ <h3>A few examples</h3>
+
+  
+
+  <p><strong>
+    Fetches yahoo.com and
+    displays it
+   </strong></p>
+   
+
+   <pre><code>&lt;?php
+require_once &quot;HTTP/Request.php&quot;;
+
+$req =&amp; new HTTP_Request(&quot;http://www.yahoo.com/&quot;);
+if (!PEAR::isError($req-&gt;sendRequest())) {
+    echo $req-&gt;getResponseBody();
+}
+?&gt;</code></pre>
+  
+
+
+  <p><strong>Fetching two website in a row</strong></p>
+   
+
+   <p>In this example, two websites are fetched and displayed. To the
+    first one a POST parameter is passed. The POST data stack is
+    cleared before the second website is fetched.</p>
+
+   <pre><code>&lt;?php
+require_once &quot;HTTP/Request.php&quot;;
+
+$req =&amp; new HTTP_Request(&quot;http://www.php.net&quot;);
+$req-&gt;setMethod(HTTP_REQUEST_METHOD_POST);
+$req-&gt;addPostData(&quot;Foo&quot;, &quot;bar&quot;);
+if (!PEAR::isError($req-&gt;sendRequest())) {
+     $response1 = $req-&gt;getResponseBody();
+} else {
+     $response1 = &quot;&quot;;
+}
+     
+$req-&gt;setMethod(HTTP_REQUEST_METHOD_GET);
+$req-&gt;setURL(&quot;http://pear.php.net&quot;);
+$req-&gt;clearPostData();
+if (!PEAR::isError($req-&gt;sendRequest())) {
+     $response2 = $req-&gt;getResponseBody();
+} else {
+     $response2 = &quot;&quot;;
+}
+
+echo $response1;
+echo $response2;
+?&gt;</code></pre>
+</section>
+<section id="package-http-http-request-basic-auth">
+<h2>Basic Authentication</h2>
+<h3>Introduction to Basic Authentication</h3>
+
+  
+  
+
+  <p>Basic Authentication is a challenge-response mechanism described in
+   <a href="http://www.faqs.org/rfcs/rfc2617">RFC 2617</a>.</p>
+ 
+
+ <h3>How to use Basic Authentication</h3>
+
+  
+
+
+  <p><strong>Basic Authentication</strong></p>
+   
+
+   <p>The following example assumes that one wants to fetch a page
+    <code>/protected.html</code> on the host
+    <code>example.com</code> that is protected using Basic
+    Authentication. The necessary username to pass the authentication is
+    <code>johndoe</code> and the appendant password is
+    <code>foo</code>.</p>
+
+   <pre><code>&lt;?php
+require_once &quot;HTTP/Request.php&quot;;
+
+$req =&amp; new HTTP_Request(&quot;http://example.com/protected.html&quot;);
+$req-&gt;setBasicAuth(&quot;johndoe&quot;, &quot;foo&quot;);
+
+$response = $req-&gt;sendRequest();
+
+if (PEAR::isError($response)) {
+    echo $response-&gt;getMessage();
+} else {
+    echo $req-&gt;getResponseBody();
+}
+?&gt;</code></pre>
+</section>
+<section id="package-http-http-request-cookie">
+<h2>Cookies</h2>
+<h3>How to add Cookie to a HTTP request</h3>
+
+  
+
+  <p><strong>Adding a cookie to the request</strong></p>
+   
+
+   <p>In this example a cookie named <code>version</code> is added
+    to the HTTP request. The value of this cookie is the version string
+    of the PHP interpreter that is running the instance of
+    <strong>HTTP_Request</strong>.</p>
+
+   <pre><code>&lt;?php
+require_once &quot;HTTP/Request.php&quot;;
+
+$req =&amp; new HTTP_Request(&quot;http://example.com/&quot;);
+$req-&gt;addCookie(&quot;version&quot;, phpversion());
+
+$response = $req-&gt;sendRequest();
+
+if (PEAR::isError($response)) {
+    echo $response-&gt;getMessage();
+} else {
+    echo $req-&gt;getResponseBody();
+}
+?&gt;</code></pre>
+  
+
+  <p><strong>Reading cookies from a HTTP response</strong></p>
+   
+
+   <p>Reading cookies that come with a HTTP response is shown in this
+    following example.</p>
+
+   <pre><code>&lt;?php
+require_once &quot;HTTP/Request.php&quot;;
+
+$req =&amp; new HTTP_Request(&quot;http://example.com/&quot;);
+
+$response = $req-&gt;sendRequest();
+
+if (PEAR::isError($response)) {
+    echo $response-&gt;getMessage();
+} else {
+    print_r($req-&gt;getResponseCookies());
+}
+?&gt;</code></pre>
+</section>
+<section id="package-http-http-request-file-upload">
+<h2>File uploads</h2>
+<h3>How to use file uploads</h3>
+
+  
+
+  <p><strong>Upload a PDF document</strong></p>
+   
+
+   <p>In this example a file named
+    <code>/home/johndoe/text.pdf</code> is uploaded to the
+    remote machine <code>upload.example.com</code>. Additionally Basic
+    Authentication is used to ensure that John is allowed to upload
+    something.</p>
+
+   <pre><code>&lt;?php
+require_once &quot;HTTP/Request.php&quot;;
+
+$req =&amp; new HTTP_Request(&quot;http://upload.example.com/upload.php&quot;);
+$req-&gt;setBasicAuth(&quot;johndoe&quot;, &quot;foo&quot;);
+$req-&gt;setMethod(HTTP_REQUEST_METHOD_POST);
+
+$result = $req-&gt;addFile(&#039;file_upload_field&#039;, &#039;/home/johndoe/text.pdf&#039;, &#039;application/pdf&#039;);
+if (PEAR::isError($result)) {
+    echo $result-&gt;getMessage();
+} else {
+
+    $response = $req-&gt;sendRequest();
+
+    if (PEAR::isError($response)) {
+        echo $response-&gt;getMessage();
+    } else {
+        echo $req-&gt;getResponseBody();
+    }
+}
+?&gt;</code></pre>
+</section>
+<section id="package-http-http-request-headers">
+<h2>Request headers</h2>
+<h3>How to add request headers</h3>
+
+  
+
+  <p><strong>Adding a custom request header</strong></p>
+   
+
+   <p>In this example a HTTP header <code>X-PHP-Version</code> is
+    added to the HTTP request. The value of this header is the version
+    string of the PHP interpreter that is running the instance of
+    <strong>HTTP_Request</strong>.</p>
+
+   <pre><code>&lt;?php
+require_once &quot;HTTP/Request.php&quot;;
+
+$req =&amp; new HTTP_Request(&quot;http://example.com/&quot;);
+$req-&gt;addHeader(&quot;X-PHP-Version&quot;, phpversion());
+
+$response = $req-&gt;sendRequest();
+
+if (PEAR::isError($response)) {
+    echo $response-&gt;getMessage();
+} else {
+    echo $req-&gt;getResponseBody();
+}
+?&gt;</code></pre>
+  
+
+  <p>Headers that have been added to the
+   <strong>HTTP_Request</strong> object can be removed with the
+   method <strong>removeHeader()</strong>, before
+   <strong>sendRequest()</strong> has been called.</p>
+</section>
+<section id="package-http-http-request-proxy-auth">
+<h2>Proxy Authorization</h2>
+<h3>How to use Proxy Authorization</h3>
+
+  
+
+  <p><strong>Using a proxy server with anonymous access</strong></p>
+   
+
+   <p>In this example it is assumed that one wants to use the machine with
+    the hostname <code>proxy.example.com</code>, where a proxy
+    server is listening on port <code>8080</code>, to proxy the
+    outgoing connection to example.com.</p>
+
+   <p>The second parameter of <strong>setProxy()</strong> is optional
+    and defaults to <code>8080</code>.</p>
+
+   <pre><code>&lt;?php
+require_once &quot;HTTP/Request.php&quot;;
+
+$req =&amp; new HTTP_Request(&quot;http://example.com/&quot;);
+$req-&gt;setProxy(&quot;proxy.example.com&quot;, 8080);
+?&gt;</code></pre>
+  
+
+  <p><strong>Using proxy authorization</strong></p>
+   
+
+   <p>This is the same example as above, except that a username/password
+    tuple is provided, which authorizes the user at the proxy server:
+    The username is <code>johndoe</code> and the appendant
+    password is <code>foo</code>.</p>
+
+   <pre><code>&lt;?php
+require_once &quot;HTTP/Request.php&quot;;
+
+$req =&amp; new HTTP_Request(&quot;http://example.com/&quot;);
+$req-&gt;setProxy(&quot;proxy.example.com&quot;, 8080, &quot;johndoe&quot;, &quot;foo&quot;);
+?&gt;</code></pre>
+</section>
+<section id="package-http-http-request-response-eval">
+<h2>Response Evaluation</h2>
+<h3>Introduction</h3>
+
+  
+
+  <p>Because HTTP is a protocol based on the <em>Request -
+   Response</em> scheme, every HTTP request is followed by a HTTP
+   response. <strong>HTTP_Request</strong> offers several methods
+   to evaluate the information from these responses.</p>
+ 
+
+ <h3>Response Codes</h3>
+
+  
+
+  <p>A important part of the HTTP response is the response code. The most
+   well-known response code probably is <code>404</code>, which
+   you may have seen in your browser at several occasions. The meaning
+   of <code>404</code> is that the requested ressource could not
+   be found. A complete list of status codes can be found in <a href="http://www.faqs.org/rfcs/rfc2616">RFC 2616</a>.</p>
+
+  <p><strong>Checking the response code</strong></p>
+   
+
+   <pre><code>&lt;?php
+require_once &quot;HTTP/Request.php&quot;;
+
+$urls = array(
+    &quot;http://www.example.com/&quot;,
+    &quot;http://example.com/thisdoesnotexist.html&quot;
+    );
+
+$req =&amp; new HTTP_Request(&quot;&quot;);
+foreach ($urls as $url) {
+    $req-&gt;setURL($url);
+    $req-&gt;sendRequest();
+
+    $code = $req-&gt;getResponseCode();
+    switch ($code) {
+    case 404:
+        echo &quot;Document not found\n&quot;;
+        break;
+
+    case 200:
+        echo &quot;Everything&#039;s ok\n&quot;;
+        break;
+
+    /* ... */
+    }
+}
+?&gt;</code></pre>
+  
+ 
+
+ <h3>Response Headers</h3>
+
+  
+
+  <p>Similar to a HTTP request a HTTP response consists of a header and a
+   body. <strong>HTTP_Request</strong> offers a method to access
+   the header of the response.</p>
+
+  <p><strong>Getting all headers from the response</strong></p>
+   
+
+   <pre><code>&lt;?php
+require_once &quot;HTTP/Request.php&quot;;
+
+$req =&amp; new HTTP_Request(&quot;http://example.com/&quot;);
+$req-&gt;sendRequest();
+
+foreach ($req-&gt;getResponseHeader() as $name =&gt; $value) {
+    echo $name . &quot; = &quot; . $value . &quot;\n&quot;;
+}
+?&gt;</code></pre>
+   <p>This will print all headers and the appendant values.</p>
+  
+
+  <p><strong>Getting a specific header</strong></p>
+   
+
+   <pre><code>&lt;?php
+require_once &quot;HTTP/Request.php&quot;;
+
+$req =&amp; new HTTP_Request(&quot;http://example.com/&quot;);
+$req-&gt;sendRequest();
+
+echo $req-&gt;getResponseHeader(&quot;Date&quot;);
+?&gt;</code></pre>
+   <p>This will print the value of the <code>Date:</code> header.</p>
+  
+ 
+
+ <h3>Response Cookies</h3>
+
+  
+
+  <p>Fetching the cookies that are part of the HTTP response is described
+   in the <a href="package/HTTP_Request/docs/index.html#package-http-http-request-cookie">Cookies</a> section.</p>
+</section>
+<section id="package-http-http-request-listeners">
+<h2>HTTP_Request_Listener</h2>
+<h3>Introduction to HTTP_Request_Listener</h3>
+
+  
+  
+
+  <p><strong>HTTP_Request_Listener</strong> is an abstract class that can be
+   extended to capture events and respond to them as they occur.  Included
+   with HTTP_Request is an example of a console-based progress bar.  To implement
+   this, the <strong>HTTP_Request_DownloadListener</strong>
+   class is used, which uses the Console_ProgressBar
+   package to display a download progress meter.</p>
+ 
+
+ <h3>Example usage of HTTP_Request_Listener</h3>
+
+  
+
+  <p>In order to use a listener, it must attach to the specific
+   <strong>HTTP_Request</strong> or <strong>HTTP_Response</strong> object
+   that you want to monitor.  The attach code is shown at the bottom of the
+   example.  As you can see, the event listener is propagated from the <strong>HTTP_Request</strong>
+   object to any child <strong>HTTP_Response</strong> objects, and attaching only need happen
+   to the first <strong>HTTP_Request</strong> object.</p>
+
+  <p><strong>Download progress bar with HTTP_Request_Listener</strong></p>
+   
+
+   <pre><code>&lt;?php
+/**
+ * An example of Listener usage with HTTP_Request. This downloads and saves 
+ * the file displaying the progress bar in the process.
+ * 
+ * Note two things:
+ * 1) The file should be run in console, not in browser;
+ * 2) You should turn output buffering OFF for this to work properly.
+ */
+
+require_once &#039;HTTP/Request.php&#039;;
+require_once &#039;HTTP/Request/Listener.php&#039;;
+require_once &#039;Console/ProgressBar.php&#039;;
+
+PEAR::setErrorHandling(PEAR_ERROR_DIE);
+
+set_time_limit(0);
+
+class HTTP_Request_DownloadListener extends HTTP_Request_Listener
+{
+   /**
+    * Handle for the target file
+    * @var int
+    */
+    var $_fp;
+
+   /**
+    * Console_ProgressBar intance used to display the indicator
+    * @var object
+    */
+    var $_bar;
+
+   /**
+    * Name of the target file
+    * @var string
+    */
+    var $_target;
+
+   /**
+    * Number of bytes received so far
+    * @var int
+    */
+    var $_size = 0;
+
+    function HTTP_Request_DownloadListener()
+    {
+        $this-&gt;HTTP_Request_Listener();
+    }
+
+   /**
+    * Opens the target file
+    * @param string Target file name
+    * @throws PEAR_Error
+    */
+    function setTarget($target)
+    {
+        $this-&gt;_target = $target;
+        $this-&gt;_fp = @fopen($target, &#039;wb&#039;);
+        if (!$this-&gt;_fp) {
+            PEAR::raiseError(&quot;Cannot open &#039;{$target}&#039;&quot;);
+        }
+    }
+
+    function update(&amp;$subject, $event, $data = null)
+    {
+        switch ($event) {
+            case &#039;sentRequest&#039;: 
+                $this-&gt;_target = basename($subject-&gt;_url-&gt;path);
+                break;
+
+            case &#039;gotHeaders&#039;:
+                if (isset($data[&#039;content-disposition&#039;]) &amp;&amp;
+                    preg_match(&#039;/filename=&quot;([^&quot;]+)&quot;/&#039;, $data[&#039;content-disposition&#039;], $matches)) {
+
+                    $this-&gt;setTarget(basename($matches[1]));
+                } else {
+                    $this-&gt;setTarget($this-&gt;_target);
+                }
+                $this-&gt;_bar =&amp; new Console_ProgressBar(
+                    &#039;* &#039; . $this-&gt;_target . &#039; %fraction% KB [%bar%] %percent%&#039;, &#039;=&gt;&#039;, &#039;-&#039;, 
+                    79, (isset($data[&#039;content-length&#039;])? round($data[&#039;content-length&#039;] / 1024): 100)
+                );
+                $this-&gt;_size = 0;
+                break;
+
+            case &#039;tick&#039;:
+                $this-&gt;_size += strlen($data);
+                $this-&gt;_bar-&gt;update(round($this-&gt;_size / 1024));
+                fwrite($this-&gt;_fp, $data);
+                break;
+
+            case &#039;gotBody&#039;:
+                fclose($this-&gt;_fp);
+                break;
+
+            case &#039;connect&#039;:
+            case &#039;disconnect&#039;:
+                break;
+
+            default:
+                PEAR::raiseError(&quot;Unhandled event &#039;{$event}&#039;&quot;);
+        } // switch
+    }
+}
+
+// Try using any other package if you like, but choose the bigger ones
+// to be able to see the progress bar
+$url = &#039;http://pear.php.net/get/HTML_QuickForm-stable&#039;;
+
+$req =&amp; new HTTP_Request($url);
+
+$download =&amp; new HTTP_Request_DownloadListener();
+$req-&gt;attach($download);
+$req-&gt;sendRequest(false);
+?&gt;</code></pre>
+  
+ 
+ <h3>Events that can be caught</h3>
+
+  
+  <p>The <strong>HTTP_Request</strong> class sends these events:</p><ul>
+    <li>
+     
+      <code>connect</code> - upon server connection, this event is sent
+     
+    </li>
+    <li>
+     
+      <code>sentRequest</code> - after the request was sent, this event is sent
+     
+    </li>
+    <li>
+     
+      <code>disconnect</code> - after server disconnect, this event is sent
+     
+    </li>
+   </ul>
+  
+  <p>The <strong>HTTP_Response</strong> class sends these events:</p><ul>
+    <li>
+     
+      <code>gotHeaders</code> - this event is sent after receiving response headers
+      (headers are passed in $data as an associative array)
+     
+    </li>
+    <li>
+     
+      <code>tick</code> - this event is sent on receiving a part of response body
+      (the part is passed in $data as a string)
+     
+    </li>
+    <li>
+     
+      <code>gzTick</code> - this event is sent on receiving a part of response body
+      that is gzip-compressed (the part is passed in $data as a string)
+     
+    </li>
+    <li>
+     
+      <code>gotBody</code> - this event is sent on after receiving the
+      complete response body (the decoded body is passed as a string in $data if it was gzipped)
+     
+    </li>
+   </ul>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

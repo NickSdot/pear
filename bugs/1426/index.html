@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1426</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #1426</h1>
+<p>Emulated destructors are not called in reverse order</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-17 17:25 UTC</td></tr>
+<tr><th>From</th><td>mjohnson at pitsco dot com</td></tr>
+<tr><th>Assigned</th><td>cellog</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-17 17:25 UTC] mjohnson at pitsco dot com</h3>
+<p>Description:<br>
+------------<br>
+When classes are &quot;destructed&quot; using the PEAR destructor mechanism, they are destructed in the order constructed, rather than the more intuitive (and similar to true OOP) reverse order.</p>
+<p>In most cases this is not relevant. However, in trying to implement a tracing mechanism that logs function calls and their durations, the &quot;destructors&quot; are not called correctly. Other destructors still need tracing calls but the tracing class is already &quot;destructed&quot;.</p>
+<p>I realize PHP 5 adds true destructors but for the time being I&#039;m stuck with PEAR. I think the correct mechanism can be implemented by reversing the order the &quot;destructors&quot; are called in _PEAR_call_destructors().</p>
+<p>In the meantime, I&#039;ll figure out a workaround.</p>
+<p>Thanks,<br>
+Michael</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php ;<br>
+require_once(&#039;PEAR.php&#039;);</p>
+<p>class MyClass extends PEAR {<br>
+    function MyClass($id) {<br>
+        PEAR::PEAR();<br>
+        $this-&gt;_id = $id;<br>
+        echo &quot;Constructed $this-&gt;_id\n&quot;;<br>
+    }<br>
+    function _MyClass() {<br>
+        echo &quot;Destructed $this-&gt;_id\n&quot;;<br>
+    }<br>
+}</p>
+<p>$mc1 = new MyClass(1);<br>
+$mc2 = new MyClass(2);<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Constructed 1 Constructed 2 Destructed 2 Destructed 1</p>
+<p>Actual result:<br>
+--------------<br>
+Constructed 1 Constructed 2 Destructed 1 Destructed 2</p>
+</section>
+<section>
+<h3>[2004-05-23 13:47 UTC] pierre at dotgeek dot org</h3>
+<p>&quot;rather than the more intuitive (and similar to true OOP) reverse order.&quot;</p>
+<p>Ah? FIFO is widely used in OO?</p>
+<p>In this case, I failed to see your problem. Do you have a short script to explain it?</p>
+<p>I&#039;m not sure it&#039;s safe to change the behiavoir now. It could be a BC problem.</p>
+<p>--Pierre</p>
+</section>
+<section>
+<h3>[2004-05-25 13:59 UTC] mjohnson at pitsco dot com</h3>
+<p>No, FIFO is not widely used, LIFO is. But PEAR&#039;s destructors are FIFO. The first object constructed is the first destructed. This has made for some pretty big headaches in my current code.</p>
+<p>I believe my reproduce code demonstrates what I&#039;m trying to show. If it is still unclear, I&#039;ll add something a bit more complicated, with nested classes.</p>
+<p>I understand the BC problem. I just wonder if it really would be a problem. When I first started using PEAR destructors I naturally assumed they were LIFO. It took this logging project to tell me otherwise. And that means I&#039;ve been working on bad assumtions all along. If the behavior can&#039;t be changed, I&#039;d recommend at least updating the documentation to reflect the current behavior.</p>
+<p>Thanks,<br>
+Michael</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

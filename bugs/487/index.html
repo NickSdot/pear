@@ -1,0 +1,2070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #487</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/SQL_Parser/index.html">SQL_Parser</a> &#187; Bug #487</h1>
+<p>Lexer can&#039;t handle functions inside getParams()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-12-23 20:50 UTC</td></tr>
+<tr><th>From</th><td>jlabonsk at eportation dot com</td></tr>
+<tr><th>Assigned</th><td>cybot</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/SQL_Parser/index.html">SQL_Parser</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>0.5.1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-12-23 20:50 UTC] jlabonsk at eportation dot com</h3>
+<p>Description:<br>
+------------<br>
+Valid SQL:</p>
+<p>INSERT INTO mytable (foo, bar, baz) VALUES (NOW(), 1, &#039;text&#039;)</p>
+<p>Small dump from pear::error object</p>
+<p>[error_message_prefix] =&gt; <br>
+    [mode] =&gt; 1<br>
+    [level] =&gt; 1024<br>
+    [code] =&gt; <br>
+    [message] =&gt; Parse error: Expected , or ) on line 1<br>
+INSERT INTO mytable (foo, bar, baz) VALUES (NOW(), 1, &#039;text&#039;)<br>
+                                               ^ found: (<br>
+    [userinfo] =&gt;</p>
+<p>It seems that Lexer::lex() can&#039;t handle tokens that are functions.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$sql = &quot;INSERT INTO mytable (foo, bar, baz) VALUES (NOW(), 1, &#039;text&#039;)&quot;;</p>
+<p>$parser = new SQL_Parser($sql);<br>
+$tree = $parser-&gt;parse();</p>
+<p>Expected result:<br>
+----------------<br>
+A value set of &#039;NOW()&#039; with a type of &#039;function&#039;</p>
+<p>Actual result:<br>
+--------------<br>
+   [backtrace] =&gt; Array<br>
+        (<br>
+            [0] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /usr/local/lib/php/PEAR.php<br>
+                    [line] =&gt; 527<br>
+                    [function] =&gt; pear_error<br>
+                    [class] =&gt; pear_error<br>
+                    [type] =&gt; -&gt;<br>
+                    [args] =&gt; Array<br>
+                        (<br>
+                            [0] =&gt; Parse error: Expected , or ) on line 1<br>
+INSERT INTO mytable (foo, bar, baz) VALUES (NOW(), 1, &#039;text&#039;)<br>
+                                               ^ found: (<br>
+                            [1] =&gt; <br>
+                            [2] =&gt; 1<br>
+                            [3] =&gt; 1024<br>
+                            [4] =&gt; <br>
+                        )</p>
+<p>)</p>
+<p>[1] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /usr/local/lib/php/SQL/Parser.php<br>
+                    [line] =&gt; 108<br>
+                    [function] =&gt; raiseerror<br>
+                    [class] =&gt; pear<br>
+                    [type] =&gt; ::<br>
+                    [args] =&gt; Array<br>
+                        (<br>
+                            [0] =&gt; Parse error: Expected , or ) on line 1<br>
+INSERT INTO mytable (foo, bar, baz) VALUES (NOW(), 1, &#039;text&#039;)<br>
+                                               ^ found: (<br>
+                        )</p>
+<p>)</p>
+<p>[2] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /usr/local/lib/php/SQL/Parser.php<br>
+                    [line] =&gt; 85<br>
+                    [function] =&gt; raiseerror<br>
+                    [class] =&gt; sql_parser<br>
+                    [type] =&gt; -&gt;<br>
+                    [args] =&gt; Array<br>
+                        (<br>
+                            [0] =&gt; Expected , or )<br>
+                        )</p>
+<p>)</p>
+<p>[3] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /usr/local/lib/php/SQL/Parser.php<br>
+                    [line] =&gt; 565<br>
+                    [function] =&gt; getparams<br>
+                    [class] =&gt; sql_parser<br>
+                    [type] =&gt; -&gt;<br>
+                    [args] =&gt; Array<br>
+                        (<br>
+                            [0] =&gt; Array<br>
+                                (<br>
+                                    [0] =&gt; NOW<br>
+                                )</p>
+<p>[1] =&gt; Array<br>
+                                (<br>
+                                    [0] =&gt; ident<br>
+                                )</p>
+<p>)</p>
+<p>)</p>
+<p>[4] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /usr/local/lib/php/SQL/Parser.php<br>
+                    [line] =&gt; 878<br>
+                    [function] =&gt; parseinsert<br>
+                    [class] =&gt; sql_parser<br>
+                    [type] =&gt; -&gt;<br>
+                    [args] =&gt; Array<br>
+                        (<br>
+                        )</p>
+<p>)</p>
+<p>[5] =&gt; Array<br>
+                (<br>
+                    [file] =&gt; /home/jlabonsk/public_html/pns-head/htdocs/terminal/test.php<br>
+                    [line] =&gt; 52<br>
+                    [function] =&gt; parse<br>
+                    [class] =&gt; sql_parser<br>
+                    [type] =&gt; -&gt;<br>
+                    [args] =&gt; Array<br>
+                        (<br>
+                        )</p>
+<p>)</p>
+<p>)</p>
+<p>[callback] =&gt;</p>
+</section>
+<section>
+<h3>[2003-12-23 20:51 UTC] jlabonsk at eportation dot com</h3>
+<p>All tested with SQL_Parser 0.4</p>
+</section>
+<section>
+<h3>[2005-04-02 02:48 UTC] epte at ruffdogs dot com</h3>
+<p>Confirmed.</p>
+<p>Wow.  This bug has been in the queue for a while.  I don&#039;t have cvs access, but I am a professional programmer (who now has a professional interest in this project).  So, I&#039;ll have a shot at it... *crack knuckles*</p>
+<p>More to come :)</p>
+</section>
+<section>
+<h3>[2005-04-02 23:58 UTC] epte at ruffdogs dot com</h3>
+<p>Alright.  I think I fixed it.  The lexer now handles functions.  It will return a type &#039;function&#039; for them.  IMHO, it handles nested functions fairly well.  Namely, it would assign FUNC(NOW(BLAH))) all to one token with type &#039;function&#039;.  The patch follows (diff from CVS).</p>
+<p>? diff<br>
+Index: Dialect_MySQL.php<br>
+===================================================================<br>
+RCS file: /repository/pear/SQL_Parser/Dialect_MySQL.php,v<br>
+retrieving revision 1.4<br>
+diff -u -r1.4 Dialect_MySQL.php<br>
+--- Dialect_MySQL.php   3 Jul 2004 04:49:44 -0000       1.4<br>
++++ Dialect_MySQL.php   2 Apr 2005 23:55:55 -0000<br>
+@@ -36,7 +36,7 @@</p>
+<p>&#039;functions&#039;=&gt;array(&#039;avg&#039;,&#039;count&#039;,&#039;max&#039;,&#039;min&#039;,&#039;sum&#039;,&#039;nextval&#039;,&#039;currval&#039;,&#039;concat&#039;,&#039;date_format&#039;),</p>
+<p>-&#039;reserved&#039;=&gt;array(&#039;absolute&#039;,&#039;action&#039;,&#039;add&#039;,&#039;all&#039;,&#039;allocate&#039;,&#039;and&#039;,&#039;any&#039;,&#039;are&#039;,&#039;asc&#039;,&#039;ascending&#039;,&#039;assertion&#039;,&#039;at&#039;,&#039;authorization&#039;,&#039;begin&#039;,&#039;bit_length&#039;,&#039;both&#039;,&#039;cascade&#039;,&#039;cascaded&#039;,&#039;case&#039;,&#039;cast&#039;,&#039;catalog&#039;,&#039;char_length&#039;,&#039;character_length&#039;,&#039;check&#039;,&#039;close&#039;,&#039;coalesce&#039;,&#039;collate&#039;,&#039;collation&#039;,&#039;column&#039;,&#039;commit&#039;,&#039;connect&#039;,&#039;connection&#039;,&#039;constraint&#039;,&#039;constraints&#039;,&#039;continue&#039;,&#039;convert&#039;,&#039;corresponding&#039;,&#039;cross&#039;,&#039;current&#039;,&#039;current_date&#039;,&#039;current_time&#039;,&#039;current_timestamp&#039;,&#039;current_user&#039;,&#039;cursor&#039;,&#039;day&#039;,&#039;deallocate&#039;,&#039;declare&#039;,&#039;default&#039;,&#039;deferrable&#039;,&#039;deferred&#039;,&#039;desc&#039;,&#039;descending&#039;,&#039;describe&#039;,&#039;descriptor&#039;,&#039;diagnostics&#039;,&#039;disconnect&#039;,&#039;distinct&#039;,&#039;domain&#039;,&#039;else&#039;,&#039;end&#039;,&#039;end-exec&#039;,&#039;escape&#039;,&#039;except&#039;,&#039;exception&#039;,&#039;exec&#039;,&#039;execute&#039;,&#039;exists&#039;,&#039;external&#039;,&#039;extract&#039;,&#039;false&#039;,&#039;fetch&#039;,&#039;first&#039;,&#039;for&#039;,&#039;foreign&#039;,&#039;found&#039;,&#039;full&#039;,&#039;get&#039;,&#039;global&#039;,&#039;go&#039;,&#039;goto&#039;,&#039;grant&#039;,&#039;group&#039;,&#039;having&#039;,&#039;hour&#039;,&#039;identity&#039;,&#039;immediate&#039;,&#039;indicator&#039;,&#039;initially&#039;,&#039;inner&#039;,&#039;input&#039;,&#039;insensitive&#039;,&#039;intersect&#039;,&#039;isolation&#039;,&#039;join&#039;,&#039;key&#039;,&#039;language&#039;,&#039;last&#039;,&#039;leading&#039;,&#039;left&#039;,&#039;level&#039;,&#039;limit&#039;,&#039;local&#039;,&#039;lower&#039;,&#039;match&#039;,&#039;minute&#039;,&#039;module&#039;,&#039;month&#039;,&#039;names&#039;,&#039;national&#039;,&#039;natural&#039;,&#039;next&#039;,&#039;no&#039;,&#039;null&#039;,&#039;nullif&#039;,&#039;octet_length&#039;,&#039;of&#039;,&#039;only&#039;,&#039;open&#039;,&#039;option&#039;,&#039;or&#039;,&#039;order&#039;,&#039;outer&#039;,&#039;output&#039;,&#039;overlaps&#039;,&#039;pad&#039;,&#039;partial&#039;,&#039;position&#039;,&#039;precision&#039;,&#039;prepare&#039;,&#039;preserve&#039;,&#039;primary&#039;,&#039;prior&#039;,&#039;privileges&#039;,&#039;procedure&#039;,&#039;public&#039;,&#039;read&#039;,&#039;references&#039;,&#039;relative&#039;,&#039;restrict&#039;,&#039;revoke&#039;,&#039;right&#039;,&#039;rollback&#039;,&#039;rows&#039;,&#039;schema&#039;,&#039;scroll&#039;,&#039;second&#039;,&#039;section&#039;,&#039;session&#039;,&#039;session_user&#039;,&#039;size&#039;,&#039;some&#039;,&#039;space&#039;,&#039;sql&#039;,&#039;sqlcode&#039;,&#039;sqlerror&#039;,&#039;sqlstate&#039;,&#039;substring&#039;,&#039;system_user&#039;,&#039;table&#039;,&#039;temporary&#039;,&#039;then&#039;,&#039;timezone_hour&#039;,&#039;timezone_minute&#039;,&#039;to&#039;,&#039;trailing&#039;,&#039;transaction&#039;,&#039;translate&#039;,&#039;translation&#039;,&#039;trim&#039;,&#039;true&#039;,&#039;union&#039;,&#039;unique&#039;,&#039;unknown&#039;,&#039;upper&#039;,&#039;usage&#039;,&#039;user&#039;,&#039;using&#039;,&#039;value&#039;,&#039;values&#039;,&#039;varying&#039;,&#039;view&#039;,&#039;when&#039;,&#039;whenever&#039;,&#039;work&#039;,&#039;write&#039;,&#039;year&#039;,&#039;zone&#039;,&#039;eoc&#039;),<br>
++&#039;reserved&#039;=&gt;array(&#039;add&#039;,&#039;all&#039;,&#039;alter&#039;,&#039;analyze&#039;,&#039;and&#039;,&#039;as&#039;,&#039;asc&#039;,&#039;asensitive&#039;,&#039;auto_increment&#039;,&#039;bdb&#039;,&#039;before&#039;,&#039;berkeleydb&#039;,&#039;between&#039;,&#039;bigint&#039;,&#039;binary&#039;,&#039;blob&#039;,&#039;both&#039;,&#039;by&#039;,&#039;call&#039;,&#039;cascade&#039;,&#039;case&#039;,&#039;change&#039;,&#039;char&#039;,&#039;character&#039;,&#039;check&#039;,&#039;collate&#039;,&#039;column&#039;,&#039;columns&#039;,&#039;condition&#039;,&#039;connection&#039;,&#039;constraint&#039;,&#039;continue&#039;,&#039;create&#039;,&#039;cross&#039;,&#039;current_date&#039;,&#039;current_time&#039;,&#039;current_timestamp&#039;,&#039;cursor&#039;,&#039;database&#039;,&#039;databases&#039;,&#039;day_hour&#039;,&#039;day_microsecond&#039;,&#039;day_minute&#039;,&#039;day_second&#039;,&#039;dec&#039;,&#039;decimal&#039;,&#039;declare&#039;,&#039;default&#039;,&#039;delayed&#039;,&#039;delete&#039;,&#039;desc&#039;,&#039;describe&#039;,&#039;deterministic&#039;,&#039;distinct&#039;,&#039;distinctrow&#039;,&#039;div&#039;,&#039;double&#039;,&#039;drop&#039;,&#039;else&#039;,&#039;elseif&#039;,&#039;enclosed&#039;,&#039;escaped&#039;,&#039;exists&#039;,&#039;exit&#039;,&#039;explain&#039;,&#039;false&#039;,&#039;fetch&#039;,&#039;fields&#039;,&#039;float&#039;,&#039;for&#039;,&#039;force&#039;,&#039;foreign&#039;,&#039;found&#039;,&#039;frac_second&#039;,&#039;from&#039;,&#039;fulltext&#039;,&#039;grant&#039;,&#039;group&#039;,&#039;having&#039;,&#039;high_priority&#039;,&#039;hour_microsecond&#039;,&#039;hour_minute&#039;,&#039;hour_second&#039;,&#039;if&#039;,&#039;ignore&#039;,&#039;in&#039;,&#039;index&#039;,&#039;infile&#039;,&#039;inner&#039;,&#039;innodb&#039;,&#039;inout&#039;,&#039;insensitive&#039;,&#039;insert&#039;,&#039;int&#039;,&#039;integer&#039;,&#039;interval&#039;,&#039;into&#039;,&#039;io_thread&#039;,&#039;is&#039;,&#039;iterate&#039;,&#039;join&#039;,&#039;key&#039;,&#039;keys&#039;,&#039;kill&#039;,&#039;leading&#039;,&#039;leave&#039;,&#039;left&#039;,&#039;like&#039;,&#039;limit&#039;,&#039;lines&#039;,&#039;load&#039;,&#039;localtime&#039;,&#039;localtimestamp&#039;,&#039;lock&#039;,&#039;long&#039;,&#039;longblob&#039;,&#039;longtext&#039;,&#039;loop&#039;,&#039;low_priority&#039;,&#039;master_server_id&#039;,&#039;match&#039;,&#039;mediumblob&#039;,&#039;mediumint&#039;,&#039;mediumtext&#039;,&#039;middleint&#039;,&#039;minute_microsecond&#039;,&#039;minute_second&#039;,&#039;mod&#039;,&#039;natural&#039;,&#039;not&#039;,&#039;no_write_to_binlog&#039;,&#039;null&#039;,&#039;numeric&#039;,&#039;on&#039;,&#039;optimize&#039;,&#039;option&#039;,&#039;optionally&#039;,&#039;or&#039;,&#039;order&#039;,&#039;out&#039;,&#039;outer&#039;,&#039;outfile&#039;,&#039;precision&#039;,&#039;primary&#039;,&#039;privileges&#039;,&#039;procedure&#039;,&#039;purge&#039;,&#039;read&#039;,&#039;real&#039;,&#039;references&#039;,&#039;regexp&#039;,&#039;rename&#039;,&#039;repeat&#039;,&#039;replace&#039;,&#039;require&#039;,&#039;restrict&#039;,&#039;return&#039;,&#039;revoke&#039;,&#039;right&#039;,&#039;rlike&#039;,&#039;second_microsecond&#039;,&#039;select&#039;,&#039;sensitive&#039;,&#039;separator&#039;,&#039;set&#039;,&#039;show&#039;,&#039;smallint&#039;,&#039;some&#039;,&#039;soname&#039;,&#039;spatial&#039;,&#039;specific&#039;,&#039;sql&#039;,&#039;sqlexception&#039;,&#039;sqlstate&#039;,&#039;sqlwarning&#039;,&#039;sql_big_result&#039;,&#039;sql_calc_found_rows&#039;,&#039;sql_small_result&#039;,&#039;sql_tsi_day&#039;,&#039;sql_tsi_frac_second&#039;,&#039;sql_tsi_hour&#039;,&#039;sql_tsi_minute&#039;,&#039;sql_tsi_month&#039;,&#039;sql_tsi_quarter&#039;,&#039;sql_tsi_second&#039;,&#039;sql_tsi_week&#039;,&#039;sql_tsi_year&#039;,&#039;ssl&#039;,&#039;starting&#039;,&#039;straight_join&#039;,&#039;striped&#039;,&#039;table&#039;,&#039;tables&#039;,&#039;terminated&#039;,&#039;then&#039;,&#039;timestampadd&#039;,&#039;timestampdiff&#039;,&#039;tinyblob&#039;,&#039;tinyint&#039;,&#039;tinytext&#039;,&#039;to&#039;,&#039;trailing&#039;,&#039;true&#039;,&#039;undo&#039;,&#039;union&#039;,&#039;unique&#039;,&#039;unlock&#039;,&#039;unsigned&#039;,&#039;update&#039;,&#039;usage&#039;,&#039;use&#039;,&#039;user_resources&#039;,&#039;using&#039;,&#039;utc_date&#039;,&#039;utc_time&#039;,&#039;utc_timestamp&#039;,&#039;values&#039;,&#039;varbinary&#039;,&#039;varchar&#039;,&#039;varcharacter&#039;,&#039;varying&#039;,&#039;when&#039;,&#039;where&#039;,&#039;while&#039;,&#039;with&#039;,&#039;write&#039;,&#039;xor&#039;,&#039;year_month&#039;,&#039;zerofill&#039;),</p>
+<p>&#039;synonyms&#039;=&gt;array(&#039;decimal&#039;=&gt;&#039;numeric&#039;,&#039;dec&#039;=&gt;&#039;numeric&#039;,&#039;numeric&#039;=&gt;&#039;numeric&#039;,&#039;float&#039;=&gt;&#039;float&#039;,&#039;real&#039;=&gt;&#039;real&#039;,&#039;double&#039;=&gt;&#039;real&#039;,&#039;int&#039;=&gt;&#039;int&#039;,&#039;integer&#039;=&gt;&#039;int&#039;,&#039;interval&#039;=&gt;&#039;interval&#039;,&#039;smallint&#039;=&gt;&#039;smallint&#039;,&#039;timestamp&#039;=&gt;&#039;timestamp&#039;,&#039;bool&#039;=&gt;&#039;bool&#039;,&#039;boolean&#039;=&gt;&#039;bool&#039;,&#039;set&#039;=&gt;&#039;set&#039;,&#039;enum&#039;=&gt;&#039;enum&#039;,&#039;text&#039;=&gt;&#039;text&#039;,&#039;char&#039;=&gt;&#039;char&#039;,&#039;character&#039;=&gt;&#039;char&#039;,&#039;varchar&#039;=&gt;&#039;varchar&#039;,&#039;ascending&#039;=&gt;&#039;asc&#039;,&#039;asc&#039;=&gt;&#039;asc&#039;,&#039;descending&#039;=&gt;&#039;desc&#039;,&#039;desc&#039;=&gt;&#039;desc&#039;,&#039;date&#039;=&gt;&#039;date&#039;,&#039;time&#039;=&gt;&#039;time&#039;),</p>
+<p>Index: Lexer.php<br>
+===================================================================<br>
+RCS file: /repository/pear/SQL_Parser/Lexer.php,v<br>
+retrieving revision 1.21<br>
+diff -u -r1.21 Lexer.php<br>
+--- Lexer.php   17 May 2004 13:15:29 -0000      1.21<br>
++++ Lexer.php   2 Apr 2005 23:55:55 -0000<br>
+@@ -29,6 +29,29 @@<br>
+ // {{{ token definitions<br>
+ // variables: &#039;ident&#039;, &#039;sys_var&#039;<br>
+ // values:    &#039;real_val&#039;, &#039;text_val&#039;, &#039;int_val&#039;, null<br>
++<br>
++define(&#039;SQL_PARSER_STATE_START&#039;, 0);<br>
++define(&#039;SQL_PARSER_STATE_KEYWORD_OR_IDENT_INCOMPLETE&#039;, 1);<br>
++define(&#039;SQL_PARSER_STATE_KEYWORD_OR_IDENT_COMPLETE&#039;, 2);<br>
++define(&#039;SQL_PARSER_STATE_REAL_OR_INT_INCOMPLETE&#039;, 5);<br>
++define(&#039;SQL_PARSER_STATE_INT_COMPLETE&#039;, 6);<br>
++define(&#039;SQL_PARSER_STATE_REAL_INCOMPLETE&#039;, 7);<br>
++define(&#039;SQL_PARSER_STATE_REAL_COMPLETE&#039;, 8);<br>
++define(&#039;SQL_PARSER_STATE_COMPARISON_INCOMPLETE&#039;, 10);<br>
++define(&#039;SQL_PARSER_STATE_COMPARISON_COMPLETE&#039;, 11);<br>
++define(&#039;SQL_PARSER_STATE_STR_INCOMPLETE&#039;, 12);<br>
++define(&#039;SQL_PARSER_STATE_STR_COMPLETE&#039;, 13);<br>
++define(&#039;SQL_PARSER_STATE_COMMENT&#039;, 14);<br>
++define(&#039;SQL_PARSER_STATE_SCI_EXPONENT_SIGN&#039;, 15);<br>
++define(&#039;SQL_PARSER_STATE_SCI_EXPONENT_FIRST_DIGIT&#039;, 16);<br>
++define(&#039;SQL_PARSER_STATE_SCI_EXPONENT_VALUE&#039;, 17);<br>
++define(&#039;SQL_PARSER_STATE_SYSVAR_INCOMPLETE&#039;, 18);<br>
++define(&#039;SQL_PARSER_STATE_SYSVAR_COMPLETE&#039;, 19);<br>
++define(&#039;SQL_PARSER_STATE_FUNCTION_INCOMPLETE&#039;, 20);<br>
++define(&#039;SQL_PARSER_STATE_FUNCTION_COMPLETE&#039;, 21);<br>
++define(&#039;SQL_PARSER_STATE_UNKNOWN&#039;, 999);<br>
++define(&#039;SQL_PARSER_STATE_EOF&#039;, 1000);<br>
++<br>
+ // }}}</p>
+<p>/**<br>
+@@ -100,472 +123,479 @@<br>
+     function isCompop($c) {<br>
+         return (($c == &#039;&lt;&#039;) || ($c == &#039;&gt;&#039;) || ($c == &#039;=&#039;) || ($c == &#039;!&#039;));<br>
+     }<br>
+-// }}}<br>
++    // }}}</p>
+<p>-// {{{ pushBack()<br>
+-/*<br>
+- * Push back a token, so the very next call to lex() will return that token.<br>
+- * Calls to this function will be ignored if there is no lookahead specified<br>
+- * to the constructor, or the pushBack() function has already been called the<br>
+- * maximum number of token&#039;s that can be looked ahead.<br>
+- */<br>
+-function pushBack()<br>
+-{<br>
+-    if($this-&gt;lookahead&gt;0 &amp;&amp; count($this-&gt;tokenStack)&gt;0 &amp;&amp; $this-&gt;stackPtr&gt;0) {<br>
+-        $this-&gt;stackPtr--;<br>
++    // {{{ pushBack()<br>
++    /*<br>
++     * Push back a token, so the very next call to lex() will return that token.<br>
++     * Calls to this function will be ignored if there is no lookahead specified<br>
++     * to the constructor, or the pushBack() function has already been called the<br>
++     * maximum number of token&#039;s that can be looked ahead.<br>
++     */<br>
++    function pushBack()<br>
++    {<br>
++        if($this-&gt;lookahead&gt;0 &amp;&amp; count($this-&gt;tokenStack)&gt;0 &amp;&amp; $this-&gt;stackPtr&gt;0) {<br>
++            $this-&gt;stackPtr--;<br>
++        }<br>
+     }<br>
+-}<br>
+-// }}}<br>
+-<br>
+-// {{{ lex()<br>
+-function lex()<br>
+-{<br>
+-    if($this-&gt;lookahead&gt;0) {<br>
+-        // The stackPtr, should always be the same as the count of<br>
+-        // elements in the tokenStack.  The stackPtr, can be thought<br>
+-        // of as pointing to the next token to be added.  If however<br>
+-        // a pushBack() call is made, the stackPtr, will be less than the<br>
+-        // count, to indicate that we should take that token from the<br>
+-        // stack, instead of calling nextToken for a new token.<br>
+-<br>
+-        if ($this-&gt;stackPtr&lt;count($this-&gt;tokenStack)) {<br>
+-<br>
+-            $this-&gt;tokText = $this-&gt;tokenStack[$this-&gt;stackPtr][&#039;tokText&#039;];<br>
+-            $this-&gt;skipText = $this-&gt;tokenStack[$this-&gt;stackPtr][&#039;skipText&#039;];<br>
+-            $token = $this-&gt;tokenStack[$this-&gt;stackPtr][&#039;token&#039;];<br>
+-<br>
+-            // We have read the token, so now iterate again.<br>
+-            $this-&gt;stackPtr++;<br>
+-            return $token;<br>
+-<br>
+-        } else {<br>
+-<br>
+-            // If $tokenStack is full (equal to lookahead), pop the oldest<br>
+-            // element off, to make room for the new one.<br>
++    // }}}</p>
+<p>-            if ($this-&gt;stackPtr == $this-&gt;lookahead) {<br>
+-                // For some reason array_shift and<br>
+-                // array_pop screw up the indexing, so we do it manually.<br>
+-                for($i=0; $i&lt;(count($this-&gt;tokenStack)-1); $i++) {<br>
+-                    $this-&gt;tokenStack[$i] = $this-&gt;tokenStack[$i+1];<br>
++    // {{{ lex()<br>
++    function lex()<br>
++    {<br>
++        if($this-&gt;lookahead&gt;0) {<br>
++            // The stackPtr, should always be the same as the count of<br>
++            // elements in the tokenStack.  The stackPtr, can be thought<br>
++            // of as pointing to the next token to be added.  If however<br>
++            // a pushBack() call is made, the stackPtr, will be less than the<br>
++            // count, to indicate that we should take that token from the<br>
++            // stack, instead of calling nextToken for a new token.<br>
++<br>
++            if ($this-&gt;stackPtr &lt; count($this-&gt;tokenStack)) {<br>
++<br>
++                $this-&gt;tokText = $this-&gt;tokenStack[$this-&gt;stackPtr][&#039;tokText&#039;];<br>
++                $this-&gt;skipText = $this-&gt;tokenStack[$this-&gt;stackPtr][&#039;skipText&#039;];<br>
++                $token = $this-&gt;tokenStack[$this-&gt;stackPtr][&#039;token&#039;];<br>
++<br>
++                // We have read the token, so now iterate again.<br>
++                $this-&gt;stackPtr++;<br>
++                return $token;<br>
++<br>
++            } else {<br>
++<br>
++                // If $tokenStack is full (equal to lookahead), pop the oldest<br>
++                // element off, to make room for the new one.<br>
++<br>
++                if ($this-&gt;stackPtr == $this-&gt;lookahead) {<br>
++                    // For some reason array_shift and<br>
++                    // array_pop screw up the indexing, so we do it manually.<br>
++                    for($i=0; $i&lt;(count($this-&gt;tokenStack)-1); $i++) {<br>
++                        $this-&gt;tokenStack[$i] = $this-&gt;tokenStack[$i+1];<br>
++                    }<br>
++<br>
++                    // Indicate that we should put the element in<br>
++                    // at the stackPtr position.<br>
++                    $this-&gt;stackPtr--;<br>
+                 }</p>
+<p>-                // Indicate that we should put the element in<br>
+-                // at the stackPtr position.<br>
+-                $this-&gt;stackPtr--;<br>
++                $token = $this-&gt;nextToken();<br>
++                $this-&gt;tokenStack[$this-&gt;stackPtr] =<br>
++                    array(&#039;token&#039;    =&gt; $token,<br>
++                          &#039;tokText&#039;  =&gt; $this-&gt;tokText,<br>
++                          &#039;skipText&#039; =&gt; $this-&gt;skipText);<br>
++                $this-&gt;stackPtr++;<br>
++                return $token;<br>
+             }<br>
+-<br>
+-            $token = $this-&gt;nextToken();<br>
+-            $this-&gt;tokenStack[$this-&gt;stackPtr] =<br>
+-                array(&#039;token&#039;=&gt;$token,<br>
+-                      &#039;tokText&#039;=&gt;$this-&gt;tokText,<br>
+-                      &#039;skipText&#039;=&gt;$this-&gt;skipText);<br>
+-            $this-&gt;stackPtr++;<br>
+-            return $token;<br>
++        }<br>
++        else<br>
++        {<br>
++            return $this-&gt;nextToken();<br>
+         }<br>
+     }<br>
+-    else<br>
++    // }}}<br>
++<br>
++    // {{{ setToken()<br>
++    function setToken($tokText=NULL)<br>
+     {<br>
+-        return $this-&gt;nextToken();<br>
++        if ($tokText === NULL) {<br>
++            $this-&gt;tokText = substr($this-&gt;string, $this-&gt;tokStart, $this-&gt;tokLen);<br>
++        } else {<br>
++            $this-&gt;tokText = $tokText;<br>
++        }<br>
++        $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
++                                $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
++        $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+     }<br>
+-}<br>
+-// }}}<br>
++    // }}}</p>
+<p>-// {{{ nextToken()<br>
+-function nextToken()<br>
+-{<br>
+-    if ($this-&gt;string == &#039;&#039;) return;<br>
+-    $state = 0;<br>
+-    $this-&gt;tokAbsStart = $this-&gt;tokStart;<br>
+-<br>
+-    while (true){<br>
+-        //echo &quot;State: $state, Char: $c\n&quot;;<br>
+-        switch($state) {<br>
+-            // {{{ State 0 : Start of token<br>
+-            case 0:<br>
+-                $this-&gt;tokPtr = $this-&gt;tokStart;<br>
+-                $this-&gt;tokText = &#039;&#039;;<br>
+-                $this-&gt;tokLen = 0;<br>
+-                $c = $this-&gt;get();<br>
++    // {{{ nextToken()<br>
++    function nextToken()<br>
++    {<br>
++        if ($this-&gt;string == &#039;&#039;) return;<br>
++        $state = SQL_PARSER_STATE_START;<br>
++        $this-&gt;tokAbsStart = $this-&gt;tokStart;<br>
++<br>
++        while (true){<br>
++            //echo &quot;State: $state, Char: $c\n&quot;;<br>
++            switch($state) {<br>
++                // {{{ State 0 : Start of token<br>
++                case SQL_PARSER_STATE_START:<br>
++                    $this-&gt;tokPtr = $this-&gt;tokStart;<br>
++                    $this-&gt;tokText = &#039;&#039;;<br>
++                    $this-&gt;tokLen = 0;<br>
++                    $c = $this-&gt;get();</p>
+<p>-                if (is_null($c)) { // End Of Input<br>
+-                    $state = 1000;<br>
+-                    break;<br>
+-                }<br>
++                    if (is_null($c)) { // End Of Input<br>
++                        $state = SQL_PARSER_STATE_EOF;<br>
++                        break;<br>
++                    }</p>
+<p>-                while (($c == &#039; &#039;) || ($c == &quot;\t&quot;)<br>
+-                    || ($c == &quot;\n&quot;) || ($c == &quot;\r&quot;)) {<br>
+-                    if ($c == &quot;\n&quot; || $c == &quot;\r&quot;) {<br>
+-                        // Handle MAC/Unix/Windows line endings.<br>
+-                        if($c == &quot;\r&quot;) {<br>
+-                            $c = $this-&gt;skip();<br>
+-<br>
+-                            // If not DOS newline<br>
+-                            if($c != &quot;\n&quot;)<br>
+-                                $this-&gt;unget();<br>
++                    while (($c == &#039; &#039;) || ($c == &quot;\t&quot;)<br>
++                        || ($c == &quot;\n&quot;) || ($c == &quot;\r&quot;)) {<br>
++                        if ($c == &quot;\n&quot; || $c == &quot;\r&quot;) {<br>
++                            // Handle MAC/Unix/Windows line endings.<br>
++                            if($c == &quot;\r&quot;) {<br>
++                                $c = $this-&gt;skip();<br>
++<br>
++                                // If not DOS newline<br>
++                                if($c != &quot;\n&quot;)<br>
++                                    $this-&gt;unget();<br>
++                            }<br>
++                            ++$this-&gt;lineNo;<br>
++                            $this-&gt;lineBegin = $this-&gt;tokPtr;<br>
+                         }<br>
+-                        ++$this-&gt;lineNo;<br>
+-                        $this-&gt;lineBegin = $this-&gt;tokPtr;<br>
+-                    }<br>
+-<br>
+-                       $c = $this-&gt;skip();<br>
+-                    $this-&gt;tokLen = 1;<br>
+-                }<br>
+-<br>
+-                // Escape quotes and backslashes<br>
+-                if ($c == &#039;\\&#039;) {<br>
+-                     $t = $this-&gt;get();<br>
+-                    if ($t == &#039;\&#039;&#039; || $t == &#039;\\&#039; || $t == &#039;&quot;&#039;) {<br>
+-                        $this-&gt;tokText = $t;<br>
+-                        $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+-                        return $this-&gt;tokText;<br>
+-                    } else {<br>
+-                        $this-&gt;unget();</p>
+<p>-                        // Unknown token.  Revert to single char<br>
+-                        $state = 999;<br>
+-                        break;<br>
++                        $c = $this-&gt;skip();<br>
++                        $this-&gt;tokLen = 1;<br>
+                     }<br>
+-                }<br>
+-<br>
+-                if (($c == &#039;\&#039;&#039;) || ($c == &#039;&quot;&#039;)) { // text string<br>
+-                    $quote = $c;<br>
+-                    $state = 12;<br>
+-                    break;<br>
+-                }<br>
+-<br>
+-                if ($c == &#039;_&#039;) { // system variable<br>
+-                    $state = 18;<br>
+-                    break;<br>
+-                }<br>
+-<br>
+-                if (ctype_alpha(ord($c))) { // keyword or ident<br>
+-                    $state = 1;<br>
+-                    break;<br>
+-                }<br>
+-<br>
+-                if (ctype_digit(ord($c))) { // real or int number<br>
+-                    $state = 5;<br>
+-                    break;<br>
+-                }<br>
+-<br>
+-                if ($c == &#039;.&#039;) {<br>
+-                    $t = $this-&gt;get();<br>
+-                    if ($t == &#039;.&#039;) { // ellipsis<br>
+-                        if ($this-&gt;get() == &#039;.&#039;) {<br>
+-                            $this-&gt;tokText = &#039;...&#039;;<br>
++<br>
++                    // Escape quotes and backslashes<br>
++                    if ($c == &#039;\\&#039;) {<br>
++                         $t = $this-&gt;get();<br>
++                        if ($t == &#039;\&#039;&#039; || $t == &#039;\\&#039; || $t == &#039;&quot;&#039;) {<br>
++                            $this-&gt;tokText = $t;<br>
+                             $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+                             return $this-&gt;tokText;<br>
+                         } else {<br>
+-                            $state = 999;<br>
++                            $this-&gt;unget();<br>
++<br>
++                            // Unknown token.  Revert to single char<br>
++                            $state = SQL_PARSER_STATE_UNKNOWN;<br>
+                             break;<br>
+                         }<br>
+-                    } else if (ctype_digit(ord($t))) { // real number<br>
+-                        $this-&gt;unget();<br>
+-                        $state = 7;<br>
++                    }<br>
++<br>
++                    if (($c == &#039;\&#039;&#039;) || ($c == &#039;&quot;&#039;)) { // text string<br>
++                        $quote = $c;<br>
++                        $state = SQL_PARSER_STATE_STR_INCOMPLETE;<br>
+                         break;<br>
+-                    } else { // period<br>
+-                        $this-&gt;unget();<br>
+                     }<br>
+-                }</p>
+<p>-                if ($c == &#039;#&#039;) { // Comments<br>
+-                    $state = 14;<br>
+-                    break;<br>
+-                }<br>
+-                if ($c == &#039;-&#039;) {<br>
+-                    $t = $this-&gt;get();<br>
+-                    if ($t == &#039;-&#039;) {<br>
+-                        $state = 14;<br>
+-                        break;<br>
+-                    } else { // negative number<br>
+-                        $this-&gt;unget();<br>
+-                        $state = 5;<br>
++                    if ($c == &#039;_&#039;) { // system variable<br>
++                        $state = SQL_PARSER_STATE_SYSVAR_INCOMPLETE;<br>
+                         break;<br>
+                     }<br>
+-                }<br>
+-<br>
+-                if ($this-&gt;isCompop($c)) { // comparison operator<br>
+-                    $state = 10;<br>
+-                    break;<br>
+-                }<br>
+-                // Unknown token.  Revert to single char<br>
+-                $state = 999;<br>
+-                break;<br>
+-            // }}}<br>
+-<br>
+-            // {{{ State 1 : Incomplete keyword or ident<br>
+-            case 1:<br>
+-                $c = $this-&gt;get();<br>
+-                if (ctype_alnum(ord($c)) || ($c == &#039;_&#039;) || ($c == &#039;.&#039;)) {<br>
+-                    $state = 1;<br>
+-                    break;<br>
+-                }<br>
+-                $state = 2;<br>
+-                break;<br>
+-            // }}}<br>
+-<br>
+-            /* {{{ State 2 : Complete keyword or ident */<br>
+-            case 2:<br>
+-                $this-&gt;unget();<br>
+-                $this-&gt;tokText = substr($this-&gt;string, $this-&gt;tokStart,<br>
+-                                        $this-&gt;tokLen);<br>
+-<br>
+-                $testToken = strtolower($this-&gt;tokText);<br>
+-                if (isset($this-&gt;symbols[$testToken])) {<br>
+-<br>
+-                    $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+-                                            $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+-                    $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+-                    return $testToken;<br>
+-                } else {<br>
+-                    $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+-                                            $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+-                    $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+-                    return &#039;ident&#039;;<br>
+-                }<br>
+-                break;<br>
+-            // }}}</p>
+<p>-            // {{{ State 5: Incomplete real or int number<br>
+-            case 5:<br>
+-                $c = $this-&gt;get();<br>
+-                if (ctype_digit(ord($c))) {<br>
+-                    $state = 5;<br>
+-                    break;<br>
+-                } else if ($c == &#039;.&#039;) {<br>
+-                    $t = $this-&gt;get();<br>
+-                    if($t == &#039;.&#039;) { // ellipsis<br>
+-                        $this-&gt;unget();<br>
+-                    } else { // real number<br>
+-                        $state = 7;<br>
+-                        break;</p>
+<p>-                    }<br>
+-                } else if(ctype_alpha(ord($c))) {<br>
+-                    // Do we allow idents to begin with a digit?<br>
+-                    if ($this-&gt;allowIdentFirstDigit) {<br>
+-                        $state = 1;<br>
+-                    } else { // a number must end with non-alpha character<br>
+-                        $state = 999;<br>
+-                    }<br>
+-                    break;<br>
+-                } else {<br>
+-                // complete number<br>
+-                $state = 6;<br>
+-                break;<br>
+-                }<br>
+-            // }}}<br>
+-<br>
+-            // {{{ State 6: Complete integer number<br>
+-            case 6:<br>
+-                $this-&gt;unget();<br>
+-                $this-&gt;tokText = intval(substr($this-&gt;string, $this-&gt;tokStart,<br>
+-                                               $this-&gt;tokLen));<br>
+-                $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+-                                         $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+-                $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+-                return &#039;int_val&#039;;<br>
+-                break;<br>
+-            // }}}<br>
+-<br>
+-            // {{{ State 7: Incomplete real number<br>
+-            case 7:<br>
+-                $c = $this-&gt;get();<br>
++                    if (ctype_alpha(ord($c))) { // keyword or ident<br>
++                        $state = SQL_PARSER_STATE_KEYWORD_OR_IDENT_INCOMPLETE;<br>
++                        break;<br>
++                    }</p>
+<p>-                if ($c == &#039;e&#039; || $c == &#039;E&#039;) {<br>
+-                        $state = 15;<br>
++                    if (ctype_digit(ord($c))) { // real or int number<br>
++                        $state = SQL_PARSER_STATE_REAL_OR_INT_INCOMPLETE;<br>
+                         break;<br>
+-                }<br>
++                    }</p>
+<p>-                if (ctype_digit(ord($c))) {<br>
+-                    $state = 7;<br>
+-                    break;<br>
+-                }<br>
+-                $state = 8;<br>
+-                break;<br>
+-            // }}}<br>
+-<br>
+-            // {{{ State 8: Complete real number<br>
+-            case 8:<br>
+-                $this-&gt;unget();<br>
+-                $this-&gt;tokText = floatval(substr($this-&gt;string, $this-&gt;tokStart,<br>
+-                                        $this-&gt;tokLen));<br>
+-                $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+-                                         $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+-                $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+-                return &#039;real_val&#039;;<br>
+-            // }}}<br>
+-<br>
+-            // {{{ State 10: Incomplete comparison operator<br>
+-            case 10:<br>
+-                $c = $this-&gt;get();<br>
+-                if ($this-&gt;isCompop($c))<br>
+-                {<br>
+-                    $state = 10;<br>
+-                    break;<br>
+-                }<br>
+-                $state = 11;<br>
+-                break;<br>
+-            // }}}<br>
+-<br>
+-            // {{{ State 11: Complete comparison operator<br>
+-            case 11:<br>
+-                $this-&gt;unget();<br>
+-                $this-&gt;tokText = substr($this-&gt;string, $this-&gt;tokStart,<br>
+-                                        $this-&gt;tokLen);<br>
+-                if($this-&gt;tokText) {<br>
+-                    $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+-                                            $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+-                    $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+-                    return $this-&gt;tokText;<br>
+-                }<br>
+-                $state = 999;<br>
+-                break;<br>
+-            // }}}<br>
+-<br>
+-            // {{{ State 12: Incomplete text string<br>
+-            case 12:<br>
+-                $bail = false;<br>
+-                while (!$bail) {<br>
+-                    switch ($this-&gt;get()) {<br>
+-                        case &#039;&#039;:<br>
+-                            $this-&gt;tokText = null;<br>
+-                            $bail = true;<br>
+-                            break;<br>
+-                        case &quot;\\&quot;:<br>
+-                            if (!$this-&gt;get()) {<br>
+-                                $this-&gt;tokText = null;<br>
+-                                $bail = true;<br>
++                    if ($c == &#039;.&#039;) {<br>
++                        $t = $this-&gt;get();<br>
++                        if ($t == &#039;.&#039;) { // ellipsis<br>
++                            if ($this-&gt;get() == &#039;.&#039;) {<br>
++                                $this-&gt;tokText = &#039;...&#039;;<br>
++                                $this-&gt;tokStart = $this-&gt;tokPtr;<br>
++                                return $this-&gt;tokText;<br>
++                            } else {<br>
++                                $state = SQL_PARSER_STATE_UNKNOWN;<br>
++                                break;<br>
+                             }<br>
+-                                //$bail = true;<br>
+-                            break;<br>
+-                        case $quote:<br>
+-                            $this-&gt;tokText = stripslashes(substr($this-&gt;string,<br>
+-                                       ($this-&gt;tokStart+1), ($this-&gt;tokLen-2)));<br>
+-                            $bail = true;<br>
++                        } else if (ctype_digit(ord($t))) { // real number<br>
++                            $this-&gt;unget();<br>
++                            $state = SQL_PARSER_STATE_REAL_INCOMPLETE;<br>
+                             break;<br>
++                        } else { // period<br>
++                            $this-&gt;unget();<br>
++                        }<br>
+                     }<br>
+-                }<br>
+-                if (!is_null($this-&gt;tokText)) {<br>
+-                    $state = 13;<br>
+-                    break;<br>
+-                }<br>
+-                $state = 999;<br>
+-                break;<br>
+-            // }}}<br>
+-<br>
+-            // {{{ State 13: Complete text string<br>
+-            case 13:<br>
+-                $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+-                                         $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+-                $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+-                return &#039;text_val&#039;;<br>
+-                break;<br>
+-            // }}}<br>
+-<br>
+-            // {{{ State 14: Comment<br>
+-            case 14:<br>
+-                $c = $this-&gt;skip();<br>
+-                if ($c == &quot;\n&quot; || $c == &quot;\r&quot; || $c == &quot;&quot;) {<br>
+-                    // Handle MAC/Unix/Windows line endings.<br>
+-                    if ($c == &quot;\r&quot;) {<br>
+-                        $c = $this-&gt;skip();<br>
+-                        // If not DOS newline<br>
+-                        if ($c != &quot;\n&quot;) {<br>
++<br>
++                    if ($c == &#039;#&#039;) { // Comments<br>
++                        $state = SQL_PARSER_STATE_COMMENT;<br>
++                        break;<br>
++                    }<br>
++                    if ($c == &#039;-&#039;) {<br>
++                        $t = $this-&gt;get();<br>
++                        if ($t == &#039;-&#039;) {<br>
++                            $state = SQL_PARSER_STATE_COMMENT;<br>
++                            break;<br>
++                        } else { // negative number<br>
+                             $this-&gt;unget();<br>
++                            $state = SQL_PARSER_STATE_REAL_OR_INT_INCOMPLETE;<br>
++                            break;<br>
+                         }<br>
+                     }</p>
+<p>-                    if ($c != &quot;&quot;) {<br>
+-                        ++$this-&gt;lineNo;<br>
+-                        $this-&gt;lineBegin = $this-&gt;tokPtr;<br>
++                    if ($this-&gt;isCompop($c)) { // comparison operator<br>
++                        $state = SQL_PARSER_STATE_COMPARISON_INCOMPLETE;<br>
++                        break;<br>
+                     }<br>
++                    // Unknown token.  Revert to single char<br>
++                    $state = SQL_PARSER_STATE_UNKNOWN;<br>
++                    break;<br>
++                // }}}</p>
+<p>-                    // We need to skip all the text.<br>
+-                    $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+-                    $state = 0;<br>
+-                } else {<br>
+-                    $state = 14;<br>
+-                }<br>
+-                break;<br>
+-            // }}}<br>
++                // {{{ State 1 : Incomplete keyword or ident<br>
++                case SQL_PARSER_STATE_KEYWORD_OR_IDENT_INCOMPLETE:<br>
++                    $c = $this-&gt;get();<br>
++                    if (ctype_alnum(ord($c)) || ($c == &#039;_&#039;) || ($c == &#039;.&#039;)) {<br>
++                        $state = SQL_PARSER_STATE_KEYWORD_OR_IDENT_INCOMPLETE;<br>
++                        break;<br>
++                    } else if ($c == &#039;(&#039;) {<br>
++                        $this-&gt;_function_paren_count = 1;<br>
++                        $state = SQL_PARSER_STATE_FUNCTION_INCOMPLETE;<br>
++                        break;<br>
++                    }<br>
++                    $state = SQL_PARSER_STATE_KEYWORD_OR_IDENT_COMPLETE;<br>
++                    break;<br>
++                // }}}<br>
++<br>
++                /* {{{ State 2 : Complete keyword or ident */<br>
++                case SQL_PARSER_STATE_KEYWORD_OR_IDENT_COMPLETE:<br>
++                    $this-&gt;unget();<br>
++                    $this-&gt;setToken();<br>
++                    $testToken = strtolower($this-&gt;tokText);<br>
++                    return (isset($this-&gt;symbols[$testToken])) ? $testToken : &#039;ident&#039;;<br>
++                    break;<br>
++                // }}}</p>
+<p>-            // {{{ State 15: Exponent Sign in Scientific Notation<br>
+-            case 15:<br>
++                // {{{ State 20: Incomplete function (Doesn&#039;t yet handle nesting!)<br>
++                case SQL_PARSER_STATE_FUNCTION_INCOMPLETE:<br>
+                     $c = $this-&gt;get();<br>
+-                    if($c == &#039;-&#039; || $c == &#039;+&#039;) {<br>
+-                            $state = 16;<br>
++                    if ($c == &#039;)&#039;) {<br>
++                        $this-&gt;_function_paren_count--;<br>
++                        if ($this-&gt;_function_paren_count == 0) {<br>
++                            $state = SQL_PARSER_STATE_FUNCTION_COMPLETE;<br>
+                             break;<br>
++                        }<br>
++                    } else if ($c == &#039;(&#039;) {<br>
++                        $this-&gt;_function_paren_count++;<br>
+                     }<br>
+-                    $state = 999;<br>
++                    $state = SQL_PARSER_STATE_FUNCTION_INCOMPLETE;<br>
++                    break;<br>
++                // }}}<br>
++<br>
++                // {{{ State 21: Complete function<br>
++                case SQL_PARSER_STATE_FUNCTION_COMPLETE:<br>
++                    $this-&gt;setToken();<br>
++                    return &#039;function&#039;;<br>
+                     break;<br>
+-            // }}}<br>
++                // }}}</p>
+<p>-            // {{{ state 16: Exponent Value-first digit in Scientific Notation<br>
+-            case 16:<br>
++                // {{{ State 5: Incomplete real or int number<br>
++                case SQL_PARSER_STATE_REAL_OR_INT_INCOMPLETE:<br>
+                     $c = $this-&gt;get();<br>
+                     if (ctype_digit(ord($c))) {<br>
+-                            $state = 17;<br>
++                        $state = SQL_PARSER_STATE_REAL_OR_INT_INCOMPLETE;<br>
++                        break;<br>
++                    } else if ($c == &#039;.&#039;) {<br>
++                        $t = $this-&gt;get();<br>
++                        if($t == &#039;.&#039;) { // ellipsis<br>
++                            $this-&gt;unget();<br>
++                        } else { // real number<br>
++                            $state = SQL_PARSER_STATE_REAL_INCOMPLETE;<br>
+                             break;<br>
++                        }<br>
++                    } else if(ctype_alpha(ord($c))) {<br>
++                        // Do we allow idents to begin with a digit?<br>
++                        if ($this-&gt;allowIdentFirstDigit) {<br>
++                            $state = SQL_PARSER_STATE_KEYWORD_OR_IDENT_INCOMPLETE;<br>
++                        } else { // a number must end with non-alpha character<br>
++                            $state = SQL_PARSER_STATE_UNKNOWN;<br>
++                        }<br>
++                        break;<br>
++                    } else {<br>
++                        // complete number<br>
++                        $state = SQL_PARSER_STATE_INT_COMPLETE;<br>
++                        break;<br>
+                     }<br>
+-                    $state = 999;  // if no digit, then token is unknown<br>
++                // }}}<br>
++<br>
++                // {{{ State 6: Complete integer number<br>
++                case SQL_PARSER_STATE_INT_COMPLETE:<br>
++                    $this-&gt;unget();<br>
++                    $this-&gt;setToken();<br>
++                    $this-&gt;tokTest = intval($this-&gt;tokText);<br>
++                    return &#039;int_val&#039;;<br>
+                     break;<br>
+-            // }}}<br>
++                // }}}</p>
+<p>-            // {{{ State 17: Exponent Value in Scientific Notation<br>
+-            case 17:<br>
++                // {{{ State 7: Incomplete real number<br>
++                case SQL_PARSER_STATE_REAL_INCOMPLETE:<br>
+                     $c = $this-&gt;get();<br>
+-                    if (ctype_digit(ord($c))) {<br>
+-                            $state = 17;<br>
++<br>
++                    if ($c == &#039;e&#039; || $c == &#039;E&#039;) {<br>
++                            $state = SQL_PARSER_STATE_SCI_EXPONENT_SIGN;<br>
+                             break;<br>
+                     }<br>
+-                    $state = 8;  // At least 1 exponent digit was required<br>
++<br>
++                    if (ctype_digit(ord($c))) {<br>
++                        $state = SQL_PARSER_STATE_REAL_INCOMPLETE;<br>
++                        break;<br>
++                    }<br>
++                    $state = SQL_PARSER_STATE_REAL_COMPLETE;<br>
+                     break;<br>
+-            // }}}<br>
++                // }}}</p>
+<p>-            // {{{ State 18 : Incomplete System Variable<br>
+-            case 18:<br>
+-                $c = $this-&gt;get();<br>
+-                if (ctype_alnum(ord($c)) || $c == &#039;_&#039;) {<br>
+-                    $state = 18;<br>
++                // {{{ State 8: Complete real number<br>
++                case SQL_PARSER_STATE_REAL_COMPLETE:<br>
++                    $this-&gt;unget();<br>
++                    $this-&gt;setToken();<br>
++                    $this-&gt;tokText = floatval($this-&gt;tokText);<br>
++                    return &#039;real_val&#039;;<br>
++                // }}}<br>
++<br>
++                // {{{ State 10: Incomplete comparison operator<br>
++                case SQL_PARSER_STATE_COMPARISON_INCOMPLETE:<br>
++                    $c = $this-&gt;get();<br>
++                    if ($this-&gt;isCompop($c)) {<br>
++                        $state = SQL_PARSER_STATE_COMPARISON_INCOMPLETE;<br>
++                        break;<br>
++                    }<br>
++                    $state = SQL_PARSER_STATE_COMPARISON_COMPLETE;<br>
+                     break;<br>
+-                }<br>
+-                $state = 19;<br>
+-                break;<br>
+-            // }}}<br>
+-<br>
+-            // {{{ State 19: Complete Sys Var<br>
+-            case 19:<br>
+-                $this-&gt;unget();<br>
+-                $this-&gt;tokText = substr($this-&gt;string, $this-&gt;tokStart,<br>
+-                                        $this-&gt;tokLen);<br>
+-                $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+-                                         $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+-                $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+-                return &#039;sys_var&#039;;<br>
+-            // }}}<br>
+-<br>
+-            // {{{ State 999 : Unknown token.  Revert to single char<br>
+-            case 999:<br>
+-                $this-&gt;revert();<br>
+-                $this-&gt;tokText = $this-&gt;get();<br>
+-                $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+-                                         $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+-                $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+-                return $this-&gt;tokText;<br>
+-            // }}}<br>
+-<br>
+-            // {{{ State 1000 : End Of Input<br>
+-            case 1000:<br>
+-                $this-&gt;tokText = &#039;*end of input*&#039;;<br>
+-                $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+-                                         $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+-                $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+-                return null;<br>
+-            // }}}<br>
++                // }}}<br>
++<br>
++                // {{{ State 11: Complete comparison operator<br>
++                case SQL_PARSER_STATE_COMPARISON_COMPLETE:<br>
++                    $this-&gt;unget();<br>
++                    $this-&gt;tokText = substr($this-&gt;string, $this-&gt;tokStart,<br>
++                                            $this-&gt;tokLen);<br>
++                    if($this-&gt;tokText) {<br>
++                        $this-&gt;setToken($this-&gt;tokText);<br>
++                        return $this-&gt;tokText;<br>
++                    }<br>
++                    $state = SQL_PARSER_STATE_UNKNOWN;<br>
++                    break;<br>
++                // }}}<br>
++<br>
++                // {{{ State 12: Incomplete text string<br>
++                case SQL_PARSER_STATE_STR_INCOMPLETE:<br>
++                    $bail = false;<br>
++                    while (!$bail) {<br>
++                        switch ($this-&gt;get()) {<br>
++                            case &#039;&#039;:<br>
++                                $this-&gt;tokText = null;<br>
++                                $bail = true;<br>
++                                break;<br>
++                            case &quot;\\&quot;:<br>
++                                if (!$this-&gt;get()) {<br>
++                                    $this-&gt;tokText = null;<br>
++                                    $bail = true;<br>
++                                }<br>
++                                    //$bail = true;<br>
++                                break;<br>
++                            case $quote:<br>
++                                $this-&gt;tokText = stripslashes(substr($this-&gt;string,<br>
++                                           ($this-&gt;tokStart+1), ($this-&gt;tokLen-2)));<br>
++                                $bail = true;<br>
++                                break;<br>
++                        }<br>
++                    }<br>
++                    if (!is_null($this-&gt;tokText)) {<br>
++                        $state = SQL_PARSER_STATE_STR_COMPLETE;<br>
++                        break;<br>
++                    }<br>
++                    $state = SQL_PARSER_STATE_UNKNOWN;<br>
++                    break;<br>
++                // }}}<br>
++<br>
++                // {{{ State 13: Complete text string<br>
++                case SQL_PARSER_STATE_STR_COMPLETE:<br>
++                    $this-&gt;setToken($this-&gt;tokText);<br>
++                    return &#039;text_val&#039;;<br>
++                    break;<br>
++                // }}}<br>
++<br>
++                // {{{ State 14: Comment<br>
++                case SQL_PARSER_STATE_COMMENT:<br>
++                    $c = $this-&gt;skip();<br>
++                    if ($c == &quot;\n&quot; || $c == &quot;\r&quot; || $c == &quot;&quot;) {<br>
++                        // Handle MAC/Unix/Windows line endings.<br>
++                        if ($c == &quot;\r&quot;) {<br>
++                            $c = $this-&gt;skip();<br>
++                            // If not DOS newline<br>
++                            if ($c != &quot;\n&quot;) {<br>
++                                $this-&gt;unget();<br>
++                            }<br>
++                        }<br>
++<br>
++                        if ($c != &quot;&quot;) {<br>
++                            ++$this-&gt;lineNo;<br>
++                            $this-&gt;lineBegin = $this-&gt;tokPtr;<br>
++                        }<br>
++<br>
++                        // We need to skip all the text.<br>
++                        $this-&gt;tokStart = $this-&gt;tokPtr;<br>
++                        $state = SQL_PARSER_STATE_START;<br>
++                    } else {<br>
++                        $state = SQL_PARSER_STATE_COMMENT;<br>
++                    }<br>
++                    break;<br>
++                // }}}<br>
++<br>
++                // {{{ State 15: Exponent Sign in Scientific Notation<br>
++                case SQL_PARSER_STATE_SCI_EXPONENT_SIGN:<br>
++                        $c = $this-&gt;get();<br>
++                        if($c == &#039;-&#039; || $c == &#039;+&#039;) {<br>
++                                $state = SQL_PARSER_STATE_SCI_EXPONENT_FIRST_DIGIT;<br>
++                                break;<br>
++                        }<br>
++                        $state = SQL_PARSER_STATE_UNKNOWN;<br>
++                        break;<br>
++                // }}}<br>
++<br>
++                // {{{ state 16: Exponent Value-first digit in Scientific Notation<br>
++                case SQL_PARSER_STATE_SCI_EXPONENT_FIRST_DIGIT:<br>
++                        $c = $this-&gt;get();<br>
++                        if (ctype_digit(ord($c))) {<br>
++                                $state = SQL_PARSER_STATE_SCI_EXPONENT_VALUE;<br>
++                                break;<br>
++                        }<br>
++                        $state = SQL_PARSER_STATE_UNKNOWN;  // if no digit, then token is unknown<br>
++                        break;<br>
++                // }}}<br>
++<br>
++                // {{{ State 17: Exponent Value in Scientific Notation<br>
++                case SQL_PARSER_STATE_SCI_EXPONENT_VALUE:<br>
++                        $c = $this-&gt;get();<br>
++                        if (ctype_digit(ord($c))) {<br>
++                                $state = SQL_PARSER_STATE_SCI_EXPONENT_VALUE;<br>
++                                break;<br>
++                        }<br>
++                        $state = SQL_PARSER_STATE_REAL_COMPLETE;  // At least 1 exponent digit was required<br>
++                        break;<br>
++                // }}}<br>
++<br>
++                // {{{ State 18 : Incomplete System Variable<br>
++                case SQL_PARSER_STATE_SYSVAR_INCOMPLETE:<br>
++                    $c = $this-&gt;get();<br>
++                    if (ctype_alnum(ord($c)) || $c == &#039;_&#039;) {<br>
++                        $state = SQL_PARSER_STATE_SYSVAR_INCOMPLETE;<br>
++                        break;<br>
++                    }<br>
++                    $state = SQL_PARSER_STATE_SYSVAR_COMPLETE;<br>
++                    break;<br>
++                // }}}<br>
++<br>
++                // {{{ State 19: Complete Sys Var<br>
++                case SQL_PARSER_STATE_SYSVAR_COMPLETE:<br>
++                    $this-&gt;unget();<br>
++                    $this-&gt;setToken();<br>
++                    return &#039;sys_var&#039;;<br>
++                // }}}<br>
++<br>
++                // {{{ State 999 : Unknown token.  Revert to single char<br>
++                case SQL_PARSER_STATE_UNKNOWN:<br>
++                    $this-&gt;revert();<br>
++                    $this-&gt;setToken($this-&gt;get());<br>
++                    return $this-&gt;tokText;<br>
++                // }}}<br>
++<br>
++                // {{{ State 1000 : End Of Input<br>
++                case SQL_PARSER_STATE_EOF:<br>
++                    $this-&gt;setToken(&#039;*end of input*&#039;);<br>
++                    return null;<br>
++                // }}}<br>
++            }<br>
+         }<br>
+     }<br>
+-}<br>
+-// }}}<br>
++    // }}}<br>
+ }<br>
+ ?&gt;<br>
+Index: Parser.php<br>
+===================================================================<br>
+RCS file: /repository/pear/SQL_Parser/Parser.php,v<br>
+retrieving revision 1.27<br>
+diff -u -r1.27 Parser.php<br>
+--- Parser.php  3 Jul 2004 04:49:44 -0000       1.27<br>
++++ Parser.php  2 Apr 2005 23:55:56 -0000<br>
+@@ -143,6 +143,7 @@<br>
+     // {{{ isVal()<br>
+     function isVal() {<br>
+        return (($this-&gt;token == &#039;real_val&#039;) ||<br>
++               ($this-&gt;token == &#039;function&#039;) ||<br>
+                ($this-&gt;token == &#039;int_val&#039;) ||<br>
+                ($this-&gt;token == &#039;text_val&#039;) ||<br>
+                ($this-&gt;token == &#039;null&#039;));</p>
+</section>
+<section>
+<h3>[2005-04-05 03:50 UTC] epte at ruffdogs dot com</h3>
+<p>So, I was wrong about functions.  They are a syntactic element -- I see that now.  I have therefore taken out the Lexer changes I suggested above, and I have put in a very rudimentary parseFunction function (which should, when it develops further, call getParams, I think).  It works for the above test case, and will not handle complex arguments yet.  Here is the relevant hunks of the patch of Lexer and Parser against CVS sources, including everything so far (4/4):</p>
+<p>Index: Parser.php<br>
+===================================================================<br>
+RCS file: /repository/pear/SQL_Parser/Parser.php,v<br>
+retrieving revision 1.27<br>
+diff -r1.27 Parser.php<br>
+103a104,106<br>
+&gt;             } elseif (in_array($this-&gt;token, $this-&gt;functions)) {<br>
+&gt;                 $types[] = &#039;function&#039;;<br>
+&gt;                 $values[] = $this-&gt;parseFunction($this-&gt;token);<br>
+114a118,141<br>
+&gt; // {{{ parseFunction()<br>
+&gt;     // this function really should call getParams<br>
+&gt;     function parseFunction($funcname) {<br>
+&gt;         $argcnt = 0;<br>
+&gt;         $func_value_tree = array(&#039;funcname&#039; =&gt; $funcname);<br>
+&gt;         $this-&gt;getTok();<br>
+&gt;         if ($this-&gt;token != &#039;(&#039;) {<br>
+&gt;             return $this-&gt;raiseError(&#039;Expected )&#039;);<br>
+&gt;         }<br>
+&gt;         $this-&gt;getTok();<br>
+&gt;         while ($this-&gt;token != &#039;)&#039;) {<br>
+&gt;             $this-&gt;getTok();<br>
+&gt;             if ($this-&gt;token == &#039;,&#039;) {<br>
+&gt;                 $argcnt++;<br>
+&gt;             } else {<br>
+&gt;                 $func_value_tree[&#039;arg_&#039;.$argcnt][&#039;type&#039;] = $this-&gt;token;<br>
+&gt;                 $func_value_tree[&#039;arg_&#039;.$argcnt][&#039;value&#039;] = $this-&gt;tokText;<br>
+&gt;             }<br>
+&gt;         }<br>
+&gt;         $func_value_tree[&#039;arg_count&#039;] = $argcnt;<br>
+&gt;         return $func_value_tree;<br>
+&gt;     }<br>
+&gt; // }}}<br>
+&gt;</p>
+<p>Index: Lexer.php<br>
+===================================================================<br>
+RCS file: /repository/pear/SQL_Parser/Lexer.php,v<br>
+retrieving revision 1.21<br>
+diff -r1.21 Lexer.php<br>
+31a32,52<br>
+&gt;<br>
+&gt; define(&#039;SQL_PARSER_STATE_START&#039;, 0);<br>
+&gt; define(&#039;SQL_PARSER_STATE_KEYWORD_OR_IDENT_INCOMPLETE&#039;, 1);<br>
+&gt; define(&#039;SQL_PARSER_STATE_KEYWORD_OR_IDENT_COMPLETE&#039;, 2);<br>
+&gt; define(&#039;SQL_PARSER_STATE_REAL_OR_INT_INCOMPLETE&#039;, 5);<br>
+&gt; define(&#039;SQL_PARSER_STATE_INT_COMPLETE&#039;, 6);<br>
+&gt; define(&#039;SQL_PARSER_STATE_REAL_INCOMPLETE&#039;, 7);<br>
+&gt; define(&#039;SQL_PARSER_STATE_REAL_COMPLETE&#039;, 8);<br>
+&gt; define(&#039;SQL_PARSER_STATE_COMPARISON_INCOMPLETE&#039;, 10);<br>
+&gt; define(&#039;SQL_PARSER_STATE_COMPARISON_COMPLETE&#039;, 11);<br>
+&gt; define(&#039;SQL_PARSER_STATE_STR_INCOMPLETE&#039;, 12);<br>
+&gt; define(&#039;SQL_PARSER_STATE_STR_COMPLETE&#039;, 13);<br>
+&gt; define(&#039;SQL_PARSER_STATE_COMMENT&#039;, 14);<br>
+&gt; define(&#039;SQL_PARSER_STATE_SCI_EXPONENT_SIGN&#039;, 15);<br>
+&gt; define(&#039;SQL_PARSER_STATE_SCI_EXPONENT_FIRST_DIGIT&#039;, 16);<br>
+&gt; define(&#039;SQL_PARSER_STATE_SCI_EXPONENT_VALUE&#039;, 17);<br>
+&gt; define(&#039;SQL_PARSER_STATE_SYSVAR_INCOMPLETE&#039;, 18);<br>
+&gt; define(&#039;SQL_PARSER_STATE_SYSVAR_COMPLETE&#039;, 19);<br>
+&gt; define(&#039;SQL_PARSER_STATE_UNKNOWN&#039;, 999);<br>
+&gt; define(&#039;SQL_PARSER_STATE_EOF&#039;, 1000);<br>
+&gt;<br>
+103c124<br>
+&lt; // }}}<br>
+---<br>
+&gt;     // }}}<br>
+105,115c126,137<br>
+&lt; // {{{ pushBack()<br>
+&lt; /*<br>
+&lt;  * Push back a token, so the very next call to lex() will return that token.<br>
+&lt;  * Calls to this function will be ignored if there is no lookahead specified<br>
+&lt;  * to the constructor, or the pushBack() function has already been called the<br>
+&lt;  * maximum number of token&#039;s that can be looked ahead.<br>
+&lt;  */<br>
+&lt; function pushBack()<br>
+&lt; {<br>
+&lt;     if($this-&gt;lookahead&gt;0 &amp;&amp; count($this-&gt;tokenStack)&gt;0 &amp;&amp; $this-&gt;stackPtr&gt;0) {<br>
+&lt;         $this-&gt;stackPtr--;<br>
+---<br>
+&gt;     // {{{ pushBack()<br>
+&gt;     /*<br>
+&gt;      * Push back a token, so the very next call to lex() will return that token.<br>
+&gt;      * Calls to this function will be ignored if there is no lookahead specified<br>
+&gt;      * to the constructor, or the pushBack() function has already been called the<br>
+&gt;      * maximum number of token&#039;s that can be looked ahead.<br>
+&gt;      */<br>
+&gt;     function pushBack()<br>
+&gt;     {<br>
+&gt;         if($this-&gt;lookahead&gt;0 &amp;&amp; count($this-&gt;tokenStack)&gt;0 &amp;&amp; $this-&gt;stackPtr&gt;0) {<br>
+&gt;             $this-&gt;stackPtr--;<br>
+&gt;         }<br>
+117,118c139<br>
+&lt; }<br>
+&lt; // }}}<br>
+---<br>
+&gt;     // }}}<br>
+120,150c141,176<br>
+&lt; // {{{ lex()<br>
+&lt; function lex()<br>
+&lt; {<br>
+&lt;     if($this-&gt;lookahead&gt;0) {<br>
+&lt;         // The stackPtr, should always be the same as the count of<br>
+&lt;         // elements in the tokenStack.  The stackPtr, can be thought<br>
+&lt;         // of as pointing to the next token to be added.  If however<br>
+&lt;         // a pushBack() call is made, the stackPtr, will be less than the<br>
+&lt;         // count, to indicate that we should take that token from the<br>
+&lt;         // stack, instead of calling nextToken for a new token.<br>
+&lt;<br>
+&lt;         if ($this-&gt;stackPtr&lt;count($this-&gt;tokenStack)) {<br>
+&lt;<br>
+&lt;             $this-&gt;tokText = $this-&gt;tokenStack[$this-&gt;stackPtr][&#039;tokText&#039;];<br>
+&lt;             $this-&gt;skipText = $this-&gt;tokenStack[$this-&gt;stackPtr][&#039;skipText&#039;];<br>
+&lt;             $token = $this-&gt;tokenStack[$this-&gt;stackPtr][&#039;token&#039;];<br>
+&lt;<br>
+&lt;             // We have read the token, so now iterate again.<br>
+&lt;             $this-&gt;stackPtr++;<br>
+&lt;             return $token;<br>
+&lt;<br>
+&lt;         } else {<br>
+&lt;<br>
+&lt;             // If $tokenStack is full (equal to lookahead), pop the oldest<br>
+&lt;             // element off, to make room for the new one.<br>
+&lt;<br>
+&lt;             if ($this-&gt;stackPtr == $this-&gt;lookahead) {<br>
+&lt;                 // For some reason array_shift and<br>
+&lt;                 // array_pop screw up the indexing, so we do it manually.<br>
+&lt;                 for($i=0; $i&lt;(count($this-&gt;tokenStack)-1); $i++) {<br>
+&lt;                     $this-&gt;tokenStack[$i] = $this-&gt;tokenStack[$i+1];<br>
+---<br>
+&gt;     // {{{ lex()<br>
+&gt;     function lex()<br>
+&gt;     {<br>
+&gt;         if($this-&gt;lookahead&gt;0) {<br>
+&gt;             // The stackPtr, should always be the same as the count of<br>
+&gt;             // elements in the tokenStack.  The stackPtr, can be thought<br>
+&gt;             // of as pointing to the next token to be added.  If however<br>
+&gt;             // a pushBack() call is made, the stackPtr, will be less than the<br>
+&gt;             // count, to indicate that we should take that token from the<br>
+&gt;             // stack, instead of calling nextToken for a new token.<br>
+&gt;<br>
+&gt;             if ($this-&gt;stackPtr &lt; count($this-&gt;tokenStack)) {<br>
+&gt;<br>
+&gt;                 $this-&gt;tokText = $this-&gt;tokenStack[$this-&gt;stackPtr][&#039;tokText&#039;];<br>
+&gt;                 $this-&gt;skipText = $this-&gt;tokenStack[$this-&gt;stackPtr][&#039;skipText&#039;];<br>
+&gt;                 $token = $this-&gt;tokenStack[$this-&gt;stackPtr][&#039;token&#039;];<br>
+&gt;<br>
+&gt;                 // We have read the token, so now iterate again.<br>
+&gt;                 $this-&gt;stackPtr++;<br>
+&gt;                 return $token;<br>
+&gt;<br>
+&gt;             } else {<br>
+&gt;<br>
+&gt;                 // If $tokenStack is full (equal to lookahead), pop the oldest<br>
+&gt;                 // element off, to make room for the new one.<br>
+&gt;<br>
+&gt;                 if ($this-&gt;stackPtr == $this-&gt;lookahead) {<br>
+&gt;                     // For some reason array_shift and<br>
+&gt;                     // array_pop screw up the indexing, so we do it manually.<br>
+&gt;                     for($i=0; $i&lt;(count($this-&gt;tokenStack)-1); $i++) {<br>
+&gt;                         $this-&gt;tokenStack[$i] = $this-&gt;tokenStack[$i+1];<br>
+&gt;                     }<br>
+&gt;<br>
+&gt;                     // Indicate that we should put the element in<br>
+&gt;                     // at the stackPtr position.<br>
+&gt;                     $this-&gt;stackPtr--;<br>
+153,155c179,185<br>
+&lt;                 // Indicate that we should put the element in<br>
+&lt;                 // at the stackPtr position.<br>
+&lt;                 $this-&gt;stackPtr--;<br>
+---<br>
+&gt;                 $token = $this-&gt;nextToken();<br>
+&gt;                 $this-&gt;tokenStack[$this-&gt;stackPtr] =<br>
+&gt;                     array(&#039;token&#039;    =&gt; $token,<br>
+&gt;                           &#039;tokText&#039;  =&gt; $this-&gt;tokText,<br>
+&gt;                           &#039;skipText&#039; =&gt; $this-&gt;skipText);<br>
+&gt;                 $this-&gt;stackPtr++;<br>
+&gt;                 return $token;<br>
+157,164c187,190<br>
+&lt;<br>
+&lt;             $token = $this-&gt;nextToken();<br>
+&lt;             $this-&gt;tokenStack[$this-&gt;stackPtr] =<br>
+&lt;                 array(&#039;token&#039;=&gt;$token,<br>
+&lt;                       &#039;tokText&#039;=&gt;$this-&gt;tokText,<br>
+&lt;                       &#039;skipText&#039;=&gt;$this-&gt;skipText);<br>
+&lt;             $this-&gt;stackPtr++;<br>
+&lt;             return $token;<br>
+---<br>
+&gt;         }<br>
+&gt;         else<br>
+&gt;         {<br>
+&gt;             return $this-&gt;nextToken();<br>
+167c193,196<br>
+&lt;     else<br>
+---<br>
+&gt;     // }}}<br>
+&gt;<br>
+&gt;     // {{{ setToken()<br>
+&gt;     function setToken($tokText=NULL)<br>
+169c198,205<br>
+&lt;         return $this-&gt;nextToken();<br>
+---<br>
+&gt;         if ($tokText === NULL) {<br>
+&gt;             $this-&gt;tokText = substr($this-&gt;string, $this-&gt;tokStart, $this-&gt;tokLen);<br>
+&gt;         } else {<br>
+&gt;             $this-&gt;tokText = $tokText;<br>
+&gt;         }<br>
+&gt;         $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+&gt;                                 $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+&gt;         $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+171,172c207<br>
+&lt; }<br>
+&lt; // }}}<br>
+---<br>
+&gt;     // }}}<br>
+174,189c209,224<br>
+&lt; // {{{ nextToken()<br>
+&lt; function nextToken()<br>
+&lt; {<br>
+&lt;     if ($this-&gt;string == &#039;&#039;) return;<br>
+&lt;     $state = 0;<br>
+&lt;     $this-&gt;tokAbsStart = $this-&gt;tokStart;<br>
+&lt;<br>
+&lt;     while (true){<br>
+&lt;         //echo &quot;State: $state, Char: $c\n&quot;;<br>
+&lt;         switch($state) {<br>
+&lt;             // {{{ State 0 : Start of token<br>
+&lt;             case 0:<br>
+&lt;                 $this-&gt;tokPtr = $this-&gt;tokStart;<br>
+&lt;                 $this-&gt;tokText = &#039;&#039;;<br>
+&lt;                 $this-&gt;tokLen = 0;<br>
+&lt;                 $c = $this-&gt;get();<br>
+---<br>
+&gt;     // {{{ nextToken()<br>
+&gt;     function nextToken()<br>
+&gt;     {<br>
+&gt;         if ($this-&gt;string == &#039;&#039;) return;<br>
+&gt;         $state = SQL_PARSER_STATE_START;<br>
+&gt;         $this-&gt;tokAbsStart = $this-&gt;tokStart;<br>
+&gt;<br>
+&gt;         while (true){<br>
+&gt;             //echo &quot;State: $state, Char: $c\n&quot;;<br>
+&gt;             switch($state) {<br>
+&gt;                 // {{{ State 0 : Start of token<br>
+&gt;                 case SQL_PARSER_STATE_START:<br>
+&gt;                     $this-&gt;tokPtr = $this-&gt;tokStart;<br>
+&gt;                     $this-&gt;tokText = &#039;&#039;;<br>
+&gt;                     $this-&gt;tokLen = 0;<br>
+&gt;                     $c = $this-&gt;get();<br>
+191,194c226,229<br>
+&lt;                 if (is_null($c)) { // End Of Input<br>
+&lt;                     $state = 1000;<br>
+&lt;                     break;<br>
+&lt;                 }<br>
+---<br>
+&gt;                     if (is_null($c)) { // End Of Input<br>
+&gt;                         $state = SQL_PARSER_STATE_EOF;<br>
+&gt;                         break;<br>
+&gt;                     }<br>
+196,205c231,243<br>
+&lt;                 while (($c == &#039; &#039;) || ($c == &quot;\t&quot;)<br>
+&lt;                     || ($c == &quot;\n&quot;) || ($c == &quot;\r&quot;)) {<br>
+&lt;                     if ($c == &quot;\n&quot; || $c == &quot;\r&quot;) {<br>
+&lt;                         // Handle MAC/Unix/Windows line endings.<br>
+&lt;                         if($c == &quot;\r&quot;) {<br>
+&lt;                             $c = $this-&gt;skip();<br>
+&lt;<br>
+&lt;                             // If not DOS newline<br>
+&lt;                             if($c != &quot;\n&quot;)<br>
+&lt;                                 $this-&gt;unget();<br>
+---<br>
+&gt;                     while (($c == &#039; &#039;) || ($c == &quot;\t&quot;)<br>
+&gt;                         || ($c == &quot;\n&quot;) || ($c == &quot;\r&quot;)) {<br>
+&gt;                         if ($c == &quot;\n&quot; || $c == &quot;\r&quot;) {<br>
+&gt;                             // Handle MAC/Unix/Windows line endings.<br>
+&gt;                             if($c == &quot;\r&quot;) {<br>
+&gt;                                 $c = $this-&gt;skip();<br>
+&gt;<br>
+&gt;                                 // If not DOS newline<br>
+&gt;                                 if($c != &quot;\n&quot;)<br>
+&gt;                                     $this-&gt;unget();<br>
+&gt;                             }<br>
+&gt;                             ++$this-&gt;lineNo;<br>
+&gt;                             $this-&gt;lineBegin = $this-&gt;tokPtr;<br>
+207,223d244<br>
+&lt;                         ++$this-&gt;lineNo;<br>
+&lt;                         $this-&gt;lineBegin = $this-&gt;tokPtr;<br>
+&lt;                     }<br>
+&lt;<br>
+&lt;                        $c = $this-&gt;skip();<br>
+&lt;                     $this-&gt;tokLen = 1;<br>
+&lt;                 }<br>
+&lt;<br>
+&lt;                 // Escape quotes and backslashes<br>
+&lt;                 if ($c == &#039;\\&#039;) {<br>
+&lt;                      $t = $this-&gt;get();<br>
+&lt;                     if ($t == &#039;\&#039;&#039; || $t == &#039;\\&#039; || $t == &#039;&quot;&#039;) {<br>
+&lt;                         $this-&gt;tokText = $t;<br>
+&lt;                         $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+&lt;                         return $this-&gt;tokText;<br>
+&lt;                     } else {<br>
+&lt;                         $this-&gt;unget();<br>
+225,227c246,247<br>
+&lt;                         // Unknown token.  Revert to single char<br>
+&lt;                         $state = 999;<br>
+&lt;                         break;<br>
+---<br>
+&gt;                         $c = $this-&gt;skip();<br>
+&gt;                         $this-&gt;tokLen = 1;<br>
+229,256c249,254<br>
+&lt;                 }<br>
+&lt;<br>
+&lt;                 if (($c == &#039;\&#039;&#039;) || ($c == &#039;&quot;&#039;)) { // text string<br>
+&lt;                     $quote = $c;<br>
+&lt;                     $state = 12;<br>
+&lt;                     break;<br>
+&lt;                 }<br>
+&lt;<br>
+&lt;                 if ($c == &#039;_&#039;) { // system variable<br>
+&lt;                     $state = 18;<br>
+&lt;                     break;<br>
+&lt;                 }<br>
+&lt;<br>
+&lt;                 if (ctype_alpha(ord($c))) { // keyword or ident<br>
+&lt;                     $state = 1;<br>
+&lt;                     break;<br>
+&lt;                 }<br>
+&lt;<br>
+&lt;                 if (ctype_digit(ord($c))) { // real or int number<br>
+&lt;                     $state = 5;<br>
+&lt;                     break;<br>
+&lt;                 }<br>
+&lt;<br>
+&lt;                 if ($c == &#039;.&#039;) {<br>
+&lt;                     $t = $this-&gt;get();<br>
+&lt;                     if ($t == &#039;.&#039;) { // ellipsis<br>
+&lt;                         if ($this-&gt;get() == &#039;.&#039;) {<br>
+&lt;                             $this-&gt;tokText = &#039;...&#039;;<br>
+---<br>
+&gt;<br>
+&gt;                     // Escape quotes and backslashes<br>
+&gt;                     if ($c == &#039;\\&#039;) {<br>
+&gt;                          $t = $this-&gt;get();<br>
+&gt;                         if ($t == &#039;\&#039;&#039; || $t == &#039;\\&#039; || $t == &#039;&quot;&#039;) {<br>
+&gt;                             $this-&gt;tokText = $t;<br>
+260c258,261<br>
+&lt;                             $state = 999;<br>
+---<br>
+&gt;                             $this-&gt;unget();<br>
+&gt;<br>
+&gt;                             // Unknown token.  Revert to single char<br>
+&gt;                             $state = SQL_PARSER_STATE_UNKNOWN;<br>
+263,265c264,268<br>
+&lt;                     } else if (ctype_digit(ord($t))) { // real number<br>
+&lt;                         $this-&gt;unget();<br>
+&lt;                         $state = 7;<br>
+---<br>
+&gt;                     }<br>
+&gt;<br>
+&gt;                     if (($c == &#039;\&#039;&#039;) || ($c == &#039;&quot;&#039;)) { // text string<br>
+&gt;                         $quote = $c;<br>
+&gt;                         $state = SQL_PARSER_STATE_STR_INCOMPLETE;<br>
+267,268d269<br>
+&lt;                     } else { // period<br>
+&lt;                         $this-&gt;unget();<br>
+270d270<br>
+&lt;                 }<br>
+272,283c272,273<br>
+&lt;                 if ($c == &#039;#&#039;) { // Comments<br>
+&lt;                     $state = 14;<br>
+&lt;                     break;<br>
+&lt;                 }<br>
+&lt;                 if ($c == &#039;-&#039;) {<br>
+&lt;                     $t = $this-&gt;get();<br>
+&lt;                     if ($t == &#039;-&#039;) {<br>
+&lt;                         $state = 14;<br>
+&lt;                         break;<br>
+&lt;                     } else { // negative number<br>
+&lt;                         $this-&gt;unget();<br>
+&lt;                         $state = 5;<br>
+---<br>
+&gt;                     if ($c == &#039;_&#039;) { // system variable<br>
+&gt;                         $state = SQL_PARSER_STATE_SYSVAR_INCOMPLETE;<br>
+286d275<br>
+&lt;                 }<br>
+288,373c277,280<br>
+&lt;                 if ($this-&gt;isCompop($c)) { // comparison operator<br>
+&lt;                     $state = 10;<br>
+&lt;                     break;<br>
+&lt;                 }<br>
+&lt;                 // Unknown token.  Revert to single char<br>
+&lt;                 $state = 999;<br>
+&lt;                 break;<br>
+&lt;             // }}}<br>
+&lt;<br>
+&lt;             // {{{ State 1 : Incomplete keyword or ident<br>
+&lt;             case 1:<br>
+&lt;                 $c = $this-&gt;get();<br>
+&lt;                 if (ctype_alnum(ord($c)) || ($c == &#039;_&#039;) || ($c == &#039;.&#039;)) {<br>
+&lt;                     $state = 1;<br>
+&lt;                     break;<br>
+&lt;                 }<br>
+&lt;                 $state = 2;<br>
+&lt;                 break;<br>
+&lt;             // }}}<br>
+&lt;<br>
+&lt;             /* {{{ State 2 : Complete keyword or ident */<br>
+&lt;             case 2:<br>
+&lt;                 $this-&gt;unget();<br>
+&lt;                 $this-&gt;tokText = substr($this-&gt;string, $this-&gt;tokStart,<br>
+&lt;                                         $this-&gt;tokLen);<br>
+&lt;<br>
+&lt;                 $testToken = strtolower($this-&gt;tokText);<br>
+&lt;                 if (isset($this-&gt;symbols[$testToken])) {<br>
+&lt;<br>
+&lt;                     $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+&lt;                                             $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+&lt;                     $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+&lt;                     return $testToken;<br>
+&lt;                 } else {<br>
+&lt;                     $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+&lt;                                             $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+&lt;                     $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+&lt;                     return &#039;ident&#039;;<br>
+&lt;                 }<br>
+&lt;                 break;<br>
+&lt;             // }}}<br>
+&lt;<br>
+&lt;             // {{{ State 5: Incomplete real or int number<br>
+&lt;             case 5:<br>
+&lt;                 $c = $this-&gt;get();<br>
+&lt;                 if (ctype_digit(ord($c))) {<br>
+&lt;                     $state = 5;<br>
+&lt;                     break;<br>
+&lt;                 } else if ($c == &#039;.&#039;) {<br>
+&lt;                     $t = $this-&gt;get();<br>
+&lt;                     if($t == &#039;.&#039;) { // ellipsis<br>
+&lt;                         $this-&gt;unget();<br>
+&lt;                     } else { // real number<br>
+&lt;                         $state = 7;<br>
+&lt;                         break;<br>
+&lt;                     }<br>
+&lt;                 } else if(ctype_alpha(ord($c))) {<br>
+&lt;                     // Do we allow idents to begin with a digit?<br>
+&lt;                     if ($this-&gt;allowIdentFirstDigit) {<br>
+&lt;                         $state = 1;<br>
+&lt;                     } else { // a number must end with non-alpha character<br>
+&lt;                         $state = 999;<br>
+&lt;                     }<br>
+&lt;                     break;<br>
+&lt;                 } else {<br>
+&lt;                 // complete number<br>
+&lt;                 $state = 6;<br>
+&lt;                 break;<br>
+&lt;                 }<br>
+&lt;             // }}}<br>
+&lt;<br>
+&lt;             // {{{ State 6: Complete integer number<br>
+&lt;             case 6:<br>
+&lt;                 $this-&gt;unget();<br>
+&lt;                 $this-&gt;tokText = intval(substr($this-&gt;string, $this-&gt;tokStart,<br>
+&lt;                                                $this-&gt;tokLen));<br>
+&lt;                 $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+&lt;                                          $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+&lt;                 $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+&lt;                 return &#039;int_val&#039;;<br>
+&lt;                 break;<br>
+&lt;             // }}}<br>
+&lt;<br>
+&lt;             // {{{ State 7: Incomplete real number<br>
+&lt;             case 7:<br>
+&lt;                 $c = $this-&gt;get();<br>
+---<br>
+&gt;                     if (ctype_alpha(ord($c))) { // keyword or ident<br>
+&gt;                         $state = SQL_PARSER_STATE_KEYWORD_OR_IDENT_INCOMPLETE;<br>
+&gt;                         break;<br>
+&gt;                     }<br>
+375,376c282,283<br>
+&lt;                 if ($c == &#039;e&#039; || $c == &#039;E&#039;) {<br>
+&lt;                         $state = 15;<br>
+---<br>
+&gt;                     if (ctype_digit(ord($c))) { // real or int number<br>
+&gt;                         $state = SQL_PARSER_STATE_REAL_OR_INT_INCOMPLETE;<br>
+378c285<br>
+&lt;                 }<br>
+---<br>
+&gt;                     }<br>
+380,438c287,296<br>
+&lt;                 if (ctype_digit(ord($c))) {<br>
+&lt;                     $state = 7;<br>
+&lt;                     break;<br>
+&lt;                 }<br>
+&lt;                 $state = 8;<br>
+&lt;                 break;<br>
+&lt;             // }}}<br>
+&lt;<br>
+&lt;             // {{{ State 8: Complete real number<br>
+&lt;             case 8:<br>
+&lt;                 $this-&gt;unget();<br>
+&lt;                 $this-&gt;tokText = floatval(substr($this-&gt;string, $this-&gt;tokStart,<br>
+&lt;                                         $this-&gt;tokLen));<br>
+&lt;                 $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+&lt;                                          $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+&lt;                 $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+&lt;                 return &#039;real_val&#039;;<br>
+&lt;             // }}}<br>
+&lt;<br>
+&lt;             // {{{ State 10: Incomplete comparison operator<br>
+&lt;             case 10:<br>
+&lt;                 $c = $this-&gt;get();<br>
+&lt;                 if ($this-&gt;isCompop($c))<br>
+&lt;                 {<br>
+&lt;                     $state = 10;<br>
+&lt;                     break;<br>
+&lt;                 }<br>
+&lt;                 $state = 11;<br>
+&lt;                 break;<br>
+&lt;             // }}}<br>
+&lt;<br>
+&lt;             // {{{ State 11: Complete comparison operator<br>
+&lt;             case 11:<br>
+&lt;                 $this-&gt;unget();<br>
+&lt;                 $this-&gt;tokText = substr($this-&gt;string, $this-&gt;tokStart,<br>
+&lt;                                         $this-&gt;tokLen);<br>
+&lt;                 if($this-&gt;tokText) {<br>
+&lt;                     $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+&lt;                                             $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+&lt;                     $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+&lt;                     return $this-&gt;tokText;<br>
+&lt;                 }<br>
+&lt;                 $state = 999;<br>
+&lt;                 break;<br>
+&lt;             // }}}<br>
+&lt;<br>
+&lt;             // {{{ State 12: Incomplete text string<br>
+&lt;             case 12:<br>
+&lt;                 $bail = false;<br>
+&lt;                 while (!$bail) {<br>
+&lt;                     switch ($this-&gt;get()) {<br>
+&lt;                         case &#039;&#039;:<br>
+&lt;                             $this-&gt;tokText = null;<br>
+&lt;                             $bail = true;<br>
+&lt;                             break;<br>
+&lt;                         case &quot;\\&quot;:<br>
+&lt;                             if (!$this-&gt;get()) {<br>
+&lt;                                 $this-&gt;tokText = null;<br>
+&lt;                                 $bail = true;<br>
+---<br>
+&gt;                     if ($c == &#039;.&#039;) {<br>
+&gt;                         $t = $this-&gt;get();<br>
+&gt;                         if ($t == &#039;.&#039;) { // ellipsis<br>
+&gt;                             if ($this-&gt;get() == &#039;.&#039;) {<br>
+&gt;                                 $this-&gt;tokText = &#039;...&#039;;<br>
+&gt;                                 $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+&gt;                                 return $this-&gt;tokText;<br>
+&gt;                             } else {<br>
+&gt;                                 $state = SQL_PARSER_STATE_UNKNOWN;<br>
+&gt;                                 break;<br>
+440,445c298,300<br>
+&lt;                                 //$bail = true;<br>
+&lt;                             break;<br>
+&lt;                         case $quote:<br>
+&lt;                             $this-&gt;tokText = stripslashes(substr($this-&gt;string,<br>
+&lt;                                        ($this-&gt;tokStart+1), ($this-&gt;tokLen-2)));<br>
+&lt;                             $bail = true;<br>
+---<br>
+&gt;                         } else if (ctype_digit(ord($t))) { // real number<br>
+&gt;                             $this-&gt;unget();<br>
+&gt;                             $state = SQL_PARSER_STATE_REAL_INCOMPLETE;<br>
+446a302,304<br>
+&gt;                         } else { // period<br>
+&gt;                             $this-&gt;unget();<br>
+&gt;                         }<br>
+448,474c306,316<br>
+&lt;                 }<br>
+&lt;                 if (!is_null($this-&gt;tokText)) {<br>
+&lt;                     $state = 13;<br>
+&lt;                     break;<br>
+&lt;                 }<br>
+&lt;                 $state = 999;<br>
+&lt;                 break;<br>
+&lt;             // }}}<br>
+&lt;<br>
+&lt;             // {{{ State 13: Complete text string<br>
+&lt;             case 13:<br>
+&lt;                 $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+&lt;                                          $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+&lt;                 $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+&lt;                 return &#039;text_val&#039;;<br>
+&lt;                 break;<br>
+&lt;             // }}}<br>
+&lt;<br>
+&lt;             // {{{ State 14: Comment<br>
+&lt;             case 14:<br>
+&lt;                 $c = $this-&gt;skip();<br>
+&lt;                 if ($c == &quot;\n&quot; || $c == &quot;\r&quot; || $c == &quot;&quot;) {<br>
+&lt;                     // Handle MAC/Unix/Windows line endings.<br>
+&lt;                     if ($c == &quot;\r&quot;) {<br>
+&lt;                         $c = $this-&gt;skip();<br>
+&lt;                         // If not DOS newline<br>
+&lt;                         if ($c != &quot;\n&quot;) {<br>
+---<br>
+&gt;<br>
+&gt;                     if ($c == &#039;#&#039;) { // Comments<br>
+&gt;                         $state = SQL_PARSER_STATE_COMMENT;<br>
+&gt;                         break;<br>
+&gt;                     }<br>
+&gt;                     if ($c == &#039;-&#039;) {<br>
+&gt;                         $t = $this-&gt;get();<br>
+&gt;                         if ($t == &#039;-&#039;) {<br>
+&gt;                             $state = SQL_PARSER_STATE_COMMENT;<br>
+&gt;                             break;<br>
+&gt;                         } else { // negative number<br>
+475a318,319<br>
+&gt;                             $state = SQL_PARSER_STATE_REAL_OR_INT_INCOMPLETE;<br>
+&gt;                             break;<br>
+479,481c323,325<br>
+&lt;                     if ($c != &quot;&quot;) {<br>
+&lt;                         ++$this-&gt;lineNo;<br>
+&lt;                         $this-&gt;lineBegin = $this-&gt;tokPtr;<br>
+---<br>
+&gt;                     if ($this-&gt;isCompop($c)) { // comparison operator<br>
+&gt;                         $state = SQL_PARSER_STATE_COMPARISON_INCOMPLETE;<br>
+&gt;                         break;<br>
+482a327,330<br>
+&gt;                     // Unknown token.  Revert to single char<br>
+&gt;                     $state = SQL_PARSER_STATE_UNKNOWN;<br>
+&gt;                     break;<br>
+&gt;                 // }}}<br>
+484,491c332,341<br>
+&lt;                     // We need to skip all the text.<br>
+&lt;                     $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+&lt;                     $state = 0;<br>
+&lt;                 } else {<br>
+&lt;                     $state = 14;<br>
+&lt;                 }<br>
+&lt;                 break;<br>
+&lt;             // }}}<br>
+---<br>
+&gt;                 // {{{ State 1 : Incomplete keyword or ident<br>
+&gt;                 case SQL_PARSER_STATE_KEYWORD_OR_IDENT_INCOMPLETE:<br>
+&gt;                     $c = $this-&gt;get();<br>
+&gt;                     if (ctype_alnum(ord($c)) || ($c == &#039;_&#039;) || ($c == &#039;.&#039;)) {<br>
+&gt;                         $state = SQL_PARSER_STATE_KEYWORD_OR_IDENT_INCOMPLETE;<br>
+&gt;                         break;<br>
+&gt;                     }<br>
+&gt;                     $state = SQL_PARSER_STATE_KEYWORD_OR_IDENT_COMPLETE;<br>
+&gt;                     break;<br>
+&gt;                 // }}}<br>
+493,494c343,353<br>
+&lt;             // {{{ State 15: Exponent Sign in Scientific Notation<br>
+&lt;             case 15:<br>
+---<br>
+&gt;                 /* {{{ State 2 : Complete keyword or ident */<br>
+&gt;                 case SQL_PARSER_STATE_KEYWORD_OR_IDENT_COMPLETE:<br>
+&gt;                     $this-&gt;unget();<br>
+&gt;                     $this-&gt;setToken();<br>
+&gt;                     $testToken = strtolower($this-&gt;tokText);<br>
+&gt;                     return (isset($this-&gt;symbols[$testToken])) ? $testToken : &#039;ident&#039;;<br>
+&gt;                     break;<br>
+&gt;                 // }}}<br>
+&gt;<br>
+&gt;                 // {{{ State 5: Incomplete real or int number<br>
+&gt;                 case SQL_PARSER_STATE_REAL_OR_INT_INCOMPLETE:<br>
+496,497c355,363<br>
+&lt;                     if($c == &#039;-&#039; || $c == &#039;+&#039;) {<br>
+&lt;                             $state = 16;<br>
+---<br>
+&gt;                     if (ctype_digit(ord($c))) {<br>
+&gt;                         $state = SQL_PARSER_STATE_REAL_OR_INT_INCOMPLETE;<br>
+&gt;                         break;<br>
+&gt;                     } else if ($c == &#039;.&#039;) {<br>
+&gt;                         $t = $this-&gt;get();<br>
+&gt;                         if($t == &#039;.&#039;) { // ellipsis<br>
+&gt;                             $this-&gt;unget();<br>
+&gt;                         } else { // real number<br>
+&gt;                             $state = SQL_PARSER_STATE_REAL_INCOMPLETE;<br>
+498a365,377<br>
+&gt;                         }<br>
+&gt;                     } else if(ctype_alpha(ord($c))) {<br>
+&gt;                         // Do we allow idents to begin with a digit?<br>
+&gt;                         if ($this-&gt;allowIdentFirstDigit) {<br>
+&gt;                             $state = SQL_PARSER_STATE_KEYWORD_OR_IDENT_INCOMPLETE;<br>
+&gt;                         } else { // a number must end with non-alpha character<br>
+&gt;                             $state = SQL_PARSER_STATE_UNKNOWN;<br>
+&gt;                         }<br>
+&gt;                         break;<br>
+&gt;                     } else {<br>
+&gt;                         // complete number<br>
+&gt;                         $state = SQL_PARSER_STATE_INT_COMPLETE;<br>
+&gt;                         break;<br>
+500c379,386<br>
+&lt;                     $state = 999;<br>
+---<br>
+&gt;                 // }}}<br>
+&gt;<br>
+&gt;                 // {{{ State 6: Complete integer number<br>
+&gt;                 case SQL_PARSER_STATE_INT_COMPLETE:<br>
+&gt;                     $this-&gt;unget();<br>
+&gt;                     $this-&gt;setToken();<br>
+&gt;                     $this-&gt;tokTest = intval($this-&gt;tokText);<br>
+&gt;                     return &#039;int_val&#039;;<br>
+502c388<br>
+&lt;             // }}}<br>
+---<br>
+&gt;                 // }}}<br>
+504,505c390,391<br>
+&lt;             // {{{ state 16: Exponent Value-first digit in Scientific Notation<br>
+&lt;             case 16:<br>
+---<br>
+&gt;                 // {{{ State 7: Incomplete real number<br>
+&gt;                 case SQL_PARSER_STATE_REAL_INCOMPLETE:<br>
+507,508c393,395<br>
+&lt;                     if (ctype_digit(ord($c))) {<br>
+&lt;                             $state = 17;<br>
+---<br>
+&gt;<br>
+&gt;                     if ($c == &#039;e&#039; || $c == &#039;E&#039;) {<br>
+&gt;                             $state = SQL_PARSER_STATE_SCI_EXPONENT_SIGN;<br>
+511c398,403<br>
+&lt;                     $state = 999;  // if no digit, then token is unknown<br>
+---<br>
+&gt;<br>
+&gt;                     if (ctype_digit(ord($c))) {<br>
+&gt;                         $state = SQL_PARSER_STATE_REAL_INCOMPLETE;<br>
+&gt;                         break;<br>
+&gt;                     }<br>
+&gt;                     $state = SQL_PARSER_STATE_REAL_COMPLETE;<br>
+513c405<br>
+&lt;             // }}}<br>
+---<br>
+&gt;                 // }}}<br>
+515,516c407,416<br>
+&lt;             // {{{ State 17: Exponent Value in Scientific Notation<br>
+&lt;             case 17:<br>
+---<br>
+&gt;                 // {{{ State 8: Complete real number<br>
+&gt;                 case SQL_PARSER_STATE_REAL_COMPLETE:<br>
+&gt;                     $this-&gt;unget();<br>
+&gt;                     $this-&gt;setToken();<br>
+&gt;                     $this-&gt;tokText = floatval($this-&gt;tokText);<br>
+&gt;                     return &#039;real_val&#039;;<br>
+&gt;                 // }}}<br>
+&gt;<br>
+&gt;                 // {{{ State 10: Incomplete comparison operator<br>
+&gt;                 case SQL_PARSER_STATE_COMPARISON_INCOMPLETE:<br>
+518,520c418,420<br>
+&lt;                     if (ctype_digit(ord($c))) {<br>
+&lt;                             $state = 17;<br>
+&lt;                             break;<br>
+---<br>
+&gt;                     if ($this-&gt;isCompop($c)) {<br>
+&gt;                         $state = SQL_PARSER_STATE_COMPARISON_INCOMPLETE;<br>
+&gt;                         break;<br>
+522c422<br>
+&lt;                     $state = 8;  // At least 1 exponent digit was required<br>
+---<br>
+&gt;                     $state = SQL_PARSER_STATE_COMPARISON_COMPLETE;<br>
+524c424<br>
+&lt;             // }}}<br>
+---<br>
+&gt;                 // }}}<br>
+526,530c426,435<br>
+&lt;             // {{{ State 18 : Incomplete System Variable<br>
+&lt;             case 18:<br>
+&lt;                 $c = $this-&gt;get();<br>
+&lt;                 if (ctype_alnum(ord($c)) || $c == &#039;_&#039;) {<br>
+&lt;                     $state = 18;<br>
+---<br>
+&gt;                 // {{{ State 11: Complete comparison operator<br>
+&gt;                 case SQL_PARSER_STATE_COMPARISON_COMPLETE:<br>
+&gt;                     $this-&gt;unget();<br>
+&gt;                     $this-&gt;tokText = substr($this-&gt;string, $this-&gt;tokStart,<br>
+&gt;                                             $this-&gt;tokLen);<br>
+&gt;                     if($this-&gt;tokText) {<br>
+&gt;                         $this-&gt;setToken($this-&gt;tokText);<br>
+&gt;                         return $this-&gt;tokText;<br>
+&gt;                     }<br>
+&gt;                     $state = SQL_PARSER_STATE_UNKNOWN;<br>
+532,565c437,567<br>
+&lt;                 }<br>
+&lt;                 $state = 19;<br>
+&lt;                 break;<br>
+&lt;             // }}}<br>
+&lt;<br>
+&lt;             // {{{ State 19: Complete Sys Var<br>
+&lt;             case 19:<br>
+&lt;                 $this-&gt;unget();<br>
+&lt;                 $this-&gt;tokText = substr($this-&gt;string, $this-&gt;tokStart,<br>
+&lt;                                         $this-&gt;tokLen);<br>
+&lt;                 $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+&lt;                                          $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+&lt;                 $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+&lt;                 return &#039;sys_var&#039;;<br>
+&lt;             // }}}<br>
+&lt;<br>
+&lt;             // {{{ State 999 : Unknown token.  Revert to single char<br>
+&lt;             case 999:<br>
+&lt;                 $this-&gt;revert();<br>
+&lt;                 $this-&gt;tokText = $this-&gt;get();<br>
+&lt;                 $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+&lt;                                          $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+&lt;                 $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+&lt;                 return $this-&gt;tokText;<br>
+&lt;             // }}}<br>
+&lt;<br>
+&lt;             // {{{ State 1000 : End Of Input<br>
+&lt;             case 1000:<br>
+&lt;                 $this-&gt;tokText = &#039;*end of input*&#039;;<br>
+&lt;                 $this-&gt;skipText = substr($this-&gt;string, $this-&gt;tokAbsStart,<br>
+&lt;                                          $this-&gt;tokStart-$this-&gt;tokAbsStart);<br>
+&lt;                 $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+&lt;                 return null;<br>
+&lt;             // }}}<br>
+---<br>
+&gt;                 // }}}<br>
+&gt;<br>
+&gt;                 // {{{ State 12: Incomplete text string<br>
+&gt;                 case SQL_PARSER_STATE_STR_INCOMPLETE:<br>
+&gt;                     $bail = false;<br>
+&gt;                     while (!$bail) {<br>
+&gt;                         switch ($this-&gt;get()) {<br>
+&gt;                             case &#039;&#039;:<br>
+&gt;                                 $this-&gt;tokText = null;<br>
+&gt;                                 $bail = true;<br>
+&gt;                                 break;<br>
+&gt;                             case &quot;\\&quot;:<br>
+&gt;                                 if (!$this-&gt;get()) {<br>
+&gt;                                     $this-&gt;tokText = null;<br>
+&gt;                                     $bail = true;<br>
+&gt;                                 }<br>
+&gt;                                     //$bail = true;<br>
+&gt;                                 break;<br>
+&gt;                             case $quote:<br>
+&gt;                                 $this-&gt;tokText = stripslashes(substr($this-&gt;string,<br>
+&gt;                                            ($this-&gt;tokStart+1), ($this-&gt;tokLen-2)));<br>
+&gt;                                 $bail = true;<br>
+&gt;                                 break;<br>
+&gt;                         }<br>
+&gt;                     }<br>
+&gt;                     if (!is_null($this-&gt;tokText)) {<br>
+&gt;                         $state = SQL_PARSER_STATE_STR_COMPLETE;<br>
+&gt;                         break;<br>
+&gt;                     }<br>
+&gt;                     $state = SQL_PARSER_STATE_UNKNOWN;<br>
+&gt;                     break;<br>
+&gt;                 // }}}<br>
+&gt;<br>
+&gt;                 // {{{ State 13: Complete text string<br>
+&gt;                 case SQL_PARSER_STATE_STR_COMPLETE:<br>
+&gt;                     $this-&gt;setToken($this-&gt;tokText);<br>
+&gt;                     return &#039;text_val&#039;;<br>
+&gt;                     break;<br>
+&gt;                 // }}}<br>
+&gt;<br>
+&gt;                 // {{{ State 14: Comment<br>
+&gt;                 case SQL_PARSER_STATE_COMMENT:<br>
+&gt;                     $c = $this-&gt;skip();<br>
+&gt;                     if ($c == &quot;\n&quot; || $c == &quot;\r&quot; || $c == &quot;&quot;) {<br>
+&gt;                         // Handle MAC/Unix/Windows line endings.<br>
+&gt;                         if ($c == &quot;\r&quot;) {<br>
+&gt;                             $c = $this-&gt;skip();<br>
+&gt;                             // If not DOS newline<br>
+&gt;                             if ($c != &quot;\n&quot;) {<br>
+&gt;                                 $this-&gt;unget();<br>
+&gt;                             }<br>
+&gt;                         }<br>
+&gt;<br>
+&gt;                         if ($c != &quot;&quot;) {<br>
+&gt;                             ++$this-&gt;lineNo;<br>
+&gt;                             $this-&gt;lineBegin = $this-&gt;tokPtr;<br>
+&gt;                         }<br>
+&gt;<br>
+&gt;                         // We need to skip all the text.<br>
+&gt;                         $this-&gt;tokStart = $this-&gt;tokPtr;<br>
+&gt;                         $state = SQL_PARSER_STATE_START;<br>
+&gt;                     } else {<br>
+&gt;                         $state = SQL_PARSER_STATE_COMMENT;<br>
+&gt;                     }<br>
+&gt;                     break;<br>
+&gt;                 // }}}<br>
+&gt;<br>
+&gt;                 // {{{ State 15: Exponent Sign in Scientific Notation<br>
+&gt;                 case SQL_PARSER_STATE_SCI_EXPONENT_SIGN:<br>
+&gt;                         $c = $this-&gt;get();<br>
+&gt;                         if($c == &#039;-&#039; || $c == &#039;+&#039;) {<br>
+&gt;                                 $state = SQL_PARSER_STATE_SCI_EXPONENT_FIRST_DIGIT;<br>
+&gt;                                 break;<br>
+&gt;                         }<br>
+&gt;                         $state = SQL_PARSER_STATE_UNKNOWN;<br>
+&gt;                         break;<br>
+&gt;                 // }}}<br>
+&gt;<br>
+&gt;                 // {{{ state 16: Exponent Value-first digit in Scientific Notation<br>
+&gt;                 case SQL_PARSER_STATE_SCI_EXPONENT_FIRST_DIGIT:<br>
+&gt;                         $c = $this-&gt;get();<br>
+&gt;                         if (ctype_digit(ord($c))) {<br>
+&gt;                                 $state = SQL_PARSER_STATE_SCI_EXPONENT_VALUE;<br>
+&gt;                                 break;<br>
+&gt;                         }<br>
+&gt;                         $state = SQL_PARSER_STATE_UNKNOWN;  // if no digit, then token is unknown<br>
+&gt;                         break;<br>
+&gt;                 // }}}<br>
+&gt;<br>
+&gt;                 // {{{ State 17: Exponent Value in Scientific Notation<br>
+&gt;                 case SQL_PARSER_STATE_SCI_EXPONENT_VALUE:<br>
+&gt;                         $c = $this-&gt;get();<br>
+&gt;                         if (ctype_digit(ord($c))) {<br>
+&gt;                                 $state = SQL_PARSER_STATE_SCI_EXPONENT_VALUE;<br>
+&gt;                                 break;<br>
+&gt;                         }<br>
+&gt;                         $state = SQL_PARSER_STATE_REAL_COMPLETE;  // At least 1 exponent digit was required<br>
+&gt;                         break;<br>
+&gt;                 // }}}<br>
+&gt;<br>
+&gt;                 // {{{ State 18 : Incomplete System Variable<br>
+&gt;                 case SQL_PARSER_STATE_SYSVAR_INCOMPLETE:<br>
+&gt;                     $c = $this-&gt;get();<br>
+&gt;                     if (ctype_alnum(ord($c)) || $c == &#039;_&#039;) {<br>
+&gt;                         $state = SQL_PARSER_STATE_SYSVAR_INCOMPLETE;<br>
+&gt;                         break;<br>
+&gt;                     }<br>
+&gt;                     $state = SQL_PARSER_STATE_SYSVAR_COMPLETE;<br>
+&gt;                     break;<br>
+&gt;                 // }}}<br>
+&gt;<br>
+&gt;                 // {{{ State 19: Complete Sys Var<br>
+&gt;                 case SQL_PARSER_STATE_SYSVAR_COMPLETE:<br>
+&gt;                     $this-&gt;unget();<br>
+&gt;                     $this-&gt;setToken();<br>
+&gt;                     return &#039;sys_var&#039;;<br>
+&gt;                 // }}}<br>
+&gt;<br>
+&gt;                 // {{{ State 999 : Unknown token.  Revert to single char<br>
+&gt;                 case SQL_PARSER_STATE_UNKNOWN:<br>
+&gt;                     $this-&gt;revert();<br>
+&gt;                     $this-&gt;setToken($this-&gt;get());<br>
+&gt;                     return $this-&gt;tokText;<br>
+&gt;                 // }}}<br>
+&gt;<br>
+&gt;                 // {{{ State 1000 : End Of Input<br>
+&gt;                 case SQL_PARSER_STATE_EOF:<br>
+&gt;                     $this-&gt;setToken(&#039;*end of input*&#039;);<br>
+&gt;                     return null;<br>
+&gt;                 // }}}<br>
+&gt;             }<br>
+568,569c570<br>
+&lt; }<br>
+&lt; // }}}<br>
+---<br>
+&gt;     // }}}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

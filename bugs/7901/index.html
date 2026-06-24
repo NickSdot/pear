@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7901</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Schema/index.html">MDB2_Schema</a> &#187; Bug #7901</h1>
+<p>Schema Update Fails</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-06-14 19:50 UTC</td></tr>
+<tr><th>From</th><td>michael at apison dot com</td></tr>
+<tr><th>Assigned</th><td>lsmith</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Schema/index.html">MDB2_Schema</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Mandriva 2006</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-06-14 19:50 UTC] michael at apison dot com</h3>
+<p>Description:<br>
+------------<br>
+Hi there,</p>
+<p>I&#039;m trying to get MDB2_Schema to update a table based on changes I made to the schema definition.  In this case (see below), the diff a new column added, and a new column added to the primary key index.  MDB2_Schema ends up running an invalid DDL statement:</p>
+<p>&quot;CREATE INDEX primary_idx ON files ()&quot;</p>
+<p>and then bombs.</p>
+<p>I&#039;ve included a code snippet, the two schemas, and the generated backtrace.</p>
+<p>Any ideas?</p>
+<p>Thanks,</p>
+<p>Michael</p>
+<p>(BTW, I&#039;m running MDB2 2.0.3 and MDB2_Driver_mysqli 1.0.3)</p>
+<p>Test script:<br>
+---------------<br>
+/* @var $schema MDB2_Schema */<br>
+$schema = MDB2_Schema::factory($fw-&gt;db);</p>
+<p>/* @var $schema MDB2_Schema */<br>
+try {<br>
+    var_dump($schema-&gt;updateDatabase(ROOT . &#039;modules/files/db/schema.xml&#039;, ROOT . &#039;modules/files/db/schema_previous.xml&#039;));<br>
+} catch (Framework_Exception $e) {<br>
+    var_dump($e);<br>
+}</p>
+<p>Schema previous<br>
+------------------<br>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;<br>
+&lt;!DOCTYPE database SYSTEM &quot;http://cvs.php.net/viewcvs.cgi/*checkout*/pear/MDB2_Schema/docs/MDB.dtd&quot;&gt;<br>
+&lt;database&gt;</p>
+<p>&lt;name&gt;framework&lt;/name&gt;<br>
+    &lt;create&gt;true&lt;/create&gt;<br>
+    &lt;overwrite&gt;false&lt;/overwrite&gt;</p>
+<p>&lt;table&gt;</p>
+<p>&lt;name&gt;files&lt;/name&gt;</p>
+<p>&lt;declaration&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_path&lt;/name&gt;<br>
+                &lt;type&gt;text&lt;/type&gt;<br>
+                &lt;length&gt;255&lt;/length&gt;<br>
+                &lt;notnull&gt;true&lt;/notnull&gt;<br>
+                &lt;default&gt;/&lt;/default&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_name&lt;/name&gt;<br>
+                &lt;type&gt;text&lt;/type&gt;<br>
+                &lt;length&gt;255&lt;/length&gt;<br>
+                &lt;notnull&gt;true&lt;/notnull&gt;<br>
+                &lt;default&gt;&lt;/default&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_type&lt;/name&gt;<br>
+                &lt;type&gt;integer&lt;/type&gt;<br>
+                &lt;unsigned&gt;false&lt;/unsigned&gt;<br>
+                &lt;length&gt;1&lt;/length&gt;<br>
+                &lt;notnull&gt;true&lt;/notnull&gt;<br>
+                &lt;default&gt;0&lt;/default&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_data&lt;/name&gt;<br>
+                &lt;type&gt;blob&lt;/type&gt;<br>
+                &lt;notnull&gt;false&lt;/notnull&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_mime&lt;/name&gt;<br>
+                &lt;type&gt;text&lt;/type&gt;<br>
+                &lt;length&gt;255&lt;/length&gt;<br>
+                &lt;notnull&gt;false&lt;/notnull&gt;<br>
+                &lt;default&gt;&lt;/default&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_right&lt;/name&gt;<br>
+                &lt;type&gt;integer&lt;/type&gt;<br>
+                &lt;unsigned&gt;false&lt;/unsigned&gt;<br>
+                &lt;notnull&gt;true&lt;/notnull&gt;<br>
+                &lt;default&gt;0&lt;/default&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_modified&lt;/name&gt;<br>
+                &lt;type&gt;timestamp&lt;/type&gt;<br>
+                &lt;notnull&gt;true&lt;/notnull&gt;<br>
+                &lt;default&gt;0000-00-00 00:00:00&lt;/default&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_owner&lt;/name&gt;<br>
+                &lt;type&gt;text&lt;/type&gt;<br>
+                &lt;unsigned&gt;false&lt;/unsigned&gt;<br>
+                &lt;length&gt;32&lt;/length&gt;<br>
+                &lt;notnull&gt;true&lt;/notnull&gt;<br>
+                &lt;default&gt;0&lt;/default&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;index&gt;<br>
+                &lt;name&gt;primary&lt;/name&gt;<br>
+                &lt;primary&gt;true&lt;/primary&gt;<br>
+                &lt;field&gt;<br>
+                    &lt;name&gt;files_path&lt;/name&gt;<br>
+                    &lt;sorting&gt;ascending&lt;/sorting&gt;<br>
+                &lt;/field&gt;<br>
+                &lt;field&gt;<br>
+                    &lt;name&gt;files_name&lt;/name&gt;<br>
+                    &lt;sorting&gt;ascending&lt;/sorting&gt;<br>
+                &lt;/field&gt;<br>
+                &lt;field&gt;<br>
+                    &lt;name&gt;files_type&lt;/name&gt;<br>
+                    &lt;sorting&gt;ascending&lt;/sorting&gt;<br>
+                &lt;/field&gt;<br>
+            &lt;/index&gt;</p>
+<p>&lt;/declaration&gt;</p>
+<p>&lt;/table&gt;<br>
+&lt;/database&gt;</p>
+<p>Schema new<br>
+----------<br>
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;<br>
+&lt;!DOCTYPE database SYSTEM &quot;http://cvs.php.net/viewcvs.cgi/*checkout*/pear/MDB2_Schema/docs/MDB.dtd&quot;&gt;<br>
+&lt;database&gt;</p>
+<p>&lt;name&gt;framework&lt;/name&gt;<br>
+    &lt;create&gt;true&lt;/create&gt;<br>
+    &lt;overwrite&gt;false&lt;/overwrite&gt;</p>
+<p>&lt;table&gt;</p>
+<p>&lt;name&gt;files&lt;/name&gt;</p>
+<p>&lt;declaration&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_path&lt;/name&gt;<br>
+                &lt;type&gt;text&lt;/type&gt;<br>
+                &lt;length&gt;255&lt;/length&gt;<br>
+                &lt;notnull&gt;true&lt;/notnull&gt;<br>
+                &lt;default&gt;/&lt;/default&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_name&lt;/name&gt;<br>
+                &lt;type&gt;text&lt;/type&gt;<br>
+                &lt;length&gt;255&lt;/length&gt;<br>
+                &lt;notnull&gt;true&lt;/notnull&gt;<br>
+                &lt;default&gt;&lt;/default&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_type&lt;/name&gt;<br>
+                &lt;type&gt;integer&lt;/type&gt;<br>
+                &lt;unsigned&gt;false&lt;/unsigned&gt;<br>
+                &lt;length&gt;1&lt;/length&gt;<br>
+                &lt;notnull&gt;true&lt;/notnull&gt;<br>
+                &lt;default&gt;0&lt;/default&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_locale&lt;/name&gt;<br>
+                &lt;type&gt;text&lt;/type&gt;<br>
+                &lt;length&gt;5&lt;/length&gt;<br>
+                &lt;notnull&gt;true&lt;/notnull&gt;<br>
+                &lt;default&gt;en_CA&lt;/default&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_data&lt;/name&gt;<br>
+                &lt;type&gt;blob&lt;/type&gt;<br>
+                &lt;notnull&gt;false&lt;/notnull&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_mime&lt;/name&gt;<br>
+                &lt;type&gt;text&lt;/type&gt;<br>
+                &lt;length&gt;255&lt;/length&gt;<br>
+                &lt;notnull&gt;false&lt;/notnull&gt;<br>
+                &lt;default&gt;&lt;/default&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_right&lt;/name&gt;<br>
+                &lt;type&gt;integer&lt;/type&gt;<br>
+                &lt;unsigned&gt;false&lt;/unsigned&gt;<br>
+                &lt;notnull&gt;true&lt;/notnull&gt;<br>
+                &lt;default&gt;0&lt;/default&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_modified&lt;/name&gt;<br>
+                &lt;type&gt;timestamp&lt;/type&gt;<br>
+                &lt;notnull&gt;true&lt;/notnull&gt;<br>
+                &lt;default&gt;0000-00-00 00:00:00&lt;/default&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;field&gt;<br>
+                &lt;name&gt;files_owner&lt;/name&gt;<br>
+                &lt;type&gt;text&lt;/type&gt;<br>
+                &lt;unsigned&gt;false&lt;/unsigned&gt;<br>
+                &lt;length&gt;32&lt;/length&gt;<br>
+                &lt;notnull&gt;true&lt;/notnull&gt;<br>
+                &lt;default&gt;0&lt;/default&gt;<br>
+            &lt;/field&gt;</p>
+<p>&lt;index&gt;<br>
+                &lt;name&gt;primary&lt;/name&gt;<br>
+                &lt;primary&gt;true&lt;/primary&gt;<br>
+                &lt;field&gt;<br>
+                    &lt;name&gt;files_path&lt;/name&gt;<br>
+                    &lt;sorting&gt;ascending&lt;/sorting&gt;<br>
+                &lt;/field&gt;<br>
+                &lt;field&gt;<br>
+                    &lt;name&gt;files_name&lt;/name&gt;<br>
+                    &lt;sorting&gt;ascending&lt;/sorting&gt;<br>
+                &lt;/field&gt;<br>
+                &lt;field&gt;<br>
+                    &lt;name&gt;files_type&lt;/name&gt;<br>
+                    &lt;sorting&gt;ascending&lt;/sorting&gt;<br>
+                &lt;/field&gt;<br>
+                &lt;field&gt;<br>
+                    &lt;name&gt;files_locale&lt;/name&gt;<br>
+                    &lt;sorting&gt;ascending&lt;/sorting&gt;<br>
+                &lt;/field&gt;<br>
+            &lt;/index&gt;</p>
+<p>&lt;/declaration&gt;</p>
+<p>&lt;/table&gt;<br>
+&lt;/database&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+success!</p>
+<p>Actual result:<br>
+--------------<br>
+object(Framework_Exception)#28 (6) {<br>
+  [&quot;message:protected&quot;]=&gt;<br>
+  string(248) &quot;MDB2 Error: syntax error _doQuery: Could not execute statement[Native code: 1064]<br>
+[Native message: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near &#039;)&#039; at line 1]<br>
+&quot;<br>
+  [&quot;string:private&quot;]=&gt;<br>
+  string(0) &quot;&quot;<br>
+  [&quot;code:protected&quot;]=&gt;<br>
+  int(-2)<br>
+  [&quot;file:protected&quot;]=&gt;<br>
+  string(51) &quot;/home/michael/www/framework/lib/Framework/Error.php&quot;<br>
+  [&quot;line:protected&quot;]=&gt;<br>
+  int(291)<br>
+  [&quot;trace:private&quot;]=&gt;<br>
+  array(13) {<br>
+    [0]=&gt;<br>
+    array(4) {<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(10) &quot;PEAR_Error&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(15) &quot;Framework_Error&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;::&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(1) {<br>
+        [0]=&gt;<br>
+        object(MDB2_Error)#26 (8) {<br>
+          [&quot;error_message_prefix&quot;]=&gt;<br>
+          string(0) &quot;&quot;<br>
+          [&quot;mode&quot;]=&gt;<br>
+          int(16)<br>
+          [&quot;level&quot;]=&gt;<br>
+          int(1024)<br>
+          [&quot;code&quot;]=&gt;<br>
+          int(-2)<br>
+          [&quot;message&quot;]=&gt;<br>
+          string(24) &quot;MDB2 Error: syntax error&quot;<br>
+          [&quot;userinfo&quot;]=&gt;<br>
+          string(223) &quot;_doQuery: Could not execute statement[Native code: 1064]<br>
+[Native message: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near &#039;)&#039; at line 1]<br>
+&quot;<br>
+          [&quot;backtrace&quot;]=&gt;<br>
+          NULL<br>
+          [&quot;callback&quot;]=&gt;<br>
+          array(2) {<br>
+            [0]=&gt;<br>
+            &amp;string(15) &quot;Framework_Error&quot;<br>
+            [1]=&gt;<br>
+            string(10) &quot;Pear_Error&quot;<br>
+          }<br>
+        }<br>
+      }<br>
+    }<br>
+    [1]=&gt;<br>
+    array(4) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(40) &quot;/home/michael/www/framework/lib/PEAR.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(901)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(14) &quot;call_user_func&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(2) {<br>
+        [0]=&gt;<br>
+        array(2) {<br>
+          [0]=&gt;<br>
+          &amp;string(15) &quot;Framework_Error&quot;<br>
+          [1]=&gt;<br>
+          string(10) &quot;Pear_Error&quot;<br>
+        }<br>
+        [1]=&gt;<br>
+        object(MDB2_Error)#26 (8) {<br>
+          [&quot;error_message_prefix&quot;]=&gt;<br>
+          string(0) &quot;&quot;<br>
+          [&quot;mode&quot;]=&gt;<br>
+          int(16)<br>
+          [&quot;level&quot;]=&gt;<br>
+          int(1024)<br>
+          [&quot;code&quot;]=&gt;<br>
+          int(-2)<br>
+          [&quot;message&quot;]=&gt;<br>
+          string(24) &quot;MDB2 Error: syntax error&quot;<br>
+          [&quot;userinfo&quot;]=&gt;<br>
+          string(223) &quot;_doQuery: Could not execute statement[Native code: 1064]<br>
+[Native message: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near &#039;)&#039; at line 1]<br>
+&quot;<br>
+          [&quot;backtrace&quot;]=&gt;<br>
+          NULL<br>
+          [&quot;callback&quot;]=&gt;<br>
+          array(2) {<br>
+            [0]=&gt;<br>
+            &amp;string(15) &quot;Framework_Error&quot;<br>
+            [1]=&gt;<br>
+            string(10) &quot;Pear_Error&quot;<br>
+          }<br>
+        }<br>
+      }<br>
+    }<br>
+    [2]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(40) &quot;/home/michael/www/framework/lib/MDB2.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(951)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(10) &quot;PEAR_Error&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(10) &quot;PEAR_Error&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(5) {<br>
+        [0]=&gt;<br>
+        string(24) &quot;MDB2 Error: syntax error&quot;<br>
+        [1]=&gt;<br>
+        int(-2)<br>
+        [2]=&gt;<br>
+        int(16)<br>
+        [3]=&gt;<br>
+        array(2) {<br>
+          [0]=&gt;<br>
+          &amp;string(15) &quot;Framework_Error&quot;<br>
+          [1]=&gt;<br>
+          string(10) &quot;Pear_Error&quot;<br>
+        }<br>
+        [4]=&gt;<br>
+        string(223) &quot;_doQuery: Could not execute statement[Native code: 1064]<br>
+[Native message: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near &#039;)&#039; at line 1]<br>
+&quot;<br>
+      }<br>
+    }<br>
+    [3]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(40) &quot;/home/michael/www/framework/lib/PEAR.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(563)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(10) &quot;MDB2_Error&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(10) &quot;MDB2_Error&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(4) {<br>
+        [0]=&gt;<br>
+        int(-2)<br>
+        [1]=&gt;<br>
+        int(16)<br>
+        [2]=&gt;<br>
+        array(2) {<br>
+          [0]=&gt;<br>
+          &amp;string(15) &quot;Framework_Error&quot;<br>
+          [1]=&gt;<br>
+          string(10) &quot;Pear_Error&quot;<br>
+        }<br>
+        [3]=&gt;<br>
+        string(223) &quot;_doQuery: Could not execute statement[Native code: 1064]<br>
+[Native message: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near &#039;)&#039; at line 1]<br>
+&quot;<br>
+      }<br>
+    }<br>
+    [4]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(40) &quot;/home/michael/www/framework/lib/MDB2.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(1357)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(10) &quot;raiseError&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(4) &quot;PEAR&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(7) {<br>
+        [0]=&gt;<br>
+        NULL<br>
+        [1]=&gt;<br>
+        int(-2)<br>
+        [2]=&gt;<br>
+        NULL<br>
+        [3]=&gt;<br>
+        NULL<br>
+        [4]=&gt;<br>
+        string(223) &quot;_doQuery: Could not execute statement[Native code: 1064]<br>
+[Native message: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near &#039;)&#039; at line 1]<br>
+&quot;<br>
+        [5]=&gt;<br>
+        string(10) &quot;MDB2_Error&quot;<br>
+        [6]=&gt;<br>
+        bool(true)<br>
+      }<br>
+    }<br>
+    [5]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(54) &quot;/home/michael/www/framework/lib/MDB2/Driver/mysqli.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(494)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(10) &quot;raiseError&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(18) &quot;MDB2_Driver_Common&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(4) {<br>
+        [0]=&gt;<br>
+        NULL<br>
+        [1]=&gt;<br>
+        NULL<br>
+        [2]=&gt;<br>
+        NULL<br>
+        [3]=&gt;<br>
+        string(37) &quot;_doQuery: Could not execute statement&quot;<br>
+      }<br>
+    }<br>
+    [6]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(40) &quot;/home/michael/www/framework/lib/MDB2.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(2112)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(8) &quot;_doQuery&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(18) &quot;MDB2_Driver_mysqli&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(4) {<br>
+        [0]=&gt;<br>
+        string(36) &quot;CREATE INDEX primary_idx ON files ()&quot;<br>
+        [1]=&gt;<br>
+        bool(true)<br>
+        [2]=&gt;<br>
+        object(mysqli)#19 (0) {<br>
+        }<br>
+        [3]=&gt;<br>
+        string(9) &quot;framework&quot;<br>
+      }<br>
+    }<br>
+    [7]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(62) &quot;/home/michael/www/framework/lib/MDB2/Driver/Manager/mysqli.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(669)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(4) &quot;exec&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(18) &quot;MDB2_Driver_Common&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(1) {<br>
+        [0]=&gt;<br>
+        string(36) &quot;CREATE INDEX primary_idx ON files ()&quot;<br>
+      }<br>
+    }<br>
+    [8]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(47) &quot;/home/michael/www/framework/lib/MDB2/Schema.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(1405)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(11) &quot;createIndex&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(26) &quot;MDB2_Driver_Manager_mysqli&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(3) {<br>
+        [0]=&gt;<br>
+        &amp;string(5) &quot;files&quot;<br>
+        [1]=&gt;<br>
+        &amp;string(7) &quot;primary&quot;<br>
+        [2]=&gt;<br>
+        &amp;array(1) {<br>
+          [&quot;change&quot;]=&gt;<br>
+          bool(true)<br>
+        }<br>
+      }<br>
+    }<br>
+    [9]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(47) &quot;/home/michael/www/framework/lib/MDB2/Schema.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(1504)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(20) &quot;alterDatabaseIndexes&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(11) &quot;MDB2_Schema&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(2) {<br>
+        [0]=&gt;<br>
+        &amp;string(5) &quot;files&quot;<br>
+        [1]=&gt;<br>
+        &amp;array(1) {<br>
+          [&quot;change&quot;]=&gt;<br>
+          array(1) {<br>
+            [&quot;primary&quot;]=&gt;<br>
+            array(1) {<br>
+              [&quot;change&quot;]=&gt;<br>
+              bool(true)<br>
+            }<br>
+          }<br>
+        }<br>
+      }<br>
+    }<br>
+    [10]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(47) &quot;/home/michael/www/framework/lib/MDB2/Schema.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(1612)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(19) &quot;alterDatabaseTables&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(11) &quot;MDB2_Schema&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(3) {<br>
+        [0]=&gt;<br>
+        &amp;array(1) {<br>
+          [&quot;files&quot;]=&gt;<br>
+          array(3) {<br>
+            [&quot;fields&quot;]=&gt;<br>
+            array(9) {<br>
+              [&quot;files_path&quot;]=&gt;<br>
+              array(5) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(4) &quot;text&quot;<br>
+                [&quot;length&quot;]=&gt;<br>
+                string(3) &quot;255&quot;<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;default&quot;]=&gt;<br>
+                string(1) &quot;/&quot;<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(10) &quot;files_path&quot;<br>
+              }<br>
+              [&quot;files_name&quot;]=&gt;<br>
+              array(5) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(4) &quot;text&quot;<br>
+                [&quot;length&quot;]=&gt;<br>
+                string(3) &quot;255&quot;<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;default&quot;]=&gt;<br>
+                string(0) &quot;&quot;<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(10) &quot;files_name&quot;<br>
+              }<br>
+              [&quot;files_type&quot;]=&gt;<br>
+              array(6) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(7) &quot;integer&quot;<br>
+                [&quot;unsigned&quot;]=&gt;<br>
+                bool(false)<br>
+                [&quot;length&quot;]=&gt;<br>
+                string(1) &quot;1&quot;<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;default&quot;]=&gt;<br>
+                int(0)<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(10) &quot;files_type&quot;<br>
+              }<br>
+              [&quot;files_locale&quot;]=&gt;<br>
+              array(5) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(4) &quot;text&quot;<br>
+                [&quot;length&quot;]=&gt;<br>
+                string(1) &quot;5&quot;<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;default&quot;]=&gt;<br>
+                string(5) &quot;en_CA&quot;<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(12) &quot;files_locale&quot;<br>
+              }<br>
+              [&quot;files_data&quot;]=&gt;<br>
+              array(3) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(4) &quot;blob&quot;<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(false)<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(10) &quot;files_data&quot;<br>
+              }<br>
+              [&quot;files_mime&quot;]=&gt;<br>
+              array(5) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(4) &quot;text&quot;<br>
+                [&quot;length&quot;]=&gt;<br>
+                string(3) &quot;255&quot;<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(false)<br>
+                [&quot;default&quot;]=&gt;<br>
+                NULL<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(10) &quot;files_mime&quot;<br>
+              }<br>
+              [&quot;files_right&quot;]=&gt;<br>
+              array(5) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(7) &quot;integer&quot;<br>
+                [&quot;unsigned&quot;]=&gt;<br>
+                bool(false)<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;default&quot;]=&gt;<br>
+                int(0)<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(11) &quot;files_right&quot;<br>
+              }<br>
+              [&quot;files_modified&quot;]=&gt;<br>
+              array(4) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(9) &quot;timestamp&quot;<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;default&quot;]=&gt;<br>
+                string(19) &quot;0000-00-00 00:00:00&quot;<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(14) &quot;files_modified&quot;<br>
+              }<br>
+              [&quot;files_owner&quot;]=&gt;<br>
+              array(6) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(4) &quot;text&quot;<br>
+                [&quot;unsigned&quot;]=&gt;<br>
+                bool(false)<br>
+                [&quot;length&quot;]=&gt;<br>
+                string(2) &quot;32&quot;<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;default&quot;]=&gt;<br>
+                string(1) &quot;0&quot;<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(11) &quot;files_owner&quot;<br>
+              }<br>
+            }<br>
+            [&quot;indexes&quot;]=&gt;<br>
+            array(1) {<br>
+              [&quot;primary&quot;]=&gt;<br>
+              array(3) {<br>
+                [&quot;primary&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;fields&quot;]=&gt;<br>
+                array(4) {<br>
+                  [&quot;files_path&quot;]=&gt;<br>
+                  array(1) {<br>
+                    [&quot;sorting&quot;]=&gt;<br>
+                    string(9) &quot;ascending&quot;<br>
+                  }<br>
+                  [&quot;files_name&quot;]=&gt;<br>
+                  array(1) {<br>
+                    [&quot;sorting&quot;]=&gt;<br>
+                    string(9) &quot;ascending&quot;<br>
+                  }<br>
+                  [&quot;files_type&quot;]=&gt;<br>
+                  array(1) {<br>
+                    [&quot;sorting&quot;]=&gt;<br>
+                    string(9) &quot;ascending&quot;<br>
+                  }<br>
+                  [&quot;files_locale&quot;]=&gt;<br>
+                  array(1) {<br>
+                    [&quot;sorting&quot;]=&gt;<br>
+                    string(9) &quot;ascending&quot;<br>
+                  }<br>
+                }<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(7) &quot;primary&quot;<br>
+              }<br>
+            }<br>
+            [&quot;was&quot;]=&gt;<br>
+            string(5) &quot;files&quot;<br>
+          }<br>
+        }<br>
+        [1]=&gt;<br>
+        &amp;array(1) {<br>
+          [&quot;files&quot;]=&gt;<br>
+          array(3) {<br>
+            [&quot;fields&quot;]=&gt;<br>
+            array(8) {<br>
+              [&quot;files_path&quot;]=&gt;<br>
+              array(5) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(4) &quot;text&quot;<br>
+                [&quot;length&quot;]=&gt;<br>
+                string(3) &quot;255&quot;<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;default&quot;]=&gt;<br>
+                string(1) &quot;/&quot;<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(10) &quot;files_path&quot;<br>
+              }<br>
+              [&quot;files_name&quot;]=&gt;<br>
+              array(5) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(4) &quot;text&quot;<br>
+                [&quot;length&quot;]=&gt;<br>
+                string(3) &quot;255&quot;<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;default&quot;]=&gt;<br>
+                string(0) &quot;&quot;<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(10) &quot;files_name&quot;<br>
+              }<br>
+              [&quot;files_type&quot;]=&gt;<br>
+              array(6) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(7) &quot;integer&quot;<br>
+                [&quot;unsigned&quot;]=&gt;<br>
+                bool(false)<br>
+                [&quot;length&quot;]=&gt;<br>
+                string(1) &quot;1&quot;<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;default&quot;]=&gt;<br>
+                int(0)<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(10) &quot;files_type&quot;<br>
+              }<br>
+              [&quot;files_data&quot;]=&gt;<br>
+              array(3) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(4) &quot;blob&quot;<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(false)<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(10) &quot;files_data&quot;<br>
+              }<br>
+              [&quot;files_mime&quot;]=&gt;<br>
+              array(5) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(4) &quot;text&quot;<br>
+                [&quot;length&quot;]=&gt;<br>
+                string(3) &quot;255&quot;<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(false)<br>
+                [&quot;default&quot;]=&gt;<br>
+                NULL<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(10) &quot;files_mime&quot;<br>
+              }<br>
+              [&quot;files_right&quot;]=&gt;<br>
+              array(5) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(7) &quot;integer&quot;<br>
+                [&quot;unsigned&quot;]=&gt;<br>
+                bool(false)<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;default&quot;]=&gt;<br>
+                int(0)<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(11) &quot;files_right&quot;<br>
+              }<br>
+              [&quot;files_modified&quot;]=&gt;<br>
+              array(4) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(9) &quot;timestamp&quot;<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;default&quot;]=&gt;<br>
+                string(19) &quot;0000-00-00 00:00:00&quot;<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(14) &quot;files_modified&quot;<br>
+              }<br>
+              [&quot;files_owner&quot;]=&gt;<br>
+              array(6) {<br>
+                [&quot;type&quot;]=&gt;<br>
+                string(4) &quot;text&quot;<br>
+                [&quot;unsigned&quot;]=&gt;<br>
+                bool(false)<br>
+                [&quot;length&quot;]=&gt;<br>
+                string(2) &quot;32&quot;<br>
+                [&quot;notnull&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;default&quot;]=&gt;<br>
+                string(1) &quot;0&quot;<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(11) &quot;files_owner&quot;<br>
+              }<br>
+            }<br>
+            [&quot;indexes&quot;]=&gt;<br>
+            array(1) {<br>
+              [&quot;primary&quot;]=&gt;<br>
+              array(3) {<br>
+                [&quot;primary&quot;]=&gt;<br>
+                bool(true)<br>
+                [&quot;fields&quot;]=&gt;<br>
+                array(3) {<br>
+                  [&quot;files_path&quot;]=&gt;<br>
+                  array(1) {<br>
+                    [&quot;sorting&quot;]=&gt;<br>
+                    string(9) &quot;ascending&quot;<br>
+                  }<br>
+                  [&quot;files_name&quot;]=&gt;<br>
+                  array(1) {<br>
+                    [&quot;sorting&quot;]=&gt;<br>
+                    string(9) &quot;ascending&quot;<br>
+                  }<br>
+                  [&quot;files_type&quot;]=&gt;<br>
+                  array(1) {<br>
+                    [&quot;sorting&quot;]=&gt;<br>
+                    string(9) &quot;ascending&quot;<br>
+                  }<br>
+                }<br>
+                [&quot;was&quot;]=&gt;<br>
+                string(7) &quot;primary&quot;<br>
+              }<br>
+            }<br>
+            [&quot;was&quot;]=&gt;<br>
+            string(5) &quot;files&quot;<br>
+          }<br>
+        }<br>
+        [2]=&gt;<br>
+        &amp;array(1) {<br>
+          [&quot;change&quot;]=&gt;<br>
+          array(1) {<br>
+            [&quot;files&quot;]=&gt;<br>
+            array(2) {<br>
+              [&quot;add&quot;]=&gt;<br>
+              array(1) {<br>
+                [&quot;files_locale&quot;]=&gt;<br>
+                array(5) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(4) &quot;text&quot;<br>
+                  [&quot;length&quot;]=&gt;<br>
+                  string(1) &quot;5&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  string(5) &quot;en_CA&quot;<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(12) &quot;files_locale&quot;<br>
+                }<br>
+              }<br>
+              [&quot;indexes&quot;]=&gt;<br>
+              array(1) {<br>
+                [&quot;change&quot;]=&gt;<br>
+                array(1) {<br>
+                  [&quot;primary&quot;]=&gt;<br>
+                  array(1) {<br>
+                    [&quot;change&quot;]=&gt;<br>
+                    bool(true)<br>
+                  }<br>
+                }<br>
+              }<br>
+            }<br>
+          }<br>
+        }<br>
+      }<br>
+    }<br>
+    [11]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(47) &quot;/home/michael/www/framework/lib/MDB2/Schema.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(2030)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(13) &quot;alterDatabase&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(11) &quot;MDB2_Schema&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(3) {<br>
+        [0]=&gt;<br>
+        &amp;array(4) {<br>
+          [&quot;name&quot;]=&gt;<br>
+          string(9) &quot;framework&quot;<br>
+          [&quot;create&quot;]=&gt;<br>
+          bool(true)<br>
+          [&quot;overwrite&quot;]=&gt;<br>
+          bool(false)<br>
+          [&quot;tables&quot;]=&gt;<br>
+          array(1) {<br>
+            [&quot;files&quot;]=&gt;<br>
+            array(3) {<br>
+              [&quot;fields&quot;]=&gt;<br>
+              array(9) {<br>
+                [&quot;files_path&quot;]=&gt;<br>
+                array(5) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(4) &quot;text&quot;<br>
+                  [&quot;length&quot;]=&gt;<br>
+                  string(3) &quot;255&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  string(1) &quot;/&quot;<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(10) &quot;files_path&quot;<br>
+                }<br>
+                [&quot;files_name&quot;]=&gt;<br>
+                array(5) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(4) &quot;text&quot;<br>
+                  [&quot;length&quot;]=&gt;<br>
+                  string(3) &quot;255&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  string(0) &quot;&quot;<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(10) &quot;files_name&quot;<br>
+                }<br>
+                [&quot;files_type&quot;]=&gt;<br>
+                array(6) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(7) &quot;integer&quot;<br>
+                  [&quot;unsigned&quot;]=&gt;<br>
+                  bool(false)<br>
+                  [&quot;length&quot;]=&gt;<br>
+                  string(1) &quot;1&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  int(0)<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(10) &quot;files_type&quot;<br>
+                }<br>
+                [&quot;files_locale&quot;]=&gt;<br>
+                array(5) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(4) &quot;text&quot;<br>
+                  [&quot;length&quot;]=&gt;<br>
+                  string(1) &quot;5&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  string(5) &quot;en_CA&quot;<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(12) &quot;files_locale&quot;<br>
+                }<br>
+                [&quot;files_data&quot;]=&gt;<br>
+                array(3) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(4) &quot;blob&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(false)<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(10) &quot;files_data&quot;<br>
+                }<br>
+                [&quot;files_mime&quot;]=&gt;<br>
+                array(5) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(4) &quot;text&quot;<br>
+                  [&quot;length&quot;]=&gt;<br>
+                  string(3) &quot;255&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(false)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  NULL<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(10) &quot;files_mime&quot;<br>
+                }<br>
+                [&quot;files_right&quot;]=&gt;<br>
+                array(5) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(7) &quot;integer&quot;<br>
+                  [&quot;unsigned&quot;]=&gt;<br>
+                  bool(false)<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  int(0)<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(11) &quot;files_right&quot;<br>
+                }<br>
+                [&quot;files_modified&quot;]=&gt;<br>
+                array(4) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(9) &quot;timestamp&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  string(19) &quot;0000-00-00 00:00:00&quot;<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(14) &quot;files_modified&quot;<br>
+                }<br>
+                [&quot;files_owner&quot;]=&gt;<br>
+                array(6) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(4) &quot;text&quot;<br>
+                  [&quot;unsigned&quot;]=&gt;<br>
+                  bool(false)<br>
+                  [&quot;length&quot;]=&gt;<br>
+                  string(2) &quot;32&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  string(1) &quot;0&quot;<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(11) &quot;files_owner&quot;<br>
+                }<br>
+              }<br>
+              [&quot;indexes&quot;]=&gt;<br>
+              array(1) {<br>
+                [&quot;primary&quot;]=&gt;<br>
+                array(3) {<br>
+                  [&quot;primary&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;fields&quot;]=&gt;<br>
+                  array(4) {<br>
+                    [&quot;files_path&quot;]=&gt;<br>
+                    array(1) {<br>
+                      [&quot;sorting&quot;]=&gt;<br>
+                      string(9) &quot;ascending&quot;<br>
+                    }<br>
+                    [&quot;files_name&quot;]=&gt;<br>
+                    array(1) {<br>
+                      [&quot;sorting&quot;]=&gt;<br>
+                      string(9) &quot;ascending&quot;<br>
+                    }<br>
+                    [&quot;files_type&quot;]=&gt;<br>
+                    array(1) {<br>
+                      [&quot;sorting&quot;]=&gt;<br>
+                      string(9) &quot;ascending&quot;<br>
+                    }<br>
+                    [&quot;files_locale&quot;]=&gt;<br>
+                    array(1) {<br>
+                      [&quot;sorting&quot;]=&gt;<br>
+                      string(9) &quot;ascending&quot;<br>
+                    }<br>
+                  }<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(7) &quot;primary&quot;<br>
+                }<br>
+              }<br>
+              [&quot;was&quot;]=&gt;<br>
+              string(5) &quot;files&quot;<br>
+            }<br>
+          }<br>
+        }<br>
+        [1]=&gt;<br>
+        &amp;array(4) {<br>
+          [&quot;name&quot;]=&gt;<br>
+          string(9) &quot;framework&quot;<br>
+          [&quot;create&quot;]=&gt;<br>
+          bool(true)<br>
+          [&quot;overwrite&quot;]=&gt;<br>
+          bool(false)<br>
+          [&quot;tables&quot;]=&gt;<br>
+          array(1) {<br>
+            [&quot;files&quot;]=&gt;<br>
+            array(3) {<br>
+              [&quot;fields&quot;]=&gt;<br>
+              array(8) {<br>
+                [&quot;files_path&quot;]=&gt;<br>
+                array(5) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(4) &quot;text&quot;<br>
+                  [&quot;length&quot;]=&gt;<br>
+                  string(3) &quot;255&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  string(1) &quot;/&quot;<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(10) &quot;files_path&quot;<br>
+                }<br>
+                [&quot;files_name&quot;]=&gt;<br>
+                array(5) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(4) &quot;text&quot;<br>
+                  [&quot;length&quot;]=&gt;<br>
+                  string(3) &quot;255&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  string(0) &quot;&quot;<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(10) &quot;files_name&quot;<br>
+                }<br>
+                [&quot;files_type&quot;]=&gt;<br>
+                array(6) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(7) &quot;integer&quot;<br>
+                  [&quot;unsigned&quot;]=&gt;<br>
+                  bool(false)<br>
+                  [&quot;length&quot;]=&gt;<br>
+                  string(1) &quot;1&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  int(0)<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(10) &quot;files_type&quot;<br>
+                }<br>
+                [&quot;files_data&quot;]=&gt;<br>
+                array(3) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(4) &quot;blob&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(false)<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(10) &quot;files_data&quot;<br>
+                }<br>
+                [&quot;files_mime&quot;]=&gt;<br>
+                array(5) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(4) &quot;text&quot;<br>
+                  [&quot;length&quot;]=&gt;<br>
+                  string(3) &quot;255&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(false)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  NULL<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(10) &quot;files_mime&quot;<br>
+                }<br>
+                [&quot;files_right&quot;]=&gt;<br>
+                array(5) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(7) &quot;integer&quot;<br>
+                  [&quot;unsigned&quot;]=&gt;<br>
+                  bool(false)<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  int(0)<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(11) &quot;files_right&quot;<br>
+                }<br>
+                [&quot;files_modified&quot;]=&gt;<br>
+                array(4) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(9) &quot;timestamp&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  string(19) &quot;0000-00-00 00:00:00&quot;<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(14) &quot;files_modified&quot;<br>
+                }<br>
+                [&quot;files_owner&quot;]=&gt;<br>
+                array(6) {<br>
+                  [&quot;type&quot;]=&gt;<br>
+                  string(4) &quot;text&quot;<br>
+                  [&quot;unsigned&quot;]=&gt;<br>
+                  bool(false)<br>
+                  [&quot;length&quot;]=&gt;<br>
+                  string(2) &quot;32&quot;<br>
+                  [&quot;notnull&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;default&quot;]=&gt;<br>
+                  string(1) &quot;0&quot;<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(11) &quot;files_owner&quot;<br>
+                }<br>
+              }<br>
+              [&quot;indexes&quot;]=&gt;<br>
+              array(1) {<br>
+                [&quot;primary&quot;]=&gt;<br>
+                array(3) {<br>
+                  [&quot;primary&quot;]=&gt;<br>
+                  bool(true)<br>
+                  [&quot;fields&quot;]=&gt;<br>
+                  array(3) {<br>
+                    [&quot;files_path&quot;]=&gt;<br>
+                    array(1) {<br>
+                      [&quot;sorting&quot;]=&gt;<br>
+                      string(9) &quot;ascending&quot;<br>
+                    }<br>
+                    [&quot;files_name&quot;]=&gt;<br>
+                    array(1) {<br>
+                      [&quot;sorting&quot;]=&gt;<br>
+                      string(9) &quot;ascending&quot;<br>
+                    }<br>
+                    [&quot;files_type&quot;]=&gt;<br>
+                    array(1) {<br>
+                      [&quot;sorting&quot;]=&gt;<br>
+                      string(9) &quot;ascending&quot;<br>
+                    }<br>
+                  }<br>
+                  [&quot;was&quot;]=&gt;<br>
+                  string(7) &quot;primary&quot;<br>
+                }<br>
+              }<br>
+              [&quot;was&quot;]=&gt;<br>
+              string(5) &quot;files&quot;<br>
+            }<br>
+          }<br>
+        }<br>
+        [2]=&gt;<br>
+        &amp;array(1) {<br>
+          [&quot;tables&quot;]=&gt;<br>
+          array(1) {<br>
+            [&quot;change&quot;]=&gt;<br>
+            array(1) {<br>
+              [&quot;files&quot;]=&gt;<br>
+              array(2) {<br>
+                [&quot;add&quot;]=&gt;<br>
+                array(1) {<br>
+                  [&quot;files_locale&quot;]=&gt;<br>
+                  array(5) {<br>
+                    [&quot;type&quot;]=&gt;<br>
+                    string(4) &quot;text&quot;<br>
+                    [&quot;length&quot;]=&gt;<br>
+                    string(1) &quot;5&quot;<br>
+                    [&quot;notnull&quot;]=&gt;<br>
+                    bool(true)<br>
+                    [&quot;default&quot;]=&gt;<br>
+                    string(5) &quot;en_CA&quot;<br>
+                    [&quot;was&quot;]=&gt;<br>
+                    string(12) &quot;files_locale&quot;<br>
+                  }<br>
+                }<br>
+                [&quot;indexes&quot;]=&gt;<br>
+                array(1) {<br>
+                  [&quot;change&quot;]=&gt;<br>
+                  array(1) {<br>
+                    [&quot;primary&quot;]=&gt;<br>
+                    array(1) {<br>
+                      [&quot;change&quot;]=&gt;<br>
+                      bool(true)<br>
+                    }<br>
+                  }<br>
+                }<br>
+              }<br>
+            }<br>
+          }<br>
+        }<br>
+      }<br>
+    }<br>
+    [12]=&gt;<br>
+    array(6) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(36) &quot;/home/michael/www/framework/main.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(59)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(14) &quot;updateDatabase&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(11) &quot;MDB2_Schema&quot;<br>
+      [&quot;type&quot;]=&gt;<br>
+      string(2) &quot;-&gt;&quot;<br>
+      [&quot;args&quot;]=&gt;<br>
+      array(2) {<br>
+        [0]=&gt;<br>
+        &amp;string(55) &quot;/home/michael/www/framework/modules/files/db/schema.xml&quot;<br>
+        [1]=&gt;<br>
+        &amp;string(63) &quot;/home/michael/www/framework/modules/files/db/schema_current.xml&quot;<br>
+      }<br>
+    }<br>
+  }<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

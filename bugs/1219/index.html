@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1219</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #1219</h1>
+<p>Apache will die on -&gt;find()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-16 08:09 UTC</td></tr>
+<tr><th>From</th><td>kotouc at go dot com</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Win XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-16 08:09 UTC] kotouc at go dot com</h3>
+<p>Description:<br>
+------------<br>
+DB_DataObject 1.5.3<br>
+httpd: LoadModule php4_module &quot;C:/Program Files/Apache Group/Apache/modules/php434/sapi/php4apache.dll&quot; <br>
+also I tried Zend module with same results (not sure if they are same .dlls)<br>
+LoadModule php4_module &quot;C:/Program Files/Zend/lib/php4apache.dll&quot;</p>
+<p>Problem: 23.php example from PHP Anthology book by Harry Fueks from sitepoint.com.<br>
+While debugging from ZEND ZDE 3.0.0 it works and when I try to list it in browser it will kill Apache.<br>
+(I am not using ZEND Optimizer)<br>
+By quoting I found out that it will die after $articles-find() call.</p>
+<p>Everything works as supposed to just not in browser on localhost. There is only one other minor issue which I don&#039;t understand and that is relative paths in schema_location and class_location in .ini file. It does not work, I had to provide full path and I don&#039;t know why.</p>
+<p>Reproduce code:<br>
+---------------<br>
+require_once(&#039;Articles.php&#039;);<br>
+$dbconfig = parse_ini_file(&#039;C:/Program Files/Apache Group/Apache/htdocs/PEAR/_workdir/data/DB_DataObject/articles/db_dataobject.ini&#039;,true);</p>
+<p>foreach($dbconfig as $class=&gt;$values) {<br>
+    $options = &amp;PEAR::getStaticProperty($class,&#039;options&#039;);<br>
+    $options = $values;<br>
+}</p>
+<p>$articles = new DataObject_Articles();<br>
+$articles-&gt;author = &#039;Kevin Yank&#039;;</p>
+<p>$articles-&gt;find(); //here it dies without error log</p>
+<p>echo ( &#039;Kevin has written the following articles:&lt;br /&gt;&#039; );<br>
+while ( $articles-&gt;fetch() ) {<br>
+    // <br>
+    echo ( &#039; - &#039;.$articles-&gt;title.&#039;, published:  &#039;.<br>
+        date(&#039;jS M Y&#039;,$articles-&gt;published).&#039;&lt;br /&gt;&#039; );<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+Kevin has written the following articles:<br>
+- Build your own Database Driven Website using PHP &amp; MySQL, published: 12th Apr 2004<br>
+- Write Secure Scripts with PHP 4.2!, published: 13th Apr 2004<br>
+- Advanced email in PHP, published: 14th Apr 2004</p>
+<p>Actual result:<br>
+--------------<br>
+nothing from browser. Apache will die. ZEND local and remote debugging will return correct result.</p>
+</section>
+<section>
+<h3>[2004-04-18 14:22 UTC] kotouc at go dot com</h3>
+<p>Yes it works, now. Thanks for help!!<br>
+Just, I don&#039;t get it why it does have to go before you include dataobjects and why it doesn&#039;t work when I unquote it among dataobject definitions. Is it that Optimizer flaw? I don&#039;t encode with Zend Encoder to engage Optimizer after. Is this happening in php module? Maybe someone could enlight me via email. Thanks.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

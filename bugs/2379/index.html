@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2379</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_IMAP/index.html">Net_IMAP</a> &#187; Bug #2379</h1>
+<p>Unnecessary text in the cmdDeleteACL() function gives rise to PHP errors</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-09-23 11:07 UTC</td></tr>
+<tr><th>From</th><td>omicron at mighty dot co dot za</td></tr>
+<tr><th>Assigned</th><td>damian</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_IMAP/index.html">Net_IMAP</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>All</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-09-23 11:07 UTC] omicron at mighty dot co dot za</h3>
+<p>Description:<br>
+------------<br>
+IMAPProtocol::cmdDeleteACL() references a variable named $acl which is not present within the function, causing PHP to issue errors.</p>
+<p>This problem looks to be a copy-paste bug, as the problematic block of code within the cmdDeleteACL() function (in IMAPProtocol.php) is also present in the cmdSetACL() function which is directly above; cmdSetACL(), however, actually uses this $acl variable.</p>
+<p>The attached patch removes this unnecessary block, as well as fixes a small typo in the main IMAP.php file.</p>
+<p>Reproduce code:<br>
+---------------<br>
+diff -U3 IMAP.php.old IMAP.php<br>
+--- IMAP.php.old        2004-08-05 04:37:18.000000000 +0200<br>
++++ IMAP.php    2004-09-23 12:29:52.423456777 +0200<br>
+@@ -1484,7 +1484,7 @@</p>
+<p>/******************************************************************<br>
+     **                                                               **<br>
+-    **           ALC METHODS                                         **<br>
++    **           ACL METHODS                                         **<br>
+     **                                                               **<br>
+     ******************************************************************/</p>
+<p>diff -U3 IMAPProtocol.php.old IMAPProtocol.php<br>
+--- IMAPProtocol.php.old        2004-08-05 05:03:45.000000000 +0200<br>
++++ IMAPProtocol.php    2004-09-23 12:30:52.686565719 +0200<br>
+@@ -1535,9 +1535,6 @@<br>
+             return new PEAR_Error(&quot;This IMAP server does not support ACL&#039;s! &quot;);<br>
+         }<br>
+         $mailbox_name=sprintf(&quot;\&quot;%s\&quot;&quot;,$this-&gt;utf_7_encode($mailbox_name) );<br>
+-        if(is_array($acl)){<br>
+-            $acl=implode(&#039;&#039;,$acl);<br>
+-        }</p>
+<p>return $this-&gt;_genericCommand(&#039;DELETEACL&#039;, sprintf(&quot;%s \&quot;%s\&quot;&quot;,$mailbox_name,$user) );</p>
+<p>}</p>
+<p>Expected result:<br>
+----------------<br>
+No errors are issued when calling the IMAP::deleteACL() method.</p>
+<p>Actual result:<br>
+--------------<br>
+When calling IMAP::deleteACL(), PHP issues errors in the relevant logs about the unknown variable &quot;$acl&quot;.</p>
+</section>
+<section>
+<h3>[2004-09-23 11:15 UTC] omicron at mighty dot co dot za</h3>
+<p>A note about the attached patch: It was generated against the latest available release (from http://pear.php.net/get/Net_IMAP) rather than the latest CVS code (from pear/Net_IMAP), as the CVS version seems to be quite different to the released version (out of date?).</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #109</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_GraphViz/index.html">Image_GraphViz</a> &#187; Bug #109</h1>
+<p>image() calls header() for non-binary imagemap-data</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2003-10-16 12:49 UTC</td></tr>
+<tr><th>From</th><td>winkelmann at someon dot com</td></tr>
+<tr><th>Assigned</th><td>sebastian</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Image_GraphViz/index.html">Image_GraphViz</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.3</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2003-10-16 12:49 UTC] winkelmann at someon dot com</h3>
+<p>Description:<br>
+------------<br>
+The image-method tries to set the contentlenght-header independent of file format. This results in a warning when Graphviz is used to generate a Imagemap inside a html page.</p>
+<p>Solution: Add a format check around the header(); in line 121</p>
+<p>Reproduce code:<br>
+---------------<br>
+$map = new Graphviz;</p>
+<p>$map-&gt;AddNode(...);</p>
+<p>echo &#039;&lt;map name=&quot;dependencies&quot;&gt;&#039;;<br>
+    $map-&gt;Image(&#039;cmap&#039;);<br>
+echo &#039;&lt;/map&gt;&#039;;</p>
+</section>
+<section>
+<h3>[2004-02-20 08:39 UTC] sebastian at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+<section>
+<h3>[2004-02-22 10:41 UTC] winkelmann at someon dot com</h3>
+<p>This Bug has not been fixed.<br>
+In version 1.20 (Feb.20), this bug is still open.</p>
+</section>
+<section>
+<h3>[2004-02-22 11:18 UTC] sebastian at php dot net</h3>
+<p>Sorry for closing this bug before, I misread your report.</p>
+<p>Does the patch below solve the problem for you?</p>
+<p>Index: GraphViz.php<br>
+===================================================================<br>
+RCS file: /repository/pear/Image_GraphViz/GraphViz.php,v<br>
+retrieving revision 1.20<br>
+diff -u -r1.20 GraphViz.php<br>
+--- GraphViz.php        20 Feb 2004 08:47:25 -0000      1.20<br>
++++ GraphViz.php        22 Feb 2004 11:23:58 -0000<br>
+@@ -106,6 +106,8 @@<br>
+             @`$command`;<br>
+             @unlink($file);</p>
+<p>+            $sendContentLengthHeader = true;<br>
++<br>
+             switch ($format) {<br>
+                 case &#039;gif&#039;:<br>
+                 case &#039;png&#039;:<br>
+@@ -128,9 +130,15 @@<br>
+                     header(&#039;Content-Type: image/svg+xml&#039;);<br>
+                 }<br>
+                 break;<br>
++<br>
++                default: {<br>
++                    $sendContentLengthHeader = false;<br>
++                }<br>
+             }</p>
+<p>-            header(&#039;Content-Length: &#039; . filesize($outputfile));<br>
++            if ($sendContentLengthHeader) {<br>
++                header(&#039;Content-Length: &#039; . filesize($outputfile));<br>
++            }</p>
+<p>$fp = fopen($outputfile, &#039;rb&#039;);</p>
+</section>
+<section>
+<h3>[2004-02-25 10:27 UTC] sebastian at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>In case this was a documentation problem, the fix will show up at the<br>
+end of next Sunday (CET) on pear.php.net.</p>
+<p>In case this was a pear.php.net website problem, the change will show<br>
+up on the website in short time.<br>
+ <br>
+Thank you for the report, and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

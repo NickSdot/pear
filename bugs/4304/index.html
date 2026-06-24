@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4304</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_Download/index.html">HTTP_Download</a> &#187; Bug #4304</h1>
+<p>Apache Process hangs after calling HTTP_Download::send()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-08 00:49 UTC</td></tr>
+<tr><th>From</th><td>akorthaus at web dot de</td></tr>
+<tr><th>Assigned</th><td>mike</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_Download/index.html">HTTP_Download</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.3</td></tr>
+<tr><th>OS</th><td>Linux 2.4.30 (Gentoo)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-08 00:49 UTC] akorthaus at web dot de</h3>
+<p>Description:<br>
+------------<br>
+I have used HTTP_Download for some time now, but suddenly, after an update to 1.0, I have the following problem:</p>
+<p>If I call a script which uses HTTP_Download::send(), the Apache-process needs 100% of available cpu and does not answer anymore, so I have to kill this process.</p>
+<p>It does not happen before, it&#039;s something in send(). I do not get any error-message (noch php-error, no error_log from Apache...). Apache-Version is 1.3.33, I use PHP as Apache-Module.</p>
+<p>I&#039;m sorry but I don&#039;t know how to get the exact error.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+require_once &#039;HTTP/Download.php&#039;;<br>
+$dl = &amp;new HTTP_Download();<br>
+$dl-&gt;setFile(&#039;./test.txt&#039;);<br>
+$dl-&gt;setContentDisposition(HTTP_DOWNLOAD_ATTACHMENT, &#039;test.txt&#039;);<br>
+$dl-&gt;send();<br>
+?&gt;</p>
+</section>
+<section>
+<h3>[2005-05-30 11:22 UTC] akorthaus at web dot de</h3>
+<p>The problem only occurs, if I have zlib.output_compression enabled in my php.ini.</p>
+<p>I have no &quot;while (@ob_end_clean());&quot; in my 1.0 Code.</p>
+<p>I have:</p>
+<p>while (ob_get_level()) {<br>
+            ob_end_clean();<br>
+        }</p>
+<p>if I uncomment it, it seems to work (with zlib.output_compression enabled in my php.ini). OK, as manual says I should not use it with zlib.output_compression, OK. (But bugs which hang up the apache-process when using common php.ini-options are not nice). I think it is an infinite loop.</p>
+<p>I often use zlib.output_compression, so what is the recommended way to use PEAR:HTTP_Download here? If I enter</p>
+<p>ini_set(&#039;zlib.output_compression&#039;, &#039;0&#039;);</p>
+<p>at the beginning of my example-script, it has no effect, the apache process hangs again (if I do not uncomment the loop above).</p>
+<p>If I try phpinfo() after ini_set() I get:</p>
+<p>Directive	Local Value	Master Value<br>
+zlib.output_compression	Off	On</p>
+<p>I cannot understand it...</p>
+</section>
+<section>
+<h3>[2005-05-30 18:14 UTC] akorthaus at web dot de</h3>
+<p>I upgraded to 1.1RC1 and it works now! (with zlib.output_compression)</p>
+<p>Thanks a lot!</p>
+</section>
+<section>
+<h3>[2005-05-30 18:20 UTC] akorthaus at web dot de</h3>
+<p>OT: if calling ini_set(&#039;zlib.output_comression&#039;,0) does not work, is &quot;PHP_INI_ALL&quot; in <br>
+http://www.php.net/manual/en/ini.php#ini.list the correct Constant for &quot;zlib.output_comression&quot;?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

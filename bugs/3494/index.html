@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3494</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Internationalization &#187; <a href="package/I18Nv2/index.html">I18Nv2</a> &#187; Bug #3494</h1>
+<p>I18Nv2&#039;s modifies the global locale</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-02-16 16:30 UTC</td></tr>
+<tr><th>From</th><td>ojai at nerim dot net</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/I18Nv2/index.html">I18Nv2</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Linux Debian</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-02-16 16:30 UTC] ojai at nerim dot net</h3>
+<p>Description:<br>
+------------<br>
+Hi,</p>
+<p>I&#039;m using I18Nv2-0.11.0 to format some dates. The problem is that it calls setlocale() so that all of my output is affected. This behaviour breaks my app, and is very intrusive to me. OO is about encapsulating, not changing global settings like this.</p>
+<p>What I need is I18Nv2 to format my date, and nothing more, nothing less. Please let the locale as it is. I guess you&#039;ll have to restore it after changing it everytime, but that&#039;s a necessary overhead to me.</p>
+<p>Reproduce code:<br>
+---------------<br>
+function makeDate ($timestamp,$lang)<br>
+{<br>
+    $localeStr = $lang . &#039;_&#039; . strtoupper ($lang);<br>
+    $locale = &amp;I18Nv2::createLocale($localeStr);<br>
+    $date_str = $locale-&gt;formatDate($timestamp, I18Nv2_DATETIME_FULL);<br>
+    return $date_str;<br>
+}</p>
+<p>printf(&#039;%2.f&#039;,10); // prints 10.00 (dot)<br>
+echo makeDate(time(),&#039;de&#039;); // shows the date correctly<br>
+printf(&#039;%2.f&#039;,10); // prints 10,00 (comma)</p>
+</section>
+<section>
+<h3>[2005-02-21 12:18 UTC] ojai at nerim dot net</h3>
+<p>I&#039;m aware of the %F directive, but it is very recent : since php 4.3.10. That is a problem for me.</p>
+<p>The real problem is that most of the code out there that use sprintf() to format numbers rely on %f. For example by altering the locale, I18Nv2 breaks the FPDF library (http://www.fpdf.org).</p>
+<p>I couldn&#039;t enumerate all libraries and applications that would break because of this issue, but, for portability, these are likely not to require php 4.3.10 before a while.</p>
+<p>Additionally, changing the locale may modify the behaviour of such methods as preg_match() and uasort().</p>
+</section>
+<section>
+<h3>[2005-02-21 15:43 UTC] ojai at nerim dot net</h3>
+<p>Yep, it works :-) Two small typos, though :</p>
+<p>- in I18Nv2::createLocale() your forget to pass the $paranoid parameter to the Locale constructor<br>
+- in I18Nv2_Locale, on line 734, you typed &quot;paramoid&quot; instead of &quot;paranoid&quot; ;-)</p>
+<p>So, I don&#039;t know if I&#039;m paranoid or paramoid, but I do have a patch, that tries to improve your idea. The problem with resetting to the C locale is that it is still intrusive : it ends up altering the locale.</p>
+<p>Instead of resetting the locale, I try to restore it. I can&#039;t test that on Windows, but it works fine on my Linux system :</p>
+<p>http://samalyse.com/ln/0014.php</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

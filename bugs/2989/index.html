@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2989</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/Pager/index.html">Pager</a> &#187; Bug #2989</h1>
+<p>Wrong parsing of arrays in QUERY_STRING</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-12-19 14:46 UTC</td></tr>
+<tr><th>From</th><td>support at infinity dot com dot ua</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Pager/index.html">Pager</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.2</td></tr>
+<tr><th>OS</th><td>Windows XP SP2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-19 14:46 UTC] support at infinity dot com dot ua</h3>
+<p>Description:<br>
+------------<br>
+If QUERY_STRING contains arrays, they are being overencoded.<br>
+This can be fixed by adding<br>
+$name = rawurldecode($name);<br>
+after line 637<br>
+(//check for arrays in parameters: site.php?foo[]=1&amp;foo[]=2&amp;foo[]=3)<br>
+in Common.php.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;html&gt;<br>
+ &lt;head&gt;<br>
+  &lt;title&gt;PEAR::Pager bug demonstration&lt;/title&gt;<br>
+ &lt;/head&gt;<br>
+ &lt;body&gt;<br>
+&lt;?php<br>
+if (empty($_GET))<br>
+{<br>
+?&gt;<br>
+  &lt;form method=&quot;get&quot;&gt;<br>
+   &lt;input type=&quot;text&quot; name=&quot;foo[bar]&quot; value=&quot;test&quot; /&gt;<br>
+   &lt;input type=&quot;submit&quot; /&gt;<br>
+  &lt;/form&gt;<br>
+&lt;?php<br>
+}<br>
+else<br>
+{<br>
+    require_once &#039;Pager/Pager.php&#039;;<br>
+    <br>
+    //create dummy array of data<br>
+    $myData = array();<br>
+    for ($i=0; $i &lt; 200; $i++) {<br>
+        $myData[] = $i;<br>
+    }<br>
+    <br>
+    $params = array(<br>
+        &#039;itemData&#039; =&gt; $myData,<br>
+    );<br>
+    $pager = &amp; Pager::factory($params);<br>
+    $page_data = $pager-&gt;getPageData();<br>
+    $links = $pager-&gt;getLinks();<br>
+    echo &#039;Try to browse the pages and watch the QUERY_STRING messes up.&lt;br/ &gt;&#039;;<br>
+    echo $links[&#039;all&#039;];<br>
+    echo &#039;&lt;pre&gt;&#039;;<br>
+    var_dump($_GET);<br>
+    echo &#039;&lt;/pre&gt;&#039;;<br>
+    <br>
+}<br>
+?&gt;<br>
+ &lt;/body&gt;<br>
+&lt;/html&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

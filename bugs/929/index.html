@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #929</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTML &#187; <a href="package/HTML_QuickForm_Controller/index.html">HTML_QuickForm_Controller</a> &#187; Bug #929</h1>
+<p>exportValues overwrite submitted arrays in multipage forms</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-03-01 14:05 UTC</td></tr>
+<tr><th>From</th><td>bmansion at mamasam dot com</td></tr>
+<tr><th>Assigned</th><td>avb</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTML_QuickForm_Controller/index.html">HTML_QuickForm_Controller</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-03-01 14:05 UTC] bmansion at mamasam dot com</h3>
+<p>Description:<br>
+------------<br>
+If you have two pages, first one with $this-&gt;addElement(&#039;text&#039;, &#039;billing[tva]&#039;...); and second with $this-&gt;addElement(&#039;text&#039;, &#039;billing[name]&#039;) upon processing, the first billing[tva] will be overwritten by the second billing element value, where it should be appended to the array.</p>
+<p>Here is a fix to exportValues for review. The preg_match was changed to strpos btw, as it is supposedly faster.</p>
+<p>function exportValues($pageName = null)<br>
+    {<br>
+        $data   =&amp; $this-&gt;container();<br>
+        $values =  array();<br>
+        if (isset($pageName)) {<br>
+            $pages = array($pageName);<br>
+        } else {<br>
+            $pages = array_keys($data[&#039;values&#039;]);<br>
+        }<br>
+        foreach ($pages as $page) {<br>
+            // skip elements representing actions<br>
+            foreach ($data[&#039;values&#039;][$page] as $key =&gt; $value) {<br>
+                if (strpos($key, &#039;_qf_&#039;) !== 0) {<br>
+                	if (isset($values[$key])) {<br>
+                        $values[$key] = HTML_QuickForm::arrayMerge($values[$key], $value);            	<br>
+                	} else {<br>
+	                    $values[$key] = $value;<br>
+                	}<br>
+                }<br>
+            }<br>
+        }<br>
+        return $values;<br>
+    }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

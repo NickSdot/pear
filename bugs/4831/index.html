@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4831</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/XML_RPC/index.html">XML_RPC</a> &#187; Bug #4831</h1>
+<p>XML_RPC doesn&#039;t propagate PEAR errors</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #4831</th><td>XML_RPC doesn&#039;t propagate PEAR errors</td></tr>
+<tr><th>Submitted</th><td>2005-07-14 01:23 UTC</td></tr>
+<tr><th>From</th><td>brion at pobox dot com</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/XML_RPC/index.html">XML_RPC</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Mac OS X</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-07-14 01:23 UTC] brion at pobox dot com</h3>
+<p>Description:<br>
+------------<br>
+In various places the XML_RPC client uses PEAR::raiseError(), <br>
+but then returns 0 from the function:</p>
+<p>$this-&gt;raiseError(&#039;Connection to RPC server &#039;<br>
+                    . $server . &#039;:&#039; . $port<br>
+                    . &#039; failed. &#039; . $this-&gt;errstr,<br>
+                    XML_RPC_ERROR_CONNECTION_FAILED);<br>
+    return 0;</p>
+<p>Since the PEAR_error value isn&#039;t propagated back to the <br>
+caller, it&#039;s difficult to diagnose errors without setting <br>
+PEAR&#039;s error handling into a more painful mode.</p>
+<p>The caller can tell _something_ went wrong if he gets 0, but <br>
+not what.</p>
+<p>Reproduce code:<br>
+---------------<br>
+require_once &#039;PEAR.php&#039;;<br>
+require_once &#039;XML/RPC.php&#039;;</p>
+<p>$client = new XML_RPC_Client(&#039;/rpc&#039;, &#039;localhost&#039;);<br>
+$message = new XML_RPC_Message(&#039;method&#039;, array());<br>
+$result = $client-&gt;send($message);</p>
+<p>if (PEAR::isError($result)) {<br>
+  print $result-&gt;getMessage();<br>
+  print &quot;\nTrying secondary server...&quot;;<br>
+} elseif ($result-&gt;faultCode()) {<br>
+  print $result-&gt;faultString();<br>
+} else {<br>
+  $value = $result-&gt;value();<br>
+  print $value-&gt;getval();<br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+xml_rpc_client: Connection to RPC server localhost:80 failed. <br>
+Connection refused<br>
+Trying secondary server...</p>
+<p>Actual result:<br>
+--------------<br>
+Fatal error: Call to a member function on a non-object in /<br>
+Users/brion/Documents/xml-foo.php on line 11</p>
+</section>
+<section>
+<h3>[2005-07-14 02:47 UTC] brion at pobox dot com</h3>
+<p>The problem I have with $result-&gt;errstr is that it contains <br>
+no contextual information, making it hard to localize the <br>
+problem. I was getting &quot;Invalid argument&quot;, without any clue <br>
+as to _what_ might be invalid, or where the error might be <br>
+getting reported from.</p>
+<p>Searching for the error string in the source didn&#039;t help <br>
+since as it turns out it comes from lower level code.</p>
+<p>Once I figured out how to get the PEAR_error printed out:<br>
+&quot;xml_rpc_client: Connection to RPC server scecore.usc.edu:80 <br>
+failed. Invalid argument&quot; I could tell where in the process <br>
+it was failing (at socket open), and could see pretty easily <br>
+what was wrong (I misspelled the server name).</p>
+<p>Just a little bit of context goes a long way, but that <br>
+context isn&#039;t there in $errstr. If it included some context <br>
+like a function name, that would be almost as good though.</p>
+</section>
+<section>
+<h3>[2005-08-04 11:16 UTC] markus at fischer dot name</h3>
+<p>And if a new package, XML_RPC2, is created which follows the PEAR standard more closer by breaking BC? So no one is getting an incompatible XML_RPC update.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

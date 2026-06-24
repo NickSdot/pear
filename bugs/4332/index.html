@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4332</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_Upload/index.html">HTTP_Upload</a> &#187; Bug #4332</h1>
+<p>problem when using 2 instance of HTTP_Upload &amp; 2 files</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-12 07:37 UTC</td></tr>
+<tr><th>From</th><td>shordeaux at waterproof dot fr</td></tr>
+<tr><th>Assigned</th><td>wenz</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_Upload/index.html">HTTP_Upload</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-12 07:37 UTC] shordeaux at waterproof dot fr</h3>
+<p>Description:<br>
+------------<br>
+If I have a form with 2 upload fields, and if I create 2 instances of<br>
+HTTP_Upload then the second one wil not work due to the usage of the<br>
+static variable is_built which is used to cache the internal<br>
+initialisation of the files array, here:<br>
+http://cvs.php.net/co.php/pear/HTTP_Upload/Upload.php?r=1.49#375</p>
+<p>If the variable is changed from static variable into private property<br>
+for example everything works fine.</p>
+<p>This means:<br>
+1. adding var $_IsBuilt = FALSE;<br>
+2. Removing line 375<br>
+3. Changing line 377 and 390 to use the property instead of the sattic<br>
+   variable.</p>
+<p>Another more efficient solution would be to store the array itself as<br>
+static instead of the is_built property.<br>
+ie. initializing it to NULL, then if the variable is NULL the array<br>
+need to be computed, elsewhere it&#039;s done.</p>
+<p>Reproduce code:<br>
+---------------<br>
+1 form + 2 upload field &amp; 2 instance of HTTP_Upload one for each file</p>
+<p>Expected result:<br>
+----------------<br>
+that all files are returned by the instance instead</p>
+<p>Actual result:<br>
+--------------<br>
+second file is returned as NULL instead</p>
+</section>
+<section>
+<h3>[2005-07-07 07:51 UTC] shordeaux at waterproof dot fr</h3>
+<p>This is the diff against version 1.42:</p>
+<p>Comparer : (&lt;)C:\Documents and Settings\Sébastien Hordeaux\Bureau\Upload-2.php (31055 octets)<br>
+   avec : (&gt;)C:\Documents and Settings\Sébastien Hordeaux\Bureau\Upload.php (31919 octets)</p>
+<p>315a315,316<br>
+&gt; 	var $__isBuilt = false;<br>
+&gt; 	<br>
+331,333c333,334<br>
+&lt;         static $is_built = false;<br>
+&lt;         //build only once for multiple calls<br>
+&lt;         if (!$is_built) {<br>
+---<br>
+&gt;         //build only once for multiple calls<br>
+&gt;         if (!$this-&gt;__isBuilt) {<br>
+346c347<br>
+&lt;             $is_built = true;<br>
+---<br>
+&gt;             $this-&gt;__isBuilt = true;</p>
+</section>
+<section>
+<h3>[2005-09-30 16:26 UTC] rlwixson at thoughtprocess dot net</h3>
+<p>I experienced the same problem, HTTP_Upload  0.9.1.  I had a form with an image upload and pdf upload, each needed to be handled differently, so I was against using single function to handle both files.</p>
+<p>I applied the suggested fix (thanks shordeaux) and it worked well.  It took 5 minutes to do; I see no reason why this bug cannot be fixed and closed.</p>
+</section>
+<section>
+<h3>[2006-01-06 18:02 UTC] glamm at a-s-i dot com</h3>
+<p>When is the next package release of HTTP_Upload?  I&#039;d like to have my hosting provider download this fix and make it easy on them by just having them &#039;pear upgrade HTTP_Upload&#039;.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3203</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a> &#187; Bug #3203</h1>
+<p>Formulas not opening properly in Excel</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-01-14 17:09 UTC</td></tr>
+<tr><th>From</th><td>dbadekas at aia dot gr</td></tr>
+<tr><th>Assigned</th><td>progi1984</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/Spreadsheet_Excel_Writer/index.html">Spreadsheet_Excel_Writer</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.1</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-01-14 17:09 UTC] dbadekas at aia dot gr</h3>
+<p>Description:<br>
+------------<br>
+The formulas produced by Spreadsheet_Excel_Writer are not produced when opened with Excel(2000). OpenOffice(1.1/1.0) has no problem and displays the formula values as expected.</p>
+<p>Excel opens by displayin the #VALUE in place of the formulas.<br>
+The formulas are correct, because: <br>
+1) OOffice and Gnumeric open correctly<br>
+2) In Excel, when you click on the formlula in the edit field and hit return, then the formula pops a value ( which is correct)<br>
+3) Improting the file to OOffice and re-exporting to excel corrects this problem.</p>
+<p>I will include a sample file later</p>
+</section>
+<section>
+<h3>[2005-01-24 20:48 UTC] rangi dot biddle at vlc dot twoa dot ac dot nz</h3>
+<p>I can also confirm that this same issue arises with Office 2003.</p>
+</section>
+<section>
+<h3>[2005-03-22 20:36 UTC] fearphage at gmail dot com</h3>
+<p>I don&#039;t see #VALUE displayed in Excel 2003. I see a 0 displayed. If I put the formula in edit mode and then press ctrl+shift+enter then the formula is evaluated properly. Is there any short-term workaround for this even?</p>
+</section>
+<section>
+<h3>[2005-03-22 20:40 UTC] fearphage at gmail dot com</h3>
+<p>This doesn&#039;t happen with simple formulas [ie. writeFormula(0,0,&quot;=SUM(C2:C10)&quot;)]. When the formulas get more complex, the evaluation of these formulas stops and returns 0.</p>
+<p>Example of an &#039;advanced&#039; formula:</p>
+<p>writeFormula(1,1,&quot;=SUM(IF(&#039;data&#039;!D2:D5000=\&quot;Fearphage\&quot;,IF(&#039;data&#039;!G2:G5000=23,1,0),0))&quot;)</p>
+</section>
+<section>
+<h3>[2005-11-12 15:56 UTC] xnoguer at php dot net</h3>
+<p>fearphage, can you explain to me what that formula is calculating?</p>
+</section>
+<section>
+<h3>[2005-11-24 09:46 UTC] sebab at info dot com dot pl</h3>
+<p>I also can confirm that problem. My formula causing #VALUE! is:</p>
+<p>=IF(AND(Q18=0;Q21=0);0;Q21/(SUMIF(K19:P19;&quot;&gt;0&quot;;K21:P21)+SUMIF(K19:P19;&quot;&lt;1&quot;;K18:P18)))</p>
+<p>or even in much simpler shape:<br>
+=SUMIF(K19:P19;&quot;&gt;0&quot;;K21:P21)</p>
+<p>Effect is the same: #VALUE! after sheet opened and correct result after edit and return without changing anything.</p>
+</section>
+<section>
+<h3>[2005-11-24 13:22 UTC] sebab at info dot com dot pl</h3>
+<p>More details about this bug. Perl implementation of this class generates correct XLS files. Please check following code snippets:</p>
+<p>in PERL:</p>
+<p>#!/usr/bin/perl -w</p>
+<p>use Spreadsheet::WriteExcel;</p>
+<p>my $workbook  = Spreadsheet::WriteExcel-&gt;new(&quot;test.xls&quot;);<br>
+my $worksheet = $workbook-&gt;add_worksheet();</p>
+<p>$worksheet-&gt;write(0, 0, &quot;AC&quot;    ,&#039;&#039;            ); # write_string()<br>
+$worksheet-&gt;write(1, 0, &quot;AAC&quot;      ,&#039;&#039;            ); # write_string()<br>
+$worksheet-&gt;write(2, 0,  2            ,&#039;&#039;         ); # write_number()<br>
+$worksheet-&gt;write(3, 0,  3.00001         ,&#039;&#039;      ); # write_number()<br>
+$worksheet-&gt;write(4, 0,  &quot;&quot;                 ,&#039;&#039;   ); # write_blank()<br>
+$worksheet-&gt;write(5, 0,  &#039;&#039;                   ,&#039;&#039; ); # write_blank()<br>
+$worksheet-&gt;write(6, 0,  undef                 ,&#039;&#039;); # write_blank()<br>
+$worksheet-&gt;write(7, 0                         ,&#039;&#039;); # write_blank()<br>
+$worksheet-&gt;write(8, 0,  &#039;=SUMIF(A1:A2,&quot;=AC&quot;,A3:A4)&#039;,&#039;&#039;);</p>
+<p>$workbook-&gt;close();</p>
+<p>in PHP:<br>
+&lt;?<br>
+require(&#039;Spreadsheet/Excel/Writer.php&#039;);<br>
+$workbook = new Spreadsheet_Excel_Writer(&#039;testphp.xls&#039;);<br>
+$worksheet =&amp; $workbook-&gt;addWorksheet();</p>
+<p>$worksheet-&gt;write(0, 0, &quot;AC&quot; ,&#039;&#039;               ); # write_string()<br>
+$worksheet-&gt;write(1, 0, &quot;AAC&quot;   ,&#039;&#039;               ); # write_string()<br>
+$worksheet-&gt;write(2, 0,  2         ,&#039;&#039;            ); # write_number()<br>
+$worksheet-&gt;write(3, 0,  3.00001      ,&#039;&#039;         ); # write_number()<br>
+$worksheet-&gt;write(4, 0,  &quot;&quot;              ,&#039;&#039;      ); # write_blank()<br>
+$worksheet-&gt;write(5, 0,  &#039;&#039;                 ,&#039;&#039;   ); # write_blank()<br>
+$worksheet-&gt;write(6, 0,  &#039;undef&#039;                ,&#039;&#039; ); # write_blank()<br>
+$worksheet-&gt;write(7, 0                         ,&#039;&#039;); # write_blank()<br>
+$worksheet-&gt;write(8, 0,  &#039;=SUMIF(A1:A2,&quot;=AC&quot;,A3:A4)&#039;,&#039;&#039;);</p>
+<p>$workbook-&gt;close();</p>
+<p>?&gt;</p>
+<p>Hope this&#039;ll help to find source of the problem.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

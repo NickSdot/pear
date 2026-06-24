@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6757</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/Archive_Zip/index.html">Archive_Zip</a> &#187; Bug #6757</h1>
+<p>try to unpack files with some umlaut</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-02-12 10:42 UTC</td></tr>
+<tr><th>From</th><td>j dot mueller at department-x dot de</td></tr>
+<tr><th>Status</th><td>Suspended</td></tr>
+<tr><th>Package</th><td><a href="package/Archive_Zip/index.html">Archive_Zip</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-02-12 10:42 UTC] j dot mueller at department-x dot de</h3>
+<p>Description:<br>
+------------<br>
+if i try to unpack zipfiles where filenames inside have some umlaut ...</p>
+<p>Test script:<br>
+---------------<br>
+if (isset($_GET[&#039;do&#039;]) &amp;&amp; &#039;upload&#039; == $_GET[&#039;do&#039;] &amp;&amp; isset($_FILES[&#039;galleryzip&#039;])) {<br>
+    <br>
+    if (isset($_FILES[&#039;galleryzip&#039;][&#039;name&#039;])) {<br>
+        $_FILES[&#039;galleryzip&#039;][&#039;name&#039;] = preg_replace(&quot;#([a-zA-Z0-9]+)#&quot;, &quot;\\1&quot;, $_FILES[&#039;galleryzip&#039;][&#039;name&#039;]);<br>
+    }<br>
+    <br>
+    if(move_uploaded_file($_FILES[&#039;galleryzip&#039;][&#039;tmp_name&#039;], ZIP.$_FILES[&#039;galleryzip&#039;][&#039;name&#039;])) {<br>
+        <br>
+        $objZIP =&amp; new Archive_Zip(ZIP.$_FILES[&#039;galleryzip&#039;][&#039;name&#039;]);<br>
+        $objZIP-&gt;extract(0);<br>
+        <br>
+        $dirname = str_replace(&#039;.zip&#039;, &#039;&#039;, $_FILES[&#039;galleryzip&#039;][&#039;name&#039;]);<br>
+        $objIMG-&gt;createThumb(ROOT.$dirname);<br>
+        <br>
+        unlink(ZIP.$_FILES[&#039;galleryzip&#039;][&#039;name&#039;]);<br>
+        <br>
+    }<br>
+    else {<br>
+        trigger_error(&#039;verschieben der Datei fehlgeschlagen&#039;);<br>
+    }<br>
+    <br>
+}</p>
+<p>Expected result:<br>
+----------------<br>
+filenames with umlaut will not be create</p>
+<p>now i have added 2 membervars in Archiv_zip<br>
+/**<br>
+* @var array search<br>
+*/<br>
+var $_search_array;</p>
+<p>/**<br>
+* @var array replace<br>
+*/<br>
+var $_replace_array;</p>
+<p>inside of the constructor</p>
+<p>// ----- Set search and Replace Arrays<br>
+$this-&gt;_search_array = array(<br>
+&quot;”&quot;,&quot;&quot;, &quot;„&quot;,&quot;á&quot;, &quot; &quot;<br>
+);<br>
+$this-&gt;_replace_array = array(<br>
+&quot;oe&quot;,&quot;ue&quot;, &quot;ae&quot;, &quot;ss&quot;, &quot;_&quot;<br>
+);</p>
+<p>// in function _readCentralFileHeader after Get filename</p>
+<p>$p_header[&#039;filename&#039;] = str_replace($this-&gt;_search_array, $this-&gt;_replace_array, $p_header[&#039;filename&#039;]);</p>
+<p>// in function _readFileHeader before Set the stored filename</p>
+<p>$p_header[&#039;filename&#039;] = str_replace($this-&gt;_search_array, $this-&gt;_replace_array, $p_header[&#039;filename&#039;]);</p>
+</section>
+<section>
+<h3>[2006-06-15 13:30 UTC] treeble at free dot fr</h3>
+<p>I have found some problems with accent and other caracter like that(ô, û, ï, ë ...)</p>
+<p>I have corrected this problem with this two arrays :</p>
+<p>$this-&gt;_search_array = array(&quot;Š&quot;, &quot;‚&quot;, &quot;ˆ&quot;, &quot;‰&quot;, &quot;‹&quot;, &quot;Œ&quot;, &quot;“&quot;, &quot;”&quot;, &quot;…&quot;, &quot;–&quot;, &quot; &quot;);<br>
+	  $this-&gt;_replace_array = array(&quot;e&quot;, &quot;e&quot;, &quot;e&quot;, &quot;e&quot;, &quot;i&quot; , &quot;i&quot;, &quot;o&quot;, &quot;o&quot;, &quot;a&quot;, &quot;u&quot;, &quot;_&quot;);</p>
+<p>Sorry for my poor english</p>
+</section>
+<section>
+<h3>[2006-06-15 13:37 UTC] treeble at free dot fr</h3>
+<p>OK, ythe caracter can&#039;t be post correctly, so you just have to test with a filename with grave accent and other special caracter. You take the caracters who are posted (listContent() =&gt; print_r =&gt; filename), and you just have to put them in the search_array, and in the replace_array you have to give the equivalent caracter without dieresis, accent or circumflexe ...</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

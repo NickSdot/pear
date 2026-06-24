@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2952</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Mail &#187; <a href="package/Mail_Mime/index.html">Mail_Mime</a> &#187; Bug #2952</h1>
+<p>Mail_mime::headers() saves extra headers</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #2952</th><td>Mail_mime::headers() saves extra headers</td></tr>
+<tr><th>Submitted</th><td>2004-12-12 14:14 UTC</td></tr>
+<tr><th>From</th><td>alpha at rrs dot at</td></tr>
+<tr><th>Assigned</th><td>cipri</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Mail_Mime/index.html">Mail_Mime</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>1.4.0, 1.4.0a1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-12-12 14:14 UTC] alpha at rrs dot at</h3>
+<p>Description:<br>
+------------<br>
+After calling Mail_mime::headers() the first time with some extra headers they cannot be overwritten with a second call. I&#039;d need this to send mails to different recipients with their email address (and maybe their name) in To.<br>
+Mail_smtp doesn&#039;t put the recipients in a To header itself.</p>
+<p>IMHO $xtra_headers should not be put into which would solve my problem.</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+// include ...<br>
+$mime = new Mail_mime();<br>
+$mime-&gt;setTXTBody(/* get some text */);</p>
+<p>$headers = array(&#039;To&#039; =&gt; &#039;foo@example.com&#039;, &#039;From&#039; =&gt; &#039;test@example.com&#039;, &#039;Subject&#039; =&gt; &#039;foo and bar&#039;);<br>
+$body = $mime-&gt;get();<br>
+$headers = $mime-&gt;headers($headers);<br>
+// Mail::factory() ....-&gt;send(&#039;text@example.com&#039;, $headers, $body)</p>
+<p>$headers = array(&#039;To&#039; =&gt; &#039;bar@example.com&#039;, &#039;From&#039; =&gt; &#039;test@example.com&#039;, &#039;Subject&#039; =&gt; &#039;foo and bar&#039;);<br>
+$body = $mime-&gt;get();<br>
+$headers = $mime-&gt;headers($headers);<br>
+// Mail::factory() ....-&gt;send(&#039;text@example.com&#039;, $headers, $body)</p>
+<p>?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+// First mail<br>
+To: foo@example.com<br>
+From: test@example.com<br>
+Subject: foo and bar</p>
+<p>the text<br>
+.</p>
+<p>// Second mail<br>
+To: bar@example.com<br>
+From: test@example.com<br>
+Subject: foo and bar</p>
+<p>the text<br>
+.</p>
+<p>Actual result:<br>
+--------------<br>
+// First mail<br>
+To: foo@example.com<br>
+From: test@example.com<br>
+Subject: foo and bar</p>
+<p>the text<br>
+.</p>
+<p>// Second mail<br>
+To: foo@example.com<br>
+From: test@example.com<br>
+Subject: foo and bar</p>
+<p>the text<br>
+.</p>
+</section>
+<section>
+<h3>[2004-12-15 22:19 UTC] alpha at rrs dot at</h3>
+<p>I know this might be just a feature request, but it would be quite easy to implement it.</p>
+<p>Maybe you could include an option like in:</p>
+<p>function &amp;headers($xtra_headers = null, $save_xtra_headers = true) <br>
+{<br>
+  $headers[&#039;MIME-Version&#039;] = &#039;1.0&#039;;<br>
+  if (isset($xtra_headers)) {<br>
+    $headers = array_merge($headers, $xtra_headers);<br>
+  }<br>
+  $headers = array_merge($headers, $this-&gt;_headers);<br>
+  if($save_xtra_headers) {<br>
+    $this-&gt;_headers = $headers;<br>
+  }<br>
+  return $this-&gt;_encodeHeaders($headers);<br>
+}</p>
+<p>It wouldn&#039;t break anything, but would do what I (and maybe others need). The only way to do this now is</p>
+<p>$old_headers = $mime-&gt;_headers;<br>
+$headers = $mime-&gt;headers($my_headers);<br>
+$mime-&gt;_headers = $old_headers;</p>
+<p>The new function header(...) would allow a simple</p>
+<p>$headers = $mime-&gt;headers($my_headers, false);</p>
+<p>which is shorter and much cleaner.</p>
+<p>b4n</p>
+</section>
+<section>
+<h3>[2005-03-06 23:20 UTC] fmunoz at digitalagencygroup dot com</h3>
+<p>After trying to implement a newsletter engine using Mail_mime I came accross this limitation. Is there any practical workaround to make the TO: in each email to be representing the actual instance in the Database instead of the address in the first row? Understanding that keeping backwards compatibility is an issue, it would be fantastic to have some implementation that would allow the use of Mail_mime to send succesive emails (changing the recipient address in the headers) using some class notation instead of &quot;unclean&quot; code.</p>
+</section>
+<section>
+<h3>[2005-08-10 20:47 UTC] pearBOGUSWORDemail at polyBOGUSTOOsense dot com</h3>
+<p>I came across this bug and it took me hours to drill <br>
+down and finally discover the culprit:</p>
+<p>in the headers() method I replaced the first line with <br>
+the second. basically, swap the array_merge() parameter <br>
+order so that your custom headers overwrite the internal <br>
+array.<br>
+-------------------<br>
+//$this-&gt;_headers = array_merge($headers, $this-<br>
+&gt;_headers);<br>
+        $this-&gt;_headers = array_merge($this-&gt;_headers, <br>
+$headers);<br>
+-------------------</p>
+<p>IMHO, this is a bug because when a function says that <br>
+you can set headers and it silently drops them in favor <br>
+of the first ones it got, the function is implmented <br>
+poorly. Either that or it is named poorly.</p>
+<p>I cannot think of any reason why this rewrite would <br>
+break Backwards Compatibility... who relies on a <br>
+function that overwrites parameters that you explicitly <br>
+send it?</p>
+<p>Please fix this and save some other soul some lunch <br>
+time.</p>
+<p>DC</p>
+</section>
+<section>
+<h3>[2005-09-04 15:28 UTC] hoermann at simal dot de</h3>
+<p>This nasty thing took me too much time.<br>
+The default behavior is not what one would expect from the function headers().<br>
+If you argue this is for backward compatibility i&#039;m wondering why the setHTMLBody() and setTXTBody() functions are working like expected? For what reason would s.o. change the mail-body but keep the headers?<br>
+Please change this behavior.</p>
+</section>
+<section>
+<h3>[2005-09-04 18:29 UTC] alpha-REMOVETHIS at rrs dot at</h3>
+<p>The function I wrote here in the comments allows the (other) expected behavior and is backward compatible. Adding it would also document the current behavior and save some WTFs.</p>
+<p>If the developers of Mail_mime would prefer a patch I&#039;ll get HEAD and add that.</p>
+</section>
+<section>
+<h3>[2005-09-06 19:46 UTC] pearBOGUSWORDemail at polyBOGUSTOOsense dot com</h3>
+<p>Yes, developers, please accept a patch from this <br>
+generous soul above...</p>
+<p>Save future generations from the misery with which we <br>
+have dealt.</p>
+</section>
+<section>
+<h3>[2005-12-20 16:37 UTC] cst at ecw dot de</h3>
+<p>I ran in to the same problem and came to the same bugfix. Please accept the patch. The patch leads to the &quot;expected&quot; behavior!</p>
+</section>
+<section>
+<h3>[2005-12-20 16:49 UTC] cst at ecw dot de</h3>
+<p>Ugly but working workaround:<br>
+unset($mime-&gt;_headers[&#039;To&#039;]);<br>
+$headers = $mime-&gt;headers($headers);</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

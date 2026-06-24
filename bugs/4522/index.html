@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4522</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Images &#187; <a href="package/Image_Graph/index.html">Image_Graph</a> &#187; Bug #4522</h1>
+<p>Image_Graph_Axis::_calcLabelInterval() dont work like it was working before</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-06-03 18:20 UTC</td></tr>
+<tr><th>From</th><td>sebhtml at users dot sourceforge dot net</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/Image_Graph/index.html">Image_Graph</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>Slackware 10</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-06-03 18:20 UTC] sebhtml at users dot sourceforge dot net</h3>
+<p>Description:<br>
+------------<br>
+Look at the expected result and actual result. The automatic interval don &#039;t work... I can&#039;t set it manually because all users have a max-min that is different... When I was using Image_Graph 0.3.0, the histograms were not working , but the automatic interval was working. I checked the code and it it not the same for the method Image_Graph_Axis::_calcLabelInterval()</p>
+<p>--sebhtml</p>
+<p>Reproduce code:<br>
+---------------<br>
+The code to reproduce the bug is : http://www.spockcorgis.com/biologie/Correlation_plot.phps<br>
+(this is a class) and the code that use the class :<br>
+http://www.spockcorgis.com/biologie/time_vs_score_img.phps</p>
+<p>Expected result:<br>
+----------------<br>
+If I set manually the interval, it looks like this :<br>
+http://www.spockcorgis.com/biologie/time_vs_score_img2.png</p>
+<p>Actual result:<br>
+--------------<br>
+The actual result look like this : http://www.spockcorgis.com/biologie/time_vs_score_img.png</p>
+</section>
+<section>
+<h3>[2005-06-03 18:41 UTC] pear dot nosey at veggerby dot dk</h3>
+<p>Actually it works as designed (as far as I can see)... The only discrepancy is that I&#039;d have said this thing was changed prior to 0.3.0, but I _do_ think it is the &quot;culprit&quot;:</p>
+<p>The &quot;problem&quot; lies in that the default x-axis is now not a linear scale axis but a category axis (i.e. the actual x-values are distributed equally in-order-of-dataset on the axis), this also means that auto-labelinterval calculations aren&#039;t used on the x-axis - all values are shows by default!</p>
+<p>What you can do to remedy this is :</p>
+<p>1) Make the graph use a linear x-axis as in the old days, by specifying the axis &quot;types&quot; as parameters on the plotarea constructor:</p>
+<p>$Plotarea = new Image_Graph_Plotarea(&quot;axis&quot;, &quot;axis&quot;);</p>
+<p>2) Use setLabelInterval() on the x-axis, which leeds me to:</p>
+<p>You should not access methods or attributes that are named starting with an _ (underscore) they are private (pseudo- since PHP4 has no method/attribute visibility). There is a method setLabelOptions() for accessing the _labelOptions attribute (not that it makes any difference in this case, but visibility is there for _me_ as a provider of the class to be able to always be certain of the class&#039; inner state, which cannot be guaranteed if you fiddle with the private variables :))</p>
+<p>Hope this helps you on your path...</p>
+<p>regards<br>
+Jesper</p>
+</section>
+<section>
+<h3>[2005-06-03 21:03 UTC] sebhtml at yahoo dot ca</h3>
+<p>Thank you very much!!!!!!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

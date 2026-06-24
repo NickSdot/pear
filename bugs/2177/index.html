@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2177</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/Services_ExchangeRates/index.html">Services_ExchangeRates</a> &#187; Bug #2177</h1>
+<p>Not obtaining ECB rates or UN Currencies correctly</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-08-20 14:04 UTC</td></tr>
+<tr><th>From</th><td>mat at sharrow dot me dot uk</td></tr>
+<tr><th>Assigned</th><td>cross</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Services_ExchangeRates/index.html">Services_ExchangeRates</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.0</td></tr>
+<tr><th>OS</th><td>Linux Mandrake 9</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-08-20 14:04 UTC] mat at sharrow dot me dot uk</h3>
+<p>Description:<br>
+------------<br>
+When trying to convert money using the default European Central Bank driver in debug mode I get the error :</p>
+<p>Error: Invalid currency: GBP</p>
+<p>When looking at the error log there are a lot of errors.</p>
+<p>Reproduce code:<br>
+---------------<br>
+$objExchange = new Services_ExchangeRates();<br>
+$objExchange-&gt;setToDebug();<br>
+$returnValue = $objExchange-&gt;convert(&#039;GBP&#039;,&#039;CYP&#039;, 100);</p>
+<p>Expected result:<br>
+----------------<br>
+To convert the monetry values and return it without an error message on screen when in debug mode, and there should be nothing in the error_log.</p>
+<p>Actual result:<br>
+--------------<br>
+[20-Aug-2004 15:03:29] PHP Notice:  Undefined variable:  cacheLength in /usr/local/php5/lib/php/Services/ExchangeRates.php on line 214<br>
+[20-Aug-2004 15:03:29] PHP Notice:  Undefined offset:  0 in /usr/local/php5/lib/php/Services/ExchangeRates/Rates_ECB.php on line 86<br>
+[20-Aug-2004 15:03:29] PHP Notice:  Trying to get property of non-object in /usr/local/php5/lib/php/Services/ExchangeRates/Rates_ECB.php on line 86<br>
+[20-Aug-2004 15:03:29] PHP Notice:  Undefined offset:  0 in /usr/local/php5/lib/php/Services/ExchangeRates/Rates_ECB.php on line 89<br>
+[20-Aug-2004 15:03:29] PHP Notice:  Trying to get property of non-object in /usr/local/php5/lib/php/Services/ExchangeRates/Rates_ECB.php on line 89<br>
+[20-Aug-2004 15:03:29] PHP Warning:  Invalid argument supplied for foreach() in /usr/local/php5/lib/php/Services/ExchangeRates/Rates_ECB.php on line 92<br>
+[20-Aug-2004 15:03:29] PHP Notice:  Undefined variable:  rates in /usr/local/php5/lib/php/Services/ExchangeRates.php on line 184<br>
+[20-Aug-2004 15:03:29] PHP Notice:  Undefined variable:  rates in /usr/local/php5/lib/php/Services/ExchangeRates.php on line 185<br>
+[20-Aug-2004 15:03:29] PHP Notice:  Undefined variable:  cacheLength in /usr/local/php5/lib/php/Services/ExchangeRates.php on line 214<br>
+[20-Aug-2004 15:03:29] PHP Warning:  asort() expects parameter 1 to be array, null given in /usr/local/php5/lib/php/Services/ExchangeRates.php on line 237<br>
+[20-Aug-2004 15:03:29] PHP Warning:  array_keys() [&lt;a href=&#039;function.array-keys&#039;&gt;function.array-keys&lt;/a&gt;]: The first argument should be an array in /usr/local/php5/lib/php/Services/ExchangeRates.php on line 243<br>
+[20-Aug-2004 15:03:29] PHP Warning:  in_array() [&lt;a href=&#039;function.in-array&#039;&gt;function.in-array&lt;/a&gt;]: Wrong datatype for second argument in /usr/local/php5/lib/php/Services/ExchangeRates.php on line 243</p>
+</section>
+<section>
+<h3>[2004-08-20 14:27 UTC] mat at sharrow dot me dot uk</h3>
+<p>have my previous comments been added?</p>
+</section>
+<section>
+<h3>[2004-08-20 14:34 UTC] mat at sharrow dot me dot uk</h3>
+<p>There are two main problems, 1 with the ECB Rates driver and 1 with the UN Currency driver.  The root cause of these two problems are either the XML feed has changed format, or the XML parser has changed the way in which node objects are created into a parse tree.  I can not comment on either.</p>
+<p>There are also a number of smaller bugs indicated by warnings and notices in the error log.  I have fixed all these problems and I am including diffs for the three files that I have changed, Exchange_Rates.php,  Exchange_Rates/Currencies_UN.php and ExchangeRates/Rates_ECB.php.</p>
+<p>FILE :: Exchange_Rates.php<br>
+--------------------------<br>
+182c182<br>
+&lt;         $rateData = $this-&gt;retrieveData(&#039;Rates_&#039; . $ratesSource, $this-&gt;_cacheLengthRates);<br>
+---<br>
+&gt;         $rateData = $this-&gt;retrieveData(&#039;Rates_&#039; . $ratesSource, $this-&gt;_cacheLengthRates);       <br>
+184,185c184,185<br>
+&lt;         $this-&gt;ratesUpdated = $rateData[&#039;date&#039;];<br>
+&lt;         $this-&gt;ratesSource = $rateData[&#039;source&#039;];<br>
+---<br>
+&gt;         $this-&gt;ratesUpdated = $rates[&#039;date&#039;];<br>
+&gt;         $this-&gt;ratesSource = $rates[&#039;source&#039;];<br>
+188,189c188<br>
+&lt; <br>
+&lt; <br>
+---<br>
+&gt;         <br>
+207c206<br>
+&lt;     function retrieveData($source, $cacheLength) {<br>
+---<br>
+&gt;     function retrieveData($source, $cacheLenth) {<br>
+228,231c227<br>
+&lt;     function getValidCurrencies($currencies, $rates) {<br>
+&lt; <br>
+&lt;         $validCurrencies = array(NULL);<br>
+&lt;     <br>
+---<br>
+&gt;     function getValidCurrencies($currencies, $rates) {</p>
+<p>FILE :: ExchangeRates/Rates_ECB.php<br>
+-----------------------------------<br>
+84c84<br>
+&lt;  <br>
+---<br>
+&gt;     <br>
+86c86<br>
+&lt;         $return[&#039;date&#039;] = $root-&gt;children[5]-&gt;children[1]-&gt;attributes[&#039;time&#039;];<br>
+---<br>
+&gt;         $return[&#039;date&#039;] = $root-&gt;children[2]-&gt;children[0]-&gt;attributes[&#039;time&#039;];<br>
+89c89<br>
+&lt;         $xrates = $root-&gt;children[5]-&gt;children[1]-&gt;children;<br>
+---<br>
+&gt;         $xrates = $root-&gt;children[2]-&gt;children[0]-&gt;children;<br>
+93,95c93<br>
+&lt;             if ($rateinfo-&gt;name == &#039;Cube&#039;) {<br>
+&lt;                 $return[&#039;rates&#039;][$rateinfo-&gt;attributes[&#039;currency&#039;]] = $rateinfo-&gt;attributes[&#039;rate&#039;];<br>
+&lt;             }<br>
+---<br>
+&gt;             $return[&#039;rates&#039;][$rateinfo-&gt;attributes[&#039;currency&#039;]] = $rateinfo-&gt;attributes[&#039;rate&#039;];<br>
+97c95<br>
+&lt; <br>
+---<br>
+&gt;</p>
+<p>FILE :: ExchangeRates/Currencies_UN.php<br>
+---------------------------------------<br>
+77c77<br>
+&lt; <br>
+---<br>
+&gt;     <br>
+82c82<br>
+&lt;                 $currencies[$curr-&gt;children[1]-&gt;content] = $curr-&gt;children[3]-&gt;content;<br>
+---<br>
+&gt;                 $currencies[$curr-&gt;children[0]-&gt;content] = $curr-&gt;children[1]-&gt;content;<br>
+85c85<br>
+&lt; <br>
+---<br>
+&gt;</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

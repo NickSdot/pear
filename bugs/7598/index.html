@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7598</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Caching &#187; <a href="package/Cache_Lite/index.html">Cache_Lite</a> &#187; Bug #7598</h1>
+<p>PHP Warnings on cache directory creation</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-05-10 18:23 UTC</td></tr>
+<tr><th>From</th><td>frederes at free dot fr</td></tr>
+<tr><th>Assigned</th><td>fab</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Cache_Lite/index.html">Cache_Lite</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.2</td></tr>
+<tr><th>OS</th><td>LINUX / WINDOWS XP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-05-10 18:23 UTC] frederes at free dot fr</h3>
+<p>Description:<br>
+------------<br>
+Bonjour,</p>
+<p>Je me permet de vous écrire pour vous signaler un &quot;petit bug&quot; sur la très bonne classe PEAR::Cache_Lite que vous avez développée :<br>
+J&#039;ai des Warning PHP qui apparaissent dans cette classe a priori, cela viendrait je pense d&#039;un simple test à faire au préalable à la création du répertoire de cache (mkdir)</p>
+<p>Warning: /usr/local/lib/php/Cache/Lite.php [753] : fopen(/tmp/cache_1/cache_17/cache_170/cache_c21f969b5f03d33d43e04f8f136e7682_b07ee23062977c62646679a117a4c152): failed to open stream: No such file or directory<br>
+Warning: /usr/local/lib/php/Cache/Lite.php [770] : mkdir(/tmp/cache_1/): File exists</p>
+<p>Fichier Lite.php / ligne 765 / fonction _write() :</p>
+<p>...<br>
+ if (($try==1) and ($this-&gt;_hashedDirectoryLevel&gt;0)) {<br>
+                $hash = md5($this-&gt;_fileName);<br>
+                $root = $this-&gt;_cacheDir;<br>
+                for ($i=0 ; $i&lt;$this-&gt;_hashedDirectoryLevel ; $i++) {<br>
+                    $root = $root . &#039;cache_&#039; . substr($hash, 0, $i + 1) . &#039;/&#039;;<br>
+                   <br>
+                    // faire un test ici : si le dossier n&#039;existe pas déjà alors....<br>
+                    @mkdir($root, $this-&gt;_hashedDirectoryUmask);<br>
+                }<br>
+                $try = 2;<br>
+            } else {<br>
+                $try = 999;<br>
+...</p>
+<p>Pour info, ceci semble être apparu depuis que j&#039;utilise la classe PEAR:Log pour la gestion d&#039;erreur, voici ma fonction handler des erreurs :</p>
+<p>&lt;?php<br>
+require_once &quot;Log.php&quot;;</p>
+<p>$conf = array(&#039;error_prepend&#039; =&gt; &#039;&lt;font color=&quot;#ff0000&quot;&gt;&lt;tt&gt;&#039;,<br>
+              &#039;error_append&#039;  =&gt; &#039;&lt;/tt&gt;&lt;/font&gt;&#039;);</p>
+<p>$logger=&amp;Log::singleton(&#039;display&#039;, &#039;&#039;, &#039;&#039;, $conf, PEAR_LOG_DEBUG);</p>
+<p>function errorHandler($code, $message, $file, $line)<br>
+{<br>
+    global $logger;</p>
+<p>/* Map the PHP error to a Log priority. */<br>
+    switch ($code)<br>
+    {<br>
+        case E_WARNING:<br>
+        case E_USER_WARNING:<br>
+          $priority = PEAR_LOG_WARNING;<br>
+          break;<br>
+        case E_NOTICE:<br>
+        case E_USER_NOTICE:<br>
+          $priority = PEAR_LOG_NOTICE;<br>
+          break;<br>
+        case E_ERROR:<br>
+        case E_USER_ERROR:<br>
+          $priority = PEAR_LOG_ERR;<br>
+          break;<br>
+        default:<br>
+          $priotity = PEAR_LOG_INFO;<br>
+    }</p>
+<p>$logger-&gt;log($file.&quot; [&quot;.$line.&quot;] : &quot;.$message, $priority);<br>
+}</p>
+<p>set_error_handler(&quot;errorHandler&quot;);<br>
+?&gt;</p>
+<p>Et ma config de Cache_Lite :</p>
+<p>&lt;?php<br>
+require_once &quot;Cache/Lite.php&quot;;<br>
+require_once &quot;Cache/Lite/Output.php&quot;;</p>
+<p>if ($ON_SERVEUR)<br>
+{<br>
+    if (!isset($DEBUG[&quot;b_nocache&quot;]))<br>
+        $b_cache=true;<br>
+    else<br>
+        $b_cache=$DEBUG[&quot;b_nocache&quot;]==1?false:true;<br>
+}<br>
+else<br>
+    $b_cache=false;</p>
+<p>$options=array(<br>
+        &quot;cacheDir&quot;                        =&gt; &quot;/tmp/monsite/&quot;,<br>
+        &quot;caching&quot;                        =&gt; $b_cache,<br>
+        &quot;lifeTime&quot;                        =&gt; 3600, /* secondes */<br>
+        &quot;fileLocking&quot;                    =&gt; true,<br>
+        &quot;writeControl&quot;                    =&gt; true,<br>
+        &quot;readControl&quot;                    =&gt; false,<br>
+        &quot;readControlType&quot;                =&gt; &quot;crc32&quot;,<br>
+        &quot;pearErrorMode&quot;                =&gt; CACHE_LITE_ERROR_DIE,<br>
+        &quot;fileNameProtection&quot;            =&gt; true,<br>
+        &quot;automaticSerialization&quot;    =&gt; true,<br>
+        &quot;memoryCaching&quot;                =&gt; false,<br>
+        &quot;onlyMemoryCaching&quot;            =&gt; false,<br>
+        &quot;memoryCachingLimit&quot;            =&gt; 1000,<br>
+        &quot;automaticCleaningFactor&quot;    =&gt; 50,<br>
+        &quot;hashedDirectoryLevel&quot;        =&gt; 3<br>
+);</p>
+<p>$cache=new Cache_Lite($options);<br>
+$cache_page=new Cache_Lite_Output($options);<br>
+?&gt;</p>
+<p>Enfin, une bonne chose serait peut-être de créer le répertoire de stockage de base des fichier s&#039;il n&#039;existe pas.<br>
+Par exemple, je l&#039;ai défini à /tmp/monsite/ et s&#039;il n&#039;existe plus (si je vide mon répertoire /tmp/ par exemple...) ça renvoie un warning je crois.</p>
+<p>Expected result:<br>
+----------------<br>
+no PHP warnings</p>
+<p>Actual result:<br>
+--------------<br>
+Warning: /usr/local/lib/php/Cache/Lite.php [753] : fopen(/tmp/cache_1/cache_1f/cache_1ff/cache_c21f969b5f03d33d43e04f8f136e7682_039e0eb4ba067f2c51834c4906b9f7b1): failed to open stream: No such file or directory</p>
+<p>Warning: /usr/local/lib/php/Cache/Lite.php [770] : mkdir(/tmp/cache_1/): File exists</p>
+</section>
+<section>
+<h3>[2006-05-28 12:55 UTC] fab at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

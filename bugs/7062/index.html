@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7062</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Networking &#187; <a href="package/Net_DNS/index.html">Net_DNS</a> &#187; Bug #7062</h1>
+<p>Update delete of NS records does not work</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-03-08 16:00 UTC</td></tr>
+<tr><th>From</th><td>sven dot hergenhahn at eur dot sas dot com</td></tr>
+<tr><th>Assigned</th><td>bate</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Net_DNS/index.html">Net_DNS</a></td></tr>
+<tr><th>PHP Version</th><td>5.0.5</td></tr>
+<tr><th>OS</th><td>Linux (FC2)</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-03-08 16:00 UTC] sven dot hergenhahn at eur dot sas dot com</h3>
+<p>Description:<br>
+------------<br>
+Using the functions provided to create and send an update package to delete an NS record, I get NOERROR, but the record is still there.</p>
+<p>I thought it might have to do with the fact that the name portion is only the domain name, but when deleting an MX record, it works fine.</p>
+<p>Thanks for checking and thanks for the modules,<br>
+Sven</p>
+<p>Test script:<br>
+---------------<br>
+&lt;?php<br>
+require_once &#039;Net/DNS.php&#039;;<br>
+$updt_data = array(&#039;rname&#039; =&gt; &#039;&#039;, &#039;zone&#039; =&gt; &#039;dns.local&#039;, &#039;type&#039; =&gt; &#039;NS&#039;, &#039;rdata&#039; =&gt; &#039;goaway.dns.local&#039;);<br>
+deleteRR($updt_data);<br>
+$updt_data = array(&#039;rname&#039; =&gt; &#039;&#039;, &#039;zone&#039; =&gt; &#039;dns.local&#039;, &#039;type&#039; =&gt; &#039;MX&#039;, &#039;rdata&#039; =&gt; &#039;100 mx.dns.local&#039;);<br>
+deleteRR($updt_data);<br>
+function deleteRR($updt_data) {<br>
+  $resolver = new Net_DNS_Resolver();<br>
+  $resolver-&gt;nameservers = array(&#039;127.0.0.1&#039;);<br>
+  $rname = $updt_data[&#039;rname&#039;];<br>
+  $zone = $updt_data[&#039;zone&#039;];<br>
+  $ttl    = 0;<br>
+  $rdata = $updt_data[&#039;rdata&#039;];<br>
+  $type   = $updt_data[&#039;type&#039;];<br>
+  $packet = new Net_DNS_Packet();<br>
+  $packet-&gt;header = new Net_DNS_Header();<br>
+  $packet-&gt;header-&gt;id = $resolver-&gt;nextid();<br>
+  $packet-&gt;header-&gt;qr = 0;<br>
+  $packet-&gt;header-&gt;opcode = &quot;UPDATE&quot;;<br>
+  $packet-&gt;question[0] = new Net_DNS_Question($zone, &quot;SOA&quot;, &quot;IN&quot;);<br>
+  $packet-&gt;answer = array();<br>
+  $del_string = &quot;$rname$zone $ttl IN $type $rdata&quot;;<br>
+  $DELrr = Net_DNS_RR::new_from_string($del_string, &#039;del&#039;);<br>
+  $packet-&gt;authority[0] = $DELrr; <br>
+  $tsig = Net_DNS_RR::factory(&#039;rndckey TSIG keysecret&#039;);<br>
+  $packet-&gt;additional = array($tsig);<br>
+  $packet-&gt;header-&gt;qdcount = count($packet-&gt;question);<br>
+  $packet-&gt;header-&gt;ancount = count($packet-&gt;answer);<br>
+  $packet-&gt;header-&gt;nscount = count($packet-&gt;authority);<br>
+  $packet-&gt;header-&gt;arcount = count($packet-&gt;additional);<br>
+  $ans = $resolver-&gt;send_tcp($packet, $packet-&gt;data());<br>
+  $ret = $ans-&gt;header-&gt;rcode;<br>
+  if ($ret == &#039;NOERROR&#039;) {    print &quot;$ret, Deletion successful ($rname, $zone, $rdata)&lt;br&gt;&quot;;  }<br>
+  else {    print &quot;$ret, Deletion failed ($rname, $zone, $rdata)&lt;br&gt;&quot;;  }<br>
+}<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+NOERROR, Deletion successful (, dns.local, goaway.dns.local)<br>
+NOERROR, Deletion successful (, dns.local, 100 mx.dns.local)<br>
+The MX record is gone, but the NS record is still there...</p>
+<p>Actual result:<br>
+--------------<br>
+Both records should have been deleted</p>
+</section>
+<section>
+<h3>[2006-03-09 10:12 UTC] sven dot hergenhahn at eur dot sas dot com</h3>
+<p>Hi there,</p>
+<p>I found the problem. The function Net_DNS_RR::new_from_string does the following:</p>
+<p>...<br>
+while ($s = array_shift($parts)) {<br>
+...</p>
+<p>My problem was that I had already set the TTL to 0. It looks like while here takes the returned value of the assignment to check whether it is still true. As 0 is false, while ends  and the variables are not set correctly.</p>
+<p>Here&#039;s some code to verify this(along with a solution):</p>
+<p>new_from_string(&quot;dns.local 0 IN NS lalala.dns.local&quot;);<br>
+new_from_string_fixed(&quot;dns.local 0 IN NS lalala.dns.local&quot;);</p>
+<p>// current function, while bails out at 0<br>
+function new_from_string($rrstring){<br>
+  $parts = preg_split(&#039;/[\s]+/&#039;, $rrstring);<br>
+  while ($s = array_shift($parts)) {<br>
+    print &quot;s is $s&lt;br&gt;&quot;;<br>
+  }<br>
+  print &quot;&lt;hr&gt;&quot;;<br>
+}</p>
+<p>// fixed version, while bails out at end of array (count=0)<br>
+function new_from_string_fixed($rrstring){<br>
+  $parts = preg_split(&#039;/[\s]+/&#039;, $rrstring);<br>
+  while (count($parts) &gt; 0) {<br>
+    $s = array_shift($parts);<br>
+    print &quot;s is $s&lt;br&gt;&quot;;<br>
+  }<br>
+  print &quot;&lt;hr&gt;&quot;;<br>
+}</p>
+<p>if (!isset($name)) {<br>
+                $name = ereg_replace(&#039;\.+$&#039;, &#039;&#039;, $s);<br>
+            } else if (preg_match(&#039;/^\d+$/&#039;, $s)) {<br>
+                $ttl = $s;<br>
+            } else if (!isset($rrclass) &amp;&amp; ! is_null(Net_DNS::classesbyname(strtoupper($s)))) {<br>
+                $rrclass = strtoupper($s);<br>
+                $rdata = join(&#039; &#039;, $parts);<br>
+            } else if (! is_null(Net_DNS::typesbyname(strtoupper($s)))) {<br>
+                $rrtype = strtoupper($s);<br>
+                $rdata = join(&#039; &#039;, $parts);<br>
+                break;<br>
+            } else {<br>
+                break;<br>
+            }<br>
+        }</p>
+<p>So for my part, the problem is solved, but I think the fix should go into your code.</p>
+<p>Cheers,<br>
+Sven</p>
+</section>
+<section>
+<h3>[2006-03-09 10:23 UTC] sven dot hergenhahn at eur dot sas dot com</h3>
+<p>yep, fixed.</p>
+<p>Thanks,<br>
+Sven</p>
+<p>BTW: There&#039;s still a bug in Resolver.php, line 844:<br>
+socket_set_blocking($sock, false);<br>
+should be:<br>
+socket_set_blocking($sock[$ctr-1], false);</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

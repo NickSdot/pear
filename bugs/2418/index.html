@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #2418</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Calendar/index.html">Calendar</a> &#187; Bug #2418</h1>
+<p>Year:build() setting start of week does not work</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-09-30 11:28 UTC</td></tr>
+<tr><th>From</th><td>chris at deskpro dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Calendar/index.html">Calendar</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>Win - but not relevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-09-30 11:28 UTC] chris at deskpro dot com</h3>
+<p>Description:<br>
+------------<br>
+http://pear.php.net/manual/en/package.datetime.calendar.calendar-year.build.php</p>
+<p>The function build() is meant to accept the firstDay variable as 2nd parameter to set the start day of week. This has no affect. You cansee from the following ode that if the $firstDay variable is set, nothing is every done with it.</p>
+<p>One fix for this is just to do a define at the start of your file based on CALENDAR_FIRST_DAY_OF_WEEK as this affects the factory method that creates the months in the year class.</p>
+<p>Either way this is all a little confusing, it seems some places you are meant to pass start of the week in build function, sometimes in the constructor and sometimes you might have to use a define. Perhaps these methods can all be reconcilled somehow? I personally think that using a CONSTANT that affects all classes would be best, i can&#039;t imagine a situation you would want to display a calendar with two different week starts on the same page.</p>
+<p>Reproduce code:<br>
+---------------<br>
+The function that does nothing when the variable is set:</p>
+<p>function build($sDates = array(), $firstDay = null)<br>
+    {<br>
+        require_once CALENDAR_ROOT.&#039;Factory.php&#039;;<br>
+        if (is_null($firstDay)) {<br>
+            $firstDay = $this-&gt;cE-&gt;getFirstDayOfWeek(<br>
+                $this-&gt;thisYear(),<br>
+                $this-&gt;thisMonth(),<br>
+                $this-&gt;thisDay()<br>
+            );<br>
+        }<br>
+        $monthsInYear = $this-&gt;cE-&gt;getMonthsInYear($this-&gt;thisYear());<br>
+        for ($i=1; $i &lt;= $monthsInYear; $i++) {<br>
+            $this-&gt;children[$i] = Calendar_Factory::create(&#039;Month&#039;,$this-&gt;year,$i);<br>
+        }<br>
+        if (count($sDates) &gt; 0) {<br>
+            $this-&gt;setSelection($sDates);<br>
+        }<br>
+        return true;<br>
+    }</p>
+</section>
+<section>
+<h3>[2004-10-01 20:28 UTC] chris at deskpro dot com</h3>
+<p>Yeah, thats what I did :)</p>
+</section>
+<section>
+<h3>[2005-01-13 02:47 UTC] chris at deskpro dot com</h3>
+<p>Just wondering if any changes have been made in CVS to unify the ways to set the start of the week?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

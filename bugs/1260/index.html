@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1260</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Configuration &#187; <a href="package/Config/index.html">Config</a> &#187; Bug #1260</h1>
+<p>[patch] INI file without sections</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-04-22 10:49 UTC</td></tr>
+<tr><th>From</th><td>dostick at ctco dot lv</td></tr>
+<tr><th>Assigned</th><td>mansion</td></tr>
+<tr><th>Status</th><td>Duplicate</td></tr>
+<tr><th>Package</th><td><a href="package/Config/index.html">Config</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.6</td></tr>
+<tr><th>OS</th><td>UNIX</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-04-22 10:49 UTC] dostick at ctco dot lv</h3>
+<p>Description:<br>
+------------<br>
+Sometimes it ts required to create INI files without sections. PEAR_Config always create section [root]</p>
+<p>This patch creates &quot;SimpleINIFile&quot; container from INIFIle container . SimpleINIFile is teh same but does not create sections.</p>
+<p>This is may be solution for bug #378</p>
+<p>Reproduce code:<br>
+---------------<br>
+18c18<br>
+&lt; // $Id: SimpleIniFile.php,v 1.1 2004/01/26 14:35:52 zzz Exp $<br>
+---<br>
+&gt; // $Id: IniFile.php,v 1.1 2004/01/05 15:22:55 zzz Exp $<br>
+28c28<br>
+&lt; class Config_Container_SimpleIniFile {<br>
+---<br>
+&gt; class Config_Container_IniFile {<br>
+147,148c147,148<br>
+&lt;                 if (!$obj-&gt;isRoot()) {  // Do not write section names<br>
+&lt;                     $string = &#039;&#039;;<br>
+---<br>
+&gt;                 if (!$obj-&gt;isRoot()) {<br>
+&gt;                     $string = &#039;[&#039;.$obj-&gt;name.&quot;]\n&quot;;<br>
+dostick@dragon /PUBLIC/virtual/intra4.ctco.lv/webapp&gt; diff -u SimpleIniFile.php- PEAR/Config/Container/IniFile.php <br>
+--- SimpleIniFile.php-  Mon Jan 26 16:35:52 2004<br>
++++ PEAR/Config/Container/IniFile.php   Mon Jan  5 17:22:55 2004<br>
+@@ -15,7 +15,7 @@<br>
+ // | Authors: Bertrand Mansion &lt;bmansion@mamasam.com&gt;                     |<br>
+ // +----------------------------------------------------------------------+<br>
+ //<br>
+-// $Id: SimpleIniFile.php,v 1.1 2004/01/26 14:35:52 zzz Exp $<br>
++// $Id: IniFile.php,v 1.1 2004/01/05 15:22:55 zzz Exp $<br>
+ <br>
+ /**<br>
+ * Config parser for PHP .ini files<br>
+@@ -25,7 +25,7 @@<br>
+ * @author      Bertrand Mansion &lt;bmansion@mamasam.com&gt;<br>
+ * @package     Config<br>
+ */<br>
+-class Config_Container_SimpleIniFile {<br>
++class Config_Container_IniFile {<br>
+ <br>
+     /**<br>
+     * This class options<br>
+@@ -144,8 +144,8 @@<br>
+                 }<br>
+                 break;<br>
+             case &#039;section&#039;:<br>
+-                if (!$obj-&gt;isRoot()) {  // Do not write section names<br>
+-                    $string = &#039;&#039;;<br>
++                if (!$obj-&gt;isRoot()) {<br>
++                    $string = &#039;[&#039;.$obj-&gt;name.&quot;]\n&quot;;<br>
+                 }<br>
+                 if (count($obj-&gt;children) &gt; 0) {<br>
+                     for ($i = 0; $i &lt; count($obj-&gt;children); $i++) {</p>
+</section>
+<section>
+<h3>[2004-04-22 11:43 UTC] dostick at ctco dot lv</h3>
+<p>correct diff:</p>
+<p>--- SimpleIniFile.php-  Mon Jan 26 16:35:52 2004<br>
++++ PEAR/Config/Container/IniFile.php   Mon Jan  5 17:22:55 2004<br>
+@@ -15,7 +15,7 @@<br>
+ // | Authors: Bertrand Mansion &lt;bmansion@mamasam.com&gt;                  <br>
+  |<br>
+ //<br>
++----------------------------------------------------------------------+</p>
+<p>//<br>
+-// $Id: SimpleIniFile.php,v 1.1 2004/01/26 14:35:52 zzz Exp $<br>
++// $Id: IniFile.php,v 1.1 2004/01/05 15:22:55 zzz Exp $<br>
+ <br>
+ /**<br>
+ * Config parser for PHP .ini files<br>
+@@ -25,7 +25,7 @@<br>
+ * @author      Bertrand Mansion &lt;bmansion@mamasam.com&gt;<br>
+ * @package     Config<br>
+ */<br>
+-class Config_Container_SimpleIniFile {<br>
++class Config_Container_IniFile {<br>
+ <br>
+     /**<br>
+     * This class options<br>
+@@ -144,8 +144,8 @@<br>
+                 }<br>
+                 break;<br>
+             case &#039;section&#039;:<br>
+-                if (!$obj-&gt;isRoot()) {  // Do not write section names<br>
+-                    $string = &#039;&#039;;<br>
++                if (!$obj-&gt;isRoot()) {<br>
++                    $string = &#039;[&#039;.$obj-&gt;name.&quot;]\n&quot;;<br>
+                 }<br>
+                 if (count($obj-&gt;children) &gt; 0) {<br>
+                     for ($i = 0; $i &lt; count($obj-&gt;children); $i++) {</p>
+</section>
+<section>
+<h3>[2004-06-04 09:21 UTC] bmansion at mamasam dot com</h3>
+<p>This is a duplicate of #378<br>
+See how this was fixed there.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

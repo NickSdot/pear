@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5681</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; HTTP &#187; <a href="package/HTTP_WebDAV_Server/index.html">HTTP_WebDAV_Server</a> &#187; Bug #5681</h1>
+<p>Can&#039;t handle file names with slashes and backslashes</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-10-13 08:27 UTC</td></tr>
+<tr><th>From</th><td>wrandels at hsw dot fhz dot ch</td></tr>
+<tr><th>Assigned</th><td>hholzgra</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/HTTP_WebDAV_Server/index.html">HTTP_WebDAV_Server</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Unix</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-13 08:27 UTC] wrandels at hsw dot fhz dot ch</h3>
+<p>Description:<br>
+------------<br>
+It is not possible to upload a file that contains a slash or a backslash in its name to the WebDAV Server.</p>
+<p>If the filename contains a slash, the filename is interpreted as a directory name followd by a filename.</p>
+<p>e.g. foo/bar.txt is interpreted as directoryname &quot;foo&quot; and filename &quot;bar.txt&quot;.</p>
+<p>If the filename contains a backslash, the backslash is silently removed.</p>
+<p>e.g. foo\bar.txt is interpreted as foobar.txt</p>
+<p>Test script:<br>
+---------------<br>
+Suggested patches:</p>
+<p>To solve the backslash problem, it appears to be sufficient, to remove the following lines from function ServeRequest in file Server.php:</p>
+<p>if (ini_get(&quot;magic_quotes_gpc&quot;)) {<br>
+  $this-&gt;path = stripslashes($this-&gt;path);<br>
+}</p>
+<p>Solving the slash problem is harder. The problem is, that function _urldecode() is invoked on the whole $_SERVER[&quot;PATH_INFO&quot;] variable. With such an approach, slashes in the file name, which were properly encoded by the WebDAV client using the %25 escape sequence, are converted into slash character. The slash characters are later wrongly interpreted as path component delimiters.</p>
+<p>Suggestion 1:<br>
+_urldecode should be invoked on the individual path components of the $_SERVER[&quot;PATH_INFO&quot;] variable. Also, the path should be stored as as an array of path components in variable $this-&gt;path in file Server.php.</p>
+<p>$this-&gt;path = explode(&#039;/&#039;, $_SERVER[&#039;PATH_INFO&#039;]);<br>
+for ($i = 0; $i &lt; count($this-&gt;path); $i++) {<br>
+  $this-&gt;path[$i] = $this-&gt;_urldecode($this-&gt;path[$i]);<br>
+}</p>
+<p>Caveat: All subclasses of Server.php must now deal with $this-&gt;path being an array instead of a string.</p>
+<p>Suggestion 2:<br>
+_urldecode should be invoked on the individual path components of the $_SERVER[&quot;PATH_INFO&quot;] variable. Then, slashes in the path components should be escaped with another slash, before concatenating the result into the string $this-&gt;path.</p>
+<p>$pathComponents = explode(&#039;/&#039;, $_SERVER[&#039;PATH_INFO&#039;]);<br>
+$this-&gt;path = &#039;&#039;;<br>
+foreach ($pathComponents as $component) {<br>
+  $this-&gt;path .= &#039;/&#039;.preg_replace(&#039;/\\//&#039;,&#039;//&#039;,$this-&gt;_urldecode($component));<br>
+}</p>
+<p>Caveat: Subclasses of Server.php which need to support Unix filenames must now deal with the escaped slash sequences.</p>
+</section>
+<section>
+<h3>[2006-03-01 09:25 UTC] wrandels at hsw dot fhz dot ch</h3>
+<p>Rationale for supporting backslashes and slashes:<br>
+-------------------------------------------------<br>
+I am integrating WebDAV support into an E-Learning plattform (ILIAS, for more information see http://www.ilias.de ). <br>
+Courses which start in one year and finish in a following year are often labeled with a slash. e.g. &quot;English Course 2005/06&quot;.<br>
+This kind of writing is commonly used in my language region (Switzerland).</p>
+<p>Support for backslash is more a nice to have feature, I am only asking for support of backslashes in order to have full support of Unix filenames without restrictions imposed by the webdav server.</p>
+<p>Rationale for supporting forbidden characters<br>
+---------------------------------------------<br>
+I am going great lengths to have our learning platform work reliably as a virtual file server.</p>
+<p>Some of our schools work mostly with Windows clients, some mostly with Mac OS X clients. Learning groups with homogeneous clients should be able to reliably exchange files using the virtual file servers without having to worry about issues caused by cross-platform support by the server.</p>
+<p>On the server I am doing already a lot for cross-platform support.</p>
+<p>I added code which attempts to guess the client operating system. The code hides hidden Unix-files (filenames starting a &quot;.&quot;) from Windows clients. This works very well. Before I added the code, Windows users duly deleted all these &quot;unwanted&quot; files, and I received complaints by Mac OS X users who had lost meta-data of their files.</p>
+<p>I also added code that deals with differences in the use of Unicode character compositions/decompositions, so that we can reliably exchange file names with diacritics and even non-latin characters in it. (For the Unicode composition/decomposition support I am using a PHP class of MediaWiki, let me know, if you are interested about details).</p>
+<p>And finally, there are some courses which only use the web-interface of the learning platform. It seems to be unpractical to restrict naming of these courses to the character set supported by the Windows operating system, because many of the forbidden characters are commonly. e.g. we have many objects on our server with a question mark in their name.</p>
+<p>So far, the Windows WebDAV client handles forbidden characters gracefully. It omits filenames which are not supported by Windows. So, I don&#039;t see a need for restricting filenames on the server.</p>
+</section>
+<section>
+<h3>[2008-05-09 07:21 UTC] wrandels at hsw dot fhz dot ch</h3>
+<p>Would it be possible to put the code sequence, which decodes the path into a function of its own, so that subclasses of HTTP_WebDAV_Server can be implemented which fully support Unix filenames?</p>
+<p>For example, by adding a function named decodePath to to HTTP_WebDAV_Server and calling it from function serveRequest?</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

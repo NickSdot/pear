@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7707</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Testing &#187; <a href="package/PHPUnit2/index.html">PHPUnit2</a> &#187; Bug #7707</h1>
+<p>assertEquals does not ignore type in arrays and objects</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-05-23 15:49 UTC</td></tr>
+<tr><th>From</th><td>kore at php dot net</td></tr>
+<tr><th>Assigned</th><td>sebastian</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PHPUnit2/index.html">PHPUnit2</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>Linux 2.6.16-gentoo-r3</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-05-23 15:49 UTC] kore at php dot net</h3>
+<p>Description:<br>
+------------<br>
+I would expect PHPUnit to ignore the type of array values, or object properties, as it does for simple values using assertEquals().</p>
+<p>This behaviour makes it more difficult to compare structs (represented by an object or array).</p>
+<p>Normally this is no problem because you would be able to access dedicated properties or values to check their equality. But this is not the case, if you this check cmpined with mockObjects like:<br>
+$mockObject<br>
+    -&gt;expects( $this-&gt;once() )<br>
+    -&gt;method( &#039;method&#039; )<br>
+    -&gt;with(<br>
+         $this-&gt;equalTo( new struct( 1., 2 ) )<br>
+    );</p>
+<p>Test script:<br>
+---------------<br>
+http://kore.phpugdo.de/equal_to.phps</p>
+<p>Expected result:<br>
+----------------<br>
+PHPUnit 3.0.0alpha3 by Sebastian Bergmann.</p>
+<p>..</p>
+<p>Time: 00:00</p>
+<p>OK (2 tests)</p>
+<p>Actual result:<br>
+--------------<br>
+PHPUnit 3.0.0alpha3 by Sebastian Bergmann.</p>
+<p>FF.</p>
+<p>Time: 00:00<br>
+There were 2 failures:<br>
+1) testEqualsStruct(testEqual)<br>
+Structs are not equalfailed asserting that &lt;struct::__set_state(array(<br>
+   &#039;a&#039; =&gt; 1,<br>
+   &#039;b&#039; =&gt; 2,<br>
+))&gt; is equal to &lt;object:struct::__set_state(array(<br>
+   &#039;a&#039; =&gt; 1,<br>
+   &#039;b&#039; =&gt; 2,<br>
+))&gt;<br>
+in object of class &lt;struct&gt;:<br>
+property &lt;a&gt;:  expected integer  &lt;1&gt;<br>
+               got      double &lt;1&gt;<br>
+/home/kore/devel/ezcomponents/trunk/Graph/tests/equal_to.php:27<br>
+/usr/lib/php/php5.1-cvs/bin/phpunit:40<br>
+2) testEqualsArray(testEqual)<br>
+Arrays are not equalfailed asserting that &lt;array (<br>
+  0 =&gt; 1,<br>
+  1 =&gt; 2,<br>
+)&gt; is equal to &lt;array:array (<br>
+  0 =&gt; 1,<br>
+  1 =&gt; 2,<br>
+)&gt;<br>
+array key &lt;0&gt;:  expected integer  &lt;1&gt;<br>
+                got      double &lt;1&gt;</p>
+<p>/home/kore/devel/ezcomponents/trunk/Graph/tests/equal_to.php:42<br>
+/usr/lib/php/php5.1-cvs/bin/phpunit:40</p>
+<p>FAILURES!<br>
+Tests: 3, Failures: 2.</p>
+</section>
+<section>
+<h3>[2006-05-23 15:54 UTC] kore at php dot net</h3>
+<p>The &quot;Actual result&quot; has a minor error, as it shows the result from a slightly modified test, which also had a method which simply tested:<br>
+&gt; $this-&gt;assertSame( 1., 1);</p>
+</section>
+<section>
+<h3>[2006-05-23 18:10 UTC] sebastian at php dot net</h3>
+<p>Please test the patch below:</p>
+<p>Index: Framework/Constraint/IsEqual.php<br>
+===================================================================<br>
+RCS file: /repository/pear/PHPUnit2/Framework/Constraint/IsEqual.php,v<br>
+retrieving revision 1.8<br>
+diff -u -B -r1.8 IsEqual.php<br>
+--- Framework/Constraint/IsEqual.php    30 Mar 2006 09:25:07 -0000      1.8<br>
++++ Framework/Constraint/IsEqual.php    23 May 2006 18:09:25 -0000<br>
+@@ -99,29 +99,50 @@<br>
+      */<br>
+     public function evaluate($other)<br>
+     {<br>
+-        $equal = FALSE;<br>
+-<br>
+         if (is_array($this-&gt;value)) {<br>
+             if (is_array($other)) {<br>
+-                $other = PHPUnit2_Util_Array::sortRecursively($other);<br>
+-                $value = PHPUnit2_Util_Array::sortRecursively($this-&gt;value);<br>
+-                $equal = (serialize($value) == serialize($other));<br>
++                $other = new RecursiveIteratorIterator(<br>
++                  new RecursiveArrayIterator(<br>
++                    PHPUnit2_Util_Array::sortRecursively($other)<br>
++                  ),<br>
++                  RecursiveIteratorIterator::SELF_FIRST<br>
++                );<br>
++<br>
++                $value = new RecursiveIteratorIterator(<br>
++                  new RecursiveArrayIterator(<br>
++                    PHPUnit2_Util_Array::sortRecursively($this-&gt;value)<br>
++                  ),<br>
++                  RecursiveIteratorIterator::SELF_FIRST<br>
++                );<br>
++<br>
++                $other-&gt;rewind();<br>
++                $value-&gt;rewind();<br>
++<br>
++                while ($other-&gt;valid() &amp;&amp; $value-&gt;valid()) {<br>
++                    if ($other-&gt;key()     != $value-&gt;key() ||<br>
++                        $other-&gt;current() != $value-&gt;current()) {<br>
++                        return FALSE;<br>
++                    }<br>
++<br>
++                    $other-&gt;next();<br>
++                    $value-&gt;next();<br>
++                }<br>
++<br>
++                return TRUE;<br>
+             }<br>
+         }</p>
+<p>else if (is_float($this-&gt;value) &amp;&amp; is_float($other) &amp;&amp; is_float($this-&gt;delta)) {<br>
+-            $equal = (abs($this-&gt;value - $other) &lt;= $this-&gt;delta);<br>
++            return (abs($this-&gt;value - $other) &lt;= $this-&gt;delta);<br>
+         }</p>
+<p>else if (is_object($this-&gt;value) &amp;&amp; is_object($other)) {<br>
+-            $equal = serialize($this-&gt;value) == serialize($other);<br>
++            return serialize($this-&gt;value) == serialize($other);<br>
+         }</p>
+<p>else {<br>
+-            $equal = $this-&gt;value == $other;<br>
++            return $this-&gt;value == $other;<br>
+         }<br>
+-<br>
+-        return $equal;<br>
+     }</p>
+<p>/**</p>
+</section>
+<section>
+<h3>[2006-05-23 18:48 UTC] kore at php dot net</h3>
+<p>With this patch it now works for arrays, but still not for objects.</p>
+</section>
+<section>
+<h3>[2006-05-25 11:07 UTC] sebastian at php dot net</h3>
+<p>This bug has been fixed in CVS.</p>
+<p>If this was a documentation problem, the fix will appear on pear.php.net by the end of next Sunday (CET).</p>
+<p>If this was a problem with the pear.php.net website, the change should be live shortly.</p>
+<p>Otherwise, the fix will appear in the package&#039;s next release.</p>
+<p>Thank you for the report and for helping us make PEAR better.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

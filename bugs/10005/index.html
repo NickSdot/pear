@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #10005</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #10005</h1>
+<p>MSSQL-problem finding table with quote_identifiers = 1</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-02-01 14:57 UTC</td></tr>
+<tr><th>From</th><td>powtac at gmx dot de</td></tr>
+<tr><th>Status</th><td>No Feedback</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>5.2.0</td></tr>
+<tr><th>OS</th><td>WIN 2000</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-02-01 14:57 UTC] powtac at gmx dot de</h3>
+<p>Description:<br>
+------------<br>
+When adding quote_identifiers = 1 to the config I get an error for the DataObject, see below. <br>
+I think this is a regexp-problem, DO can&#039;t find the Table &quot;[dbo.Adressen]&quot; instead of finding &quot;dbo.Adressen&quot; (without quote identifiers).<br>
+I&#039;m using MSSQL 2005. The access without quote_identifiers on works perfekt.</p>
+<p>Test script:<br>
+---------------<br>
+Config:<br>
+=======<br>
+...<br>
+$config[&#039;db_driver&#039;]         = &#039;DB&#039;;<br>
+$config[&#039;quote_identifiers&#039;] = 1;<br>
+...</p>
+<p>Script:<br>
+=======<br>
+DB_DataObject::debugLevel(1);<br>
+$CustomerL =&amp; new DataObject_Dbo_Adressen;<br>
+$CustomerL-&gt;selectAdd();<br>
+$CustomerL-&gt;selectAdd(&#039;Adresse, Mandant&#039;);<br>
+$CustomerL-&gt;whereAdd(&#039;Adresse &lt; 20&#039;);<br>
+if ($CustomerL-&gt;find()) {<br>
+    while ($CustomerL-&gt;fetch()) {<br>
+        // do ....<br>
+    }     <br>
+}</p>
+<p>Dbo_Adressen.php:<br>
+=================<br>
+&lt;?php<br>
+/**<br>
+ * Table Definition for dbo.Adressen<br>
+ */<br>
+require_once &#039;DB/DataObject.php&#039;;</p>
+<p>class DataObject_Dbo_Adressen extends DB_DataObject <br>
+{<br>
+    ###START_AUTOCODE<br>
+    /* ... */</p>
+<p>public $__table = &#039;dbo.Adressen&#039;;  // table name<br>
+    public $Adresse;   // int identity(10)  <br>
+    public $Mandant;   // int(10)  <br>
+...<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+Correct DataObject</p>
+<p>Actual result:<br>
+--------------<br>
+DataObject_Dbo_Adressen: find:<br>
+DataObject_Dbo_Adressen: CONNECT: Checking for database database_ in options<br>
+DataObject_Dbo_Adressen: databaseStructure: Loaded ini file: C:\www\zugriff\dataObject/AFS_WAWU_DB.ini<br>
+DataObject_Dbo_Adressen: QUERY: SELECT Adresse, Mandant<br>
+FROM [dbo.Adressen]</p>
+<p>WHERE ( Adresse &lt; 20 )</p>
+<p>DataObject_Dbo_Adressen: Query Error: [db_error: message=&quot;DB Error: no such table&quot; code=-18 mode=return level=notice prefix=&quot;&quot; info=&quot;SELECT Adresse, Mandant<br>
+FROM [dbo.Adressen]</p>
+<p>WHERE ( Adresse &lt; 20 )</p>
+<p>[nativecode=208 - Ungültiger Objektname &#039;dbo.Adressen&#039;.]&quot;]<br>
+DataObject_Dbo_Adressen: ERROR: DB_Error Object<br>
+(<br>
+[error_message_prefix] =&gt;<br>
+[mode] =&gt; 1<br>
+[level] =&gt; 1024<br>
+[code] =&gt; -18<br>
+[message] =&gt; DB Error: no such table<br>
+[userinfo] =&gt; SELECT Adresse, Mandant<br>
+FROM [dbo.Adressen]</p>
+<p>WHERE ( Adresse &lt; 20 )</p>
+<p>[nativecode=208 - Ungültiger Objektname &#039;dbo.Adressen&#039;.]<br>
+[backtrace] =&gt; Array<br>
+(<br>
+[0] =&gt; Array<br>
+(<br>
+[file] =&gt; C:\Programms\xampp\php\pear\DB.php<br>
+[line] =&gt; 888<br>
+[function] =&gt; PEAR_Error<br>
+[class] =&gt; PEAR_Error<br>
+[type] =&gt; -&gt;<br>
+[args] =&gt; Array<br>
+(<br>
+[0] =&gt; DB Error: no such table</p>
+<p>....</p>
+</section>
+<section>
+<h3>[2007-02-01 16:31 UTC] powtac at gmx dot de</h3>
+<p>When I disable quote_identifiers, I get this result:</p>
+<p>DataObject_Dbo_Adressen: find:<br>
+DataObject_Dbo_Adressen: CONNECT: Checking for database database_ in options<br>
+DataObject_Dbo_Adressen: databaseStructure: Loaded ini file: C:\www\zugriff\dataObject/AFS_WAWU_DB.ini<br>
+DataObject_Dbo_Adressen: QUERY: SELECT Adresse, Mandant<br>
+FROM dbo.Adressen</p>
+<p>WHERE ( Adresse &lt; 20 )</p>
+<p>DataObject_Dbo_Adressen: query: QUERY DONE IN 0.0122919082642 seconds<br>
+DataObject_Dbo_Adressen: find: CHECK autofetchd<br>
+DataObject_Dbo_Adressen: find: DONE<br>
+DataObject_Dbo_Adressen: FETCH: a:2:{s:7:&quot;Adresse&quot;;i:1;s:7:&quot;Mandant&quot;;i:1;}<br>
+NULL</p>
+<p>With quote_identifiers I expect a query like:</p>
+<p>SELECT [Adresse], [Mandant] FROM [dbo].[Adressen] WHERE ( [Adresse] &lt; 20 )</p>
+<p>&quot;[&quot; and &quot;]&quot; seems to be quote_identifiers for MSSQL. This could been added by PEAR::DB!?</p>
+<p>I found this bug while searching for an solution for the problem of having a MSSQL table with a column named &quot;Update&quot;. This gave me a error like &quot;wrong syntax: found keyword&quot;. With &quot;$Object-&gt;selectAdd(&#039;[Update] as coldate&#039;);&quot; I got Update/coldate working on my awful MSSQL table. See also http://pear.php.net/bugs/bug.php?id=9839. :(</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

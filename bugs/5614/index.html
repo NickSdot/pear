@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5614</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB_DataObject/index.html">DB_DataObject</a> &#187; Bug #5614</h1>
+<p>Insufficient parameter checking in joinAdd()</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #5614</th><td>Insufficient parameter checking in joinAdd()</td></tr>
+<tr><th>Submitted</th><td>2005-10-06 05:54 UTC</td></tr>
+<tr><th>From</th><td>markus at fischer dot name</td></tr>
+<tr><th>Assigned</th><td>alan_k</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/DB_DataObject/index.html">DB_DataObject</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.10</td></tr>
+<tr><th>OS</th><td>Any</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-10-06 05:54 UTC] markus at fischer dot name</h3>
+<p>Description:<br>
+------------<br>
+The method joinAdd() doesn&#039;t verify if the object passed is a DB_DataObject.</p>
+<p>It only verifies if it is an object:<br>
+if (!is_object($obj)) {<br>
+  $this-&gt;raiseError(&quot;joinAdd: called without an object&quot;, DB_DATAOBJECT_ERROR_NODATA,PEAR_ERROR_DIE);<br>
+}</p>
+<p>but assumed it&#039;s an DB_DataObject because it calls the -&gt;links() method:</p>
+<p>if (!$ofield &amp;&amp; ($olinks = $obj-&gt;links())) {</p>
+<p>The check should make sure it&#039;s a valid DB_DataObject (is_subclass_of) and not just an object.</p>
+<p>Test script:<br>
+---------------<br>
+$oTable1 =&amp; DB_DataObject::factory(&quot;table1&quot;);<br>
+$oTableUnknown =&amp; DB_DataObject::factory(&quot;someunknowntable&quot;);<br>
+$oTable1-&gt;joinAdd($oTableUnknown, &quot;INNER&quot;);</p>
+<p>Expected result:<br>
+----------------<br>
+An error should be raised.</p>
+<p>Actual result:<br>
+--------------<br>
+Bails out with a fatal error:</p>
+<p>Fatal error: Call to undefined function: links() in /data/www/webroot/pear/share/php/DB/DataObject.php on line 2899</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

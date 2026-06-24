@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #10144</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; File Formats &#187; <a href="package/File_Archive/index.html">File_Archive</a> &#187; Bug #10144</h1>
+<p>long filenames are not stored correctly</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-02-21 14:31 UTC</td></tr>
+<tr><th>From</th><td>fritsch+pear dot php dot net at in dot tum dot de</td></tr>
+<tr><th>Assigned</th><td>cbrunet</td></tr>
+<tr><th>Status</th><td>Verified</td></tr>
+<tr><th>Package</th><td><a href="package/File_Archive/index.html">File_Archive</a></td></tr>
+<tr><th>PHP Version</th><td>Irrelevant</td></tr>
+<tr><th>OS</th><td>Ubuntu</td></tr>
+<tr><th>Roadmaps</th><td>1.5.5</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-02-21 14:31 UTC] fritsch+pear dot php dot net at in dot tum dot de</h3>
+<p>Description:<br>
+------------<br>
+In Writer/Tar.php it reads like this:<br>
+        $filePrefix = &#039;&#039;;<br>
+        if (strlen($filename) &gt; 255) {<br>
+            return PEAR::raiseError(<br>
+                &quot;$filename is too long to be put in a tar archive&quot;<br>
+            );<br>
+        } else if (strlen($filename) &gt; 100) {<br>
+            $filePrefix = substr($filename, 0, strlen($filename)-100);<br>
+            $filename = substr($filename, -100);<br>
+        }</p>
+<p>Actually (at least unix tar handles archives like that) the prefix needs to be a path-component, so that &quot;$filePrefix/$filename&quot; is the actual filename. This is not handled correctly by the above code, so it will inject a slash at strlen()-100 for the filename, resulting in really messy tarfiles.</p>
+<p>Test script:<br>
+---------------<br>
+A solution might look like this:<br>
+        } else if (strlen($filename) &gt; 100) {<br>
+	    #need a path component of max 155 bytes<br>
+            $pos = strrpos(substr($filename, 0, 155), &#039;/&#039;);<br>
+	    if(strlen($filename) - $pos &gt; 100) #filename-component may not exceed 100 bytes<br>
+		return PEAR::raiseError(<br>
+                	&quot;$filename is too long to be put in a tar archive&quot;<br>
+            	);<br>
+	    $filePrefix = substr($filename, 0, $pos);<br>
+            $filename = substr($filename, $pos+1);<br>
+	    echo &quot;$filePrefix vs $filename&lt;br&gt;\n&quot;;<br>
+        }</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #5852</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Web Services &#187; <a href="package/SOAP/index.html">SOAP</a> &#187; Bug #5852</h1>
+<p>HTTP Transport to use curl when available, fixes double headers when NTLM auth</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-11-02 15:36 UTC</td></tr>
+<tr><th>From</th><td>martin at malditainternet dot com</td></tr>
+<tr><th>Assigned</th><td>yunosh</td></tr>
+<tr><th>Status</th><td>Wont fix</td></tr>
+<tr><th>Package</th><td><a href="package/SOAP/index.html">SOAP</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.0</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-11-02 15:36 UTC] martin at malditainternet dot com</h3>
+<p>Description:<br>
+------------<br>
+There&#039;s a curl-php &#039;feature&#039; that will return the received headers for all requests done with just one curl_exec call on the same string.</p>
+<p>Ie, if you make a request that request with NTLM authentication, CURL will do 2 requests: for the first one, it will receive a HTTP 401 with some negotiation/challenge headers and then, it sends another request with the auth data and gets a HTTP 200 response.</p>
+<p>Then it returns the headers from the curl_exec functions:</p>
+<p>HTTP/1.1 401 Unauthorized<br>
+blablabla</p>
+<p>HTTP/1.1 200 OK<br>
+blabla</p>
+<p>&lt;html&gt;<br>
+...</p>
+<p>My patch just skips all the first headers and returns the last one, which is the most important (AFAIK)</p>
+<p>Test script:<br>
+---------------<br>
+--- /tmp/SOAP-0.9.1/Transport/HTTP.php	2005-05-30 19:06:40.000000000 -0300<br>
++++ SOAP/Transport/HTTP.php	2005-11-02 12:22:31.000000000 -0300<br>
+@@ -485,6 +485,10 @@<br>
+      */<br>
+     function &amp;_sendHTTP(&amp;$msg, $options)<br>
+     {<br>
++        if (extension_loaded(&quot;curl&quot;))<br>
++        {<br>
++            return $this-&gt;_sendHTTPS($msg,$options);<br>
++        }<br>
+         $this-&gt;incoming_payload = &#039;&#039;;<br>
+         $this-&gt;_getRequest($msg, $options);<br>
+         $host = $this-&gt;urlparts[&#039;host&#039;];<br>
+@@ -582,7 +586,8 @@<br>
+         curl_setopt($ch, CURLOPT_FAILONERROR,      0);<br>
+         curl_setopt($ch, CURLOPT_FOLLOWLOCATION,   1);<br>
+         curl_setopt($ch, CURLOPT_RETURNTRANSFER,   1);<br>
+-        curl_setopt($ch, CURLOPT_HEADER,           1);<br>
++        curl_setopt($ch, CURLOPT_HEADER,           0);<br>
++        curl_setopt($ch, CURLOPT_HEADERFUNCTION,   &#039;_SOAP_curl_parse_header&#039;);<br>
+         if (defined(&#039;CURLOPT_HTTP_VERSION&#039;)) {<br>
+             curl_setopt($ch, CURLOPT_HTTP_VERSION, 1);<br>
+         }<br>
+@@ -599,6 +604,7 @@<br>
+         $this-&gt;outgoing_payload = $msg;<br>
+ <br>
+         $this-&gt;incoming_payload = curl_exec($ch);<br>
++        $this-&gt;incoming_payload = _SOAP_curl_get_headers($ch) . $this-&gt;incoming_payload;<br>
+         if (!$this-&gt;incoming_payload) {<br>
+             $m = &#039;curl_exec error &#039; . curl_errno($ch) . &#039; &#039; . curl_error($ch);<br>
+             curl_close($ch);<br>
+@@ -614,3 +620,38 @@<br>
+     }<br>
+ <br>
+ }<br>
++/**<br>
++ * Gets the last response HTTP header of a curl request (duplicated headers are generated when curl finds a redirection)<br>
++ *<br>
++ * This function will be used by curl itself<br>
++ *<br>
++ * @param object $ch curl object<br>
++ * @param string $header header line received from the server<br>
++ * @return int number of bytes processed<br>
++ *<br>
++ * @see curl_init()<br>
++ */<br>
++function _SOAP_curl_parse_header($ch,$header)<br>
++{<br>
++    global $_SOAP_CURL_HEADERS;<br>
++    if (substr($_SOAP_CURL_HEADERS,-4) == &quot;\r\n\r\n&quot;){ // the variable has a full http header set, but we&#039;re receiving more headers. We&#039;ll discard those old headers and start with a new set.<br>
++        $_SOAP_CURL_HEADERS=&#039;&#039;;<br>
++    }<br>
++    $_SOAP_CURL_HEADERS.=$header;<br>
++    return strlen($header);<br>
++}<br>
++<br>
++/**<br>
++ * Returns the response HTTP headers for the last curl request <br>
++ *<br>
++ * @param object $ch curl object<br>
++ * @return string headers received, including the last empty line<br>
++ *<br>
++ */<br>
++function _SOAP_curl_get_headers($ch)<br>
++{<br>
++    // this global variable should be changed for something better, &#039;thread-safe&#039;<br>
++    return $GLOBALS[&#039;_SOAP_CURL_HEADERS&#039;];<br>
++}<br>
++$GLOBALS[&#039;_SOAP_CURL_HEADERS&#039;]=&#039;&#039;;<br>
++?&gt;</p>
+</section>
+<section>
+<h3>[2005-11-02 15:36 UTC] martin at malditainternet dot com</h3>
+<p>sorry, wrong summary</p>
+</section>
+<section>
+<h3>[2005-11-02 18:48 UTC] martin at malditainternet dot com</h3>
+<p>Sorry, I forgot to add that this patch makes the HTTP Transport to use CURL when available (using the existing code for HTTPS requests)</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

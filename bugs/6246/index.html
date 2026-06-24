@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #6246</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Date and Time &#187; <a href="package/Date/index.html">Date</a> &#187; Bug #6246</h1>
+<p>inDaylightTime() crashes Apache 2.0.55 with status 3221225477</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-12-14 20:50 UTC</td></tr>
+<tr><th>From</th><td>ariel at trisolutions dot com dot br</td></tr>
+<tr><th>Assigned</th><td>pajoye</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Date/index.html">Date</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.1</td></tr>
+<tr><th>OS</th><td>Windows XP SP2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-12-14 20:50 UTC] ariel at trisolutions dot com dot br</h3>
+<p>Description:<br>
+------------<br>
+Using Date 1.4.6.<br>
+Calling Date_TimeZone::inDaylightTime() crashes Apache 2.0.55 with the following message:<br>
+[notice] Parent: child process exited with status 3221225477 -- Restarting.<br>
+The following code reproduces the error:</p>
+<p>&lt;?<br>
+   require &quot;Date.php&quot;;<br>
+   $date = new Date;<br>
+   echo $date-&gt;getDate();<br>
+   echo &quot;&lt;BR&gt;&quot;;<br>
+   echo &quot;Is in daylight saving time? &quot;.<br>
+         $date-&gt;inDaylightTime($date).&quot;&lt;BR&gt;&quot;;<br>
+?&gt;</p>
+<p>Replacing inDaylightTime() by this simple piece of code:</p>
+<p>function inDaylightTime($date)<br>
+{<br>
+   return date(&quot;I&quot;);<br>
+}</p>
+<p>fixes that bug. I ask myself what&#039;s the reason for messing up with putenv() and getenv()?</p>
+</section>
+<section>
+<h3>[2005-12-14 20:58 UTC] ariel at trisolutions dot com dot br</h3>
+<p>Note that with the replaced version of the code, there&#039;s no need to pass any argument to inDaylightTime() and this function can be called statically:</p>
+<p>function inDaylightTime()<br>
+{<br>
+   return date(&quot;I&quot;);<br>
+}</p>
+<p>Of course, you cannot test if a given date is in daylight time, only the current date. But anyway, I think this is the purpose of this function.</p>
+</section>
+<section>
+<h3>[2005-12-16 16:09 UTC] ariel at trisolutions dot com dot br</h3>
+<p>If that is the case, why don&#039;t use:</p>
+<p>function inDaylightTime($date)<br>
+{<br>
+   return date( &#039;I&#039;, $date-&gt;getDate(DATE_FORMAT_UNIXTIME) );<br>
+}</p>
+<p>That serves the purpose of the function.<br>
+Anyway, hope the fix to come.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

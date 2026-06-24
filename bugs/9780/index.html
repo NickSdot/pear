@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #9780</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/MDB2_Driver_oci8/index.html">MDB2_Driver_oci8</a> &#187; Bug #9780</h1>
+<p>Mdb2 Oracle Driver getMessage() returns an array</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2007-01-09 07:24 UTC</td></tr>
+<tr><th>From</th><td>pcdinh at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>quipo</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/MDB2_Driver_oci8/index.html">MDB2_Driver_oci8</a></td></tr>
+<tr><th>PHP Version</th><td>5.2.0</td></tr>
+<tr><th>OS</th><td>Windows Xp Sp2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2007-01-09 07:24 UTC] pcdinh at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+There is a bug in Oracle driver for MDB2 that affects the behaviour of the method getMessage().</p>
+<p>I tried to execute a wrong SQL syntax statement and expected getMessage() will return a meaningful error notice.</p>
+<p>However I have got as follows:</p>
+<p>MDB2 Error: Array</p>
+<p>I tried to var_dump() MDB2_Error and found:</p>
+<p>object(MDB2_Error)#12 (8) {<br>
+  [&quot;error_message_prefix&quot;]=&gt;<br>
+  string(0) &quot;&quot;<br>
+  [&quot;mode&quot;]=&gt;<br>
+  int(1)<br>
+  [&quot;level&quot;]=&gt;<br>
+  int(1024)<br>
+  [&quot;code&quot;]=&gt;<br>
+  NULL<br>
+  [&quot;message&quot;]=&gt;<br>
+  string(17) &quot;MDB2 Error: Array&quot;<br>
+  [&quot;userinfo&quot;]=&gt;<br>
+  string(224) &quot;_doQuery: [Error message: Could not execute statement]<br>
+[Last executed query: select PRIMARY_SHORT_COMPANY_NAME from wvb_company where company_perm_id #= 454]<br>
+[Native code: 911]<br>
+[Native message: ORA-00911: invalid character]<br>
+&quot;<br>
+  [&quot;backtrace&quot;]=&gt;<br>
+  array(13) {<br>
+    [0]=&gt;<br>
+    array(7) {<br>
+      [&quot;file&quot;]=&gt;<br>
+      string(31) &quot;D:\wvbsrc\library\pear\MDB2.php&quot;<br>
+      [&quot;line&quot;]=&gt;<br>
+      int(961)<br>
+      [&quot;function&quot;]=&gt;<br>
+      string(10) &quot;PEAR_Error&quot;<br>
+      [&quot;class&quot;]=&gt;<br>
+      string(10) &quot;PEAR_Error&quot;<br>
+      [&quot;object&quot;]=&gt;<br>
+      object(MDB2_Error)#12 (8) {<br>
+        [&quot;error_message_prefix&quot;]=&gt;<br>
+        string(0) &quot;&quot;<br>
+        [&quot;mode&quot;]=&gt;<br>
+        int(1)<br>
+        [&quot;level&quot;]=&gt;<br>
+        int(1024)<br>
+        [&quot;code&quot;]=&gt;<br>
+        NULL<br>
+        [&quot;message&quot;]=&gt;<br>
+        string(17) &quot;MDB2 Error: Array&quot;<br>
+        [&quot;userinfo&quot;]=&gt;<br>
+        string(224) &quot;_doQuery: [Error message: Could not execute statement]<br>
+[Last executed query: select PRIMARY_SHORT_COMPANY_NAME from wvb_company where company_perm_id #= 454]<br>
+[Native code: 911]<br>
+[Native message: ORA-00911: invalid character]</p>
+<p>Test script:<br>
+---------------<br>
+select PRIMARY_SHORT_COMPANY_NAME from wvb_company where company_perm_id #= 454</p>
+<p>Any wrong Sql statement</p>
+<p>Expected result:<br>
+----------------<br>
+MDB2 Error: ........... (some text here, not an array)</p>
+<p>Actual result:<br>
+--------------<br>
+MDB2 Error: Array</p>
+</section>
+<section>
+<h3>[2007-01-09 08:38 UTC] pcdinh at gmail dot com</h3>
+<p>There is a mismatch between the constructor:</p>
+<p>function MDB2_Error($code = MDB2_ERROR, $mode = PEAR_ERROR_RETURN,<br>
+              $level = E_USER_NOTICE, $debuginfo = null)<br>
+    {<br>
+    	$this-&gt;PEAR_Error(&#039;MDB2 Error: &#039;.MDB2::errorMessage($code), $code,<br>
+            $mode, $level, $debuginfo);<br>
+    }</p>
+<p>and PEAR::raiseError</p>
+<p>The code to instantiate an object of MDB2_Error</p>
+<p>$err =&amp; PEAR::raiseError(NULL, $code, $mode, $options, $userinfo, &#039;MDB2_Error&#039;, false);</p>
+<p>that will make a call to PEAR::raiseError that includes these logic:</p>
+<p>if ($skipmsg) {			<br>
+            $a = &amp;new $ec($code, $mode, $options, $userinfo);<br>
+            return $a;<br>
+        } else {			<br>
+            $a = &amp;new $ec($message, $code, $mode, $options, $userinfo);<br>
+            return $a;<br>
+        }</p>
+<p>because $skipmsg is set to be true so $a = &amp;new $ec($code, $mode, $options, $userinfo); will be called</p>
+<p>But in fact $code is null and MDB2::errorMessage($code) will return an array.</p>
+<p>In MDb2::raiseError() the initial parameter $userinfo in fact can be acted as $message but it is ignored</p>
+</section>
+<section>
+<h3>[2007-01-09 08:59 UTC] pcdinh at gmail dot com</h3>
+<p>File oci8.php, line 637<br>
+         <br>
+$result = @OCIParse($connection, $query);<br>
+if (!$result) {<br>
+    $err = $this-&gt;raiseError(null, null, null,<br>
+                &#039;Could not create statement&#039;, __FUNCTION__);<br>
+    return $err;<br>
+}</p>
+<p>Code has been assigned as null.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

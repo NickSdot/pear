@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #1525</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Database &#187; <a href="package/DB/index.html">DB</a> &#187; Bug #1525</h1>
+<p>DB_FETCHMODE_ASSOC doesn&#039;t work with MSSQL</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2004-05-28 14:28 UTC</td></tr>
+<tr><th>From</th><td>tricera_it at yahoo dot it</td></tr>
+<tr><th>Assigned</th><td>danielc</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/DB/index.html">DB</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.4</td></tr>
+<tr><th>OS</th><td>Linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2004-05-28 14:28 UTC] tricera_it at yahoo dot it</h3>
+<p>Description:<br>
+------------<br>
+With MSSQL, if you try to fetch results with DB_FETCHMODE_ASSOC or DB_FETCHMODE_OBJECT you will get no loop.<br>
+DB_FETCHMODE_ORDERED works properly.</p>
+<p>Reproduce code:<br>
+---------------<br>
+With MSSQL, this works:<br>
+$db-&gt;setFetchMode(DB_FETCHMODE_ORDERED);<br>
+$res =&amp; $db-&gt;query(&#039;SELECT * FROM users&#039;);<br>
+while ($row =&amp; $res-&gt;fetchRow()) {<br>
+    echo $row[&#039;id&#039;] . &quot;\n&quot;;<br>
+}</p>
+<p>this not:<br>
+$db-&gt;setFetchMode(DB_FETCHMODE_ASSOC);<br>
+$res =&amp; $db-&gt;query(&#039;SELECT * FROM users&#039;);<br>
+while ($row =&amp; $res-&gt;fetchRow()) {<br>
+    echo $row[&#039;id&#039;] . &quot;\n&quot;;<br>
+}</p>
+<p>Determining fetch mode per call gives the same problem.</p>
+</section>
+<section>
+<h3>[2004-05-28 15:09 UTC] tricera_it at yahoo dot it</h3>
+<p>Version 1.6.4</p>
+</section>
+<section>
+<h3>[2004-05-28 22:13 UTC] tricera_it at yahoo dot it</h3>
+<p>You are right: my example is bugged :-( <br>
+But was just a copy &amp; paste error. I can assure you that if the following code works:</p>
+<p>echo &quot;start\n&quot;;<br>
+$res =&amp; $db-&gt;query(&#039;SELECT * FROM users&#039;);<br>
+while ($row =&amp; $res-&gt;fetchRow(DB_FETCHMODE_ORDERED)) {<br>
+  echo &quot;looping: &quot;;  <br>
+  echo $row[0].&quot;\n&quot;;<br>
+}<br>
+echo &quot;end\n&quot;;</p>
+<p>and returns:</p>
+<p>start<br>
+looping: 1<br>
+looping: 2<br>
+(...)<br>
+end</p>
+<p>the following doesn&#039;t work:</p>
+<p>echo &quot;start\n&quot;;<br>
+$res =&amp; $db-&gt;query(&#039;SELECT * FROM users&#039;);<br>
+while ($row =&amp; $res-&gt;fetchRow(DB_FETCHMODE_ASSOC)) {<br>
+  echo &quot;looping: &quot;;  <br>
+  echo $row[&#039;id&#039;].&quot;\n&quot;;<br>
+}<br>
+echo &quot;end\n&quot;;</p>
+<p>and returns:</p>
+<p>start<br>
+end</p>
+<p>so the loop is ignored. A case sensitivity problem should returns:</p>
+<p>start<br>
+looping: <br>
+looping: <br>
+(...)<br>
+end</p>
+<p>This happens only with MSSQL, and not, as eg., with MYSQL.<br>
+If it is an my error pls let me know how to solve it.</p>
+</section>
+<section>
+<h3>[2004-05-29 07:43 UTC] tricera_it at yahoo dot it</h3>
+<p>I&#039;ve run the test. This is the result:</p>
+<p>row count: 909</p>
+<p>No error messages has been printed.<br>
+I&#039;ve also extended the test as the following:</p>
+<p>&lt;?php<br>
+$res =&amp; $db-&gt;query(&#039;SELECT * FROM users&#039;);<br>
+if (DB::isError($res)) {<br>
+    echo $res-&gt;getUserInfo() . &quot;\n&quot;;<br>
+    exit;<br>
+}</p>
+<p>echo &#039;row count: &#039; . $res-&gt;numRows() . &quot;\n&quot;;</p>
+<p>$row =&amp; $res-&gt;fetchRow(DB_FETCHMODE_ASSOC);<br>
+if (DB::isError($row)) {<br>
+    echo $row-&gt;getUserInfo() . &quot;\n&quot;;<br>
+    exit;<br>
+}<br>
+print_r($row);</p>
+<p>$row =&amp; $res-&gt;fetchRow(DB_FETCHMODE_ORDERED);<br>
+print_r($row);<br>
+?&gt;</p>
+<p>The result was:</p>
+<p>row count: 909<br>
+Array<br>
+(<br>
+    [0] =&gt; 1<br>
+    [1] =&gt; John<br>
+    [2] =&gt; Smith<br>
+)</p>
+<p>I&#039;d like to underline that all this happens ONLY with MSSQL, not with other databases.</p>
+</section>
+<section>
+<h3>[2004-05-29 10:40 UTC] tricera_it at yahoo dot it</h3>
+<p>I&#039;ve found the solution!</p>
+<p>It was a PHP problem and not a DB bug. PHP did not recognize the MSSQL_ASSOC parameter of mssql_fetch_array function (line 198 of mssql.php). I&#039;ve removed the @ from that function to see the error message.<br>
+Now, installing the last release (4.3.6) of PHP, all seems to work properly.<br>
+Thank for your help.</p>
+</section>
+<section>
+<h3>[2004-05-29 17:01 UTC] tricera_it at yahoo dot it</h3>
+<p>Probably the problem was not due to the PHP version but to the PHP configuration. PHP 4.3.4 has been compiled with the option --with-sybase=[dir_to_FreeTDS], now I try to compile with --with-mssql=[dir_to_FreeTDS].<br>
+I think, but is just an idea, that this second way lets MSSQL_* constants be available.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

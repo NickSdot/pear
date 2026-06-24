@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7414</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PHP &#187; <a href="package/PHP_Compat/index.html">PHP_Compat</a> &#187; Bug #7414</h1>
+<p>making var_export() generating correct PHP code with nested objects</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #7414</th><td>making var_export() generating correct PHP code with nested objects</td></tr>
+<tr><th>Submitted</th><td>2006-04-17 20:44 UTC</td></tr>
+<tr><th>From</th><td>kenashkov at gmail dot com</td></tr>
+<tr><th>Assigned</th><td>arpad</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PHP_Compat/index.html">PHP_Compat</a></td></tr>
+<tr><th>PHP Version</th><td>4.4.1</td></tr>
+<tr><th>OS</th><td>GNU/Linux (fedora Core 4)</td></tr>
+<tr><th>Roadmaps</th><td>1.6.0a1</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-04-17 20:44 UTC] kenashkov at gmail dot com</h3>
+<p>Description:<br>
+------------<br>
+Backporting the fix for this http://bugs.php.net/bug.php?id=29361 (changing the generated code for objects - replacing the class definition - the class::__set_state call).</p>
+<p>Here is a modification of the original code found in PHP/Compat/Function/var_export.php</p>
+<p>Not tested to be identical to php5.1 function ! Just tested to be working and follow the representation from the examples.<br>
+-----------------------------------------------<br>
+if (!function_exists(&#039;var_export&#039;)) {<br>
+    function var_export($var, $return = false, $level = 0)<br>
+    {<br>
+        // Init<br>
+        $indent      = &#039;  &#039;;<br>
+        $doublearrow = &#039; =&gt; &#039;;<br>
+        $lineend     = &quot;,\n&quot;;<br>
+        $stringdelim = &#039;\&#039;&#039;;<br>
+        $newline     = &quot;\n&quot;;<br>
+        $find        = array(null, &#039;\\&#039;, &#039;\&#039;&#039;);<br>
+        $replace     = array(&#039;NULL&#039;, &#039;\\\\&#039;, &#039;\\\&#039;&#039;);<br>
+        $out         = &#039;&#039;;</p>
+<p>// Indent<br>
+        $level++;<br>
+        for ($i = 1, $previndent = &#039;&#039;; $i &lt; $level; $i++) {<br>
+            $previndent .= $indent;<br>
+        }</p>
+<p>// Handle each type<br>
+        switch (gettype($var)) {<br>
+            // Array<br>
+            case &#039;array&#039;:<br>
+                $out = &#039;array (&#039; . $newline;<br>
+                foreach ($var as $key =&gt; $value) {<br>
+                    // Key<br>
+                    if (is_string($key)) {<br>
+                        // Make key safe<br>
+                        for ($i = 0, $c = count($find); $i &lt; $c; $i++) {<br>
+                            $var = str_replace($find[$i], $replace[$i], $var);<br>
+                        }<br>
+                        $key = $stringdelim . $key . $stringdelim;<br>
+                    }</p>
+<p>// Value<br>
+                    if (is_array($value)) {<br>
+                        $export = var_export($value, true, $level);<br>
+                        $value = $newline . $previndent . $indent . $export;<br>
+                    } else {<br>
+                        $value = var_export($value, true, $level);<br>
+                    }</p>
+<p>// Piece line together<br>
+                    $out .= $previndent . $indent . $key . $doublearrow . $value . $lineend;<br>
+                }</p>
+<p>// End string<br>
+                $out .= $previndent . &#039;)&#039;;<br>
+                break;</p>
+<p>// String<br>
+            case &#039;string&#039;:<br>
+                // Make the string safe<br>
+                for ($i = 0, $c = count($find); $i &lt; $c; $i++) {<br>
+                    $var = str_replace($find[$i], $replace[$i], $var);<br>
+                }<br>
+                $out = $stringdelim . $var . $stringdelim;<br>
+                break;</p>
+<p>// Number<br>
+            case &#039;integer&#039;:<br>
+            case &#039;double&#039;:<br>
+                $out = (string) $var;<br>
+                break;</p>
+<p>// Boolean<br>
+            case &#039;boolean&#039;:<br>
+                $out = $var ? &#039;true&#039; : &#039;false&#039;;<br>
+                break;</p>
+<p>// NULLs<br>
+            case &#039;NULL&#039;:<br>
+            case &#039;resource&#039;:<br>
+                $out = &#039;NULL&#039;;<br>
+                break;</p>
+<p>// Objects<br>
+            case &#039;object&#039;:<br>
+                // Start the object export<br>
+                $out = get_class($var) . &#039;::__set_state(array(&#039;.$newline;<br>
+                foreach(get_object_vars($var) as $key=&gt;$value) {<br>
+                    $out .= $indent . $previndent . $stringdelim . $key . $stringdelim . $doublearrow;<br>
+                    if(is_array($value) || is_object($value)) {<br>
+                        $export = var_export($value, true, $level);<br>
+                        $out .= $export . $lineend;<br>
+                    } else {<br>
+                        $out .= var_export($value, true, $level) . $lineend;<br>
+                    }<br>
+                }<br>
+                $out .= $previndent . &#039;))&#039;;<br>
+                break;<br>
+        }</p>
+<p>// Method of output<br>
+        if ($return === true) {<br>
+            return $out;<br>
+        } else {<br>
+            echo $out;<br>
+        }<br>
+    }<br>
+}</p>
+<p>-----------------------------------------------</p>
+<p>Test script:<br>
+---------------<br>
+class aa{<br>
+function __set_state($vars=array())<br>
+	{<br>
+	$obj =&amp; new aa();<br>
+	foreach($vars as $key=&gt;$value)<br>
+		$obj-&gt;$key = $value;<br>
+	return $obj;<br>
+	}<br>
+}</p>
+<p>$obj = new aa;<br>
+$obj-&gt;nested_obj = new aa;<br>
+var_export(obj);</p>
+<p>Expected result:<br>
+----------------<br>
+ aa::__set_state(array(<br>
+  &#039;nested_obj&#039; =&gt; aa::__set_state(array(<br>
+  )),<br>
+))</p>
+<p>Actual result:<br>
+--------------<br>
+ class aa {<br>
+  var $nested_obj = <br>
+  class aa {<br>
+  };<br>
+}</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

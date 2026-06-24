@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #7217</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; PEAR &#187; <a href="package/PEAR/index.html">PEAR</a> &#187; Bug #7217</h1>
+<p>go-pear.php web installation problem</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2006-03-27 14:28 UTC</td></tr>
+<tr><th>From</th><td>rebe at unit01 dot net</td></tr>
+<tr><th>Assigned</th><td>pajoye</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PEAR/index.html">PEAR</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.2</td></tr>
+<tr><th>OS</th><td>linux</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-03-27 14:28 UTC] rebe at unit01 dot net</h3>
+<p>Description:<br>
+------------<br>
+Latest go-pear:<br>
+ $Id: go-pear,v 1.81 2006/03/11 14:15:20 pajoye Exp $<br>
+fails on php5 with &quot;open_basedir&quot; restriction.<br>
+Function tmp_dir() about line 1156 has check code:</p>
+<p>$_temp = my_env(&#039;TMPDIR&#039;);<br>
+        if (!$_temp) {<br>
+            if (is_writable(&#039;/tmp&#039;)) {<br>
+                $_temp = &#039;/tmp&#039;;<br>
+            }<br>
+        }<br>
+which fails cause is_writable(&#039;/tmp&#039;) return true (!!) even if php<br>
+cannot write anything there because of restrictions, so then in line<br>
+423:</p>
+<p>$ptmp = tempnam($foo, &#039;gope&#039;);</p>
+<p>$ptmp becomes ampty - script is downloading packages into current dir<br>
+which makes then conflicts and errors.</p>
+<p>I suggest to change this:<br>
+        if (!$_temp) {<br>
+            if (is_writable(&#039;/tmp&#039;)) {<br>
+                $_temp = &#039;/tmp&#039;;<br>
+            }<br>
+        }</p>
+<p>to something like that:<br>
+        if (!$_temp) {<br>
+$test = &#039;/tmp/&#039;.uniqid();<br>
+            if (@mkdir($test)) {<br>
+    @rmdir($test);<br>
+                $_temp = &#039;/tmp&#039;;<br>
+            }<br>
+        }<br>
+which forces to create something to check if its possible.</p>
+</section>
+<section>
+<h3>[2006-03-27 15:06 UTC] rebe at unit01 dot net</h3>
+<p>/tmp is writable but not for that webpage due to open_basedir restriction. I know it looks like php bug and so i just reported it to them too. But  so far till php will be corrected go-pear.php script is useless in that case.</p>
+<p>My problem is i restricted php (open_basedir) and shell at all for web hosting issues and i can&#039;t recommend any working sollution to easy install pear on users pages.</p>
+</section>
+<section>
+<h3>[2006-03-28 08:58 UTC] rebe at unit01 dot net</h3>
+<p>I am specifying php setting upload_tmp_dir to every virtual host but there is no TMPDIR env in my whole linux box. I checked everywhere (tried shell envs and phpinfo and i didn&#039;t find any env telling what is a temp dir except upload_tmp_dir for php)</p>
+<p>So, frankly i don&#039;t know what for you&#039;re checking that env in your script cause i am afraid is empty in most systems.</p>
+</section>
+<section>
+<h3>[2006-03-28 09:13 UTC] rebe at unit01 dot net</h3>
+<p>I am using mostly Debian (and clones) and Trustix distros but i expect that every linux is the same in this case.</p>
+<p>Yes that is good idea to add that setting in config and for sure check if its no current dir because installation fails when try to download pear packages again for main pear (Archive and so on..) and print error downloading because they exists.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

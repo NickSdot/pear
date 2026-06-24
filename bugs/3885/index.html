@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #3885</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; XML &#187; <a href="package/XML_Serializer/index.html">XML_Serializer</a> &#187; Bug #3885</h1>
+<p>unserializing indexed arrays with one element</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-03-19 13:47 UTC</td></tr>
+<tr><th>From</th><td>gabest at gabest dot org</td></tr>
+<tr><th>Status</th><td>Bogus</td></tr>
+<tr><th>Package</th><td><a href="package/XML_Serializer/index.html">XML_Serializer</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.2</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-03-19 13:47 UTC] gabest at gabest dot org</h3>
+<p>Description:<br>
+------------<br>
+I think this isn&#039;t really a bug, but rather something fudamentally wrong (maybe with my approach to the problem).</p>
+<p>Let&#039;s say I have the following xml structure as a string:</p>
+<p>&lt;root&gt;<br>
+ &lt;node&gt;<br>
+  &lt;item&gt;&lt;name&gt;apple&lt;/name&gt;&lt;/item&gt;<br>
+ &lt;/node&gt;<br>
+ &lt;node&gt;<br>
+  &lt;item&gt;&lt;name&gt;orange&lt;/name&gt;&lt;/item&gt;<br>
+  &lt;item&gt;&lt;name&gt;banana&lt;/name&gt;&lt;/item&gt;<br>
+ &lt;/node&gt;<br>
+&lt;/root&gt;</p>
+<p>Then I try to unserialize this into a php array to display the item names with smarty. The problem is, it ends up in such an ambigous structure:</p>
+<p>Array<br>
+(<br>
+ [node] =&gt; Array<br>
+ (<br>
+  [0] =&gt; Array<br>
+  (<br>
+   [item] =&gt; Array<br>
+   (<br>
+    [name] =&gt; apple<br>
+   )<br>
+  )<br>
+  [1] =&gt; Array<br>
+  (<br>
+   [item] =&gt; Array<br>
+   (<br>
+    [0] =&gt; Array<br>
+    (<br>
+     [name] =&gt; orange<br>
+    )<br>
+    [1] =&gt; Array<br>
+    (<br>
+     [name] =&gt; banana<br>
+    )<br>
+   )<br>
+  )<br>
+ )<br>
+)</p>
+<p>Now, if I wanted to iterate this with smarty I&#039;d need to write something like this ...</p>
+<p>{foreach from=$node key=nindex item=n}<br>
+ node {$nindex}&lt;br&gt;<br>
+ {foreach from=$n.item key=index item=i}<br>
+  {$index} =&gt; {$i.name}&lt;br&gt;<br>
+ {/foreach}<br>
+{/foreach}</p>
+<p>.. which would print this ...</p>
+<p>node 0<br>
+  name =&gt; a<br>
+node 1<br>
+  0 =&gt; orange<br>
+  1 =&gt; banana</p>
+<p>... not exactly what I wished for.</p>
+<p>Any idea how to avoid this situation? Is there a magic option to tell the unserializer what tags to treat as indexed arrays?</p>
+</section>
+<section>
+<h3>[2005-03-19 14:34 UTC] gabest at gabest dot org</h3>
+<p>Sorry, just stepped though the debugger and noticed it was the forceEnum option I needed. Would be nice to have a documentation on these things at least :)</p>
+</section>
+<section>
+<h3>[2005-03-20 18:06 UTC] gabest at gabest dot org</h3>
+<p>True... My mistake not noticing it!</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

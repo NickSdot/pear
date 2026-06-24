@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #8341</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Structures &#187; <a href="package/Structures_DataGrid_Renderer_Smarty/index.html">Structures_DataGrid_Renderer_Smarty</a> &#187; Bug #8341</h1>
+<p>Passing column meta data to formatter</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Request #8341</th><td>Passing column meta data to formatter</td></tr>
+<tr><th>Submitted</th><td>2006-08-01 20:11 UTC</td></tr>
+<tr><th>From</th><td>michael at apison dot com</td></tr>
+<tr><th>Assigned</th><td>olivierg</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/Structures_DataGrid_Renderer_Smarty/index.html">Structures_DataGrid_Renderer_Smarty</a></td></tr>
+<tr><th>PHP Version</th><td>5.1.4</td></tr>
+<tr><th>OS</th><td>irrelevant</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2006-08-01 20:11 UTC] michael at apison dot com</h3>
+<p>Description:<br>
+------------<br>
+Hi there,</p>
+<p>I&#039;m need a decent way to define the width of a colum set when rendering the datagrid as a table (I&#039;m using the Smarty renderer, but this is a problem probablly applicable across different renderers).  If I know in the template in advance how many columns and each desired width, then I can code some logic in the template (although that tends to be a bit messy).  However, in my case, the columns are variable, and ideally should be set outside of the  design logic.</p>
+<p>I raised this issue on the PEAR general list which resulted in Mark suggesting that either I extend the appropriate classes, or write a feature request.  Well, I think this is a good idea that probably is applicable to a range of cases, so I&#039;m thinking that such a solution should make its way into the package proper.</p>
+<p>What I&#039;d like to be able to do is something like this:</p>
+<p>$datagrid-&gt;addColumn(<br>
+   new Structures_DataGrid_Column(<br>
+       &#039;ID&#039;,<br>
+       &#039;id&#039;,<br>
+       &#039;id&#039;,<br>
+       array(&#039;width&#039; =&gt; &#039;5%&#039;),<br>
+   )<br>
+);</p>
+<p>$datagrid-&gt;addColumn(<br>
+   new Structures_DataGrid_Column(<br>
+       &#039;Title&#039;,<br>
+       &#039;title&#039;,<br>
+       &#039;title&#039;,<br>
+       array(&#039;width&#039; =&gt; &#039;50%&#039;),<br>
+   )<br>
+);</p>
+<p>etc...</p>
+<p>I looked into the logistics of carrying over column attributes to the built Header vars that are assigned to Smarty.  This would require a change to Structures_DataGrid_Renderer::build().  At line 665, something like this could be added:</p>
+<p>$attribs = $column-&gt;attribs;<br>
+$this-&gt;_columns[$index] = compact(&#039;field&#039;,&#039;label&#039;, &#039;attribs&#039;);</p>
+<p>Now in the Smarty renderer we can access this data.  If buildHeader() was modified as such:</p>
+<p>$prepared[$index][&#039;attribs&#039;] = $spec[&#039;attribs&#039;];<br>
+$prepared[$index][&#039;label&#039;] = $spec[&#039;label&#039;];</p>
+<p>(line 223)</p>
+<p>This data is now availble for template access.</p>
+<p>Waddya think?</p>
+<p>Michael</p>
+</section>
+<section>
+<h3>[2006-08-03 21:47 UTC] olivierg at php dot net</h3>
+<p>The attributes where indeed not carried by the Smarty Renderer from the Column object to the Smarty template.</p>
+<p>You seem to have pretty well understood the &quot;logistics&quot; involved.</p>
+<p>Actually, I&#039;ve added support for the &quot;columnAttributes&quot; to the Smarty driver, in a similar way to the HTMLTable driver. It&#039;s in the CVS.</p>
+<p>There&#039;s no reason to put this information into the main $_columns property, especially because this property is meant to contain non-driver-specific informations, while attributes are only relevant for XML/HTML formats.</p>
+<p>The attributes are converted to a string before they&#039;re passed to Smarty. It&#039;s a little intrusive, but I think it&#039;s much more handy.</p>
+<p>You might use the attributes in your templates with a simple thing like: <br>
+&lt;td {$columnSet[col].attributes}&gt; ... &lt;/td&gt;</p>
+<p>This bug is closed. Thanks for your report.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>

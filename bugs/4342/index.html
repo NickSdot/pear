@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug #4342</title>
+    <base href="file:///Users/Nick/Code/nicksdot/php__pear/static/">
+    <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196x196.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="archive-notice">
+        <h2>PEAR is archived and read-only</h2>
+        <p>This mirror preserves historical PEAR package releases and metadata so existing references remain available.</p>
+        <ul>
+            <li>No new packages can be added.</li>
+            <li>No package updates will be published here.</li>
+            <li>The PEAR CLI and channel metadata continue to work for packages and versions already in the archive.</li>
+            <li>New projects should use <a href="https://getcomposer.org/">Composer</a> and <a href="https://packagist.org/">Packagist</a>.</li>
+        </ul>
+    </header>
+
+    <main>
+        <h1><a href="./index.html">Home</a> &#187; Testing &#187; <a href="package/PHPUnit/index.html">PHPUnit</a> &#187; Bug #4342</h1>
+<p>Assign by reference bug in addListener</p>
+<h2>Details</h2>
+<table>
+<tbody>
+<tr><th>Submitted</th><td>2005-05-13 16:11 UTC</td></tr>
+<tr><th>From</th><td>d dot morgan at eris dot qinetiq dot com</td></tr>
+<tr><th>Status</th><td>Closed</td></tr>
+<tr><th>Package</th><td><a href="package/PHPUnit/index.html">PHPUnit</a></td></tr>
+<tr><th>PHP Version</th><td>4.3.11</td></tr>
+<tr><th>OS</th><td>WinXP</td></tr>
+<tr><th>Roadmaps</th><td>(Not assigned)</td></tr>
+</tbody>
+</table>
+<h2>Comments</h2>
+<section>
+<h3>[2005-05-13 16:11 UTC] d dot morgan at eris dot qinetiq dot com</h3>
+<p>Description:<br>
+------------<br>
+PHPUnit version 1.2.2</p>
+<p>When adding a test listener to PHPUnit_TestResult, the addListener method executes the code:</p>
+<p>$this-&gt;_listeners[] = $listener;</p>
+<p>which has the effect of adding a duplicate of the listener to the _listeners array instead of the listener passed.</p>
+<p>To fix the bug, the line should read:</p>
+<p>$this-&gt;_listeners[] =&amp; $listener;</p>
+<p>Reproduce code:<br>
+---------------<br>
+&lt;?php<br>
+require_once(&quot;PHPUnit.php&quot;);</p>
+<p>class MyTestListener extends PHPUnit_TestListener<br>
+{<br>
+  var $suite;<br>
+  var $results;<br>
+  var $text;</p>
+<p>function MyTestListener($new_suite)<br>
+  {<br>
+    $this-&gt;suite = $new_suite;<br>
+    $this-&gt;results =&amp; new PHPUnit_TestResult();<br>
+    $this-&gt;results-&gt;addListener(&amp;$this);</p>
+<p>$this-&gt;text = &quot;foo&quot;;<br>
+  }</p>
+<p>function run()<br>
+  {<br>
+    $this-&gt;suite-&gt;run($this-&gt;results);<br>
+    echo $this-&gt;text;<br>
+  }</p>
+<p>function endTest(&amp;$test)<br>
+  {<br>
+    $this-&gt;text = &quot;bar&quot;;<br>
+  }<br>
+}<br>
+?&gt;</p>
+<p>Expected result:<br>
+----------------<br>
+When the above class is constructed with a test suite and then has run called, the text &quot;bar&quot; should be echoed.</p>
+<p>Actual result:<br>
+--------------<br>
+When the above class is constructed with a test suite and then has run called, the text &quot;foo&quot; is echoed.</p>
+</section>
+
+    </main>
+
+    <footer>
+        <hr>
+        <p>Copyright &copy; 2001+ <a href="https://www.php.net/">The PHP Group</a>.  All rights reserved.</p>
+    </footer>
+</body>
+</html>
