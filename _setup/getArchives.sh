@@ -3,7 +3,6 @@ set -Eeuo pipefail
 
 SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SETUP_DIR")"
-SOURCE_BASE_URL="https://pear.php.net"
 
 FORCE="${FORCE:-0}"
 ARCHIVE_URLS_FILE="${ARCHIVE_URLS_FILE:-$SETUP_DIR/archive-urls.txt}"
@@ -91,48 +90,38 @@ archive_name_from_url() {
   printf '%s.tgz\n' "$name"
 }
 
-archive_source_url() {
-  local url="$1"
-  local name
-
-  name="$(archive_name_from_url "$url")" || return 1
-  printf '%s/get/%s\n' "$SOURCE_BASE_URL" "${name%.tgz}"
-}
-
 download_archive() {
   local original_url="$1"
-  local source_url
   local archive_name
   local target
   local rel
   local tmp
 
-  if ! source_url="$(archive_source_url "$original_url")"; then
+  if ! archive_name="$(archive_name_from_url "$original_url")"; then
     printf 'invalid\t%s\n' "$original_url" >> "$MISSING_LOG"
     return 0
   fi
 
-  archive_name="$(archive_name_from_url "$source_url")"
   target="$ARCHIVE_DIR/$archive_name"
   rel="${target#$ROOT_DIR/}"
 
   if [ -s "$target" ] && ! is_force_enabled; then
-    printf 'present\t%s\t%s\n' "$rel" "$source_url" >> "$SUCCESS_LOG"
+    printf 'present\t%s\t%s\n' "$rel" "$original_url" >> "$SUCCESS_LOG"
     return 0
   fi
 
   tmp="$(mktemp "${target}.tmp.XXXXXX")"
 
-  if curl -fsSL --retry 2 --retry-delay 2 -o "$tmp" "$source_url"; then
+  if curl -fsSL --retry 2 --retry-delay 2 -o "$tmp" "$original_url"; then
     if [ -s "$tmp" ]; then
       mv "$tmp" "$target"
-      printf 'downloaded\t%s\t%s\n' "$rel" "$source_url" >> "$SUCCESS_LOG"
+      printf 'downloaded\t%s\t%s\n' "$rel" "$original_url" >> "$SUCCESS_LOG"
       return 0
     fi
 
-    printf 'empty\t%s\t%s\n' "$rel" "$source_url" >> "$MISSING_LOG"
+    printf 'empty\t%s\t%s\n' "$rel" "$original_url" >> "$MISSING_LOG"
   else
-    printf 'missing\t%s\t%s\n' "$rel" "$source_url" >> "$MISSING_LOG"
+    printf 'missing\t%s\t%s\n' "$rel" "$original_url" >> "$MISSING_LOG"
   fi
 
   rm -f "$tmp"
