@@ -29,6 +29,12 @@ if ($relative === '') {
     $relative = 'index.html';
 }
 
+if ($relative === '_setup' || str_starts_with($relative, '_setup/')) {
+    http_response_code(403);
+    echo "Forbidden.\n";
+    return true;
+}
+
 if (str_contains($relative, "\0") || preg_match('#(?:^|/)\.\.(?:/|$)#', $relative) === 1) {
     http_response_code(400);
     echo "Bad request.\n";
