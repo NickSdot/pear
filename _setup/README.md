@@ -16,3 +16,11 @@ ARCHIVE_DOWNLOAD_JOBS=15 _setup/getArchives.sh
 ```
 
 Logs are written to `_setup/logs/`. Web access to `_setup/` is denied.
+
+Preview locally:
+
+```sh
+_setup/serve.sh 8080
+```
+
+Open `http://127.0.0.1:8080/pear/`.
